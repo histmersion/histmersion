@@ -1,0 +1,123 @@
+# the first server
+## sources 20 rows
+{ "authors" : [ "Ann Zqauthor", "Bo Zqwriter" ], "body" : 149, "calibre_id" : null, "cited_by_count" : 120, "citekey" : "zqauthor2019_roads", "doi" : "10.5555/zq.open", "has_original" : true, "license" : null, "source" : "unpaywall", "status" : "current", "summary" : "Zq abstract.", "title" : "Tin roads of Zqland", "venue" : "Journal of Zq Studies", "year" : 2019 }
+{ "authors" : [ "Bo Zqwriter" ], "body" : 0, "calibre_id" : "77", "cited_by_count" : null, "citekey" : "zqa_cited", "doi" : "10.5555/zq.cited", "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: The harbour at Zqcove.", "title" : "The harbour at Zqcove", "venue" : null, "year" : 2001 }
+{ "authors" : [ "Cy Zqmaker" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 3, "citekey" : "zqmaker1995_copper", "doi" : "10.5555/zq.ref1", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "Copper of Zqisles", "venue" : "Journal of Zq Studies", "year" : 1995 }
+{ "authors" : [ "Cy Zqmaker" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_ref", "doi" : "10.5555/zq.ref1", "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: Copper of Zqisles.", "title" : "Copper of Zqisles", "venue" : null, "year" : 1995 }
+{ "authors" : [ "Di Zqreader" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 5, "citekey" : "zqa_legal", "doi" : "10.5555/zq.closed", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "A closed study of Zqtell", "venue" : "Journal of Zq Studies", "year" : 2021 }
+{ "authors" : [ "Di Zqreader" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 5, "citekey" : "zqreader2021_closed", "doi" : "10.5555/zq.closed", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "A closed study of Zqtell", "venue" : "Journal of Zq Studies", "year" : 2021 }
+{ "authors" : [ "Ed Zqfalse" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_retracted", "doi" : "10.5555/zq.retracted", "has_original" : false, "license" : null, "source" : null, "status" : "retracted", "summary" : "A study: A retracted claim about Zqtell.", "title" : "A retracted claim about Zqtell", "venue" : null, "year" : 2012 }
+{ "authors" : [ "Fay Zqgold" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 9, "citekey" : "zqgold2022_gold", "doi" : "10.5555/zq.gold", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "Gold open access on a refusing host", "venue" : "Journal of Zq Studies", "year" : 2022 }
+{ "authors" : [ "Gus Zqlater" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 1, "citekey" : "zqlater2024_later", "doi" : "10.5555/zq.later", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "A later reply on Zqtell", "venue" : "Journal of Zq Studies", "year" : 2024 }
+{ "authors" : [ "Gus Zqlater" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_later", "doi" : "10.5555/zq.later", "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: A later reply on Zqtell.", "title" : "A later reply on Zqtell", "venue" : null, "year" : 2024 }
+{ "authors" : [ "Hal Zqarx" ], "body" : 149, "calibre_id" : null, "cited_by_count" : 2, "citekey" : "zqarx2021_preprint", "doi" : "10.48550/arxiv.2101.00001", "has_original" : true, "license" : null, "source" : "arxiv", "status" : "current", "summary" : "Zq abstract.", "title" : "A preprint on Zq metallurgy", "venue" : "Journal of Zq Studies", "year" : 2021 }
+{ "authors" : [ "Ivy Zqbook" ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqbook1911_book", "doi" : null, "has_original" : true, "license" : null, "source" : "archive_org", "status" : "unassessed", "summary" : "About Zqland.", "title" : "A Zq book", "venue" : "Zq Press", "year" : 1911 }
+{ "authors" : [ "Jo Zqnotes" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_nodoi", "doi" : null, "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: Undated notes.", "title" : "Undated notes", "venue" : null, "year" : 1990 }
+{ "authors" : [ "Lu Zqsecond" ], "body" : 149, "calibre_id" : null, "cited_by_count" : 12, "citekey" : "zqsecond2018_bronze", "doi" : "10.5555/zq.open2", "has_original" : true, "license" : null, "source" : "unpaywall", "status" : "current", "summary" : "Zq abstract.", "title" : "Bronze of Zqcove", "venue" : "Journal of Zq Studies", "year" : 2018 }
+{ "authors" : [ "Qi Zqlicence" ], "body" : 149, "calibre_id" : null, "cited_by_count" : 7, "citekey" : "zqlicence2020_licensed", "doi" : "10.5555/zq.licensed", "has_original" : true, "license" : "CC BY 4.0", "source" : "zq-shelf", "status" : "current", "summary" : "Zq abstract.", "title" : "A licensed Zq survey", "venue" : "Journal of Zq Studies", "year" : 2020 }
+{ "authors" : [ ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_byhand", "doi" : "10.5555/zq.unknown", "has_original" : false, "license" : null, "source" : "oa", "status" : "unassessed", "summary" : null, "title" : "zqa_byhand", "venue" : null, "year" : null }
+{ "authors" : [ ], "body" : 148, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_upload", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "An uploaded Zq study", "venue" : null, "year" : 2020 }
+{ "authors" : [ ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_dup", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "zqa_dup", "venue" : null, "year" : null }
+{ "authors" : [ ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_ledger", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "zqa_ledger", "venue" : null, "year" : null }
+{ "authors" : [ ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_mcp", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "Sent by a model", "venue" : null, "year" : null }
+## edges 2 rows
+{ "dst" : "zqa_cited", "kind" : "cites", "src" : "zqa_later" }
+{ "dst" : "zqa_ref", "kind" : "references", "src" : "zqauthor2019_roads" }
+## unresolved_edges 0 rows
+## assessments 14 rows
+{ "cited_by" : 1, "citekey" : "zqa_later", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 1, "citekey" : "zqlater2024_later", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 12, "citekey" : "zqsecond2018_bronze", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 120, "citekey" : "zqauthor2019_roads", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 2, "citekey" : "zqarx2021_preprint", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 3, "citekey" : "zqa_ref", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 3, "citekey" : "zqmaker1995_copper", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 40, "citekey" : "zqa_cited", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 5, "citekey" : "zqa_legal", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 5, "citekey" : "zqreader2021_closed", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 7, "citekey" : "zqlicence2020_licensed", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 80, "citekey" : "zqa_retracted", "influential" : null, "notices" : { "crossrefUpdates" : [ { "doi" : "10.5555/zq.retraction-notice", "kind" : "retraction", "label" : "Retraction" } ], "retractionWatch" : [ { "date" : "DAY", "nature" : "Retraction", "reason" : "+Concerns/Issues About Data" } ] }, "retracted" : true, "verdict" : "retracted" }
+{ "cited_by" : 9, "citekey" : "zqgold2022_gold", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : null, "citekey" : "zqa_byhand", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "unassessed" }
+## retraction_watch 2 rows
+{ "date" : "DAY", "doi" : "10.5555/zq.other", "nature" : "Correction", "reason" : "+Error in Text" }
+{ "date" : "DAY", "doi" : "10.5555/zq.retracted", "nature" : "Retraction", "reason" : "+Concerns/Issues About Data" }
+## queue_items 8 rows
+{ "list" : "acquire", "reason" : "bought", "status" : "done", "text" : "A Zq atlas (buy)", "topic" : null }
+{ "list" : "acquire", "reason" : "ingested as [[zqa_ledger]]", "status" : "done", "text" : "Find the Zq ledger (no DOI)", "topic" : null }
+{ "list" : "acquire", "reason" : "ingested as [[zqauthor2019_roads]]", "status" : "done", "text" : "Have we 10.5555/zq.open?", "topic" : null }
+{ "list" : "acquire", "reason" : "ingested as [[zqsecond2018_bronze]]", "status" : "done", "text" : "Get 10.5555/zq.open2", "topic" : null }
+{ "list" : "acquire", "reason" : null, "status" : "open", "text" : "Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold", "topic" : "browser download" }
+{ "list" : "acquire", "reason" : null, "status" : "open", "text" : "Get 10.5555/zq.ref1", "topic" : null }
+{ "list" : "acquire", "reason" : null, "status" : "open", "text" : "Wanted: doi:10.5555/zq.closed", "topic" : "zq" }
+{ "list" : "log", "reason" : null, "status" : "open", "text" : "acquire re-check: 1 closed (in the corpus already: #4 [[zqauthor2019_roads]]), 1 legal copy(ies) found (#3 [[zqsecond2018_bronze]]; the conversion closes the item), 3 still without a legal copy; 0 due item(s) left (by person, job UUID)", "topic" : "DAY" }
+## acquire_checks 5 rows
+{ "checks" : 1, "generation" : true, "outcome" : "closed", "reason" : "checked DAY: in the corpus with its original as [[zqauthor2019_roads]] — closed" }
+{ "checks" : 1, "generation" : true, "outcome" : "fetched", "reason" : "checked DAY: a legal copy found (unpaywall) — converting; the item closes once it is stored" }
+{ "checks" : 1, "generation" : true, "outcome" : "no-copy", "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of " }
+{ "checks" : 1, "generation" : true, "outcome" : "no-copy", "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.gold; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.gold; pmc: no copy — pmc has no copy of 10.5555/zq.gold; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555" }
+{ "checks" : 1, "generation" : true, "outcome" : "no-copy", "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555" }
+## source_candidates 3 rows
+{ "arxiv_id" : null, "authors" : [ "Mo Zqnew", "Ni Zqnew" ], "doi" : "10.5555/zq.fresh1", "found_by" : [ "openalex query \"zq tin trade\"" ], "goal" : "zqa-goal", "is_oa" : false, "state" : "seen", "title" : "New finds at Zqtell", "venue" : "Journal of Zq Studies", "year" : 2025 }
+{ "arxiv_id" : null, "authors" : [ "Ox Zqiso" ], "doi" : "10.5555/zq.fresh2", "found_by" : [ "crossref query \"zq tin trade\"", "openalex query \"zq tin trade\"" ], "goal" : "zqa-goal", "is_oa" : false, "state" : "dismissed", "title" : "Tin isotopes of Zqland", "venue" : "Journal of Zq Studies", "year" : 2025 }
+{ "arxiv_id" : null, "authors" : [ "Pi Zqslag" ], "doi" : "10.5555/zq.fresh3", "found_by" : [ "crossref query \"zq tin trade\"" ], "goal" : "zqa-goal", "is_oa" : false, "state" : "new", "title" : "Zq slag heaps", "venue" : "Zq Notes", "year" : 2025 }
+## candidate_watches 6 rows
+{ "goal" : "zqa-goal", "index_name" : "arxiv", "kind" : "query", "last_error" : null, "last_found" : 0, "subject" : "zq tin trade" }
+{ "goal" : "zqa-goal", "index_name" : "core", "kind" : "query", "last_error" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)", "last_found" : 0, "subject" : "zq tin trade" }
+{ "goal" : "zqa-goal", "index_name" : "crossref", "kind" : "query", "last_error" : null, "last_found" : 2, "subject" : "zq tin trade" }
+{ "goal" : "zqa-goal", "index_name" : "europepmc", "kind" : "query", "last_error" : null, "last_found" : 0, "subject" : "zq tin trade" }
+{ "goal" : "zqa-goal", "index_name" : "openalex", "kind" : "citing", "last_error" : null, "last_found" : 1, "subject" : "10.5555/zq.cited" }
+{ "goal" : "zqa-goal", "index_name" : "openalex", "kind" : "query", "last_error" : null, "last_found" : 5, "subject" : "zq tin trade" }
+## upstream_quota 1 rows
+{ "blocked_why" : null, "lookup_tokens" : 6, "search_tokens" : 0, "upstream" : "core" }
+## jobs 13 rows
+{ "citekey" : "zqa_dup", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqa_ledger", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s) · ticked off acquisition item 2", "status" : "done" }
+{ "citekey" : "zqa_mcp", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqa_upload", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqa_upload", "error" : null, "kind" : "reocr", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqarx2021_preprint", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqauthor2019_roads", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqauthor2019_roads", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqbook1911_book", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqlicence2020_licensed", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqlicence2020_licensed", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s)", "status" : "done" }
+{ "citekey" : "zqsecond2018_bronze", "error" : null, "kind" : "ingest", "progress" : "2 page(s), 1 asset(s) · ticked off acquisition item #3 (same DOI)", "status" : "done" }
+{ "citekey" : null, "error" : null, "kind" : "acquire_recheck", "progress" : "4/4 items · 1 closed · 1 fetched · 3 no legal copy · 0 failed", "status" : "done" }
+## assets 9 rows
+{ "citekey" : "zqa_dup", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqa_ledger", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqa_mcp", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqa_upload", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqarx2021_preprint", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqauthor2019_roads", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqbook1911_book", "license" : null, "name" : "zq-fig.png" }
+{ "citekey" : "zqlicence2020_licensed", "license" : "CC BY 4.0", "name" : "zq-fig.png" }
+{ "citekey" : "zqsecond2018_bronze", "license" : null, "name" : "zq-fig.png" }
+# the switch on
+## sources 7 rows
+{ "authors" : [ "Bo Zqwriter" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 40, "citekey" : "zqa_strict", "doi" : "10.5555/zq.cited", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "The harbour at Zqcove", "venue" : "Journal of Zq Studies", "year" : 2001 }
+{ "authors" : [ "Bo Zqwriter" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_cited", "doi" : "10.5555/zq.cited", "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: The harbour at Zqcove.", "title" : "The harbour at Zqcove", "venue" : null, "year" : 2001 }
+{ "authors" : [ "Cy Zqmaker" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_ref", "doi" : "10.5555/zq.ref1", "has_original" : false, "license" : null, "source" : null, "status" : "unassessed", "summary" : "A study: Copper of Zqisles.", "title" : "Copper of Zqisles", "venue" : null, "year" : 1995 }
+{ "authors" : [ "Di Zqreader" ], "body" : 0, "calibre_id" : null, "cited_by_count" : 5, "citekey" : "zqreader2021_closed", "doi" : "10.5555/zq.closed", "has_original" : false, "license" : null, "source" : "oa", "status" : "current", "summary" : "Zq abstract.", "title" : "A closed study of Zqtell", "venue" : "Journal of Zq Studies", "year" : 2021 }
+{ "authors" : [ "Ed Zqfalse" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_retracted", "doi" : "10.5555/zq.retracted", "has_original" : false, "license" : null, "source" : null, "status" : "contested", "summary" : "A study: A retracted claim about Zqtell.", "title" : "A retracted claim about Zqtell", "venue" : null, "year" : 2012 }
+{ "authors" : [ "Gus Zqlater" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_later", "doi" : "10.5555/zq.later", "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: A later reply on Zqtell.", "title" : "A later reply on Zqtell", "venue" : null, "year" : 2024 }
+{ "authors" : [ "Jo Zqnotes" ], "body" : 0, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_nodoi", "doi" : null, "has_original" : false, "license" : null, "source" : null, "status" : "current", "summary" : "A study: Undated notes.", "title" : "Undated notes", "venue" : null, "year" : 1990 }
+## edges 0 rows
+## unresolved_edges 0 rows
+## assessments 2 rows
+{ "cited_by" : 40, "citekey" : "zqa_strict", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+{ "cited_by" : 5, "citekey" : "zqreader2021_closed", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }
+## retraction_watch 0 rows
+## queue_items 2 rows
+{ "list" : "acquire", "reason" : null, "status" : "open", "text" : "Get 10.5555/zq.ref1 please", "topic" : null }
+{ "list" : "log", "reason" : null, "status" : "open", "text" : "acquire re-check: 1 still without a legal copy; 0 due item(s) left (by person, job UUID)", "topic" : "DAY" }
+## acquire_checks 1 rows
+{ "checks" : 1, "generation" : true, "outcome" : "no-copy", "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — core has no copy of 10.5555/zq.ref1; openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.ref1; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.ref1; zq-shel" }
+## source_candidates 0 rows
+## candidate_watches 0 rows
+## upstream_quota 1 rows
+{ "blocked_why" : null, "lookup_tokens" : 3, "search_tokens" : 0, "upstream" : "core" }
+## jobs 1 rows
+{ "citekey" : null, "error" : null, "kind" : "acquire_recheck", "progress" : "1/1 items · 0 closed · 0 fetched · 1 no legal copy · 0 failed", "status" : "done" }
+## assets 0 rows

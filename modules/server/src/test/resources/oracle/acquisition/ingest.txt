@@ -1,0 +1,1531 @@
+== ingest 10.5555/zq.open (an open copy)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 120,
+    "citekey" : "zqauthor2019_roads",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.open",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 120 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqauthor2019_roads",
+    "verdict" : "current",
+    "year" : 2019
+  },
+  "citekey" : "zqauthor2019_roads",
+  "created" : true,
+  "doi" : "10.5555/zq.open",
+  "dropIn" : null,
+  "edgesAdded" : 1,
+  "pdf" : {
+    "bytes" : 12329,
+    "source" : "unpaywall",
+    "spoolPath" : "TMP/acq-acquire/zqauthor2019_roads/paper.pdf",
+    "url" : "http://127.0.0.1:PORT/files/zq-open.pdf"
+  },
+  "steps" : [
+    {
+      "detail" : "Tin roads of Zqland (2019), 120 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "unpaywall: 12329 bytes from 127.0.0.1",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "3 reference(s), 1 resolve to stored sources",
+      "ok" : true,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata; queued OCR job UUID for TMP/acq-acquire/zqauthor2019_roads/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "Tin roads of Zqland"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.open?email=oracle@example.org
+  > GET /files/zq-open.pdf
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== the source written
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Ann Zqauthor",
+      "Bo Zqwriter"
+    ],
+    "citekey" : "zqauthor2019_roads",
+    "doi" : "10.5555/zq.open",
+    "notes" : null,
+    "ocrMarkdown" : "# Converted 2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455.pdf\n\nA body of 12329 bytes (quality: false).\n\n![fig](assets/zq-fig.png)\n",
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : "unpaywall",
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "Zq abstract.",
+    "tags" : [
+    ],
+    "title" : "Tin roads of Zqland",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 2019
+  }
+}
+== its original
+200 12329 bytes, sha256 2d5dd186d2a4a979, attachment; filename="zqauthor2019_roads.pdf"
+== its edges
+200 [
+  {
+    "citekey" : "zqa_ref",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : "current",
+    "target" : "source",
+    "title" : "Copper of Zqisles"
+  }
+]
+== ingest 10.5555/zq.open again (the original kept)
+200 {
+  "assessment" : {
+    "applied" : null,
+    "checkedAt" : "TS",
+    "citedByCount" : 120,
+    "citekey" : "zqauthor2019_roads",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.open",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 120 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqauthor2019_roads",
+    "verdict" : "current",
+    "year" : 2019
+  },
+  "citekey" : "zqauthor2019_roads",
+  "created" : false,
+  "doi" : "10.5555/zq.open",
+  "dropIn" : null,
+  "edgesAdded" : 1,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "Tin roads of Zqland (2019), 120 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "skipped: `zqauthor2019_roads` already has a converted body — `--refetch` fetches and converts it again",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "3 reference(s), 1 resolve to stored sources",
+      "ok" : true,
+      "step" : "references"
+    },
+    {
+      "detail" : "updated source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "Tin roads of Zqland"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.open --refetch
+200 {
+  "assessment" : {
+    "applied" : null,
+    "checkedAt" : "TS",
+    "citedByCount" : 120,
+    "citekey" : "zqauthor2019_roads",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.open",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 120 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqauthor2019_roads",
+    "verdict" : "current",
+    "year" : 2019
+  },
+  "citekey" : "zqauthor2019_roads",
+  "created" : false,
+  "doi" : "10.5555/zq.open",
+  "dropIn" : null,
+  "edgesAdded" : 1,
+  "pdf" : {
+    "bytes" : 12329,
+    "source" : "unpaywall",
+    "spoolPath" : "TMP/acq-acquire/zqauthor2019_roads/paper.pdf",
+    "url" : "http://127.0.0.1:PORT/files/zq-open.pdf"
+  },
+  "steps" : [
+    {
+      "detail" : "Tin roads of Zqland (2019), 120 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "unpaywall: 12329 bytes from 127.0.0.1 (replacing a converted body: --refetch)",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "3 reference(s), 1 resolve to stored sources",
+      "ok" : true,
+      "step" : "references"
+    },
+    {
+      "detail" : "updated source from metadata; queued OCR job UUID for TMP/acq-acquire/zqauthor2019_roads/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "Tin roads of Zqland"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.open?email=oracle@example.org
+  > GET /files/zq-open.pdf
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.licensed (a plugin's copy with its licence)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 7,
+    "citekey" : "zqlicence2020_licensed",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.licensed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 7 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqlicence2020_licensed",
+    "verdict" : "current",
+    "year" : 2020
+  },
+  "citekey" : "zqlicence2020_licensed",
+  "created" : true,
+  "doi" : "10.5555/zq.licensed",
+  "dropIn" : null,
+  "edgesAdded" : 0,
+  "pdf" : {
+    "bytes" : 12326,
+    "source" : "zq-shelf",
+    "spoolPath" : "TMP/acq-acquire/zqlicence2020_licensed/paper.pdf",
+    "url" : "https://shelf.zq.example/licensed.pdf"
+  },
+  "steps" : [
+    {
+      "detail" : "A licensed Zq survey (2020), 7 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "zq-shelf: 12326 bytes from shelf.zq.example, licence CC BY 4.0",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata; queued OCR job UUID for TMP/acq-acquire/zqlicence2020_licensed/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "recorded CC BY 4.0",
+      "ok" : true,
+      "step" : "licence"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A licensed Zq survey"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.licensed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.licensed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.licensed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.licensed
+  > GET /crossref/works/10.5555/zq.licensed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.licensed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.licensed --refetch (the licence kept)
+200 {
+  "assessment" : {
+    "applied" : null,
+    "checkedAt" : "TS",
+    "citedByCount" : 7,
+    "citekey" : "zqlicence2020_licensed",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.licensed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 7 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqlicence2020_licensed",
+    "verdict" : "current",
+    "year" : 2020
+  },
+  "citekey" : "zqlicence2020_licensed",
+  "created" : false,
+  "doi" : "10.5555/zq.licensed",
+  "dropIn" : null,
+  "edgesAdded" : 0,
+  "pdf" : {
+    "bytes" : 12326,
+    "source" : "zq-shelf",
+    "spoolPath" : "TMP/acq-acquire/zqlicence2020_licensed/paper.pdf",
+    "url" : "https://shelf.zq.example/licensed.pdf"
+  },
+  "steps" : [
+    {
+      "detail" : "A licensed Zq survey (2020), 7 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "zq-shelf: 12326 bytes from shelf.zq.example, licence CC BY 4.0 (replacing a converted body: --refetch)",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "updated source from metadata; queued OCR job UUID for TMP/acq-acquire/zqlicence2020_licensed/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A licensed Zq survey"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.licensed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.licensed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.licensed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.licensed
+  > GET /crossref/works/10.5555/zq.licensed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.licensed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest arxiv:2101.00001
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 2,
+    "citekey" : "zqarx2021_preprint",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.48550/arxiv.2101.00001",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 2 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqarx2021_preprint",
+    "verdict" : "current",
+    "year" : 2021
+  },
+  "citekey" : "zqarx2021_preprint",
+  "created" : true,
+  "doi" : "10.48550/arxiv.2101.00001",
+  "dropIn" : null,
+  "edgesAdded" : 0,
+  "pdf" : {
+    "bytes" : 12334,
+    "source" : "arxiv",
+    "spoolPath" : "TMP/acq-acquire/zqarx2021_preprint/paper.pdf",
+    "url" : "http://127.0.0.1:PORT/arxiv/pdf/2101.00001"
+  },
+  "steps" : [
+    {
+      "detail" : "A preprint on Zq metallurgy (2021), 2 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "arxiv: 12334 bytes from 127.0.0.1",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata; queued OCR job UUID for TMP/acq-acquire/zqarx2021_preprint/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A preprint on Zq metallurgy"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_preprint","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"874ce444963ac0d570538d15829a36b51bc3aa55a56ec12f6201e2927497f90b","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.48550/arxiv.2101.00001?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.48550/arxiv.2101.00001%22&limit=1
+  > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.48550/arxiv.2101.00001%22&resultType=core&format=json&pageSize=5
+  > GET /arxiv/pdf/2101.00001
+  > GET /crossref/works/10.48550/arxiv.2101.00001?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.48550/arxiv.2101.00001?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.closed (no copy)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 5,
+    "citekey" : "zqreader2021_closed",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.closed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 5 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqreader2021_closed",
+    "verdict" : "current",
+    "year" : 2021
+  },
+  "citekey" : "zqreader2021_closed",
+  "created" : true,
+  "doi" : "10.5555/zq.closed",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqreader2021_closed",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "A closed study of Zqtell (2021), 5 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — core has no copy of 10.5555/zq.closed; openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A closed study of Zqtell"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.closed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.gold (a refusing host)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 9,
+    "citekey" : "zqgold2022_gold",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.gold",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 9 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqgold2022_gold",
+    "verdict" : "current",
+    "year" : 2022
+  },
+  "citekey" : "zqgold2022_gold",
+  "created" : true,
+  "doi" : "10.5555/zq.gold",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqgold2022_gold",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "Gold open access on a refusing host (2022), 9 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.gold; core: no copy — core has no copy of 10.5555/zq.gold; openalex: no copy — openalex has no copy of 10.5555/zq.gold; pmc: no copy — pmc has no copy of 10.5555/zq.gold; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.gold; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.gold; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "open access, but no script may download it — acquisition item #1: download it in the browser",
+      "ok" : true,
+      "step" : "acquire"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "Gold open access on a refusing host"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.gold?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.gold%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.gold%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.gold
+  > GET /crossref/works/10.5555/zq.gold?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.gold?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.closed --legal-only --citekey zqa_legal
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 5,
+    "citekey" : "zqa_legal",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.closed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 5 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqa_legal",
+    "verdict" : "current",
+    "year" : 2021
+  },
+  "citekey" : "zqa_legal",
+  "created" : true,
+  "doi" : "10.5555/zq.closed",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqa_legal",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "A closed study of Zqtell (2021), 5 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — core has no copy of 10.5555/zq.closed; openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A closed study of Zqtell"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.closed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest 10.5555/zq.unknown
+400 {
+  "code" : null,
+  "message" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+== ingest 10.5555/zq.unknown --citekey zqa_byhand
+200 {
+  "assessment" : {
+    "applied" : null,
+    "checkedAt" : "TS",
+    "citedByCount" : null,
+    "citekey" : "zqa_byhand",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.unknown",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "UNASSESSED — no citation data; judge relevance to the topic by hand",
+    "retractionWatch" : [
+    ],
+    "target" : "zqa_byhand",
+    "verdict" : "unassessed",
+    "year" : null
+  },
+  "citekey" : "zqa_byhand",
+  "created" : true,
+  "doi" : "10.5555/zq.unknown",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqa_byhand",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "no upstream record for 10.5555/zq.unknown",
+      "ok" : false,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.unknown; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.unknown; pmc: no copy — pmc has no copy of 10.5555/zq.unknown; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.unknown; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.unknown; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "unassessed",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : null
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.unknown?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.unknown%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.unknown
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+== ingest zqa_ref (by citekey)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 3,
+    "citekey" : "zqmaker1995_copper",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.ref1",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 3 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqmaker1995_copper",
+    "verdict" : "current",
+    "year" : 1995
+  },
+  "citekey" : "zqmaker1995_copper",
+  "created" : true,
+  "doi" : "10.5555/zq.ref1",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqmaker1995_copper",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "Copper of Zqisles (1995), 3 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.ref1; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.ref1; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "Copper of Zqisles"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.ref1?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.ref1%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.ref1
+  > GET /crossref/works/10.5555/zq.ref1?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.ref1?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== ingest (bad citekey)
+400 {
+  "code" : "invalid",
+  "message" : "invalid citekey '../escape' — it may not contain '..'"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== upload zqa_upload
+202 {
+  "citekey" : "zqa_upload",
+  "jobId" : "UUID",
+  "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+  "status" : "queued"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+== upload the same bytes as zqa_dup
+409 {
+  "code" : "conflict",
+  "message" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+}
+== upload the same bytes as zqa_dup --force
+202 {
+  "citekey" : "zqa_dup",
+  "jobId" : "UUID",
+  "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+  "status" : "queued"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+== upload (empty)
+400 {
+  "code" : null,
+  "message" : "the upload is empty"
+}
+== upload (bad citekey)
+400 {
+  "code" : "invalid",
+  "message" : "invalid citekey 'Bad Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+}
+== acquire add (an item an upload fulfils)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 2,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Find the Zq ledger (no DOI)",
+  "topic" : null
+}
+== upload zqa_ledger --acquire-item
+202 {
+  "citekey" : "zqa_ledger",
+  "jobId" : "UUID",
+  "sha256" : "30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a",
+  "status" : "queued"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","progress":"2 page(s), 1 asset(s) · ticked off acquisition item 2","error":null,"sha256":"30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a","createdAt":"TS","updatedAt":"TS","acquireItem":2,"detail":null}
+== upload with a done item
+400 {
+  "code" : null,
+  "message" : "acquisition item 2 is already done"
+}
+== upload with no such item
+400 {
+  "code" : null,
+  "message" : "no acquisition item 99999"
+}
+== reocr zqa_upload --quality
+202 {
+  "citekey" : "zqa_upload",
+  "jobId" : "UUID",
+  "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+  "status" : "queued"
+}
+job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+== reocr zqa_nodoi (no original)
+400 {
+  "code" : null,
+  "message" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+}
+== reocr zqa_missing
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqa_missing'"
+}
+== original zqa_upload
+200 12327 bytes, sha256 ba3491d4b4046fe3, attachment; filename="zqa_upload.pdf"
+== original zqa_nodoi
+404 {
+  "code" : "not_found",
+  "message" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+}
+== mcp ingest base64
+queued job `UUID` for **zqa_mcp** — poll `job_status` with that id
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_mcp","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"f7a82208f1948ea92999933994b05a305dcf1c669304b54970259700af410852","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+== mcp ingest (neither)
+_give either `path` (a file the SERVER can see) or `base64` (the document itself)_
+== mcp ingest path outside
+_the server cannot see a file at '/no/such/zq.pdf' (paths are resolved INSIDE the server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host_
+== mcp ingest_doi
+### Ingested `zqlater2024_later`
+
+A later reply on Zqtell  
+**DOI:** [10.5555/zq.later](https://doi.org/10.5555/zq.later)  
+**PDF:** none found through legal open access  
+**Reference edges:** 0
+
+- ✓ **metadata** — A later reply on Zqtell (2024), 1 citation(s)
+- ✗ **fetch** — no legal open-access PDF found
+- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.later; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.later; pmc: no copy — pmc has no copy of 10.5555/zq.later; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.later; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.later; zq-shelf: no copy — the zq shelf has only one work
+- ✗ **references** — 0 reference(s), 0 resolve to stored sources
+- ✓ **store** — created source from metadata — no file was acquired, so there is nothing to convert
+- ✓ **assess** — current → status=current
+
+> No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqlater2024_later
+
+### ✓ CURRENT — zqlater2024_later
+**DOI:** [10.5555/zq.later](https://doi.org/10.5555/zq.later)  
+**Citekey:** `zqlater2024_later`  
+**Cited by:** 1  
+**Recommendation:** KEEP — 1 citation(s), no amendment on record
+
+_Stored `status` set to **current**._
+  > GET /openalex/works/https://doi.org/10.5555/zq.later?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.later?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.later?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.later%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.later
+  > GET /crossref/works/10.5555/zq.later?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.later?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.later?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.later?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== mcp ingest_doi --legalOnly
+### Updated `zqreader2021_closed`
+
+A closed study of Zqtell  
+**DOI:** [10.5555/zq.closed](https://doi.org/10.5555/zq.closed)  
+**PDF:** none found through legal open access  
+**Reference edges:** 0
+
+- ✓ **metadata** — A closed study of Zqtell (2021), 5 citation(s)
+- ✗ **fetch** — no legal open-access PDF found
+- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work
+- ✗ **references** — 0 reference(s), 0 resolve to stored sources
+- ✓ **store** — updated source from metadata — no file was acquired, so there is nothing to convert
+- ✓ **assess** — current
+
+> No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqreader2021_closed
+
+### ✓ CURRENT — zqreader2021_closed
+**DOI:** [10.5555/zq.closed](https://doi.org/10.5555/zq.closed)  
+**Citekey:** `zqreader2021_closed`  
+**Cited by:** 5  
+**Recommendation:** KEEP — 5 citation(s), no amendment on record
+
+_Re-run with `--apply` to write this verdict to the source's `status`._
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== jobs
+200 [
+  {
+    "acquireItem" : null,
+    "citekey" : "zqa_mcp",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "f7a82208f1948ea92999933994b05a305dcf1c669304b54970259700af410852",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqa_upload",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "reocr",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : 2,
+    "citekey" : "zqa_ledger",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s) · ticked off acquisition item 2",
+    "sha256" : "30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqa_dup",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqa_upload",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqarx2021_preprint",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "874ce444963ac0d570538d15829a36b51bc3aa55a56ec12f6201e2927497f90b",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqlicence2020_licensed",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqlicence2020_licensed",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqauthor2019_roads",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455",
+    "status" : "done",
+    "updatedAt" : "TS"
+  },
+  {
+    "acquireItem" : null,
+    "citekey" : "zqauthor2019_roads",
+    "createdAt" : "TS",
+    "detail" : null,
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "ingest",
+    "progress" : "2 page(s), 1 asset(s)",
+    "sha256" : "2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455",
+    "status" : "done",
+    "updatedAt" : "TS"
+  }
+]
+== job (unknown)
+404 {
+  "code" : "not_found",
+  "message" : "No job 'UUID'"
+}
+== unauthorised fetcher asked
+0 time(s)
+== the unauthorised switch on
+== put zqa_cited (holds 10.5555/zq.cited)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Bo Zqwriter"
+    ],
+    "citekey" : "zqa_cited",
+    "doi" : "10.5555/zq.cited",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: The harbour at Zqcove.",
+    "tags" : [
+    ],
+    "title" : "The harbour at Zqcove",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== put zqa_ref (holds 10.5555/zq.ref1)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Cy Zqmaker"
+    ],
+    "citekey" : "zqa_ref",
+    "doi" : "10.5555/zq.ref1",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : "A study: Copper of Zqisles.",
+    "tags" : [
+    ],
+    "title" : "Copper of Zqisles",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1995
+  }
+}
+== put zqa_retracted (holds 10.5555/zq.retracted, contested)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Ed Zqfalse"
+    ],
+    "citekey" : "zqa_retracted",
+    "doi" : "10.5555/zq.retracted",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "contested",
+    "summary" : "A study: A retracted claim about Zqtell.",
+    "tags" : [
+    ],
+    "title" : "A retracted claim about Zqtell",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2012
+  }
+}
+== put zqa_later (holds 10.5555/zq.later)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Gus Zqlater"
+    ],
+    "citekey" : "zqa_later",
+    "doi" : "10.5555/zq.later",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: A later reply on Zqtell.",
+    "tags" : [
+    ],
+    "title" : "A later reply on Zqtell",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2024
+  }
+}
+== put zqa_nodoi (no DOI)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Jo Zqnotes"
+    ],
+    "citekey" : "zqa_nodoi",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: Undated notes.",
+    "tags" : [
+    ],
+    "title" : "Undated notes",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1990
+  }
+}
+== ingest 10.5555/zq.closed (a person: the unauthorised fetcher is asked)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 5,
+    "citekey" : "zqreader2021_closed",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.closed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 5 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqreader2021_closed",
+    "verdict" : "current",
+    "year" : 2021
+  },
+  "citekey" : "zqreader2021_closed",
+  "created" : true,
+  "doi" : "10.5555/zq.closed",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqreader2021_closed",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "A closed study of Zqtell (2021), 5 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — core has no copy of 10.5555/zq.closed; openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work; zq-unauthorised: no copy — the zq fixture has no copy",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A closed study of Zqtell"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.closed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== asked
+1 time(s)
+== ingest 10.5555/zq.cited --legal-only (not asked)
+200 {
+  "assessment" : {
+    "applied" : "current",
+    "checkedAt" : "TS",
+    "citedByCount" : 40,
+    "citekey" : "zqa_strict",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.cited",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 40 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqa_strict",
+    "verdict" : "current",
+    "year" : 2001
+  },
+  "citekey" : "zqa_strict",
+  "created" : true,
+  "doi" : "10.5555/zq.cited",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqa_strict",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "The harbour at Zqcove (2001), 40 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "the legal chain only: the fetchers the config marks unauthorised were not asked",
+      "ok" : true,
+      "step" : "legal-only"
+    },
+    {
+      "detail" : "no legal open-access PDF found",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.cited; core: no copy — core has no copy of 10.5555/zq.cited; openalex: no copy — openalex has no copy of 10.5555/zq.cited; pmc: no copy — pmc has no copy of 10.5555/zq.cited; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.cited; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.cited; zq-shelf: no copy — the zq shelf has only one work",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "created source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "The harbour at Zqcove"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.cited?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.cited%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.cited%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.cited
+  > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== asked
+1 time(s)
+== acquire add (an item with a DOI)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 1,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Get 10.5555/zq.ref1 please",
+  "topic" : null
+}
+== recheck (the watcher's path: not asked)
+200 {
+  "allowance" : 1,
+  "closed" : 0,
+  "dryRun" : false,
+  "due" : 1,
+  "failed" : 0,
+  "fetched" : 0,
+  "job" : {
+    "acquireItem" : null,
+    "citekey" : null,
+    "createdAt" : "TS",
+    "detail" : {
+      "about" : null,
+      "eventImport" : null,
+      "eventRederive" : null,
+      "events" : null,
+      "init" : null,
+      "media" : null,
+      "planHash" : null,
+      "recheck" : {
+        "all" : true,
+        "by" : "person",
+        "resumes" : null,
+        "since" : "TS",
+        "upTo" : 0
+      },
+      "skippedPeriodCount" : 0,
+      "skippedPeriods" : [
+      ],
+      "vacuum" : null
+    },
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "acquire_recheck",
+    "progress" : null,
+    "sha256" : null,
+    "status" : "queued",
+    "updatedAt" : "TS"
+  },
+  "noCopy" : 0,
+  "note" : null,
+  "open" : 1,
+  "rows" : [
+  ],
+  "withDoi" : 1
+}
+job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"1/1 items · 0 closed · 0 fetched · 1 no legal copy · 0 failed","error":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.ref1?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.ref1%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.ref1%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.ref1
+== asked
+1 time(s)

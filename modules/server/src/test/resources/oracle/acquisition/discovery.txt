@@ -1,0 +1,931 @@
+== put zqa_cited (holds 10.5555/zq.cited)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Bo Zqwriter"
+    ],
+    "citekey" : "zqa_cited",
+    "doi" : "10.5555/zq.cited",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: The harbour at Zqcove.",
+    "tags" : [
+    ],
+    "title" : "The harbour at Zqcove",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== put zqa_ref (holds 10.5555/zq.ref1)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Cy Zqmaker"
+    ],
+    "citekey" : "zqa_ref",
+    "doi" : "10.5555/zq.ref1",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : "A study: Copper of Zqisles.",
+    "tags" : [
+    ],
+    "title" : "Copper of Zqisles",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1995
+  }
+}
+== put zqa_retracted (holds 10.5555/zq.retracted, contested)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Ed Zqfalse"
+    ],
+    "citekey" : "zqa_retracted",
+    "doi" : "10.5555/zq.retracted",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "contested",
+    "summary" : "A study: A retracted claim about Zqtell.",
+    "tags" : [
+    ],
+    "title" : "A retracted claim about Zqtell",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2012
+  }
+}
+== put zqa_later (holds 10.5555/zq.later)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Gus Zqlater"
+    ],
+    "citekey" : "zqa_later",
+    "doi" : "10.5555/zq.later",
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: A later reply on Zqtell.",
+    "tags" : [
+    ],
+    "title" : "A later reply on Zqtell",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2024
+  }
+}
+== put zqa_nodoi (no DOI)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Jo Zqnotes"
+    ],
+    "citekey" : "zqa_nodoi",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "UUID",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "A study: Undated notes.",
+    "tags" : [
+    ],
+    "title" : "Undated notes",
+    "topics" : [
+    ],
+    "uid" : "UUID",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1990
+  }
+}
+== discover tin
+200 {
+  "count" : 5,
+  "query" : "zq tin",
+  "works" : [
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ann Zqauthor",
+        "Bo Zqwriter"
+      ],
+      "citedByCount" : 120,
+      "citekey" : "zqauthor2019_roads",
+      "doi" : "10.5555/zq.open",
+      "inDb" : false,
+      "isOa" : true,
+      "isRetracted" : false,
+      "oaLicence" : "cc-by",
+      "oaLocations" : [
+      ],
+      "oaStatus" : "green",
+      "oaUrl" : null,
+      "openalexId" : "W608136257",
+      "referencedWorks" : [
+      ],
+      "title" : "Tin roads of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2019
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Bo Zqwriter"
+      ],
+      "citedByCount" : 40,
+      "citekey" : "zqa_cited",
+      "doi" : "10.5555/zq.cited",
+      "inDb" : true,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W1661078230",
+      "referencedWorks" : [
+      ],
+      "title" : "The harbour at Zqcove",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2001
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Gus Zqlater"
+      ],
+      "citedByCount" : 1,
+      "citekey" : "zqa_later",
+      "doi" : "10.5555/zq.later",
+      "inDb" : true,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W1669151605",
+      "referencedWorks" : [
+      ],
+      "title" : "A later reply on Zqtell",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2024
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Mo Zqnew",
+        "Ni Zqnew"
+      ],
+      "citedByCount" : 0,
+      "citekey" : "zqnew2025_finds",
+      "doi" : "10.5555/zq.fresh1",
+      "inDb" : false,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W47583482",
+      "referencedWorks" : [
+      ],
+      "title" : "New finds at Zqtell",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2025
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ox Zqiso"
+      ],
+      "citedByCount" : 2,
+      "citekey" : "zqiso2025_isotopes",
+      "doi" : "10.5555/zq.fresh2",
+      "inDb" : false,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W47583483",
+      "referencedWorks" : [
+      ],
+      "title" : "Tin isotopes of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2025
+    }
+  ]
+}
+  > GET /openalex/works?search=zq+tin&per-page=25&sort=relevance_score:desc&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== discover tin --not-in-db --since 2010 --sort cited --limit 2
+200 {
+  "count" : 3,
+  "query" : "zq tin",
+  "works" : [
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ann Zqauthor",
+        "Bo Zqwriter"
+      ],
+      "citedByCount" : 120,
+      "citekey" : "zqauthor2019_roads",
+      "doi" : "10.5555/zq.open",
+      "inDb" : false,
+      "isOa" : true,
+      "isRetracted" : false,
+      "oaLicence" : "cc-by",
+      "oaLocations" : [
+      ],
+      "oaStatus" : "green",
+      "oaUrl" : null,
+      "openalexId" : "W608136257",
+      "referencedWorks" : [
+      ],
+      "title" : "Tin roads of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2019
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Mo Zqnew",
+        "Ni Zqnew"
+      ],
+      "citedByCount" : 0,
+      "citekey" : "zqnew2025_finds",
+      "doi" : "10.5555/zq.fresh1",
+      "inDb" : false,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W47583482",
+      "referencedWorks" : [
+      ],
+      "title" : "New finds at Zqtell",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2025
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ox Zqiso"
+      ],
+      "citedByCount" : 2,
+      "citekey" : "zqiso2025_isotopes",
+      "doi" : "10.5555/zq.fresh2",
+      "inDb" : false,
+      "isOa" : false,
+      "isRetracted" : false,
+      "oaLicence" : null,
+      "oaLocations" : [
+      ],
+      "oaStatus" : "closed",
+      "oaUrl" : null,
+      "openalexId" : "W47583483",
+      "referencedWorks" : [
+      ],
+      "title" : "Tin isotopes of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "workType" : "article",
+      "year" : 2025
+    }
+  ]
+}
+  > GET /openalex/works?search=zq+tin&per-page=2&sort=cited_by_count:desc&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== discover (blank)
+400 {
+  "code" : null,
+  "message" : "give a search query"
+}
+== meta 10.5555/zq.open
+200 {
+  "abstractText" : "Zq abstract.",
+  "arxivId" : null,
+  "authors" : [
+    "Ann Zqauthor",
+    "Bo Zqwriter"
+  ],
+  "citedByCount" : 120,
+  "citekey" : "zqauthor2019_roads",
+  "doi" : "10.5555/zq.open",
+  "inDb" : false,
+  "isOa" : true,
+  "isRetracted" : false,
+  "oaLicence" : "cc-by",
+  "oaLocations" : [
+  ],
+  "oaStatus" : "green",
+  "oaUrl" : null,
+  "openalexId" : "W608136257",
+  "referencedWorks" : [
+  ],
+  "title" : "Tin roads of Zqland",
+  "venue" : "Journal of Zq Studies",
+  "workType" : "article",
+  "year" : 2019
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== meta https://doi.org/10.5555/ZQ.CITED
+200 {
+  "abstractText" : "Zq abstract.",
+  "arxivId" : null,
+  "authors" : [
+    "Bo Zqwriter"
+  ],
+  "citedByCount" : 40,
+  "citekey" : "zqa_cited",
+  "doi" : "10.5555/zq.cited",
+  "inDb" : true,
+  "isOa" : false,
+  "isRetracted" : false,
+  "oaLicence" : null,
+  "oaLocations" : [
+  ],
+  "oaStatus" : "closed",
+  "oaUrl" : null,
+  "openalexId" : "W1661078230",
+  "referencedWorks" : [
+  ],
+  "title" : "The harbour at Zqcove",
+  "venue" : "Journal of Zq Studies",
+  "workType" : "article",
+  "year" : 2001
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== meta arxiv:2101.00001
+200 {
+  "abstractText" : "Zq abstract.",
+  "arxivId" : null,
+  "authors" : [
+    "Hal Zqarx"
+  ],
+  "citedByCount" : 2,
+  "citekey" : "zqarx2021_preprint",
+  "doi" : "10.48550/arxiv.2101.00001",
+  "inDb" : false,
+  "isOa" : false,
+  "isRetracted" : false,
+  "oaLicence" : null,
+  "oaLocations" : [
+  ],
+  "oaStatus" : "closed",
+  "oaUrl" : null,
+  "openalexId" : "W1442687633",
+  "referencedWorks" : [
+  ],
+  "title" : "A preprint on Zq metallurgy",
+  "venue" : "Journal of Zq Studies",
+  "workType" : "article",
+  "year" : 2021
+}
+  > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== meta zqa_cited
+200 {
+  "abstractText" : "Zq abstract.",
+  "arxivId" : null,
+  "authors" : [
+    "Bo Zqwriter"
+  ],
+  "citedByCount" : 40,
+  "citekey" : "zqa_cited",
+  "doi" : "10.5555/zq.cited",
+  "inDb" : true,
+  "isOa" : false,
+  "isRetracted" : false,
+  "oaLicence" : null,
+  "oaLocations" : [
+  ],
+  "oaStatus" : "closed",
+  "oaUrl" : null,
+  "openalexId" : "W1661078230",
+  "referencedWorks" : [
+  ],
+  "title" : "The harbour at Zqcove",
+  "venue" : "Journal of Zq Studies",
+  "workType" : "article",
+  "year" : 2001
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== meta zqa_nodoi
+400 {
+  "code" : null,
+  "message" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+}
+== meta zqa_missing
+400 {
+  "code" : "not_found",
+  "message" : "No source 'zqa_missing'"
+}
+== meta 10.5555/zq.unknown
+400 {
+  "code" : null,
+  "message" : "http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org: HTTP 404 not found"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
+== wikirefs
+200 {
+  "article" : "Zqland",
+  "arxiv" : [
+    "2101.00001"
+  ],
+  "doiCount" : 2,
+  "dois" : [
+    "10.5555/zq.cited",
+    "10.5555/zq.unheld"
+  ],
+  "known" : [
+    "10.5555/zq.cited"
+  ],
+  "url" : "https://en.wikipedia.org/wiki/Zqland"
+}
+  > GET /wikipedia?action=parse&page=Zqland&prop=wikitext&format=json&redirects=1
+== wikirefs (not an article)
+200 {
+  "article" : "Zqland",
+  "arxiv" : [
+    "2101.00001"
+  ],
+  "doiCount" : 2,
+  "dois" : [
+    "10.5555/zq.cited",
+    "10.5555/zq.unheld"
+  ],
+  "known" : [
+    "10.5555/zq.cited"
+  ],
+  "url" : "https://en.wikipedia.org/"
+}
+  > GET /wikipedia?action=parse&page=https://en.wikipedia.org&prop=wikitext&format=json&redirects=1
+== refs 10.5555/zq.open (not held)
+200 {
+  "backend" : "crossref",
+  "count" : 3,
+  "doi" : "10.5555/zq.open",
+  "edgesAdded" : 0,
+  "references" : [
+    {
+      "authors" : [
+      ],
+      "citekey" : "zqa_ref",
+      "doi" : "10.5555/zq.ref1",
+      "raw" : null,
+      "title" : "Copper of Zqisles",
+      "year" : 1995
+    },
+    {
+      "authors" : [
+        "Zqwriter"
+      ],
+      "citekey" : null,
+      "doi" : null,
+      "raw" : null,
+      "title" : "The harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+      ],
+      "citekey" : null,
+      "doi" : null,
+      "raw" : "An unknown Zq work, 1904.",
+      "title" : null,
+      "year" : null
+    }
+  ],
+  "resolved" : 1,
+  "target" : "10.5555/zq.open"
+}
+  > GET /crossref/works/10.5555/zq.open?mailto=oracle@example.org
+== refs zqa_nodoi
+400 {
+  "code" : null,
+  "message" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+}
+== followups zqa_cited
+200 {
+  "backend" : "semantic-scholar",
+  "count" : 2,
+  "doi" : "10.5555/zq.cited",
+  "edgesAdded" : 0,
+  "followups" : [
+    {
+      "arxiv" : null,
+      "citedBy" : 1,
+      "citekey" : "zqa_later",
+      "contexts" : [
+        "Zq tin roads were wrong, as we show."
+      ],
+      "doi" : "10.5555/zq.later",
+      "intents" : [
+        "background"
+      ],
+      "isInfluential" : true,
+      "proposedKind" : "cites",
+      "title" : "A later reply on Zqtell",
+      "year" : 2024
+    },
+    {
+      "arxiv" : null,
+      "citedBy" : 0,
+      "citekey" : null,
+      "contexts" : [
+      ],
+      "doi" : "10.5555/zq.elsewhere",
+      "intents" : [
+      ],
+      "isInfluential" : false,
+      "proposedKind" : "cites",
+      "title" : "A study not held",
+      "year" : 2023
+    }
+  ],
+  "target" : "zqa_cited"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /s2/paper/DOI:10.5555/zq.cited/citations?fields=intents,isInfluential,contexts,citingPaper.title,citingPaper.year,citingPaper.externalIds,citingPaper.citationCount&limit=100&offset=0
+== followups zqa_cited --apply --since 2020 --limit 5
+200 {
+  "backend" : "semantic-scholar",
+  "count" : 2,
+  "doi" : "10.5555/zq.cited",
+  "edgesAdded" : 1,
+  "followups" : [
+    {
+      "arxiv" : null,
+      "citedBy" : 1,
+      "citekey" : "zqa_later",
+      "contexts" : [
+        "Zq tin roads were wrong, as we show."
+      ],
+      "doi" : "10.5555/zq.later",
+      "intents" : [
+        "background"
+      ],
+      "isInfluential" : true,
+      "proposedKind" : "cites",
+      "title" : "A later reply on Zqtell",
+      "year" : 2024
+    },
+    {
+      "arxiv" : null,
+      "citedBy" : 0,
+      "citekey" : null,
+      "contexts" : [
+      ],
+      "doi" : "10.5555/zq.elsewhere",
+      "intents" : [
+      ],
+      "isInfluential" : false,
+      "proposedKind" : "cites",
+      "title" : "A study not held",
+      "year" : 2023
+    }
+  ],
+  "target" : "zqa_cited"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /s2/paper/DOI:10.5555/zq.cited/citations?fields=intents,isInfluential,contexts,citingPaper.title,citingPaper.year,citingPaper.externalIds,citingPaper.citationCount&limit=5&offset=0
+== retractions (before)
+200 {
+  "error" : null,
+  "rows" : 0,
+  "running" : false,
+  "source" : "http://127.0.0.1:PORT/rw/retractions.csv"
+}
+== retractions update, and the mirror once refreshed
+200 {
+  "error" : null,
+  "rows" : 0,
+  "running" : true,
+  "source" : "http://127.0.0.1:PORT/rw/retractions.csv"
+}
+200 {
+  "error" : null,
+  "rows" : 2,
+  "running" : false,
+  "source" : "http://127.0.0.1:PORT/rw/retractions.csv"
+}
+  > GET /rw/retractions.csv
+== assess zqa_ref
+200 {
+  "applied" : null,
+  "checkedAt" : "TS",
+  "citedByCount" : 3,
+  "citekey" : "zqa_ref",
+  "crossrefUpdates" : [
+  ],
+  "doi" : "10.5555/zq.ref1",
+  "flagged" : false,
+  "influentialCitations" : null,
+  "isRetracted" : false,
+  "kept" : null,
+  "recommendation" : "KEEP — 3 citation(s), no amendment on record",
+  "retractionWatch" : [
+  ],
+  "target" : "zqa_ref",
+  "verdict" : "current",
+  "year" : 1995
+}
+  > GET /crossref/works/10.5555/zq.ref1?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess zqa_ref --apply
+200 {
+  "applied" : "current",
+  "checkedAt" : "TS",
+  "citedByCount" : 3,
+  "citekey" : "zqa_ref",
+  "crossrefUpdates" : [
+  ],
+  "doi" : "10.5555/zq.ref1",
+  "flagged" : false,
+  "influentialCitations" : null,
+  "isRetracted" : false,
+  "kept" : null,
+  "recommendation" : "KEEP — 3 citation(s), no amendment on record",
+  "retractionWatch" : [
+  ],
+  "target" : "zqa_ref",
+  "verdict" : "current",
+  "year" : 1995
+}
+  > GET /crossref/works/10.5555/zq.ref1?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess zqa_cited --apply (a status kept)
+200 {
+  "applied" : "current",
+  "checkedAt" : "TS",
+  "citedByCount" : 40,
+  "citekey" : "zqa_cited",
+  "crossrefUpdates" : [
+  ],
+  "doi" : "10.5555/zq.cited",
+  "flagged" : false,
+  "influentialCitations" : null,
+  "isRetracted" : false,
+  "kept" : null,
+  "recommendation" : "KEEP — 40 citation(s), no amendment on record",
+  "retractionWatch" : [
+  ],
+  "target" : "zqa_cited",
+  "verdict" : "current",
+  "year" : 2001
+}
+  > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess zqa_cited --apply --force-status
+200 {
+  "applied" : "current",
+  "checkedAt" : "TS",
+  "citedByCount" : 40,
+  "citekey" : "zqa_cited",
+  "crossrefUpdates" : [
+  ],
+  "doi" : "10.5555/zq.cited",
+  "flagged" : false,
+  "influentialCitations" : null,
+  "isRetracted" : false,
+  "kept" : null,
+  "recommendation" : "KEEP — 40 citation(s), no amendment on record",
+  "retractionWatch" : [
+  ],
+  "target" : "zqa_cited",
+  "verdict" : "current",
+  "year" : 2001
+}
+  > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess zqa_retracted --apply (a retraction is always written)
+200 {
+  "applied" : "retracted",
+  "checkedAt" : "TS",
+  "citedByCount" : 80,
+  "citekey" : "zqa_retracted",
+  "crossrefUpdates" : [
+    {
+      "doi" : "10.5555/zq.retraction-notice",
+      "kind" : "retraction",
+      "label" : "Retraction"
+    }
+  ],
+  "doi" : "10.5555/zq.retracted",
+  "flagged" : true,
+  "influentialCitations" : null,
+  "isRetracted" : true,
+  "kept" : null,
+  "recommendation" : "EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it",
+  "retractionWatch" : [
+    {
+      "date" : "DAY",
+      "nature" : "Retraction",
+      "reason" : "+Concerns/Issues About Data"
+    }
+  ],
+  "target" : "zqa_retracted",
+  "verdict" : "retracted",
+  "year" : 2012
+}
+  > GET /crossref/works/10.5555/zq.retracted?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.retracted?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess 10.5555/zq.closed (not held)
+200 {
+  "applied" : null,
+  "checkedAt" : null,
+  "citedByCount" : 5,
+  "citekey" : null,
+  "crossrefUpdates" : [
+  ],
+  "doi" : "10.5555/zq.closed",
+  "flagged" : false,
+  "influentialCitations" : null,
+  "isRetracted" : false,
+  "kept" : null,
+  "recommendation" : "KEEP — 5 citation(s), no amendment on record",
+  "retractionWatch" : [
+  ],
+  "target" : "10.5555/zq.closed",
+  "verdict" : "current",
+  "year" : 2021
+}
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== assess zqa_nodoi
+400 {
+  "code" : null,
+  "message" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+}
+== assess (bad id)
+400 {
+  "code" : null,
+  "message" : "'not an id!' is neither a DOI, an arXiv id, nor a citekey"
+}
+== mcp discover query
+### 3 work(s) for “zq tin”
+
+| citekey | title | year | authors | cited | doi | notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| zqauthor2019_roads | Tin roads of Zqland | 2019 | Ann Zqauthor, Bo Zqwriter | 120 | [10.5555/zq.open](https://doi.org/10.5555/zq.open) | green |
+| zqnew2025_finds | New finds at Zqtell | 2025 | Mo Zqnew, Ni Zqnew | 0 | [10.5555/zq.fresh1](https://doi.org/10.5555/zq.fresh1) | — |
+| zqiso2025_isotopes | Tin isotopes of Zqland | 2025 | Ox Zqiso | 2 | [10.5555/zq.fresh2](https://doi.org/10.5555/zq.fresh2) | — |
+
+_Ingest one with `histmersion ingest <doi>`; `in db` means the corpus already has it._
+  > GET /openalex/works?search=zq+tin&per-page=25&sort=relevance_score:desc&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== mcp discover doi
+# The harbour at Zqcove
+_Bo Zqwriter · 2001 · Journal of Zq Studies · article_
+**DOI:** [10.5555/zq.cited](https://doi.org/10.5555/zq.cited)  
+**Citekey (proposed):** `zqa_cited`  
+**Cited by:** 40  
+**Access:** no OA copy known
+
+_Already in the corpus as `zqa_cited`._
+
+## Abstract
+
+Zq abstract.
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== mcp discover wikipediaUrl
+### Zqland — 2 DOI(s), 1 arXiv id(s)
+
+| doi | status |
+| --- | --- |
+| [10.5555/zq.cited](https://doi.org/10.5555/zq.cited) | in db |
+| [10.5555/zq.unheld](https://doi.org/10.5555/zq.unheld) | — |
+
+**arXiv:** 2101.00001
+
+_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._
+  > GET /wikipedia?action=parse&page=Zqland&prop=wikitext&format=json&redirects=1
+== mcp discover (nothing)
+_give one of: query, doi, wikipediaUrl_
+== mcp refs
+_No reference list deposited for **zqa_cited** (backend: openalex)._
+  > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=referenced_works&mailto=oracle@example.org
+== mcp assess
+### ✓ CURRENT — zqa_later
+**DOI:** [10.5555/zq.later](https://doi.org/10.5555/zq.later)  
+**Citekey:** `zqa_later`  
+**Cited by:** 1  
+**Recommendation:** KEEP — 1 citation(s), no amendment on record
+
+_Re-run with `--apply` to write this verdict to the source's `status`._
+  > GET /crossref/works/10.5555/zq.later?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.later?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== mcp assess retractionsStatus
+Retraction Watch mirror: **2** row(s) from http://127.0.0.1:PORT/rw/retractions.csv.
+== mcp assess (nothing)
+_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_
+== mcp followups
+### 2 paper(s) citing zqa_cited · via semantic-scholar
+
+| ★ | title | year | intents | proposed edge | doi | in corpus |
+| --- | --- | --- | --- | --- | --- | --- |
+| ★ | A later reply on Zqtell | 2024 | background | **cites** | [10.5555/zq.later](https://doi.org/10.5555/zq.later) | `zqa_later` |
+|  | A study not held | 2023 |  | **cites** | [10.5555/zq.elsewhere](https://doi.org/10.5555/zq.elsewhere) | — |
+
+**Citation contexts**
+- **A later reply on Zqtell** (cites · influential)
+  > Zq tin roads were wrong, as we show.
+
+_Re-run with `--apply` to record these as typed edges (only papers already in the corpus get one)._
+
+_Proposed edge kinds are **proposed — verify by reading** the citing paper. The classification is based on citation contexts and intents from Semantic Scholar, which can be wrong (e.g. a paper that cites another to disagree may still be classified as `cites`)._
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /s2/paper/DOI:10.5555/zq.cited/citations?fields=intents,isInfluential,contexts,citingPaper.title,citingPaper.year,citingPaper.externalIds,citingPaper.citationCount&limit=100&offset=0

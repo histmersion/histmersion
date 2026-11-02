@@ -1,0 +1,857 @@
+== collections
+200 [
+  {
+    "capabilities" : [
+      "read"
+    ],
+    "description" : "archive.org's public texts (lending-only items are refused)",
+    "name" : "archive-org",
+    "problem" : null,
+    "reachable" : true,
+    "title" : "archive.org"
+  },
+  {
+    "capabilities" : [
+      "read",
+      "add",
+      "update"
+    ],
+    "description" : "The Calibre library at TMP/calibre-library: read with calibredb (sqlite3 while the GUI holds it), written back with calibredb",
+    "name" : "calibre",
+    "problem" : null,
+    "reachable" : true,
+    "title" : "Calibre"
+  }
+]
+== calibre
+200 {
+  "capabilities" : [
+    "read",
+    "add",
+    "update"
+  ],
+  "description" : "The Calibre library at TMP/calibre-library: read with calibredb (sqlite3 while the GUI holds it), written back with calibredb",
+  "name" : "calibre",
+  "problem" : null,
+  "reachable" : true,
+  "title" : "Calibre"
+}
+== calibre search Bronze
+200 {
+  "entries" : [
+    {
+      "authors" : [
+        "Sharon R. Stocker"
+      ],
+      "formats" : [
+        "TMP/calibre-library/Author 1/Book 1 (1)/Book 1.pdf"
+      ],
+      "id" : "1",
+      "identifiers" : {
+        "doi" : "10.1/zzcal.1"
+      },
+      "publisher" : "Hesperia",
+      "tags" : [
+        "tin"
+      ],
+      "title" : "Bronze Age tin and its trade",
+      "year" : 2019
+    },
+    {
+      "authors" : [
+        "Robert Drews"
+      ],
+      "formats" : [
+        "TMP/calibre-library/Author 6/Book 6 (6)/Book 6.epub"
+      ],
+      "id" : "6",
+      "identifiers" : {
+        
+      },
+      "publisher" : null,
+      "tags" : [
+      ],
+      "title" : "Bronze Age warfare",
+      "year" : 1993
+    }
+  ],
+  "total" : 2
+}
+  $ calibredb "list" "--with-library" "TMP/calibre-library" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "20" "--search" "Bronze"
+== calibre gaps
+200 {
+  "count" : 8,
+  "gaps" : [
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_byhand",
+      "counted" : false,
+      "doi" : "10.5555/zq.unknown",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : null,
+      "title" : "zqa_byhand",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    },
+    {
+      "authors" : [
+        "Bo Zqwriter"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_cited",
+      "counted" : false,
+      "doi" : "10.5555/zq.cited",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: The harbour at Zqcove.",
+      "title" : "The harbour at Zqcove",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 2001
+    },
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_dup",
+      "counted" : true,
+      "doi" : null,
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "ocr",
+      "storedOriginal" : true,
+      "summary" : null,
+      "title" : "zqa_dup",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    },
+    {
+      "authors" : [
+        "Gus Zqlater"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_later",
+      "counted" : false,
+      "doi" : "10.5555/zq.later",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: A later reply on Zqtell.",
+      "title" : "A later reply on Zqtell",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 2024
+    },
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_ledger",
+      "counted" : true,
+      "doi" : null,
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "ocr",
+      "storedOriginal" : true,
+      "summary" : null,
+      "title" : "zqa_ledger",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    },
+    {
+      "authors" : [
+        "Di Zqreader"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_legal",
+      "counted" : false,
+      "doi" : "10.5555/zq.closed",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : "Zq abstract.",
+      "title" : "A closed study of Zqtell",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2021
+    },
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_mcp",
+      "counted" : true,
+      "doi" : null,
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "ocr",
+      "storedOriginal" : true,
+      "summary" : null,
+      "title" : "Sent by a model",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    },
+    {
+      "authors" : [
+        "Jo Zqnotes"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_nodoi",
+      "counted" : false,
+      "doi" : null,
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: Undated notes.",
+      "title" : "Undated notes",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Cy Zqmaker"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_ref",
+      "counted" : false,
+      "doi" : "10.5555/zq.ref1",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: Copper of Zqisles.",
+      "title" : "Copper of Zqisles",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 1995
+    },
+    {
+      "authors" : [
+        "Ed Zqfalse"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_retracted",
+      "counted" : false,
+      "doi" : "10.5555/zq.retracted",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: A retracted claim about Zqtell.",
+      "title" : "A retracted claim about Zqtell",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 2012
+    },
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_upload",
+      "counted" : true,
+      "doi" : null,
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "ocr",
+      "storedOriginal" : true,
+      "summary" : null,
+      "title" : "An uploaded Zq study",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 2020
+    },
+    {
+      "authors" : [
+        "Hal Zqarx"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqarx2021_preprint",
+      "counted" : true,
+      "doi" : "10.48550/arxiv.2101.00001",
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "arxiv",
+      "storedOriginal" : true,
+      "summary" : "Zq abstract.",
+      "title" : "A preprint on Zq metallurgy",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2021
+    },
+    {
+      "authors" : [
+        "Ann Zqauthor",
+        "Bo Zqwriter"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqauthor2019_roads",
+      "counted" : true,
+      "doi" : "10.5555/zq.open",
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "unpaywall",
+      "storedOriginal" : true,
+      "summary" : "Zq abstract.",
+      "title" : "Tin roads of Zqland",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2019
+    },
+    {
+      "authors" : [
+        "Fay Zqgold"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqgold2022_gold",
+      "counted" : false,
+      "doi" : "10.5555/zq.gold",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : "Zq abstract.",
+      "title" : "Gold open access on a refusing host",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2022
+    },
+    {
+      "authors" : [
+        "Gus Zqlater"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqlater2024_later",
+      "counted" : false,
+      "doi" : "10.5555/zq.later",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : "Zq abstract.",
+      "title" : "A later reply on Zqtell",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2024
+    },
+    {
+      "authors" : [
+        "Qi Zqlicence"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqlicence2020_licensed",
+      "counted" : true,
+      "doi" : "10.5555/zq.licensed",
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "zq-shelf",
+      "storedOriginal" : true,
+      "summary" : "Zq abstract.",
+      "title" : "A licensed Zq survey",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2020
+    },
+    {
+      "authors" : [
+        "Cy Zqmaker"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqmaker1995_copper",
+      "counted" : false,
+      "doi" : "10.5555/zq.ref1",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : "Zq abstract.",
+      "title" : "Copper of Zqisles",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 1995
+    },
+    {
+      "authors" : [
+        "Di Zqreader"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqreader2021_closed",
+      "counted" : false,
+      "doi" : "10.5555/zq.closed",
+      "isbn" : null,
+      "original" : "none",
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : "Zq abstract.",
+      "title" : "A closed study of Zqtell",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2021
+    },
+    {
+      "authors" : [
+        "Lu Zqsecond"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqsecond2018_bronze",
+      "counted" : true,
+      "doi" : "10.5555/zq.open2",
+      "isbn" : null,
+      "original" : "stored",
+      "provenance" : "unpaywall",
+      "storedOriginal" : true,
+      "summary" : "Zq abstract.",
+      "title" : "Bronze of Zqcove",
+      "topics" : [
+      ],
+      "venue" : "Journal of Zq Studies",
+      "year" : 2018
+    }
+  ],
+  "total" : 19,
+  "uncounted" : 11
+}
+== calibre audit
+200 {
+  "checked" : 0,
+  "findings" : [
+  ]
+}
+  $ calibredb "list" "--with-library" "TMP/calibre-library" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+== calibre push zqa_upload
+400 {
+  "code" : null,
+  "message" : "empty or Unknown author — fix the metadata first; an untitled / Unknown-Author entry is unfindable and must not be created"
+}
+== calibre push zqa_nodoi (no original)
+400 {
+  "code" : "not_found",
+  "message" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
+}
+== calibre sync (dry)
+200 {
+  "applied" : false,
+  "gaps" : {
+    "count" : 1,
+    "gaps" : [
+      {
+        "authors" : [
+        ],
+        "calibreId" : null,
+        "citekey" : "zqa_byhand",
+        "counted" : false,
+        "doi" : "10.5555/zq.unknown",
+        "isbn" : null,
+        "original" : "none",
+        "provenance" : "oa",
+        "storedOriginal" : false,
+        "summary" : null,
+        "title" : "zqa_byhand",
+        "topics" : [
+        ],
+        "venue" : null,
+        "year" : null
+      },
+      {
+        "authors" : [
+          "Bo Zqwriter"
+        ],
+        "calibreId" : null,
+        "citekey" : "zqa_cited",
+        "counted" : false,
+        "doi" : "10.5555/zq.cited",
+        "isbn" : null,
+        "original" : "none",
+        "provenance" : null,
+        "storedOriginal" : false,
+        "summary" : "A study: The harbour at Zqcove.",
+        "title" : "The harbour at Zqcove",
+        "topics" : [
+        ],
+        "venue" : null,
+        "year" : 2001
+      },
+      {
+        "authors" : [
+        ],
+        "calibreId" : null,
+        "citekey" : "zqa_dup",
+        "counted" : true,
+        "doi" : null,
+        "isbn" : null,
+        "original" : "stored",
+        "provenance" : "ocr",
+        "storedOriginal" : true,
+        "summary" : null,
+        "title" : "zqa_dup",
+        "topics" : [
+        ],
+        "venue" : null,
+        "year" : null
+      }
+    ],
+    "total" : 3,
+    "uncounted" : 2
+  },
+  "pushes" : [
+  ]
+}
+== calibre sync --apply --limit 2
+200 {
+  "applied" : true,
+  "gaps" : {
+    "count" : 0,
+    "gaps" : [
+      {
+        "authors" : [
+        ],
+        "calibreId" : null,
+        "citekey" : "zqa_byhand",
+        "counted" : false,
+        "doi" : "10.5555/zq.unknown",
+        "isbn" : null,
+        "original" : "none",
+        "provenance" : "oa",
+        "storedOriginal" : false,
+        "summary" : null,
+        "title" : "zqa_byhand",
+        "topics" : [
+        ],
+        "venue" : null,
+        "year" : null
+      },
+      {
+        "authors" : [
+          "Bo Zqwriter"
+        ],
+        "calibreId" : null,
+        "citekey" : "zqa_cited",
+        "counted" : false,
+        "doi" : "10.5555/zq.cited",
+        "isbn" : null,
+        "original" : "none",
+        "provenance" : null,
+        "storedOriginal" : false,
+        "summary" : "A study: The harbour at Zqcove.",
+        "title" : "The harbour at Zqcove",
+        "topics" : [
+        ],
+        "venue" : null,
+        "year" : 2001
+      }
+    ],
+    "total" : 2,
+    "uncounted" : 2
+  },
+  "pushes" : [
+  ]
+}
+== acquire calibre gaps --limit 3
+200 {
+  "count" : 3,
+  "gaps" : [
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_byhand",
+      "doi" : "10.5555/zq.unknown",
+      "isbn" : null,
+      "provenance" : "oa",
+      "storedOriginal" : false,
+      "summary" : null,
+      "title" : "zqa_byhand",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    },
+    {
+      "authors" : [
+        "Bo Zqwriter"
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_cited",
+      "doi" : "10.5555/zq.cited",
+      "isbn" : null,
+      "provenance" : null,
+      "storedOriginal" : false,
+      "summary" : "A study: The harbour at Zqcove.",
+      "title" : "The harbour at Zqcove",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : 2001
+    },
+    {
+      "authors" : [
+      ],
+      "calibreId" : null,
+      "citekey" : "zqa_dup",
+      "doi" : null,
+      "isbn" : null,
+      "provenance" : "ocr",
+      "storedOriginal" : true,
+      "summary" : null,
+      "title" : "zqa_dup",
+      "topics" : [
+      ],
+      "venue" : null,
+      "year" : null
+    }
+  ]
+}
+== acquire calibre meta zqa_cited
+200 {
+  "authors" : [
+    "Bo Zqwriter"
+  ],
+  "calibreId" : null,
+  "citekey" : "zqa_cited",
+  "doi" : "10.5555/zq.cited",
+  "isbn" : null,
+  "provenance" : null,
+  "storedOriginal" : null,
+  "summary" : "A study: The harbour at Zqcove.",
+  "title" : "The harbour at Zqcove",
+  "topics" : [
+  ],
+  "venue" : null,
+  "year" : 2001
+}
+== acquire calibre meta (bad)
+400 {
+  "code" : "invalid",
+  "message" : "invalid citekey 'No Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+}
+== acquire calibre pushed zqa_cited
+200 {
+  "calibreId" : "77",
+  "citekey" : "zqa_cited",
+  "ok" : true
+}
+== acquire calibre pushed zqa_missing
+400 {
+  "code" : "not_found",
+  "message" : "No source 'zqa_missing'"
+}
+== archive search zq
+200 {
+  "count" : 2,
+  "items" : [
+    {
+      "creator" : [
+        "Ivy Zqbook"
+      ],
+      "description" : "About Zqland.",
+      "files" : [
+        {
+          "format" : "Text PDF",
+          "megabytes" : 0.0,
+          "name" : "zqbook.pdf"
+        }
+      ],
+      "identifier" : "zqbook",
+      "lendingOnly" : false,
+      "publisher" : "Zq Press",
+      "title" : "A Zq book",
+      "year" : 1911
+    },
+    {
+      "creator" : [
+      ],
+      "description" : null,
+      "files" : [
+        {
+          "format" : "Text PDF",
+          "megabytes" : 0.0,
+          "name" : "zqlent.pdf"
+        }
+      ],
+      "identifier" : "zqlent",
+      "lendingOnly" : true,
+      "publisher" : null,
+      "title" : "Lent Zq",
+      "year" : null
+    }
+  ],
+  "query" : "zq"
+}
+  > GET /archive/advancedsearch.php?q=(zq)+AND+mediatype:texts&fl%5B%5D=identifier&rows=8&output=json&sort%5B%5D=downloads+desc
+  > GET /archive/metadata/zqbook
+  > GET /archive/metadata/zqlent
+== archive info zqbook
+200 {
+  "creator" : [
+    "Ivy Zqbook"
+  ],
+  "description" : "About Zqland.",
+  "files" : [
+    {
+      "format" : "Text PDF",
+      "megabytes" : 0.0,
+      "name" : "zqbook.pdf"
+    }
+  ],
+  "identifier" : "zqbook",
+  "lendingOnly" : false,
+  "publisher" : "Zq Press",
+  "title" : "A Zq book",
+  "year" : 1911
+}
+  > GET /archive/metadata/zqbook
+== archive info zqlent
+200 {
+  "creator" : [
+  ],
+  "description" : null,
+  "files" : [
+    {
+      "format" : "Text PDF",
+      "megabytes" : 0.0,
+      "name" : "zqlent.pdf"
+    }
+  ],
+  "identifier" : "zqlent",
+  "lendingOnly" : true,
+  "publisher" : null,
+  "title" : "Lent Zq",
+  "year" : null
+}
+  > GET /archive/metadata/zqlent
+== archive import zqlent (lending only)
+400 {
+  "code" : null,
+  "message" : "'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)"
+}
+  > GET /archive/metadata/zqlent
+== archive import zqbook
+200 {
+  "assessment" : null,
+  "citekey" : "zqbook1911_book",
+  "created" : true,
+  "doi" : null,
+  "dropIn" : null,
+  "edgesAdded" : 0,
+  "pdf" : {
+    "bytes" : 12324,
+    "source" : "archive_org",
+    "spoolPath" : "TMP/acq-acquire/zqbook1911_book/paper.pdf",
+    "url" : null
+  },
+  "steps" : [
+    {
+      "detail" : "A Zq book (1911)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "archive.org: 12324 bytes (zqbook.pdf)",
+      "ok" : true,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "created source from metadata; queued OCR job UUID for TMP/acq-acquire/zqbook1911_book/paper.pdf — poll `job_status`",
+      "ok" : true,
+      "step" : "store"
+    }
+  ],
+  "title" : "A Zq book"
+}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqbook1911_book","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"12a0fc07ae5a990ab0e9e5bcd6faa0062ba8ab4852e6c0054076be344b4f4cb0","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+  > GET /archive/metadata/zqbook
+  > GET /archive/metadata/zqbook
+  > GET /archive/download/zqbook/zqbook.pdf
+== mcp archive search
+### 2 archive.org item(s) for “zq”
+
+| identifier | title | year | creator |
+| --- | --- | --- | --- |
+| `zqbook` | A Zq book | 1911 | Ivy Zqbook |
+| `zqlent` | Lent Zq | — |  |
+
+_Check one with `histmersion archive info <id>` before importing._
+  > GET /archive/advancedsearch.php?q=(zq)+AND+mediatype:texts&fl%5B%5D=identifier&rows=8&output=json&sort%5B%5D=downloads+desc
+  > GET /archive/metadata/zqbook
+  > GET /archive/metadata/zqlent
+== mcp archive id
+### Lent Zq
+
+**Identifier:** `zqlent`  
+**Creator:**   
+**Year:** —  
+**Publisher:** —
+
+> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never downloaded here (no DRM circumvention).
+
+| file | format | MB |
+| --- | --- | --- |
+| zqlent.pdf | Text PDF | 0.0 |
+  > GET /archive/metadata/zqlent
+== mcp archive import lent
+_'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)_
+  > GET /archive/metadata/zqlent
+== mcp collection list
+### archive.org (`archive-org`)
+
+archive.org's public texts (lending-only items are refused)
+
+- can: read
+- reachable: yes
+
+### Calibre (`calibre`)
+
+The Calibre library at TMP/calibre-library: read with calibredb (sqlite3 while the GUI holds it), written back with calibredb
+
+- can: read, add, update
+- reachable: yes
+== mcp collection gaps
+### 9 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zqa_dup` | zqa_dup | — |  | ocr | stored |
+| `zqa_ledger` | zqa_ledger | — |  | ocr | stored |
+| `zqa_mcp` | Sent by a model | — |  | ocr | stored |
+| `zqa_upload` | An uploaded Zq study | 2020 |  | ocr | stored |
+| `zqarx2021_preprint` | A preprint on Zq metallurgy | 2021 | Hal Zqarx | arxiv | stored |
+| `zqauthor2019_roads` | Tin roads of Zqland | 2019 | Ann Zqauthor, Bo Zqwriter | unpaywall | stored |
+| `zqbook1911_book` | A Zq book | 1911 | Ivy Zqbook | archive_org | stored |
+| `zqlicence2020_licensed` | A licensed Zq survey | 2020 | Qi Zqlicence | zq-shelf | stored |
+| `zqsecond2018_bronze` | Bronze of Zqcove | 2018 | Lu Zqsecond | unpaywall | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+
+10 records without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
