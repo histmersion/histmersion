@@ -14,7 +14,7 @@ import java.time.Instant
   */
 object IngestBacklog:
 
-  /** How the legal chain says a work has no legal file (`AcquireHandlers.ingestLegal`): such a work goes to the
+  /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
     */
   val NoLegalCopy = "no legal open-access copy of"

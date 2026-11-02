@@ -69,10 +69,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The registry's figures on this server's database. */
   private val diagnostics: DiagnosticsService = DiagnosticsService(Deps.data, deps.transactor)
 
-  /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in `OpsHandlers`, in
-    * `IngestHandlers` and in the acquisition handlers, which is why it lives on `Deps` rather than in this class. A
-    * restore drops and recreates every table; a write that slipped past the lock wrote into a schema that was about to
-    * be replaced.
+  /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in `OpsHandlers`, in the
+    * ingest and the acquisition controllers, which is why it lives on `Deps` rather than in this class. A restore drops
+    * and recreates every table; a write that slipped past the lock wrote into a schema that was about to be replaced.
     */
   val maintenance: WriteGate = deps.maintenance
 
