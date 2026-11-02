@@ -3813,6 +3813,12 @@ workflows and `GoalSweep` naming `Handlers`), repository 39 → 26 (`SourceRepo`
 - `MirrorAdapter.SourceNotes` stays for `Handlers.exportSource` and the mirror's suite; `LibraryData.SourceNotes` is the
   same value.
 - `TransitionTools` keeps exporting the library's tool names (the definitions' generator and its suites name them there).
+- About's storage figures read the server's environment (`Deps.environment`, what the entry point read once), not the
+  process's: `Composition.server` takes the `SystemContext`, and `DataOracleSuite` gives its servers a home and a cache
+  directory of its own (a gazetteer folder in it), so the machine's own cache no longer reaches `storage.txt`. The record
+  was re-taken with that one test change on a checkout of f75777dd and is byte-identical on this branch; no other oracle
+  file changed. The other direct readers of the process's environment (`GazetteerPaths.of`, `AgentTrees`,
+  `AgentDoctor`, `BackupWiring`) are slice 12's.
 
 **Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled classes:
 renamed `db.BSourceRow$`, `BFindingRow$`, `BAssessmentRow$` → `domain.library.sources.*$` (`derived$DbCodec$lzy1`);
