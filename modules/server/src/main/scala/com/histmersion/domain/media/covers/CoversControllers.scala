@@ -41,4 +41,4 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   def afterIngest(citekey: String): Option[String] = pictures.afterIngest(citekey)
 
 object CoversControllers:
-  val CoversJobKind: String = com.histmersion.api.JobKindsAdapter.MediaCovers.value
+  val CoversJobKind: String = com.histmersion.api.media.covers.CoversJobKinds.MediaCovers.kind.value

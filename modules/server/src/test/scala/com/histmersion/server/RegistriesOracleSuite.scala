@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.*
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -9,8 +11,8 @@ import java.nio.file.{Files, Path}
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and
   * cancelled, and what a job of it is about for each kind of detail; for an alias table the record's noun, its
   * identifier's word, the tables and columns a rename is resolved through, and the rule the surfaces state. Recorded on
-  * the code before the registries existed, read from the registries since (`JobKindsAdapter.all`, `Deps.aliasTables`);
-  * `HISTMERSION_UPDATE_ORACLE=1` rewrites it.
+  * the code before the registries existed, read from the registries since
+  * (`com.histmersion.api.RegisteredJobKinds.all`, `Deps.aliasTables`); `HISTMERSION_UPDATE_ORACLE=1` rewrites it.
   */
 class RegistriesOracleSuite extends munit.FunSuite:
 
@@ -38,7 +40,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
   )
 
   test("job-kinds.txt: every job kind, its name, its controls and its subjects"):
-    val lines = JobKindsAdapter.all.kinds.flatMap { k =>
+    val lines = com.histmersion.api.RegisteredJobKinds.all.kinds.flatMap { k =>
       val head = s"${k.value}\t${Wording.jobKindOf(k.value)}\tstoppable=${JobActions.Stoppable.contains(k.value)}"
       val subjects = details.map { (name, d) =>
         val j = JobInfo(id = "j", kind = k.value, status = "done", detail = Some(d))
@@ -58,7 +60,5 @@ class RegistriesOracleSuite extends munit.FunSuite:
         s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, "old_one", "new_one").getOrElse("-")}"
     }
     val bundles =
-      com.histmersion.values.BundleKind.values.toList.map(b =>
-        s"bundle $b\t${AliasKindsAdapter.of(b).fold("-")(_.noun)}"
-      )
+      com.histmersion.values.BundleKind.values.toList.map(b => s"bundle $b\t${AliasKinds.of(b).fold("-")(_.noun)}")
     check("alias-tables.txt", (lines ++ bundles).mkString("", "\n", "\n"))

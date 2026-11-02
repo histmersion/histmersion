@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.values.AttestationTarget
 
 import com.histmersion.api.{
-  AliasKindsAdapter,
   ApiError,
   Attestation,
   AttestationDeleted,
@@ -32,13 +33,7 @@ final class AttestationsControllers(
 ):
 
   private def refId(targetType: String, id: String): String =
-    val kind = targetType.trim.toLowerCase(Locale.ROOT) match
-      case "event"   => Some(AliasKindsAdapter.EventRecords)
-      case "place"   => Some(AliasKindsAdapter.PlaceRecords)
-      case "source"  => Some(AliasKindsAdapter.SourceRecords)
-      case "article" => Some(AliasKindsAdapter.ArticleRecords)
-      case _         => None
-    kind.fold(id)(current(_, id))
+    AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
 
   def list(
       citekey: Option[String],
@@ -49,7 +44,7 @@ final class AttestationsControllers(
   ): AttestationList =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
     attestations.list(
-      citekey.map(current(AliasKindsAdapter.SourceRecords, _)),
+      citekey.map(current(AliasKinds.SourceRecords, _)),
       targetType,
       target.orElse(targetId),
       page(limit),
@@ -64,7 +59,7 @@ final class AttestationsControllers(
     */
   def create(caller: Caller, in: AttestationPut): Either[ApiError, Attestation] =
     maintenance.guard("create_attestation"):
-      val ck = current(AliasKindsAdapter.SourceRecords, in.citekey)
+      val ck = current(AliasKinds.SourceRecords, in.citekey)
       for
         t <- AttestationTarget.check(in.targetType).left.map(ApiError(_, Some(Write.CodeInvalid)))
         _ <- Either.cond(sources.canonical(ck).isDefined, (), Write.notFound(ck))

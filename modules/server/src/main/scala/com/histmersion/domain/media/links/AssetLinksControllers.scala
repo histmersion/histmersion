@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.links
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.*
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.identity.AliasKind
@@ -17,13 +19,7 @@ final class AssetLinksControllers(
 
   /** The identifier a target of `targetType` answers to now. */
   private def refId(targetType: String, id: String): String =
-    val kind = targetType.trim.toLowerCase(java.util.Locale.ROOT) match
-      case "event"   => Some(AliasKindsAdapter.EventRecords)
-      case "place"   => Some(AliasKindsAdapter.PlaceRecords)
-      case "source"  => Some(AliasKindsAdapter.SourceRecords)
-      case "article" => Some(AliasKindsAdapter.ArticleRecords)
-      case _         => None
-    kind.fold(id)(current(_, id))
+    AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
 
   def list(
       citekey: Option[String],
@@ -32,13 +28,13 @@ final class AssetLinksControllers(
       targetId: Option[String]
   ): AssetLinkList =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
-    links.list(citekey.map(current(AliasKindsAdapter.SourceRecords, _)), asset, targetType, target.orElse(targetId))
+    links.list(citekey.map(current(AliasKinds.SourceRecords, _)), asset, targetType, target.orElse(targetId))
 
   def create(in: AssetLinkPut): Either[ApiError, AssetLink] =
     maintenance.guard("create_asset_link")(
       links.create(
         in.modify(_.citekey)
-          .setTo(current(AliasKindsAdapter.SourceRecords, in.citekey))
+          .setTo(current(AliasKinds.SourceRecords, in.citekey))
           .modify(_.targetId)
           .setTo(refId(in.targetType, in.targetId))
       )

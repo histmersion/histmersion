@@ -4,7 +4,7 @@ import com.histmersion.api.catalogue.places.RegionNode
 import com.histmersion.api.library.search.Tree
 
 import com.histmersion.api.*
-import com.histmersion.util.identity.AliasTablesAdapter
+import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.augustnagro.magnum.{connect, transact, DbCon}
 
 import javax.sql.DataSource
@@ -83,7 +83,7 @@ object PlaceFixtures:
   def rename(ds: DataSource, oldId: String, newId: String): Either[ApiError, Unit] =
     transact(ds)(PlaceRepo.rename(oldId, newId))
 
-  def renamedTo(ds: DataSource, id: String): Option[String] = AliasTablesAdapter.PlaceAliases.renamedTo(ds, id)
+  def renamedTo(ds: DataSource, id: String): Option[String] = PlaceAliasTable.table.renamedTo(ds, id)
 
   def addName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
     transact(ds)(PlaceRepo.addName(id, name, lang))

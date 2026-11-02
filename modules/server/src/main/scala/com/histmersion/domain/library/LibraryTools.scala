@@ -1,5 +1,7 @@
 package com.histmersion.domain.library
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.library.search.SearchMarkdown
 import com.histmersion.api.library.sources.SourcesMarkdown
 
@@ -232,7 +234,7 @@ object LibraryTools:
           sources.put(in.citekey, in.source, in.strict) match
             case Right(sw) =>
               ToolResult.text(
-                Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
+                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey)(
                   SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )
@@ -260,7 +262,7 @@ object LibraryTools:
           sources.patch(in.citekey, in.patch, in.strict) match
             case Right(sw) =>
               ToolResult.text(
-                Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
+                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey)(
                   SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )
@@ -275,7 +277,7 @@ object LibraryTools:
             "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
             "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
             "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
-            s"source notes/summaries. ${Aliases.rule(AliasKindsAdapter.SourceRecords)} (get_source, neighbors, graph, " +
+            s"source notes/summaries. ${Aliases.rule(AliasKinds.SourceRecords)} (get_source, neighbors, graph, " +
             "export_source, /source/<old> and [[old]] included.) Refused when the " +
             "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
             "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +

@@ -31,11 +31,17 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.approvalKind(ApprovalKind.Edge), "Link two sources")
 
   test("every job kind has wording, and the kinds are distinct"):
-    JobKindsAdapter.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
-    assertEquals(JobKindsAdapter.all.kinds.map(_.value).distinct.length, JobKindsAdapter.all.kinds.length)
-    assertEquals(Wording.jobKind(JobKindsAdapter.BasemapFetch), "Download the background map")
-    assertEquals(Wording.jobKind(JobKindsAdapter.EventsImport), "Import events")
-    assertEquals(Wording.jobKind(JobKindsAdapter.MediaImport), "Fetch pictures")
+    RegisteredJobKinds.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
+    assertEquals(RegisteredJobKinds.all.kinds.map(_.value).distinct.length, RegisteredJobKinds.all.kinds.length)
+    assertEquals(
+      Wording.jobKind(com.histmersion.util.basemap.BasemapJobKinds.BasemapFetch.kind),
+      "Download the background map"
+    )
+    assertEquals(
+      Wording.jobKind(com.histmersion.api.catalogue.events.EventsJobKinds.EventsImport.kind),
+      "Import events"
+    )
+    assertEquals(Wording.jobKind(com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind), "Fetch pictures")
     // the constants the api module names are registered kinds
     assertEquals(
       List(
@@ -46,7 +52,7 @@ class WordingSuite extends munit.FunSuite:
         Agents.JobKind,
         MergeApplyJob.JobKind,
         AcquireChecks.RecheckJob.JobKind
-      ).filterNot(k => JobKindsAdapter.all.parse(k).isDefined),
+      ).filterNot(k => RegisteredJobKinds.all.parse(k).isDefined),
       Nil
     )
 

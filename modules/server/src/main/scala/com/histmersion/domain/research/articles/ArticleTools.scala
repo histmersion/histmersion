@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.util.identity.AliasKinds
+
 import chimp.server.*
 import com.histmersion.api.*
 import com.histmersion.api.VocabularyCodecs.given
@@ -93,7 +95,7 @@ object ArticleTools:
           articles.put(in.slug, in.article, in.strict) match
             case Right(v) =>
               ToolResult.text(
-                Aliases.note(AliasKindsAdapter.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
+                Aliases.note(AliasKinds.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
                   ArticleMarkdown.article(v)
                 )
               )
@@ -122,7 +124,7 @@ object ArticleTools:
           articles.patch(in.slug, in.patch, in.strict) match
             case Right(v) =>
               ToolResult.text(
-                Aliases.note(AliasKindsAdapter.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
+                Aliases.note(AliasKinds.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
                   ArticleMarkdown.article(v)
                 )
               )

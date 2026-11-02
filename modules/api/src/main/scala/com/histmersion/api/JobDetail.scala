@@ -22,4 +22,4 @@ object JobDetail:
   given Schema[JobDetail] = summon[KindlingsSchema[JobDetail]].schema
 
   /** What a job is about: its source, else what its detail says (each kind's owner says how). */
-  def subject(j: JobInfo): Option[String] = JobKindsAdapter.all.subject(j)
+  def subject(j: JobInfo): Option[String] = RegisteredJobKinds.all.subject(j)

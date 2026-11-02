@@ -131,9 +131,9 @@ object Wording:
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
-  def jobKind(k: JobKind): String = JobKindsAdapter.all.get(k).fold(humanize(k.value))(_.name.value)
+  def jobKind(k: JobKind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
 
-  def jobKindOf(wire: String): String = JobKindsAdapter.all.parse(wire).fold(humanize(wire))(_.name.value)
+  def jobKindOf(wire: String): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => "Queued"

@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.research.articles.BacklinksMarkdown
 
 import com.histmersion.api.*
@@ -390,7 +392,7 @@ final class ArticlesControllers(
       // an OLD slug follows the alias: the put replaces the renamed article
       Articles
         .applyPut(
-          Articles.slugOf(slug).fold(_ => slug, s => current(AliasKindsAdapter.ArticleRecords, s)),
+          Articles.slugOf(slug).fold(_ => slug, s => current(AliasKinds.ArticleRecords, s)),
           in.copy(reasons = canonicalReasons(in.reasons))
         )
         .left
@@ -409,7 +411,7 @@ final class ArticlesControllers(
         .slugOf(slug)
         .left
         .map(m => ApiError(m, Some(Write.CodeInvalid)))
-        .map(current(AliasKindsAdapter.ArticleRecords, _))
+        .map(current(AliasKinds.ArticleRecords, _))
         .flatMap { s =>
           val gate =
             if !strict then Right(())
@@ -427,7 +429,7 @@ final class ArticlesControllers(
 
   def delete(slug: String): Either[ApiError, ArticleDeleted] =
     maintenance.guard("delete_article"):
-      val now = current(AliasKindsAdapter.ArticleRecords, norm(slug))
+      val now = current(AliasKinds.ArticleRecords, norm(slug))
       if store.delete(now, Caller.Local) then Right(ArticleDeleted(now, true))
       else Left(Articles.notFound(slug))
 
@@ -436,7 +438,7 @@ final class ArticlesControllers(
     */
   def rename(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_article"):
-      val from = current(AliasKindsAdapter.ArticleRecords, norm(slug))
+      val from = current(AliasKinds.ArticleRecords, norm(slug))
       for
         to <- LabelRenames.validate(com.histmersion.values.BundleKind.Article, from, req.to)
         rewritten <- store.rename(from, to, Caller.Local)
@@ -452,7 +454,7 @@ final class ArticlesControllers(
   /** The note of the article an old slug or its own names, as the mirror writes it. */
   def articleNote(slug: String): Either[ApiError, String] =
     store
-      .load(current(AliasKindsAdapter.ArticleRecords, norm(slug)))
+      .load(current(AliasKinds.ArticleRecords, norm(slug)))
       .map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
       .toRight(Articles.notFound(slug))
 

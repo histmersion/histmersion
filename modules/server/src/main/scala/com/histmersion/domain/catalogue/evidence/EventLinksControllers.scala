@@ -25,7 +25,6 @@ import com.histmersion.api.{
   EventTier,
   Filter,
   JobInfo,
-  JobKindsAdapter,
   LeadFacts,
   Period,
   TimeSpan,
@@ -324,4 +323,4 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
-  val CandidatesJobKind: String = JobKindsAdapter.EventsCandidates.value
+  val CandidatesJobKind: String = com.histmersion.api.catalogue.evidence.EvidenceJobKinds.EventsCandidates.kind.value

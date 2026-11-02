@@ -222,7 +222,7 @@ object Pages:
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
-        case Some(Right(j)) if j.kind == JobKindsAdapter.Agent.value =>
+        case Some(Right(j)) if j.kind == com.histmersion.api.automation.agents.AgentJobKinds.Agent.kind.value =>
           Router.go(Route.Run(j.id), push = false)
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>

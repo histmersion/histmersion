@@ -12,7 +12,6 @@ import com.histmersion.api.{
   EventRederiveReport,
   EventRederiveRequest,
   JobInfo,
-  JobKindsAdapter,
   Write
 }
 import com.histmersion.domain.Caller
@@ -91,5 +90,5 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
-  val ImportJobKind: String = JobKindsAdapter.EventsImport.value
-  val RederiveJobKind: String = JobKindsAdapter.EventsRederive.value
+  val ImportJobKind: String = com.histmersion.api.catalogue.events.EventsJobKinds.EventsImport.kind.value
+  val RederiveJobKind: String = com.histmersion.api.catalogue.events.EventsJobKinds.EventsRederive.kind.value

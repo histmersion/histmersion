@@ -146,7 +146,7 @@ object GoalRepo:
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
   def renamedTo(ds: DataSource, slug: String): Option[String] =
-    com.histmersion.util.identity.AliasTablesAdapter.GoalAliases.renamedTo(ds, slug)
+    com.histmersion.domain.automation.goals.GoalAliasTable.table.renamedTo(ds, slug)
 
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds):

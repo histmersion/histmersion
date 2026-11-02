@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{
-  AliasKindsAdapter,
   Api,
   ApiError,
   BBox,
@@ -85,7 +86,7 @@ final class EventsControllers(
         Left(ApiError(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
       case _ => Right(())
 
-  private def now(id: String): String = current(AliasKindsAdapter.EventRecords, id)
+  private def now(id: String): String = current(AliasKinds.EventRecords, id)
 
   def get(id: String): Either[ApiError, EventDetail] =
     events.get(now(id)).map(card).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))

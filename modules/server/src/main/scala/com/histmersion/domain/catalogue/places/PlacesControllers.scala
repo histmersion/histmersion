@@ -1,7 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.{
-  AliasKindsAdapter,
   Api,
   ApiError,
   Dataset,
@@ -58,7 +59,7 @@ final class PlacesControllers(
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
     * resolves to the place it names, as an old citekey does.
     */
-  def placeId(id: String): String = current(AliasKindsAdapter.PlaceRecords, id)
+  def placeId(id: String): String = current(AliasKinds.PlaceRecords, id)
 
   private def named(id: Option[String]): Option[String] = id.map(_.trim).filter(_.nonEmpty).map(placeId)
 

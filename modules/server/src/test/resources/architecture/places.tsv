@@ -19,7 +19,6 @@ api:api/Agents.scala	automation.agents
 api:api/AgentsApi.scala	automation.agents
 api:api/AgentsMarkdown.scala	automation.agents
 api:api/Aggregate.scala	library.search
-api:api/AliasKindsAdapter.scala	api
 api:api/Aliases.scala	util.identity
 api:api/Api.scala	api
 api:api/ApiError.scala	util.common
@@ -332,7 +331,6 @@ api:api/JobActions.scala	util.jobs
 api:api/JobCounts.scala	util.jobs
 api:api/JobDetail.scala	util.jobs
 api:api/JobInfo.scala	util.jobs
-api:api/JobKindsAdapter.scala	api
 api:api/JobState.scala	util.jobs
 api:api/Label.scala	library.search
 api:api/LabelRename.scala	library.search
@@ -476,6 +474,7 @@ api:api/Queue.scala	automation.worklists
 api:api/RefRow.scala	library.citations
 api:api/RefsRequest.scala	library.citations
 api:api/RefsResult.scala	library.citations
+api:api/RegisteredJobKinds.scala	api
 api:api/ReindexResult.scala	util.data.maintenance
 api:api/ReloadMarkdown.scala	util.settings
 api:api/ReloadReport.scala	util.settings
@@ -549,6 +548,7 @@ api:api/TimeSpan.scala	kernel
 api:api/TocEntry.scala	library.sources
 api:api/UiApi.scala	server.instance
 api:api/UiConfig.scala	server.instance
+api:api/UiLabels.scala	api.ui
 api:api/UiNotices.scala	server.instance
 api:api/UidRedirect.scala	util.identity
 api:api/UpdateNotice.scala	library.acquisition
@@ -905,4 +905,3 @@ server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
 server:server/hot/PinRequests.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins
-api:api/UiLabels.scala	api.ui

@@ -9,7 +9,7 @@ object UiLabels:
 
   lazy val known: Map[String, String] =
     Wording.schedulerJobTypes ++ AgentScheduler.waitCodes ++ Wording.strategies ++
-      JobKindsAdapter.all.entries.map(e => e.kind.value -> e.name.value) ++
+      RegisteredJobKinds.all.entries.map(e => e.kind.value -> e.name.value) ++
       ApprovalKind.values.map(k => k.wire -> Wording.approvalKind(k)) ++
       Pipeline.values.map(p => p.wire -> Wording.pipeline(p)) ++
       ManagerKind.values.map(k => k.wire -> Wording.managerKind(k)) ++
