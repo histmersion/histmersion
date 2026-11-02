@@ -6,9 +6,10 @@ import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.domain.automation.workflows.{ToolName, WorkflowDefinition, WorkflowId}
 import com.histmersion.values.{AgentRole, Pipeline, TargetKind}
 
-/** One of today's pipelines registered as a workflow, through this transition adapter until its domain defines its own:
-  * its identifier, version, target, roles and description are the pipeline's; a role's agents may use the tools the
-  * definitions of the pipeline's step agents in that role list.
+/** One of research's and the engine's pipelines registered as a workflow, through this transition adapter until
+  * research defines its own (the library registers its own, `LibraryWorkflow`): its identifier, version, target, roles
+  * and description are the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents
+  * in that role list.
   */
 final class PipelineWorkflow(
     val pipeline: Pipeline,

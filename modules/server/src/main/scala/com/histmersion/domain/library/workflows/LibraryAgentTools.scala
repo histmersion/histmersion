@@ -11,14 +11,14 @@ import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 
-/** The agent tools the library offers the engine: a source, its passages, the search, the facets, a source's edges,
-  * the read-only query and a source's follow-ups — each a thin, typed wrapper over the same controller REST and MCP
-  * call, returning the same Markdown (in process, no HTTP, no second schema: the input types are the MCP tools' own
+/** The agent tools the library offers the engine: a source, its passages, the search, the facets, a source's edges, the
+  * read-only query and a source's follow-ups — each a thin, typed wrapper over the same controller REST and MCP call,
+  * returning the same Markdown (in process, no HTTP, no second schema: the input types are the MCP tools' own
   * Kindlings-derived case classes, or an agent's own where the agent is shown fewer parameters).
   *
   * Only READ tools exist here, on purpose: every write an agent run makes is made by workflow CODE from a validated
-  * typed answer, so a prompt injected through an OCR'd body has nothing to call that changes the corpus. `query` runs on
-  * the read-only role, `followups` never applies its edges.
+  * typed answer, so a prompt injected through an OCR'd body has nothing to call that changes the corpus. `query` runs
+  * on the read-only role, `followups` never applies its edges.
   *
   * What a call returns is bounded by `agents.tools` ([[ToolResultCap]]): every later turn of the step re-sends it, so a
   * long result is cut with a trailer saying how to read on, a source record arrives without its UI links, a body slice

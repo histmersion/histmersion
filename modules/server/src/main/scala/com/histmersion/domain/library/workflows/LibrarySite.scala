@@ -5,7 +5,7 @@ import com.histmersion.domain.automation.worklists.{QueueService, WorkListContro
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.labels.LabelsControllers
 import com.histmersion.domain.library.search.{QueryControllers, SearchControllers}
-import com.histmersion.domain.library.sources.{SourceService, SourcesControllers}
+import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.JobListing
 
