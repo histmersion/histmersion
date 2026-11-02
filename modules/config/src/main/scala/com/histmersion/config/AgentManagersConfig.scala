@@ -13,6 +13,7 @@ final case class AgentManagersConfig(
     review: ReviewManagerConfig,
     enrich: SimpleManagerConfig,
     seed: SimpleManagerConfig,
-    watch: WatchManagerConfig,
+    /** A watcher's run limit; the library reads the rest of `agents.managers.watch`. */
+    watch: SimpleManagerConfig,
     dailyUsd: Double = 0
 ) derives ConfigReader

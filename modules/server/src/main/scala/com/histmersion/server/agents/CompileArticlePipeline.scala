@@ -47,6 +47,7 @@ final class CompileArticlePipeline(
     h: Handlers,
     ds: DataSource,
     cfg: => AgentsConfig,
+    lib: => LibraryAgentsConfig,
     startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
@@ -187,7 +188,7 @@ final class CompileArticlePipeline(
               ResearchAnswers.extract
             ) { (a, last) =>
               CompileArticle
-                .checkExtract(a, ck, text, cfg.verify.quoteMinRatio, cfg.compile.maxClaims, last)
+                .checkExtract(a, ck, text, lib.verify.quoteMinRatio, cfg.compile.maxClaims, last)
                 .map(Checked(_, _))
             }
             .map(sofar :+ _)

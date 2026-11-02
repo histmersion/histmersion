@@ -136,7 +136,7 @@ final class GoalFocusService(
   private def settings(r: Read, max: Int): GoalFocus.Settings =
     GoalFocus.Settings(
       max,
-      cfg.seed.minSources,
+      agents.sourcesToPlan,
       plansByPerson = !cfg.approvals.checked(ApprovalKind.GoalPlan),
       r.openPlans
     )

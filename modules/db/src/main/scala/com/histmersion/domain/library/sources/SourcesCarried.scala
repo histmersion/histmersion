@@ -47,7 +47,8 @@ object SourcesCarried:
           .head
       )
 
-  /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes. */
+  /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes.
+    */
   val sources: CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
     val entry: BundleEntry = BundleEntry(BundleKind.Source.file)
@@ -72,7 +73,11 @@ object SourcesCarried:
         )
       )
       val as = rs.map(SourceBundleRepo.sourceLine(_, files))
-      CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)), as.map(_.updatedAt).maxOption, bodies ++ stored)
+      CarriedOut(
+        BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)),
+        as.map(_.updatedAt).maxOption,
+        bodies ++ stored
+      )
 
     def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
       val as = SourceBundleRepo.sources(scope).toList.map(SourceBundleRepo.sourceLine(_, files))
@@ -110,7 +115,10 @@ object SourcesCarried:
     Library,
     set("unresolved-edges"),
     List(rows(21)(SourceBundleRepo.unresolvedEdgesIn))
-  )(scope => SourceBundleRepo.unresolvedEdges(scope).toList)(_ => None, (es, ls) => es.modify(_.unresolvedEdges).setTo(ls))
+  )(scope => SourceBundleRepo.unresolvedEdges(scope).toList)(
+    _ => None,
+    (es, ls) => es.modify(_.unresolvedEdges).setTo(ls)
+  )
 
   val assessments: CarriedKind = CarriedKind.owned[BundleAssessment](
     Library,

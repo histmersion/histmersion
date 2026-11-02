@@ -63,7 +63,6 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         maxConcurrentRuns = 20,
         roles = b.agents.roles
           .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
-        seed = b.agents.seed.copy(minSources = 2),
         approvals = b.agents.approvals.copy(
           articlePublish = "checked",
           articlePlan = "auto",
@@ -72,7 +71,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         ),
         autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 2),
         review = b.agents.review.copy(spotChecks = 0)
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2))
     )
 
   /** The same with every approval a person's (the shipped defaults). */

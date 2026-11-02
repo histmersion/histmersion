@@ -88,7 +88,8 @@ private[sources] object SourceCheckRepo:
          ORDER BY s.citekey"""
   )
 
-  /** The raw fetches behind the pure classifiers, kept here so every statement the rules run is visible in one place. */
+  /** The raw fetches behind the pure classifiers, kept here so every statement the rules run is visible in one place.
+    */
   val citekeysSql = "SELECT citekey FROM sources"
   // both tables: the dangling-edge rules report the PARKED ones (V026), and must see them all
   val edgesSql = "SELECT src, dst, kind FROM edges UNION ALL SELECT src, dst, kind FROM unresolved_edges"
@@ -179,8 +180,8 @@ private[sources] object SourceCheckRepo:
           ),
           c.format
         )
-      case FindingGeocode  => FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
-      case FindingUnplaced => FindingPlacement.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
+      case FindingGeocode     => FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
+      case FindingUnplaced    => FindingPlacement.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
       case FindingPlaceholder =>
         FindingPlacement.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
       case name => projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))

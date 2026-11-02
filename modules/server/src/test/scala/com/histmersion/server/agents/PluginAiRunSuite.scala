@@ -109,9 +109,9 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       agents = b.agents.copy(
         enabled = true,
         prices = "echo=1/2; limited=1/2",
-        enrich = b.agents.enrich.copy(upstream = false),
         roles = b.agents.roles.copy(extractor = "hello-ai:echo")
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )
 
   private lazy val ds = testPool(baseCfg.db)

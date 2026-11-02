@@ -260,30 +260,3 @@ object MergeText:
         core + ((10 - sum % 10) % 10).toString
       }
     else None
-
-  // ── MinHash over 5-word shingles (Broder 1997) ────────────────────────────────────────────────
-
-  /** A MinHash signature: the minimum of each of `k` hash functions over a text's shingles. */
-  final case class MinHash(mins: Vector[Int]):
-    /** The estimated Jaccard similarity of the two shingle sets. */
-    def similarity(o: MinHash): Double =
-      if mins.isEmpty || mins.length != o.mins.length then 0.0
-      else mins.zip(o.mins).count((a, b) => a == b).toDouble / mins.length
-
-  /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
-    * hashed as one. Pure and deterministic.
-    */
-  def minHash(text: String, k: Int = 64, shingle: Int = 5): MinHash =
-    val ws = tokens(text)
-    val shingles: Iterator[String] =
-      if ws.length <= shingle then Iterator.single(ws.mkString(" ")) else ws.sliding(shingle).map(_.mkString(" "))
-    val mins = Array.fill(k)(Int.MaxValue)
-    shingles.foreach { sh =>
-      val h = scala.util.hashing.MurmurHash3.stringHash(sh)
-      var i = 0 // a hot loop over the k functions; a while keeps it allocation-free
-      while i < k do
-        val v = scala.util.hashing.MurmurHash3.mix(h, i * 0x9e3779b9)
-        if v < mins(i) then mins(i) = v
-        i += 1
-    }
-    MinHash(mins.toVector)

@@ -24,7 +24,7 @@ final class AcquisitionWork(deps: Deps, h: Handlers, a: AgentsHandlers):
   /** The watchers' ingest backlog: the legal open-access picks past a day's allowance, ingested on later days (the
     * sweep parks them, the managers' tick drains them).
     */
-  val oaBacklog: OaBacklog = OaBacklog(deps.ds, cfg, h, () => upstream, a)
+  val oaBacklog: OaBacklog = OaBacklog(deps.ds, cfg, deps.cfg.libraryAgents, h, () => upstream, a)
 
   /** The acquisition list's legal re-check (the managers' tick runs it; `queue acquire recheck` by hand). */
   val acquireRecheck: AcquireRecheckService =

@@ -307,13 +307,13 @@ object MergeFixture:
     article("h-same", "zz_same_text", "Identical on both sides.", home)
   )
 
-  def sketches: Map[String, MergeText.MinHash] =
+  def sketches: Map[String, com.histmersion.util.text.MinHash] =
     (foreign.sources ++ here).flatMap(s => s.bodySha256.map(_ -> s)).toMap.flatMap { (sha, s) =>
       val text = if s.uid == uid("w-olsen") then bodyOlsen
       else if s.uid == uid("h-olsen") then bodyOlsenAgain
       else if s.uid == uid("w-kuhrt") then "Kuhrt body, work's OCR"
       else "Kuhrt body, home's OCR"
-      Some(sha -> MergeText.minHash(text, cfg.minhashSize))
+      Some(sha -> com.histmersion.util.text.MinHash.of(text, cfg.minhashSize))
     }
 
   /** Home's event under work's event id, dated differently: not the same event without asking. */

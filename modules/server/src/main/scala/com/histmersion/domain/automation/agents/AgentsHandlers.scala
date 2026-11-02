@@ -55,6 +55,9 @@ final class AgentsHandlers(
 
   /** The agents' settings now (read at each use). */
   def config: AgentsConfig = cfg
+
+  /** How many sources a goal gathers before its articles are planned (the site's, read at each use). */
+  def sourcesToPlan: Int = site.sourcesToPlan
   private val ds = site.ds
 
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */

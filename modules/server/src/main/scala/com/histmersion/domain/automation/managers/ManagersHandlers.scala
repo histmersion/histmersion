@@ -141,7 +141,12 @@ final class ManagersHandlers(
         for
           g <- goal.toRight(ApiError("a watcher is for one research area: give its goal"))
           gl <- host.goal(g)
-          m <- make(Kind.Watch, watchId(gl.slug), Some(gl.slug), in.cron.orElse(Some(mcfg.watch.cron)))
+          m <- make(
+            Kind.Watch,
+            watchId(gl.slug),
+            Some(gl.slug),
+            in.cron.orElse(kinds.find(_.kind == Kind.Watch).flatMap(_.cron))
+          )
           _ = Sweep
             .of(in.config)
             .foreach(sw => addItem(m.id, EnqueueRequest(sw.itemKind, gl.slug, Some(0)), ItemOrigin.Selection))

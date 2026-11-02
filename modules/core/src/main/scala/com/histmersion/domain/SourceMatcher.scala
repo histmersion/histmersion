@@ -6,7 +6,8 @@ import scala.annotation.tailrec
 import com.histmersion.api.BundleSource
 import com.histmersion.api.given
 
-import MergeText.{AuthorAgreement, MinHash}
+import MergeText.AuthorAgreement
+import com.histmersion.util.text.MinHash
 
 import java.util.UUID
 import com.histmersion.values.EditionsPolicy

@@ -25,6 +25,9 @@ trait ManagerKindDefinition:
   /** The item kinds it drives: an item is evaluated, followed up and started by the kind that lists its kind. */
   def items: List[String] = Managers.itemKinds(kind)
 
+  /** The cron a new manager of this kind gets when a person names none (UTC); `None`: no cron. */
+  def cron: Option[String] = None
+
   /** A manager's settings when it saves none: the server's defaults for its kind. */
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig
 

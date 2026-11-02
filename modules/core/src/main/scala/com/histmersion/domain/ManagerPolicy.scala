@@ -78,7 +78,7 @@ object ManagerPolicy:
 
     private def simple(k: ManagerKind, m: ManagerDefaults): ManagerRunDefaults = k match
       case ManagerKind.Enrich => m.enrich
-      case ManagerKind.Watch  => ManagerRunDefaults(m.watch.maxRuns)
+      case ManagerKind.Watch  => m.watch
       case _                  => m.seed
 
     /** The defaults as a config (what `effective` shows for an unset key). */
@@ -100,29 +100,10 @@ object ManagerPolicy:
         extendMinNew = Some(d.extendMinNew)
       )
 
-    /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
-    def defaultsFor(k: ManagerKind, m: ManagerDefaults, seed: SeedPlanDefaults): ManagerConfig = k match
+    /** The defaults of a manager of kind `k` (a kind whose defaults say more builds them itself). */
+    def defaultsFor(k: ManagerKind, m: ManagerDefaults): ManagerConfig = k match
       case ManagerKind.Review => defaults(m.review, m)
-      case ManagerKind.Seed   =>
-        ManagerConfig(
-          maxRuns = Some(m.seed.maxRuns),
-          maxOpen = Some(2 * m.seed.maxRuns),
-          maxFailures = Some(m.maxFailures),
-          minSources = Some(seed.minSources),
-          maxArticles = Some(seed.maxArticles),
-          dailyUsd = dailyCap(ManagerConfig(), m)
-        )
-      case ManagerKind.Watch =>
-        ManagerConfig(
-          maxRuns = Some(m.watch.maxRuns),
-          maxOpen = Some(2 * m.watch.maxRuns),
-          maxFailures = Some(m.maxFailures),
-          sweeps = Some(Sweep.values.toList.map(_.wire)),
-          autoIngest = Some(false),
-          autoIngestPerDay = Some(m.watch.autoIngestPerDay),
-          dailyUsd = dailyCap(ManagerConfig(), m)
-        )
-      case other =>
+      case other              =>
         val s = simple(other, m)
         ManagerConfig(
           maxRuns = Some(s.maxRuns),
@@ -187,15 +168,6 @@ object ManagerPolicy:
 
   /** The start of `now`'s UTC day (what a daily cap counts from). */
   def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)
-
-  // ── the watcher (phase 3) ──────────────────────────────────────────────────────────────────────
-
-  /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted in
-    * (`autoIngest`, default off), else what is left of its daily cap (`perDay`) after the ones it ingested today.
-    */
-  def ingestAllowance(c: ManagerConfig, m: ManagerDefaults, ingestedToday: Int): Int =
-    if !c.autoIngest.contains(true) then 0
-    else math.max(0, c.autoIngestPerDay.getOrElse(m.watch.autoIngestPerDay) - math.max(0, ingestedToday))
 
   /** What the next step of an item is, once its run settled. */
   enum Next:

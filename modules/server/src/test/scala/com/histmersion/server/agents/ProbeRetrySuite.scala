@@ -34,7 +34,8 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     b.copy(
       db = b.db.copy(url = testDb.get),
       server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0", enrich = b.agents.enrich.copy(upstream = false))
+      agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0"),
+      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )
 
   private lazy val ds = testPool(cfg.db)

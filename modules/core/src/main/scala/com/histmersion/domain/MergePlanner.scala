@@ -48,7 +48,7 @@ import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.{ArticleOutcome, FindingMatch}
-import MergeText.MinHash
+import com.histmersion.util.text.MinHash
 import SourceMatcher.{Outcome, Pair, Side}
 import com.histmersion.util.text.{Anchor, SafeName}
 

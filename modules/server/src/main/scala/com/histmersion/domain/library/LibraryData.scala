@@ -56,8 +56,7 @@ object LibraryData extends DataContribution:
     val owner: DataOwner = LibraryData.owner
     val records: MirrorRecords = LibraryData.SourceNotes
     val placement: MirrorPlacement = MirrorPlacement.SourceFiles
-    def note(id: String)(using notes: TransitionNotes): Either[ApiError, String] = notes.sourceNote(id)
-  )
+    def note(id: String)(using notes: TransitionNotes): Either[ApiError, String] = notes.sourceNote(id))
 
   override val maintenance: List[MaintenanceTask] = List(SourcesData.reindex(owner))
 

@@ -5,9 +5,9 @@ import com.histmersion.domain.automation.managers.{ManagerContext, ManagerDefaul
 import com.histmersion.api.{Acquire, ApiError, Autopilot, CandidateSweep, Plural}
 import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
-import com.histmersion.domain.{IngestBacklog, ManagerPolicy}
+import com.histmersion.domain.{IngestBacklog, ManagerPolicy, WatchManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
-import com.histmersion.config.AgentsConfig
+import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
@@ -21,11 +21,16 @@ import scala.collection.mutable.Builder
   * the library contributes it. Its housework at every tick: the goals with no source gather candidates (no model), the
   * ingest backlog drains, and the acquisition list's legal re-check runs.
   */
-final class WatchManagerKind(h: Handlers, val work: AcquisitionWork) extends ManagerKindDefinition:
+final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
+    extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
 
-  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
+  private def watch = lib.managers.watch
+  private def watchDefaults = WatchManagerDefaults(watch.maxRuns, watch.autoIngestPerDay)
+
+  override def cron: Option[String] = Some(watch.cron)
+
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = watchDefaults.managerDefaults(m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case AcquisitionSweep => Pipeline.AcquisitionSweep
@@ -160,9 +165,8 @@ final class WatchManagerKind(h: Handlers, val work: AcquisitionWork) extends Man
                 val sweep = item.kind == AcquisitionSweep
                 val autoOn = sweep && m.config.autoIngest.contains(true)
                 val own = if sweep then
-                  ManagerPolicy.ingestAllowance(
+                  watchDefaults.ingestAllowance(
                     m.config,
-                    ManagerDefaultsViews.defaults(c.cfg.managers),
                     c.countEvents(m.id, Feed.Ingested, ManagerPolicy.dayStart(now))
                   )
                 else 0

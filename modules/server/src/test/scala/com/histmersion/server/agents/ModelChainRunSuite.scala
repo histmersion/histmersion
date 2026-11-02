@@ -48,9 +48,9 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       agents = b.agents.copy(
         enabled = true,
         prices = "zzA=1/2; zzB=1/2; sonnet=0/0",
-        enrich = b.agents.enrich.copy(upstream = false),
         roles = b.agents.roles.copy(extractor = s"${A.wire} > ${B.wire}")
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )
 
   private lazy val ds = testPool(baseCfg.db)

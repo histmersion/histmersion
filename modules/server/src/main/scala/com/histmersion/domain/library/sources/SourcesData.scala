@@ -52,7 +52,9 @@ object SourcesData:
   /** The library's rules, in the order the report has always listed them. */
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingEdges) ++
-      List(fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix)(c => SourceCheckRepo.resolveEdgesFix(c.dataSource))) ++
+      List(
+        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix)(c => SourceCheckRepo.resolveEdgesFix(c.dataSource))
+      ) ++
       listed(
         owner,
         NoFindings,

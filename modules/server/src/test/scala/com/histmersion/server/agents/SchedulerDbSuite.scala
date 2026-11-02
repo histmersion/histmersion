@@ -48,9 +48,11 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         roles = b.agents.roles
           .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
         scheduler = b.agents.scheduler.copy(enabled = false, strategy = "goal-first", minShare = 0),
-        seed = b.agents.seed.copy(minSources = 2),
-        managers = b.agents.managers.copy(watch = b.agents.managers.watch.copy(drainPerTick = 50)),
         autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 100, maxActiveGoals = 3)
+      ),
+      libraryAgents = b.libraryAgents.copy(
+        seed = b.libraryAgents.seed.copy(minSources = 2),
+        managers = b.libraryAgents.managers.copy(watch = b.libraryAgents.managers.watch.copy(drainPerTick = 50))
       )
     )
 
