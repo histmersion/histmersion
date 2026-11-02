@@ -31,7 +31,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
   private lazy val media: MediaSettings =
     val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e), identity)
     val supplied = FirstPartySettings.fallback("media-met", loaded.merged)
-    summon[ConfigReader[MediaPluginConfig]].from(supplied.root).fold(e => fail(e.toString), _.media)
+    summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
   private val collections = List(
     "media-wikidata" -> "wikidata",
@@ -146,7 +146,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     val wikidata = WikidataPictures(media, HostLicences)
     assertEquals(wikidata.roles, Set("image", "locator-map", "plan", "aerial-view", "route-map"))
     assert(wikidata.roles.subsetOf(MediaCollection.Roles))
-    assertEquals(CommonsDepictions(media, HostLicences).roles, Set(MediaCollection.Depiction))
+    assertEquals(Commons.Depictions(media, HostLicences).roles, Set(MediaCollection.Depiction))
     assertEquals(MetCollection(media.met).roles, Set(MediaCollection.Object))
     assertEquals(LocCollection(media.loc, media.thumbPx).roles, Set(MediaCollection.Map))
     assertEquals(h.contributions.mediaCollections, List("wikidata"))

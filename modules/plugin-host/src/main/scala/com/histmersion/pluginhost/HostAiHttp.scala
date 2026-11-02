@@ -34,7 +34,7 @@ final class HostAiHttp extends AiHttp:
       headers: Map[String, String],
       body: String,
       timeoutSeconds: Int
-  ): Either[String, AiHttpResponse] =
+  ): Either[String, AiHttp.Response] =
     send(
       url,
       headers,
@@ -42,7 +42,7 @@ final class HostAiHttp extends AiHttp:
       _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
     )
 
-  def get(url: String, headers: Map[String, String], timeoutSeconds: Int): Either[String, AiHttpResponse] =
+  def get(url: String, headers: Map[String, String], timeoutSeconds: Int): Either[String, AiHttp.Response] =
     send(url, headers, timeoutSeconds, _.GET())
 
   private def send(
@@ -50,7 +50,7 @@ final class HostAiHttp extends AiHttp:
       headers: Map[String, String],
       timeoutSeconds: Int,
       method: java.net.http.HttpRequest.Builder => java.net.http.HttpRequest.Builder
-  ): Either[String, AiHttpResponse] =
+  ): Either[String, AiHttp.Response] =
     try
       val b = java.net.http.HttpRequest
         .newBuilder(java.net.URI.create(url))
@@ -59,7 +59,7 @@ final class HostAiHttp extends AiHttp:
       val _ = b.header("User-Agent", userAgent)
       val r = client.send(method(b).build(), java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
       Right(
-        AiHttpResponse(
+        AiHttp.Response(
           r.statusCode,
           r.body,
           r.headers.map.asScala.toMap.collect {

@@ -10,5 +10,5 @@ import com.histmersion.pluginhost.HostOwned
   */
 final case class HostAiProvider(plugin: String, kind: ProviderKind) extends AiProvider, HostOwned:
   def title: String = BuiltinAi.titles.getOrElse(kind, kind.wire)
-  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     Left(AiFailure.Error(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI"))

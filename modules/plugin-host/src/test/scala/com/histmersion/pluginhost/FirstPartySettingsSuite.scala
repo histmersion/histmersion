@@ -63,9 +63,9 @@ class FirstPartySettingsSuite extends munit.FunSuite:
   /** A first-party plugin whose defaults declare an environment override, as `oa-unpaywall`'s do. */
   final private class Unpaywall extends Plugin:
     type Config = Contact
-    val info = PluginInfo("oa-unpaywall", "1.0.0", Spi.Version)
+    val info = Plugin.Info("oa-unpaywall", "1.0.0", Spi.Version)
     override def defaultsResource = "zq-first-defaults.conf"
-    def register(c: Contact, ctx: PluginContext) = Right(())
+    def register(c: Contact, ctx: Plugin.Context) = Right(())
 
   test("another plugin's block is read as it is in effect: its defaults, the user's block, the environment"):
     val merged = ConfigFactory.parseString("histmersion.acquire.contact-email = \"\"")

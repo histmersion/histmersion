@@ -7,7 +7,7 @@ import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import hearth.kindlings.optics.syntax.*
 import scala.jdk.CollectionConverters.*
-import com.histmersion.plugin.{Plugin, PluginHttp}
+import com.histmersion.plugin.Plugin
 
 /** The plugin generations: discover the providers on the server's class path — the first-party fetchers, event
   * catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin — add the plugins
@@ -33,7 +33,7 @@ object Plugins:
   def load(
       loaded: LoadedConfig,
       provided: List[Plugin],
-      http: () => PluginHttp,
+      http: () => Plugin.Http,
       quota: HostServices.Quotas,
       previous: Option[Generation] = None,
       changed: List[String] = Nil
@@ -46,7 +46,7 @@ object Plugins:
     */
   def fetchers(
       loaded: LoadedConfig,
-      http: () => PluginHttp,
+      http: () => Plugin.Http,
       quota: HostServices.Quotas,
       extra: List[Plugin] = Nil
   ): Generation =
@@ -57,7 +57,7 @@ object Plugins:
       loaded: LoadedConfig,
       all: List[Plugin],
       errors: List[String],
-      http: () => PluginHttp,
+      http: () => Plugin.Http,
       quota: HostServices.Quotas,
       carry: Map[String, (PluginStatus, Registries)]
   ): Generation =
@@ -184,7 +184,7 @@ object Plugins:
       all,
       user,
       env,
-      services(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }, env),
+      services(() => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") }, env),
       errors,
       carried,
       fallback = FirstPartySettings.fallback(_, host),
@@ -201,7 +201,7 @@ object Plugins:
     Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv")
 
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
-  def services(http: () => PluginHttp, env: org.ekrich.config.Config): HostServices =
+  def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
     HostServices(http, env, log)
 
   private def log(id: String, warn: Boolean, message: String): Unit =

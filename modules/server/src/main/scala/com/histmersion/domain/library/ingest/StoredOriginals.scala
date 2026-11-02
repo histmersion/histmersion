@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.ingest
 
 import com.histmersion.domain.library.sources.{SourceDeletePlan, SourceOriginals}
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 import com.histmersion.domain.library.Citekey
 
 /** The files the server keeps of a source's original (#969), which a delete removes after its commit:
@@ -27,7 +27,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
         o.list().filter(f => f.isFile && f.key.name.startsWith(sha + ".")).sortBy(_.key.value).map(f => o.where(f.key))
       )
     val acquired = plan.keys.filter(Citekey.valid).flatMap { k =>
-      StoreKey.of(k).toOption.filter(s.isDirectory).toList.flatMap { dir =>
+      Store.Key.of(k).toOption.filter(s.isDirectory).toList.flatMap { dir =>
         s.list(dir).filter(_.isFile).sortBy(f => s.where(f.key)).map(f => s.where(f.key)) :+ s.where(dir)
       }
     }
@@ -53,11 +53,11 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
     }
 
   /** The key of `where` in `store`, when it is one of its files. */
-  private def keyIn(store: Store, where: String): Option[StoreKey] =
-    val root = store.where(StoreKey.Root).stripSuffix("/") + "/"
+  private def keyIn(store: Store, where: String): Option[Store.Key] =
+    val root = store.where(Store.Key.Root).stripSuffix("/") + "/"
     Option
       .when(where.startsWith(root))(where.drop(root.length))
-      .flatMap(StoreKey.either(_).toOption)
+      .flatMap(Store.Key.either(_).toOption)
       .filterNot(_.isRoot)
 
   /** Every content hash the originals' store holds a file for (`<sha>.<ext>`, one listing) — what the Calibre gaps

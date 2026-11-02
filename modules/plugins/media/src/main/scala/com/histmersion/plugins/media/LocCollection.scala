@@ -26,7 +26,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: Int)
       s"$e — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
     else e
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(LocCollection.results)

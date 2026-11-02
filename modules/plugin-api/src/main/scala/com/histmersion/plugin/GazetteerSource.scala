@@ -2,7 +2,7 @@ package com.histmersion.plugin
 
 /** Gazetteer sources, a part of the app that plugins extend: a dataset of historical places — polity outlines, a
   * classical atlas's regions, named periods — that `histmersion places fetch <id>` (and `init.fetch-sources`) imports
-  * into the map. A plugin adds one or more [[GazetteerSource]]s to [[PluginContext.gazetteerSources]].
+  * into the map. A plugin adds one or more [[GazetteerSource]]s to [[Plugin.Context.gazetteerSources]].
   *
   * The plugin DOWNLOADS and READS: it returns the dataset's places in the shape the host stores them. The host owns the
   * rest: the client the download goes through (its User-Agent and timeouts), checking every place, the dry run's
@@ -27,6 +27,6 @@ trait GazetteerSource:
 
   /** Every place of the dataset, in the order the host stores them (a place another one is part of first, so the
     * relation finds it). `http` is the host's client for gazetteer downloads (its User-Agent and timeouts); a dataset
-    * is one large download, so [[PluginHttp.fetch]] (one request, the answer's status as it came) suits it best.
+    * is one large download, so [[Plugin.Http.fetch]] (one request, the answer's status as it came) suits it best.
     */
-  def fetch(http: PluginHttp): Either[String, List[GazetteerPlace]]
+  def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]]

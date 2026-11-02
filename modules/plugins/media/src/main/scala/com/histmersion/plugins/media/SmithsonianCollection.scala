@@ -18,7 +18,7 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[String])
   )
   private val units = CollectionSettings.items(conf.excludeProviders)
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),

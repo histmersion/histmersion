@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 
 import com.histmersion.util.data.maintenance.PgRelocation
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput, RunningProcess}
-import com.histmersion.util.storage.{Location, Storage, StoreKey}
+import com.histmersion.util.storage.{Location, Storage}
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeUnit
@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import com.histmersion.api.backup.Backup
+import com.histmersion.util.storage.Store
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
@@ -308,7 +309,7 @@ object Supervisor:
             "HF_HUB_OFFLINE" -> "1",
             "HISTMERSION_CONVERTER_PORT" -> port.toString
           ),
-          output = ProcessOutput.AppendTo(Storage.at(Location.Logs, l.logs), StoreKey("converter.log"))
+          output = ProcessOutput.AppendTo(Storage.at(Location.Logs, l.logs), Store.Key("converter.log"))
         )
         val started = System.nanoTime()
         val p = processes.start(launch).fold(e => throw java.io.IOException(e), identity)

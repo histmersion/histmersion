@@ -2,7 +2,7 @@ package com.histmersion.plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
 

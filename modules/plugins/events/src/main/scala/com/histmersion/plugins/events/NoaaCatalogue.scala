@@ -24,7 +24,7 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
 
   def parts(query: CatalogueQuery): List[String] = cfg.datasetList.map(ds => s"$ds:1")
 
-  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage] =
+  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
     part match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt

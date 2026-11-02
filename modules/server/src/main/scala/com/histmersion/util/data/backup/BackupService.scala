@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
-import com.histmersion.util.storage.{HandedFile, Location, Storage, Store, StoreKey, TempName}
+import com.histmersion.util.storage.{HandedFile, Location, Storage, Store, TempName}
 
 import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
@@ -32,13 +32,13 @@ trait BackupService:
   /** The ONLY way a client-supplied name names an archive: syntactically safe AND present in the listing. A name that
     * is neither cannot escape the store.
     */
-  def resolve(file: String): Either[Api.Error, StoreKey]
+  def resolve(file: String): Either[Api.Error, Store.Key]
 
   /** The archive `file` itself, for the download (`GET /api/backups/{file}`). */
   def archive(file: String): Either[Api.Error, HandedFile]
 
   /** `pg_restore --clean --if-exists` of `archive`: how long it took, and what `pg_restore` complained of. */
-  def restore(archive: StoreKey): Either[Api.Error, (Long, List[String])]
+  def restore(archive: Store.Key): Either[Api.Error, (Long, List[String])]
 
   /** The rows the guarded tables hold: a restore over any of them needs `force`. */
   def guardedRows: Int
@@ -74,14 +74,14 @@ object BackupService:
 
   /** The archives of `store`, newest first; `where` names it in the error. */
   private def listing(store: Store): Either[Api.Error, List[Backup.Info]] =
-    if !store.isDirectory(StoreKey.Root) then Right(Nil)
+    if !store.isDirectory(Store.Key.Root) then Right(Nil)
     else
       scala.util
         .Try(
           Backup.newestFirst(
             store
               .names()
-              .map(StoreKey.of(_))
+              .map(Store.Key.of(_))
               .collect { case Right(k) if store.isFile(k) => k }
               .flatMap(k => Backup.safeName(k.name).toOption.flatMap(n => store.stat(k).map(s => (n, s))))
               .map((n, s) => Backup.Info(n, s.size.value, CreatedAt.format(Backup.takenAt(n, s.modified))))
@@ -91,19 +91,19 @@ object BackupService:
         .left
         .map(e => Api.Error(s"cannot list ${store.where()}: ${e.getMessage}"))
 
-  private def resolving(store: Store, file: String): Either[Api.Error, StoreKey] =
+  private def resolving(store: Store, file: String): Either[Api.Error, Store.Key] =
     for
       name <- Backup.safeName(file).left.map(m => Api.Error(m))
       known <- listing(store)
       _ <- if known.exists(_.file == name) then Right(()) else Left(Backup.missing(name))
-      key <- StoreKey.either(name).left.map(m => Api.Error(m))
+      key <- Store.Key.either(name).left.map(m => Api.Error(m))
     yield key
 
   /** The name of a new archive taken at `now`, not taken by an archive nor by a dump being written. */
   private def freshName(store: Store, now: Instant): String =
     Backup.uniqueName(
       Backup.fileName(now),
-      n => store.exists(StoreKey.applyUnsafe(n)) || store.exists(StoreKey.applyUnsafe(n + Pending))
+      n => store.exists(Store.Key.applyUnsafe(n)) || store.exists(Store.Key.applyUnsafe(n + Pending))
     )
 
   /** Delete the archives beyond `keep` — AFTER a dump succeeded, never the one just written. Best effort: a file that
@@ -113,7 +113,7 @@ object BackupService:
     listing(store).toOption.toList.flatMap { rows =>
       Backup.toPrune(rows.map(_.file), keep).filterNot(_ == keeping).filter { n =>
         scala.util
-          .Try(store.delete(StoreKey.applyUnsafe(n)))
+          .Try(store.delete(Store.Key.applyUnsafe(n)))
           .fold(e => { scribe.warn(s"backup: could not prune $n: ${e.getMessage}"); false }, identity)
       }
     }
@@ -142,7 +142,7 @@ object BackupService:
       * otherwise the search path. The failure message says exactly what to do.
       */
     private def exe(name: String): Either[Api.Error, String] =
-      val key = StoreKey.applyUnsafe(name)
+      val key = Store.Key.applyUnsafe(name)
       Option(backups.pgBinDir).map(_.trim).filter(_.nonEmpty).flatMap(_ => storage.find(Location.PostgresTools)) match
         case Some(tools) if tools.isExecutable(key) => Right(tools.where(key))
         case Some(tools)                            =>
@@ -172,7 +172,7 @@ object BackupService:
       */
     private def run(cmd: List[String]): Either[Api.Error, (Int, List[String])] =
       val scratch = storage.scratch("histmersion-pg-")
-      val log = StoreKey.applyUnsafe("pg.log")
+      val log = Store.Key.applyUnsafe("pg.log")
       val cfg = settings()
       val launch = ProcessLaunch(
         cmd,
@@ -204,7 +204,7 @@ object BackupService:
     /** The captured output, bounded: a `pg_restore` complaining about every statement can write megabytes, and only the
       * last handful of lines ever reaches an error message.
       */
-    private def tail(logs: Store, log: StoreKey): List[String] =
+    private def tail(logs: Store, log: Store.Key): List[String] =
       scala.util
         .Try(logs.get(log).fold(List.empty[String])(_.text().linesIterator.toList.takeRight(200)))
         .getOrElse(Nil)
@@ -231,7 +231,7 @@ object BackupService:
       yield PreparedBackup(
         name,
         () =>
-          val key = StoreKey.applyUnsafe(name)
+          val key = Store.Key.applyUnsafe(name)
           val started = System.nanoTime()
           for
             reservation <- dir.reserve(key, TempName.Suffixed(Pending)).left.map(e => Api.Error(e.message))
@@ -258,7 +258,7 @@ object BackupService:
 
     def list: Either[Api.Error, List[Backup.Info]] = listing(store)
 
-    def resolve(file: String): Either[Api.Error, StoreKey] = resolving(store, file)
+    def resolve(file: String): Either[Api.Error, Store.Key] = resolving(store, file)
 
     def archive(file: String): Either[Api.Error, HandedFile] =
       val dir = store
@@ -272,7 +272,7 @@ object BackupService:
       * are skipped, so a dump taken on an installation with other role names loads cleanly. The caller re-issues the
       * read-only role's grants afterwards.
       */
-    def restore(archive: StoreKey): Either[Api.Error, (Long, List[String])] =
+    def restore(archive: Store.Key): Either[Api.Error, (Long, List[String])] =
       for
         t <- target
         pgRestore <- exe("pg_restore")
@@ -305,7 +305,7 @@ object BackupService:
         PreparedBackup(
           name,
           () =>
-            val key = StoreKey.applyUnsafe(name)
+            val key = Store.Key.applyUnsafe(name)
             dir
               .put(key, dumped)
               .left
@@ -316,10 +316,10 @@ object BackupService:
         )
       }
     def list: Either[Api.Error, List[Backup.Info]] = listing(store)
-    def resolve(file: String): Either[Api.Error, StoreKey] = resolving(store, file)
+    def resolve(file: String): Either[Api.Error, Store.Key] = resolving(store, file)
     def archive(file: String): Either[Api.Error, HandedFile] =
       resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => Api.Error(e.message)))
-    def restore(archive: StoreKey): Either[Api.Error, (Long, List[String])] =
+    def restore(archive: Store.Key): Either[Api.Error, (Long, List[String])] =
       store.get(archive).toRight(Backup.missing(archive.value)).map(_ => (0L, Nil))
     def guardedRows: Int = rows.get
     def refusal(n: Int): Api.Error = refusalOver(registry, n)

@@ -6,7 +6,7 @@ import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
 import com.histmersion.util.data.backup.{BackupJobs, BackupService}
 import com.histmersion.util.data.maintenance.{CacheEvent, CacheName, MaintenanceSite, MaintenanceSlice}
-import com.histmersion.util.data.maintenance.{MaintenanceTaskName, VacuumJobs}
+import com.histmersion.util.data.maintenance.VacuumJobs
 
 import java.time.Instant
 import com.histmersion.api.backup.{Backup, RestoreRequest, RestoreResult}
@@ -14,6 +14,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.api.Api
 import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.util.data.maintenance.MaintenanceTask
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
@@ -48,7 +49,7 @@ final class MaintenanceControllers(
   def reindex(after: Option[String], limit: Option[Int]): Either[Api.Error, ReindexResult] =
     maintenance.guard("reindex"):
       Deps.data
-        .task(MaintenanceTaskName("reindex"))
+        .task(MaintenanceTask.Name("reindex"))
         .toRight(Api.Error("no reindex is registered"))
         .map(
           _.run(MaintenanceSlice(after.map(_.trim).filter(_.nonEmpty), limit.filter(_ > 0)), MaintenanceSite(ds, cfg))

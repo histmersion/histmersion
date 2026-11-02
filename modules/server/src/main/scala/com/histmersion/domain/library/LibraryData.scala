@@ -7,9 +7,10 @@ import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.MaintenanceTask
-import com.histmersion.util.data.mirror.{MirrorExport, MirrorPlacement, MirrorRecords}
+import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
+import com.histmersion.util.data.mirror.Mirror
 
 /** What the library says about the data it owns: its tables, the originals, the spool and the corpus folder it keeps
   * files in, the sources a restore must not drop unasked, what a bundle carries of it and how a merge treats it, the
@@ -48,12 +49,12 @@ object LibraryData extends DataContribution:
   override val mergeRules: List[MergeRules] = LibraryExchange.mergeRules
 
   /** The sources' records in the mirror. */
-  val SourceNotes: MirrorRecords = MirrorRecords("sources")
+  val SourceNotes: Mirror.Records = Mirror.Records("sources")
 
   /** The sources' notes (each its frontmatter and its notes, `SourceNotes`), in `sources/`. */
-  override val mirror: List[MirrorExport] = List(new MirrorExport:
+  override val mirror: List[Mirror.Export] = List(new Mirror.Export:
     val owner: DataOwner = LibraryData.owner
-    val records: MirrorRecords = LibraryData.SourceNotes
+    val records: Mirror.Records = LibraryData.SourceNotes
     val placement: MirrorPlacement = MirrorPlacement.SourceFiles)
 
   override val maintenance: List[MaintenanceTask] = List(SourcesData.reindex(owner))

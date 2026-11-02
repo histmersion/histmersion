@@ -846,9 +846,9 @@ class MediaOracleSuite extends DbSuite:
   /** A plugin's collection of its targets' own pictures: it is asked about the whole batch and states each licence. */
   final private class OwnPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.PluginInfo("zq-own", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-own", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqOracleConfig, ctx: spi.PluginContext) =
+    def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.mediaCollections.add("zq-own", OwnCollection).flatMap(_ => ctx.mediaCollections.add("zq-search", Searched))
 
   private object OwnCollection extends spi.MediaCollection:
@@ -858,7 +858,7 @@ class MediaOracleSuite extends DbSuite:
     override val requestIntervalMs = 0
     override val matchRule = spi.MediaMatchRule.Own
     override val asks = Set(spi.MediaTarget.Places, spi.MediaTarget.Events)
-    def search(place: spi.MediaPlace, http: spi.PluginHttp) = Right(Nil)
+    def search(place: spi.MediaPlace, http: spi.Plugin.Http) = Right(Nil)
     private def item(key: String, licence: String, author: Option[String], role: Option[String]) =
       spi.MediaItem(
         key,
@@ -871,25 +871,25 @@ class MediaOracleSuite extends DbSuite:
     override def searchTargets(
         places: List[spi.MediaPlace],
         events: List[spi.MediaEvent],
-        http: spi.PluginHttp
+        http: spi.Plugin.Http
     ): spi.MediaFound =
       val _ = http.get("https://zq-own.example/batch", Map.empty)
       val placeUses = places.flatMap { p =>
         List(
           spi.MediaUse(
-            spi.MediaTargetId(spi.MediaTarget.Places, p.id),
+            spi.MediaTarget.Id(spi.MediaTarget.Places, p.id),
             item(s"${p.id}-by", "CC BY 4.0", Some("Zq"), None),
             statement = Some("P18"),
             rank = 0,
             note = Some("its own picture")
           ),
           spi.MediaUse(
-            spi.MediaTargetId(spi.MediaTarget.Places, p.id),
+            spi.MediaTarget.Id(spi.MediaTarget.Places, p.id),
             item(s"${p.id}-nc", "CC BY-NC 4.0", Some("Zq"), Some("plan")),
             rank = 1
           ),
           spi.MediaUse(
-            spi.MediaTargetId(spi.MediaTarget.Places, p.id),
+            spi.MediaTarget.Id(spi.MediaTarget.Places, p.id),
             item(s"${p.id}-anon", "cc-by-sa-4.0", None, Some("locator-map")),
             rank = 2
           )
@@ -897,7 +897,7 @@ class MediaOracleSuite extends DbSuite:
       }
       val eventUses = events.map(e =>
         spi.MediaUse(
-          spi.MediaTargetId(spi.MediaTarget.Events, e.id),
+          spi.MediaTarget.Id(spi.MediaTarget.Events, e.id),
           item(s"${e.id}-pd", "https://creativecommons.org/publicdomain/mark/1.0/", None, None),
           rank = 0,
           basis = Some("the event's own item")
@@ -905,8 +905,8 @@ class MediaOracleSuite extends DbSuite:
       )
       spi.MediaFound(
         uses = placeUses ++ eventUses,
-        asked = places.map(p => spi.MediaTargetId(spi.MediaTarget.Places, p.id)) ++
-          events.map(e => spi.MediaTargetId(spi.MediaTarget.Events, e.id)),
+        asked = places.map(p => spi.MediaTarget.Id(spi.MediaTarget.Places, p.id)) ++
+          events.map(e => spi.MediaTarget.Id(spi.MediaTarget.Events, e.id)),
         read = placeUses.size + eventUses.size,
         notTaken = List("a statement the plugin did not take")
       )
@@ -915,7 +915,7 @@ class MediaOracleSuite extends DbSuite:
     val title = "Zq searched objects"
     val role = spi.MediaCollection.Object
     override val requestIntervalMs = 0
-    def search(place: spi.MediaPlace, http: spi.PluginHttp) =
+    def search(place: spi.MediaPlace, http: spi.Plugin.Http) =
       http.get(s"https://zq-search.example/q?label=${place.label}", Map.empty).map { _ =>
         def it(key: String, licence: String, where: String) =
           Right(

@@ -10,7 +10,7 @@ import com.histmersion.api.automation.{Activity, ActivityMarkdown}
   */
 object ActivityCmd:
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "activity",
       "What the agents, the server and you did, one list, newest first: agent runs, " +

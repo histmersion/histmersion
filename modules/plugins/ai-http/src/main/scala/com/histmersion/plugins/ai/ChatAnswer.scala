@@ -1,9 +1,10 @@
 package com.histmersion.plugins.ai
 
-import com.histmersion.plugin.{AiStop, AiToolCall, AiTurn, AiUsage}
+import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
 import io.circe.parser.{decode, parse}
+import com.histmersion.plugin.AiTool
 
 /** What an OpenAI-compatible chat-completions API answered, read as these providers have always read it: the first
   * choice's text and tool calls (a call without an id is `call_<n>`, without a name `unknown`), its finish reason, the
@@ -106,7 +107,7 @@ object ChatAnswer:
     yield ()
   }
 
-  private val message: Decoder[(String, List[AiToolCall])] = product { c =>
+  private val message: Decoder[(String, List[AiTool.Call])] = product { c =>
     given Decoder[(Option[String], (String, Option[String]))] = toolCall
     for
       content <- orDefault(c.downField("content"), "")
@@ -118,12 +119,12 @@ object ChatAnswer:
     yield (
       content,
       calls.toList.zipWithIndex.map { case ((id, (args, name)), i) =>
-        AiToolCall(id.getOrElse(s"call_$i"), name.getOrElse("unknown"), args)
+        AiTool.Call(id.getOrElse(s"call_$i"), name.getOrElse("unknown"), args)
       }
     )
   }
 
-  private val choice: Decoder[(String, List[AiToolCall], String)] = product { c =>
+  private val choice: Decoder[(String, List[AiTool.Call], String)] = product { c =>
     for
       m <- c.downField("message").as(using message)
       finish <- c.downField("finish_reason").as[String]

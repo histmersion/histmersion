@@ -1,11 +1,11 @@
 package com.histmersion.plugin
 
 /** A metered upstream's budget, kept by the host for the whole server — across plugin generations, config reloads and
-  * restarts — and shared with the host's own calls to the same upstream. A plugin asks [[PluginContext.quota]] for it
+  * restarts — and shared with the host's own calls to the same upstream. A plugin asks [[Plugin.Context.quota]] for it
   * by the upstream's name.
   *
   * A call goes: [[take]] (the host may wait for the call's slot, or refuse it), then the request, sent once
-  * ([[PluginHttp.fetch]]), then [[observe]] with what the upstream answered, which the budget reads for a slow-down or
+  * ([[Plugin.Http.fetch]]), then [[observe]] with what the upstream answered, which the budget reads for a slow-down or
   * the upstream's own rate headers.
   *
   * {{{

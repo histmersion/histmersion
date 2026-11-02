@@ -38,9 +38,9 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
 
   final private class ZqPlugin extends spi.Plugin:
     type Config = ZqCatalogueConfig
-    val info = spi.PluginInfo("zq-plugin", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-plugin", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqCatalogueConfig, ctx: spi.PluginContext) = ctx.eventCatalogues.add(Catalogue, ZqQuakes)
+    def register(c: ZqCatalogueConfig, ctx: spi.Plugin.Context) = ctx.eventCatalogues.add(Catalogue, ZqQuakes)
 
   // `var`: whether the API answers part p2 (it fails on the first import)
   @volatile private var p2Up = false
@@ -62,7 +62,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
         lon = Some(spi.Longitude(23.7)),
         names = List(s"$label (alt)")
       )
-    def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
+    def read(part: String, q: spi.CatalogueQuery, http: spi.Plugin.Http) =
       http.get(s"https://zq.example/api/$part", Map.empty).flatMap { _ =>
         part match
           case "p1" =>
@@ -186,7 +186,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
         lat = Some(spi.Latitude(30.0)),
         lon = Some(spi.Longitude(31.0))
       )
-    def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
+    def read(part: String, q: spi.CatalogueQuery, http: spi.Plugin.Http) =
       http
         .get("https://zq.example/api/floods", Map.empty)
         .map(_ =>
@@ -202,9 +202,9 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
 
   final private class FloodsPlugin extends spi.Plugin:
     type Config = ZqCatalogueConfig
-    val info = spi.PluginInfo("zq-floods-plugin", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-floods-plugin", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqCatalogueConfig, ctx: spi.PluginContext) = ctx.eventCatalogues.add(Floods, ZqFloods)
+    def register(c: ZqCatalogueConfig, ctx: spi.Plugin.Context) = ctx.eventCatalogues.add(Floods, ZqFloods)
 
   private def floodsGeneration: Generation =
     PluginHost.build(
@@ -212,7 +212,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
       ConfigFactory.parseString("histmersion.plugins.zq-floods-plugin.enabled = true"),
       ConfigFactory.empty,
       Plugins.services(
-        () => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
+        () => new spi.Plugin.Http { def get(u: String, h: Map[String, String]) = Left("no") },
         ConfigFactory.empty
       )
     )

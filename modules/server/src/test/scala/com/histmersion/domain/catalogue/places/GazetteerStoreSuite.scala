@@ -4,7 +4,6 @@ import com.histmersion.server.ServerPlugins
 
 import com.histmersion.config.AppConfig
 import com.histmersion.db.TestDb
-import com.histmersion.plugin.PluginHttp
 import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
 import com.histmersion.server.{Bootstrap, Deps, ServerWiring}
 
@@ -14,6 +13,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.api.catalogue.Place
+import com.histmersion.plugin.Plugin
 
 /** What the network gazetteers store: each fixture imported through the real runner (download from a loopback server,
   * transform, batch upsert, `finding_places` rebuilt) into a scratch database of its own, then its `places`,
@@ -46,7 +46,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
   private lazy val sources = ServerPlugins.offline.registries.gazetteerSources
 
   /** The host's gazetteer client, its requests sent to the loopback server instead of the source's host. */
-  private def http: PluginHttp =
+  private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
       def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))

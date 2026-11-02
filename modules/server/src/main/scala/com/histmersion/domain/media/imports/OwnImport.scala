@@ -35,10 +35,11 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
     */
   final private case class Verdict(licence: Option[String], decision: Either[String, (MediaItem, Rights)])
 
-  private def idOf(t: Target): MediaTargetId =
-    MediaTargetId(if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places, t.id)
+  private def idOf(t: Target): com.histmersion.plugin.MediaTarget.Id =
+    com.histmersion.plugin.MediaTarget
+      .Id(if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places, t.id)
 
-  private def typeOf(t: MediaTargetId): String = t.kind match
+  private def typeOf(t: com.histmersion.plugin.MediaTarget.Id): String = t.kind match
     case MediaTarget.Events => ImportRepo.Event
     case MediaTarget.Places => ImportRepo.Place
 
@@ -127,7 +128,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]],
       categories: List[(String, String)],
-      byId: Map[MediaTargetId, Target]
+      byId: Map[com.histmersion.plugin.MediaTarget.Id, Target]
   ): MediaImportReport =
     val known = db.known(provider, verdicts.keys.toList)
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)

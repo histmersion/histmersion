@@ -6,9 +6,9 @@ package com.histmersion.plugin
 class GazetteerSpiSuite extends munit.FunSuite:
 
   /** A context as a plugin written before gazetteer sources existed has it. */
-  private object EarlyContext extends PluginContext:
-    def http = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("offline") }
-    def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+  private object EarlyContext extends Plugin.Context:
+    def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
     def env(name: String) = None
     def secret(s: Secret) = Left("none")
     def secretVaults = Registry.refusing("no vaults")
@@ -16,7 +16,7 @@ class GazetteerSpiSuite extends munit.FunSuite:
   private object Nowhere extends GazetteerSource:
     def title = "Nowhere"
     def rights = GazetteerRights(Licence("CC0-1.0"), "Nowhere atlas")
-    def fetch(http: PluginHttp) = Right(List(GazetteerPlace("nowhere_1", "Nowhere", "region")))
+    def fetch(http: Plugin.Http) = Right(List(GazetteerPlace("nowhere_1", "Nowhere", "region")))
 
   test("a host without gazetteers refuses a source, saying why"):
     assertEquals(

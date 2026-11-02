@@ -8,8 +8,9 @@ import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.{CacheEvent, CacheHolding, CacheName, CacheSpec}
-import com.histmersion.util.storage.{Location, StoreKey}
+import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
+import com.histmersion.util.storage.Store
 
 /** What the catalogue says about the data it owns: its tables, the gazetteer's stores and the base map's, the caches of
   * the map, what a bundle carries of it and how a merge treats it, its counts and its checks.
@@ -60,7 +61,7 @@ object CatalogueData extends DataContribution:
 
   /** The base map's tiles read on demand: the relief deeper, the map and the sea floor outside the focus region. */
   private def onDemand(directory: String): CacheHolding =
-    CacheHolding.InStore(Location.Basemap, StoreKey.applyUnsafe(directory))
+    CacheHolding.InStore(Location.Basemap, Store.Key.applyUnsafe(directory))
 
   override val caches: List[CacheSpec] = List(
     CacheSpec(owner, CacheName("map-tiles"), "map tiles", CacheHolding.InMemory, List(CacheEvent.Restored)),

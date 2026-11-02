@@ -5,7 +5,7 @@ class AiProviderSpiSuite extends munit.FunSuite:
 
   private object Echo extends AiProvider:
     val title = "Echo"
-    def turn(r: AiTurnRequest, http: AiHttp) =
+    def turn(r: AiTurn.Request, http: AiHttp) =
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
         .toRight(AiFailure.Error("no user message"))
@@ -20,7 +20,7 @@ class AiProviderSpiSuite extends munit.FunSuite:
     assertEquals(Echo.description, "")
 
   test("one turn: the request in, the answer out; a turn's defaults"):
-    val req = AiTurnRequest("m", "sys", List(AiMessage.User("hi")), Nil, None, 16000, 1, 4)
+    val req = AiTurn.Request("m", "sys", List(AiMessage.User("hi")), Nil, None, 16000, 1, 4)
     val t = Echo.turn(req, AiHttp.Offline).toOption.get
     assertEquals((t.text, t.toolCalls, t.stop, t.servedBy), ("hi", Nil, AiStop.EndTurn, None))
     assertEquals(t.usage, Some(AiUsage(10, 2, 0, 0)))
@@ -32,9 +32,9 @@ class AiProviderSpiSuite extends munit.FunSuite:
     assertEquals(AiHttp.Offline.get("https://x.example", Map.empty, 5), Left("offline"))
 
   test("a context written before AI providers existed still compiles and refuses one; the SPI is still 1"):
-    val ctx = new PluginContext:
-      def http = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("offline") }
-      def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    val ctx = new Plugin.Context:
+      def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(name: String) = None
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("no vaults")

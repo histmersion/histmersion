@@ -1,11 +1,11 @@
 package com.histmersion.plugin.testkit
 
-import com.histmersion.plugin.{AiHttp, AiHttpResponse, WorkKey}
+import com.histmersion.plugin.{AiHttp, WorkKey}
 
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
   * `Left("no scripted answer")`) and keeps every request, to assert on what the provider sent.
   */
-final class ScriptedAiHttp(answers: Either[String, AiHttpResponse]*) extends AiHttp:
+final class ScriptedAiHttp(answers: Either[String, AiHttp.Response]*) extends AiHttp:
   // the answers not yet given and the requests seen; guarded by `this` (a provider may call from several threads)
   private val left = scala.collection.mutable.Queue(answers*)
   private val seen = List.newBuilder[AiHttpRequest]
@@ -17,13 +17,13 @@ final class ScriptedAiHttp(answers: Either[String, AiHttpResponse]*) extends AiH
       headers: Map[String, String],
       body: String,
       timeoutSeconds: Int
-  ): Either[String, AiHttpResponse] =
+  ): Either[String, AiHttp.Response] =
     next(AiHttpRequest("POST", url, ScriptedAiHttp.masked(headers), Some(body)))
 
-  def get(url: String, headers: Map[String, String], timeoutSeconds: Int): Either[String, AiHttpResponse] =
+  def get(url: String, headers: Map[String, String], timeoutSeconds: Int): Either[String, AiHttp.Response] =
     next(AiHttpRequest("GET", url, ScriptedAiHttp.masked(headers), None))
 
-  private def next(r: AiHttpRequest): Either[String, AiHttpResponse] = synchronized {
+  private def next(r: AiHttpRequest): Either[String, AiHttp.Response] = synchronized {
     seen += r
     if left.isEmpty then Left("no scripted answer") else left.dequeue()
   }

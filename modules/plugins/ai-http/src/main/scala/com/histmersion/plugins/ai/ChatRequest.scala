@@ -1,8 +1,9 @@
 package com.histmersion.plugins.ai
 
-import com.histmersion.plugin.{AiMessage, AiTurnRequest}
+import com.histmersion.plugin.AiMessage
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
+import com.histmersion.plugin.AiTurn
 
 /** One call to an OpenAI-compatible chat-completions API (`POST chat/completions`), its body as the API takes it: the
   * system prompt as the first message, the conversation (tool calls on the assistant's messages, their results as
@@ -16,7 +17,7 @@ final case class ChatRequest(json: Json):
 object ChatRequest:
 
   /** The request for `r`. */
-  def of(r: AiTurnRequest, strictTools: Boolean): ChatRequest =
+  def of(r: AiTurn.Request, strictTools: Boolean): ChatRequest =
     val system = Json.obj("content" -> Json.fromString(r.system), "role" -> Json.fromString("system"))
     val format = r.answerSchemaRendered.orElse(r.answerSchema).flatMap(s => parse(s).toOption).map { s =>
       Json.obj(

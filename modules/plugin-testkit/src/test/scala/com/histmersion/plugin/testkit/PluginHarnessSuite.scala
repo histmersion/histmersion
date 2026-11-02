@@ -99,7 +99,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       loaded("kit-ai", "api-key = \"keepassxc:Models/key\"", secrets = Map("keepassxc:Models/key" -> "k-1234"))
     assertEquals(viaVault.contributions.secretVaults, Nil, "the stand-in vault is not the plugin's")
     val viaEnv = loaded("kit-ai", "api-key = \"env:KIT_KEY\"", secrets = Map("env:KIT_KEY" -> "k-5678"))
-    val ai = ScriptedAiHttp(Right(AiHttpResponse(200, "hello")))
+    val ai = ScriptedAiHttp(Right(AiHttp.Response(200, "hello")))
     assertEquals(viaEnv.aiTurn("kit-ai", request, ai).turn, Some(Right(AiTurn("hello"))))
     assertEquals(ai.requests.map(_.headers("x-api-key")), List("***"))
     val missing = PluginHarness.load("kit-ai", "api-key = \"keepassxc:Models/key\"", env = Map.empty)
@@ -246,7 +246,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     )
     assertEquals(r.refused, List("p1: bad: its dating runs backwards"))
 
-  private val request = AiTurnRequest("m", "system", List(AiMessage.User("hi")), Nil, None, 100, 1, 1)
+  private val request = AiTurn.Request("m", "system", List(AiMessage.User("hi")), Nil, None, 100, 1, 1)
 
   test("AI: the provider's check first, then one call through the scripted transport"):
     val none = loaded("kit-ai")

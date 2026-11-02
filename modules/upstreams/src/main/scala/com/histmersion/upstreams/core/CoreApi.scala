@@ -1,15 +1,16 @@
 package com.histmersion.upstreams.core
-import com.histmersion.plugin.{PluginHttp, UpstreamQuota}
+import com.histmersion.plugin.UpstreamQuota
 import io.circe.Json
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.library.acquisition.CoreEndpoint
 import com.histmersion.upstreams.http.Url
+import com.histmersion.plugin.Plugin
 
 /** CORE's `search/works` with a key, through the server's CORE budget (`quota`) — the one way Histmersion calls CORE.
-  * Asked once, never retried ([[PluginHttp.fetch]]): the budget decides when CORE is asked again.
+  * Asked once, never retried ([[Plugin.Http.fetch]]): the budget decides when CORE is asked again.
   */
-final class CoreApi(core: CoreEndpoint, http: PluginHttp, quota: UpstreamQuota):
+final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
   def searchWorks(key: String, query: String, limit: Int, purpose: String): Either[CoreFailure, Json] =

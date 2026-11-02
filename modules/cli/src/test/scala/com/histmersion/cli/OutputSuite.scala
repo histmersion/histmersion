@@ -23,8 +23,18 @@ class OutputSuite extends munit.FunSuite:
 
   test("calibre search --json keeps the field names it always printed"):
     val b =
-      CalibreBook(3, "Title", List("A"), Some("1999-01-01"), None, List("t"), None, Map("doi" -> "10.1/x"), List("PDF"))
-    val js = Output.json(List(CalibreJson.Book.of(b)))
+      Calibre.Book(
+        3,
+        "Title",
+        List("A"),
+        Some("1999-01-01"),
+        None,
+        List("t"),
+        None,
+        Map("doi" -> "10.1/x"),
+        List("PDF")
+      )
+    val js = Output.json(List(Calibre.Json.Book.of(b)))
     assertEquals(
       io.circe.parser.parse(js).toOption.flatMap(_.asArray).flatMap(_.headOption).map(_.asObject.get.keys.toList),
       Some(List("id", "title", "authors", "year", "publisher", "tags", "identifiers", "formats"))
@@ -32,10 +42,10 @@ class OutputSuite extends munit.FunSuite:
     assert(js.contains("\"year\" : 1999"), js)
 
   test("calibre update --all --json names each outcome as before"):
-    val ch = CalibreChange(CalibreField.values.head, "a", "b")
-    val r = CalibreJson.UpdateRow.of(UpdateEntry(3, List("ck"), UpdateOutcome.Failed(List(ch), "locked")))
+    val ch = Calibre.Change(Calibre.Field.values.head, "a", "b")
+    val r = Calibre.Json.UpdateRow.of(UpdateEntry(3, List("ck"), UpdateOutcome.Failed(List(ch), "locked")))
     assertEquals((r.state, r.reason, r.changes.map(_.from)), ("failed", Some("locked"), List("a")))
-    assertEquals(CalibreJson.UpdateRow.of(UpdateEntry(3, Nil, UpdateOutcome.UpToDate)).state, "up-to-date")
+    assertEquals(Calibre.Json.UpdateRow.of(UpdateEntry(3, Nil, UpdateOutcome.UpToDate)).state, "up-to-date")
 
   test("no command prints JSON or declares --json its own way"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/cli/src/main/scala")

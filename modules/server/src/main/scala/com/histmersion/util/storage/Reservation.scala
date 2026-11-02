@@ -8,7 +8,7 @@ import java.io.OutputStream
   * key in one step — or discarded. Nothing reads a half-written file.
   */
 trait Reservation extends AutoCloseable:
-  def key: StoreKey
+  def key: Store.Key
 
   /** Where the file being written is, for messages. */
   def where: String
@@ -24,7 +24,7 @@ trait Reservation extends AutoCloseable:
   /** Move the file over the key in one step, replacing what is there; with `keepPermissions`, the replaced file's
     * permissions carry over.
     */
-  def commit(keepPermissions: Boolean = false): Either[StoreError, Stored]
+  def commit(keepPermissions: Boolean = false): Either[Store.Error, Stored]
 
   /** Remove the file; nothing happens to the key. */
   def discard(): Unit
@@ -33,4 +33,4 @@ trait Reservation extends AutoCloseable:
   def close(): Unit
 
   /** The file itself, for a program the supporting areas hand it to (a dump, a settings check). */
-  private[util] def onDisk: Either[StoreError, java.nio.file.Path]
+  private[util] def onDisk: Either[Store.Error, java.nio.file.Path]

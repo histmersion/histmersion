@@ -2,7 +2,7 @@ package com.histmersion.plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
 
@@ -12,7 +12,7 @@ final class BitwardenVault(
     session: Option[String],
     field: String,
     timeout: FiniteDuration
-) extends SecretVault:
+) extends Secret.Vault:
   def resolve(ref: String): Either[String, String] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for

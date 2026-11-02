@@ -16,13 +16,14 @@ import scala.concurrent.duration.*
 import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.domain.library.acquisition.*
-import com.histmersion.server.hot.{Hot, PinRequests}
+import com.histmersion.server.hot.Hot
 import ox.{releaseAfterScope, Ox}
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, CalibrePushRequest}
 import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
+import com.histmersion.server.hot.Pin
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
@@ -149,7 +150,7 @@ object Composition:
       catch
         case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     // every request pinned to the generation current when it arrived (hot.PinRequests)
-    val options = NettySyncServerOptions.customiseInterceptors.prependInterceptor(PinRequests(sg.graph)).options
+    val options = NettySyncServerOptions.customiseInterceptors.prependInterceptor(Pin.Requests(sg.graph)).options
     val srv = NettySyncServer(options)
       .host(host)
       .port(port)

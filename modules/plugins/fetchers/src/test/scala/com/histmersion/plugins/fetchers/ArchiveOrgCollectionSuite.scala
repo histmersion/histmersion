@@ -21,7 +21,7 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
 
   private val asked = scala.collection.mutable.ListBuffer.empty[String]
 
-  private object Canned extends PluginHttp:
+  private object Canned extends Plugin.Http:
     def get(url: String, headers: Map[String, String]) =
       asked += url
       if url.contains("/advancedsearch.php") then

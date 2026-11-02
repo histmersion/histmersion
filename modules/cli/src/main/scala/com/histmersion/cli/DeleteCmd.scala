@@ -29,7 +29,7 @@ object DeleteCmd:
     ).mapN((ck, apply, json) => Args(ck.trim, apply, json))
       .mapValidated(a => Citekey.of(a.citekey).leftMap(_.message).toValidatedNel.map(_ => a))
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "delete",
       "Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched"
@@ -44,7 +44,7 @@ object DeleteCmd:
       calibreId: String,
       libraryExists: => Boolean,
       library: String,
-      byId: Int => Either[String, Option[CalibreBook]]
+      byId: Int => Either[String, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.trim.toIntOption match
       case None                      => CalibreEntryCheck.Unchecked(s"'$calibreId' is not a Calibre id")
@@ -55,7 +55,7 @@ object DeleteCmd:
           case Right(None)    => CalibreEntryCheck.Missing
           case Left(e)        => CalibreEntryCheck.Unchecked(e.linesIterator.nextOption().getOrElse(e).take(200))
 
-  def run(c: Client, a: Args): Either[CliError, Unit] =
+  def run(c: Client, a: Args): Either[Cli.Error, Unit] =
     c.deleteSource(a.citekey, a.apply).flatMap { d =>
       lazy val check = d.calibreId.map { id =>
         val cfg = Settings.app.cli.calibre
@@ -64,10 +64,10 @@ object DeleteCmd:
       }
       Output.emit(a.json, d)(Source.Delete.markdown(_, check))
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-      if d.refused then Left(CliError(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
+      if d.refused then Left(Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
       else if d.filesFailed.nonEmpty then
         Left(
-          CliError(
+          Cli.Error(
             s"deleted, but ${Plural.count(d.filesFailed.size, "stored file")} could not be removed",
             exitCode = ExitCode.Refused
           )

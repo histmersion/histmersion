@@ -1,6 +1,6 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{Plugin, PluginInfo, Spi}
+import com.histmersion.plugin.{Plugin, Spi}
 
 /** One of Histmersion's own acquisition plugins: on by default (its defaults resource), switched off by
   * `histmersion.plugins.<id>.enabled = false`. Its endpoints and rules are Histmersion's own `histmersion.acquire`
@@ -8,7 +8,7 @@ import com.histmersion.plugin.{Plugin, PluginInfo, Spi}
   * contact, a credential — never an endpoint.
   */
 trait FetcherPlugin(id: String) extends Plugin:
-  val info: PluginInfo = PluginInfo(id, FetcherPlugin.Version, Spi.Version)
+  val info: Plugin.Info = Plugin.Info(id, FetcherPlugin.Version, Spi.Version)
 
 object FetcherPlugin:
   val Version = "0.1.0"

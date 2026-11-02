@@ -9,7 +9,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.{CatalogueJobs, CatalogueState}
 import com.histmersion.domain.catalogue.events.EventService
-import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReader, PassageSource}
+import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReader}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{JobStops, Pinning}
 
@@ -25,7 +25,7 @@ class EventLinksControllersSuite extends munit.FunSuite:
     "zzln2021_silent" -> "Nothing of the kind here."
   )
 
-  private val sources = new PassageSource:
+  private val sources = new Passage.Source:
     def canonical(citekey: String): Option[String] = Option.when(texts.contains(citekey))(citekey)
     def naming(name: String, limit: Int): List[String] = texts.collect { case (ck, t) if t.contains(name) => ck }.toList
     def reader(citekey: String): PassageReader = (query, _, _, _, _, _) =>

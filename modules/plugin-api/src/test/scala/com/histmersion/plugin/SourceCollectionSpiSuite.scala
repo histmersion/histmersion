@@ -5,12 +5,12 @@ package com.histmersion.plugin
   */
 class SourceCollectionSpiSuite extends munit.FunSuite:
 
-  private object Bodies extends PluginHttp:
+  private object Bodies extends Plugin.Http:
     def get(url: String, headers: Map[String, String]) = Left("offline")
 
-  private object EarlyContext extends PluginContext:
+  private object EarlyContext extends Plugin.Context:
     def http = Bodies
-    def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
     def env(name: String) = None
     def secret(s: Secret) = Left("none")
     def secretVaults = Registry.refusing("no vaults")

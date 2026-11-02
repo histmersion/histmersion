@@ -1,12 +1,13 @@
 package com.histmersion.upstreams.archiveorg
-import com.histmersion.plugin.{FetchedFile, PluginHttp}
+import com.histmersion.plugin.FetchedFile
 import com.histmersion.domain.library.acquisition.Endpoint
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.json
+import com.histmersion.plugin.Plugin
 
 /** archive.org's search, an item's metadata and a file of a public item. */
-final class ArchiveOrg(archive: Endpoint, http: PluginHttp):
+final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
   private def identifier(s: String): String =

@@ -14,7 +14,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
 
   private val keys = Map("ANTHROPIC_API_KEY" -> "k-test", "OPENAI_API_KEY" -> "k-test")
 
-  private def request(iteration: Int = 1, tools: List[AiTool] = Nil) = AiTurnRequest(
+  private def request(iteration: Int = 1, tools: List[AiTool] = Nil) = AiTurn.Request(
     "m-1",
     "SYSTEM",
     List(AiMessage.User("USER")),
@@ -40,7 +40,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       """"message":{"role":"assistant","content":"{\"word\":\"hi\"}"},"finish_reason":"stop"}],""" +
       """"usage":{"prompt_tokens":700,"completion_tokens":30,"total_tokens":730}}"""
 
-  private def json(body: String) = Right(AiHttpResponse(200, body, Map("content-type" -> "application/json")))
+  private def json(body: String) = Right(AiHttp.Response(200, body, Map("content-type" -> "application/json")))
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its provider"):
     Map("ai-anthropic" -> "anthropic", "ai-openai" -> "openai", "ai-local" -> "local").foreach { (id, name) =>
@@ -88,7 +88,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
         Right(
           AiTurn(
             "Let me look.",
-            List(AiToolCall("toolu_01", "facets", """{"field":"tags"}""")),
+            List(AiTool.Call("toolu_01", "facets", """{"field":"tags"}""")),
             AiStop.ToolUse,
             Some(AiUsage(2000, 80, 500, 300)),
             Some("claude-sonnet-4-5-20250929")
@@ -100,7 +100,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
   test("openai: one call to chat completions, keyed by a bearer token; an error answer is the provider's failure"):
     val http = ScriptedAiHttp(
       Right(
-        AiHttpResponse(
+        AiHttp.Response(
           429,
           """{"error":{"message":"Rate limit reached","type":"tokens","code":"rate_limit_exceeded"}}"""
         )

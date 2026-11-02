@@ -2,7 +2,7 @@ package com.histmersion.util.data.maintenance
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -50,8 +50,8 @@ object PgRelocation:
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
   def relocate(pg: Store, macOS: Boolean, processes: Processes): Option[Result] =
-    val marker = StoreKey.applyUnsafe(Marker)
-    val here = pg.onDisk(StoreKey.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
+    val marker = Store.Key.applyUnsafe(Marker)
+    val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().trim).filter(_.nonEmpty) else None
     recorded.filter(_ != here).map { from =>
       val (fb, tb) = (from.getBytes(UTF_8), here.getBytes(UTF_8))

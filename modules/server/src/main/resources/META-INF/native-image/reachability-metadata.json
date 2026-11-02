@@ -11699,7 +11699,7 @@
       ]
     },
     {
-      "type": "com.histmersion.config.ConfigReloadConfig$",
+      "type": "com.histmersion.config.ConfigReload$Config$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"
@@ -15445,7 +15445,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.personal.bookmarks.BookmarkRow$",
+      "type": "com.histmersion.domain.personal.bookmarks.Bookmark$Row$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -15453,7 +15453,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.personal.notes.NoteRow$",
+      "type": "com.histmersion.domain.personal.notes.Note$Row$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -15501,7 +15501,7 @@
       ]
     },
     {
-      "type": "com.histmersion.plugin.PluginConfig$",
+      "type": "com.histmersion.plugin.Plugin$Config$",
       "fields": [
         {
           "name": "given_ConfigReader_Boolean$lzy1"

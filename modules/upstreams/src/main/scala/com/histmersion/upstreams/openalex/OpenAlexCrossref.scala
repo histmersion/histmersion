@@ -1,17 +1,17 @@
 package com.histmersion.upstreams.openalex
-import com.histmersion.plugin.{PluginHttp, PluginLog}
 import io.circe.Json
 import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkLookup, WorkRef}
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.json
+import com.histmersion.plugin.Plugin
 
 /** OpenAlex and Crossref: search, a work's metadata, its deposited reference list, its amendment notices, and
   * OpenAlex's own record of it — over the host's HTTP, for the host's discovery and for the fetchers that read an
   * OpenAlex record.
   */
-final class OpenAlexCrossref(cfg: UpstreamSettings, http: PluginHttp, log: PluginLog):
+final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log):
 
   private def mailto = "mailto" -> cfg.mailto
 

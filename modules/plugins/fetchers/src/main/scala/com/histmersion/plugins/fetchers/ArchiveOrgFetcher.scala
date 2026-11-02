@@ -1,6 +1,6 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 
@@ -10,7 +10,7 @@ import com.histmersion.upstreams.archiveorg.ArchiveOrg
   */
 final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
-  def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
       case None     => Fetch.Miss("archive-org needs an archive.org identifier")
       case Some(id) =>

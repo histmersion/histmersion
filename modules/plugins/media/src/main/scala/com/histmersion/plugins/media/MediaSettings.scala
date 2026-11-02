@@ -12,7 +12,7 @@ final case class MediaSettings(
     thumbPx: Int,
     perProperty: Int,
     wikidata: WikidataSettings,
-    commons: CommonsSettings,
+    commons: Commons.Settings,
     depicts: DepictsSettings,
     met: CollectionSettings,
     cleveland: CollectionSettings,

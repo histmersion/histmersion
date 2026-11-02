@@ -20,13 +20,13 @@ private[bookmarks] object BookmarkRepo:
           FROM bookmarks b"""
 
   /** Newest first; every one when no `size` is given. */
-  def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[BookmarkRow] =
+  def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
     (Sql.of(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL", Param.S(user.value)) ++
       kind.fold(Sql.empty)(k => Sql.of(" AND b.target_kind = ?", Param.S(k.wire))) ++
       Sql.raw(" ORDER BY b.created_at DESC, b.id DESC") ++
-      size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[BookmarkRow].run().toList
+      size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[Bookmark.Row].run().toList
 
-  def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[BookmarkRow] =
+  def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
     Sql
       .of(
         s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL AND b.id = ?::uuid",
@@ -34,7 +34,7 @@ private[bookmarks] object BookmarkRepo:
         Param.S(id.value)
       )
       .frag
-      .query[BookmarkRow]
+      .query[Bookmark.Row]
       .run()
       .headOption
 

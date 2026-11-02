@@ -31,7 +31,7 @@ object Ping:
   */
 class AiProvidersSuite extends munit.FunSuite:
 
-  private val offline = new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }
+  private val offline = new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") }
 
   /** A generation of `plugins` as the server builds one: the first-party plugins supplied the host's settings
     * (`reference.conf` under `env`) and allowed their reserved names.
@@ -59,23 +59,23 @@ class AiProvidersSuite extends munit.FunSuite:
 
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
-      answers: List[AiTurnRequest => Either[AiFailure, AiTurn]],
+      answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
       override val spendsPersonalPlan: Boolean = false,
       checked: Either[String, Unit] = Right(())
   ) extends AiProvider:
     val title = "Scripted"
-    val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurnRequest]
+    val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
     override def check(model: String) = checked
-    def turn(r: AiTurnRequest, http: AiHttp) =
+    def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
-      answers.lift(asked.size - 1).getOrElse((_: AiTurnRequest) => Left(AiFailure.Error("script exhausted")))(r)
+      answers.lift(asked.size - 1).getOrElse((_: AiTurn.Request) => Left(AiFailure.Error("script exhausted")))(r)
 
   /** A third-party plugin registering `provider` under `name`. */
   final private class AiPlugin(name: String, provider: AiProvider, id: String = "zq-ai") extends Plugin:
     type Config = com.histmersion.util.plugins.HostProvided.NoSettings
-    val info = PluginInfo(id, "0.1.0", Spi.Version)
+    val info = Plugin.Info(id, "0.1.0", Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: Config, ctx: PluginContext) = ctx.aiProviders.add(name, provider)
+    def register(c: Config, ctx: Plugin.Context) = ctx.aiProviders.add(name, provider)
 
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 
@@ -235,7 +235,7 @@ class AiProvidersSuite extends munit.FunSuite:
   test("a plugin's turns run in the host's loop: the host's tool runs, the answer is decoded, each turn counted"):
     val p = Scripted(
       List(
-        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("", List(AiTool.Call("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
         _ => Right(AiTurn("""{"citekey":"x2020","title":"X","year":2020}""", usage = u, servedBy = Some("pro-002")))
       )
     )
@@ -258,13 +258,14 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assertEquals(
       second.messages.collect { case AiMessage.Assistant(_, cs) => cs }.flatten,
-      List(AiToolCall("c1", "ping", """{"word":"hi"}"""))
+      List(AiTool.Call("c1", "ping", """{"word":"hi"}"""))
     )
 
   test("a tool the step does not allow is never run for a plugin either; the last iteration offers no tools"):
     val p = Scripted(
       List(
-        _ => Right(AiTurn("", List(AiToolCall("c1", "query", """{"sql":"DELETE FROM sources"}""")), AiStop.ToolUse, u)),
+        _ =>
+          Right(AiTurn("", List(AiTool.Call("c1", "query", """{"sql":"DELETE FROM sources"}""")), AiStop.ToolUse, u)),
         _ => Right(AiTurn("""{"citekey":"x","title":"X","year":null}""", usage = u))
       )
     )
@@ -280,7 +281,7 @@ class AiProvidersSuite extends munit.FunSuite:
         seen.incrementAndGet(); next
     val p = Scripted(
       List(
-        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"a"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("", List(AiTool.Call("c1", "ping", """{"word":"a"}""")), AiStop.ToolUse, u)),
         _ => Right(AiTurn("""{"citekey":"x","title":"X","year":1}""", usage = u))
       )
     )
@@ -308,7 +309,7 @@ class AiProvidersSuite extends munit.FunSuite:
     "pure: an answer becomes sttp-ai's — stop reasons, usage never negative, the configured model when none is named"
   ):
     val t =
-      PluginAiClient.response(AiTurn("t", List(AiToolCall("1", "x", "{}")), AiStop.EndTurn, Some(AiUsage(-5, 3))), ref)
+      PluginAiClient.response(AiTurn("t", List(AiTool.Call("1", "x", "{}")), AiStop.EndTurn, Some(AiUsage(-5, 3))), ref)
     assertEquals((t.stopReason, t.model, t.usage.map(_.inputTokens.value)), (StopReason.ToolUse, Some("pro"), Some(0L)))
     assertEquals(PluginAiClient.response(AiTurn("t", stop = AiStop.MaxTokens), ref).stopReason, StopReason.MaxTokens)
     assertEquals(
@@ -326,20 +327,20 @@ class AiProvidersSuite extends munit.FunSuite:
     )
 
   /** A provider that asks for the loop's notes and verbatim failures, as the HTTP built-ins do. */
-  final private class Wired(answers: List[AiTurnRequest => Either[AiFailure, AiTurn]], checked: Either[String, Unit])
+  final private class Wired(answers: List[AiTurn.Request => Either[AiFailure, AiTurn]], checked: Either[String, Unit])
       extends AiProvider:
     val title = "Wired"
-    val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurnRequest]
+    val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
     override def capabilities = AiCapabilities(iterationMarkers = true, verbatimFailures = true)
     override def check(model: String) = checked
-    def turn(r: AiTurnRequest, http: AiHttp) =
+    def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
-      answers.lift(asked.size - 1).getOrElse((_: AiTurnRequest) => Left(AiFailure.Error("script exhausted")))(r)
+      answers.lift(asked.size - 1).getOrElse((_: AiTurn.Request) => Left(AiFailure.Error("script exhausted")))(r)
 
   test("the request options a provider asks for: the loop's notes, the rendered schema, reasoning, verbatim failures"):
     val p = Wired(
       List(
-        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("", List(AiTool.Call("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
         _ => Right(AiTurn("""{"word":"pong"}""", usage = Some(AiUsage(10, 5, reasoning = 3))))
       ),
       Right(())
@@ -357,7 +358,7 @@ class AiProvidersSuite extends munit.FunSuite:
     // a third-party provider that asks for nothing sees neither the notes nor anything else new
     val plain = Scripted(
       List(
-        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("", List(AiTool.Call("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
         _ => Right(AiTurn("""{"citekey":"x","title":"X","year":1}""", usage = u))
       )
     )

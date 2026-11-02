@@ -1,7 +1,7 @@
 package com.histmersion.fixtures.helloai
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** A TEST FIXTURE, not a product: the smallest third-party AI provider, compiled against plugin-api alone and packaged

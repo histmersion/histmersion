@@ -23,19 +23,19 @@ object JobFollow:
     def line(text: String): Unit = Console.err.print(s"\r${" " * Width}\r$text")
     def clear(): Unit = Console.err.print("\r" + " " * Width + "\r")
 
-  def failed(what: String, why: Option[String]): CliError =
-    CliError(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
+  def failed(what: String, why: Option[String]): Cli.Error =
+    Cli.Error(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
   def job(
-      fetch: String => Either[CliError, JobInfo],
+      fetch: String => Either[Cli.Error, JobInfo],
       id: String,
       waited: Long = 0,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = Progress.line,
       clear: () => Unit = () => Progress.clear()
-  ): Either[CliError, JobInfo] =
+  ): Either[Cli.Error, JobInfo] =
     fetch(id) match
       case Left(e)  => clear(); Left(e)
       case Right(j) =>
@@ -53,12 +53,12 @@ object JobFollow:
     */
   @annotation.tailrec
   def backup(
-      fetch: () => Either[CliError, Backup.Status],
+      fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
       pollMs: Long = BackupPollMs,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = l => System.err.println(l)
-  ): Either[CliError, Backup.Result] =
+  ): Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>
         progress(s"backup ${s.file} running for ${s.durationMs / 1000} s…")
@@ -67,5 +67,5 @@ object JobFollow:
           case Right(next) => backup(fetch, next, pollMs, sleep, progress)
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
-        s.result.toRight(CliError(s"backup ${s.file} finished without a checksum", ExitCode.Refused))
+        s.result.toRight(Cli.Error(s"backup ${s.file} finished without a checksum", ExitCode.Refused))
       case _ => Left(failed(s"backup ${s.file}", s.error))

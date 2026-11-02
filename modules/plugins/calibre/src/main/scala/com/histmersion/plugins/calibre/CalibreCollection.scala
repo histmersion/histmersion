@@ -8,7 +8,7 @@ import scala.util.Try
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
-final class CalibreCollection(library: CalibreLibrary, writeBack: Boolean, shell: Shell) extends SourceCollection:
+final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shell: Shell) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: String = "Calibre"
@@ -89,7 +89,7 @@ final class CalibreCollection(library: CalibreLibrary, writeBack: Boolean, shell
       r.id.value.trim.toIntOption.map(AuditRecord(r.key, _, r.title, r.authors, r.year.map(_.value)))
     )
     calibre.all().map { books =>
-      CalibreAudit.audit(recs, books.map(b => b.id -> b).toMap).map(CalibreCollection.finding)
+      Calibre.Audit.audit(recs, books.map(b => b.id -> b).toMap).map(CalibreCollection.finding)
     }
 
 object CalibreCollection:
@@ -97,7 +97,7 @@ object CalibreCollection:
   val SearchLimit: Int = 20
 
   /** A book as a collection item. */
-  def item(b: CalibreBook): CollectionItem =
+  def item(b: Calibre.Book): CollectionItem =
     CollectionItem(
       id = CollectionId(b.id.toString),
       title = Some(b.title),
@@ -113,8 +113,8 @@ object CalibreCollection:
     )
 
   /** An item back as the book it was read from. */
-  def book(i: CollectionItem): CalibreBook =
-    CalibreBook(
+  def book(i: CollectionItem): Calibre.Book =
+    Calibre.Book(
       id = i.id.value.trim.toIntOption.getOrElse(0),
       title = i.title.getOrElse(""),
       authors = i.authors,
@@ -127,13 +127,13 @@ object CalibreCollection:
       cover = i.cover
     )
 
-  def push(m: CollectionMetadata): CalibrePush =
-    CalibrePush(m.title, m.authors, m.doi, m.isbn, m.year.map(_.value), m.publisher, m.summary, m.tags)
+  def push(m: CollectionMetadata): Calibre.Push =
+    Calibre.Push(m.title, m.authors, m.doi, m.isbn, m.year.map(_.value), m.publisher, m.summary, m.tags)
 
-  def change(c: CalibreChange): CollectionChange = CollectionChange(c.field.name, c.from, c.to)
+  def change(c: Calibre.Change): CollectionChange = CollectionChange(c.field.name, c.from, c.to)
 
   def entry(e: UpdateEntry): CollectionUpdateEntry =
-    def all(cs: List[CalibreChange]) = cs.map(change)
+    def all(cs: List[Calibre.Change]) = cs.map(change)
     val outcome = e.outcome match
       case UpdateOutcome.Change(cs)         => CollectionUpdateOutcome.Change(all(cs))
       case UpdateOutcome.Applied(cs)        => CollectionUpdateOutcome.Applied(all(cs))

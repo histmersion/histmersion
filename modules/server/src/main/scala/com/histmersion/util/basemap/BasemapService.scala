@@ -3,7 +3,7 @@ package com.histmersion.util.basemap
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.util.storage.{Location, Storage, Store, StoreError, StoreKey}
+import com.histmersion.util.storage.{Location, Storage, Store}
 
 import sttp.model.StatusCode
 
@@ -35,17 +35,17 @@ final class BasemapService(
   private def cfg = config()
 
   /** The open archives, by where their file is, with the file stamp they were opened at. */
-  private val open = ConcurrentHashMap[String, (String, PmTilesFile)]()
+  private val open = ConcurrentHashMap[String, (String, PmTiles.File)]()
 
   /** The base map's files, where the configuration puts them now. */
   def files: Store = storage.store(Location.Basemap)
 
-  def key(l: Basemap.Layer): StoreKey = StoreKey.applyUnsafe(l.file)
+  def key(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(l.file)
 
   /** The unfinished download of a layer: its range requests, kept until it is assembled. */
-  def work(l: Basemap.Layer): StoreKey = StoreKey.applyUnsafe(s".${l.wire}.part")
+  def work(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(s".${l.wire}.part")
 
-  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
+  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   private def attribution(l: Basemap.Layer): String = l match
     case Basemap.Layer.Vector     => cfg.vector.attribution
@@ -56,14 +56,14 @@ final class BasemapService(
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
   /** A stamp of the file as it is now (size, modification time): it changes with each fetch. */
-  private def stamp(k: StoreKey, store: Store = files): Option[String] =
+  private def stamp(k: Store.Key, store: Store = files): Option[String] =
     store.stat(k).filter(_.isFile).map(f => s"${f.size.value.toHexString}${f.modified.toEpochMilli.toHexString}")
 
   /** The layer's archive, opened once and again only when the file changed. */
-  def reader(l: Basemap.Layer): Either[String, Option[PmTilesFile]] = readerAt(key(l))
+  def reader(l: Basemap.Layer): Either[String, Option[PmTiles.File]] = readerAt(key(l))
 
   /** The archive `k` (a layer's, a focus region's), opened once and again only when the file changed. */
-  def readerAt(k: StoreKey): Either[String, Option[PmTilesFile]] =
+  def readerAt(k: Store.Key): Either[String, Option[PmTiles.File]] =
     val store = files
     val p = store.where(k)
     stamp(k, store) match
@@ -80,7 +80,7 @@ final class BasemapService(
                 case old                      =>
                   store
                     .get(k)
-                    .fold[Either[String, Option[PmTilesFile]]](Right(None))(PmTilesFile.open(_).map(Some(_)))
+                    .fold[Either[String, Option[PmTiles.File]]](Right(None))(PmTiles.File.open(_).map(Some(_)))
                     .map { opened =>
                       opened.foreach(f => open.put(p, (s, f)))
                       // an archive replaced while a request reads it: the old channel stays readable
@@ -163,13 +163,13 @@ final class BasemapService(
   // ── the relief deeper than the extract: focus regions and on demand ────────────────────────────
 
   /** Where the focus regions' relief archives are. */
-  def focusDir: StoreKey = BasemapService.FocusDir
+  def focusDir: Store.Key = BasemapService.FocusDir
 
   /** The focus region `name`'s archive. */
-  def focusKey(name: String): StoreKey = focusDir.child(s"$name.pmtiles")
+  def focusKey(name: String): Store.Key = focusDir.child(s"$name.pmtiles")
 
   /** The focus regions' archives, by name. */
-  def focusFiles: List[(String, StoreKey)] =
+  def focusFiles: List[(String, Store.Key)] =
     files
       .list(focusDir)
       .filter(f => f.isFile && f.key.name.endsWith(".pmtiles"))
@@ -201,7 +201,7 @@ final class BasemapService(
   @volatile private var demands = Map.empty[Basemap.Layer, OnDemandTiles]
 
   private def demandAt(l: Basemap.Layer, name: String)(make: Store => OnDemandTiles): OnDemandTiles =
-    val at = files.sub(StoreKey.applyUnsafe(name))
+    val at = files.sub(Store.Key.applyUnsafe(name))
     demands
       .get(l)
       .filter(_.store.where() == at.where())
@@ -304,7 +304,7 @@ final class BasemapService(
     * that exists — a focus region's, else the extract's — cut and resampled in metres ([[TerrainResample]]) as a
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
-  private def fromAncestor(z: Int, x: Long, y: Long, extract: PmTilesFile): Option[Array[Byte]] =
+  private def fromAncestor(z: Int, x: Long, y: Long, extract: PmTiles.File): Option[Array[Byte]] =
     val key = s"${stamp(this.key(Basemap.Layer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
@@ -478,7 +478,7 @@ final class BasemapService(
       if jobs.running.isDefined then Left(jobs.busy("a base-map fetch", Some(BasemapApi.Busy)))
       else
         val store = files
-        def gone(f: StoreKey, w: StoreKey): List[(String, Long)] =
+        def gone(f: Store.Key, w: Store.Key): List[(String, Long)] =
           Option(open.remove(store.where(f))).foreach(_._2.close())
           val bytes = store.stat(f).filter(_.isFile).fold(0L)(_.size.value)
           val file = Option.when(store.delete(f))((store.where(f), bytes))
@@ -489,8 +489,8 @@ final class BasemapService(
           .when(q.cache || all) {
             Basemap.Layer.values.toList.flatMap(onDemandOf).flatMap { od =>
               val c = od.store
-              Option.when(c.exists(StoreKey.Root))(
-                (c.where(), od.cache.clear() + c.deleteTree(StoreKey.Root).fold(0L)(_.value))
+              Option.when(c.exists(Store.Key.Root))(
+                (c.where(), od.cache.clear() + c.deleteTree(Store.Key.Root).fold(0L)(_.value))
               )
             }
           }
@@ -501,7 +501,7 @@ final class BasemapService(
     }
 
   /** The unfinished download of a focus region. */
-  def focusWork(name: String): StoreKey = StoreKey.applyUnsafe(s".terrain-focus-$name.part")
+  def focusWork(name: String): Store.Key = Store.Key.applyUnsafe(s".terrain-focus-$name.part")
 
   // ── fetching ───────────────────────────────────────────────────────────────────────────────────
 
@@ -683,8 +683,8 @@ final class BasemapService(
       h: RangeHttp,
       note: String => Unit,
       keepAll: Boolean,
-      out: Option[StoreKey] = None,
-      workDir: Option[StoreKey] = None
+      out: Option[Store.Key] = None,
+      workDir: Option[Store.Key] = None
   ): Either[String, String] =
     val store = files
     done(store.makeDirectory())
@@ -768,8 +768,8 @@ final class BasemapService(
         val coords = tiles.map(_._2)
         val got = coords.zipWithIndex.foldLeft[Either[String, Int]](Right(0)) { case (acc, ((z, x, y), i)) =>
           acc.flatMap { n =>
-            val f = StoreKey.applyUnsafe(s"$z-$x-$y.png")
-            val none = StoreKey.applyUnsafe(s"$z-$x-$y.none")
+            val f = Store.Key.applyUnsafe(s"$z-$x-$y.png")
+            val none = Store.Key.applyUnsafe(s"$z-$x-$y.none")
             if work.isFile(f) || work.isFile(none) then Right(n)
             else
               if n > 0 then pace.sleep(bc.requestGapMs.toLong)
@@ -787,7 +787,7 @@ final class BasemapService(
           val w = PmTilesWriter(store, out)
           var stored = 0L // tiles written
           ids.zip(coords).foreach { case (id, (z, x, y)) =>
-            work.get(StoreKey.applyUnsafe(s"$z-$x-$y.png")).foreach { f => w.add(id, f.bytes()); stored += 1 }
+            work.get(Store.Key.applyUnsafe(s"$z-$x-$y.png")).foreach { f => w.add(id, f.bytes()); stored += 1 }
           }
           val header = PmTiles.Header(
             0,
@@ -1057,7 +1057,7 @@ object BasemapService:
   val JobKind = com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value
 
   /** Where the focus regions' relief archives are, in the base map's store. */
-  val FocusDir: StoreKey = StoreKey.applyUnsafe("terrain-focus")
+  val FocusDir: Store.Key = Store.Key.applyUnsafe("terrain-focus")
 
   /** Whether tile `z/x/y` lies in an archive's bounds (any part of it). Pure. */
   def inside(h: PmTiles.Header, z: Int, x: Long, y: Long): Boolean =
@@ -1131,6 +1131,6 @@ object BasemapService:
       (if dryRun then s"; by zoom — ${BasemapFetch.perZoomLine(BasemapFetch.perZoom(p))}" else "")
 
   /** Close a replaced archive a little later, after the requests reading it are done. */
-  private def closeLater(f: PmTilesFile): Unit =
+  private def closeLater(f: PmTiles.File): Unit =
     val t = Thread.ofVirtual().unstarted { () => Thread.sleep(30000); f.close() }
     t.start()

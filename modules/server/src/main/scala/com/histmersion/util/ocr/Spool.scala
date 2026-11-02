@@ -1,7 +1,7 @@
 package com.histmersion.util.ocr
 
 import com.histmersion.api.text.SafeName
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 import com.histmersion.domain.library.Citekey
 
 /** Where a fetched file waits for the converter (`acquire.spool-dir`; empty is the JVM temp directory's
@@ -10,14 +10,14 @@ import com.histmersion.domain.library.Citekey
 final class Spool(store: Store):
 
   /** Where `key` is, for the ingest's report. */
-  def where(key: StoreKey): String = store.where(key)
+  def where(key: Store.Key): String = store.where(key)
 
   /** `bytes` as the fetched file of `citekey`. The key is built from a caller-supplied string, so it gets BOTH guards:
     * the citekey must parse ([[Citekey]]), and the store's key refuses anything that would leave it.
     */
-  def write(citekey: String, extension: String, bytes: Array[Byte]): Either[String, StoreKey] =
+  def write(citekey: String, extension: String, bytes: Array[Byte]): Either[String, Store.Key] =
     Citekey.parse(citekey).flatMap { _ =>
-      StoreKey
+      Store.Key
         .of(citekey, s"paper.${SafeName.of(extension)}")
         .left
         .map(_ => s"could not spool the file: '$citekey' would escape the spool directory")
@@ -25,4 +25,4 @@ final class Spool(store: Store):
     }
 
   /** The fetched file at `key`, when it is there. */
-  def get(key: StoreKey): Option[com.histmersion.util.storage.Blob] = store.get(key)
+  def get(key: Store.Key): Option[com.histmersion.util.storage.Blob] = store.get(key)

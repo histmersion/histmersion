@@ -2,13 +2,13 @@ package com.histmersion.plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
 
 /** The first-party secret vaults (docs/research-plugins.md §3.7): each a plugin, built into the server and DISABLED
   * until `histmersion.plugins.<id>.enabled = true`. Each one runs the vault's own CLI as a subprocess ([[Subprocess]])
-  * and registers a [[SecretVault]] under its id, so `<id>:<ref>` references in any plugin's config resolve through it.
+  * and registers a [[Secret.Vault]] under its id, so `<id>:<ref>` references in any plugin's config resolve through it.
   * No master password is ever stored: a tool that needs one to unlock gets it from a [[Secret]] (`env:…`), or the vault
   * answers that it is locked.
   */
@@ -28,7 +28,7 @@ object Vaults:
   /** A Secret given in a vault's own settings (its unlock password, its session), resolved through the host; `None`
     * when the setting is `null`.
     */
-  private[vaults] def optional(s: Option[Secret], ctx: PluginContext): Either[String, Option[String]] =
+  private[vaults] def optional(s: Option[Secret], ctx: Plugin.Context): Either[String, Option[String]] =
     s.fold(Right(None))(ctx.secret(_).map(Some(_)))
 
   /** Pure: `~/x` against HOME. */

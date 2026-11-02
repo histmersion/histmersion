@@ -35,7 +35,7 @@ private[cli] object KindSources:
 
   private val Imports =
     """import com.histmersion.plugin.*
-      |import com.histmersion.plugin.PluginConfig.given
+      |import com.histmersion.plugin.Plugin.Config.given
       |import hearth.kindlings.sconfigderivation.ConfigReader
       |
       |""".stripMargin
@@ -69,16 +69,16 @@ private[cli] object KindSources:
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = PluginInfo("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
       |
-      |  def register(config: @Name@Config, ctx: PluginContext): Either[String, Unit] =
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
       |    ctx.sourceFetchers.add("@id@", @Contribution@(config.baseUrl, ctx.http))
       |
       |/** One step of the acquisition chain: a copy of a work by its DOI, from a mirror that serves PDFs. */
-      |final class @Contribution@(baseUrl: String, http: PluginHttp) extends SourceFetcher:
+      |final class @Contribution@(baseUrl: String, http: Plugin.Http) extends SourceFetcher:
       |  val access = Access.Open
       |
-      |  def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+      |  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       |    work.doi match
       |      case None => Fetch.Miss("no DOI")
       |      case Some(doi) =>
@@ -160,9 +160,9 @@ private[cli] object KindSources:
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = PluginInfo("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
       |
-      |  def register(config: @Name@Config, ctx: PluginContext): Either[String, Unit] =
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
       |    ctx.mediaCollections.add("@id@", @Contribution@(config.pictures))
       |
       |/** A media collection kept in the settings: the pictures listed under a place's name. The server
@@ -172,7 +172,7 @@ private[cli] object KindSources:
       |  override val description = "pictures listed in the @id@ plugin's settings"
       |  val role = MediaCollection.Image
       |
-      |  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+      |  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
       |    Right(pictures.filter(_.place.equalsIgnoreCase(place.label)).map(p =>
       |      Right(MediaItem(p.key, p.title, p.pageUrl, Some(p.imageUrl), Right(MediaRights(Licence(p.licence), credit = p.credit)),
       |        geography = List("place" -> p.place)))))
@@ -244,9 +244,9 @@ private[cli] object KindSources:
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = PluginInfo("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
       |
-      |  def register(config: @Name@Config, ctx: PluginContext): Either[String, Unit] =
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
       |    ctx.eventCatalogues.add("@id@", @Contribution@(config.source, config.events))
       |
       |/** An event catalogue kept in the settings, read in one part. The server keeps the events of the
@@ -259,7 +259,7 @@ private[cli] object KindSources:
       |
       |  def parts(query: CatalogueQuery): List[String] = List("all")
       |
-      |  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage] =
+      |  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
       |    Right(CataloguePage(events.map { e =>
       |      // a position off the globe is left out: the event is still read, without one
       |      val position = for lat <- Latitude.option(e.lat); lon <- Longitude.option(e.lon) yield (lat, lon)
@@ -322,9 +322,9 @@ private[cli] object KindSources:
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = PluginInfo("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
       |
-      |  def register(config: @Name@Config, ctx: PluginContext): Either[String, Unit] =
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
       |    ctx.aiProviders.add("@id@", @Contribution@(config.reply))
       |
       |/** An AI provider, registered under the provider name `@id@` (`@id@:<model>` in the agents' roles).
@@ -336,16 +336,16 @@ private[cli] object KindSources:
       |
       |  override def models(http: AiHttp): Either[String, List[String]] = Right(List("fixed"))
       |
-      |  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+      |  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
       |    Right(AiTurn(reply, usage = Some(AiUsage(input = 0, output = 0)), servedBy = Some(request.model)))
       |""".stripMargin
 
   private val AiProviderTest =
     """/** The plugin loaded and called as the server calls it (the Histmersion plugin testkit). Its requests
-      |  * go through a ScriptedAiHttp: answer them with `ScriptedAiHttp(Right(AiHttpResponse(200, "…")))`
+      |  * go through a ScriptedAiHttp: answer them with `ScriptedAiHttp(Right(AiHttp.Response(200, "…")))`
       |  * and assert on what it sent (`requests`, keys masked). */
       |class @Name@Suite extends munit.FunSuite:
-      |  private val request = AiTurnRequest("fixed", "You are a test.", List(AiMessage.User("Hello")), Nil, None,
+      |  private val request = AiTurn.Request("fixed", "You are a test.", List(AiMessage.User("Hello")), Nil, None,
       |    maxTokens = 100, iteration = 1, maxIterations = 1)
       |
       |  private val harness = PluginHarness.load("@id@", "reply = \"{}\"").fold(e => fail(e), identity)
@@ -376,13 +376,13 @@ private[cli] object KindSources:
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = PluginInfo("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
       |
-      |  def register(config: @Name@Config, ctx: PluginContext): Either[String, Unit] =
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
       |    ctx.secretVaults.add("@id@", @Contribution@(java.nio.file.Path.of(config.directory)))
       |
       |/** A secret vault: `@id@:<name>` in a setting is the content of the file `<name>` in the directory. */
-      |final class @Contribution@(directory: java.nio.file.Path) extends SecretVault:
+      |final class @Contribution@(directory: java.nio.file.Path) extends Secret.Vault:
       |  val name = "@id@"
       |
       |  def resolve(ref: String): Either[String, String] =

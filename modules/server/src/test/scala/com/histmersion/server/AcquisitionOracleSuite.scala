@@ -311,14 +311,14 @@ class AcquisitionOracleSuite extends DbSuite:
 
   final private class ZqUnauthorisedPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.PluginInfo("zq-unauthorised", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-unauthorised", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqOracleConfig, ctx: spi.PluginContext) =
+    def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
         "zq-unauthorised",
         new spi.SourceFetcher:
           val access = spi.Access.Unauthorised
-          def fetch(w: spi.WorkKey, c: spi.FetchContext) =
+          def fetch(w: spi.WorkKey, c: spi.Fetch.Context) =
             unauthorisedAsked.incrementAndGet()
             spi.Fetch.Miss("the zq fixture has no copy")
       )
@@ -326,14 +326,14 @@ class AcquisitionOracleSuite extends DbSuite:
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
   final private class ZqShelfPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.PluginInfo("zq-shelf", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-shelf", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqOracleConfig, ctx: spi.PluginContext) =
+    def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
         "zq-shelf",
         new spi.SourceFetcher:
           val access = spi.Access.Open
-          def fetch(w: spi.WorkKey, c: spi.FetchContext) =
+          def fetch(w: spi.WorkKey, c: spi.Fetch.Context) =
             if w.doi.map(_.value).contains("10.5555/zq.licensed") then
               spi.Fetch.Found(
                 spi.FetchedFile(

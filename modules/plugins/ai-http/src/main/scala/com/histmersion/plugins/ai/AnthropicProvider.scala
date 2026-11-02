@@ -24,7 +24,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
       )
     )
 
-  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val schema = request.answerSchemaRendered.orElse(request.answerSchema)
     val sent = for
       url <- base.map(_.endpoint("v1", "messages"))

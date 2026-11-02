@@ -8,12 +8,12 @@ class ChatWireSuite extends munit.FunSuite:
   private val tool =
     AiTool("facets", "Values", """{"type":"object","properties":{"field":{"type":"string"}},"required":["field"]}""")
 
-  private val r = AiTurnRequest(
+  private val r = AiTurn.Request(
     "gpt-x",
     "SYS",
     List(
       AiMessage.User("u"),
-      AiMessage.Assistant("looking", List(AiToolCall("c1", "facets", """{"field":"tags"}"""))),
+      AiMessage.Assistant("looking", List(AiTool.Call("c1", "facets", """{"field":"tags"}"""))),
       AiMessage.ToolResult("c1", "facets", "ok")
     ),
     List(tool),
@@ -61,7 +61,7 @@ class ChatWireSuite extends munit.FunSuite:
       Right(
         AiTurn(
           "",
-          List(AiToolCall("call_0", "a", "{}"), AiToolCall("k", "unknown", "{}")),
+          List(AiTool.Call("call_0", "a", "{}"), AiTool.Call("k", "unknown", "{}")),
           AiStop.ToolUse,
           Some(AiUsage(9, 3, 4, 0, 2)),
           Some("gpt-y")

@@ -129,7 +129,7 @@ object PluginHost:
     * is refused: which one the user meant cannot be known), an id that is no config key, or a key the host keeps for
     * itself.
     */
-  def check(infos: List[PluginInfo], spi: Int): Map[String, String] =
+  def check(infos: List[Plugin.Info], spi: Int): Map[String, String] =
     val dup = infos.groupBy(_.id).collect {
       case (id, is) if is.size > 1 =>
         id -> s"plugin id '$id' is claimed by ${is.size} plugins"
@@ -298,7 +298,7 @@ object PluginHost:
     }
 
   private def mask(s: String): String =
-    if s.trim.startsWith(s"${SecretRef.ValueScheme}:") then s"${SecretRef.ValueScheme}:${SecretRef.Mask}" else s
+    if s.trim.startsWith(s"${Secret.Ref.ValueScheme}:") then s"${Secret.Ref.ValueScheme}:${Secret.Ref.Mask}" else s
 
   /** The value with every literal `value:` string inside it (a list of secrets, an object) masked. */
   private def masked(v: ConfigValue): ConfigValue = v match
@@ -324,15 +324,15 @@ object PluginHost:
   /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the vault registered
     * under that name. Errors name the reference (never a value).
     */
-  def resolve(ref: SecretRef, env: Config, vaults: Map[String, SecretVault]): Either[String, String] =
+  def resolve(ref: Secret.Ref, env: Config, vaults: Map[String, Secret.Vault]): Either[String, String] =
     ref match
-      case SecretRef.Value(v) => Right(v)
-      case SecretRef.Env(n)   =>
+      case Secret.Ref.Value(v) => Right(v)
+      case Secret.Ref.Env(n)   =>
         Option(env.root.get(n))
           .flatMap(v => Option(v.unwrapped))
           .map(_.toString)
           .toRight(s"secret ${ref.shown}: environment variable $n is not set")
-      case SecretRef.Vault(name, r) =>
+      case Secret.Ref.Vault(name, r) =>
         vaults.get(name) match
           case None =>
             Left(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)")
@@ -340,14 +340,14 @@ object PluginHost:
             try v.resolve(r).left.map(e => s"secret ${ref.shown}: $e")
             catch case NonFatal(e) => Left(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}")
 
-  /** Resolve several references of ONE vault in one call ([[SecretVault.resolveAll]]): each answer as [[resolve]] words
-    * it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll` that
-    * throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead, so a
-    * throw fails only its own reference.
+  /** Resolve several references of ONE vault in one call ([[Secret.Vault.resolveAll]]): each answer as [[resolve]]
+    * words it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll`
+    * that throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead,
+    * so a throw fails only its own reference.
     */
-  def resolveAll(name: String, refs: List[String], vault: SecretVault): Map[String, Either[String, String]] =
+  def resolveAll(name: String, refs: List[String], vault: Secret.Vault): Map[String, Either[String, String]] =
     val asked = refs.distinct
-    def one(r: String) = resolve(SecretRef.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
+    def one(r: String) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
       val answers = Option(vault.resolveAll(asked)).getOrElse(Map.empty)
       asked.map { r =>
@@ -356,7 +356,7 @@ object PluginHost:
           .flatMap(Option(_))
           .getOrElse(Left(s"vault '$name' gave no answer for it"))
           .left
-          .map(e => s"secret ${SecretRef.Vault(name, r).shown}: $e")
+          .map(e => s"secret ${Secret.Ref.Vault(name, r).shown}: $e")
       }.toMap
     catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
 
@@ -366,15 +366,15 @@ object PluginHost:
     * registrations).
     */
   final private class GenerationSecrets(env: Config, wanted: Map[String, List[String]]):
-    private val known = scala.collection.concurrent.TrieMap.empty[SecretRef, Either[String, String]]
-    def apply(ref: SecretRef, vaults: Map[String, SecretVault]): Either[String, String] =
+    private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[String, String]]
+    def apply(ref: Secret.Ref, vaults: Map[String, Secret.Vault]): Either[String, String] =
       known.getOrElse(
         ref, {
           ref match
-            case SecretRef.Vault(name, asked) if vaults.contains(name) =>
+            case Secret.Ref.Vault(name, asked) if vaults.contains(name) =>
               val batch = (wanted.getOrElse(name, Nil) :+ asked).distinct
-                .filterNot(r => known.contains(SecretRef.Vault(name, r)))
-              resolveAll(name, batch, vaults(name)).foreach((r, v) => known.update(SecretRef.Vault(name, r), v))
+                .filterNot(r => known.contains(Secret.Ref.Vault(name, r)))
+              resolveAll(name, batch, vaults(name)).foreach((r, v) => known.update(Secret.Ref.Vault(name, r), v))
             case _ => known.update(ref, resolve(ref, env, vaults))
           known.getOrElse(ref, resolve(ref, env, vaults))
         }
@@ -389,7 +389,7 @@ object PluginHost:
       p: Plugin,
       block: Config,
       secrets: List[Secret],
-      call: PluginContext => Either[String, Unit],
+      call: Plugin.Context => Either[String, Unit],
       carried: Option[(PluginStatus, Registries)] = None
   )
 
@@ -419,16 +419,16 @@ object PluginHost:
       id: String,
       services: HostServices,
       resolved: Secret => Either[String, String],
-      vaults: Staged[SecretVault],
+      vaults: Staged[Secret.Vault],
       fetchers: Staged[SourceFetcher],
       media: Staged[MediaCollection],
       events: Staged[EventCatalogue],
       ai: Staged[AiProvider],
       gazetteers: Staged[GazetteerSource],
       collections: Staged[SourceCollection]
-  ) extends PluginContext:
-    lazy val http: PluginHttp = services.http()
-    val log: PluginLog = new PluginLog:
+  ) extends Plugin.Context:
+    lazy val http: Plugin.Http = services.http()
+    val log: Plugin.Log = new Plugin.Log:
       def info(message: String) = services.log(id, false, message)
       def warn(message: String) = services.log(id, true, message)
     def env(name: String) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
@@ -506,8 +506,8 @@ object PluginHost:
       Some(s"'$id' is the name of one of Histmersion's own source collections")
     else None
 
-  private def validVault(id: String, v: SecretVault): Option[String] =
-    if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then
+  private def validVault(id: String, v: Secret.Vault): Option[String] =
+    if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id) then
       Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
     else if v.name != id then Some(s"vault '${v.name}' registered under another name, '$id'")
@@ -610,7 +610,7 @@ object PluginHost:
     val ready = prepared.collect { case (_, Right(pr)) => pr }
     val wanted = ready
       .flatMap(_.secrets.map(_.ref))
-      .collect { case SecretRef.Vault(v, r) => v -> r }
+      .collect { case Secret.Ref.Vault(v, r) => v -> r }
       .distinct
       .groupMap(_._1)(_._2)
     val secrets = GenerationSecrets(env, wanted)
@@ -632,7 +632,7 @@ object PluginHost:
           case Nil        => (rs, ds, left, prog)
           case pr :: tail =>
             val missing =
-              pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
+              pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !rs.secretVaults.contains(v) => v }
             if missing.nonEmpty then pass(tail, rs, ds, left :+ pr, prog)
             else
               val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets, firstParty(pr.p.info.id)))
@@ -641,7 +641,7 @@ object PluginHost:
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
           val names =
-            pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
+            pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
           pr.p.info.id -> (
             status(
               pr.p,
@@ -699,11 +699,11 @@ object PluginHost:
     val p = pr.p
     val id = p.info.id
     def resolved(s: Secret): Either[String, String] = secrets(s.ref, regs.secretVaults)
-    val literal = pr.secrets.exists(_.ref.isInstanceOf[SecretRef.Value])
+    val literal = pr.secrets.exists(_.ref.isInstanceOf[Secret.Ref.Value])
     val warns = if !literal then Nil
     else
       List(
-        s"$Root.$id: a secret is written into the config (value:${SecretRef.Mask}) — " +
+        s"$Root.$id: a secret is written into the config (value:${Secret.Ref.Mask}) — " +
           "use env:<NAME> or a vault reference"
       )
     warns.foreach(w => services.log(id, true, w))
@@ -725,7 +725,7 @@ object PluginHost:
     pr.secrets.iterator.map(resolved).collectFirst { case Left(e) => e } match
       case Some(e) => fail(e)
       case None    =>
-        val staged = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
+        val staged = Staged[Secret.Vault](Registries.SecretVault, regs.secretVaults, validVault)
         val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
         val media =
           Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection(firstParty))

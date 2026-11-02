@@ -21,7 +21,7 @@ class CommonsParsersSuite extends munit.FunSuite:
   private lazy val media: MediaSettings =
     val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e), identity)
     val supplied = FirstPartySettings.fallback("media-wikidata", loaded.merged)
-    summon[ConfigReader[MediaPluginConfig]].from(supplied.root).fold(e => fail(e.toString), _.media)
+    summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
   // ── titles and URLs ──────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ class CommonsParsersSuite extends munit.FunSuite:
   // ── rights ───────────────────────────────────────────────────────────────────────────────────
 
   /** Commons' answer for one file, `File:X.jpg`, with this `extmetadata`; every request recorded. */
-  final private class OneFile(meta: Map[String, String]) extends PluginHttp:
+  final private class OneFile(meta: Map[String, String]) extends Plugin.Http:
     val asked = scala.collection.mutable.ListBuffer.empty[String]
     def get(url: String, headers: Map[String, String]) =
       asked += url
@@ -80,7 +80,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   private def file(meta: (String, String)*): MediaItem =
     val http = OneFile(meta.toMap)
-    val (items, failed) = CommonsFiles(http, media, HostLicences).items(List("File:X.jpg"))
+    val (items, failed) = Commons.Files(http, media, HostLicences).items(List("File:X.jpg"))
     assertEquals(failed, Nil)
     assertEquals(http.asked.size, 1, "one imageinfo call for the batch")
     items("File:X.jpg")
@@ -133,15 +133,15 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(refusal("License" -> "cc0", "AttributionRequired" -> "true"), Some("no author to credit"))
 
   test("a file Commons does not answer for, or does not have, is stated with the reason it cannot be used"):
-    val http = new PluginHttp:
+    val http = new Plugin.Http:
       def get(url: String, headers: Map[String, String]) =
         Right("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8))
-    val (items, failed) = CommonsFiles(http, media, HostLicences).items(List("File:Gone.jpg", "File:Other.jpg"))
+    val (items, failed) = Commons.Files(http, media, HostLicences).items(List("File:Gone.jpg", "File:Other.jpg"))
     assertEquals(failed, Nil)
     assertEquals(items("File:Gone.jpg").rights, Left("missing on Commons"))
     assertEquals(items("File:Other.jpg").rights, Left("no answer from Commons"))
-    val down = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("HTTP 503") }
-    val (none, lines) = CommonsFiles(down, media, HostLicences).items(List("File:A.jpg"))
+    val down = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("HTTP 503") }
+    val (none, lines) = Commons.Files(down, media, HostLicences).items(List("File:A.jpg"))
     assertEquals(none("File:A.jpg").rights, Left("no answer from Commons"))
     assertEquals(lines, List("Commons File:A.jpg…: HTTP 503"))
 

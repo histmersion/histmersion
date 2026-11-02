@@ -6,11 +6,11 @@ package com.histmersion.plugin
   */
 class SpiAdditionsSuite extends munit.FunSuite:
 
-  private object Bodies extends PluginHttp:
+  private object Bodies extends Plugin.Http:
     def get(url: String, headers: Map[String, String]) =
       if url.endsWith("/missing") then Left(s"$url: HTTP 404") else Right(s"body of $url".getBytes("UTF-8"))
 
-  test("PluginHttp.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
+  test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
     val r = Bodies.fetch("https://x.example/a").fold(e => fail(e), identity)
     assertEquals(
       (r.status, r.headers, String(r.body, "UTF-8")),
@@ -19,7 +19,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(Bodies.fetch("https://x.example/missing").map(_.status), Left("https://x.example/missing: HTTP 404"))
 
   test("a response's header is found in any case"):
-    val r = PluginHttpResponse(429, Map("x-ratelimit-remaining" -> "0"), Array.emptyByteArray)
+    val r = Plugin.HttpResponse(429, Map("x-ratelimit-remaining" -> "0"), Array.emptyByteArray)
     assertEquals(r.header("X-RateLimit-Remaining"), Some("0"))
     assertEquals(r.header("Retry-After"), None)
 
@@ -31,9 +31,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(q.waitingUntil, None)
 
   /** A context as a plugin of SPI 2's first release wrote it: no quota of its own. */
-  private object EarlyContext extends PluginContext:
+  private object EarlyContext extends Plugin.Context:
     def http = Bodies
-    def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
     def env(name: String) = None
     def secret(s: Secret) = Left("none")
     def secretVaults = Registry.refusing("no vaults")
@@ -43,9 +43,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(EarlyContext.quota("anything").take("lookup"), Right(()))
 
   test("a fetch context written before peers were told says no plugin is registered"):
-    val ctx = new FetchContext:
+    val ctx = new Fetch.Context:
       def memo[A](key: String)(compute: => A): A = compute
-      val log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+      val log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
     assert(!ctx.registered("oa-unpaywall"))
 
   /** A catalogue as one written before re-reading existed: it re-reads nothing, and its parts stay read. */
@@ -55,7 +55,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def citation = "Floods"
     def home = "https://floods.example"
     def parts(query: CatalogueQuery) = List("all")
-    def read(part: String, query: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
+    def read(part: String, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a catalogue re-reads nothing by default, and a part read once stays read"):
     val stored = CatalogueEvent("f1", "https://floods.example/f1", "Flood", "flood", Some(Year(-500)), Some(Year(-500)))
@@ -69,7 +69,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals((caps.iterationMarkers, caps.verbatimFailures), (false, false))
     val early = new AiProvider:
       def title = "Early"
-      def turn(request: AiTurnRequest, http: AiHttp) = Left(AiFailure.Error("none"))
+      def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error("none"))
     assertEquals(early.capabilities, AiCapabilities(tools = true, structuredOutput = false))
 
   test("the members a provider or host compiled before them used still exist, with their old shapes"):
@@ -82,9 +82,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(new AiCapabilities(false, true), AiCapabilities(false, true, false, false))
     assert(classOf[AiCapabilities].getConstructor(bools*) != null)
     assert(AiCapabilities.getClass.getMethod("apply", bools*) != null)
-    val old = AiTurnRequest("m", "s", Nil, Nil, Some("{}"), 10, 1, 2)
+    val old = AiTurn.Request("m", "s", Nil, Nil, Some("{}"), 10, 1, 2)
     assertEquals((old.answerSchemaRendered, old.answerDescription), (None, None))
-    assertEquals(new AiTurnRequest("m", "s", Nil, Nil, Some("{}"), 10, 1, 2), old)
+    assertEquals(new AiTurn.Request("m", "s", Nil, Nil, Some("{}"), 10, 1, 2), old)
     val request = Array[Class[?]](
       classOf[String],
       classOf[String],
@@ -95,8 +95,8 @@ class SpiAdditionsSuite extends munit.FunSuite:
       classOf[Int],
       classOf[Int]
     )
-    assert(classOf[AiTurnRequest].getConstructor(request*) != null)
-    assert(AiTurnRequest.getClass.getMethod("apply", request*) != null)
+    assert(classOf[AiTurn.Request].getConstructor(request*) != null)
+    assert(AiTurn.Request.getClass.getMethod("apply", request*) != null)
 
   // ── media: the members added for the first-party collections ─────────────────────────────────
 
@@ -104,7 +104,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
   private object Portal extends MediaCollection:
     val title = "Portal objects"
     val role = MediaCollection.Object
-    def search(place: MediaPlace, http: PluginHttp) =
+    def search(place: MediaPlace, http: Plugin.Http) =
       if place.label == "Nowhere" then Left("offline")
       else
         Right(
@@ -145,9 +145,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     )
     val (a, b, e) =
       (
-        MediaTargetId(MediaTarget.Places, "a"),
-        MediaTargetId(MediaTarget.Places, "b"),
-        MediaTargetId(MediaTarget.Events, "e")
+        MediaTarget.Id(MediaTarget.Places, "a"),
+        MediaTarget.Id(MediaTarget.Places, "b"),
+        MediaTarget.Id(MediaTarget.Events, "e")
       )
     assertEquals(found.uses.map(u => (u.target, u.item.key, u.rank)), List((a, "a-1", 0)))
     assertEquals(found.asked, List(a, b, e))
@@ -163,8 +163,8 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val failing = new MediaCollection:
       val title = "Failing"
       val role = MediaCollection.Map
-      def search(place: MediaPlace, http: PluginHttp) = Right(Nil)
-      override def complete(item: MediaItem, http: PluginHttp) =
+      def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
+      override def complete(item: MediaItem, http: Plugin.Http) =
         if item.key == "k1" then Left("gone") else Right(item)
     assertEquals(failing.completeAll(items, Bodies), MediaCompleted(Map("k2" -> items(1)), List("k1: gone")))
 
@@ -176,11 +176,11 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("a context written before the host lent its licence reading reads every statement as unknown"):
     val l = EarlyContext.licences
-    assertEquals(l.readName("CC BY 4.0"), LicenceRead("CC BY 4.0", LicenceRead.Unknown))
+    assertEquals(l.readName("CC BY 4.0"), Licence.Read("CC BY 4.0", Licence.Read.Unknown))
     assertEquals(
       l.readUrl("https://creativecommons.org/licenses/by/4.0"),
-      LicenceRead.unknown("https://creativecommons.org/licenses/by/4.0")
+      Licence.Read.unknown("https://creativecommons.org/licenses/by/4.0")
     )
-    assertEquals(l.readFirst(List(" ", "cc0", "pd")), LicenceRead("cc0", LicenceRead.Unknown))
-    assertEquals(l.readFirst(Nil), LicenceRead.unknown(""))
+    assertEquals(l.readFirst(List(" ", "cc0", "pd")), Licence.Read("cc0", Licence.Read.Unknown))
+    assertEquals(l.readFirst(Nil), Licence.Read.unknown(""))
     assert(!l.readName("cc-by-4.0").needsAttribution)

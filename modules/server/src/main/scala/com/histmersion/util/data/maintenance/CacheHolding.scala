@@ -1,7 +1,8 @@
 package com.histmersion.util.data.maintenance
 
 import com.histmersion.util.data.TableName
-import com.histmersion.util.storage.{Location, StoreKey}
+import com.histmersion.util.storage.Location
+import com.histmersion.util.storage.Store
 
 /** Where a cache is held. */
 enum CacheHolding:
@@ -12,4 +13,4 @@ enum CacheHolding:
   case InTables(tables: List[TableName])
 
   /** In files below `key` of the store of `location`. */
-  case InStore(location: Location, key: StoreKey)
+  case InStore(location: Location, key: Store.Key)

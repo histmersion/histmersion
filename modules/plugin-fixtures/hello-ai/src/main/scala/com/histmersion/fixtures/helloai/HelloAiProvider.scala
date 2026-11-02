@@ -1,7 +1,7 @@
 package com.histmersion.fixtures.helloai
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiProvider:
   val title = "Hello AI (scripted test provider)"
@@ -19,7 +19,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiP
       AiCheck("token", "ok", if hasToken then "given (never shown)" else "none asked")
     )
 
-  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val usage = Some(AiUsage(input = 100, output = 20))
     if request.model == "limited" then Left(AiFailure.LimitReached("hello-ai: usage limit reached"))
     else
@@ -33,7 +33,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiP
               Right(
                 AiTurn(
                   "",
-                  List(AiToolCall("hello-1", t, r.input.getOrElse("{}"))),
+                  List(AiTool.Call("hello-1", t, r.input.getOrElse("{}"))),
                   AiStop.ToolUse,
                   usage,
                   Some(s"${request.model}-scripted")

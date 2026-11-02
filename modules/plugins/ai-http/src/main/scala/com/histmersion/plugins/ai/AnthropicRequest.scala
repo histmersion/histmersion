@@ -1,8 +1,9 @@
 package com.histmersion.plugins.ai
 
-import com.histmersion.plugin.{AiMessage, AiTurnRequest}
+import com.histmersion.plugin.AiMessage
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
+import com.histmersion.plugin.AiTurn
 
 /** One call to the Anthropic Messages API (`POST v1/messages`), its body as the API takes it: the model, the
   * conversation as user and assistant messages of content blocks (tool calls as `tool_use`, their results as
@@ -20,7 +21,7 @@ object AnthropicRequest:
   /** The request for `r`, or why it cannot be built (a tool call whose input is not a JSON object), described as the
     * exception that says so.
     */
-  def of(r: AiTurnRequest): Either[String, AnthropicRequest] =
+  def of(r: AiTurn.Request): Either[String, AnthropicRequest] =
     messages(r.messages).map { msgs =>
       val tools = Option.when(r.tools.nonEmpty)(
         Json.fromValues(r.tools.map { t =>

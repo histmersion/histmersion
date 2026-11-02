@@ -3,9 +3,9 @@ package com.histmersion.plugins.calibre
 /** What `calibre update --all` does, or did, to one Calibre entry. */
 enum UpdateOutcome:
   /** Dry run: these fields would change. */
-  case Change(changes: List[CalibreChange])
-  case Applied(changes: List[CalibreChange])
-  case Failed(changes: List[CalibreChange], reason: String)
+  case Change(changes: List[Calibre.Change])
+  case Applied(changes: List[Calibre.Change])
+  case Failed(changes: List[Calibre.Change], reason: String)
   case UpToDate
 
   /** Linked from more than one record — which one it should show is a person's decision. */

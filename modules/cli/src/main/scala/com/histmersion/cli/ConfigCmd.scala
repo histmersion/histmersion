@@ -17,11 +17,11 @@ object ConfigCmd:
       (_: Client) =>
         val located = UserPaths.configFile(AppConfig.lookup(org.ekrich.config.ConfigFactory.systemEnvironment()))
         located match
-          case None    => Left(CliError(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})"))
+          case None    => Left(Cli.Error(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})"))
           case Some(p) =>
             println(p)
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
-              case Left(err) => Left(CliError(err))
+              case Left(err) => Left(Cli.Error(err))
               case Right(l)  =>
                 if !Files.exists(p) then System.err.println("(not there yet: the defaults and the environment apply)")
                 else
@@ -42,12 +42,12 @@ object ConfigCmd:
       c.configReload.flatMap { r =>
         Output.emit(json, r)(ReloadMarkdown.report)
         if r.errors.isEmpty then Right(())
-        else Left(CliError("the config was not reloaded", exitCode = ExitCode.Refused))
+        else Left(Cli.Error("the config was not reloaded", exitCode = ExitCode.Refused))
       }
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "config",
       "The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server"

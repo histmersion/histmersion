@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 
@@ -25,8 +25,8 @@ class HostCollectionSuite extends munit.FunSuite:
 
   final private class ShelfPlugin(id: String, name: String) extends Plugin:
     type Config = NoSettings
-    val info = PluginInfo(id, "0.1.0", Spi.Version)
-    def register(c: NoSettings, ctx: PluginContext) = ctx.sourceCollections.add(name, Shelf)
+    val info = Plugin.Info(id, "0.1.0", Spi.Version)
+    def register(c: NoSettings, ctx: Plugin.Context) = ctx.sourceCollections.add(name, Shelf)
 
   private def build(p: Plugin, firstParty: String => Boolean = _ => false) =
     PluginHost.build(
@@ -34,7 +34,7 @@ class HostCollectionSuite extends munit.FunSuite:
       ConfigFactory.parseString(s"histmersion.plugins.${p.info.id}.enabled = true"),
       ConfigFactory.empty,
       HostServices(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+        () => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
         ConfigFactory.empty,
         (_, _, _) => ()
       ),

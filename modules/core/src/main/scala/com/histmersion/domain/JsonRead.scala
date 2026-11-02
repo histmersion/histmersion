@@ -8,7 +8,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 
 /** Shared reading helpers for the collection APIs. Pure. */
-private[domain] object Read:
+private[domain] object JsonRead:
   def str(c: ACursor, k: String): Option[String] =
     c.downField(k).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
   def strs(c: ACursor, k: String): List[String] =

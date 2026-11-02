@@ -48,7 +48,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     assertEquals((r.role, r.rendition), (None, None), "the collection's role; the host measures the file")
     val rights = r.rights.fold(fail(_), identity)
     assertEquals((rights.licence, rights.licenceUrl), (Licence("CC0-1.0"), Some(Cc0Url)))
-    assertEquals(HostLicences.readName(rights.licence.value), LicenceRead("CC0-1.0", LicenceRead.Cc0))
+    assertEquals(HostLicences.readName(rights.licence.value), Licence.Read("CC0-1.0", Licence.Read.Cc0))
     assertEquals(rights.credit, "Terracotta animal figurine, The Metropolitan Museum of Art, CC0")
     val closed = fixture("met-object.json").mapObject(_.add("isPublicDomain", Json.False))
     assert(MetCollection.record(closed).toOption.get.rights.isLeft, "not public domain: refused, never assumed")
@@ -103,7 +103,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     )
     assertEquals(coin.pageUrl, "https://www.artic.edu/artworks/4441")
     assert(coin.rights.isRight)
-    assertEquals(coin.rights.map(r => HostLicences.readName(r.licence.value).family), Right(LicenceRead.Cc0))
+    assertEquals(coin.rights.map(r => HostLicences.readName(r.licence.value).family), Right(Licence.Read.Cc0))
     assert(rs(1).rights.isLeft, "the fixture's second work is marked not public domain")
 
   // ── the Library of Congress ──────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     assertEquals(r.rights.map(_.licence), Right(Licence("public-domain")))
     assertEquals(
       r.rights.map(rr => HostLicences.readName(rr.licence.value).family),
-      Right(LicenceRead.PublicDomain)
+      Right(Licence.Read.PublicDomain)
     )
     assertEquals(
       r.rights.map(_.credit),
@@ -140,17 +140,17 @@ class CollectionParsersSuite extends munit.FunSuite:
   // ── depictions ───────────────────────────────────────────────────────────────────────────────
 
   test("Commons depictions: haswbstatement search URL and its titles; P1299 items preferred first, deprecated dropped"):
-    val u = CommonsDepicts.searchUrl("https://commons.wikimedia.org/w/api.php", "Q203729", 10, 5)
+    val u = Commons.Depicts.searchUrl("https://commons.wikimedia.org/w/api.php", "Q203729", 10, 5)
     assertEquals(
       u,
       "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search" +
         "&srnamespace=6&srlimit=10&srsearch=haswbstatement%3AP180%3DQ203729&maxlag=5"
     )
-    val ts = CommonsDepicts.titles(fixture("commons-depicts.json")).fold(fail(_), identity)
+    val ts = Commons.Depicts.titles(fixture("commons-depicts.json")).fold(fail(_), identity)
     assertEquals(ts.size, 3)
     assert(ts.head.startsWith("File:Museum Hattusa"))
     assertEquals(
-      CommonsDepicts.depictedBy(fixture("wd-depicted-by.json")),
+      Commons.Depicts.depictedBy(fixture("wd-depicted-by.json")),
       Map("Q203729" -> List("Q5002", "Q5001"), "Q404" -> Nil)
     )
 

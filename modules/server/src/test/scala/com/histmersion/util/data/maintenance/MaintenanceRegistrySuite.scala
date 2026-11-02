@@ -8,8 +8,8 @@ import com.histmersion.util.storage.Location
 class MaintenanceRegistrySuite extends munit.FunSuite:
 
   test("the reindex is the library's, found by name; nothing else is"):
-    assertEquals(Deps.data.task(MaintenanceTaskName("reindex")).map(_.owner), Some(DataOwner("library")))
-    assertEquals(Deps.data.task(MaintenanceTaskName("prune")), None)
+    assertEquals(Deps.data.task(MaintenanceTask.Name("reindex")).map(_.owner), Some(DataOwner("library")))
+    assertEquals(Deps.data.task(MaintenanceTask.Name("prune")), None)
     assertEquals(Deps.data.maintenance.map(_.name.value: String), List("reindex"))
 
   test("each store and each cache has one owner; a restore clears only the map's tiles"):

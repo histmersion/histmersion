@@ -1,7 +1,7 @@
 package com.histmersion.plugin
 
 /** AI providers, the fifth part of the app that plugins extend: who serves a model the embedded agents call. A plugin
-  * adds an [[AiProvider]] to [[PluginContext.aiProviders]] under the PROVIDER NAME — the part before the colon of a
+  * adds an [[AiProvider]] to [[Plugin.Context.aiProviders]] under the PROVIDER NAME — the part before the colon of a
   * `provider:model` reference (`agents.roles.extractor = "gemini:gemini-3-pro"` asks the provider registered as
   * `gemini`).
   *
@@ -42,4 +42,4 @@ trait AiProvider:
   def doctor(online: Boolean, http: AiHttp): List[AiCheck] = Nil
 
   /** ONE model call. */
-  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn]
+  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]

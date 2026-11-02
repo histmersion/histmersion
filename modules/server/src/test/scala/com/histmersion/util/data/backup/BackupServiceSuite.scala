@@ -3,10 +3,11 @@ package com.histmersion.util.data.backup
 import com.histmersion.api.Write
 import com.histmersion.api.backup.Backup
 import com.histmersion.server.Deps
-import com.histmersion.util.storage.{Location, Storage, StoreKey}
+import com.histmersion.util.storage.{Location, Storage}
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.storage.Store
 
 /** The backups in memory: named, listed, pruned and refused as the database implementation does. */
 class BackupServiceSuite extends munit.FunSuite:
@@ -28,7 +29,7 @@ class BackupServiceSuite extends munit.FunSuite:
     assertEquals(third.pruned, List(first.file))
     assertEquals(svc.list.map(_.map(_.file)), Right(List(third.file, second.file)))
     assert(third.sha256.length == 64, third)
-    store.put(StoreKey.applyUnsafe("notes.txt"), Array[Byte](1)): Unit
+    store.put(Store.Key.applyUnsafe("notes.txt"), Array[Byte](1)): Unit
     assertEquals(svc.list.map(_.size), Right(2))
 
   test("only a listed, syntactically safe name resolves; a restore of it changes nothing here"):

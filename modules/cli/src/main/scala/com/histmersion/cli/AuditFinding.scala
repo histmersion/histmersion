@@ -7,7 +7,7 @@ final case class AuditFinding(
     calibreId: Int,
     citekeys: List[String],
     issues: List[AuditIssue],
-    calibre: Option[CalibreBook],
+    calibre: Option[Calibre.Book],
     record: AuditRecord
 ):
   /** What `calibre update` fixes: everything but a missing entry. The year included — Calibre shows the record's year,

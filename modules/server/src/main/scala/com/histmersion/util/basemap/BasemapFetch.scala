@@ -4,7 +4,7 @@ import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-import com.histmersion.util.storage.{RandomReader, Store, StoreKey}
+import com.histmersion.util.storage.{RandomReader, Store}
 import com.histmersion.ByteOffset
 import io.circe.Json
 import io.circe.syntax.*
@@ -239,7 +239,7 @@ object BasemapFetch:
   // ── 2. the download ────────────────────────────────────────────────────────────────────────────
 
   /** The file request `r` is kept in, in the work store. */
-  def chunkKey(r: (Long, Long)): StoreKey = StoreKey.applyUnsafe(s"${r._1}-${r._2}.bin")
+  def chunkKey(r: (Long, Long)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
 
   /** The requests not downloaded yet. */
   def pending(p: Plan, work: Store): Vector[(Long, Long)] =
@@ -295,7 +295,7 @@ object BasemapFetch:
       p: Plan,
       work: Store,
       out: Store,
-      key: StoreKey,
+      key: Store.Key,
       transform: Array[Byte] => Either[String, Option[Array[Byte]]],
       header: PmTiles.Header,
       metadata: Json,
@@ -419,8 +419,8 @@ object BasemapFetch:
     * depth) is emptied first. Answers how many parts are already there.
     */
   def prepare(work: Store, state: Json): Int =
-    val file = StoreKey.applyUnsafe("state.json")
-    if work.isDirectory(StoreKey.Root) && !work
+    val file = Store.Key.applyUnsafe("state.json")
+    if work.isDirectory(Store.Key.Root) && !work
         .get(file)
         .flatMap(f => io.circe.parser.parse(f.text()).toOption)
         .contains(state)

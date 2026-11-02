@@ -1,8 +1,9 @@
 package com.histmersion.util.process
 
-import com.histmersion.util.storage.{Location, Storage, StoreKey}
+import com.histmersion.util.storage.{Location, Storage}
 
 import java.nio.file.Files
+import com.histmersion.util.storage.Store
 
 class ProcessesSuite extends munit.FunSuite:
 
@@ -25,14 +26,17 @@ class ProcessesSuite extends munit.FunSuite:
   test("output appended to a file of a store"):
     val dir = Files.createTempDirectory("histmersion-process")
     val logs = Storage.at(Location.Logs, dir)
-    logs.put(StoreKey("child.log"), "before\n".getBytes): Unit
+    logs.put(Store.Key("child.log"), "before\n".getBytes): Unit
     val p = Processes()
       .start(
-        ProcessLaunch(List("/bin/sh", "-c", "echo after"), output = ProcessOutput.AppendTo(logs, StoreKey("child.log")))
+        ProcessLaunch(
+          List("/bin/sh", "-c", "echo after"),
+          output = ProcessOutput.AppendTo(logs, Store.Key("child.log"))
+        )
       )
       .fold(fail(_), identity)
     assertEquals(p.waitFor(), 0)
-    assertEquals(logs.get(StoreKey("child.log")).map(_.text()), Some("before\nafter\n"))
+    assertEquals(logs.get(Store.Key("child.log")).map(_.text()), Some("before\nafter\n"))
 
   test("a program that is not there is refused, not thrown"):
     assert(Processes().run(ProcessLaunch(List("/nonexistent/histmersion-no-such-program"))).isLeft)

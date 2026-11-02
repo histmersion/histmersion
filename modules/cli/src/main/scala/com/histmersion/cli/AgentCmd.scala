@@ -54,7 +54,7 @@ object AgentCmd:
     )
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then Left(CliError("--remove takes no --limit", exitCode = ExitCode.Usage))
+          if limits.nonEmpty then Left(Cli.Error("--remove takes no --limit", exitCode = ExitCode.Usage))
           else
             c.call(AgentsApi.removeAllowance)(target)
               .map(r =>
@@ -65,7 +65,7 @@ object AgentCmd:
           limits
             .traverse(l => ModelChains.Limit.parse(l))
             .left
-            .map(m => CliError(m, exitCode = ExitCode.Usage))
+            .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
             .flatMap { ls =>
               c.call(AgentsApi.setAllowance)(ModelChains.AllowanceSet(target, ls.map(_.spec), reserve))
                 .map(a => println(AgentsMarkdown.allowance(a)))
@@ -121,8 +121,8 @@ object AgentCmd:
       )
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
-            case (None, false)   => Left(CliError("give the floors, or --reset", exitCode = ExitCode.Usage))
-            case (Some(_), true) => Left(CliError("--reset takes no floors", exitCode = ExitCode.Usage))
+            case (None, false)   => Left(Cli.Error("give the floors, or --reset", exitCode = ExitCode.Usage))
+            case (Some(_), true) => Left(Cli.Error("--reset takes no floors", exitCode = ExitCode.Usage))
             case _               =>
               c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse("")))))
                 .map(x => println(AgentsMarkdown.pool(x)))
@@ -137,7 +137,7 @@ object AgentCmd:
           case "on" | "off" =>
             c.call(AgentsApi.setFallthrough)((role, PlanQuota.FallthroughSet(v.trim.equalsIgnoreCase("on"))))
               .map(q => println(AgentsMarkdown.quota(q)))
-          case other => Left(CliError(s"'$other' is neither on nor off", exitCode = ExitCode.Usage))
+          case other => Left(Cli.Error(s"'$other' is neither on nor off", exitCode = ExitCode.Usage))
       }
     }
     val refresh = Opts.subcommand(
@@ -182,7 +182,7 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: String, last: String): Either[CliError, Unit] =
+  private[cli] def follow(c: Client, id: String, last: String): Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e)  => Left(e)
       case Right(d) =>
@@ -196,7 +196,7 @@ object AgentCmd:
             println(AgentsMarkdown.run(d, withMessages = false)); Right(())
           case _ =>
             println(AgentsMarkdown.run(d, withMessages = false))
-            Left(CliError(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
+            Left(Cli.Error(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
 
   private val run = Opts.subcommand(
     "run",
@@ -263,7 +263,7 @@ object AgentCmd:
         ev._2
           .traverse(ModelOverride.parse)
           .left
-          .map(m => CliError(s"--model-for $m", exitCode = ExitCode.Usage))
+          .map(m => Cli.Error(s"--model-for $m", exitCode = ExitCode.Usage))
           .flatMap { over =>
             c.call(AgentsApi.startRun)(
               RunRequest(
@@ -383,7 +383,7 @@ object AgentCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "agent",
       "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"

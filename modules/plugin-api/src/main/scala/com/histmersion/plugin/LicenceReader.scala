@@ -7,22 +7,22 @@ package com.histmersion.plugin
   */
 trait LicenceReader:
   /** A licence as a machine id or a short name (`cc-by-sa-3.0`, `CC BY-SA 3.0 de`, `cc0`, `pd`, `Public domain`). */
-  def readName(name: String): LicenceRead
+  def readName(name: String): Licence.Read
 
   /** A licence given as its Creative Commons URL (`https://creativecommons.org/licenses/by-sa/4.0`); anything else is
     * unknown.
     */
-  def readUrl(url: String): LicenceRead
+  def readUrl(url: String): Licence.Read
 
   /** The first of the statements that reads as a known licence ([[readName]]), else unknown with the first non-empty
     * one.
     */
-  def readFirst(statements: List[String]): LicenceRead
+  def readFirst(statements: List[String]): Licence.Read
 
 object LicenceReader:
   /** A host that lends no reading: every statement is unknown. */
   val Unread: LicenceReader = new LicenceReader:
-    def readName(name: String) = LicenceRead.unknown(name)
-    def readUrl(url: String) = LicenceRead.unknown(url)
+    def readName(name: String) = Licence.Read.unknown(name)
+    def readUrl(url: String) = Licence.Read.unknown(url)
     def readFirst(statements: List[String]) =
-      LicenceRead.unknown(statements.map(_.trim).find(_.nonEmpty).getOrElse(""))
+      Licence.Read.unknown(statements.map(_.trim).find(_.nonEmpty).getOrElse(""))

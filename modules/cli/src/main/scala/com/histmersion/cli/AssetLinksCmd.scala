@@ -45,7 +45,7 @@ object AssetLinksCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("asset-links", "Semantic links between assets and entities: search, add, rm") {
       search orElse addCmd orElse rmCmd
     }

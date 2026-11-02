@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.histmersion.server.BasemapWiring
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
@@ -33,12 +33,12 @@ object BasemapExtractTool:
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
-  private def at(p: Path): (Store, StoreKey) =
+  private def at(p: Path): (Store, Store.Key) =
     val a = p.toAbsolutePath
-    (BasemapFixtures.store(a.getParent), StoreKey.applyUnsafe(a.getFileName.toString))
+    (BasemapFixtures.store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
 
   /** The work store of an extract written to `out`: `<out>.work` beside it. */
-  private def workOf(out: Path): (Store, StoreKey) = at(out.resolveSibling(out.getFileName.toString + ".work"))
+  private def workOf(out: Path): (Store, Store.Key) = at(out.resolveSibling(out.getFileName.toString + ".work"))
 
   def run(args: List[String]): Unit = args match
     case "extract" :: build :: bbox :: z :: out :: rest =>

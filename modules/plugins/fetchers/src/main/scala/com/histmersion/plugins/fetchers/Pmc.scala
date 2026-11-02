@@ -1,6 +1,6 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{FetchContext, FetchedFile, PluginHttp, SourceFetcher}
+import com.histmersion.plugin.{FetchedFile, SourceFetcher}
 import com.histmersion.upstreams.http.{json, text}
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.europepmc.EuropePmcHit
@@ -8,15 +8,17 @@ import com.histmersion.upstreams.jats.Jats
 import com.histmersion.upstreams.pmc.{PmcObject, PmcRecord}
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
+import com.histmersion.plugin.Fetch
+import com.histmersion.plugin.Plugin
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
   * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it
   * after every PDF source). Both read one Europe PMC search and one dataset record per work, shared through the fetch's
   * memo.
   */
-final class Pmc(cfg: UpstreamSettings, client: () => PluginHttp):
+final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
 
-  private def http: PluginHttp = client()
+  private def http: Plugin.Http = client()
 
   /** The PMC hosts get the project's public identity — no contact e-mail, no `email` parameter. */
   private def pmcHeaders = Map("User-Agent" -> cfg.publicUserAgent)
@@ -30,7 +32,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => PluginHttp):
     *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders
     *      it to Markdown instead of OCR.
     */
-  final private class PmcLookup(doi: String, ctx: FetchContext):
+  final private class PmcLookup(doi: String, ctx: Fetch.Context):
     lazy val hit: Option[EuropePmcHit] =
       http.json(
         Url(
@@ -88,7 +90,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => PluginHttp):
           ctx.log.warn(s"pmc: $url does not match the MD5 its record gives — skipping"); None
         case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
 
-  private def lookup(ctx: FetchContext, doi: String): PmcLookup =
+  private def lookup(ctx: Fetch.Context, doi: String): PmcLookup =
     ctx.memo(s"pmc:lookup:$doi")(PmcLookup(doi, ctx))
 
   val pdfStep: SourceFetcher = ByDoi("pmc", (ctx, d) => lookup(ctx, d).pdf)

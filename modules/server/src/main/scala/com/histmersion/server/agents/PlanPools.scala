@@ -305,7 +305,7 @@ final class PlanPools(
       codexHome() match
         case None       => Some("no CODEX_HOME to read")
         case Some(home) =>
-          CodexHome.using(home)(
+          Codex.Home.using(home)(
             seams.readCodex(cfg.providers.codex.command, home, math.max(5, cfg.doctorTimeoutSeconds))
           ) match
             case Left(why) =>

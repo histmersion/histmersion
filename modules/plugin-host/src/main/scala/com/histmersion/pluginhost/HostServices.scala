@@ -9,7 +9,7 @@ import scala.jdk.CollectionConverters.*
   * read at startup, and the budgets of the metered upstreams (by name; an upstream with none is unlimited).
   */
 final case class HostServices(
-    http: () => PluginHttp,
+    http: () => Plugin.Http,
     env: Config,
     log: (String, Boolean, String) => Unit, // (plugin id, is a warning, message)
     quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited

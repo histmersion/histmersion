@@ -22,16 +22,16 @@ class VaultsSuite extends munit.FunSuite:
     f
 
   /** A context with an environment of its own (PATH = the fake tools), secrets from `secrets`. */
-  final private class Ctx(envVars: Map[String, String], secrets: Map[SecretRef, String] = Map.empty)
-      extends PluginContext:
-    var vaults: List[(String, SecretVault)] = Nil // what the plugin registered (test-local)
+  final private class Ctx(envVars: Map[String, String], secrets: Map[Secret.Ref, String] = Map.empty)
+      extends Plugin.Context:
+    var vaults: List[(String, Secret.Vault)] = Nil // what the plugin registered (test-local)
     var infos: List[String] = Nil // what it logged at info (test-local)
-    def http = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("no network in tests") }
-    val log = new PluginLog { def info(m: String) = infos = infos :+ m; def warn(m: String) = () }
+    def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("no network in tests") }
+    val log = new Plugin.Log { def info(m: String) = infos = infos :+ m; def warn(m: String) = () }
     def env(name: String) = envVars.get(name)
     def secret(s: Secret) = secrets.get(s.ref).toRight(s"no value for ${s.ref.shown}")
-    val secretVaults = new Registry[SecretVault]:
-      def add(id: String, a: SecretVault) =
+    val secretVaults = new Registry[Secret.Vault]:
+      def add(id: String, a: Secret.Vault) =
         if vaults.exists(_._1 == id) then Left("dup") else { vaults = vaults :+ (id -> a); Right(()) }
 
   private def decode(p: Plugin, hocon: String): p.Config =
@@ -39,7 +39,7 @@ class VaultsSuite extends munit.FunSuite:
     val c = ConfigFactory.parseString(hocon).withFallback(defs).withoutPath("enabled")
     p.configReader.from(c.root).fold(e => fail(e.toString), identity)
 
-  private def registered(p: Plugin, hocon: String, ctx: Ctx): SecretVault =
+  private def registered(p: Plugin, hocon: String, ctx: Ctx): Secret.Vault =
     p.register(decode(p, hocon), ctx).fold(e => fail(e), identity)
     assertEquals(ctx.vaults.map(_._1), List(p.info.id))
     ctx.vaults.head._2
@@ -123,7 +123,7 @@ class VaultsSuite extends munit.FunSuite:
   test("keepassxc: the password comes from a Secret over stdin, never the command line; the attribute defaults"):
     val d = bin(); fakeKeePassXc(d)
     val db = Files.writeString(d.resolve("v.kdbx"), "")
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "master-pw"))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
     val v = registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP"""", ctx)
     assertEquals(v.name, "keepassxc")
     assertEquals(v.resolve("Histmersion/Portal"), Right("value of Histmersion/Portal/password"))
@@ -152,13 +152,13 @@ class VaultsSuite extends munit.FunSuite:
     val wrong = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "nope"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "nope"))
     )
     assert(wrong.resolve("E").left.exists(_.contains("locked")))
     val v = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP", timeout-seconds = 1""",
-      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "master-pw"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
     )
     assertEquals(v.resolve("missing"), Left("keepassxc: no entry 'missing'"))
     assert(v.resolve("slow").left.exists(_.contains("did not answer within 1 s")))
@@ -317,9 +317,9 @@ class VaultsSuite extends munit.FunSuite:
   private def calls(d: Path): List[String] =
     if Files.exists(d.resolve("kp-calls")) then Files.readAllLines(d.resolve("kp-calls")).asScala.toList else Nil
 
-  private def ykVault(d: Path, extra: String, pw: String = "master-pw"): (SecretVault, Ctx) =
+  private def ykVault(d: Path, extra: String, pw: String = "master-pw"): (Secret.Vault, Ctx) =
     val db = d.resolve("v.kdbx"); if !Files.exists(db) then Files.writeString(db, "")
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> pw))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> pw))
     (registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP", $extra""", ctx), ctx)
 
   test("yubikey: a single entry adds -y <slot:serial> beside the password on stdin, and says to touch it"):
@@ -511,7 +511,7 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "master-pw"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
     )
     assertEquals(
       v.resolveAll(List("A", "B#UserName")),
@@ -527,7 +527,7 @@ class VaultsSuite extends munit.FunSuite:
     val wrong = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "nope"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "nope"))
     )
     assert(wrong.resolveAll(List("A", "B")).values.forall(_.left.exists(_.contains("the database is locked"))))
 
@@ -551,7 +551,7 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       KeePassXcPlugin(),
       s"""cli = "$exe", database = "$db", password = "env:KP", ykman = \"\"""",
-      Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(SecretRef.Env("KP") -> "test-pw"))
+      Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(Secret.Ref.Env("KP") -> "test-pw"))
     )
     assertEquals(
       v.resolveAll(List("G/One", "G/Two words \"q\" b\\s", "missing", "Three#UserName", "Three")),
@@ -581,7 +581,7 @@ class VaultsSuite extends munit.FunSuite:
 
   test("1password: op read with the service-account token from a Secret, in the tool's environment only"):
     val d = bin(); fakeOp(d)
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("OPT") -> "sa-token"))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("OPT") -> "sa-token"))
     val v = registered(OnePasswordPlugin(), """service-account-token = "env:OPT", account = "me"""", ctx)
     assertEquals(v.name, "1password")
     assertEquals(v.resolve("op://Private/Portal/password"), Right("op-value"))
@@ -615,7 +615,7 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       BitwardenPlugin(),
       """session = "env:BWS"""",
-      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("BWS") -> "sess"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("BWS") -> "sess"))
     )
     assertEquals(v.resolve("item-1"), Right("bw password"))
     assertEquals(v.resolve("item-1#username"), Right("bw username"))

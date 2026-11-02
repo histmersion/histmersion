@@ -1,7 +1,7 @@
 package com.histmersion.fixtures.helloai
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `name`: the provider name it registers (`hello-ai`); `token`: an optional secret it is given (a reference, resolved

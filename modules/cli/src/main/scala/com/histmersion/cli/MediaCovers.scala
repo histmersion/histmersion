@@ -32,7 +32,7 @@ object MediaCovers:
         ORDER BY s.citekey"""
 
   /** The Calibre-linked sources to look at, as (citekey, Calibre id). */
-  def linked(c: Client, only: Option[String], refresh: Boolean): Either[CliError, List[(String, Int)]] =
+  def linked(c: Client, only: Option[String], refresh: Boolean): Either[Cli.Error, List[(String, Int)]] =
     c.query(linkedQuery(only, refresh))
       .map(_.rows.flatMap { r =>
         for ck <- r.headOption.flatten; id <- r.lift(1).flatten.flatMap(_.trim.toIntOption) yield (ck, id)
@@ -47,7 +47,7 @@ object MediaCovers:
     case Skipped(reason: String)
     case Failed(message: String)
 
-  def one(c: Client, ck: String, book: CalibreBook, dryRun: Boolean): Outcome =
+  def one(c: Client, ck: String, book: Calibre.Book, dryRun: Boolean): Outcome =
     CoverChoice.choose(
       book.cover,
       p => Files.isRegularFile(Path.of(p)),
@@ -78,13 +78,14 @@ object MediaCovers:
       refresh: Boolean,
       dryRun: Boolean,
       limit: Option[Int]
-  ): Either[CliError, (MediaCoversReport, List[(String, String)])] =
+  ): Either[Cli.Error, (MediaCoversReport, List[(String, String)])] =
     if !cal.libraryExists then
       Right((MediaCoversReport(dryRun, skipped = List(MediaCount("no Calibre library here", 1))), Nil))
     else
       for
         links <- linked(c, only, refresh)
-        books <- if links.isEmpty then Right(Nil) else cal.all().left.map(e => CliError(e, exitCode = ExitCode.Refused))
+        books <-
+          if links.isEmpty then Right(Nil) else cal.all().left.map(e => Cli.Error(e, exitCode = ExitCode.Refused))
       yield
         val byId = books.map(b => b.id -> b).toMap
         val outcomes = links.take(limit.filter(_ > 0).getOrElse(Int.MaxValue)).map { (ck, id) =>

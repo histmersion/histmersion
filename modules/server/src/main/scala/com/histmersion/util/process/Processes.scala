@@ -1,11 +1,12 @@
 package com.histmersion.util.process
 
-import com.histmersion.util.storage.{HandedFile, StoreKey}
+import com.histmersion.util.storage.HandedFile
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, IOException, OutputStream}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Store
 
 /** Launching child processes (the bundled database's tools, the converter, dumps): the one place a process is started.
   * Working directories and log files are store handles.
@@ -38,7 +39,7 @@ object Processes:
 
     private def directory(launch: ProcessLaunch): Either[String, Option[HandedFile]] = launch.workingStore match
       case None    => Right(None)
-      case Some(s) => s.onDiskFile(StoreKey.Root).left.map(_.message).map(Some(_))
+      case Some(s) => s.onDiskFile(Store.Key.Root).left.map(_.message).map(Some(_))
 
     private def log(launch: ProcessLaunch): Either[String, Option[ProcessBuilder.Redirect]] = launch.output match
       case ProcessOutput.Piped            => Right(None)

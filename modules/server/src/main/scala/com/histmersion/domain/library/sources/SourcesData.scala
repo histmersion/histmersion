@@ -7,7 +7,7 @@ import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount
-import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice, MaintenanceTask, MaintenanceTaskName}
+import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice, MaintenanceTask}
 import com.augustnagro.magnum.DbCon
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
@@ -25,7 +25,7 @@ object SourcesData:
     */
   def reindex(of: DataOwner): MaintenanceTask = new MaintenanceTask:
     val owner: DataOwner = of
-    val name: MaintenanceTaskName = MaintenanceTaskName("reindex")
+    val name: MaintenanceTask.Name = MaintenanceTask.Name("reindex")
     def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult =
       SourceRepairs(Transactor(site.dataSource)).reindexChunks(
         site.settings.limits.chunkChars,

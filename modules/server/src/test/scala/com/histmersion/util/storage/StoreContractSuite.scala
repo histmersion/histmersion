@@ -13,7 +13,7 @@ import scala.util.Using
 abstract class StoreContractSuite extends munit.FunSuite:
   def fresh(): Store
 
-  private def key(s: String) = StoreKey.applyUnsafe(s)
+  private def key(s: String) = Store.Key.applyUnsafe(s)
   private def utf(s: String) = s.getBytes(UTF_8)
 
   test("put, get, stat, list and walk"):
@@ -21,11 +21,11 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assert(s.put(key("a/b/one.txt"), utf("one")).isRight)
     assert(s.write(key("a/two.bin"), Array[Byte](1, 2, 3)).isRight)
     assertEquals(s.get(key("a/b/one.txt")).map(_.text()), Some("one"))
-    assertEquals(s.stat(key("a/two.bin")).map(st => (st.kind, st.size.value: Long)), Some((StoredKind.File, 3L)))
+    assertEquals(s.stat(key("a/two.bin")).map(st => (st.kind, st.size.value: Long)), Some((Stored.Kind.File, 3L)))
     assert(s.isDirectory(key("a/b")) && s.isFile(key("a/two.bin")) && !s.exists(key("a/none")))
     assertEquals(
       s.list(key("a")).map(st => (st.key.value: String, st.kind)),
-      List("a/b" -> StoredKind.Directory, "a/two.bin" -> StoredKind.File)
+      List("a/b" -> Stored.Kind.Directory, "a/two.bin" -> Stored.Kind.File)
     )
     assertEquals(s.walk().map(st => st.key.value: String), List("a/b/one.txt", "a/two.bin"))
     assertEquals(s.size.value: Long, 6L)
@@ -38,7 +38,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assert(sub.put(key("t/1.webp"), utf("x")).isRight)
     assertEquals(s.walk().map(st => st.key.value: String), List("cache/t/1.webp"))
     assertEquals(sub.walk().map(st => st.key.value: String), List("t/1.webp"))
-    assertEquals(sub.deleteTree(StoreKey.Root).map(_.value: Long), Some(1L))
+    assertEquals(sub.deleteTree(Store.Key.Root).map(_.value: Long), Some(1L))
     assertEquals(s.walk(), Nil)
 
   test("a reservation is invisible until committed, and gone when discarded"):
@@ -126,7 +126,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
     val r = s.measure(MeasureBudget.unlimited)
     assertEquals((r.bytes.value: Long, r.files, r.exists, r.partial), (300L, 2L, true, false))
     assertEquals(s.sub(key("x")).measure(MeasureBudget.unlimited).bytes.value: Long, 200L)
-    assertEquals(s.sub(key("nope")).measure(MeasureBudget.unlimited), StoreMeasure.absent)
+    assertEquals(s.sub(key("nope")).measure(MeasureBudget.unlimited), Store.Measure.absent)
 
   test("measure: a budget that runs out stops the walk, partial, and is shared by the next walk"):
     val s = fresh()
@@ -162,10 +162,10 @@ class DiskStoreSuite extends StoreContractSuite:
   test("on disk: a key is a path below the root; a symbolic link is written through when asked"):
     val dir = Files.createTempDirectory("histmersion-store")
     val s = Storage(_ => Some(dir), () => dir).store(Location.UserConfig)
-    assertEquals(s.where(StoreKey.applyUnsafe("x/y")), dir.resolve("x/y").toString)
+    assertEquals(s.where(Store.Key.applyUnsafe("x/y")), dir.resolve("x/y").toString)
     val real = Files.writeString(dir.resolve("real.conf"), "old")
     Files.createSymbolicLink(dir.resolve("link.conf"), real)
-    val r = s.reserve(StoreKey.applyUnsafe("link.conf"), TempName.Unique, throughLink = true).toOption.get
+    val r = s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = true).toOption.get
     Using.resource(r.output())(_.write("new".getBytes(UTF_8)))
     assert(r.onDisk.exists(p => p.getFileName.toString.startsWith(".link.conf.")))
     assert(r.commit(keepPermissions = true).isRight)
@@ -175,23 +175,23 @@ class DiskStoreSuite extends StoreContractSuite:
 
   test("on disk: a reservation's suffixed file is the key's name and the suffix, beside it"):
     val dir = Files.createTempDirectory("histmersion-store")
-    val r = Storage.at(Location.Backups, dir).reserve(StoreKey.applyUnsafe("a.dump"), TempName.Suffixed(".part"))
+    val r = Storage.at(Location.Backups, dir).reserve(Store.Key.applyUnsafe("a.dump"), TempName.Suffixed(".part"))
     assertEquals(r.flatMap(_.onDisk).map(_.toString), Right(dir.resolve("a.dump.part").toString))
     r.foreach(_.close())
 
   test("a store at a directory is the store the storage gives for a location placed there"):
     val dir = Files.createTempDirectory("histmersion-store")
     val at = Storage.at(Location.Basemap, dir)
-    at.put(StoreKey.applyUnsafe("vector.pmtiles"), "v".getBytes(UTF_8)): Unit
+    at.put(Store.Key.applyUnsafe("vector.pmtiles"), "v".getBytes(UTF_8)): Unit
     val placed = Storage(_ => Some(dir), () => dir).store(Location.Basemap)
-    assertEquals(placed.get(StoreKey.applyUnsafe("vector.pmtiles")).map(_.text()), Some("v"))
+    assertEquals(placed.get(Store.Key.applyUnsafe("vector.pmtiles")).map(_.text()), Some("v"))
     assertEquals((at.location, at.where()), (Location.Basemap, dir.toString))
 
   test("a scratch store is removed when it closes"):
     val base = Files.createTempDirectory("histmersion-scratch")
     val storage = Storage(_ => None, () => base)
     val scratch = storage.scratch("histmersion-test-")
-    scratch.store.put(StoreKey.applyUnsafe("a/b"), Array[Byte](1)): Unit
+    scratch.store.put(Store.Key.applyUnsafe("a/b"), Array[Byte](1)): Unit
     assertEquals(Files.list(base).count(), 1L)
     scratch.close()
     assertEquals(Files.list(base).count(), 0L)
@@ -203,7 +203,7 @@ class MemoryStoreSuite extends StoreContractSuite:
 
   test("in memory: nothing is on disk, and each location is one store for everyone holding the storage"):
     val storage = Storage.InMemory()
-    storage.store(Location.Spool).put(StoreKey.applyUnsafe("x"), Array[Byte](1)): Unit
-    assert(storage.store(Location.Spool).isFile(StoreKey.applyUnsafe("x")))
-    assert(storage.store(Location.Spool).onDisk(StoreKey.applyUnsafe("x")).isLeft)
+    storage.store(Location.Spool).put(Store.Key.applyUnsafe("x"), Array[Byte](1)): Unit
+    assert(storage.store(Location.Spool).isFile(Store.Key.applyUnsafe("x")))
+    assert(storage.store(Location.Spool).onDisk(Store.Key.applyUnsafe("x")).isLeft)
     assertEquals(storage.store(Location.Spool).volume, None)

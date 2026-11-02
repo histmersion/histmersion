@@ -86,13 +86,13 @@ class CalibreSuite extends munit.FunSuite:
   test("push refuses junk metadata and never reaches calibredb"):
     val shell = RecordingShell()
     val c = Calibre(cfg(), shell)
-    val bad = c.add(Path.of("/tmp/whatever.pdf"), CalibrePush("Unknown", List("Unknown Author")))
+    val bad = c.add(Path.of("/tmp/whatever.pdf"), Calibre.Push("Unknown", List("Unknown Author")))
     assert(bad.isLeft, bad)
     assertEquals(shell.commands, Nil, "the guard must fire before anything is executed")
 
   test("push refuses while the Calibre GUI holds the library"):
     val shell = RecordingShell(running = true)
-    val r = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), CalibrePush("T", List("A")))
+    val r = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), Calibre.Push("T", List("A")))
     assert(r.left.exists(_.contains("GUI is running")), r)
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
@@ -101,7 +101,7 @@ class CalibreSuite extends munit.FunSuite:
       commands = commands :+ cmd
       if cmd.contains("list") then Right(onShelf) else Right("")
 
-  private val meta = CalibrePush(
+  private val meta = Calibre.Push(
     "Perspectives on Hittite Civilization",
     List("Güterbock, Hans G.", "Hoffner, Harry A."),
     doi = Some("10.1/x"),
@@ -136,13 +136,13 @@ class CalibreSuite extends munit.FunSuite:
       changed,
       Right(
         List(
-          CalibreField.Title,
-          CalibreField.Authors,
-          CalibreField.Pubdate,
-          CalibreField.Identifiers,
-          CalibreField.Tags,
-          CalibreField.Publisher,
-          CalibreField.Comments
+          Calibre.Field.Title,
+          Calibre.Field.Authors,
+          Calibre.Field.Pubdate,
+          Calibre.Field.Identifiers,
+          Calibre.Field.Tags,
+          Calibre.Field.Publisher,
+          Calibre.Field.Comments
         )
       )
     )
@@ -250,20 +250,20 @@ class CalibreSuite extends munit.FunSuite:
     LinkedRecord(
       "burkert1985_greek",
       10,
-      CalibrePush("Greek Religion", List("Burkert, Walter"), year = Some(1985), tags = List("t"))
+      Calibre.Push("Greek Religion", List("Burkert, Walter"), year = Some(1985), tags = List("t"))
     ),
     LinkedRecord(
       "page1959_history",
       11,
-      CalibrePush("History and the Homeric Iliad", List("Page, Denys"), year = Some(1959), tags = List("t"))
+      Calibre.Push("History and the Homeric Iliad", List("Page, Denys"), year = Some(1959), tags = List("t"))
     ),
-    LinkedRecord("guterbock1948_kumarbi", 12, CalibrePush("Kumarbi", List("Güterbock, Hans G."), tags = List("t"))),
+    LinkedRecord("guterbock1948_kumarbi", 12, Calibre.Push("Kumarbi", List("Güterbock, Hans G."), tags = List("t"))),
     LinkedRecord(
       "guterbock1997_perspectives",
       12,
-      CalibrePush("Perspectives", List("Güterbock, Hans G."), tags = List("t"))
+      Calibre.Push("Perspectives", List("Güterbock, Hans G."), tags = List("t"))
     ),
-    LinkedRecord("gone2000_x", 13, CalibrePush("Gone", List("Someone")))
+    LinkedRecord("gone2000_x", 13, Calibre.Push("Gone", List("Someone")))
   )
   private val shelfAll = Seq(
     entry(10, "Greek Religion", "Walter Burkert", "1985-01-01T00:00:00+00:00"),
@@ -280,7 +280,7 @@ class CalibreSuite extends munit.FunSuite:
       out.map(e => e.calibreId -> e.outcome),
       List(
         10 -> UpdateOutcome.UpToDate,
-        11 -> UpdateOutcome.Change(List(CalibreChange(CalibreField.Pubdate, "1963", "1959-01-01"))),
+        11 -> UpdateOutcome.Change(List(Calibre.Change(Calibre.Field.Pubdate, "1963", "1959-01-01"))),
         12 -> UpdateOutcome.Shared,
         13 -> UpdateOutcome.Missing
       )
@@ -293,7 +293,7 @@ class CalibreSuite extends munit.FunSuite:
     val out = Calibre(cfg(), shell).updateAll(linked, apply = true).fold(fail(_), identity)
     assertEquals(
       out.find(_.calibreId == 11).map(_.outcome),
-      Some(UpdateOutcome.Applied(List(CalibreChange(CalibreField.Pubdate, "1963", "1959-01-01"))))
+      Some(UpdateOutcome.Applied(List(Calibre.Change(Calibre.Field.Pubdate, "1963", "1959-01-01"))))
     )
     assertEquals(
       shell.commands.filter(_.contains("set_metadata")),
@@ -320,14 +320,14 @@ class CalibreSuite extends munit.FunSuite:
 
   test("update refuses junk metadata and a running GUI before running anything"):
     assert(
-      Calibre(cfg(), RecordingShell()).update(1, CalibrePush("T", List("(ed.)"))).isLeft,
+      Calibre(cfg(), RecordingShell()).update(1, Calibre.Push("T", List("(ed.)"))).isLeft,
       "a name that is nothing but a role is no author"
     )
     val shell = RecordingShell()
-    assert(Calibre(cfg(), shell).update(1, CalibrePush("Unknown", List("A"))).isLeft)
+    assert(Calibre(cfg(), shell).update(1, Calibre.Push("Unknown", List("A"))).isLeft)
     assertEquals(shell.commands, Nil)
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).update(1, CalibrePush("T", List("A"))).left.exists(_.contains("GUI is running")))
+    assert(Calibre(cfg(), gui).update(1, Calibre.Push("T", List("A"))).left.exists(_.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
 
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
@@ -342,7 +342,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(shell.commands(1).contains("-readonly"), "the metadata.db must be opened READ-ONLY")
 
   private def book(id: Int, title: String, authors: List[String], pubdate: String) =
-    CalibreBook(id, title, authors, Some(pubdate), None, Nil, None, Map.empty, Nil)
+    Calibre.Book(id, title, authors, Some(pubdate), None, Nil, None, Map.empty, Nil)
 
   test("Calibre's 0101 'no date' is no year at all"):
     val b = book(1, "Twilight of the Gods", List("Ian Young"), "0101-01-01T00:00:00+00:00")
@@ -372,7 +372,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre(cfg(), quiet).replaceFormat(1, tmpFile("mobi")).isLeft)
     assertEquals(quiet.commands, Nil)
 
-  private def cfg() = CalibreLibrary(lib, "calibredb", "sqlite3", "/Applications/calibre.app/Contents/MacOS/calibre")
+  private def cfg() = Calibre.Library(lib, "calibredb", "sqlite3", "/Applications/calibre.app/Contents/MacOS/calibre")
 
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:

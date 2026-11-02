@@ -61,7 +61,7 @@ object PluginAiClient:
       case ConversationEntry.IterationMarker(n, of) if markers => AiMessage.User(s"[Iteration $n of $of]")
       case ConversationEntry.UserPrompt(t)                     => AiMessage.User(t)
       case ConversationEntry.AssistantResponse(t, tcs)         =>
-        AiMessage.Assistant(t, tcs.toList.map(c => AiToolCall(c.id, c.toolName, c.input)))
+        AiMessage.Assistant(t, tcs.toList.map(c => AiTool.Call(c.id, c.toolName, c.input)))
       case ConversationEntry.ToolResult(id, name, out) => AiMessage.ToolResult(id, name, out)
     }
 
@@ -124,7 +124,7 @@ object PluginAiClient:
     ): Identity[AgentResponse] =
       val caps = provider.capabilities
       val offered = if includeTools && caps.tools then conf.userTools.toList.map(tool) else Nil
-      val req = AiTurnRequest(
+      val req = AiTurn.Request(
         model.model,
         conf.systemPrompt.getOrElse(""),
         messages(history, caps.iterationMarkers),

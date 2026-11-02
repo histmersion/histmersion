@@ -193,7 +193,7 @@ final class AgentDoctor(
 
   private def claudeCode(models: List[ModelRef], allowances: List[picker.Effective]): List[DoctorCheck] =
     val cc = app.agents.providers.claudeCode
-    val loopback = ClaudeCodeEnv.isLoopback(app.server.host)
+    val loopback = ClaudeCode.Env.isLoopback(app.server.host)
     val used = models.nonEmpty
     val level = if used then fail else warn
     val bind =

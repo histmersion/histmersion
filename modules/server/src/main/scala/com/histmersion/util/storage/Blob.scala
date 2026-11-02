@@ -10,7 +10,7 @@ import java.time.Instant
   * [[reader]]); a grid read many times over is mapped ([[mapped]]).
   */
 trait Blob:
-  def key: StoreKey
+  def key: Store.Key
 
   /** Where the file is, for messages. */
   def where: String

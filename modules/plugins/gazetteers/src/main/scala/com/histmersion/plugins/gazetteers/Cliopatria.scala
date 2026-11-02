@@ -27,7 +27,7 @@ object Cliopatria extends DownloadedGazetteer:
 
   private val Polity = "polity"
 
-  override def fetch(http: PluginHttp): Either[String, List[GazetteerPlace]] =
+  override def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
   def read(text: String): Either[String, List[GazetteerPlace]] =

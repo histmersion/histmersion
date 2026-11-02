@@ -7,12 +7,13 @@ import com.histmersion.pluginhost.{FetchChain, Generation}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.plugin.{Fetch, FetchContext, PluginHttp, PluginLog, WorkKey}
+import com.histmersion.plugin.{Fetch, WorkKey}
 import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.Plugin
 
 /** Histmersion's own acquisition plugins, found on the class path and registered through the plugin host like any
   * plugin, with the host's `histmersion.acquire` settings supplied: on by default in today's order, each one switched
@@ -388,6 +389,6 @@ class FetcherPluginsSuite extends munit.FunSuite:
     assertEquals(Plugins.carried(g, List("histmersion.acquire.landing.max-pages")), Map.empty)
     assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
-  private object Ctx extends FetchContext:
+  private object Ctx extends Fetch.Context:
     def memo[A](key: String)(compute: => A): A = compute
-    val log: PluginLog = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    val log: Plugin.Log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }

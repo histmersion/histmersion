@@ -2,12 +2,12 @@ package com.histmersion.pluginhost
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.plugin.{PluginHttp, PluginHttpResponse}
 import sttp.client4.*
 
 import scala.concurrent.duration.*
+import com.histmersion.plugin.Plugin
 
-/** The acquisition client: every request a source fetcher (a plugin's through [[PluginHttp]], or a built-in one) and
+/** The acquisition client: every request a source fetcher (a plugin's through [[Plugin.Http]], or a built-in one) and
   * the metadata lookups make, over one [[HttpTransport]].
   *
   * Every request follows [[HttpPolicy]], the one outbound policy: the product's `User-Agent` (no e-mail — Crossref and
@@ -70,10 +70,10 @@ final class PolicyHttp(
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's
     * budget meters is sent [[once]], answered with its status and headers.
     */
-  def plugin: PluginHttp = new PluginHttp:
+  def plugin: Plugin.Http = new Plugin.Http:
     def get(url: String, headers: Map[String, String]) = bytes(url, headers)
     override def fetch(url: String, headers: Map[String, String]) =
-      once(url, headers).map(a => PluginHttpResponse(a.code, a.headers, a.body))
+      once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
   val UserAgent = "User-Agent"

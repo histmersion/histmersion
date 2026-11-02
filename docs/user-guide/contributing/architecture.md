@@ -41,7 +41,7 @@ tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pa
 | `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-host`, `plugin-vaults` | native image |
 | `cli` | **a pure HTTP client** of the server — sttp client derived from `api`'s endpoints. No pgjdbc, no DB credentials on the host. | `api`, `config`, `files` — **never** `core` or `db` | native image |
 | `web` | the web page (Scala.js, Laminar; the map drawn by MapLibre GL JS behind its own interface) | `api` (Scala.js) **only** | served by the server |
-| `plugin-api` | the plugin SPI: `Plugin`, `PluginContext`, the registries, `Secret` | sconfig, kindlings only | — |
+| `plugin-api` | the plugin SPI: `Plugin`, `Plugin.Context`, the registries, `Secret` | sconfig, kindlings only | — |
 | `plugin-vaults` | the built-in secret vaults (KeePassXC, 1Password, Bitwarden), compiled as a third-party plugin would be | `plugin-api` only | — |
 | `plugin-fixtures/hello`, `hello-ai` | test plugins, packaged as their own jars; never on the server's class path | `plugin-api` only | — |
 

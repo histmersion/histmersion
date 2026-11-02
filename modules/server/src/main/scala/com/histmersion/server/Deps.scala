@@ -61,7 +61,7 @@ final class Deps(
     com.histmersion.domain.automation.worklists.WorkListControllers(queues, maintenance, clock)
 
   /** The sources' texts as the catalogue's evidence searches them (the library's). */
-  lazy val passages: com.histmersion.domain.catalogue.evidence.passages.PassageSource =
+  lazy val passages: com.histmersion.domain.catalogue.evidence.passages.Passage.Source =
     com.histmersion.domain.library.sources.SourcePassages(transactor)
 
   /** The events related to what a filter selects, as the library reads the filter's sources. */

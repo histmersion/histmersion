@@ -132,7 +132,7 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
   the directory of `project.scala`), so the testkit finds `recordings/` wherever `scala-cli test` is
   started.
 - The `publish` lines name the plugin when you publish it: change the organization to your own (a
-  reversed domain name, say) and keep the version equal to the one in `PluginInfo`.
+  reversed domain name, say) and keep the version equal to the one in `Plugin.Info`.
 
 **More source files.** A plugin of several files keeps all its directives in `project.scala`,
 including the `test.*` ones: put a file's `//> using dep` there, not at the top of that file. scala-cli
@@ -221,7 +221,7 @@ that directory. To read the API without an editor:
 
 ```bash
 unzip -l "$(histmersion plugin api-jar --sources)"                                         # the files
-unzip -p "$(histmersion plugin api-jar --sources)" com/histmersion/plugin/PluginContext.scala   # one, with its docs
+unzip -p "$(histmersion plugin api-jar --sources)" com/histmersion/plugin/Plugin.Context.scala   # one, with its docs
 javap -cp "$(histmersion plugin api-jar)" com.histmersion.plugin.PluginContext                  # signatures only
 ```
 
@@ -302,7 +302,7 @@ under a licence compatible with the AGPL ([Legal notice](../legal.md)).
   provider class in `META-INF/services/com.histmersion.plugin.Plugin`. The provider is a public
   class with a no-argument constructor (not a Scala `object`), and constructing it does nothing —
   real work starts in `register`, and only for an enabled plugin.
-- **`PluginInfo(id, version, spiVersion)`.** `id` is kebab-case (`[a-z0-9][a-z0-9-]*`) and is also
+- **`Plugin.Info(id, version, spiVersion)`.** `id` is kebab-case (`[a-z0-9][a-z0-9-]*`) and is also
   the settings key: `histmersion.plugins.<id> { … }`. `spiVersion` must be `Spi.Version` (now 2),
   which is compiled into your plugin; a plugin built for another one is refused, with a message to
   rebuild it.
@@ -325,7 +325,7 @@ under a licence compatible with the AGPL ([Legal notice](../legal.md)).
 - **`register(config, ctx): Either[String, Unit]`.** Called once per configuration generation, after
   every `Secret` in the decoded config was resolved. What the plugin adds to the context's
   **registries** is staged: a `Left` or an exception discards all of it.
-- **Six registries** on `PluginContext`, one per extension point: `secretVaults`, `sourceFetchers`,
+- **Six registries** on `Plugin.Context`, one per extension point: `secretVaults`, `sourceFetchers`,
   `mediaCollections`, `eventCatalogues`, `aiProviders`, `gazetteerSources`. A new extension point is a new registry, not a
   new service type, so existing jars keep loading.
 - **What the host lends.** `ctx.http` (the host's HTTP client and its politeness policy — a plugin
@@ -380,7 +380,7 @@ What to change in a plugin:
 - A tuple period becomes `Period.from(Year(a), Year(b))` (`Left` when it ends before it starts).
 - In munit, compare a value taken out with `.value` against a plain one through its base type
   (`.map(d => d.value: String)`): munit compares only types it can tell are comparable.
-- Nothing changed in `PluginInfo`, `PluginContext`, the registries, `Secret`, the AI provider's types, the
+- Nothing changed in `Plugin.Info`, `Plugin.Context`, the registries, `Secret`, the AI provider's types, the
   settings, or how a plugin is packaged, installed and linked.
 
 ## Walkthrough 1: `hello`, a source fetcher
@@ -397,15 +397,15 @@ final case class HelloConfig(greeting: String, greeter: String, mirrors: List[St
 
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
-  val info = PluginInfo("hello", "0.1.0", Spi.Version)
+  val info = Plugin.Info("hello", "0.1.0", Spi.Version)
 
-  def register(config: HelloConfig, ctx: PluginContext): Either[String, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[String, Unit] =
     ctx.log.info(s"hello: ${config.greeting} (${config.mirrors.size} mirror(s))")
     ctx.sourceFetchers.add("hello", HelloFetcher(config.mirrors.size))
 
 final class HelloFetcher(mirrors: Int) extends SourceFetcher:
   val access = Access.Open
-  def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     Fetch.Miss(s"hello has no copy (asked $mirrors mirror(s))")
 ```
 
@@ -437,7 +437,7 @@ histmersion.plugins.hello { enabled = true, greeting = "hi" }
 
 The fetcher contract (`SourceFetcher.scala`):
 
-- `fetch(work: WorkKey, ctx: FetchContext): Fetch` gets every identifier the caller has (DOI, arXiv,
+- `fetch(work: WorkKey, ctx: Fetch.Context): Fetch` gets every identifier the caller has (DOI, arXiv,
   PubMed, PMC, archive.org, ISBN, title, authors, year, preferred format) and answers
   `Fetch.Found(FetchedFile(…))`, `Fetch.Miss(why)` or `Fetch.Refused(why)` (a copy exists but may not
   be taken). `work.doi` is a `Doi` (`work.doi.map(_.value)` for the text), `work.year` a `Year`. A
@@ -462,9 +462,9 @@ final case class HelloAiConfig(name: String, token: Option[Secret], replies: Lis
 
 final class HelloAiPlugin extends Plugin:
   type Config = HelloAiConfig
-  val info = PluginInfo("hello-ai", "0.1.0", Spi.Version)
+  val info = Plugin.Info("hello-ai", "0.1.0", Spi.Version)
 
-  def register(config: HelloAiConfig, ctx: PluginContext): Either[String, Unit] =
+  def register(config: HelloAiConfig, ctx: Plugin.Context): Either[String, Unit] =
     config.token.fold[Either[String, Boolean]](Right(false))(t => ctx.secret(t).map(_.nonEmpty)).flatMap { hasToken =>
       ctx.aiProviders.add(config.name, HelloAiProvider(config.replies, hasToken))
     }
@@ -472,7 +472,7 @@ final class HelloAiPlugin extends Plugin:
 
 An `AiProvider` (`AiProvider.scala`) answers **one model call at a time**:
 
-- `turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn]` — the request carries the
+- `turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]` — the request carries the
   model id, the system prompt, the conversation so far, the tools offered on this call, the JSON
   schema the final answer must match, and the output-token cap. The answer is text and/or tool calls,
   why it stopped, and token usage.
@@ -490,7 +490,7 @@ users price them in `agents.prices` (`0/0` for a free one) and cap them with all
 
 The other extension points follow the same pattern: `MediaCollection` (`search` a place, `complete`
 a record; the host judges every licence and every match itself), `EventCatalogue` (`parts` and
-`read` pages of `CatalogueEvent`s, with its `licence` and `citation`) and `SecretVault` (`name`,
+`read` pages of `CatalogueEvent`s, with its `licence` and `citation`) and `Secret.Vault` (`name`,
 `resolve(ref)`, and optionally `resolveAll(refs)`: the host asks a vault once for every reference of a
 config generation; the default calls `resolve` for each, a vault whose backend costs per call — an
 unlock, a hardware key — overrides it to pay once).

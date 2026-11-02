@@ -22,7 +22,7 @@ object IngestCmd:
     * The exit code is the point: a failed conversion must not look like success in a script — it exits
     * [[ExitCode.Refused]].
     */
-  def pollJob(c: Client, id: String, waited: Int): Either[CliError, Unit] =
+  def pollJob(c: Client, id: String, waited: Int): Either[Cli.Error, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
@@ -39,14 +39,14 @@ object IngestCmd:
       noWait: Boolean,
       provenance: Option[String] = None,
       acquireItem: Option[Int] = None
-  ): Either[CliError, Unit] =
+  ): Either[Cli.Error, Unit] =
     if citekey.trim.isEmpty then
-      Left(CliError("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
+      Left(Cli.Error("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
     else if scala.util.Try(Files.size(file)).getOrElse(0L) == 0L then
-      Left(CliError(s"$file is empty — there is nothing to convert", exitCode = ExitCode.Usage))
+      Left(Cli.Error(s"$file is empty — there is nothing to convert", exitCode = ExitCode.Usage))
     else
       val prov = provenance.orElse(Some("manual"))
       val params =
@@ -93,7 +93,7 @@ object IngestCmd:
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: String, help: String): Opts[Client => Either[CliError, Unit]] =
+  private def control(action: String, help: String): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(action, help) {
       (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.call(Api.jobControl)((id, action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
@@ -140,4 +140,4 @@ object IngestCmd:
       }
   }
 
-  val all: Opts[Client => Either[CliError, Unit]] = reocr orElse assets orElse jobs
+  val all: Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs

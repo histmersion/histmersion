@@ -67,7 +67,7 @@ object EventsCmd:
   }
 
   /** The arguments of `events patch <id>`: the id and the patch they make (or why they make none). */
-  private[cli] val patchOpts: Opts[(String, Either[CliError, EventPatch])] =
+  private[cli] val patchOpts: Opts[(String, Either[Cli.Error, EventPatch])] =
     (
       Opts.argument[String]("id"),
       Opts
@@ -95,11 +95,11 @@ object EventsCmd:
     )
       .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck, wd) =>
         val patch = for
-          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => CliError(m, exitCode = ExitCode.Usage))
+          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => Cli.Error(m, exitCode = ExitCode.Usage))
           _ <- scale
             .filter(EventScale.parse(_).isEmpty)
             .fold(Right(()))(v =>
-              Left(CliError(s"--scale: '$v' is not local, regional or auto", exitCode = ExitCode.Usage))
+              Left(Cli.Error(s"--scale: '$v' is not local, regional or auto", exitCode = ExitCode.Usage))
             )
           p = EventPatch(
             label = label,
@@ -116,7 +116,7 @@ object EventsCmd:
           _ <- Either.cond(
             p != EventPatch(),
             (),
-            CliError("nothing to change: give at least one field", exitCode = ExitCode.Usage)
+            Cli.Error("nothing to change: give at least one field", exitCode = ExitCode.Usage)
           )
         yield p
         (id, patch)
@@ -139,7 +139,7 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[CliError, Unit] =
+  private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[Cli.Error, Unit] =
     println(
       s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
@@ -289,7 +289,7 @@ object EventsCmd:
       }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "events",
       "Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads"

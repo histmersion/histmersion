@@ -2,13 +2,13 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.plugin.PluginHttp
 import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import com.histmersion.api.instance.Version
 import com.histmersion.api.catalogue.Place
+import com.histmersion.plugin.Plugin
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every
@@ -48,7 +48,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   // ── the code under test: the plugins' sources run by the host's runner ──────────────────────
 
   /** The host's gazetteer client, its requests sent to the loopback server instead of the source's host. */
-  private def http: PluginHttp =
+  private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
       def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))

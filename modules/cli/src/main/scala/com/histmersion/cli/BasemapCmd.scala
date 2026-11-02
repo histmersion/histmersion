@@ -98,7 +98,7 @@ object BasemapCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("basemap", "The web UI's local base map (street maps and terrain): status, styles, fetch, rm") {
       statusCmd orElse fetchCmd orElse rmCmd
     }

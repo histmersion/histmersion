@@ -13,8 +13,8 @@ import java.nio.{ByteBuffer, ByteOrder}
 final case class GeoTiffGrid(
     west: Degrees,
     north: Degrees,
-    stepX: DegreesPerPixel,
-    stepY: DegreesPerPixel,
+    stepX: Degrees.PerPixel,
+    stepY: Degrees.PerPixel,
     width: PixelCount,
     height: PixelCount,
     rowOffsets: Vector[ByteOffset],
@@ -147,8 +147,8 @@ object GeoTiffGrid:
       tie <- d.doubles(ModelTiepoint).flatMap(_.filter(_.size >= 6).toRight("no tie point (not a GeoTIFF)"))
       keys <- d.ints(GeoKeyDirectory).map(_.getOrElse(Vector.empty))
       noData <- d.text(GdalNoData).map(_.flatMap(_.toDoubleOption).map(_.toShort))
-      stepX <- DegreesPerPixel.either(scale(0))
-      stepY <- DegreesPerPixel.either(scale(1))
+      stepX <- Degrees.PerPixel.either(scale(0))
+      stepY <- Degrees.PerPixel.either(scale(1))
       w <- PixelCount.either(width.toInt)
       h <- PixelCount.either(height.toInt)
       offsets <- rowOffsets(strips, perStrip, height, width * 2)

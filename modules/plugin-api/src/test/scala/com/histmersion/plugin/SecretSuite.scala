@@ -2,43 +2,43 @@ package com.histmersion.plugin
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 final case class WithSecrets(token: Secret, password: Option[Secret], retries: Int, verbose: Boolean)
     derives ConfigReader
 
 final class ExamplePlugin extends Plugin:
   type Config = WithSecrets
-  val info = PluginInfo("example", "0.1.0", Spi.Version)
-  def register(config: WithSecrets, ctx: PluginContext) = Right(())
+  val info = Plugin.Info("example", "0.1.0", Spi.Version)
+  def register(config: WithSecrets, ctx: Plugin.Context) = Right(())
 
 class SecretSuite extends munit.FunSuite:
 
   test("the three reference forms parse"):
-    assertEquals(SecretRef.parse("value:hunter2"), Right(SecretRef.Value("hunter2")))
-    assertEquals(SecretRef.parse("env:PORTAL_TOKEN"), Right(SecretRef.Env("PORTAL_TOKEN")))
+    assertEquals(Secret.Ref.parse("value:hunter2"), Right(Secret.Ref.Value("hunter2")))
+    assertEquals(Secret.Ref.parse("env:PORTAL_TOKEN"), Right(Secret.Ref.Env("PORTAL_TOKEN")))
     assertEquals(
-      SecretRef.parse(" keepassxc:Histmersion/Portal#password "),
-      Right(SecretRef.Vault("keepassxc", "Histmersion/Portal#password"))
+      Secret.Ref.parse(" keepassxc:Histmersion/Portal#password "),
+      Right(Secret.Ref.Vault("keepassxc", "Histmersion/Portal#password"))
     )
     assertEquals(
-      SecretRef.parse("1password:op://Private/Portal/password"),
-      Right(SecretRef.Vault("1password", "op://Private/Portal/password"))
+      Secret.Ref.parse("1password:op://Private/Portal/password"),
+      Right(Secret.Ref.Vault("1password", "op://Private/Portal/password"))
     )
     // a literal keeps its colons and its spaces inside
-    assertEquals(SecretRef.parse("value:a:b c"), Right(SecretRef.Value("a:b c")))
+    assertEquals(Secret.Ref.parse("value:a:b c"), Right(Secret.Ref.Value("a:b c")))
 
   test("a bare value, an empty part or a bad name is refused, and the error never echoes a value"):
-    val bare = SecretRef.parse("hunter2")
+    val bare = Secret.Ref.parse("hunter2")
     assert(bare.left.exists(_.contains("not a bare value")), bare)
     assert(!bare.left.exists(_.contains("hunter2")))
-    assert(SecretRef.parse("value:").isLeft)
-    assert(SecretRef.parse("env:").isLeft)
-    assert(SecretRef.parse("env:NOT-A-NAME").isLeft)
-    assert(SecretRef.parse("keepassxc:").isLeft)
-    assert(SecretRef.parse("Vault:x").left.exists(_.contains("not a vault name")))
-    assert(SecretRef.parse(":x").isLeft)
-    assert(SecretRef.parse(null).isLeft)
+    assert(Secret.Ref.parse("value:").isLeft)
+    assert(Secret.Ref.parse("env:").isLeft)
+    assert(Secret.Ref.parse("env:NOT-A-NAME").isLeft)
+    assert(Secret.Ref.parse("keepassxc:").isLeft)
+    assert(Secret.Ref.parse("Vault:x").left.exists(_.contains("not a vault name")))
+    assert(Secret.Ref.parse(":x").isLeft)
+    assert(Secret.Ref.parse(null).isLeft)
 
   test("toString shows the reference, never a literal value"):
     assertEquals(Secret.parse("env:PORTAL_TOKEN").map(_.toString), Right("Secret(env:PORTAL_TOKEN)"))
@@ -53,12 +53,12 @@ class SecretSuite extends munit.FunSuite:
       ConfigFactory.parseString("token = \"env:PORTAL_TOKEN\"\npassword = null\nretries = \"3\"\nverbose = \"true\"")
     assertEquals(
       ConfigReader[WithSecrets].from(c.root),
-      Right(WithSecrets(Secret(SecretRef.Env("PORTAL_TOKEN")), None, 3, true))
+      Right(WithSecrets(Secret(Secret.Ref.Env("PORTAL_TOKEN")), None, 3, true))
     )
     val withPw = c.withValue("password", org.ekrich.config.ConfigValueFactory.fromAnyRef("keepassxc:a#b"))
     assertEquals(
       ConfigReader[WithSecrets].from(withPw.root).map(_.password),
-      Right(Some(Secret(SecretRef.Vault("keepassxc", "a#b"))))
+      Right(Some(Secret(Secret.Ref.Vault("keepassxc", "a#b"))))
     )
 
   test("a bare string where a secret belongs is a decoding error that does not repeat the value"):

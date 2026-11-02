@@ -11,7 +11,7 @@ import com.histmersion.pluginhost.Generation
 import com.histmersion.config.{AppConfig, ConfigReload}
 import com.histmersion.api.settings.ReloadReport
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
+import com.histmersion.server.hot.Hot
 import ox.{forkDiscard, useInScope}
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -33,7 +33,7 @@ import scala.util.control.NonFatal
   * and all, closed with its Ox scope.
   */
 final class ServerGraph private (
-    val graph: HotGraph[HotConfig],
+    val graph: Hot.Graph[HotConfig],
     source: Option[ConfigSource],
     val pool: Hot[DataSource],
     val migrations: Hot[String],
@@ -42,8 +42,8 @@ final class ServerGraph private (
     val core: com.histmersion.domain.library.acquisition.CoreBudget
 ):
 
-  val ds: DataSource = HotDataSource(pool)(identity)
-  val queryDs: DataSource = HotDataSource(queryPool)(_.ds)
+  val ds: DataSource = Hot.DataSource(pool)(identity)
+  val queryDs: DataSource = Hot.DataSource(queryPool)(_.ds)
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
   def deps(maintenance: WriteGate, restart: Option[() => Unit], system: SystemContext): Deps =
@@ -163,7 +163,7 @@ object ServerGraph:
       core: com.histmersion.domain.library.acquisition.CoreBudget =
         com.histmersion.domain.library.acquisition.CoreBudget()
   ): Either[String, ServerGraph] =
-    val graph = HotGraph[HotConfig](initial)
+    val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
     val built =
       for

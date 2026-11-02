@@ -17,10 +17,10 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
   val role = MediaCollection.Object
   override def matchRule = MediaMatchRule.PlaceIds(Set(OpenContext.Context))
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(OpenContext.records(_, licences))
 
-  override def complete(item: MediaItem, http: PluginHttp): Either[String, MediaItem] =
+  override def complete(item: MediaItem, http: Plugin.Http): Either[String, MediaItem] =
     http.askJson(OpenContext.itemUrl(conf.apiUrl, item.key)).flatMap(OpenContext.item(_, item, licences))

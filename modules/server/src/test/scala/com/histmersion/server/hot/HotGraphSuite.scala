@@ -21,13 +21,13 @@ class HotGraphSuite extends munit.FunSuite:
     @volatile var closed = false
     def close(): Unit = { closed = true; log.add(s"close $name") }
 
-  private val quiet = new HotGraph.Log:
+  private val quiet = new Hot.Graph.Log:
     def info(m: String) = ()
     def warn(m: String) = ()
 
   final private class Fixture:
     val log = ConcurrentLinkedQueue[String]()
-    val graph = HotGraph[Conf](Map("db" -> "a", "query" -> "q1", "other" -> "x"), quiet)
+    val graph = Hot.Graph[Conf](Map("db" -> "a", "query" -> "q1", "other" -> "x"), quiet)
     val builds = AtomicInteger(0)
     val pool = graph
       .node[Res]("pool", keys = List("db")) { ctx =>
@@ -196,7 +196,7 @@ class HotGraphSuite extends munit.FunSuite:
   test("a retired value with its own idle check waits for it (a pool with a connection out)"):
     val out = AtomicInteger(1)
     val log = ConcurrentLinkedQueue[String]()
-    val graph = HotGraph[Conf](Map("db" -> "a"), quiet)
+    val graph = Hot.Graph[Conf](Map("db" -> "a"), quiet)
     try
       val pool = graph
         .node[Res]("pool", keys = List("db"), idle = _ => out.get == 0) { ctx =>
@@ -214,7 +214,7 @@ class HotGraphSuite extends munit.FunSuite:
     finally graph.close(1.second)
 
   test("onPublish runs on the new generation, whatever the reloading thread is pinned to"):
-    val graph = HotGraph[Conf](Map("db" -> "a"), quiet)
+    val graph = Hot.Graph[Conf](Map("db" -> "a"), quiet)
     try
       val seen = ConcurrentLinkedQueue[String]()
       val pool = graph.node[String]("pool", keys = List("db"))(ctx => Right(ctx.config("db"))).fold(fail(_), identity)
@@ -232,7 +232,7 @@ class HotGraphSuite extends munit.FunSuite:
 
   test("a failed build's own resources are released at once; close() closes everything"):
     val log = ConcurrentLinkedQueue[String]()
-    val graph = HotGraph[Conf](Map("db" -> "a"), quiet)
+    val graph = Hot.Graph[Conf](Map("db" -> "a"), quiet)
     val h = graph
       .node[Res]("pool", keys = List("db")) { ctx =>
         val r = useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close())

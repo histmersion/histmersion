@@ -1,10 +1,9 @@
 package com.histmersion.plugins.media
 
-import com.histmersion.plugin.PluginContext
-
 /** `media-smithsonian`: `histmersion media import smithsonian` — Smithsonian Open Access objects, with an api.data.gov
   * key.
   */
+import com.histmersion.plugin.Plugin
 final class SmithsonianPlugin extends KeyedPlugin("media-smithsonian", "smithsonian"):
-  protected def collection(c: KeyedPluginConfig, key: Option[String], ctx: PluginContext) =
+  protected def collection(c: KeyedPlugin.Config, key: Option[String], ctx: Plugin.Context) =
     SmithsonianCollection(c.media.smithsonian, key)

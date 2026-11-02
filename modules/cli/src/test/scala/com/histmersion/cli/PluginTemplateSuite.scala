@@ -148,7 +148,7 @@ class PluginTemplateSuite extends munit.FunSuite:
     assert(tests.contains("class MirrorPackagingSuite extends munit.FunSuite"), tests)
     assert(tests.contains("PluginHarness.load(\"mirror\""), "the tests load the plugin as the server does")
     assert(
-      !tests.contains("extends PluginContext") && !tests.contains("extends PluginHttp"),
+      !tests.contains("extends Plugin.Context") && !tests.contains("extends Plugin.Http"),
       "no hand-made host in the tests"
     )
 
@@ -213,7 +213,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       files.foreach(f => assert(!"@[A-Za-z]+@".r.findFirstIn(f.content).isDefined, s"${f.path} keeps a placeholder"))
       val main = file(files, "MyThing.scala")
       assert(main.contains("final class MyThingPlugin extends Plugin:"), main)
-      assert(main.contains("PluginInfo(\"my-thing\", \"0.1.0\", Spi.Version)"), main)
+      assert(main.contains("Plugin.Info(\"my-thing\", \"0.1.0\", Spi.Version)"), main)
       assert(main.contains(s"final class MyThing${kind.classSuffix}"), main)
       assert(
         file(files, PluginTemplate.defaultsPath(PluginId.parse("my-thing").toOption.get)).contains("enabled = false\n")
@@ -322,7 +322,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       )
       assertEquals(
         PluginAuthoring
-          .repository(Some("https://example.org/m2"), Left(CliError("no install")), Left(CliError("no HOME")))
+          .repository(Some("https://example.org/m2"), Left(Cli.Error("no install")), Left(Cli.Error("no HOME")))
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))
       )

@@ -1,7 +1,7 @@
 package com.histmersion.fixtures.hellodeps
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** A TEST FIXTURE, not a product: a plugin with a dependency of its own (`hello-lib`), published with a POM that lists

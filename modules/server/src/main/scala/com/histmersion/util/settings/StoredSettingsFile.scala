@@ -2,7 +2,7 @@ package com.histmersion.util.settings
 
 import com.histmersion.config.AppConfig
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile}
-import com.histmersion.util.storage.{Store, StoreError, StoreKey, TempName}
+import com.histmersion.util.storage.{Store, TempName}
 import org.ekrich.config.{Config, ConfigFactory}
 
 import java.io.IOException
@@ -13,7 +13,7 @@ import scala.util.Using
   * read its settings from. Its text and its includes are read as a load reads them, which needs the file on disk; a
   * store in memory has none to give, and every read and change of it is refused.
   */
-final class StoredSettingsFile(store: Store, key: StoreKey, val shown: String) extends SettingsFile:
+final class StoredSettingsFile(store: Store, key: Store.Key, val shown: String) extends SettingsFile:
 
   def read(): Either[SettingError, ConfigFileState] =
     if !store.exists(key) then
@@ -70,4 +70,4 @@ final class StoredSettingsFile(store: Store, key: StoreKey, val shown: String) e
       .map(m => SettingError.Unreadable(m.replace(where, shown)))
       .flatMap(_.toRight(SettingError.Unreadable(s"$shown: no such file")))
 
-  private def io(e: StoreError): SettingError = SettingError.Io(e.message)
+  private def io(e: Store.Error): SettingError = SettingError.Io(e.message)

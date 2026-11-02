@@ -25,7 +25,7 @@ final class PluginOps(
     confirm: String => Boolean = PluginOps.ask
 ):
 
-  private def err(msg: String, code: Int = ExitCode.Refused) = CliError(msg, exitCode = code)
+  private def err(msg: String, code: Int = ExitCode.Refused) = Cli.Error(msg, exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -81,14 +81,14 @@ final class PluginOps(
   def installedSet: Option[PluginSet] =
     if Files.isRegularFile(install.record) then PluginKit.parseSet(Files.readString(install.record)).toOption else None
 
-  def spiVersion: Either[CliError, Int] =
+  def spiVersion: Either[Cli.Error, Int] =
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
     else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(err(_))
 
   // ── describe (the kit's pluginTool on a JVM, through histmersion-relink) ───────────────────────
 
   /** What `jar` provides, loaded with the dependency jars of `lib` (`lib/classpath`). */
-  def describe(jar: Path, lib: Option[Path] = None): Either[CliError, PluginJar] =
+  def describe(jar: Path, lib: Option[Path] = None): Either[Cli.Error, PluginJar] =
     val withLib = lib.toList.flatMap(l => List("--lib", l.toString))
     run.capture(install.relink.toString :: "--describe" :: withLib ::: List(jar.toString), install.env) match
       case Left((_, e)) => Left(err(s"could not describe ${jar.getFileName}: $e"))
@@ -113,7 +113,7 @@ final class PluginOps(
   /** The jar at `to`, its signature beside it when there is one (`<to>.asc`), and the POM published with it (`<to minus
     * .jar>.pom`, which lists the plugin's dependencies) when there is one.
     */
-  private def fetch(origin: Origin, to: Path, wantAsc: Boolean, repos: List[String]): Either[CliError, String] =
+  private def fetch(origin: Origin, to: Path, wantAsc: Boolean, repos: List[String]): Either[Cli.Error, String] =
     origin match
       case Origin.File(path) =>
         val p = Path.of(path)
@@ -137,7 +137,7 @@ final class PluginOps(
     * the checksum the repository publishes beside it (SHA-256 when there is one, else SHA-1, which Maven Central always
     * has). The dependencies the POM lists are the resolver's (`histmersion-relink --resolve`).
     */
-  private def maven(c: Coordinates, to: Path, wantAsc: Boolean, repos: List[String]): Either[CliError, String] =
+  private def maven(c: Coordinates, to: Path, wantAsc: Boolean, repos: List[String]): Either[Cli.Error, String] =
     def one(repo: String): Either[String, String] =
       val url = c.jarUrl(repo)
       for
@@ -182,7 +182,7 @@ final class PluginOps(
     * reports, or why the plugin is refused (a library the server ships at an older version than the plugin needs) or
     * could not be resolved.
     */
-  private def dependencies(jar: Path, lib: Path, repos: List[String]): Either[CliError, List[String]] =
+  private def dependencies(jar: Path, lib: Path, repos: List[String]): Either[Cli.Error, List[String]] =
     run.capture(
       install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
       install.env
@@ -210,7 +210,7 @@ final class PluginOps(
     * refuse what cannot be linked, show what it is and needs, install it under `<id>-<version>.jar` (replacing an older
     * version of the same plugin), its POM beside it and its dependencies in `lib/`.
     */
-  def add(arg: String, o: AddOptions): Either[CliError, PluginJar] =
+  def add(arg: String, o: AddOptions): Either[Cli.Error, PluginJar] =
     PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage)).flatMap(addFrom(_, o))
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
@@ -222,7 +222,7 @@ final class PluginOps(
       case Origin.Maven(c)   => s"${c.artifact}-${c.version}.jar"
     raw.replaceAll("[^A-Za-z0-9._+\\-]", "_")
 
-  private def addFrom(origin: Origin, o: AddOptions): Either[CliError, PluginJar] =
+  private def addFrom(origin: Origin, o: AddOptions): Either[Cli.Error, PluginJar] =
     val work = install.staging.resolve(s"add-${ProcessHandle.current().pid()}")
     deleteTree(work)
     Files.createDirectories(work)
@@ -291,7 +291,12 @@ final class PluginOps(
       finally s.close()
 
   /** The signer's fingerprint when the jar was verified; refused when verification is required and fails. */
-  private def signature(jar: Path, asc: Path, verifying: Boolean, unsigned: Boolean): Either[CliError, Option[String]] =
+  private def signature(
+      jar: Path,
+      asc: Path,
+      verifying: Boolean,
+      unsigned: Boolean
+  ): Either[Cli.Error, Option[String]] =
     if !verifying then Right(None)
     else if !Files.isRegularFile(asc) then
       if unsigned then {
@@ -350,7 +355,7 @@ final class PluginOps(
         case Left((_, e)) => out(s"warning: the plugins manifest was not re-signed: $e")
 
   /** `plugin rm`: by plugin id or file name. */
-  def rm(what: String): Either[CliError, List[String]] =
+  def rm(what: String): Either[Cli.Error, List[String]] =
     val idx = index
     val hits = jars.map(_.getFileName.toString).filter(f => f == what || PluginKit.idsOf(f, idx).contains(what))
     if hits.isEmpty then Left(err(s"no installed plugin '$what' (histmersion plugin list)", ExitCode.Usage))
@@ -420,12 +425,12 @@ final class PluginOps(
         PluginKit.statusLines(st, serverAnswered)) ++ signing
     )
 
-  def rebuild(args: List[String]): Either[CliError, Unit] =
+  def rebuild(args: List[String]): Either[Cli.Error, Unit] =
     run.interactive(install.relink.toString :: args, install.env) match
       case 0  => Right(())
       case rc =>
         Left(
-          CliError(
+          Cli.Error(
             s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})",
             exitCode = if rc == 1 then ExitCode.Usage else ExitCode.Refused
           )

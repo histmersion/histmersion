@@ -15,7 +15,7 @@ final class MetCollection(conf: CollectionSettings)
   override val description = "The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(MetCollection.ids)

@@ -2,16 +2,16 @@ package com.histmersion.plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 import java.nio.file.{Files, Path}
 import scala.concurrent.duration.*
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
-  val info = PluginInfo("keepassxc", Vaults.Version, Spi.Version)
+  val info = Plugin.Info("keepassxc", Vaults.Version, Spi.Version)
 
-  def register(c: KeePassXcConfig, ctx: PluginContext): Either[String, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[String, Unit] =
     val home = ctx.env("HOME")
     for
       db <- Option(c.database)
@@ -47,7 +47,7 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: String, ctx: PluginContext): Either[String, Option[String]] =
+  private def detector(ykman: String, ctx: Plugin.Context): Either[String, Option[String]] =
     val t = Option(ykman).map(_.trim).getOrElse("")
     if t.isEmpty then
       ctx.log.info("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")

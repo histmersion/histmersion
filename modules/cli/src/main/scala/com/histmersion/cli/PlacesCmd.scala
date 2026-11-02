@@ -74,16 +74,16 @@ object PlacesCmd:
       kind: Option[String],
       batch: Int,
       dataset: Dataset = Dataset.Local
-  ): Either[CliError, com.histmersion.api.catalogue.Place.ImportResult] =
-    if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+  ): Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult] =
+    if !Files.isRegularFile(file) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.Kind.Region)) match
-        case Left(e)      => Left(CliError(s"$file: $e", exitCode = ExitCode.Usage))
+        case Left(e)      => Left(Cli.Error(s"$file: $e", exitCode = ExitCode.Usage))
         case Right(items) =>
           val groups = items.grouped(batch.max(1)).toList
           val total = groups.size
           groups.zipWithIndex
-            .foldLeft[Either[CliError, com.histmersion.api.catalogue.Place.ImportResult]](
+            .foldLeft[Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult]](
               Right(com.histmersion.api.catalogue.Place.ImportResult(0, 0, 0, Nil))
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
@@ -183,7 +183,7 @@ object PlacesCmd:
           val n = batch.getOrElse(defaultBatch)
           if !Files.isDirectory(d) then
             Left(
-              CliError(
+              Cli.Error(
                 s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>",
                 exitCode = ExitCode.Usage
               )
@@ -191,13 +191,13 @@ object PlacesCmd:
           else
             val files = seedFiles(d)
             if files.isEmpty then
-              Left(CliError(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = ExitCode.Usage))
+              Left(Cli.Error(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = ExitCode.Usage))
             else
               def pass(
                   fs: List[(Path, Option[String])],
                   label: String
-              ): Either[CliError, List[(Path, Option[String])]] =
-                fs.foldLeft[Either[CliError, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
+              ): Either[Cli.Error, List[(Path, Option[String])]] =
+                fs.foldLeft[Either[Cli.Error, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>
                       println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
@@ -224,7 +224,7 @@ object PlacesCmd:
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: String, noWait: Boolean): Either[CliError, Unit] =
+  private def started(c: Client, id: String, noWait: Boolean): Either[Cli.Error, Unit] =
     println(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
 
@@ -453,7 +453,7 @@ object PlacesCmd:
       }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "places",
       "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places"

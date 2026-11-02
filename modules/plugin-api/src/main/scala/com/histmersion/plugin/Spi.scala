@@ -4,7 +4,7 @@ import scala.compiletime.deferred
 
 object Spi:
   /** Bumped on an incompatible change to anything in this package. A new extension point (a new registry on
-    * [[PluginContext]]) is compatible: existing plugins never call it.
+    * [[Plugin.Context]]) is compatible: existing plugins never call it.
     *
     * An `inline val`: the number is compiled INTO the plugin, so the host reads the generation the plugin was built
     * against, not its own. (SPI 1 declared a plain `val`, read from the host at run time; an SPI-1 plugin fails to link

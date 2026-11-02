@@ -90,9 +90,9 @@ class PluginGazetteersSuite extends munit.FunSuite:
   private def source(answer: => Either[String, List[GazetteerPlace]]): GazetteerSource = new GazetteerSource:
     def title = "Atlas"
     def rights = GazetteerRights(Licence("CC BY 4.0"), "Atlas, CC BY 4.0")
-    def fetch(http: PluginHttp) = answer
+    def fetch(http: Plugin.Http) = answer
 
-  private val offline = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("offline") }
+  private val offline = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
 
   test("a source's places in its order, the refused ones apart; its failure and what it throws are the import's"):
     val bad = slice.copy(id = "zz_bad", kind = "")

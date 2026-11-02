@@ -21,19 +21,19 @@ class SourceFetcherSuite extends munit.FunSuite:
     val r = Registry.refusing[SourceFetcher]("no chain here")
     val f = new SourceFetcher:
       val access = Access.Open
-      def fetch(work: WorkKey, ctx: FetchContext) = Fetch.Miss("nothing")
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss("nothing")
     assertEquals(r.add("portal", f), Left("'portal': no chain here"))
 
   test("a context written before source fetchers existed still compiles and refuses a fetcher"):
-    val ctx = new PluginContext:
-      def http = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("offline") }
-      def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    val ctx = new Plugin.Context:
+      def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(name: String) = None
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("no vaults")
     val f = new SourceFetcher:
       val access = Access.Subscription
-      def fetch(work: WorkKey, ctx: FetchContext) = Fetch.Refused("no entitlement")
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused("no entitlement")
     assert(ctx.sourceFetchers.add("portal", f).left.exists(_.contains("no acquisition chain")))
 
   test("a FetchedFile's licence is optional"):

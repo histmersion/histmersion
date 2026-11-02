@@ -31,12 +31,12 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.{weights, EventSelection, EventService, EventSql}
-import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.evidence.passages.Passage
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -49,7 +49,7 @@ final class EventLinksControllers(
     leadFacts: LeadService,
     events: EventService,
     attestations: AttestationService,
-    sources: PassageSource,
+    sources: Passage.Source,
     jobs: CatalogueJobs,
     info: String => Option[CatalogProviderInfo],
     resolve: Filter => Filter,

@@ -4,12 +4,13 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
-import com.histmersion.domain.catalogue.evidence.passages.{PassageReader, PassageSource}
+import com.histmersion.domain.catalogue.evidence.passages.PassageReader
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.domain.catalogue.evidence.passages.Passage
 
 /** The attestations' controllers over the in-memory service, no server and no database: an old citekey and an old place
   * id resolved before they are stored, an unknown target kind and a missing source refused, a finding id kept as given,
@@ -22,7 +23,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
   )
   private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
 
-  private val sources = new PassageSource:
+  private val sources = new Passage.Source:
     def canonical(citekey: String): Option[String] = Option.when(citekey == "zznew1990_x")(citekey)
     def naming(name: String, limit: Int): List[String] = Nil
     def reader(citekey: String): PassageReader = (_, _, _, _, _, _) => Left("no text")

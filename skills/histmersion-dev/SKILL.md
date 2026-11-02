@@ -187,7 +187,7 @@ relink and signing, §15–21 as built).
 server). ONE ServiceLoader service, `Plugin` (listed in `META-INF/services/com.histmersion.plugin.Plugin`,
 a public class with a no-argument constructor):
 
-- `info = PluginInfo(id, version, Spi.Version)` — `id` is kebab-case and the config key
+- `info = Plugin.Info(id, version, Spi.Version)` — `id` is kebab-case and the config key
   `histmersion.plugins.<id>`; another SPI version is refused (SPI 2: `Spi.Version` is an `inline val`, so it
   is compiled into the plugin; an SPI-1 jar fails to link on it and is told to rebuild).
 - The values the SPI exchanges are plugin-api's own Iron newtypes — `Year`, `Period`, `Latitude`,
@@ -275,7 +275,7 @@ self-check otherwise. Built-in plugins (`modules/plugin-vaults`, the `oa-*`/`med
 **Config and secrets.** Plugin settings live in `histmersion.conf` under `histmersion.plugins.<id>`. A
 settings change (`enabled` included) needs no restart: `histmersion config reload` (or `config.watch`)
 rebuilds the changed plugins in place; a failed reload changes nothing. Credentials are `Secret` fields
-holding a REFERENCE, never the value: `env:NAME`, `<vault>:<ref>` (resolved by a registered `SecretVault`,
+holding a REFERENCE, never the value: `env:NAME`, `<vault>:<ref>` (resolved by a registered `Secret.Vault`,
 e.g. `keepassxc:Group/entry#password`), or `value:<literal>` (allowed, warned about, masked everywhere).
 The `keepassxc` vault also opens YubiKey-protected databases: `yubikey = "2:<serial>"` or a list tried in
 order (`ykman list --serials`, when installed, limits it to the connected keys); test it with fake

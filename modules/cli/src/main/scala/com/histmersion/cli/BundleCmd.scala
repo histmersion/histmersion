@@ -14,10 +14,10 @@ import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
   */
 object BundleCmd:
 
-  private def existing(file: String): Either[CliError, java.io.File] =
+  private def existing(file: String): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
-    else Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+    else Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
   private[cli] def manifestOf(p: Path): Either[String, Bundle.Manifest] =
@@ -50,7 +50,7 @@ object BundleCmd:
         case Right(_) =>
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
-            e => Left(CliError(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
+            e => Left(Cli.Error(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
             m => Right(println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
           )
     }
@@ -63,7 +63,7 @@ object BundleCmd:
     (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok then Right(()) else Left(CliError("the bundle did not verify", exitCode = ExitCode.Refused))
+        if r.ok then Right(()) else Left(Cli.Error("the bundle did not verify", exitCode = ExitCode.Refused))
       }
     }
   }
@@ -78,7 +78,7 @@ object BundleCmd:
       MergeCmd.resolutionOpts,
       Output.jsonFlag
     ).mapN { (file, dryRun, res, json) => (c: Client) =>
-      val run: Either[CliError, Bundle.ImportResult] =
+      val run: Either[Cli.Error, Bundle.ImportResult] =
         if res.isEmpty then existing(file).flatMap(c.importBundle(dryRun, _))
         else
           for
@@ -89,7 +89,7 @@ object BundleCmd:
           yield x
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
-        if r.problems.isEmpty then Right(()) else Left(CliError("the import was refused", exitCode = ExitCode.Refused))
+        if r.problems.isEmpty then Right(()) else Left(Cli.Error("the import was refused", exitCode = ExitCode.Refused))
       }
     }
   }
@@ -104,7 +104,7 @@ object BundleCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "bundle",
       "Portable .hmx bundles: export, verify and import a whole collection, carrying its identities"

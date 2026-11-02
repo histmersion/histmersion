@@ -19,9 +19,9 @@ private[notes] object NoteRepo:
           FROM notes n"""
 
   /** Last changed first; every one when no `size` is given. */
-  def list(user: UserId, kind: Option[MarkKind], item: Option[NoteItem], size: Option[PageSize])(using
+  def list(user: UserId, kind: Option[MarkKind], item: Option[Note.Item], size: Option[PageSize])(using
       DbCon
-  ): List[NoteRow] =
+  ): List[Note.Row] =
     (Sql.of(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL", Param.S(user.value)) ++
       kind.fold(Sql.empty)(k => Sql.of(" AND n.target_kind = ?", Param.S(k.wire))) ++
       item.fold(Sql.empty)(i =>
@@ -32,9 +32,9 @@ private[notes] object NoteRepo:
         )
       ) ++
       Sql.raw(" ORDER BY n.updated_at DESC, n.id DESC") ++
-      size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[NoteRow].run().toList
+      size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[Note.Row].run().toList
 
-  def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[NoteRow] =
+  def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
     Sql
       .of(
         s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL AND n.id = ?::uuid",
@@ -42,7 +42,7 @@ private[notes] object NoteRepo:
         Param.S(id.value)
       )
       .frag
-      .query[NoteRow]
+      .query[Note.Row]
       .run()
       .headOption
 

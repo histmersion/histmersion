@@ -12,7 +12,7 @@ import com.histmersion.api.plugins.PluginsReport
 object PluginCmd:
 
   /** The install on this machine, wherever the CLI is pointed. */
-  private[cli] def install: Either[CliError, LocalInstall] =
+  private[cli] def install: Either[Cli.Error, LocalInstall] =
     val env = (k: String) => Option(java.lang.System.getenv(k))
     val exe =
       scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(Path.of(_))
@@ -20,12 +20,12 @@ object PluginCmd:
     LocalInstall
       .locate(cfg.cli.plugins, cfg.runtime.dataDir, env, java.lang.System.getProperty("os.name", ""), exe)
       .left
-      .map(e => CliError(e, exitCode = ExitCode.Usage))
+      .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
 
-  private[cli] def local(c: Client): Either[CliError, PluginOps] =
+  private[cli] def local(c: Client): Either[Cli.Error, PluginOps] =
     if !PluginKit.isLoopback(c.serverUrl) then
       Left(
-        CliError(
+        Cli.Error(
           s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
             "run the command on the machine the server runs on",
           exitCode = ExitCode.Usage
@@ -58,7 +58,7 @@ object PluginCmd:
       val repos = repoArgs
         .traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
         .left
-        .map(CliError(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>
           if rebuild then ops.rebuild(Nil)
@@ -173,7 +173,7 @@ object PluginCmd:
           Either.cond(
             Files.isRegularFile(src),
             println(src),
-            CliError(s"no sources jar beside $jar", exitCode = ExitCode.Refused)
+            Cli.Error(s"no sources jar beside $jar", exitCode = ExitCode.Refused)
           )
       }
     }
@@ -203,7 +203,7 @@ object PluginCmd:
         kind <- PluginKind.parse(rawKind)
         pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName))
       yield (id, kind, pkg)
-      result.left.map(CliError(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
+      result.left.map(Cli.Error(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
         val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
         for
           (repo, copied) <- PluginAuthoring.repository(
@@ -225,7 +225,7 @@ object PluginCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "plugin",
       "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one"

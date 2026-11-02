@@ -44,7 +44,7 @@ class CodexHomeSuite extends munit.FunSuite:
     val h = home()
     try
       val ran = scala.collection.mutable.ListBuffer.empty[List[String]]
-      val r = CodexHome.retain(h, cfg, now, argv => { ran += argv; Right(0) })
+      val r = Codex.Home.retain(h, cfg, now, argv => { ran += argv; Right(0) })
       assertEquals(r.skipped, None)
       assertEquals((r.deleted, r.freedBytes), (2, 200L))
       assert(!Files.exists(h.resolve("sessions/2026/08")), "the emptied month folder is gone")
@@ -69,22 +69,22 @@ class CodexHomeSuite extends munit.FunSuite:
       val inRun = CountDownLatch(1)
       val done = CountDownLatch(1)
       val t = Thread.ofVirtual().start { () =>
-        CodexHome.using(h) { inRun.countDown(); val _ = done.await(10, TimeUnit.SECONDS) }
+        Codex.Home.using(h) { inRun.countDown(); val _ = done.await(10, TimeUnit.SECONDS) }
       }
       assert(inRun.await(10, TimeUnit.SECONDS))
-      val busy = CodexHome.retain(h, cfg, now, _ => fail("no vacuum under a run"))
+      val busy = Codex.Home.retain(h, cfg, now, _ => fail("no vacuum under a run"))
       assert(busy.skipped.exists(_.contains("using the home")), busy.toString)
       assert(Files.exists(h.resolve("sessions/2026/08/01/rollout-old.jsonl")))
       done.countDown(); t.join()
-      assertEquals(CodexHome.retain(h, cfg, now, _ => Right(0)).deleted, 2)
+      assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(0)).deleted, 2)
     finally cleanup(h)
 
   test("keep-sessions-days 0 and vacuum off change nothing; a failing vacuum is reported, not thrown"):
     val h = home()
     try
-      val off = CodexHome.retain(h, cfg.copy(keepSessionsDays = 0, vacuum = false), now, _ => fail("vacuum is off"))
+      val off = Codex.Home.retain(h, cfg.copy(keepSessionsDays = 0, vacuum = false), now, _ => fail("vacuum is off"))
       assertEquals((off.deleted, off.vacuumed), (0, Nil))
-      val bad = CodexHome.retain(h, cfg.copy(keepSessionsDays = 0), now, _ => Left("sqlite3: not found"))
+      val bad = Codex.Home.retain(h, cfg.copy(keepSessionsDays = 0), now, _ => Left("sqlite3: not found"))
       assertEquals(bad.problems.size, 2, bad.toString)
-      assert(CodexHome.retain(h.resolve("missing"), cfg, now).skipped.exists(_.contains("no Codex home")))
+      assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.contains("no Codex home")))
     finally cleanup(h)

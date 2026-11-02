@@ -84,16 +84,16 @@ object AcquireCmd:
     * plus 60 000 inserts — so the CLI drives the wait, exactly as `reindex` does.
     */
   @annotation.tailrec
-  private def pollRetractions(c: AcquireClient, waited: Int): Either[CliError, RetractionsUpdate] =
+  private def pollRetractions(c: AcquireClient, waited: Int): Either[Cli.Error, RetractionsUpdate] =
     c.retractionsStatus match
       case Left(e)                => Left(e)
       case Right(r) if !r.running =>
         r.error match
-          case Some(msg) => Left(CliError(s"the refresh failed: $msg", exitCode = ExitCode.Refused))
+          case Some(msg) => Left(Cli.Error(s"the refresh failed: $msg", exitCode = ExitCode.Refused))
           case None      => Right(r)
       case Right(_) if waited > 600 =>
         Left(
-          CliError("the refresh is still running after 10 minutes — check the server log", exitCode = ExitCode.Refused)
+          Cli.Error("the refresh is still running after 10 minutes — check the server log", exitCode = ExitCode.Refused)
         )
       case Right(_) =>
         Thread.sleep(2000)
@@ -216,7 +216,7 @@ object AcquireCmd:
             )
           else if item.isDefined then
             Left(
-              CliError(
+              Cli.Error(
                 "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
                   "`histmersion queue done <id>` once the source is in",
                 exitCode = ExitCode.Usage
@@ -262,5 +262,5 @@ object AcquireCmd:
   }
 
   /** Everything this stream adds to `histmersion`, in one value so `Cli` gains a single line. */
-  val all: Opts[Client => Either[CliError, Unit]] =
+  val all: Opts[Client => Either[Cli.Error, Unit]] =
     discover orElse refs orElse assess orElse followups orElse ingest orElse archive

@@ -48,5 +48,5 @@ object BookmarksCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("bookmarks", "Your bookmarks: list, add, rm")(list orElse add orElse rm)

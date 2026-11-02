@@ -77,7 +77,7 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     val rights = bead.rights.fold(fail(_), identity)
     assertEquals(rights.licence, Licence("CC0-1.0"))
-    assertEquals(licences.readName(rights.licence.value), LicenceRead("CC0-1.0", LicenceRead.Cc0))
+    assertEquals(licences.readName(rights.licence.value), Licence.Read("CC0-1.0", Licence.Read.Cc0))
     assertEquals(
       rights.credit,
       "Bead, National Museum of Asian Art, Smithsonian Institution, Gift of Charles Lang Freer, CC0"
@@ -192,12 +192,12 @@ class KeyedParsersSuite extends munit.FunSuite:
     assertEquals(gate.originalUrl, Some("https://images.fixture.example/lion-gate.jpg"))
     val r = gate.rights.fold(fail(_), identity)
     assertEquals(r.licence, Licence("http://creativecommons.org/licenses/by-sa/4.0/"), "its edm:rights URL")
-    assertEquals(licences.readUrl(r.licence.value), LicenceRead("CC-BY-SA-4.0", "cc-by-sa", needsAttribution = true))
+    assertEquals(licences.readUrl(r.licence.value), Licence.Read("CC-BY-SA-4.0", "cc-by-sa", needsAttribution = true))
     assertEquals(r.author, Some("Fixture Photographer"))
     assertEquals(r.credit, "The Lion Gate, Mycenae, Fixture Photographer, Fixture Archive, via Europeana, CC BY-SA 4.0")
     assertEquals(
       rs(1).rights.map(x => licences.readUrl(x.licence.value).family),
-      Right(LicenceRead.PublicDomain)
+      Right(Licence.Read.PublicDomain)
     )
     assertEquals(
       rs(1).rights.map(_.credit),

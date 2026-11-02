@@ -17,10 +17,10 @@ trait DownloadedGazetteer extends GazetteerSource:
   /** Pure: the dataset's places from its text, in the order they are stored. */
   def read(text: String): Either[String, List[GazetteerPlace]]
 
-  def fetch(http: PluginHttp): Either[String, List[GazetteerPlace]] = download(http).flatMap(read)
+  def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]] = download(http).flatMap(read)
 
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
-  def download(http: PluginHttp): Either[String, String] =
+  def download(http: Plugin.Http): Either[String, String] =
     http.fetch(url) match
       case Left(e)                     => Left(s"download failed: $e")
       case Right(r) if r.status != 200 => Left(s"HTTP ${r.status} from $url")

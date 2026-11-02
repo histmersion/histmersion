@@ -15,7 +15,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
   private object Elsewhere extends GazetteerSource:
     def title = "Elsewhere atlas"
     def rights = GazetteerRights(Licence("CC0-1.0"), "Elsewhere atlas")
-    def fetch(http: PluginHttp) = Right(Nil)
+    def fetch(http: Plugin.Http) = Right(Nil)
 
   test("the stock generation registers the three first-party sources, listed in today's order"):
     val registered = ServerPlugins.offline.registries.gazetteerSources

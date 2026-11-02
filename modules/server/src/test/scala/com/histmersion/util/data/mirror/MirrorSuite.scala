@@ -11,12 +11,12 @@ import com.histmersion.api.Api
   */
 class MirrorSuite extends munit.FunSuite:
 
-  private val sources = new MirrorNote:
-    val records: MirrorRecords = LibraryData.SourceNotes
+  private val sources = new Mirror.Note:
+    val records: Mirror.Records = LibraryData.SourceNotes
     def note(citekey: String): Either[Api.Error, String] = Right(s"source $citekey")
 
-  private val articles = new MirrorNote:
-    val records: MirrorRecords = ResearchData.ArticleNotes
+  private val articles = new Mirror.Note:
+    val records: Mirror.Records = ResearchData.ArticleNotes
     def note(slug: String): Either[Api.Error, String] =
       if slug == "gone" then Left(Api.Error("no such article")) else Right(s"article $slug")
 
@@ -37,5 +37,5 @@ class MirrorSuite extends munit.FunSuite:
     assertEquals(mirror.note(ResearchData.ArticleNotes, "gone").left.map(_.message), Left("no such article"))
 
   test("a kind nobody registered is refused"):
-    assert(mirror.note(MirrorRecords("events"), "x").isLeft)
+    assert(mirror.note(Mirror.Records("events"), "x").isLeft)
     assertEquals(mirror.kinds, List(LibraryData.SourceNotes, ResearchData.ArticleNotes))

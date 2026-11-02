@@ -3,7 +3,7 @@ package com.histmersion.plugin
 /** Event catalogues, the third part of the app that plugins extend: a catalogue of events — eruptions, earthquakes,
   * battles, treaties — that `histmersion events import <id>` reads into the map as RESEARCH LEADS (drawn lighter than
   * the events a source in the corpus attests). A plugin adds one or more [[EventCatalogue]]s to
-  * [[PluginContext.eventCatalogues]].
+  * [[Plugin.Context.eventCatalogues]].
   *
   * The plugin READS: it splits one import into parts and returns each part's records. The host owns the rest: which
   * parts are read (a part read before is not read again unless `--refresh`), the years and the `--bbox`/size
@@ -42,7 +42,7 @@ trait EventCatalogue:
   def parts(query: CatalogueQuery): List[String]
 
   /** The records of one part. `http` is the host's polite client of this import. */
-  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage]
+  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage]
 
   /** Whether every part is read at every import, whatever an earlier import read: for a catalogue whose parts are pages
     * of a list that changes (page 2 of the newest records is other records next week), so a part's key does not stand
