@@ -3,7 +3,7 @@ package com.histmersion.plugins.events
 import com.histmersion.api.{CatalogRecord, EventPrecision, TimeSpan}
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginEvents
-import com.histmersion.upstreams.CatalogDating
+import com.histmersion.upstreams.dating.CatalogDating
 
 import io.circe.Json
 import io.circe.parser.parse

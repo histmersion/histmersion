@@ -1,7 +1,7 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.Secret
-import com.histmersion.upstreams.UpstreamSettings
+import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `oa-core`'s settings. `api-key`: CORE's API key as a secret reference (`env:<NAME>`, a vault's); `null` =

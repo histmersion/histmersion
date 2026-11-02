@@ -1,6 +1,8 @@
 package com.histmersion.upstreams
 
 /** JATS → Markdown (#1523): the PMC full text an ingest falls back to when no PDF is published. */
+
+import com.histmersion.upstreams.jats.Jats
 class JatsSuite extends munit.FunSuite:
 
   private val article = scala.io.Source.fromResource("jats/article.xml").mkString

@@ -10,7 +10,7 @@ import com.histmersion.util.ocr.Spool
 import com.histmersion.values.{Citekey, LicenceId}
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
-import com.histmersion.upstreams.WorkLookup
+import com.histmersion.domain.library.acquisition.WorkLookup
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -488,7 +488,8 @@ final class AcquisitionControllers(
           .parse(citekey)
           .toOption
           .flatMap(
-            BrowserDownload.of(w, _, com.histmersion.upstreams.RepositoryLanding.onHost(_, acq.landing.refusingHosts))
+            BrowserDownload
+              .of(w, _, com.histmersion.upstreams.landing.RepositoryLanding.onHost(_, acq.landing.refusingHosts))
           )
       )
     browserOnly.foreach { b =>

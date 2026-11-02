@@ -1,6 +1,9 @@
 package com.histmersion.upstreams
 
 import io.circe.parser.parse
+import com.histmersion.upstreams.archiveorg.ArchiveFile
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.unpaywall.OaAccess
 
 /** The upstream JSON parsers, driven by REAL responses captured from OpenAlex, Crossref, Unpaywall, Semantic Scholar,
   * archive.org and Wikipedia (trimmed, in `src/test/resources/acquire`). Fixtures rather than mocks: when an upstream

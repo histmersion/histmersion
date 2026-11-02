@@ -12,6 +12,7 @@ import com.histmersion.db.QueueRows
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.api.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 
 import com.histmersion.values.SourceStatus
 

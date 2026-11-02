@@ -1,6 +1,9 @@
 package com.histmersion.upstreams
 
 import io.circe.parser.parse
+import com.histmersion.upstreams.europepmc.EuropePmcHit
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.pmc.PmcObject
 
 /** Europe PMC search hits and NCBI's PMC Article Datasets records (#1523), from responses captured on 2026-10-11
   * (trimmed, in `src/test/resources/acquire`).

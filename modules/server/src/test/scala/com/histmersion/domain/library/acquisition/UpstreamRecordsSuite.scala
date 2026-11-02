@@ -1,7 +1,8 @@
 package com.histmersion.domain.library.acquisition
 
 import com.histmersion.api
-import com.histmersion.upstreams.{AcquireParse, Identifiers}
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.identifiers.Identifiers
 
 import io.circe.parser.parse
 

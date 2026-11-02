@@ -7,7 +7,7 @@ import com.histmersion.config.MediaConfig
 import com.histmersion.domain.{Licence, LicenceFamily}
 import com.histmersion.domain.media.assets.{ProviderAsset, Rights}
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.MediaText
+import com.histmersion.upstreams.media.MediaText
 
 import scala.util.control.NonFatal
 

@@ -1,7 +1,7 @@
 package com.histmersion.plugins.media
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.MediaText
+import com.histmersion.upstreams.media.MediaText
 
 /** The Commons half every Commons-backed collection shares: what Commons says about each file — licence, author and
   * credit from `imageinfo` + `extmetadata`, read and never assumed, as the item to state — and, for the files to store,

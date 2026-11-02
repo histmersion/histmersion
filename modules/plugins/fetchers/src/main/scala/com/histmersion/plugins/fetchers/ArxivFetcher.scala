@@ -1,7 +1,7 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.{Access, Fetch, FetchContext, PluginHttp, SourceFetcher, WorkKey}
-import com.histmersion.upstreams.UpstreamSettings
+import com.histmersion.upstreams.settings.UpstreamSettings
 
 /** The `arxiv` plugin's fetcher: an arXiv preprint's PDF, by its arXiv id. */
 final class ArxivFetcher(cfg: UpstreamSettings, http: () => PluginHttp) extends SourceFetcher:

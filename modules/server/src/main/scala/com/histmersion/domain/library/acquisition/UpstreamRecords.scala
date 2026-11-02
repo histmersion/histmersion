@@ -4,7 +4,7 @@ import com.histmersion.api
 import com.histmersion.upstreams
 import io.scalaland.chimney.dsl.*
 
-extension (w: upstreams.WorkRef)
+extension (w: com.histmersion.domain.library.acquisition.WorkRef)
   /** The work as the wire shows it, keyed by the citekey the corpus gives a work (not in the corpus yet). */
   def wire: api.WorkRef =
     w.into[api.WorkRef]
@@ -14,14 +14,18 @@ extension (w: upstreams.WorkRef)
 
 extension (w: api.WorkRef)
   /** The work as the upstreams' rules read it. */
-  def upstream: upstreams.WorkRef = w.transformInto[upstreams.WorkRef]
+  def upstream: com.histmersion.domain.library.acquisition.WorkRef =
+    w.transformInto[com.histmersion.domain.library.acquisition.WorkRef]
 
-extension (r: upstreams.FollowupRow) def wire: api.FollowupRow = r.into[api.FollowupRow].enableDefaultValues.transform
+extension (r: com.histmersion.domain.library.acquisition.FollowupRow)
+  def wire: api.FollowupRow = r.into[api.FollowupRow].enableDefaultValues.transform
 
-extension (r: upstreams.RefRow) def wire: api.RefRow = r.into[api.RefRow].enableDefaultValues.transform
+extension (r: com.histmersion.domain.library.acquisition.RefRow)
+  def wire: api.RefRow = r.into[api.RefRow].enableDefaultValues.transform
 
-extension (i: upstreams.ArchiveItem) def wire: api.ArchiveItem = i.transformInto[api.ArchiveItem]
+extension (i: upstreams.archiveorg.ArchiveItem) def wire: api.ArchiveItem = i.transformInto[api.ArchiveItem]
 
-extension (f: upstreams.ArchiveFile) def wire: api.ArchiveFile = f.transformInto[api.ArchiveFile]
+extension (f: upstreams.archiveorg.ArchiveFile) def wire: api.ArchiveFile = f.transformInto[api.ArchiveFile]
 
-extension (f: api.ArchiveFile) def upstream: upstreams.ArchiveFile = f.transformInto[upstreams.ArchiveFile]
+extension (f: api.ArchiveFile)
+  def upstream: upstreams.archiveorg.ArchiveFile = f.transformInto[upstreams.archiveorg.ArchiveFile]

@@ -2,7 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.config.{AcquireConfig, LandingConfig}
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.upstreams.RepositoryLanding
+import com.histmersion.upstreams.landing.RepositoryLanding
 
 extension (c: AcquireConfig)
   /** The identifier every acquisition upstream sees: the product, never the contact. */

@@ -1,6 +1,6 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.upstreams.UpstreamSettings
+import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `oa-landing`'s settings: the host's `histmersion.acquire` (its landing-page rules among them), and the contact

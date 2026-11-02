@@ -289,7 +289,8 @@ object Composition:
     val http = SttpHttp(cfg, maxRetryAfterSeconds = app.media.maxRetryAfterSeconds, tls = tls.map(_._1))
     val openalex =
       OpenAlexDiscovery(
-        com.histmersion.upstreams.OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
+        com.histmersion.upstreams.openalex
+          .OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
       )
     val (chain, notes) = FetchChain.of(
       plugins.registries.sourceFetchers,

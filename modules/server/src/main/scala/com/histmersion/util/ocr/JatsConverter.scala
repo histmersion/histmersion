@@ -1,6 +1,6 @@
 package com.histmersion.util.ocr
 
-import com.histmersion.upstreams.Jats
+import com.histmersion.upstreams.jats.Jats
 
 import com.histmersion.api.ConvertedDoc
 import com.histmersion.util.storage.Blob

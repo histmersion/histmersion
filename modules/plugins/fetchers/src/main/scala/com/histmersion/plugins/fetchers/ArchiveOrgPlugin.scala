@@ -1,7 +1,7 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.PluginContext
-import com.histmersion.upstreams.ArchiveOrg
+import com.histmersion.upstreams.archiveorg.ArchiveOrg
 
 /** `archive-org`: a public archive.org item's file, by its identifier (lending-only items are refused), and
   * archive.org's texts as a read-only source collection (`histmersion archive search|info|import`).

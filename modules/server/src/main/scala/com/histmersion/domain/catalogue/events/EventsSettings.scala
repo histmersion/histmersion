@@ -4,7 +4,7 @@ import com.histmersion.api.BBox
 import com.histmersion.api.EventTaxonomy
 import com.histmersion.config.{EventsConfig, EventsLinksConfig, EventsWikidataConfig}
 import com.histmersion.domain.catalogue.evidence.EventMatcher
-import com.histmersion.upstreams.WikidataClasses
+import com.histmersion.upstreams.wikidata.WikidataClasses
 
 extension (c: EventsWikidataConfig)
   /** The configured classes and their kinds (canonical), the most specific first. */

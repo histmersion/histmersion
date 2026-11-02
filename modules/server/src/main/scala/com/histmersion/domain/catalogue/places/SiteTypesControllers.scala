@@ -47,7 +47,7 @@ final class SiteTypesControllers(
           .grouped(ec.siteTypes.batch.max(1))
           .toList
           .flatMap { b =>
-            c.json(com.histmersion.upstreams.WikidataEntities.url(api, b, settings().media.wikidata.maxlag))
+            c.json(com.histmersion.upstreams.wikidata.WikidataEntities.url(api, b, settings().media.wikidata.maxlag))
               .flatMap(EventProviders.WikidataEvents.claims(_, prop))
               .getOrElse(Map.empty)
               .toList

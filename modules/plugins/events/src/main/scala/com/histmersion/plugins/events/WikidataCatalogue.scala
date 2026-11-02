@@ -1,7 +1,8 @@
 package com.histmersion.plugins.events
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.{CatalogDating, WikidataClasses}
+import com.histmersion.upstreams.wikidata.WikidataClasses
+import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.{ACursor, Json}
 
 import java.net.URLEncoder

@@ -1,6 +1,6 @@
 package com.histmersion.plugins.media
 
-import com.histmersion.upstreams.MediaText
+import com.histmersion.upstreams.media.MediaText
 import io.circe.Json
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.

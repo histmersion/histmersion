@@ -1,7 +1,8 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.{AcquireParse, ArchiveFile, ArchiveItem, ArchiveOrg}
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.archiveorg.{ArchiveFile, ArchiveItem, ArchiveOrg}
 
 /** archive.org's texts as a read-only source collection: its search, an item's metadata and files, and a public item's
   * file. A lending-only item is described (`restricted`), never downloaded: it is borrowed on archive.org.

@@ -1,6 +1,8 @@
 package com.histmersion.upstreams
 
-import CatalogDating.{Bound, Limits, Span}
+import com.histmersion.upstreams.dating.CatalogDating.{Bound, Limits, Span}
+import com.histmersion.upstreams.dating.CatalogDating
+import com.histmersion.upstreams.wikidata.WikidataClasses
 
 /** How a catalogue's dating becomes a four-point span, and how it is held inside its limits. */
 class CatalogDatingSuite extends munit.FunSuite:

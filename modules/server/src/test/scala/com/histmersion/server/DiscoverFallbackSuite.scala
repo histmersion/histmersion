@@ -13,7 +13,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   private def discovery(c: com.histmersion.config.AcquireConfig, http: Http): OpenAlexDiscovery =
     OpenAlexDiscovery(
-      com.histmersion.upstreams.OpenAlexCrossref(
+      com.histmersion.upstreams.openalex.OpenAlexCrossref(
         com.histmersion.pluginhost.upstreamSettings(c),
         HttpPlugin(http),
         com.histmersion.pluginhost.HostLog.scribe.plugin

@@ -7,6 +7,7 @@ import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.api.WorkRef
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 

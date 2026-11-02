@@ -3,6 +3,8 @@ package com.histmersion.upstreams
 /** Plain text and link-safe names out of a provider's metadata (#1446): Commons' HTML author fields, its tracking
   * parameters, its file titles. Pure.
   */
+
+import com.histmersion.upstreams.media.MediaText
 class MediaTextSuite extends munit.FunSuite:
 
   test("plain text out of Commons' HTML author fields"):

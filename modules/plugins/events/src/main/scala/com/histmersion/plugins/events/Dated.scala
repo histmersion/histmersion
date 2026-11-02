@@ -1,7 +1,7 @@
 package com.histmersion.plugins.events
 
 import com.histmersion.plugin.{CatalogueEvent, Year}
-import com.histmersion.upstreams.CatalogDating
+import com.histmersion.upstreams.dating.CatalogDating
 
 /** An event's dating as the SPI states it: the four points of a span, each held to what a `Year` holds. */
 final case class Dated(notBefore: Option[Year], beginBy: Option[Year], endFrom: Option[Year], notAfter: Option[Year])

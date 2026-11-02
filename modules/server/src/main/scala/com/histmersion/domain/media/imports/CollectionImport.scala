@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.assets.{ProviderAsset, Rights}
 import com.histmersion.util.ocr.ConverterClient
-import com.histmersion.upstreams.MediaText
+import com.histmersion.upstreams.media.MediaText
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
