@@ -26,3 +26,6 @@ trait PairQuestions:
 
   /** A question: the issue, and the decisions an import can carry out itself. */
   def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit
+
+  /** A line of the plan's notes. */
+  def info(line: String): Unit

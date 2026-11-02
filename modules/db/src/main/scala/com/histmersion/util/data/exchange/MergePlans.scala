@@ -53,7 +53,8 @@ object MergePlans:
       rules: MergeRuleSet
   )(using DbCon): (MergePlanner.Input, MergePlanner.Result) =
     val input0 = MergeState.load(loaded.entities, m, loaded.problems, files, chunkChars, cfg, kinds, rules)
-    val sk = MergeState.sketches(bundle, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
+    val sk =
+      MergeState.sketches(bundle, input0, MergePlanner.sketchesWanted(input0, cfg, rules.planning), cfg.minhashSize)
     val input =
       input0.copy(bodies =
         MergeState.bodies(bundle, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg, rules.planning))

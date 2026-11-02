@@ -1,30 +1,27 @@
 package com.histmersion.domain
 
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
-import scala.annotation.tailrec
+import com.histmersion.util.text.Fingerprint
 import com.histmersion.api.{
   BundleArticle,
-  BundleFinding,
   BundleGoal,
   BundleGoalLink,
   BundleGoalSchedule,
   BundleQueueItem,
   BundleRange,
-  BundleSource,
   Lint,
-  MergeDecision,
   Queue
 }
 import com.histmersion.files.*
 import com.histmersion.api.given
 
-import java.util.UUID
-import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
+import com.histmersion.values.{DecisionKind, GoalStatus, IssueKind}
 
-/** How two records that are one are folded into one (docs/research-merge-import.md §5.3–§5.4, milestones M4–M5). The
-  * survivor is always THIS collection's row (left): it keeps its uid, and the bundle's (right) uid becomes a redirect
-  * to it. Pure; the planner decides which records are one and what the user chose, these functions only compute the
-  * result.
+/** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
+  * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
+  * `SourcePlan.fold` and `FindingPlan.fold`). The survivor is always THIS collection's row (left): it keeps its uid,
+  * and the bundle's (right) uid becomes a redirect to it. Pure; the planner decides which records are one and what the
+  * user chose, these functions only compute the result.
   *
   * Left is this collection, right the bundle — as everywhere in the merge.
   */
@@ -36,18 +33,9 @@ object MergeFold:
     * kept), then more capitals (title case); a tie keeps the left.
     */
   def richer(l: String, r: String): String =
-    def score(s: String) = (MergeText.tokens(s).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
+    def score(s: String) =
+      (Fingerprint.tokens(s).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
     if summon[Ordering[(Int, Int, Int, Int)]].gt(score(r), score(l)) then r else l
-
-  /** The richer author list: as many names, then the longer written-out names (`Hans G.` over `H. G.`). */
-  def richerAuthors(l: List[String], r: List[String]): List[String] =
-    def score(as: List[String]) =
-      (
-        as.size,
-        as.flatMap(MergeText.person).map(p => p.forenames.map(_.length).sum).sum,
-        as.map(_.count(c => c.isLetter && c > 127)).sum
-      )
-    if summon[Ordering[(Int, Int, Int)]].gt(score(r), score(l)) then r else l
 
   /** Left's values, then right's that are not already there (compared after `key`). */
   def union(l: List[String], r: List[String], key: String => String): List[String] =
@@ -58,7 +46,7 @@ object MergeFold:
   def unionTags(l: List[String], r: List[String]): List[String] = union(l, r, Lint.normaliseTag)
 
   /** Topics and regions compared folded. */
-  def unionNames(l: List[String], r: List[String]): List[String] = union(l, r, s => MergeText.fold(s.trim))
+  def unionNames(l: List[String], r: List[String]): List[String] = union(l, r, s => Fingerprint.fold(s.trim))
 
   private def text(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
@@ -78,199 +66,6 @@ object MergeFold:
     (a, b) match
       case (Some(x), Some(y)) => Some(if width(y) < width(x) then y else x)
       case _                  => a.orElse(b)
-
-  // ── sources (§5.3) ──────────────────────────────────────────────────────────────────────────
-
-  /** One source out of a pair, field by field. `decided` holds the decision of each field issue of the pair (doi, year,
-    * status, title, authors, summary, notes, period, body); a field with no issue follows §5.3's automatic rule.
-    * `citekey` is the label the survivor keeps (`map:<citekey>`).
-    */
-  def foldSource(
-      l: BundleSource,
-      r: BundleSource,
-      decided: Map[IssueKind, MergeDecision],
-      citekey: String
-  ): BundleSource =
-    def pick[A](k: IssueKind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
-      case Some(DecisionKind.KeepRight) => right
-      case Some(DecisionKind.KeepLeft)  => left
-      case _                            => auto
-    def prose(k: IssueKind, a: Option[String], b: Option[String]): Option[String] =
-      (text(a), text(b)) match
-        case (Some(x), Some(y)) if x != y =>
-          decided.get(k).map(_.kind) match
-            case Some(DecisionKind.KeepRight) => b
-            case Some(DecisionKind.Concat)    => Some(s"$x\n\n$y")
-            case _                            => a
-        case (Some(_), _) => a
-        case (_, Some(_)) => b
-        case _            => a
-    val keepRightBody = decided.get(IssueKind.BodyDiffers).exists(_.kind == DecisionKind.KeepRight) ||
-      (l.bodySha256.isEmpty && r.bodySha256.isDefined)
-    val period = (l.period, r.period) match
-      case (Some(a), Some(b)) if a != b =>
-        decided.get(IssueKind.PeriodDiffers).map(_.kind) match
-          case Some(DecisionKind.KeepRight) => Some(b)
-          case Some(DecisionKind.Hull)      => Some(hull(a, b))
-          case _                            => Some(a)
-      case (a, b) => a.orElse(b)
-    val status =
-      if l.status == r.status || r.status == SourceStatus.Unassessed then l.status
-      else if l.status == SourceStatus.Unassessed then r.status
-      else pick(IssueKind.StatusDiffers, l.status, l.status, r.status)
-    l.copy(
-      citekey = citekey,
-      title = pick(IssueKind.TitleDiffers, richer(l.title, r.title), l.title, r.title),
-      authors = pick(IssueKind.AuthorsDiffers, richerAuthors(l.authors, r.authors), l.authors, r.authors),
-      doi = pick(IssueKind.DoiDiffers, l.doi.orElse(r.doi), l.doi.orElse(r.doi), r.doi.orElse(l.doi)),
-      year = pick(IssueKind.YearDiffers, l.year.orElse(r.year), l.year.orElse(r.year), r.year.orElse(l.year)),
-      venue = (text(l.venue), text(r.venue)) match
-        case (Some(a), Some(b)) if MergeText.fingerprint(a) == MergeText.fingerprint(b) => Some(richer(a, b))
-        case (a, b)                                                                     => a.orElse(b),
-      status = status,
-      topics = unionNames(l.topics, r.topics),
-      regions = unionNames(l.regions, r.regions),
-      tags = unionTags(l.tags, r.tags),
-      period = period,
-      summary = prose(IssueKind.SummaryDiffers, l.summary, r.summary),
-      notes = prose(IssueKind.NotesDiffers, l.notes, r.notes),
-      provenance = l.provenance.orElse(r.provenance),
-      citedByCount =
-        l.citedByCount.zip(r.citedByCount).map((a, b) => math.max(a, b)).orElse(l.citedByCount).orElse(r.citedByCount),
-      influentialCitations = l.influentialCitations
-        .zip(r.influentialCitations)
-        .map((a, b) => math.max(a, b))
-        .orElse(l.influentialCitations)
-        .orElse(r.influentialCitations),
-      addedDate = if r.addedDate < l.addedDate then r.addedDate else l.addedDate,
-      bodySha256 = if keepRightBody then r.bodySha256 else l.bodySha256.orElse(r.bodySha256),
-      originalSha256 =
-        if keepRightBody then r.originalSha256.orElse(l.originalSha256) else l.originalSha256.orElse(r.originalSha256),
-      originalExt = if keepRightBody then r.originalExt.orElse(l.originalExt) else l.originalExt.orElse(r.originalExt),
-      isbns = Option(unionNames(l.isbns.getOrElse(Nil), r.isbns.getOrElse(Nil)).sorted).filter(_.nonEmpty),
-      rev = ""
-    )
-
-  // ── findings (§5.4) ─────────────────────────────────────────────────────────────────────────
-
-  /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
-  def claimKey(claim: String): String = MergeText.significant(MergeText.tokens(claim)).distinct.sorted.mkString(" ")
-
-  private def claimWords(claim: String): Set[String] = MergeText.significant(MergeText.tokens(claim)).toSet
-
-  /** Great-circle distance in km. */
-  def km(lon1: Double, lat1: Double, lon2: Double, lat2: Double): Double =
-    val (p1, p2) = (math.toRadians(lat1), math.toRadians(lat2))
-    val dp = p2 - p1
-    val dl = math.toRadians(lon2 - lon1)
-    val a = math.pow(math.sin(dp / 2), 2) + math.cos(p1) * math.cos(p2) * math.pow(math.sin(dl / 2), 2)
-    6371.0 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-  /** The same place, as far as two findings say: points within `withinKm`, or the same region name (fingerprint), or
-    * one of them says nothing about where.
-    */
-  def samePlace(a: BundleFinding, b: BundleFinding, withinKm: Double): Boolean =
-    val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v) <= withinKm
-    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x) == MergeText.fingerprint(y))
-    points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
-
-  /** Caution ranks: contested is the least sure, then low, medium, high. */
-  private def caution(c: Confidence): Int = c match
-    case Confidence.Contested => 0
-    case Confidence.Low       => 1
-    case Confidence.Medium    => 2
-    case Confidence.High      => 3
-
-  /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
-  enum FindingMatch:
-    /** The same claim (and a compatible time and place): one finding. */
-    case Same(right: BundleFinding, left: BundleFinding)
-
-    /** Nearly the same claim at an overlapping time: kept apart unless the user says `merge`. */
-    case Near(right: BundleFinding, left: BundleFinding, jaccard: Double)
-
-    /** Nothing here like it: a new finding of the survivor. */
-    case Unmatched(right: BundleFinding)
-
-  /** Pair each bundle finding with at most one finding here, one-to-one: the same claim first, then the nearest
-    * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).
-    */
-  def matchFindings(
-      lefts: List[BundleFinding],
-      rights: List[BundleFinding],
-      withinKm: Double,
-      nearAtLeast: Double
-  ): List[FindingMatch] =
-    val rs = rights.sortBy(_.id)
-    val ls = lefts.sortBy(_.id)
-    @tailrec def pairSame(
-        rest: List[BundleFinding],
-        acc: Map[UUID, BundleFinding],
-        taken: Set[UUID]
-    ): (Map[UUID, BundleFinding], Set[UUID]) =
-      rest match
-        case Nil       => (acc, taken)
-        case r :: tail =>
-          ls.find(l =>
-            !taken(l.uid) && claimKey(l.claim) == claimKey(r.claim) && claimKey(r.claim).nonEmpty &&
-              overlap(l.period, r.period) && samePlace(l, r, withinKm)
-          ) match
-            case Some(l) => pairSame(tail, acc + (r.uid -> l), taken + l.uid)
-            case None    => pairSame(tail, acc, taken)
-    val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
-    @tailrec def pairNear(
-        rest: List[BundleFinding],
-        acc: Map[UUID, (BundleFinding, Double)],
-        taken: Set[UUID]
-    ): Map[UUID, (BundleFinding, Double)] =
-      rest match
-        case Nil       => acc
-        case r :: tail =>
-          val w = claimWords(r.claim)
-          ls.filterNot(l => taken(l.uid))
-            .filter(l => l.period.isDefined && r.period.isDefined && overlap(l.period, r.period))
-            .map(l => l -> MergeText.jaccard(w, claimWords(l.claim)))
-            .filter(_._2 >= nearAtLeast)
-            .sortBy((l, j) => (-j, l.id))
-            .headOption match
-            case Some((l, j)) => pairNear(tail, acc + (r.uid -> (l, j)), taken + l.uid)
-            case None         => pairNear(tail, acc, taken)
-    val near = pairNear(rs.filterNot(r => same.contains(r.uid)), Map.empty, takenBySame)
-    rs.map { r =>
-      same
-        .get(r.uid)
-        .map(FindingMatch.Same(r, _))
-        .orElse(near.get(r.uid).map((l, j) => FindingMatch.Near(r, l, j)))
-        .getOrElse(FindingMatch.Unmatched(r))
-    }
-
-  /** One finding out of two (§5.4): left's identity and claim, tags unioned, the more specific period and the point
-    * where only one has it, the more cautious confidence.
-    */
-  def foldFinding(l: BundleFinding, r: BundleFinding): BundleFinding =
-    val period = narrower(l.period, r.period)
-    val conf = (l.confidence, r.confidence) match
-      case (Some(a), Some(b)) => Some(if caution(b) < caution(a) then b else a)
-      case (a, b)             => a.orElse(b)
-    val point = if l.lon.isDefined && l.lat.isDefined then (l.lon, l.lat) else (r.lon, r.lat)
-    l.copy(
-      region = text(l.region).orElse(text(r.region)),
-      lon = point._1,
-      lat = point._2,
-      period = period,
-      periodName = if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName),
-      tags = unionTags(l.tags, r.tags),
-      confidence = conf,
-      significance = l.significance.orElse(r.significance),
-      rev = ""
-    )
-
-  /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken.
-    */
-  def nextFindingIds(citekey: String, taken: Set[String], count: Int): List[String] =
-    val Num = s"""^${java.util.regex.Pattern.quote(citekey)}#(\\d+)$$""".r
-    val top = taken.toList.collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
-    Iterator.from(top + 1).map(n => s"$citekey#$n").filterNot(taken).take(count).toList
 
   // ── goals ───────────────────────────────────────────────────────────────────────────────────
 
@@ -352,7 +147,7 @@ object MergeFold:
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
   /** A queue item's text as compared: folded, whitespace collapsed. */
-  def queueKey(t: String): String = MergeText.fold(t).trim.replaceAll("\\s+", " ")
+  def queueKey(t: String): String = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
 
   /** One queue item out of two: `done` anywhere is done. */
   def foldQueue(l: BundleQueueItem, r: BundleQueueItem): BundleQueueItem =

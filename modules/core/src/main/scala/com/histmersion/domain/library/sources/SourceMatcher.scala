@@ -1,5 +1,6 @@
-package com.histmersion.domain
+package com.histmersion.domain.library.sources
 
+import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.MatchWeights
 
 import scala.annotation.tailrec

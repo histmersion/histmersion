@@ -1,9 +1,10 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue}
-import com.histmersion.domain.MergePlanner
+import com.histmersion.api.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
+import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.files.BundleEntities
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
+import com.histmersion.util.text.MinHash
+import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind}
 
 import java.util.UUID
 
@@ -19,6 +20,54 @@ trait PlanRun:
 
   /** What the plan says first: how the bundle's records of this kind were taken. */
   def notices: List[String] = Nil
+
+  /** The OCR bodies (by sha256) whose sketches could decide whether a source of the bundle is one here: the database
+    * computes them before the plan.
+    */
+  def sketchesWanted(cfg: MergeSettings): Set[String] = Set.empty
+
+  /** The bundle's sources that are, or may be, one with a source here, in the order they were matched. */
+  def matchSources(
+      sketches: Map[String, MinHash],
+      cfg: MergeSettings,
+      editions: Option[EditionsPolicy]
+  ): List[SourcePair] = Nil
+
+  /** The questions about the bundle's sources themselves, before every other: whether a pair is one work, the fields of
+    * a pair, a citekey taken here. `fates` is what became of each of the bundle's sources.
+    */
+  def sourceQuestions(
+      fates: Map[UUID, SourceFate],
+      sketches: Map[String, MinHash],
+      cfg: MergeSettings,
+      questions: PairQuestions
+  ): Unit = ()
+
+  /** The question of a pair about its OCR bodies, when there is one (the bundle's source by uid). */
+  def bodyIssue(right: UUID): Option[String] = None
+
+  /** What a pair of sources that are (or may be) one owns of this kind, asked before every kind's [[pair]]. */
+  def pairFirst(
+      right: BundleSource,
+      left: BundleSource,
+      cond: Option[IssueCondition],
+      cfg: MergeSettings,
+      questions: PairQuestions
+  ): Unit = ()
+
+  /** The kind's labels a different record has here, before every kind's [[labelsTaken]]. */
+  def labelsTakenFirst(questions: PlanQuestions): Unit = ()
+
+  /** A decision's argument that names a source by its citekey checked (`map`, a rename no kind checks itself). */
+  def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] = None
+
+  /** A pair of sources that folds, under `citekey`, before every kind's [[foldPairFirst]]: whether the folded source
+    * takes the bundle's body.
+    */
+  def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean = false
+
+  /** A source of the bundle that arrives under another citekey (a collision decided `rename-right`). */
+  def renamed(source: UUID, citekey: String): Unit = ()
 
   /** The bundle's source that a line of this kind belongs to (its fate decides whether the line is held). */
   def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] = None
@@ -65,6 +114,11 @@ trait PlanRun:
   /** What a pair that folds does with the kind's lines; `alt` is the body question's decision, when there is one. */
   def foldPair(right: BundleSource, left: BundleSource, alt: Option[DecisionKind], folds: PlanFolds): Unit = ()
 
+  /** The kind's labels of inserted records that a different record has here, given new ones before every kind's
+    * [[relabel]]; `fates` is what became of each of the bundle's sources.
+    */
+  def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit = ()
+
   /** The kind's labels of inserted records that a different record has here, given new ones. */
   def relabel(relabels: PlanRelabels): Unit = ()
 
@@ -88,3 +142,6 @@ trait PlanRun:
 
   /** What the merge renames in a body it takes from the bundle: source uid → (old name, new name) of its files. */
   def bodyRenames: Map[UUID, List[(String, String)]] = Map.empty
+
+  /** The plan with what the kind lists of its own (how each of the bundle's sources was matched). */
+  def planned(plan: MergePlan): MergePlan = plan

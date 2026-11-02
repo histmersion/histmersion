@@ -10,7 +10,9 @@ import com.histmersion.util.data.exchange.{
   PlanQuestions,
   PlanRelabels,
   PlanRules,
-  PlanRuns
+  PlanRuns,
+  SourceFate,
+  SourcePair
 }
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
@@ -18,7 +20,6 @@ import com.histmersion.api.{
   BundleAlias,
   BundleArticle,
   BundleEdge,
-  BundleFinding,
   BundleGoal,
   BundleGoalLink,
   BundleInstance,
@@ -40,17 +41,14 @@ import com.histmersion.api.{
   MergeResolutions,
   MergeTally,
   Plural,
-  Queue,
-  SourceMatch
+  Queue
 }
 import com.histmersion.files.*
 import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
-import MergeFold.{ArticleOutcome, FindingMatch}
-import com.histmersion.util.text.MinHash
-import SourceMatcher.{Outcome, Pair, Side}
-import com.histmersion.util.text.{Anchor, SafeName}
+import MergeFold.ArticleOutcome
+import com.histmersion.util.text.{Anchor, MinHash, SafeName}
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
@@ -61,9 +59,7 @@ import com.histmersion.values.{
   EditionsPolicy,
   IssueKind,
   IssueSeverity,
-  MatchMethod,
-  MatchOutcome,
-  SourceStatus
+  MatchOutcome
 }
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
@@ -76,8 +72,9 @@ import com.histmersion.values.{
   *   1. **identity**: a bundle uid that a redirect (`uid_aliases`) or the ledger maps onto a row here is THAT row
   *      ([[mapUid]]); the bundle's lines are rewritten into this collection's uids and labels ([[localize]]) before
   *      anything is compared;
-  *   2. **sources**: the rest are matched ([[SourceMatcher]]): auto-merge, needs-decision (a [[IssueKind.SameWork]]
-  *      issue), or new — a new one whose citekey is taken here is a [[IssueKind.CitekeyCollision]];
+  *   2. **sources**: the rest are matched by the sources' rules (the library's, [[PlanRun.matchSources]]): auto-merge,
+  *      needs-decision (a [[IssueKind.SameWork]] issue), or new — a new one whose citekey is taken here is a
+  *      [[IssueKind.CitekeyCollision]];
   *   3. **fields** of every pair that is (or may be) merged: DOI, year, status, title, authors, summary, notes, period,
   *      OCR body. Under an open SameWork issue they are CONDITIONAL (`if S-… = map`), and the collision a `both` would
   *      cause is conditional too;
@@ -382,19 +379,11 @@ object MergePlanner:
 
   // ── sketches and bodies ─────────────────────────────────────────────────────────────────────
 
-  /** The OCR bodies (by sha256) whose MinHash could decide a pair: those of every blocked pair whose bodies differ —
-    * the database computes them before [[plan]].
+  /** The OCR bodies (by sha256) whose MinHash could decide whether two sources are one, as the kinds' rules say: the
+    * database computes them before [[plan]].
     */
-  def sketchesWanted(in: Input, cfg: MergeSettings): Set[String] =
-    val (rights, lefts) = matchSides(in)
-    val byKey = lefts.flatMap(l => SourceMatcher.blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
-    rights.flatMap { r =>
-      SourceMatcher.blockingKeys(r).toList.flatMap(k => byKey.getOrElse(k, Nil)).distinctBy(_.uid).flatMap { l =>
-        (r.source.bodySha256, l.source.bodySha256) match
-          case (Some(a), Some(b)) if a != b => List(a, b)
-          case _                            => Nil
-      }
-    }.toSet
+  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[String] =
+    PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg)
 
   /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
     * pairs, as each kind's rules say.
@@ -406,39 +395,11 @@ object MergePlanner:
       cfg: MergeSettings,
       rules: List[PlanRules]
   ): Set[String] =
-    val (rights, lefts) = matchSides(in)
-    val pairs = SourceMatcher.assign(rights, lefts, sketches, cfg, resolutions.policy.editions).pairs
     val run = PlanRuns(rules.map(_.start(in)))
-    run.bodiesWanted(pairs.map(p => (p.right.source, p.left.source)))
-
-  /** The bundle's sources that need matching (no identity here), and the sources here they may match (not already some
-    * bundle source's own, not deleted).
-    */
-  private def matchSides(in: Input): (List[Side], List[Side]) =
-    val idOf = mapUid(in.uidAliases, in.ledger)
-    val localUids = in.local.sources.map(_.uid).toSet ++ in.sources.map(_.uid)
-    val unknown = in.foreign.sources.filter { s =>
-      val l = idOf(s.uid)
-      l == s.uid && !localUids(l) && !in.tombstoned(l)
-    }
-    val claimed = in.foreign.sources.map(s => idOf(s.uid)).toSet
-    val foreignAliases = in.foreign.aliases.groupMap(_.sourceUid)(_.alias)
-    val localAliases = in.labels.aliases.toList.groupMap(_._2)(_._1)
-    val rights = unknown.map(s => Side(s, foreignAliases.getOrElse(s.uid, Nil).toSet))
-    val lefts = in.sources
-      .filterNot(s => claimed(s.uid) || in.tombstoned(s.uid))
-      .map(s => Side(s, localAliases.getOrElse(s.uid, Nil).toSet))
-    (rights, lefts)
+    val pairs = run.matchSources(sketches, cfg, resolutions.policy.editions)
+    run.bodiesWanted(pairs.map(p => (p.right, p.left)))
 
   // ── the plan ────────────────────────────────────────────────────────────────────────────────
-
-  /** What became of one of the bundle's sources. */
-  private enum Fate:
-    case Same(local: UUID, byLedger: Boolean)
-    case Deleted
-    case Auto(pair: Pair)
-    case Gate(pair: Pair, issue: String)
-    case New
 
   /** An issue before resolutions, with the decision kinds an import can carry out itself. */
   final private case class Draft(issue: MergeIssue, importable: Set[DecisionKind])
@@ -490,41 +451,25 @@ object MergePlanner:
     def liveHere(u: UUID): Boolean = in.live(u) || (localRevs.contains(u) && !in.tombstoned(u))
 
     // ── 2. sources ──
-    val (rights, lefts) = matchSides(in)
-    val matching = SourceMatcher.assign(rights, lefts, sketches, cfg, policy.editions)
+    val matched: List[SourcePair] = run.matchSources(sketches, cfg, policy.editions)
     val sourcesByUid = in.sources.map(s => s.uid -> s).toMap
-    def leftRev(u: UUID): String = sourcesByUid.get(u).map(s => BundleFormat.stamp(s).rev).getOrElse("")
     def rightRev(u: UUID): String = rawRevs.get(u).map(_.rev).getOrElse("")
     def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
 
-    val gateIds: Map[UUID, String] = matching.pairs
-      .filter(_.outcome == Outcome.NeedsDecision)
-      .map(p =>
-        p.right.uid -> issueId(
-          IssueKind.SameWork,
-          BundleKind.Source,
-          List(p.right.uid),
-          List(p.left.uid),
-          rightRev(p.right.uid),
-          leftRev(p.left.uid)
-        )
-      )
-      .toMap
-    val fates: Map[UUID, Fate] = fes.sources.map { s =>
+    val fates: Map[UUID, SourceFate] = fes.sources.map { s =>
       val l = idOf(s.uid)
-      s.uid -> (if in.tombstoned(l) && !localRevs.contains(l) then Fate.Deleted
-                else if localRevs.contains(l) then Fate.Same(l, l != s.uid)
+      s.uid -> (if in.tombstoned(l) && !localRevs.contains(l) then SourceFate.Deleted
+                else if localRevs.contains(l) then SourceFate.Same(l, l != s.uid)
                 else
-                  matching.pairs.find(_.right.uid == s.uid) match
-                    case Some(p) if p.outcome == Outcome.AutoMerge => Fate.Auto(p)
-                    case Some(p)                                   => Fate.Gate(p, gateIds(s.uid))
-                    case None                                      => Fate.New)
+                  matched.find(_.right.uid == s.uid) match
+                    case Some(p) => p.gate.fold(SourceFate.Auto(p))(g => SourceFate.Gate(p, g))
+                    case None    => SourceFate.New)
     }.toMap
-    val pairs: List[(Pair, Option[IssueCondition])] = fes.sources.flatMap(s =>
+    val pairs: List[(SourcePair, Option[IssueCondition])] = fes.sources.flatMap(s =>
       fates(s.uid) match
-        case Fate.Auto(p)    => Some(p -> None)
-        case Fate.Gate(p, g) => Some(p -> Some(IssueCondition(g, DecisionKind.Map)))
-        case _               => None
+        case SourceFate.Auto(p)    => Some(p -> None)
+        case SourceFate.Gate(p, g) => Some(p -> Some(IssueCondition(g, DecisionKind.Map)))
+        case _                     => None
     )
 
     // ── the drafts: every issue, conditional ones included ──
@@ -534,187 +479,18 @@ object MergePlanner:
     val lr = List(km.KeepLeft, km.KeepRight)
     val info = List.newBuilder[String]
     run.notices.foreach(info += _)
+    val noted = info
+    val pairQuestions = new PairQuestions:
+      def input: Input = in
+      def rightRev(u: UUID): String = rawRevs.get(u).map(_.rev).getOrElse("")
+      def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
+      def here(u: UUID): Boolean = localRevs.contains(u)
+      def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
+      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
+      def info(line: String): Unit = noted += line
 
-    // the gates
-    matching.pairs.filter(_.outcome == Outcome.NeedsDecision).foreach { p =>
-      val ev = p.evidence
-      val title =
-        if p.flags.nonEmpty then s"the same work? ${p.flags.mkString("; ")} (score ${SourceMatcher.signed(ev.score)})"
-        else s"possibly the same work (score ${SourceMatcher.signed(ev.score)})"
-      add(
-        Draft(
-          MergeIssue(
-            gateIds(p.right.uid),
-            IssueKind.SameWork,
-            IssueSeverity.Blocking,
-            BundleKind.Source,
-            title,
-            Some(MergeIssueDetail.side(p.left.source)),
-            Some(MergeIssueDetail.side(p.right.source)),
-            ev.why ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${SourceMatcher.signed(sc)})"),
-            List(km.Map, km.Both),
-            Option.when(ev.score >= cfg.autoMerge)(MergeDecision.withArg(km.Map, p.left.source.citekey)),
-            detail = Some(IssueDetail(MergeIssueDetail.sourceFields(p.left.source, p.right.source)))
-          ),
-          Set(km.Both)
-        )
-      )
-    }
-
-    // the fields of a pair that is (or may be) merged; their ids by pair, for the fold
-    val pairFieldIds = scala.collection.mutable.Map.empty[UUID, Map[IssueKind, String]]
-    def fieldIssues(p: Pair, cond: Option[IssueCondition]): List[Draft] =
-      val (r, l) = (p.right.source, p.left.source)
-      val (fu, lu) = (List(r.uid), List(l.uid))
-      val (rr, ll) = (rightRev(r.uid), leftRev(l.uid))
-      def mk(
-          kind: IssueKind,
-          title: String,
-          opts: List[DecisionKind],
-          suggested: Option[MergeDecision] = None,
-          sev: IssueSeverity = IssueSeverity.Blocking,
-          why: List[String] = Nil
-      ): Draft =
-        Draft(
-          MergeIssue(
-            issueId(kind, BundleKind.Source, fu, lu, rr, ll),
-            kind,
-            sev,
-            BundleKind.Source,
-            title,
-            Some(MergeIssueDetail.side(l)),
-            Some(MergeIssueDetail.side(r)),
-            why,
-            opts,
-            suggested,
-            cond,
-            detail = Some(IssueDetail(MergeIssueDetail.sourceFields(l, r)))
-          ),
-          Set.empty
-        )
-      val doiR = r.doi.flatMap(MergeText.doiKey)
-      val doiL = l.doi.flatMap(MergeText.doiKey)
-      val sameDoi = doiR.isDefined && doiR == doiL
-      val ds = List(
-        Option.when(doiR.isDefined && doiL.isDefined && doiR != doiL)(
-          mk(
-            IssueKind.DoiDiffers,
-            s"DOI differs: ${l.doi.get} here, ${r.doi.get} in the bundle",
-            lr,
-            why = p.evidence.strong.map(k => s"matched by $k: one record has the wrong DOI")
-          )
-        ),
-        r.year.zip(l.year).filter((a, b) => a != b && !(math.abs(a - b) == 1 && sameDoi)).map { (a, b) =>
-          val earliest = if b <= a then km.KeepLeft else km.KeepRight
-          mk(
-            IssueKind.YearDiffers,
-            s"year differs: $b here, $a in the bundle",
-            lr,
-            Some(MergeDecision.of(earliest)),
-            why = List("the suggestion keeps the earliest year (the first edition)")
-          )
-        },
-        Option.when(r.status != l.status && r.status != SourceStatus.Unassessed && l.status != SourceStatus.Unassessed)(
-          mk(IssueKind.StatusDiffers, s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle", lr)
-        ),
-        Option.when(p.evidence.titleDiffers)(
-          mk(IssueKind.TitleDiffers, "title differs", lr, why = List(s"here: ${l.title}", s"bundle: ${r.title}"))
-        ),
-        Option.when(p.evidence.authors == MergeText.AuthorAgreement.Disjoint)(
-          mk(
-            IssueKind.AuthorsDiffers,
-            "no author in common",
-            lr,
-            why = List(s"here: ${l.authors.mkString("; ")}", s"bundle: ${r.authors.mkString("; ")}")
-          )
-        ),
-        text(r.summary, l.summary).map(_ =>
-          mk(IssueKind.SummaryDiffers, "summary differs", List(km.KeepLeft, km.KeepRight, km.Concat))
-        ),
-        text(r.notes, l.notes).map(_ =>
-          mk(IssueKind.NotesDiffers, "notes differ", List(km.KeepLeft, km.KeepRight, km.Concat))
-        ),
-        r.period
-          .zip(l.period)
-          .filter((a, b) => a != b)
-          .map((a, b) =>
-            mk(
-              IssueKind.PeriodDiffers,
-              s"period differs: ${MergeIssueDetail.rangeText(Some(b))} here, ${MergeIssueDetail.rangeText(Some(a))} in the bundle",
-              List(km.KeepLeft, km.KeepRight, km.Hull),
-              Some(MergeDecision.of(km.Hull))
-            )
-          ),
-        r.bodySha256.zip(l.bodySha256).filter((a, b) => a != b).map { (a, b) =>
-          val sim = sketches
-            .get(a)
-            .zip(sketches.get(b))
-            .map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), 2)})")
-            .getOrElse("")
-          mk(
-            IssueKind.BodyDiffers,
-            s"OCR bodies differ$sim",
-            lr,
-            Some(MergeDecision.of(km.KeepLeft)),
-            IssueSeverity.Default,
-            List("by default this collection's body stays; keep-right takes the bundle's (and its figures)")
-          )
-        }
-      ).flatten
-      pairFieldIds(r.uid) = ds.map(d => d.issue.kind -> d.issue.id).toMap
-      ds
-
-    // a bundle source that would be NEW: is its citekey taken here?
-    def collision(s: BundleSource, cond: Option[IssueCondition]): Option[Draft] =
-      val owner = in.labels.citekeys
-        .get(s.citekey)
-        .orElse(in.labels.aliases.get(s.citekey))
-        .filterNot(in.tombstoned)
-      owner.flatMap(sourcesByUid.get).map { o =>
-        val asAlias = !in.labels.citekeys.contains(s.citekey)
-        val score = lefts
-          .find(_.uid == o.uid)
-          .map(l => SourceMatcher.evidence(Side(s, Set.empty), l, sketches, cfg.weights).score)
-        val title =
-          if asAlias then s"citekey ${s.citekey} is an old citekey (alias) of another source here"
-          else s"same citekey, different works" + score.fold("")(sc => s" (score ${SourceMatcher.signed(sc)})")
-        val suggestion = renameSuggestion(s, in, fes)
-        Draft(
-          MergeIssue(
-            issueId(
-              IssueKind.CitekeyCollision,
-              BundleKind.Source,
-              List(s.uid),
-              List(o.uid),
-              rightRev(s.uid),
-              leftRev(o.uid)
-            ),
-            IssueKind.CitekeyCollision,
-            IssueSeverity.Blocking,
-            BundleKind.Source,
-            title,
-            Some(MergeIssueDetail.side(o)),
-            Some(MergeIssueDetail.side(s)),
-            if asAlias then List("rename-left cannot free an old citekey: the bundle's source takes a new one")
-            else Nil,
-            if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
-            Some(MergeDecision.withArg(km.RenameRight, suggestion)),
-            cond,
-            detail = Some(IssueDetail(MergeIssueDetail.sourceFields(o, s)))
-          ),
-          Set.empty
-        )
-      }
-
-    fes.sources.foreach { s =>
-      fates(s.uid) match
-        case Fate.Auto(p)    => fieldIssues(p, None).foreach(add)
-        case Fate.Gate(p, g) =>
-          fieldIssues(p, Some(IssueCondition(g, km.Map))).foreach(add)
-          collision(s, Some(IssueCondition(g, km.Both))).foreach(add)
-        case Fate.New => collision(s, None).foreach(add)
-        case _        => ()
-    }
+    // whether a pair is one work, the fields of a pair, a citekey taken: as the sources' rules ask
+    run.sourceQuestions(fates, sketches, cfg, pairQuestions)
 
     // old citekeys of the bundle that name a different source here (issue id → the alias)
     val aliasIssues = Map.newBuilder[String, String]
@@ -748,99 +524,26 @@ object MergePlanner:
             )
           }
         fates.get(a.sourceUid) match
-          case Some(Fate.Same(l, _)) => conflict(l, None).foreach(add)
-          case Some(Fate.Auto(p))    => conflict(p.left.uid, None).foreach(add)
-          case Some(Fate.Gate(p, g)) =>
+          case Some(SourceFate.Same(l, _)) => conflict(l, None).foreach(add)
+          case Some(SourceFate.Auto(p))    => conflict(p.left.uid, None).foreach(add)
+          case Some(SourceFate.Gate(p, g)) =>
             (
               conflict(p.left.uid, Some(IssueCondition(g, km.Map))),
               conflict(a.sourceUid, Some(IssueCondition(g, km.Both)))
             ) match
               case (Some(x), Some(_)) => add(x.modify(_.issue.condition).setTo(None))
               case (x, y)             => (x ++ y).foreach(add)
-          case Some(Fate.New) | None => conflict(a.sourceUid, None).foreach(add)
-          case Some(Fate.Deleted)    => ()
+          case Some(SourceFate.New) | None => conflict(a.sourceUid, None).foreach(add)
+          case Some(SourceFate.Deleted)    => ()
       }
     }
 
     // ── 4. what a pair owns (M4) ──
-    // rows of the bundle that already have their own uid here are not matched again inside a pair
-    val foreignFindingsOf = fes.findings.filterNot(f => localRevs.contains(toLocal(f.uid))).groupBy(_.sourceUid)
-    val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
-    val nearIssue = scala.collection.mutable.Map.empty[UUID, String] // bundle finding → issue
-    val findingMatches = scala.collection.mutable.Map.empty[UUID, List[FindingMatch]] // bundle source → matches
-    val pairQuestions = new PairQuestions:
-      def input: Input = in
-      def rightRev(u: UUID): String = rawRevs.get(u).map(_.rev).getOrElse("")
-      def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
-      def here(u: UUID): Boolean = localRevs.contains(u)
-      def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
-      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
-
     pairs.foreach { (p, cond) =>
-      val (r, l) = (p.right.source, p.left.source)
-      // findings
-      val ms = MergeFold.matchFindings(
-        localFindingsOf.getOrElse(l.uid, Nil),
-        foreignFindingsOf.getOrElse(r.uid, Nil),
-        cfg.findingWithinKm,
-        cfg.findingNearAtLeast
-      )
-      findingMatches(r.uid) = ms
-      ms.foreach {
-        case FindingMatch.Near(rf, lf, j) =>
-          val id = issueId(
-            IssueKind.FindingNearDuplicate,
-            BundleKind.Finding,
-            List(rf.uid),
-            List(lf.uid),
-            rightRev(rf.uid),
-            localRev(lf.uid)
-          )
-          nearIssue(rf.uid) = id
-          add(
-            Draft(
-              MergeIssue(
-                id,
-                IssueKind.FindingNearDuplicate,
-                IssueSeverity.Default,
-                BundleKind.Finding,
-                s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, 2)})",
-                Some(IssueSide(lf.id, lf.uid, List(MergeIssueDetail.preview(lf.claim)))),
-                Some(IssueSide(rf.id, rf.uid, List(MergeIssueDetail.preview(rf.claim)))),
-                List("by default both are kept; merge makes them one finding"),
-                List(km.Both, km.Merge),
-                Some(MergeDecision.of(km.Both)),
-                cond,
-                detail =
-                  Some(
-                    IssueDetail(
-                      List(
-                        IssueField("claim", Some(lf.claim), Some(rf.claim)),
-                        IssueField(
-                          "period",
-                          lf.period.map(x => MergeIssueDetail.rangeText(Some(x))),
-                          rf.period.map(x => MergeIssueDetail.rangeText(Some(x)))
-                        ),
-                        IssueField("region", lf.region, rf.region),
-                        IssueField(
-                          "confidence",
-                          lf.confidence.map(_.toString.toLowerCase),
-                          rf.confidence.map(_.toString.toLowerCase)
-                        )
-                      )
-                    )
-                  )
-              ),
-              Set.empty
-            )
-          )
-        case FindingMatch.Same(rf, lf)
-            if rf.confidence.isDefined && lf.confidence.isDefined && rf.confidence != lf.confidence =>
-          info += s"finding ${lf.id}: the same claim as the bundle's ${rf.id} at another confidence — the more cautious is kept"
-        case _ => ()
-      }
-      // what the kinds own of the pair, under each alternative of the body question
-      run.pair(r, l, cond, pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers)), pairQuestions)
+      val (r, l) = (p.right, p.left)
+      // what the kinds own of the pair (the findings first), under each alternative of the body question
+      run.pairFirst(r, l, cond, cfg, pairQuestions)
+      run.pair(r, l, cond, run.bodyIssue(r.uid), pairQuestions)
     }
 
     // ── 5. rows ──
@@ -850,15 +553,13 @@ object MergePlanner:
       val l = toLocal(f)
       Local(localRevs.get(l).map(_.rev), in.tombstoned(l), ledgerOf(f))
     // the source a line belongs to (its fate decides whether the line is held, or folded with it)
-    val findingSource = fes.findings.map(f => f.uid -> f.sourceUid).toMap
     def ownerSource(f: UUID, kind: BundleKind): Option[UUID] = kind match
-      case BundleKind.Source  => Some(f)
-      case BundleKind.Finding => findingSource.get(f)
-      case _                  => run.ownerSource(f, kind)
+      case BundleKind.Source => Some(f)
+      case _                 => run.ownerSource(f, kind)
     def heldBy(f: UUID, kind: BundleKind): Boolean =
       ownerSource(f, kind).flatMap(fates.get).exists {
-        case Fate.Auto(_) | Fate.Gate(_, _) => true
-        case _                              => false
+        case SourceFate.Auto(_) | SourceFate.Gate(_, _) => true
+        case _                                          => false
       }
 
     val initialRows: List[Row] =
@@ -903,13 +604,7 @@ object MergePlanner:
       in.articleHistory.getOrElse(local, Nil).find(_._1 == sha).map(_._2)
 
     /** The two records of a row question side by side, where the screen can show more than labels. */
-    def rowDetail(kind: BundleKind, u: UUID): Option[IssueDetail] = kind match
-      case BundleKind.Source =>
-        sourcesByUid
-          .get(u)
-          .zip(localized.sources.find(_.uid == u))
-          .map((l, r) => IssueDetail(MergeIssueDetail.sourceFields(l, r)))
-      case _ => run.rowDetail(kind, u, localized)
+    def rowDetail(kind: BundleKind, u: UUID): Option[IssueDetail] = run.rowDetail(kind, u, localized)
     // a bundle uid → (the uid here, what M4 does)
     val merges = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Merges)]
     def articleMerge(f: UUID, o: UUID, oc: ArticleOutcome): Boolean = oc match
@@ -1073,6 +768,7 @@ object MergePlanner:
       def merged(foreign: UUID): Boolean = merges.contains(foreign)
       def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit = merges(foreign) = here -> Merges.Contributed(how)
       def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
+      def info(line: String): Unit = noted += line
       def labelTaken[A](
           kind: BundleKind,
           rows: List[A],
@@ -1095,15 +791,7 @@ object MergePlanner:
           (a, o) => merge(a, o).map(Merges.Contributed(_)),
           detailOf
         )
-    labelTaken(
-      BundleKind.Source,
-      localized.sources.filter(s => localRevs.contains(s.uid)),
-      _.uid,
-      _.citekey,
-      s => in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
-      "citekey",
-      detailOf = (s, o) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssueDetail.sourceFields(l, s)))
-    )
+    run.labelsTakenFirst(questions)
     run.labelsTaken(questions)
     labelTaken(
       BundleKind.Goal,
@@ -1258,7 +946,6 @@ object MergePlanner:
     val all = drafts.result().distinctBy(_.issue.id)
     val byId: Map[String, Draft] = all.map(d => d.issue.id -> d).toMap
     val errors = List.newBuilder[String]
-    val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
     val texts: Map[String, String] = resolutions.resolve.flatMap(r => r.text.map(r.issue.trim -> _)).toMap
     // a resolution an earlier apply carried out answers an issue that is gone because of it: done, not stale
     val carriedOut = resolutions.resolve.filter(r =>
@@ -1279,22 +966,10 @@ object MergePlanner:
           case (Some(d), Right(dec)) =>
             val i = d.issue
             val argOk: Either[String, Unit] = dec.kind match
-              case km.Map =>
-                val allowed = List(i.left, i.right).flatten.map(_.label)
-                val ck = dec.argument.getOrElse("")
-                val leftUid = i.left.map(_.uid)
-                if !allowed.contains(ck) then
-                  Left(s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}")
-                else if in.labels.citekeys.get(ck).orElse(in.labels.aliases.get(ck)).exists(o => !leftUid.contains(o))
-                then Left(s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey")
-                else Right(())
+              case km.Map => run.citekeyArgument(i, dec).getOrElse(Right(()))
               case km.RenameRight | km.RenameLeft if run.argument(i, dec).isDefined => run.argument(i, dec).get
-              case km.RenameRight | km.RenameLeft                                   =>
-                val ck = dec.argument.getOrElse("")
-                if !Citekeys.valid(ck) then Left(s"'$ck' is not a citekey (lower-case letters, digits and _)")
-                else if labelsHere(ck) then Left(s"'$ck' is already a citekey (or an old one) here or in the bundle")
-                else Right(())
-              case _ => Right(())
+              case km.RenameRight | km.RenameLeft => run.citekeyArgument(i, dec).getOrElse(Right(()))
+              case _                              => Right(())
             if !i.options.contains(dec.kind) then
               errors += s"$id: ${dec.wire} is not a decision for this issue (${i.options.map(DecisionKind.wireOf).mkString(" | ")})"
               None
@@ -1374,13 +1049,9 @@ object MergePlanner:
     val foldMap = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, BundleKind)]
     val overrides = scala.collection.mutable.Map.empty[UUID, Decision]
     type Line[A] = BundleEntities => A
-    val sourceLine = scala.collection.mutable.Map.empty[UUID, Line[BundleSource]]
-    val findingLine = scala.collection.mutable.Map.empty[UUID, Line[BundleFinding]]
     val articleLine = scala.collection.mutable.Map.empty[UUID, Line[BundleArticle]]
     val goalLine = scala.collection.mutable.Map.empty[UUID, Line[BundleGoal]]
     val queueLine = scala.collection.mutable.Map.empty[UUID, Line[BundleQueueItem]]
-    def sourceIn(es: BundleEntities, u: UUID) = es.sources.find(_.uid == u).get
-    def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
     def articleIn(es: BundleEntities, u: UUID) = es.articles.find(_.uid == u).get
     def goalIn(es: BundleEntities, u: UUID) = es.goals.find(_.uid == u).get
     def queueIn(es: BundleEntities, u: UUID) = es.queue.find(_.uid == u).get
@@ -1416,57 +1087,27 @@ object MergePlanner:
         .zip(i.left)
         .foreach((ck, l) => renames += ((l.uid, l.label, ck)))
     }
-    val localFindingIds = in.local.findings.map(_.id).toSet
-    val assignedFindingIds = scala.collection.mutable.Set.from(localFindingIds)
 
     // the pairs that fold: every auto-merge, and a gate decided map
     pairs.foreach { (p, _) =>
-      val (r, l) = (p.right.source, p.left.source)
+      val (r, l) = (p.right, p.left)
       val mapTo: Option[String] = fates(r.uid) match
-        case Fate.Auto(_)    => Some(l.citekey)
-        case Fate.Gate(_, g) => decisionIn(g).filter(_.kind == km.Map).flatMap(_.argument)
-        case _               => None
+        case SourceFate.Auto(_)    => Some(l.citekey)
+        case SourceFate.Gate(_, g) => decisionIn(g).filter(_.kind == km.Map).flatMap(_.argument)
+        case _                     => None
       mapTo.foreach { ck =>
         fold(r.uid, l.uid, BundleKind.Source)
         foldedSources(r.uid) = l.uid
         finalCitekey(r.uid) = ck
-        tally = tally.copy(
-          sourcesMerged = tally.sourcesMerged + 1,
-          sourcesByScore = tally.sourcesByScore + (if p.evidence.strongKey then 0 else 1)
-        )
-        val fieldDec = pairFieldIds.getOrElse(r.uid, Map.empty).flatMap((k, id) => decisionIn(id).map(k -> _))
-        val merged = MergeFold.foldSource(l, r, fieldDec, ck)
-        sourceLine(l.uid) = _ => merged
-        val keepRightBody = merged.bodySha256 != l.bodySha256
-
-        // findings: the same claim folds, a near-duplicate folds when decided `merge`, the rest arrive
-        // under the survivor's citekey, numbered after its last
-        val ms = findingMatches.getOrElse(r.uid, Nil)
-        def merging(rf: BundleFinding) = nearIssue.get(rf.uid).flatMap(decisionIn).exists(_.kind == km.Merge)
-        val renumbered =
-          localFindingsOf.getOrElse(l.uid, Nil).map(f => s"$ck#${f.id.dropWhile(_ != '#').drop(1)}").toSet
-        val incoming = ms.collect {
-          case FindingMatch.Unmatched(rf)                  => rf
-          case FindingMatch.Near(rf, _, _) if !merging(rf) => rf
-        }
-        val ids = MergeFold.nextFindingIds(ck, assignedFindingIds.toSet ++ renumbered, incoming.size)
-        assignedFindingIds ++= ids
-        incoming.zip(ids).foreach((rf, id) => findingLine(rf.uid) = es => findingIn(es, rf.uid).copy(id = id))
-        ms.foreach {
-          case FindingMatch.Same(rf, lf) =>
-            fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => MergeFold.foldFinding(lf, rf)
-            tally = tally.modify(_.findingsMerged).using(_ + 1)
-          case FindingMatch.Near(rf, lf, _) if merging(rf) =>
-            fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => MergeFold.foldFinding(lf, rf)
-            tally = tally.modify(_.findingsMerged).using(_ + 1)
-          case _ => ()
-        }
+        tally = tally.modify(_.sourcesMerged).using(_ + 1)
+        // the source field by field and its findings, as the sources' rules fold them
+        val keepRightBody = run.foldSources(r, l, ck, folds)
 
         // what the kinds own of the pair before the rest: the figures
         run.foldPairFirst(r, l, keepRightBody, folds)
 
         // what the kinds own of the pair: as the body question is decided
-        val alt = pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers)) match
+        val alt = run.bodyIssue(r.uid) match
           case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
           case None     => None
         run.foldPair(r, l, alt, folds)
@@ -1476,55 +1117,26 @@ object MergePlanner:
     fes.sources.foreach { s =>
       if !finalCitekey.contains(s.uid) then
         fates(s.uid) match
-          case Fate.Same(l, _) =>
+          case SourceFate.Same(l, _) =>
             val writes =
               initialOf.get(s.uid).exists(r => r.decision == Decision.FastForward || r.decision == Decision.Insert)
             finalCitekey(s.uid) = if writes then localized.sources.find(_.uid == l).fold(s.citekey)(_.citekey)
             else sourcesByUid.get(l).fold(s.citekey)(_.citekey)
           case _ => finalCitekey(s.uid) = renameRight.getOrElse(s.uid, s.citekey)
     }
-    renameRight.foreach { (u, ck) =>
-      sourceLine(u) = es => sourceIn(es, u).copy(citekey = ck)
-      fes.findings
-        .filter(_.sourceUid == u)
-        .foreach(f =>
-          findingLine(f.uid) = es => findingIn(es, f.uid).copy(id = s"$ck#${f.id.dropWhile(_ != '#').drop(1)}")
-        )
-    }
+    renameRight.foreach((u, ck) => run.renamed(u, ck))
     tally = tally.copy(sourcesRenamed = renameRight.size + renames.result().size)
     // a finding id or an asset name a different record has here: the bundle's is renumbered / renamed
-    // (a source whose citekey collides is renamed as a whole, its findings with it)
-    val collidingSources: Set[UUID] = fes.sources
-      .filter(s =>
-        fates.get(s.uid).exists(f => f == Fate.New || f.isInstanceOf[Fate.Gate]) &&
-          (in.labels.citekeys.contains(s.citekey) || in.labels.aliases.contains(s.citekey))
-      )
-      .map(_.uid)
-      .toSet
     val relabelled = scala.collection.mutable.ListBuffer.empty[String]
-    initialRows
-      .filter(r =>
-        r.decision == Decision.Insert && r.kind == BundleKind.Finding && !findingLine.contains(r.foreignUid) &&
-          !findingSource.get(r.foreignUid).exists(collidingSources)
-      )
-      .foreach { r =>
-        val f = localized.findings.find(_.uid == r.uid).get
-        in.labels.findings.get(f.id).filter(_ != f.uid).foreach { _ =>
-          val ck = f.id.takeWhile(_ != '#')
-          val id = MergeFold.nextFindingIds(ck, assignedFindingIds.toSet, 1).head
-          assignedFindingIds += id
-          findingLine(r.foreignUid) = es => findingIn(es, r.foreignUid).copy(id = id)
-          info += s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id"
-          relabelled += s"finding ${f.id} → $id"
-        }
-      }
     val (notes0, relabelled0) = (info, relabelled)
-    run.relabel(new PlanRelabels:
+    val relabels = new PlanRelabels:
       def rows: List[Row] = initialRows
       def localized: BundleEntities = linesHere
       def writesInitially(foreign: UUID): Boolean = initialOf.get(foreign).exists(_.decision.writes)
       def info(line: String): Unit = notes0 += line
-      def relabelled(line: String): Unit = relabelled0 += line)
+      def relabelled(line: String): Unit = relabelled0 += line
+    run.relabelFirst(fates, relabels)
+    run.relabel(relabels)
     val ckMap: Map[String, String] =
       fes.sources.flatMap(s => finalCitekey.get(s.uid).filter(_ != s.citekey).map(s.citekey -> _)).toMap
     def rewrite(body: String): String = if ckMap.isEmpty then body else ArticleLinks.retarget(body, ckMap.get)._1
@@ -1670,8 +1282,6 @@ object MergePlanner:
         !other
       }
     val finalEs0 = es0.copy(
-      sources = replaced(es0.sources, _.uid, sourceLine),
-      findings = replaced(es0.findings, _.uid, findingLine),
       edges = edges0.filterNot(e => e.srcUid == e.dstUid).distinct,
       unresolvedEdges = (es0.unresolvedEdges ++ in.local.unresolvedEdges.filter(e => foldedHere(e.srcUid))).distinct,
       aliases = es0.aliases ++ newAliases,
@@ -1741,8 +1351,8 @@ object MergePlanner:
     val gateBoth: Set[UUID] = fes.sources
       .filter(s =>
         fates(s.uid) match
-          case Fate.Gate(_, g) => gateDecision.get(g).exists(_.kind == km.Both)
-          case _               => false
+          case SourceFate.Gate(_, g) => gateDecision.get(g).exists(_.kind == km.Both)
+          case _                     => false
       )
       .map(_.uid)
       .toSet
@@ -1841,15 +1451,11 @@ object MergePlanner:
     val needsApply = List.newBuilder[String]
     fes.sources.foreach { s =>
       fates(s.uid) match
-        case Fate.Auto(p) =>
-          needsApply += s"source ${s.citekey}: the same work as ${p.left.source.citekey} here " +
-            s"(${
-                if p.evidence.strongKey then p.evidence.strong.mkString(", ")
-                else s"score ${SourceMatcher.signed(p.evidence.score)}"
-              })" +
+        case SourceFate.Auto(p) =>
+          needsApply += s"source ${s.citekey}: the same work as ${p.left.citekey} here (${p.basis})" +
             " — folding the two into one is `merge apply`'s"
-        case Fate.Gate(p, g) if gateDecision.get(g).exists(_.kind == km.Map) =>
-          needsApply += s"source ${s.citekey}: $g decided ${gateDecision(g).wire} — folding it into ${p.left.source.citekey} is `merge apply`'s"
+        case SourceFate.Gate(p, g) if gateDecision.get(g).exists(_.kind == km.Map) =>
+          needsApply += s"source ${s.citekey}: $g decided ${gateDecision(g).wire} — folding it into ${p.left.citekey} is `merge apply`'s"
         case _ => ()
     }
     merges.foreach { case (f, (o, how)) =>
@@ -1865,13 +1471,7 @@ object MergePlanner:
     relabelled.foreach(x => needsApply += s"$x: a label taken here, renumbered — that is `merge apply`'s")
     issues.filter(_.condition.isEmpty).foreach { i =>
       i.decision.foreach { dec =>
-        val pairIssue = i.kind match
-          case IssueKind.DoiDiffers | IssueKind.YearDiffers | IssueKind.StatusDiffers | IssueKind.TitleDiffers |
-              IssueKind.AuthorsDiffers | IssueKind.SummaryDiffers | IssueKind.NotesDiffers | IssueKind.PeriodDiffers |
-              IssueKind.BodyDiffers | IssueKind.SameWork | IssueKind.FindingNearDuplicate =>
-            true
-          case k => run.pairIssue(k)
-        if !pairIssue && !byId(i.id).importable(dec.kind) then
+        if !run.pairIssue(i.kind) && !byId(i.id).importable(dec.kind) then
           needsApply += s"${i.id} = ${dec.wire}: carrying that out is `merge apply`'s"
       }
     }
@@ -1893,54 +1493,30 @@ object MergePlanner:
           MatchCounts(fes.sources.size, byUid, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere)
         case s :: tail =>
           fates(s.uid) match
-            case Fate.Same(_, false) =>
+            case SourceFate.Same(_, false) =>
               countMatches(tail, byUid + 1, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere)
-            case Fate.Same(_, true) =>
+            case SourceFate.Same(_, true) =>
               countMatches(tail, byUid, byLedger + 1, byStrongKey, byScore, undecided, unmatched, deletedHere)
-            case Fate.Deleted =>
+            case SourceFate.Deleted =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere + 1)
-            case Fate.Auto(p) if p.evidence.strongKey =>
+            case SourceFate.Auto(p) if p.byKey =>
               countMatches(tail, byUid, byLedger, byStrongKey + 1, byScore, undecided, unmatched, deletedHere)
-            case Fate.Auto(_) =>
+            case SourceFate.Auto(_) =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore + 1, undecided, unmatched, deletedHere)
-            case Fate.Gate(_, _) =>
+            case SourceFate.Gate(_, _) =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided + 1, unmatched, deletedHere)
-            case Fate.New =>
+            case SourceFate.New =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched + 1, deletedHere)
     val counts = countMatches(fes.sources, 0, 0, 0, 0, 0, 0, 0)
-    val matches: List[SourceMatch] = fes.sources.sortBy(_.citekey).flatMap { s =>
+    // how each of the bundle's sources was matched, by citekey, as the plan's hash reads it
+    val matched0: List[String] = fes.sources.sortBy(_.citekey).flatMap { s =>
+      def line(left: Option[UUID], o: MatchOutcome) = s"${s.uid}>${left.fold("")(_.toString)}:${MatchOutcome.wireOf(o)}"
       fates(s.uid) match
-        case Fate.Same(_, _) => None
-        case Fate.Deleted    =>
-          Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.DeletedHere))
-        case Fate.New     => Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New))
-        case Fate.Auto(p) =>
-          Some(
-            SourceMatch(
-              s.uid,
-              s.citekey,
-              Some(p.left.uid),
-              Some(p.left.source.citekey),
-              if p.evidence.strongKey then MatchMethod.StrongKey else MatchMethod.Score,
-              MatchOutcome.AutoMerge,
-              Some(p.evidence.score),
-              p.evidence.why
-            )
-          )
-        case Fate.Gate(p, g) =>
-          Some(
-            SourceMatch(
-              s.uid,
-              s.citekey,
-              Some(p.left.uid),
-              Some(p.left.source.citekey),
-              MatchMethod.Score,
-              MatchOutcome.NeedsDecision,
-              Some(p.evidence.score),
-              p.evidence.why,
-              Some(g)
-            )
-          )
+        case SourceFate.Same(_, _) => None
+        case SourceFate.Deleted    => Some(line(None, MatchOutcome.DeletedHere))
+        case SourceFate.New        => Some(line(None, MatchOutcome.New))
+        case SourceFate.Auto(p)    => Some(line(Some(p.left.uid), MatchOutcome.AutoMerge))
+        case SourceFate.Gate(p, _) => Some(line(Some(p.left.uid), MatchOutcome.NeedsDecision))
     }
     val held =
       rows.filter(r => r.decision == Decision.Held && r.kind != BundleKind.Source).groupMapReduce(_.kind)(_ => 1)(_ + _)
@@ -1988,7 +1564,7 @@ object MergePlanner:
       .sha256Hex(
         (
           List(in.manifest.bundleId.toString) ++
-            matches.map(m => s"${m.rightUid}>${m.leftUid.fold("")(_.toString)}:${MatchOutcome.wireOf(m.outcome)}") ++
+            matched0 ++
             sorted.map(i => s"${i.id}=${i.decision.fold("")(_.wire)}") ++ problems ++
             rows.map(r => s"${r.foreignUid}>${r.uid}:${r.decision}:${r.localizedRev}:${r.localRev.getOrElse("")}") ++
             (apply.renames.map(_.toString) ++ apply.attestations.map(_.toString) ++ apply.folds.map(_.toString)).sorted
@@ -1997,22 +1573,24 @@ object MergePlanner:
       .take(8)
     val usedResolutions = chosen.keySet.intersect(liveIds).size
 
-    val plan = MergePlan(
-      in.manifest.bundleId,
-      in.manifest.instance,
-      in.here,
-      in.manifest.formatVersion,
-      in.manifest.schemaVersion,
-      in.manifest.asOf,
-      hash,
-      counts,
-      matches,
-      sorted,
-      info.result() ++ notes.result(),
-      problems,
-      errors.result().distinct,
-      usedResolutions,
-      changes
+    val plan = run.planned(
+      MergePlan(
+        in.manifest.bundleId,
+        in.manifest.instance,
+        in.here,
+        in.manifest.formatVersion,
+        in.manifest.schemaVersion,
+        in.manifest.asOf,
+        hash,
+        counts,
+        Nil,
+        sorted,
+        info.result() ++ notes.result(),
+        problems,
+        errors.result().distinct,
+        usedResolutions,
+        changes
+      )
     )
     val aliasOf = aliasIssues.result()
     Result(
@@ -2043,22 +1621,3 @@ object MergePlanner:
     val base = as.filter(keep).map(a => repl.get(uid(a)).fold(a)(_(es0)))
     val extra = repl.keySet.diff(as.map(uid).toSet).toList.sortBy(_.toString).map(u => repl(u)(es0))
     (base ++ extra).distinctBy(uid)
-
-  /** Both texts present and different (after trimming). */
-  private def text(a: Option[String], b: Option[String]): Option[Unit] =
-    a.map(_.trim).filter(_.nonEmpty).zip(b.map(_.trim).filter(_.nonEmpty)).filter((x, y) => x != y).map(_ => ())
-
-  /** A new citekey for a bundle source whose own is taken: its key plus the next significant title word
-    * (`smith2019_ritual` → `smith2019_ritualkingship`), else a letter (`smith2019_ritualb`). Never one in use here or
-    * in the bundle. Pure.
-    */
-  def renameSuggestion(s: BundleSource, in: Input, fes: BundleEntities): String =
-    val usedHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey) ++
-      fes.aliases.map(_.alias)
-    val suffix = s.citekey.dropWhile(_ != '_').drop(1)
-    val words = MergeText
-      .significant(MergeText.tokens(s.title))
-      .map(_.filter(c => c.isLetterOrDigit && c < 128))
-      .filter(w => w.nonEmpty && !suffix.contains(w))
-    val byWord = words.headOption.map(w => s.citekey + w).filterNot(usedHere)
-    byWord.getOrElse(Iterator.from(0).map(i => s.citekey + ('b' + i).toChar).find(c => !usedHere(c)).get)

@@ -3,6 +3,7 @@ package com.histmersion.domain
 import com.histmersion.domain.catalogue.events.EventPlan
 import com.histmersion.domain.catalogue.places.PlacePlan
 import com.histmersion.domain.catalogue.CataloguePlan
+import com.histmersion.domain.library.LibraryPlan
 
 import com.histmersion.util.data.exchange.{BundlePlan, MergeResolutionsFile}
 import com.histmersion.config.*
@@ -29,7 +30,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       in0: MergePlanner.Input => MergePlanner.Input = identity,
       res: MergeResolutions = MergeResolutions()
   ): MergePlanner.Result =
-    MergePlanner.plan(in0(input(es)), sketches, res, cfg, List(CataloguePlan))
+    MergePlanner.plan(in0(input(es)), sketches, res, cfg, List(CataloguePlan, LibraryPlan))
 
   private def resolve(pairs: (String, String)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))

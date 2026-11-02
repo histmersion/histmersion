@@ -1,9 +1,10 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue}
-import com.histmersion.domain.MergePlanner
+import com.histmersion.api.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
+import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.files.BundleEntities
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
+import com.histmersion.util.text.MinHash
+import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind}
 
 import scala.annotation.tailrec
 import java.util.UUID
@@ -22,6 +23,45 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
     through(runs, es)(_.localized(_, mapped))
 
   override def notices: List[String] = runs.flatMap(_.notices)
+
+  override def sketchesWanted(cfg: MergeSettings): Set[String] = runs.flatMap(_.sketchesWanted(cfg)).toSet
+
+  override def matchSources(
+      sketches: Map[String, MinHash],
+      cfg: MergeSettings,
+      editions: Option[EditionsPolicy]
+  ): List[SourcePair] = runs.flatMap(_.matchSources(sketches, cfg, editions))
+
+  override def sourceQuestions(
+      fates: Map[UUID, SourceFate],
+      sketches: Map[String, MinHash],
+      cfg: MergeSettings,
+      questions: PairQuestions
+  ): Unit = runs.foreach(_.sourceQuestions(fates, sketches, cfg, questions))
+
+  override def bodyIssue(right: UUID): Option[String] = runs.iterator.flatMap(_.bodyIssue(right)).nextOption()
+
+  override def pairFirst(
+      right: BundleSource,
+      left: BundleSource,
+      cond: Option[IssueCondition],
+      cfg: MergeSettings,
+      questions: PairQuestions
+  ): Unit = runs.foreach(_.pairFirst(right, left, cond, cfg, questions))
+
+  override def labelsTakenFirst(questions: PlanQuestions): Unit = runs.foreach(_.labelsTakenFirst(questions))
+
+  override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
+    runs.iterator.flatMap(_.citekeyArgument(issue, decision)).nextOption()
+
+  /** Every run folds; the folded source takes the bundle's body when one of them says so. */
+  override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
+    runs.map(_.foldSources(right, left, citekey, folds)).exists(identity)
+
+  override def renamed(source: UUID, citekey: String): Unit = runs.foreach(_.renamed(source, citekey))
+
+  override def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit =
+    runs.foreach(_.relabelFirst(fates, relabels))
 
   override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] =
     runs.iterator.flatMap(_.ownerSource(foreign, kind)).nextOption()
@@ -78,3 +118,5 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def tombstones: List[(UUID, BundleKind, UUID)] = runs.flatMap(_.tombstones)
 
   override def bodyRenames: Map[UUID, List[(String, String)]] = runs.flatMap(_.bodyRenames).toMap
+
+  override def planned(plan: MergePlan): MergePlan = runs.foldLeft(plan)((p, r) => r.planned(p))

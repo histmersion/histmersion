@@ -756,7 +756,6 @@ core:domain/ArticleReviewStatus.scala	research.articles.review
 core:domain/AutoEnrich.scala	library.workflows
 core:domain/AutopilotPolicy.scala	automation.autopilot
 core:domain/BrowserDownload.scala	library.acquisition
-core:domain/Citekeys.scala	library.sources
 core:domain/CodexRetention.scala	automation.agents
 core:domain/CompareRuns.scala	automation.agents
 core:domain/CompileArticle.scala	research.workflows
@@ -775,7 +774,6 @@ core:domain/ManagerRunDefaults.scala	automation.managers
 core:domain/MergeFold.scala	util.data.exchange
 core:domain/MergePlanner.scala	util.data.exchange
 core:domain/MergeSettings.scala	util.data.exchange
-core:domain/MergeText.scala	library.merge-rules
 core:domain/PassageFinder.scala	library.sources
 core:domain/PlanArticles.scala	research.workflows
 core:domain/PlanGoal.scala	automation.goals
@@ -788,7 +786,6 @@ core:domain/SchedulerDefaults.scala	automation.scheduler
 core:domain/SchedulerPolicy.scala	automation.scheduler
 core:domain/Scheduling.scala	automation.scheduler
 core:domain/SeedPlanDefaults.scala	library.workflows
-core:domain/SourceMatcher.scala	library.merge-rules
 core:domain/WatchManagerDefaults.scala	library.workflows
 core:domain/WatchSchedules.scala	automation.scheduler
 core:domain/activity/ActivityCursor.scala	automation.activity

@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.CataloguePlan
+import com.histmersion.domain.library.LibraryPlan
 import com.histmersion.domain.media.assets.AssetPlan
 
 import com.histmersion.util.data.exchange.{BundleFormat, PlanRules}
@@ -29,7 +30,7 @@ import com.histmersion.values.{Confidence, EditionsPolicy, IssueKind}
   */
 class MergePlanOracleSuite extends munit.FunSuite with Bounded:
 
-  private val rules: List[PlanRules] = List(CataloguePlan, AssetPlan)
+  private val rules: List[PlanRules] = List(CataloguePlan, AssetPlan, LibraryPlan)
 
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 
@@ -93,7 +94,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       sk: Map[String, com.histmersion.util.text.MinHash],
       res: MergeResolutions
   ): String =
-    val s = MergePlanner.sketchesWanted(in, cfg).toList.sorted
+    val s = MergePlanner.sketchesWanted(in, cfg, rules).toList.sorted
     val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sorted
     s"sketches wanted: ${s.mkString(", ")}\nbodies wanted: ${b.mkString(", ")}\n"
 

@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.domain.library.sources
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.files.*
