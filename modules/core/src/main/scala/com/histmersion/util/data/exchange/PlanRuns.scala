@@ -4,12 +4,13 @@ import com.histmersion.api.exchange.{BundleSource, IssueCondition, IssueDetail, 
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
-import com.histmersion.values.{BundleKind, IssueKind}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.EditionsPolicy
 
 import scala.annotation.tailrec
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
 final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
@@ -65,7 +66,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit =
     runs.foreach(_.relabelFirst(fates, relabels))
 
-  override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] =
+  override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
     runs.iterator.flatMap(_.ownerSource(foreign, kind)).nextOption()
 
   override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] =
@@ -79,7 +80,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
       questions: PairQuestions
   ): Unit = runs.foreach(_.pair(right, left, cond, bodyIssue, questions))
 
-  override def rowDetail(kind: BundleKind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
+  override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
     runs.iterator.flatMap(_.rowDetail(kind, u, localized)).nextOption()
 
   override def conflict(row: MergePlanner.Row, localized: BundleEntities): Option[PlanMerge] =
@@ -92,7 +93,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
     runs.iterator.flatMap(_.argument(issue, decision)).nextOption()
 
-  override def pairIssue(kind: IssueKind): Boolean = runs.exists(_.pairIssue(kind))
+  override def pairIssue(kind: Issue.Kind): Boolean = runs.exists(_.pairIssue(kind))
 
   override def foldPairFirst(
       right: BundleSource,
@@ -117,7 +118,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def fixes: List[MergePlanner.AttestationFix] = runs.flatMap(_.fixes)
 
-  override def tombstones: List[(UUID, BundleKind, UUID)] = runs.flatMap(_.tombstones)
+  override def tombstones: List[(UUID, Bundle.Kind, UUID)] = runs.flatMap(_.tombstones)
 
   override def bodyRenames: Map[UUID, List[(String, String)]] = runs.flatMap(_.bodyRenames).toMap
 

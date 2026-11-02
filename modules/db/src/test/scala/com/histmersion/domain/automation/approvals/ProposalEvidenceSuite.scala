@@ -2,22 +2,30 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.values.{ApprovalKind, EdgeKind, SourceStatus}
 import io.circe.syntax.*
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** What the approvals' lists read of a source proposal's payload is what the proposal says: its evidence and quote. */
 class ProposalEvidenceSuite extends munit.FunSuite:
 
   private val proposals = List(
     Proposal(
-      ApprovalKind.StatusChange,
+      Approval.Kind.StatusChange,
       "a2000_x",
-      status = Some(SourceStatus.Contested),
+      status = Some(Source.Status.Contested),
       evidence = "why",
       quote = Some("q")
     ),
-    Proposal(ApprovalKind.Edge, "a2000_x", edgeKind = Some(EdgeKind.Refutes), target = Some("b2001_y"), evidence = "e"),
-    Proposal(ApprovalKind.Edge, "a2000_x", edgeKind = Some(EdgeKind.Challenges), target = Some("b2001_y"))
+    Proposal(
+      Approval.Kind.Edge,
+      "a2000_x",
+      edgeKind = Some(Edge.Kind.Refutes),
+      target = Some("b2001_y"),
+      evidence = "e"
+    ),
+    Proposal(Approval.Kind.Edge, "a2000_x", edgeKind = Some(Edge.Kind.Challenges), target = Some("b2001_y"))
   )
 
   test("every proposal's payload reads as its evidence and quote"):

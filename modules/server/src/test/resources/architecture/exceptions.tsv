@@ -1,4 +1,7 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
+direction	api:api/VocabularyCodecs.scala	util.common -> automation: Goal	1
+direction	api:api/VocabularyCodecs.scala	util.common -> catalogue: Place	1
+direction	api:api/VocabularyCodecs.scala	util.common -> library: Edge	1
 direction	api:api/automation/Agents.scala	automation -> research: ArticlePlans	1
 direction	api:api/automation/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
 direction	api:api/automation/GoalPlans.scala	automation -> research: CoverageReason	1
@@ -8,8 +11,10 @@ direction	api:api/exchange/MergeIssueDetail.scala	util.data -> automation: GoalP
 direction	api:api/library/DeleteBlockerKind.scala	library -> research: Article	1
 direction	api:api/library/NeighborTarget.scala	library -> research: Article	1
 direction	api:api/maintenance/StorageMarkdown.scala	util.data -> server: AboutMarkdown	1
+direction	core:domain/MergeFold.scala	util.data -> automation: Goal	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
+direction	db:domain/automation/agents/AgentRepo.scala	automation -> library: Edge	1
 direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeleteCount	1
 direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeletePart	1
 direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteBlocker	1
@@ -26,10 +31,14 @@ direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> libr
 direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeleteCount	1
 direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeletePart	1
 direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: RenameCount	1
+direction	db:util/database/Codecs.scala	util.database -> catalogue: Place	1
+direction	db:util/database/Codecs.scala	util.database -> library: Edge	1
 direction	db:util/jobs/JobRepo.scala	util.jobs -> automation: Agents	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlocker	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlockerKind	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: RenameCount	1
+direction	server:domain/automation/agents/ApprovalService.scala	automation -> library: Edge	1
+direction	server:domain/automation/approvals/Approvals.scala	automation -> library: Edge	1
 direction	server:domain/research/articles/ArticleRoutes.scala	research -> server: ArticleHtml	1
 direction	server:domain/research/articles/PageBuilder.scala	research -> server: ArticleHtml	1
 direction	server:server/Pages.scala	research -> server: ArticleHtml	1

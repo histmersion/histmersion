@@ -26,10 +26,10 @@ import sttp.client4.testing.SyncBackendStub
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, Queue}
 import com.histmersion.api.library.{Assessment, MetadataPatch, RefsResult, SourcePatch, SourcePut, WorkRef}
+import com.histmersion.domain.library.Source
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes
@@ -147,7 +147,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val s = h.library.sources.get(Ck).toOption.get
     assertEquals(s.source.summary, Some("Tin reached the Aegean by sea."))
     assertEquals((s.source.periodStart, s.source.periodEnd), (Some(-1600L), Some(-1200L)))
-    assertEquals(s.source.status, SourceStatus.Current)
+    assertEquals(s.source.status, Source.Status.Current)
     assertEquals(s.source.tags, List("tin_trade"))
     assertEquals(s.source.notes.map(_.trim), Some(s"The source traces tin by sea [[$Ck]]."))
     assertEquals(s.findings.size, 1, "the invented quote never reached the corpus")
@@ -277,7 +277,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
     val sent = c.steps.head.last.history.entries.collect { case ConversationEntry.ToolResult(_, n, r) => (n, r) }
     assertEquals(sent.toList, List(("patch_source", "Tool not found: patch_source")))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, SourceStatus.Unassessed)
+    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
     assert(run.warnings.exists(_.contains("status retracted not applied")), run.warnings)
     // the proposal waits in the approvals, not in the backlog (P2); nothing is applied until approved
     val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
@@ -448,26 +448,26 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     val p =
-      AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Contested), evidence = "e")
+      AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(Source.Status.Contested), evidence = "e")
     val first = TestRuns.proposals(a, h).propose(None, p)
     val id = first match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
     // the same proposal while it is open is not doubled
     assert(TestRuns.proposals(a, h).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, SourceStatus.Unassessed)
+    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
     val decided = a.decide(id, "approve", DecisionRequest(Some("checked the rebuttal"))).toOption.get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, SourceStatus.Contested)
+    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
     assert(a.decide(id, "reject", DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
     assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
-    val p2 = p.copy(status = Some(SourceStatus.Debunked))
+    val p2 = p.copy(status = Some(Source.Status.Debunked))
     val id2 = TestRuns.proposals(a, h).propose(None, p2) match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
     assertEquals(a.decide(id2, "reject", DecisionRequest()).map(_.state), Right("rejected"))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, SourceStatus.Contested)
+    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
     assertEquals(a.approvalsList(Some("all"), None).map(_.count(_.citekey == Ck)), Right(2))
     assert(a.approvalsList(Some("pending"), None).isLeft)
     // paged (core Paging): newest first, id2 then id; the counts are every state's, the total the filter's
@@ -490,10 +490,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .proposals(a, h)
       .propose(
         None,
-        AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Debunked), evidence = "e")
+        AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(Source.Status.Debunked), evidence = "e")
       )
     assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, SourceStatus.Debunked)
+    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Debunked)
     assertEquals(
       TestRuns.approvals(ds).approvals(Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
       List(Some("debunked"))
@@ -602,7 +602,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.library.sources
         .patch(
           Ck,
-          SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(SourceStatus.Current))))
+          SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(Source.Status.Current))))
         )
         .isRight
     )

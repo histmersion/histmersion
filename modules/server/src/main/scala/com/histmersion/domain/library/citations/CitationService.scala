@@ -2,7 +2,6 @@ package com.histmersion.domain.library.citations
 
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.SourceStatus
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
@@ -15,6 +14,7 @@ import com.histmersion.api.library.{
   NeighborTarget,
   SourceGraph
 }
+import com.histmersion.domain.library.Source
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.
@@ -112,7 +112,7 @@ object CitationService:
             o.map(_.citekey),
             o.map(_.title),
             o.flatMap(_.year),
-            Some(o.fold(SourceStatus.Unassessed)(_.status))
+            Some(o.fold(Source.Status.Unassessed)(_.status))
           )
       val disagreeing = st.edges.toList.filter(e => Disagreeing(e.kind))
       def sides = disagreeing.flatMap(e => List((e.src, "out", e.kind, e.dst), (e.dst, "in", e.kind, e.src)))

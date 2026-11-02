@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.PlaceEntry
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.values.BundleKind
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.{Api, ApiError, Dataset, GeoPick}
@@ -38,7 +37,8 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
-import com.histmersion.values.PlaceKind
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.data.exchange.Bundle
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of
@@ -119,8 +119,9 @@ final class PlacesControllers(
       body: String
   ): Either[ApiError, PlaceImportResult] =
     maintenance.guard("places/import"):
-      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
-      if !PlaceKind.all.contains(k) then Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
+      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
+      if !Place.Kind.all.contains(k) then
+        Left(ApiError(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})"))
       else
         for
           set <- Dataset.ofParam(dataset)
@@ -194,8 +195,8 @@ final class PlacesControllers(
     * `GET /api/places/{old}` and in a `place=<old>` filter alike.
     */
   def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
-    rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Place, from, req.to))
-      .map((from, to) => LabelRenamed(BundleKind.Place, from, to))
+    rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Place, from, req.to))
+      .map((from, to) => LabelRenamed(Bundle.Kind.Place, from, to))
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places`; a rebuild arriving during a restore is refused like
     * every other write.

@@ -6,9 +6,9 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{PlaceSummary, PlaceTimeBasis}
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.domain.catalogue.Place
 
 /** The time rule of the place views (2026-10-09): on what ground a view at a time shows a place. */
 class PlaceTimeBasisSuite extends munit.FunSuite:
@@ -23,31 +23,31 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
   ) = PlaceTimeBasis.of(kind, modern, imported, undated, geometry)
 
   test("a dated place, also one whose unknown start is a stored window, is judged by its period"):
-    assertEquals(of(PlaceKind.Site), Dated)
-    assertEquals(of(PlaceKind.Polity), Dated)
-    assertEquals(of(PlaceKind.Polity, imported = true), Dated, "a dated Wikidata state")
+    assertEquals(of(Place.Kind.Site), Dated)
+    assertEquals(of(Place.Kind.Polity), Dated)
+    assertEquals(of(Place.Kind.Polity, imported = true), Dated, "a dated Wikidata state")
 
   test("physical features are timeless: any seed feature, and a Natural Earth physical region"):
-    assertEquals(of(PlaceKind.Feature), Timeless)
-    assertEquals(of(PlaceKind.Feature, undated = true), Timeless)
-    assertEquals(of(PlaceKind.Feature, modern = true, undated = true), Timeless, "a Natural Earth sea")
-    assertEquals(of(PlaceKind.Region, modern = true, undated = true), Timeless, "a Natural Earth peninsula")
-    assertEquals(of(PlaceKind.Feature, imported = true, undated = true), Findings, "never a GeoNames/Wikidata place")
+    assertEquals(of(Place.Kind.Feature), Timeless)
+    assertEquals(of(Place.Kind.Feature, undated = true), Timeless)
+    assertEquals(of(Place.Kind.Feature, modern = true, undated = true), Timeless, "a Natural Earth sea")
+    assertEquals(of(Place.Kind.Region, modern = true, undated = true), Timeless, "a Natural Earth peninsula")
+    assertEquals(of(Place.Kind.Feature, imported = true, undated = true), Findings, "never a GeoNames/Wikidata place")
 
   test("a present-day place is modern: the Natural Earth cities, an undated GeoNames or Wikidata place"):
-    assertEquals(of(PlaceKind.Site, modern = true, undated = true), Modern)
-    assertEquals(of(PlaceKind.Region, modern = true, imported = true, undated = true), Modern)
+    assertEquals(of(Place.Kind.Site, modern = true, undated = true), Modern)
+    assertEquals(of(Place.Kind.Region, modern = true, imported = true, undated = true), Modern)
 
   test("any other undated place is there by its findings; with no shape it is a grouping node"):
-    assertEquals(of(PlaceKind.Site, undated = true), Findings, "an undated Pleiades site")
-    assertEquals(of(PlaceKind.Region, undated = true), Findings, "a curated region, a Natural Earth country")
-    assertEquals(of(PlaceKind.Region, undated = true, geometry = false), Grouping, "a continent")
+    assertEquals(of(Place.Kind.Site, undated = true), Findings, "an undated Pleiades site")
+    assertEquals(of(Place.Kind.Region, undated = true), Findings, "a curated region, a Natural Earth country")
+    assertEquals(of(Place.Kind.Region, undated = true, geometry = false), Grouping, "a continent")
 
   test("a people (region-cleanup's kind) is never timeless: dated by its period, else by its findings"):
-    assertEquals(of(PlaceKind.People, undated = true), Findings, "the Ubii, undated in Pleiades")
-    assertEquals(of(PlaceKind.People), Dated, "a people Pleiades dates")
-    assertEquals(of(PlaceKind.People, undated = true, geometry = false), Grouping)
-    assertEquals(of(PlaceKind.People, imported = true, undated = true), Findings)
+    assertEquals(of(Place.Kind.People, undated = true), Findings, "the Ubii, undated in Pleiades")
+    assertEquals(of(Place.Kind.People), Dated, "a people Pleiades dates")
+    assertEquals(of(Place.Kind.People, undated = true, geometry = false), Grouping)
+    assertEquals(of(Place.Kind.People, imported = true, undated = true), Findings)
 
   test("visible: only what the basis allows"):
     def vis(b: PlaceTimeBasis, hi: Long, overlaps: Boolean, evidence: Boolean) =
@@ -67,7 +67,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(parse("sometimes"), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = PlaceSummary("x", "Anatolia", PlaceKind.Region, None, None, None, "")
+    val p = PlaceSummary("x", "Anatolia", Place.Kind.Region, None, None, None, "")
     val d = PlaceDetail(p, None, Nil, Nil, 0, Some(-2500L), timeBasis = Findings)
     assert(d.datedByFindings)
     assert(!d.copy(asOf = None).datedByFindings)

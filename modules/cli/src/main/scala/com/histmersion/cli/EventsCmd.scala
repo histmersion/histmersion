@@ -6,7 +6,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.values.BundleKind
 import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.catalogue.{
   Corrections,
@@ -26,6 +25,7 @@ import com.histmersion.api.catalogue.{
   EventTaxonomy
 }
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.util.data.exchange.Bundle
 
 object EventsCmd:
 
@@ -294,6 +294,6 @@ object EventsCmd:
       "events",
       "Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads"
     ) {
-      search orElse showCmd orElse patchCmd orElse LabelRenameCmd(BundleKind.Event) orElse importCmd orElse
+      search orElse showCmd orElse patchCmd orElse LabelRenameCmd(Bundle.Kind.Event) orElse importCmd orElse
         rederiveCmd orElse correctionsCmd orElse cataloguesCmd orElse linksCmd orElse candidatesCmd orElse leadsCmd
     }

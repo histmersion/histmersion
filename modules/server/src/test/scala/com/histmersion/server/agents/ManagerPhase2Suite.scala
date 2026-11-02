@@ -21,11 +21,11 @@ import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant
-import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
 import com.histmersion.api.automation.{Goal, GoalPut}
 import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
 import com.histmersion.api.research.{ArticleFilter, ArticlePut}
+import com.histmersion.domain.library.Source
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the
@@ -104,7 +104,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
             title = "Bronze Age tin",
             year = Some(2019),
             topics = List("zzagent_tin"),
-            status = Some(SourceStatus.Current),
+            status = Some(Source.Status.Current),
             summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
             body = Some(
               "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
@@ -128,7 +128,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
+        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
         .isRight
     )
     assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)

@@ -4,8 +4,8 @@ import com.histmersion.domain.*
 
 import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.Geocode
-import com.histmersion.values.PlaceKind
 import com.histmersion.Period
+import com.histmersion.domain.catalogue.Place
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
   * people, a civic tribe, a province, a deme and a district alike as a "region" with one representative point; this
@@ -189,12 +189,12 @@ object PlaceReview:
             )
       case None if Withdrawn.matches(e.label.trim) =>
         Some(Proposal.Review(e.id, e.label, "withdrawn by Pleiades, with no replacement named", ev))
-      case None if e.kind == PlaceKind.Feature => None
-      case None                                =>
+      case None if e.kind == Place.Kind.Feature => None
+      case None                                 =>
         val settled = types.intersect(SiteTypes)
         // a SITE that is also a settlement stays one (a provincial capital); otherwise an
         // administrative or a people type wins over the kind the seed gave it
-        val keepSite = e.kind == PlaceKind.Site && settled.nonEmpty
+        val keepSite = e.kind == Place.Kind.Site && settled.nonEmpty
         val admin = types.intersect(PolityTypes).filter(_ => !keepSite)
         if admin.nonEmpty then
           val period = polityPeriod(e)
@@ -206,13 +206,13 @@ object PlaceReview:
             case None    => "an administrative unit (a polity); no source states its period — add one by hand"
           // a polity whose own period is already the stated one needs no period write
           val write = period.filterNot(p => stated._1.contains(p.start) && stated._2.contains(p.end))
-          if e.kind == PlaceKind.Polity && write.isEmpty then None
-          else Some(Proposal.Reclassify(e.id, e.label, e.kind, PlaceKind.Polity, write, note, ev))
+          if e.kind == Place.Kind.Polity && write.isEmpty then None
+          else Some(Proposal.Reclassify(e.id, e.label, e.kind, Place.Kind.Polity, write, note, ev))
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
-          to(PlaceKind.People, "a people or civic tribe — a group of persons, not a territory")
+          to(Place.Kind.People, "a people or civic tribe — a group of persons, not a territory")
         else if settled.nonEmpty && !RegionAside.matches(e.label) then
-          to(PlaceKind.Site, s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
-        else if e.kind != PlaceKind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
+          to(Place.Kind.Site, s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
+        else if e.kind != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
           // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
           Some(
             Proposal.Review(

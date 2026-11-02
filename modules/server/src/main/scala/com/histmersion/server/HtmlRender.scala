@@ -3,10 +3,10 @@ package com.histmersion.server
 import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.{FindingRow, Label, SourceRef}
 import com.histmersion.api.research.ArticleRef
+import com.histmersion.domain.library.Source
 
 /** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
   * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
@@ -73,7 +73,7 @@ object HtmlRender:
   /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`) and its
     * word.
     */
-  def statusBadge(status: SourceStatus): String =
+  def statusBadge(status: Source.Status): String =
     s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
         status
       )} (${status.wire})">${Wording.status(status)}</span>"""

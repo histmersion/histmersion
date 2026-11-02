@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.automation.{Goal, GoalDeleted}
 import com.histmersion.api.catalogue.{Attestation, AttestationList, EventDeleted, Lpf, Place, PlaceInput, PlaceName}
@@ -177,7 +176,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
             Place(
               "zz_alias_p1",
               "Zzalias Hill",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.5,39.5]}""")
             ),
             List(PlaceName("Zzalias Hill"))

@@ -1,6 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
 import com.histmersion.api.catalogue.{
   PlaceDating,
   PlaceDescription,
@@ -11,6 +10,8 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.library.SourceDetail
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Source
 
 class PreviewSuite extends munit.FunSuite:
 
@@ -20,7 +21,7 @@ class PreviewSuite extends munit.FunSuite:
     List("Eric H. Cline"),
     Some(2014),
     Some("Princeton UP"),
-    SourceStatus.Current,
+    Source.Status.Current,
     List("bronze_age_collapse"),
     List("Eastern_Mediterranean"),
     List("sea_peoples"),
@@ -45,7 +46,7 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(c.identifier, "10.1515/9781400849987")
     assertEquals(c.byline, "Eric H. Cline · 2014 · Princeton UP")
     assertEquals(c.where, "Eastern Mediterranean · 1250 BCE–1100 BCE")
-    assertEquals(c.status, Some(SourceStatus.Current))
+    assertEquals(c.status, Some(Source.Status.Current))
     assert(c.summary.exists(s => s.length == 300 && s.endsWith("…")), c.summary)
     assertEquals(Preview.card(detail.copy(doi = None)).identifier, "cline2014_year")
 
@@ -63,7 +64,7 @@ class PreviewSuite extends munit.FunSuite:
     PlaceSummary(
       "wikidata_q131839713",
       "Kingdom of Patones",
-      PlaceKind.Polity,
+      Place.Kind.Polity,
       None,
       Some(1769L),
       Some("Wikidata (wikidata.org), CC0"),
@@ -98,7 +99,7 @@ class PreviewSuite extends munit.FunSuite:
       place = patones.place.copy(
         id = "geonames_1",
         label = "Boğazkale",
-        kind = PlaceKind.Site,
+        kind = Place.Kind.Site,
         periodEnd = None,
         dating = PlaceDating.Unknown,
         importSource = Some("geonames")
@@ -115,7 +116,7 @@ class PreviewSuite extends munit.FunSuite:
       place = gn.place.copy(
         importSource = None,
         dating = PlaceDating.Stated,
-        kind = PlaceKind.Region,
+        kind = Place.Kind.Region,
         periodStart = Some(-1650L),
         periodEnd = Some(-1180L),
         source = Some("Pleiades (pleiades.stoa.org), CC-BY")
@@ -130,7 +131,7 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card at a time says when an undated place is there only by its findings"):
     val anatolia = patones.copy(
-      place = PlaceSummary("anatolia", "Anatolia", PlaceKind.Region, None, None, None, ""),
+      place = PlaceSummary("anatolia", "Anatolia", Place.Kind.Region, None, None, None, ""),
       links = Nil,
       descriptions = Nil,
       timeBasis = PlaceTimeBasis.Findings
@@ -145,21 +146,21 @@ class PreviewSuite extends munit.FunSuite:
       place = patones.place.copy(
         id = "pleiades_1001895",
         label = "Thessalia",
-        kind = PlaceKind.Region,
+        kind = Place.Kind.Region,
         importSource = None,
         dating = PlaceDating.Stated,
         periodEnd = None
       ),
       links = Nil,
       descriptions = Nil,
-      locationPrecision = LocationPrecision.GridCell
+      locationPrecision = Place.Precision.GridCell
     )
     val t = Preview.card(thessalia)
     assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
     assert(t.facts.contains(PlaceShape.NoBoundaryNote), t.facts.toString)
     val ubii = thessalia.copy(
-      place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = PlaceKind.People),
-      locationPrecision = LocationPrecision.Stated
+      place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = Place.Kind.People),
+      locationPrecision = Place.Precision.Stated
     )
     val u = Preview.card(ubii)
     assertEquals(u.byline.takeWhile(_ != ' '), "People")

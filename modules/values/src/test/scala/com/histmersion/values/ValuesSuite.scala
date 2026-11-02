@@ -2,6 +2,7 @@ package com.histmersion.values
 
 import com.histmersion.{Latitude, LatLon, Longitude, Period, Year}
 import com.histmersion.domain.library.Doi
+import com.histmersion.domain.catalogue.places.Wikidata
 class ValuesSuite extends munit.FunSuite:
 
   test("a period may not end before it starts; a point is one year"):
@@ -9,9 +10,9 @@ class ValuesSuite extends munit.FunSuite:
       Period.from(Year(-3300), Year(-3100)).map(p => (p.start.value: Int, p.end.value: Int)),
       Right((-3300, -3100))
     )
-    assertEquals(Period.from(Year(-3100), Year(-3300)), Left(PeriodError.EndsBeforeStart(Year(-3100), Year(-3300))))
+    assertEquals(Period.from(Year(-3100), Year(-3300)), Left(Period.Error.EndsBeforeStart(Year(-3100), Year(-3300))))
     assertEquals(
-      PeriodError.EndsBeforeStart(Year(-3100), Year(-3300)).message,
+      Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message,
       "the period ends (-3300) before it starts (-3100)"
     )
     assert(Period.point(Year(-1200)).isPoint && !Period.from(Year(1), Year(2)).toOption.get.isPoint)
@@ -24,8 +25,8 @@ class ValuesSuite extends munit.FunSuite:
     )
 
   test("a Wikidata id is Q and a number"):
-    assert(WikidataId.either("Q12554").isRight)
-    assert(WikidataId.either("Q0").isLeft && WikidataId.either("P31").isLeft && WikidataId.either("q1").isLeft)
+    assert(Wikidata.Id.either("Q12554").isRight)
+    assert(Wikidata.Id.either("Q0").isLeft && Wikidata.Id.either("P31").isLeft && Wikidata.Id.either("q1").isLeft)
 
   test("coordinates stay on the globe"):
     assert(Latitude.either(90.0).isRight && Latitude.either(-90.0).isRight && Latitude.either(90.5).isLeft)

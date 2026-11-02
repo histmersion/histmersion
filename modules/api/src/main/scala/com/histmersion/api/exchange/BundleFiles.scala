@@ -1,5 +1,4 @@
 package com.histmersion.api.exchange
-import com.histmersion.values.BundleKind
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.given
 
@@ -24,7 +23,7 @@ object BundleFiles:
   val Tombstones = "entities/tombstones.ndjson"
 
   val all: List[String] =
-    BundleKind.values.toList.map(_.file) ++
+    com.histmersion.util.data.exchange.Bundle.Kind.values.toList.map(_.file) ++
       List(
         Edges,
         UnresolvedEdges,

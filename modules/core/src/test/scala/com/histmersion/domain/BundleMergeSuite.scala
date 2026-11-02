@@ -5,7 +5,6 @@ import com.histmersion.domain.catalogue.events.EventPlan
 import com.histmersion.api.given
 
 import java.util.UUID
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{
@@ -16,6 +15,7 @@ import com.histmersion.api.exchange.{
   BundleEventCheck,
   BundleKindCounts
 }
+import com.histmersion.util.data.exchange.Bundle
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.
@@ -165,9 +165,9 @@ class BundleMergeSuite extends munit.FunSuite:
   test("cascade: a line needing a row deleted here is skipped too, transitively; optional links are not"):
     val (src, asset, link, ev) = (U1, U2, UUID.randomUUID(), UUID.randomUUID())
     val refs = List(
-      BundleEntities.Reference(BundleKind.Source, src, asset, "asset", required = true),
-      BundleEntities.Reference(BundleKind.Asset, asset, link, "link", required = true),
-      BundleEntities.Reference(BundleKind.Event, src, ev, "parent", required = false)
+      BundleEntities.Reference(Bundle.Kind.Source, src, asset, "asset", required = true),
+      BundleEntities.Reference(Bundle.Kind.Asset, asset, link, "link", required = true),
+      BundleEntities.Reference(Bundle.Kind.Event, src, ev, "parent", required = false)
     )
     val out = BundlePlan.cascade(
       Map(src -> Decision.SkipDeleted, asset -> Decision.Insert, link -> Decision.Insert, ev -> Decision.Insert),
@@ -182,8 +182,8 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("counts tally every decision under its kind"):
     val c = BundlePlan.counts(
-      BundleKind.Goal,
+      Bundle.Kind.Goal,
       List(Decision.Insert, Decision.Insert, Decision.Conflict, Decision.RecordTombstone, Decision.Delete)
     )
-    assertEquals(c, BundleKindCounts(BundleKind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1))
+    assertEquals(c, BundleKindCounts(Bundle.Kind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1))
     assertEquals(c.changed, 3)

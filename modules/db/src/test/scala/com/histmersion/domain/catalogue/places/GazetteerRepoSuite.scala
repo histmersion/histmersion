@@ -10,7 +10,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.KindHint
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{
@@ -73,7 +72,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       label: String,
       names: List[GazName] = Nil,
       links: List[GazLink] = Nil,
-      kind: String = PlaceKind.Site,
+      kind: String = com.histmersion.domain.catalogue.Place.Kind.Site,
       span: Span = Span.always
   ): GazRecord =
     GazRecord(
@@ -120,7 +119,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
           Place(
             Seed,
             "Zzgazhattusa",
-            PlaceKind.Site,
+            com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),
             Some(Period(-1650, -1180)),
             Some("Pleiades"),
@@ -187,7 +186,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       wd("Q999000001"),
       "Zzgazhattusa",
       links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close)),
-      kind = PlaceKind.Region,
+      kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       span = Span(Some(-1650), Some(-1180))
     ).copy(itemClass = Some("Q1620908"))
     val c1 = run("lpf:zzgazwd", "v1", List(w))
@@ -300,7 +299,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       None,
       "zzgaz_a_farm",
       "Zzgaz farm",
-      PlaceKind.Site,
+      com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(44.0, 39.0),
       Span.always,
       Gazetteer.mergeNames(List(GazName("Zzgaz farm"), GazName("Zzgazmikoyan", "en"))),
@@ -313,7 +312,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       None,
       "zzgaz_b_village",
       "Zzgaz village",
-      PlaceKind.Site,
+      com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(45.0, 39.5),
       Span.always,
       Gazetteer.mergeNames(List(GazName("Zzgaz village"), GazName("Zzgazmikoyan", "en", Span(Some(1935), Some(1956))))),
@@ -344,14 +343,20 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val joined = rec(
       wd("Q999000701"),
       "Zzgazhatti land",
-      kind = PlaceKind.Region,
+      kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       span = Span(Some(-1650), Some(-1180)),
       links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close))
     ).copy(itemClass = Some("Q1620908"))
-    val alone = rec(wd("Q999000702"), "Zzgaz point region", kind = PlaceKind.Region)
+    val alone = rec(wd("Q999000702"), "Zzgaz point region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
     val polity =
-      rec(wd("Q999000703"), "Zzgaz point kingdom", kind = PlaceKind.Polity, span = Span(Some(-900), Some(-700)))
-    val shaped = rec(wd("Q999000704"), "Zzgaz shaped region", kind = PlaceKind.Region).copy(geometry = Poly)
+      rec(
+        wd("Q999000703"),
+        "Zzgaz point kingdom",
+        kind = com.histmersion.domain.catalogue.Place.Kind.Polity,
+        span = Span(Some(-900), Some(-700))
+      )
+    val shaped = rec(wd("Q999000704"), "Zzgaz shaped region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
+      .copy(geometry = Poly)
     val site = rec(wd("Q999000705"), "Zzgaz town")
     val c = run("wikidata", "v1", List(joined, alone, polity, shaped, site))
     assertEquals((c.created, c.joined, c.pointAreasSkipped), (2L, 1L, 2L), c.describe)
@@ -373,7 +378,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val gArea = rec(
       gn("999000706"),
       "Zzgaz point region (gn)",
-      kind = PlaceKind.Region,
+      kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       links = List(GazLink(wd("Q999000702"), LinkMatch.Exact))
     )
     val gSite = rec(gn("999000707"), "Zzgaz hamlet", links = List(GazLink(wd("Q999000702"), LinkMatch.Exact)))
@@ -384,13 +389,13 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val kept = run(
       "wikidata",
       "v1",
-      List(rec(wd("Q999000708"), "Zzgaz kept region", kind = PlaceKind.Region)),
+      List(rec(wd("Q999000708"), "Zzgaz kept region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)),
       kinds = Set.empty
     )
     assertEquals((kept.created, kept.pointAreasSkipped), (1L, 0L))
 
   test("a place an earlier import made for a point-only area goes on the next run, with what joined it"):
-    val area = rec(wd("Q999000711"), "Zzgaz old region", kind = PlaceKind.Region)
+    val area = rec(wd("Q999000711"), "Zzgaz old region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
     val first = run("wikidata", "v1", List(area), kinds = Set.empty)
     assertEquals(first.created, 1L)
     // a GeoNames site joined it before the rule
@@ -414,7 +419,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val area = rec(
       wd("Q999000721"),
       "Zzgaz doomed region",
-      kind = PlaceKind.Region,
+      kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       links = List(GazLink(gn("999000723"), LinkMatch.Exact))
     )
     val site =
@@ -442,7 +447,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(names("wikidata_q999000722").map(_._1), List("Zzgaz town by the region"))
 
   test("prune: a real run removes the source's point-only areas before its first batch; a dry run leaves them"):
-    val area = rec(wd("Q999000731"), "Zzgaz pruned region", kind = PlaceKind.Polity)
+    val area = rec(wd("Q999000731"), "Zzgaz pruned region", kind = com.histmersion.domain.catalogue.Place.Kind.Polity)
     run("wikidata", "v1", List(area), kinds = Set.empty)
     assert(exists("wikidata_q999000731"))
     connect(ds):
@@ -457,7 +462,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     assert(!exists("wikidata_q999000731"))
 
   test("evidence keeps a place: a point-only area an attestation names stays, its record on it"):
-    val area = rec(wd("Q999000741"), "Zzgaz attested region", kind = PlaceKind.Region)
+    val area = rec(wd("Q999000741"), "Zzgaz attested region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
     run("wikidata", "v1", List(area), kinds = Set.empty)
     connect(ds):
       SourceFixtures.upsert(
@@ -469,7 +474,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
           doi = None,
           year = Some(2026),
           venue = None,
-          status = SourceStatus.Current,
+          status = com.histmersion.domain.library.Source.Status.Current,
           topics = Nil,
           regions = Nil,
           tags = Nil,

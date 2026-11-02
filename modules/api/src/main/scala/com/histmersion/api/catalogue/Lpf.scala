@@ -1,6 +1,5 @@
 package com.histmersion.api.catalogue
 import io.circe.{Json, JsonObject}
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
 
@@ -232,7 +231,7 @@ object Lpf:
       if id.isEmpty then Left(s"feature #$ordinal has no id and no title")
       else
         val kind = str(props, "kind")
-          .flatMap(PlaceKind.parse)
+          .flatMap(com.histmersion.domain.catalogue.Place.Kind.parse)
           .orElse(
             f("types")
               .orElse(props("types"))
@@ -240,10 +239,12 @@ object Lpf:
               .map(_.toList)
               .getOrElse(Nil)
               .flatMap(t => t.asString.orElse(t.asObject.flatMap(str(_, "label", "identifier", "sourceLabel"))))
-              .flatMap(PlaceKind.parse)
+              .flatMap(com.histmersion.domain.catalogue.Place.Kind.parse)
               .headOption
           )
-          .orElse(str(props, "featureType", "feature_type", "TYPE").flatMap(PlaceKind.parse))
+          .orElse(
+            str(props, "featureType", "feature_type", "TYPE").flatMap(com.histmersion.domain.catalogue.Place.Kind.parse)
+          )
           .getOrElse(defaultKind)
         val (period, open) = OpenSide.split(
           f("when")
@@ -271,7 +272,10 @@ object Lpf:
         )
     }
 
-  def parse(json: String, defaultKind: String = PlaceKind.Region): Either[String, List[PlaceInput]] =
+  def parse(
+      json: String,
+      defaultKind: String = com.histmersion.domain.catalogue.Place.Kind.Region
+  ): Either[String, List[PlaceInput]] =
     io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray

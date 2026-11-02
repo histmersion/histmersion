@@ -22,7 +22,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
-import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader}
 import com.histmersion.util.data.exchange.{BundleExport, MergeRepo}
@@ -44,6 +43,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.library.{Ingest, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.util.data.exchange.Issue
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
@@ -158,7 +158,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       Place(
         id,
         label,
-        PlaceKind.Site,
+        com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
         Some(Period(-1650, -1180))
       ),
@@ -218,7 +218,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
-    val q = p.issues.find(_.kind == IssueKind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
+    val q = p.issues.find(_.kind == Issue.Kind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
     // the review screen gets both geometries as GeoJSON
     assert(q.detail.flatMap(_.place).flatMap(_.rightGeometry).exists(_.contains("\"Point\"")), q.detail.toString)
     assert(p.info.exists(_.contains("is the same place")), p.info.mkString("\n"))
@@ -241,7 +241,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         None,
         Some(2020),
         None,
-        SourceStatus.Current,
+        com.histmersion.domain.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,
@@ -441,7 +441,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
-    assert(!p.issues.exists(_.kind == IssueKind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
+    assert(!p.issues.exists(_.kind == Issue.Kind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
     assert(p.info.exists(_.contains("it keeps its id")), p.info.mkString("\n"))
     val r = importInto(home, bundle, sh)
     assert(r.applied, r.problems.mkString("\n"))

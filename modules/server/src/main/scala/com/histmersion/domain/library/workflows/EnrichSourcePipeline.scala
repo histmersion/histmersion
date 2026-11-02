@@ -12,10 +12,10 @@ import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.EnrichSource.*
 import io.circe.syntax.*
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.FindingInput
+import com.histmersion.domain.library.Source
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -291,7 +291,7 @@ final class EnrichSourcePipeline(
     */
   private def status(ctx: RunCtx, ck: String, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
     if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, "filled by the patch")
-    else if c.status == SourceStatus.Unassessed then StatusRouted(None, None, "no status proposed")
+    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, "no status proposed")
     else if a.retracted then StatusRouted(None, None, s"${c.status.wire} not proposed: the source is retracted")
     else
       val proposal = AgentProposals.Proposal(

@@ -14,7 +14,6 @@ import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMet
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.api.library.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.library.{
   Acquire,
   AcquireMarkdown,
@@ -173,7 +172,24 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       authors: List[String] = List("A B"),
       year: Option[Int] = Some(2000)
   ) =
-    Source(ck, title, authors, doi, year, None, SourceStatus.Current, Nil, Nil, Nil, None, None, None, None, None, None)
+    Source(
+      ck,
+      title,
+      authors,
+      doi,
+      year,
+      None,
+      com.histmersion.domain.library.Source.Status.Current,
+      Nil,
+      Nil,
+      Nil,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
 
   private def wipe(cks: String*): Unit =
     import com.augustnagro.magnum.*
@@ -251,7 +267,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(a.flagged)
     assertEquals(a.retractionWatch.head.date, Some("2021-12-15"))
     assertEquals(a.applied, Some("retracted"))
-    assertEquals(SourceFixtures.load(ds, "zzacq_retr").map(_.status), Some(SourceStatus.Retracted))
+    assertEquals(
+      SourceFixtures.load(ds, "zzacq_retr").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Retracted)
+    )
     // and the verdict is STORED, so a later lint does not need the network
     assertEquals(AcquisitionTesting.assessments(ds).lastFor("zzacq_retr").map(_._1), Some("retracted"))
 
@@ -267,30 +286,41 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals(a.retractionWatch, Nil)
     assertEquals(a.applied, None) // no --apply
-    assertEquals(SourceFixtures.load(ds, "zzacq_ok").map(_.status), Some(SourceStatus.Current))
+    assertEquals(
+      SourceFixtures.load(ds, "zzacq_ok").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Current)
+    )
 
   // #699: assess --apply overwrote contested (with a challenges edge behind it) with current
   test("assess --apply keeps a status already set, unless --force-status; a retraction always applies"):
     wipe("zzacq_kept", "zzacq_retr2")
     SourceFixtures.upsert(
       ds,
-      source("zzacq_kept", Some("10.1038/zzkept")).copy(status = SourceStatus.Contested),
+      source("zzacq_kept", Some("10.1038/zzkept"))
+        .copy(status = com.histmersion.domain.library.Source.Status.Contested),
       cfg.limits.chunkChars
     )
     val h = handlers()
     val a = h.assess(AssessRequest("zzacq_kept", apply = true)).fold(e => fail(e.message), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
-    assertEquals((a.applied, a.kept), (None, Some(SourceStatus.Contested)))
+    assertEquals((a.applied, a.kept), (None, Some(com.histmersion.domain.library.Source.Status.Contested)))
     assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
-    assertEquals(SourceFixtures.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Contested))
+    assertEquals(
+      SourceFixtures.load(ds, "zzacq_kept").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Contested)
+    )
 
     val f = h.assess(AssessRequest("zzacq_kept", apply = true, forceStatus = true)).fold(e => fail(e.message), identity)
     assertEquals((f.applied, f.kept), (Some("current"), None))
-    assertEquals(SourceFixtures.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Current))
+    assertEquals(
+      SourceFixtures.load(ds, "zzacq_kept").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Current)
+    )
 
     SourceFixtures.upsert(
       ds,
-      source("zzacq_retr2", Some("10.1177/zzretracted2")).copy(status = SourceStatus.Foundational),
+      source("zzacq_retr2", Some("10.1177/zzretracted2"))
+        .copy(status = com.histmersion.domain.library.Source.Status.Foundational),
       cfg.limits.chunkChars
     )
     AcquisitionTesting
@@ -303,7 +333,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
     val r = h.assess(AssessRequest("zzacq_retr2", apply = true)).fold(e => fail(e.message), identity)
     assertEquals(r.applied, Some("retracted"))
-    assertEquals(SourceFixtures.load(ds, "zzacq_retr2").map(_.status), Some(SourceStatus.Retracted))
+    assertEquals(
+      SourceFixtures.load(ds, "zzacq_retr2").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Retracted)
+    )
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
@@ -382,7 +415,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(stored.edges.map(_.dst), List("zzacq_ref"))
     assertEquals(r.assessment.map(_.verdict), Some(Acquire.Verdicts.Current))
     // a freshly created source takes the verdict as its status
-    assertEquals(stored.status, SourceStatus.Current)
+    assertEquals(stored.status, com.histmersion.domain.library.Source.Status.Current)
     wipe("zzacq_ingested", "zzacq_ref")
 
   test("a fetched copy's licence becomes the source's, never over one already recorded (#2560)"):
@@ -406,7 +439,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(
       !AcquisitionTesting
         .sources(Deps(cfg, ds))
-        .recordLicence("zzacq_ingested", com.histmersion.values.LicenceId("  "), Caller.Local),
+        .recordLicence("zzacq_ingested", com.histmersion.domain.Licence.Id("  "), Caller.Local),
       "a blank licence is never written"
     )
     wipe("zzacq_ingested")

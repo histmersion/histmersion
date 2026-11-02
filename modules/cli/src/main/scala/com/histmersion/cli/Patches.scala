@@ -5,9 +5,10 @@ import com.histmersion.config.*
 
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.catalogue.PeriodInput
 import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, FindingsPatch, MetadataPatch, SourcePatch}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -25,7 +26,7 @@ object Patches:
       topics: Option[String],
       regions: Option[String],
       summary: Option[String],
-      status: Option[SourceStatus],
+      status: Option[Source.Status],
       title: Option[String],
       notesFile: Option[String],
       period: Option[String],
@@ -65,7 +66,7 @@ object Patches:
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
-  private def mergeMetadata(base: Option[MetadataPatch], title: Option[String], status: Option[SourceStatus]) =
+  private def mergeMetadata(base: Option[MetadataPatch], title: Option[String], status: Option[Source.Status]) =
     if title.isEmpty && status.isEmpty then base
     else
       val m = base.getOrElse(MetadataPatch())
@@ -114,12 +115,12 @@ object Patches:
   private[cli] def parseEdge(flag: String, s: String): Either[CliError, EdgeInput] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
-        EdgeKind
+        Edge.Kind
           .fromWire(k)
           .map(EdgeInput(dst, _))
           .toRight(
             CliError(
-              s"$flag: unknown edge kind '$k' (one of: ${EdgeKind.allWire.mkString(", ")})",
+              s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})",
               exitCode = ExitCode.Usage
             )
           )

@@ -2,7 +2,6 @@ package com.histmersion.pluginhost
 
 import com.histmersion.api.BBox
 import com.histmersion.plugin.*
-import com.histmersion.values
 
 /** The conversions between plugin-api's newtypes and the model's: free where both sides hold a newtype, a parse where
   * the host still holds a plain value, and every value a plugin hands over checked again — a newtype is erased at run

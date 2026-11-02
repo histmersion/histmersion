@@ -9,10 +9,10 @@ import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Param.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{FacetField, Filter, FindingMatch, Sort}
+import com.histmersion.domain.library.Source
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.
@@ -386,7 +386,7 @@ class FilterSqlSuite extends munit.FunSuite:
     citekey = "cline2014_collapse",
     title = "1177 BC: The Year Civilization Collapsed",
     year = Some(2014),
-    status = SourceStatus.Current,
+    status = Source.Status.Current,
     topics = j("collapse", "trade"),
     regions = j("Levant", "Aegean"),
     periodStart = Some(-1300),

@@ -4,7 +4,6 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{GeoTime, Period, Place, PlaceInput}
 
@@ -167,7 +166,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       Place(
         id,
         label,
-        PlaceKind.Polity,
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(g),
         Some(Period(from, to)),
         Some("fixture"),
@@ -325,7 +324,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       Place(
         "zzs_round",
         "The Kingdom of Zzs-Round (East)",
-        PlaceKind.Polity,
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(circle(157.5, -38.5, 1.5, 720)),
         Some(Period(3000, 3100)),
         Some("fixture")
@@ -337,7 +336,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       Place(
         "zzs_dot",
         "Zzs Dot",
-        PlaceKind.Site,
+        com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[156.2,-38.2]}"""),
         Some(Period(3000, 3100)),
         Some("fixture")
@@ -424,7 +423,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
         Place(
           id,
           label,
-          PlaceKind.Site,
+          com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[165.5,-38.5]}"""),
           None,
           Some("fixture"),
@@ -457,7 +456,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
         Place(
           id,
           "Zzqmodern",
-          PlaceKind.Site,
+          com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[166.5,-38.5]}"""),
           None,
           Some("fixture"),

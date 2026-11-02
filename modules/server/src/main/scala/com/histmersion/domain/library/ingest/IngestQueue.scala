@@ -12,7 +12,6 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{JobPool, JobRecords, Pinning}
 import com.histmersion.util.ocr.{ConverterClient, ConverterState}
 import com.histmersion.util.storage.{Store, StoreKey}
-import com.histmersion.values.SourceStatus
 
 import hearth.kindlings.optics.syntax.*
 
@@ -26,6 +25,7 @@ import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Ingest, IngestAccepted, IngestParams, SourcePatch, SourcePut}
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.domain.library.Source
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent
@@ -273,7 +273,7 @@ final class IngestQueue(
       authors = p.authors.map(_.trim).filter(_.nonEmpty),
       doi = p.doi.map(_.trim).filter(_.nonEmpty),
       year = p.year,
-      status = Some(SourceStatus.Unassessed),
+      status = Some(Source.Status.Unassessed),
       body = Some(body),
       provenance = Some("ocr")
     )

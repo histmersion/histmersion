@@ -4,10 +4,10 @@ import com.histmersion.api.library.SourceWrite
 
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
-import com.histmersion.values.SourceStatus
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
+import com.histmersion.domain.library.Source
 
 /** The synchronous, metadata-only half of an acquisition.
   *
@@ -47,7 +47,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
           doi = meta.doi,
           year = meta.year,
           venue = meta.venue,
-          status = Some(SourceStatus.Unassessed),
+          status = Some(Source.Status.Unassessed),
           summary = meta.summary,
           citedByCount = meta.citedByCount,
           influentialCitations = meta.influentialCitations,

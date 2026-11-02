@@ -5,10 +5,10 @@ import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
-import com.histmersion.values.ApprovalKind
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.domain.automation.Approval
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
@@ -74,10 +74,10 @@ trait ManagerContext:
 
   /** The output of the last finished `step` of `run`, as recorded. */
   def stepOutput(run: String, step: String): Option[String]
-  def approvalsOf(run: String, kind: ApprovalKind): List[ApprovalInfo]
+  def approvalsOf(run: String, kind: Approval.Kind): List[ApprovalInfo]
 
   /** [[StepFacts]] from the approval of `kind` a run opened: none, open (the item waits for it), or decided. */
-  def approvalFacts(run: String, kind: ApprovalKind, none: String): StepFacts
+  def approvalFacts(run: String, kind: Approval.Kind, none: String): StepFacts
   def unsettledOn(target: String): Seq[RunInfo]
   def runsFor(p: Pipeline, target: String): Seq[RunInfo]
   def slugExists(slug: String): Boolean

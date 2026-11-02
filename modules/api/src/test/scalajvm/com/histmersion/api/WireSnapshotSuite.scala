@@ -9,7 +9,6 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.media.MediaMarkdown
 
-import com.histmersion.values.{LocationPrecision, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import hearth.kindlings.optics.syntax.*
 import io.circe.syntax.*
@@ -60,6 +59,8 @@ import com.histmersion.api.media.{
 }
 import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.views.{EventDetail, PlaceDetail, ResolvedId}
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Source
 
 /** The Markdown and JSON of the wire records slice 12 moves, over synthetic fixture values: the renderers no other
   * suite asserts on (the brief search, a source's findings, the graph, the contradictions, the map feed, the body
@@ -76,7 +77,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     "zq_alpha_2001",
     "Zq Alpha",
     Some(2001),
-    SourceStatus.Contested,
+    Source.Status.Contested,
     List("zq-topic"),
     List("zq-region"),
     Some(-1450),
@@ -109,7 +110,7 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val graph = SourceGraph(
     "zq_alpha_2001",
     2,
-    List(GraphNode("zq_alpha_2001", Some("Zq Alpha"), Some(2001), Some(SourceStatus.Current)), GraphNode("zq_gamma")),
+    List(GraphNode("zq_alpha_2001", Some("Zq Alpha"), Some(2001), Some(Source.Status.Current)), GraphNode("zq_gamma")),
     List(GraphLink("zq_alpha_2001", "zq_gamma", "challenges"))
   )
   private val contradictions = ContradictionsResult(
@@ -118,15 +119,15 @@ class WireSnapshotSuite extends munit.FunSuite:
         "zq_alpha_2001",
         "Zq Alpha",
         Some(2001),
-        SourceStatus.Current,
+        Source.Status.Current,
         Some("out"),
         Some("refutes"),
         Some("zq_gamma"),
         Some("Zq Gamma"),
         Some(1990),
-        Some(SourceStatus.Debunked)
+        Some(Source.Status.Debunked)
       ),
-      ContradictionRow("zq_beta_1999", "Zq Beta", None, SourceStatus.Contested, None, None, None, None)
+      ContradictionRow("zq_beta_1999", "Zq Beta", None, Source.Status.Contested, None, None, None, None)
     ),
     2
   )
@@ -221,7 +222,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     findings = 3,
     asOf = Some(-1500),
     links = List(PlaceLink("zq_tell", "wikidata", "Q2")),
-    locationPrecision = LocationPrecision.Stated,
+    locationPrecision = Place.Precision.Stated,
     media = List(thumb),
     siteType = Some("tell")
   )
@@ -314,7 +315,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "resolved source json" -> ResolvedId(
         "zq_alpha_2001",
         source = Some(
-          ResolvedSource("zq_alpha_2001", Some("10.0/zq"), List("Zq A"), Some(2001), "Zq Alpha", SourceStatus.Current)
+          ResolvedSource("zq_alpha_2001", Some("10.0/zq"), List("Zq A"), Some(2001), "Zq Alpha", Source.Status.Current)
         )
       ).asJson.spaces2,
       "resolved article json" -> ResolvedId(

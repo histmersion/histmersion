@@ -1,10 +1,11 @@
 package com.histmersion.api
 
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.WireEnumValues
 import com.histmersion.api.library.{Label, SourceRef}
 import com.histmersion.api.research.ArticleKind
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 class DomainSuite extends munit.FunSuite:
 
@@ -60,28 +61,28 @@ class DomainSuite extends munit.FunSuite:
 
   // ── SourceStatus ───────────────────────────────────────────────────────────────────────────────
   test("SourceStatus.fromString case-insensitive"):
-    assertEquals(SourceStatus.fromString("foundational"), SourceStatus.Foundational)
-    assertEquals(SourceStatus.fromString("Contested"), SourceStatus.Contested)
+    assertEquals(Source.Status.fromString("foundational"), Source.Status.Foundational)
+    assertEquals(Source.Status.fromString("Contested"), Source.Status.Contested)
 
   test("SourceStatus.fromString defaults to Unassessed for unknown"):
-    assertEquals(SourceStatus.fromString("bogus"), SourceStatus.Unassessed)
+    assertEquals(Source.Status.fromString("bogus"), Source.Status.Unassessed)
 
   test("SourceStatus wire representation is lowercase"):
-    val wev = summon[WireEnumValues[SourceStatus]]
-    assertEquals(wev.wire(SourceStatus.Foundational), "foundational")
-    assertEquals(wev.wire(SourceStatus.Superseded), "superseded")
+    val wev = summon[WireEnumValues[Source.Status]]
+    assertEquals(wev.wire(Source.Status.Foundational), "foundational")
+    assertEquals(wev.wire(Source.Status.Superseded), "superseded")
 
   // ── EdgeKind ───────────────────────────────────────────────────────────────────────────────────
   test("EdgeKind.wireOf uses underscores for multi-word kinds"):
-    assertEquals(EdgeKind.wireOf(EdgeKind.SupersededBy), "superseded_by")
-    assertEquals(EdgeKind.wireOf(EdgeKind.FoundationalFor), "foundational_for")
+    assertEquals(Edge.Kind.wireOf(Edge.Kind.SupersededBy), "superseded_by")
+    assertEquals(Edge.Kind.wireOf(Edge.Kind.FoundationalFor), "foundational_for")
 
   test("EdgeKind.fromWire round-trips"):
-    for e <- EdgeKind.values do
-      assertEquals(EdgeKind.fromWire(EdgeKind.wireOf(e)), Some(e), s"EdgeKind round-trip failed for $e")
+    for e <- Edge.Kind.values do
+      assertEquals(Edge.Kind.fromWire(Edge.Kind.wireOf(e)), Some(e), s"EdgeKind round-trip failed for $e")
 
   test("EdgeKind.allWire contains all values"):
-    assertEquals(EdgeKind.allWire.size, EdgeKind.values.length)
+    assertEquals(Edge.Kind.allWire.size, Edge.Kind.values.length)
 
   // ── ArticleKind ────────────────────────────────────────────────────────────────────────────────
   test("ArticleKind.fromString case-insensitive"):
@@ -93,11 +94,11 @@ class DomainSuite extends munit.FunSuite:
 
   // ── SourceRef ──────────────────────────────────────────────────────────────────────────────────
   test("SourceRef.idLabel prefers DOI"):
-    val r = SourceRef("haak2015", Some("10.1038/nature14317"), Nil, Some(2015), "Title", SourceStatus.Current)
+    val r = SourceRef("haak2015", Some("10.1038/nature14317"), Nil, Some(2015), "Title", Source.Status.Current)
     assertEquals(r.idLabel, "10.1038/nature14317")
 
   test("SourceRef.idLabel falls back to citekey"):
-    val r = SourceRef("haak2015", None, Nil, Some(2015), "Title", SourceStatus.Current)
+    val r = SourceRef("haak2015", None, Nil, Some(2015), "Title", Source.Status.Current)
     assertEquals(r.idLabel, "haak2015")
 
   test("SourceRef.surname handles Firstname Lastname"):
@@ -120,7 +121,14 @@ class DomainSuite extends munit.FunSuite:
 
   test("SourceRef.shortCite combines authors and year"):
     val r =
-      SourceRef("haak2015", None, List("Haak, Wolfgang", "Lazaridis, Iosif"), Some(2015), "Title", SourceStatus.Current)
+      SourceRef(
+        "haak2015",
+        None,
+        List("Haak, Wolfgang", "Lazaridis, Iosif"),
+        Some(2015),
+        "Title",
+        Source.Status.Current
+      )
     assertEquals(r.shortCite, "Haak & Lazaridis 2015")
 
   // ── the shared HTML atoms ─────────────────────────────────────────────────────────────────────

@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 /** `idLabel` is the DOI when present, else the citekey: the owner's decision to show DOIs in the UI while keeping the
@@ -11,7 +10,7 @@ final case class SourceRef(
     authors: List[String],
     year: Option[Int],
     title: String,
-    status: SourceStatus
+    status: com.histmersion.domain.library.Source.Status
 ):
   def idLabel: String = doi.getOrElse(citekey)
 

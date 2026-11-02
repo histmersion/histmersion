@@ -5,9 +5,9 @@ import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
-import com.histmersion.values.BundleKind
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the events: the events (renamed first, as the other side renamed them, after the places and
   * periods they point at), their old ids, what the catalogues say about them and the corrections by hand.
@@ -19,7 +19,7 @@ object EventsCarried:
 
   val events: CarriedKind = CarriedKind.records[BundleEvent](
     Catalogue,
-    BundleKind.Event,
+    Bundle.Kind.Event,
     TableName("events"),
     List(rows(41)(EventBundleRepo.eventRenames), rows(46)(EventBundleRepo.eventsIn))
   )(scope => EventBundleRepo.events(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.events).setTo(ls))

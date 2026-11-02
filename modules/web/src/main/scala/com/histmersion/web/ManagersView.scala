@@ -6,7 +6,6 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.values.GoalStatus
 import com.histmersion.api.automation.{
   Agents,
   AgentScheduler,
@@ -16,6 +15,7 @@ import com.histmersion.api.automation.{
   Stalls
 }
 import com.histmersion.api.views.AutopilotStatus
+import com.histmersion.domain.automation.Goal
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's state — with what the
   * supervisor derived: starved, at capacity, idle — its items, runs in flight and last event) and one window per
@@ -502,7 +502,7 @@ object ManagersView:
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   def stages(gs: List[Autopilot.GoalProgress]): String =
-    GoalStatus.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
+    Goal.Status.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
 
   /** The switch and the status: on/off (the click shows the new state at once; the server's answer follows), the
     * approval rules, today's ingests, and every goal's stage, counts and pace.

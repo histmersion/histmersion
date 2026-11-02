@@ -1,6 +1,5 @@
 package com.histmersion.api.catalogue
 import sttp.tapir.Schema
-import com.histmersion.values.PlaceKind
 import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
@@ -27,7 +26,8 @@ object PlaceTimeBasis:
   given Schema[PlaceTimeBasis] = WireEnum.schema
 
   def of(kind: String, modern: Boolean, imported: Boolean, undated: Boolean, hasGeometry: Boolean): PlaceTimeBasis =
-    if !imported && (kind == PlaceKind.Feature || (modern && kind == PlaceKind.Region)) then Timeless
+    if !imported && (kind == com.histmersion.domain.catalogue.Place.Kind.Feature || (modern && kind == com.histmersion.domain.catalogue.Place.Kind.Region))
+    then Timeless
     else if modern then Modern
     else if undated && !hasGeometry then Grouping
     else if undated then Findings

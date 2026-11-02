@@ -6,7 +6,7 @@ import com.histmersion.config.given
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, RunState}
 import com.histmersion.domain.Scheduling.*
-import com.histmersion.values.EdgeKind
+import com.histmersion.domain.library.Edge
 
 /** The schedules' pure rules: when a due schedule may start, its cap, and the DOIs an acquisition item names. */
 class SchedulingSuite extends munit.FunSuite:

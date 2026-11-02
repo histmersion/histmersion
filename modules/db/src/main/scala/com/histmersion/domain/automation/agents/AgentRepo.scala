@@ -7,9 +7,10 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -481,9 +482,9 @@ object AgentRepo:
       jobId: Option[String],
       kind: ApprovalKind,
       citekey: String,
-      status: Option[SourceStatus],
-      current: Option[SourceStatus],
-      edgeKind: Option[EdgeKind],
+      status: Option[Source.Status],
+      current: Option[Source.Status],
+      edgeKind: Option[Edge.Kind],
       target: Option[String],
       payload: String,
       state: ApprovalState,
@@ -494,7 +495,7 @@ object AgentRepo:
     sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
                                  result, decided_at)
           VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
-                  ${edgeKind.map(EdgeKind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
+                  ${edgeKind.map(Edge.Kind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
                   $decided::timestamptz)
           ON CONFLICT DO NOTHING RETURNING id"""
       .query[Long]
@@ -512,13 +513,13 @@ object AgentRepo:
   def proposedBefore(
       kind: ApprovalKind,
       citekey: String,
-      status: Option[SourceStatus],
-      edgeKind: Option[EdgeKind],
+      status: Option[Source.Status],
+      edgeKind: Option[Edge.Kind],
       target: Option[String]
   )(using DbCon): Boolean =
     sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
           AND coalesce(status, '') = ${status.fold("")(_.wire)}
-          AND coalesce(edge_kind, '') = ${edgeKind.fold("")(EdgeKind.wireOf)}
+          AND coalesce(edge_kind, '') = ${edgeKind.fold("")(Edge.Kind.wireOf)}
           AND coalesce(target, '') = ${target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
 
   def approval(id: Long)(using DbCon): Option[ApprovalInfo] =

@@ -1,5 +1,4 @@
 package com.histmersion.api.catalogue
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.{ApiError, GeoPoint, Write, YearFmt}
 import com.histmersion.api.given
 
@@ -42,9 +41,9 @@ object PlaceOverrides:
               case _ => Left(invalid("a point needs both pointLat and pointLon"))
         _ <- kind.fold(Right(()))(k =>
           Either.cond(
-            PlaceKind.all.contains(k),
+            com.histmersion.domain.catalogue.Place.Kind.all.contains(k),
             (),
-            invalid(s"kind '$k' is not one of ${PlaceKind.all.mkString(", ")}")
+            invalid(s"kind '$k' is not one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}")
           )
         )
         _ <- period match

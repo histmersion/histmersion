@@ -9,12 +9,12 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.api.{BBox, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.media.MediaRole
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{FacetField, Filter, FindingMatch, SearchHit, Sort}
+import com.histmersion.domain.library.Source
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -494,7 +494,7 @@ object FilterSql:
       citekey: String,
       title: String,
       year: Option[Int],
-      status: SourceStatus,
+      status: Source.Status,
       topics: List[String],
       regions: List[String],
       periodStart: Option[Long],

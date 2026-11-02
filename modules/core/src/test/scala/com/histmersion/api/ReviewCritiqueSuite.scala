@@ -9,8 +9,8 @@ import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.values.EdgeKind
 import com.histmersion.api.research.{CritiquePair, CritiqueReason, CritiqueRef, CritiqueSide, CritiqueState}
+import com.histmersion.domain.library.Edge
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a missing-critique MAJOR
   * is held to in each kind of pass, the skeptic's rulings on the open pairs, the fixer's set-asides and how the ledger
@@ -43,7 +43,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       pair = pair.flatMap(CritiqueRef.parse(_).toOption)
     )
   private def edgeProposal(src: String, dst: String) =
-    Proposal(ApprovalKind.Edge, src, edgeKind = Some(EdgeKind.Refutes), target = Some(dst), quote = Some("q"))
+    Proposal(ApprovalKind.Edge, src, edgeKind = Some(Edge.Kind.Refutes), target = Some(dst), quote = Some("q"))
 
   /** The article: S1–S3 state the claim unqualified; S8 hedged; S9 not in it at all. */
   private val body =

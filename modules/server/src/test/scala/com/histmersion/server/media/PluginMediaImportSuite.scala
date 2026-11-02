@@ -23,7 +23,6 @@ import org.ekrich.config.ConfigFactory
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
@@ -136,7 +135,12 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           PlaceInput(
-            Place(PlaceId, "Zqplenae", PlaceKind.Site, Some("""{"type":"Point","coordinates":[142.0,-43]}""")),
+            Place(
+              PlaceId,
+              "Zqplenae",
+              com.histmersion.domain.catalogue.Place.Kind.Site,
+              Some("""{"type":"Point","coordinates":[142.0,-43]}""")
+            ),
             List(PlaceName("Zqplenae"), PlaceName("Zqplenai"))
           )
         )

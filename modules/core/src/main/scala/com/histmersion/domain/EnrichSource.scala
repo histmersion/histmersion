@@ -10,7 +10,7 @@ import com.histmersion.api.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Source
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.2): what each
   * LLM step must return, how the body is cut into windows, how an answer is verified, and how the verified result
@@ -178,7 +178,7 @@ object EnrichSource:
       tags: List[String],
       period: Option[Period],
       periodName: Option[String],
-      status: SourceStatus,
+      status: Source.Status,
       statusEvidence: String
   ) derives KindlingsCodecAsObject
 
@@ -268,7 +268,7 @@ object EnrichSource:
     val summary = Option(c.summary).map(_.trim).filter(_.nonEmpty)
     // a status other than unassessed is a proposal a person may weigh: it needs its evidence
     val evidence = Option(c.statusEvidence).map(_.trim).getOrElse("")
-    val noEvidence = Option.when(status.exists(_ != SourceStatus.Unassessed) && evidence.isEmpty)(
+    val noEvidence = Option.when(status.exists(_ != Source.Status.Unassessed) && evidence.isEmpty)(
       "the status evidence is empty — say, from the text, why that status"
     )
     val problems = status.left.toOption.toList ++ summary.fold(List("the summary is empty"))(_ => Nil) ++
@@ -526,10 +526,10 @@ object EnrichSource:
     val merge = (have: List[String], add: List[String]) =>
       Option.when(add.exists(a => !have.contains(a)))((have ++ add).distinct)
     val setStatus = Option.when(
-      l.status == SourceStatus.Unassessed.wire &&
-        (c.status == SourceStatus.Current || c.status == SourceStatus.Foundational)
+      l.status == Source.Status.Unassessed.wire &&
+        (c.status == Source.Status.Current || c.status == Source.Status.Foundational)
     )(c.status)
-    val proposal = Option.when(setStatus.isEmpty && c.status != SourceStatus.Unassessed && c.status.wire != l.status)(
+    val proposal = Option.when(setStatus.isEmpty && c.status != Source.Status.Unassessed && c.status.wire != l.status)(
       s"${c.status.wire}: ${c.statusEvidence}"
     )
     val p = SourcePatch(
@@ -587,9 +587,9 @@ object EnrichSource:
   /** The lint rules `close` runs for this one source (`no-findings`, `no-period`, `unassessed-status`): each hit is a
     * run warning.
     */
-  def closeLint(findings: Int, hasPeriod: Boolean, status: SourceStatus): List[String] =
+  def closeLint(findings: Int, hasPeriod: Boolean, status: Source.Status): List[String] =
     List(
       Option.when(findings == 0)(s"${Lint.NoFindings}: the source has no findings"),
       Option.when(!hasPeriod)(s"${Lint.NoPeriod}: the source has no period"),
-      Option.when(status == SourceStatus.Unassessed)(s"${Lint.UnassessedStatus}: the status is still unassessed")
+      Option.when(status == Source.Status.Unassessed)(s"${Lint.UnassessedStatus}: the status is still unassessed")
     ).flatten

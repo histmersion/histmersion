@@ -13,7 +13,6 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPut, Period}
 import com.histmersion.api.library.{Filter, Source}
@@ -34,7 +33,13 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   private val Tag = "zz-rel-tag"
 
-  private def source(ck: String, tags: List[String], status: SourceStatus, period: Period, author: String) =
+  private def source(
+      ck: String,
+      tags: List[String],
+      status: com.histmersion.domain.library.Source.Status,
+      period: Period,
+      author: String
+  ) =
     SourceFixtures.put(
       ds,
       Source(
@@ -82,8 +87,20 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      val _ = source("zz_rel_match", List(Tag), SourceStatus.Current, Period(-1300, -1200), "Zzrelauthor")
-      val _ = source("zz_rel_other", Nil, SourceStatus.Contested, Period(-600, -500), "Someone")
+      val _ = source(
+        "zz_rel_match",
+        List(Tag),
+        com.histmersion.domain.library.Source.Status.Current,
+        Period(-1300, -1200),
+        "Zzrelauthor"
+      )
+      val _ = source(
+        "zz_rel_other",
+        Nil,
+        com.histmersion.domain.library.Source.Status.Contested,
+        Period(-600, -500),
+        "Someone"
+      )
       val _ = article("zz_rel_cites_match", "Zz Rel Kadesh article", "# K\n\nSee [[zz_rel_match]].")
       val _ = article("zz_rel_cites_other", "Zz Rel other article", "# O\n\nSee [[zz_rel_other]].")
       val _ = article("zz_rel_cites_none", "Zz Rel lonely article", "# L\n\nNo citation at all.")

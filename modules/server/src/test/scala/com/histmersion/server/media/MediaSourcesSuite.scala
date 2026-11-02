@@ -26,7 +26,6 @@ import com.histmersion.util.ocr.ConverterClient
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
@@ -137,11 +136,21 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           PlaceInput(
-            Place("zqms_site", "Zqms Mykenai", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-60,-50]}""")),
+            Place(
+              "zqms_site",
+              "Zqms Mykenai",
+              com.histmersion.domain.catalogue.Place.Kind.Site,
+              Some("""{"type":"Point","coordinates":[-60,-50]}""")
+            ),
             List(PlaceName("Zqms Mykenai"))
           ),
           PlaceInput(
-            Place("zqms_dup", "Zqms Mykenai", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-60.005,-50]}""")),
+            Place(
+              "zqms_dup",
+              "Zqms Mykenai",
+              com.histmersion.domain.catalogue.Place.Kind.Site,
+              Some("""{"type":"Point","coordinates":[-60.005,-50]}""")
+            ),
             List(PlaceName("Zqms Mykenai"))
           )
         )

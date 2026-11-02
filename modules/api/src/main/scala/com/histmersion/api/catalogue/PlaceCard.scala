@@ -10,7 +10,6 @@ import com.histmersion.api.catalogue.{
   PlaceTimeBasis,
   PlaceType
 }
-import com.histmersion.values.LocationPrecision
 
 /** What a place's page shows of the gazetteer: the row, its geometry, the hierarchy around it and its records. The
   * gazetteer's own record ([[PlaceEntry]]) and the page the server answers (`PlaceDetail`, which adds the place's
@@ -31,7 +30,7 @@ trait PlaceCard:
   def hasBoundary: Boolean
   def descriptions: List[PlaceDescription]
   def timeBasis: PlaceTimeBasis
-  def locationPrecision: LocationPrecision
+  def locationPrecision: com.histmersion.domain.catalogue.Place.Precision
   def siteType: Option[String]
   def record: PlaceRecord
 
@@ -43,7 +42,9 @@ trait PlaceCard:
       .orElse(Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote))
 
   def locationNote: Option[String] =
-    Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.Approximate)
+    Option.when(locationPrecision == com.histmersion.domain.catalogue.Place.Precision.GridCell)(
+      com.histmersion.domain.catalogue.Place.Precision.Approximate
+    )
 
   def shapeNotes: List[String] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
 

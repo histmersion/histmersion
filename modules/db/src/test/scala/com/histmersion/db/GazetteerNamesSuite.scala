@@ -15,13 +15,13 @@ import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 import com.augustnagro.magnum.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{Geocode, Lpf, Period, PlaceAdd, PlaceEdits, PlaceInput}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.domain.catalogue.Place
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed: the places a
   * finding names in plain English are read out of `db/places` itself (Natural Earth physical + cities, Pleiades with
@@ -100,7 +100,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       if !Wanted.exists(id => text.contains(s"\"$id\"")) then Nil
       else
         Lpf
-          .parse(text, kind.getOrElse(PlaceKind.Region))
+          .parse(text, kind.getOrElse(Place.Kind.Region))
           .fold(e => fail(s"$f: $e"), identity)
           .filter(in => Wanted.contains(in.place.id))
     }
@@ -223,7 +223,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       .toInput(
         PlaceAdd(
           "Zzgn Gornji",
-          PlaceKind.Site,
+          Place.Kind.Site,
           15.98,
           45.81,
           "fixture: a hand-checked map",
@@ -233,7 +233,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .fold(e => fail(e.message), identity)
     val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message), identity)
-    assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", PlaceKind.Site, Some("fixture: a hand-checked map")))
+    assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", Place.Kind.Site, Some("fixture: a hand-checked map")))
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")
     assertEquals(PlaceFixtures.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
@@ -265,7 +265,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2025),
       venue = None,
-      status = SourceStatus.Current,
+      status = com.histmersion.domain.library.Source.Status.Current,
       topics = Nil,
       regions = Nil,
       tags = Nil,

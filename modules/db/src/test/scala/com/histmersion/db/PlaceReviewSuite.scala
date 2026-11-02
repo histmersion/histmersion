@@ -10,8 +10,8 @@ import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PlaceReview.Proposal
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.domain.catalogue.Place
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and a merge and
@@ -27,13 +27,13 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     val ps = mine(PlaceFixtures.proposals(ds))
     val byId = ps.map(p => p.id -> p).toMap
     assertEquals(byId.keySet, Set(Aiantis, Thess, Dup, Into, Peir))
-    assertEquals(byId(Aiantis).asInstanceOf[Proposal.Reclassify].to, PlaceKind.People)
-    assertEquals(byId(Thess).asInstanceOf[Proposal.Reclassify].to, PlaceKind.Polity)
-    assertEquals(byId(Into).asInstanceOf[Proposal.Reclassify].to, PlaceKind.Polity, "province-2 filed as a site")
-    assertEquals(byId(Peir).asInstanceOf[Proposal.Reclassify].to, PlaceKind.Site)
+    assertEquals(byId(Aiantis).asInstanceOf[Proposal.Reclassify].to, Place.Kind.People)
+    assertEquals(byId(Thess).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity)
+    assertEquals(byId(Into).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity, "province-2 filed as a site")
+    assertEquals(byId(Peir).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Site)
     assertEquals(byId(Dup).asInstanceOf[Proposal.Merge].into, Into)
     assert(byId(Aiantis).describe.startsWith(s"$Aiantis Zzrc Aiantis: region → people"), byId(Aiantis).describe)
-    assertEquals(PlaceFixtures.get(ds, Aiantis).map(_.place.kind), Some(PlaceKind.Region), "a dry run writes nothing")
+    assertEquals(PlaceFixtures.get(ds, Aiantis).map(_.place.kind), Some(Place.Kind.Region), "a dry run writes nothing")
 
   test("place-kind --fix: kinds change, the duplicate merges (links, alias), findings are matched again"):
     seed()
@@ -43,8 +43,8 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     val (re, mg) =
       PlaceFixtures.applyProposals(ds, mine(PlaceFixtures.proposals(ds)), cfg.places.pointToleranceKm)
     assertEquals((re, mg), (4, 1))
-    assertEquals(PlaceFixtures.get(ds, Aiantis).map(_.place.kind), Some(PlaceKind.People))
-    assertEquals(PlaceFixtures.get(ds, Peir).map(_.place.kind), Some(PlaceKind.Site))
+    assertEquals(PlaceFixtures.get(ds, Aiantis).map(_.place.kind), Some(Place.Kind.People))
+    assertEquals(PlaceFixtures.get(ds, Peir).map(_.place.kind), Some(Place.Kind.Site))
     assertEquals(PlaceFixtures.get(ds, Dup), None)
     assertEquals(PlaceFixtures.renamedTo(ds, Dup), Some(Into), "the old id resolves to its replacement")
     val links = connect(ds)(
@@ -91,7 +91,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
         doi = None,
         year = Some(2026),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -125,7 +125,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       List(Thess),
       "the moved place's findings are matched again at once"
     )
-    assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.Stated))
+    assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(Place.Precision.Stated))
     assertEquals(PlaceFixtures.relocations(ds).filter(_.id.startsWith("pleiades_99910")), Nil)
     assertEquals(
       PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm),

@@ -2,10 +2,10 @@ package com.histmersion.files
 
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Edge
+import com.histmersion.domain.library.Source
 
 class SourceNoteParseSuite extends munit.FunSuite:
   val note =
@@ -43,7 +43,7 @@ class SourceNoteParseSuite extends munit.FunSuite:
     assertEquals(s.venue, None)
     assertEquals(s.year, Some(2023))
     assertEquals(s.period, Some(Period(-6000, -3000)))
-    assertEquals(s.status, SourceStatus.Current)
+    assertEquals(s.status, Source.Status.Current)
 
   test("findings: geo + period, and null geo → None"):
     val fs = SourceNote.parseNote(note, "x").get.findings

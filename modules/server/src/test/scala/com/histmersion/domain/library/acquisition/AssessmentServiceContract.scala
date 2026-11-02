@@ -41,7 +41,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
         None,
         Some(2000),
         None,
-        com.histmersion.values.SourceStatus.Current,
+        com.histmersion.domain.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,

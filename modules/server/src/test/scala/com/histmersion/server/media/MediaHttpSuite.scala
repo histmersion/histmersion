@@ -18,7 +18,6 @@ import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.PlaceKind
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName}
 import com.histmersion.api.media.{
@@ -88,7 +87,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               "zqmh_mycenae",
               "Zqmh Mycenae",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
               Some(Period(-1600, -1100))
             ),
@@ -98,7 +97,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               "zqmh_nolink",
               "Zqmh no link",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.0,37.0]}""")
             ),
             List(PlaceName("Zqmh no link"))

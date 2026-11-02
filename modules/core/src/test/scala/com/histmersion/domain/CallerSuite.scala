@@ -1,7 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.values.RunId
 import com.histmersion.UserId
+import com.histmersion.domain.automation.Run
 
 class CallerSuite extends munit.FunSuite:
 
@@ -16,9 +16,9 @@ class CallerSuite extends munit.FunSuite:
     assert(!Caller.Role.Contributor.includes(Caller.Role.Researcher) && Caller.Role.Reader.includes(Caller.Role.Reader))
 
   test("an automated caller names its run"):
-    val run = RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")
+    val run = Run.Id("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")
     assertEquals(Caller.Automation(run).run, run)
 
   test("a person asks for themselves; an automated run for nobody"):
     assertEquals(Caller.Local.person, Some(UserId("local")))
-    assertEquals(Caller.Automation(RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")).person, None)
+    assertEquals(Caller.Automation(Run.Id("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")).person, None)

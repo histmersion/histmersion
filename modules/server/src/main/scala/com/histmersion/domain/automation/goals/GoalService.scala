@@ -6,7 +6,6 @@ import com.histmersion.api.automation.GoalPlans.{GoalLink, GoalSchedule}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.GoalLinkKind
 import com.histmersion.domain.automation.ScheduleKind
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
@@ -53,11 +52,16 @@ trait GoalService:
   def links(goal: String): List[GoalLink]
 
   /** Link (an existing link keeps its note unless a new one is given); false = no such goal. */
-  def link(goal: String, kind: GoalLinkKind, ref: String, note: Option[String]): Boolean
-  def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean
+  def link(
+      goal: String,
+      kind: com.histmersion.domain.automation.Goal.LinkKind,
+      ref: String,
+      note: Option[String]
+  ): Boolean
+  def unlink(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: String): Boolean
 
   /** The refs of a goal's links of one kind (a sweep's queries, a currency check's sources), oldest first. */
-  def refs(goal: String, kind: GoalLinkKind): List[String]
+  def refs(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind): List[String]
 
   /** Every goal's links counted by kind; an article link counts only while the article exists. */
   def linkCounts(): Map[(String, String), Int]
@@ -103,11 +107,17 @@ object GoalService:
     def rename(from: String, to: String): Either[ApiError, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
     def goalsOfItems(items: List[Int]): List[(Int, String, String)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
     def links(goal: String): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
-    def link(goal: String, kind: GoalLinkKind, ref: String, note: Option[String]): Boolean =
+    def link(
+        goal: String,
+        kind: com.histmersion.domain.automation.Goal.LinkKind,
+        ref: String,
+        note: Option[String]
+    ): Boolean =
       db.transact(GoalLinkRepo.link(goal, kind, ref, note))
-    def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean =
+    def unlink(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: String): Boolean =
       db.transact(GoalLinkRepo.unlink(goal, kind, ref))
-    def refs(goal: String, kind: GoalLinkKind): List[String] = db.read(GoalLinkRepo.refsIn(goal, kind))
+    def refs(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind): List[String] =
+      db.read(GoalLinkRepo.refsIn(goal, kind))
     def linkCounts(): Map[(String, String), Int] = db.read(GoalLinkRepo.linkCounts())
     def planned(): Set[String] = db.read(GoalLinkRepo.planned())
     def planAndBudget(goal: String): Option[(Option[String], Option[BigDecimal])] =
@@ -143,11 +153,11 @@ object GoalService:
       val fraction = if micros == 0 then "" else "." + f"$micros%06d".reverse.dropWhile(_ == '0').reverse
       s"${Updated.format(at)}$fraction+00"
     private def shown(r: GoalRecord): Goal = r.goal.modify(_.updatedAt).setTo(Some(updatedText(r.updatedAt)))
-    private def kindOrder(k: GoalLinkKind): Int = k match
-      case GoalLinkKind.Source      => 0
-      case GoalLinkKind.Article     => 1
-      case GoalLinkKind.SearchQuery => 2
-      case _                        => 3
+    private def kindOrder(k: com.histmersion.domain.automation.Goal.LinkKind): Int = k match
+      case com.histmersion.domain.automation.Goal.LinkKind.Source      => 0
+      case com.histmersion.domain.automation.Goal.LinkKind.Article     => 1
+      case com.histmersion.domain.automation.Goal.LinkKind.SearchQuery => 2
+      case _                                                           => 3
 
     def get(slug: String): Option[Goal] = goals.get(slug).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug).map(shown)
@@ -274,7 +284,7 @@ object GoalService:
     def goalsOfItems(items: List[Int]): List[(Int, String, String)] =
       val refs = items.map(_.toString).toSet
       state.get.links
-        .filter(l => l.kind == GoalLinkKind.QueueItem && refs(l.ref))
+        .filter(l => l.kind == com.histmersion.domain.automation.Goal.LinkKind.QueueItem && refs(l.ref))
         .flatMap(l => goals.get(l.goal).flatMap(g => l.ref.toIntOption.map((_, g.goal.slug, g.goal.title))))
         .toList
         .sortBy((_, slug, title) => (title, slug))
@@ -291,10 +301,17 @@ object GoalService:
             l.note,
             targets.title(l.kind, l.ref),
             AutomationState.text(l.createdAt),
-            Option.when(l.kind == GoalLinkKind.QueueItem)(targets.queueList(l.ref)).flatten
+            Option
+              .when(l.kind == com.histmersion.domain.automation.Goal.LinkKind.QueueItem)(targets.queueList(l.ref))
+              .flatten
           )
         )
-    def link(goal: String, kind: GoalLinkKind, ref: String, note: Option[String]): Boolean =
+    def link(
+        goal: String,
+        kind: com.histmersion.domain.automation.Goal.LinkKind,
+        ref: String,
+        note: Option[String]
+    ): Boolean =
       goals.contains(goal) && {
         val at = now
         val _ = state.updateAndGet(
@@ -306,16 +323,20 @@ object GoalService:
         )
         true
       }
-    def refs(goal: String, kind: GoalLinkKind): List[String] =
+    def refs(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind): List[String] =
       state.get.links.filter(l => l.goal == goal && l.kind == kind).sortBy(l => (l.createdAt, l.ref)).map(_.ref).toList
 
-    def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean =
+    def unlink(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: String): Boolean =
       val before =
         state.getAndUpdate(_.modify(_.links).using(_.filterNot(l => l.goal == goal && l.kind == kind && l.ref == ref)))
       before.links.exists(l => l.goal == goal && l.kind == kind && l.ref == ref)
     def linkCounts(): Map[(String, String), Int] =
       state.get.links
-        .filter(l => l.kind != GoalLinkKind.Article || targets.title(GoalLinkKind.Article, l.ref).isDefined)
+        .filter(l =>
+          l.kind != com.histmersion.domain.automation.Goal.LinkKind.Article || targets
+            .title(com.histmersion.domain.automation.Goal.LinkKind.Article, l.ref)
+            .isDefined
+        )
         .groupBy(l => (l.goal, l.kind.wire))
         .view
         .mapValues(_.size)

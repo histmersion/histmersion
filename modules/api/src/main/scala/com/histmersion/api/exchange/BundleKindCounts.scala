@@ -3,11 +3,10 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.values.BundleKind
 import com.histmersion.api.given
 
 final case class BundleKindCounts(
-    kind: BundleKind,
+    kind: com.histmersion.util.data.exchange.Bundle.Kind,
     inserted: Int = 0,
     updated: Int = 0,
     unchanged: Int = 0,

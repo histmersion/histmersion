@@ -6,9 +6,9 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{ManagerDefaults, ManagerPolicy, ReviewArticle, ReviewManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings}
 import com.histmersion.domain.ReviewLedger.Ledger
-import com.histmersion.values.RunState
 
 import java.time.{Duration, Instant}
+import com.histmersion.domain.automation.Run
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the
@@ -115,14 +115,14 @@ object ReviewManagerPolicy:
       failures: Int,
       state: ItemState,
       run: String,
-      status: RunState,
+      status: Run.State,
       error: Option[String],
       facts: Option[ReviewFacts],
       taskText: Option[String],
       now: Instant
   ): Next =
     status match
-      case RunState.Done =>
+      case Run.State.Done =>
         val f = facts.getOrElse(ReviewFacts(0, 0, 0, onlyMissingCritiques = false))
         val mark = RunMark(
           run,
@@ -165,7 +165,7 @@ object ReviewManagerPolicy:
             s"${Plural.count(f.openMajors, "open MAJOR")}$pairs after run $attempts; again" +
               (if s.cooldownMinutes > 0 then s" after a ${s.cooldownMinutes}-minute cooldown" else "")
           )
-      case RunState.Cancelled =>
+      case Run.State.Cancelled =>
         Next.Stop("stopped: its run was cancelled", None, state.copy(before = None))
       case _ => // failed (or anything else terminal)
         val n = failures + 1

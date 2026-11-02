@@ -4,8 +4,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import java.util.UUID
-import com.histmersion.values.IssueSeverity
 import com.histmersion.api.given
+import com.histmersion.util.data.exchange.Issue
 
 final case class MergePlan(
     bundleId: UUID,
@@ -26,7 +26,7 @@ final case class MergePlan(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
   def open: List[MergeIssue] = issues.filter(_.open)
-  def blocking: List[MergeIssue] = issues.filter(_.severity == IssueSeverity.Blocking)
-  def defaults: List[MergeIssue] = issues.filter(_.severity == IssueSeverity.Default)
+  def blocking: List[MergeIssue] = issues.filter(_.severity == Issue.Severity.Blocking)
+  def defaults: List[MergeIssue] = issues.filter(_.severity == Issue.Severity.Default)
 object MergePlan:
   given Schema[MergePlan] = summon[KindlingsSchema[MergePlan]].schema

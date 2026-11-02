@@ -3,7 +3,6 @@ package com.histmersion.web
 import com.histmersion.api.YearFmt
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.exchange.{
   BundleInstance,
@@ -20,6 +19,8 @@ import com.histmersion.api.exchange.{
   MergeResolution,
   MergeResolutions
 }
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.
@@ -30,16 +31,16 @@ class MergeViewSuite extends munit.FunSuite:
 
   private def issue(
       id: String,
-      sev: IssueSeverity = IssueSeverity.Blocking,
+      sev: Issue.Severity = Issue.Severity.Blocking,
       decision: Option[String] = None,
       cond: Option[IssueCondition] = None,
-      kind: IssueKind = IssueKind.StatusDiffers
+      kind: Issue.Kind = Issue.Kind.StatusDiffers
   ): MergeIssue =
     MergeIssue(
       id,
       kind,
       sev,
-      BundleKind.Source,
+      Bundle.Kind.Source,
       s"title of $id",
       Some(IssueSide(s"left_$id", U)),
       Some(IssueSide(s"right_$id", U)),
@@ -72,7 +73,7 @@ class MergeViewSuite extends munit.FunSuite:
       issue("S-1"),
       issue("S-2", decision = Some("keep-left")),
       issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
-      issue("O-4", IssueSeverity.Default, Some("keep-left"))
+      issue("O-4", Issue.Severity.Default, Some("keep-left"))
     )
     assertEquals(
       MergeView.grouped(is).map((g, xs) => g -> xs.map(_.id)),
@@ -90,7 +91,7 @@ class MergeViewSuite extends munit.FunSuite:
         issue("S-1"),
         issue("S-2", decision = Some("keep-left")),
         issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
-        issue("O-4", IssueSeverity.Default)
+        issue("O-4", Issue.Severity.Default)
       )
     )
     assertEquals(MergeView.counter(p), (1, 2))
@@ -100,7 +101,7 @@ class MergeViewSuite extends munit.FunSuite:
     assert(!MergeView.applicable(plan(Nil).copy(problems = List("a blob is missing"))))
 
   test("the filter matches the id, the kind, the title and the labels"):
-    val is = List(issue("S-1"), issue("A-2", kind = IssueKind.ArticleDiverged))
+    val is = List(issue("S-1"), issue("A-2", kind = Issue.Kind.ArticleDiverged))
     assertEquals(MergeView.filtered(is, "  ").map(_.id), List("S-1", "A-2"))
     assertEquals(MergeView.filtered(is, "article-diverged").map(_.id), List("A-2"))
     assertEquals(MergeView.filtered(is, "RIGHT_S-1").map(_.id), List("S-1"))
@@ -125,12 +126,12 @@ class MergeViewSuite extends munit.FunSuite:
       MergeView.resultOf(i, IssueField("title", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.KeepRight))),
       None
     )
-    val notes = issue("S-2", kind = IssueKind.NotesDiffers)
+    val notes = issue("S-2", kind = Issue.Kind.NotesDiffers)
     assertEquals(
       MergeView.resultOf(notes, IssueField("notes", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.Concat))),
       Some(Right("a\n\nb"))
     )
-    val gate = issue("S-3", kind = IssueKind.SameWork)
+    val gate = issue("S-3", kind = Issue.Kind.SameWork)
     assertEquals(
       MergeView.resultOf(
         gate,

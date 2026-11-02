@@ -3,8 +3,8 @@ package com.histmersion.web.library
 import com.histmersion.api.{Wording, YearFmt}
 import com.histmersion.api.research.{ArticleSummary, ArticleView}
 import com.histmersion.api.library.{Label, SearchHit, SourceKinds, SourceWithFindings}
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.media.MediaRole
+import com.histmersion.domain.library.Source
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its
   * title, its authors, its status, its period, its regions and its summary. A row of the table already holds most of
@@ -14,7 +14,7 @@ final case class ReadingHead(
     what: String,
     title: String,
     authors: String,
-    status: Option[SourceStatus],
+    status: Option[Source.Status],
     period: String,
     regions: String,
     summary: Option[String]

@@ -7,12 +7,12 @@ import com.histmersion.util.jobs.{JobRuns, JobRunState}
 import com.histmersion.domain.automation.goals.{FocusService, GoalLinkTargets, GoalService}
 import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.GoalLinkKind
 import com.augustnagro.magnum.*
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import scala.collection.concurrent.TrieMap
+import com.histmersion.domain.automation.Goal
 
 /** A contract of the engine's services, run once on the in-memory stores and once on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with no such
@@ -61,9 +61,9 @@ object EngineStoreSuite:
     protected def fresh(test: String): Option[EngineStores] =
       val state = AtomicReference(AutomationState.empty)
       val clock = Moving()
-      val titles = TrieMap.empty[(GoalLinkKind, String), String]
+      val titles = TrieMap.empty[(Goal.LinkKind, String), String]
       val targets = new GoalLinkTargets:
-        def title(kind: GoalLinkKind, ref: String): Option[String] = titles.get((kind, ref))
+        def title(kind: Goal.LinkKind, ref: String): Option[String] = titles.get((kind, ref))
         def queueList(ref: String): Option[String] = None
       val jobs = JobRuns.InMemory(AtomicReference(Map.empty[String, JobRunState]), () => Instant.now(clock))
       Some(new EngineStores:
@@ -75,8 +75,8 @@ object EngineStoreSuite:
         val managers = ManagerService.InMemory(state, jobs, clock)
         val focus = FocusService.InMemory(state, clock)
         val agentState = com.histmersion.domain.automation.agents.AgentStateService.InMemory(state, clock)
-        def article(slug: String, title: String): Unit = titles.update((GoalLinkKind.Article, slug), title)
-        def source(citekey: String, title: String): Unit = titles.update((GoalLinkKind.Source, citekey), title)
+        def article(slug: String, title: String): Unit = titles.update((Goal.LinkKind.Article, slug), title)
+        def source(citekey: String, title: String): Unit = titles.update((Goal.LinkKind.Source, citekey), title)
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
 
   /** The stores on a scratch database of their own per test. */

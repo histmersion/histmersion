@@ -7,7 +7,6 @@ import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.Path
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.library.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{
@@ -322,7 +321,7 @@ object CalibreCmd:
             doi = b.doi,
             year = b.year,
             venue = b.publisher,
-            status = Some(SourceStatus.Unassessed),
+            status = Some(com.histmersion.domain.library.Source.Status.Unassessed),
             tags = b.tags,
             summary = summary,
             provenance = Some("calibre"),

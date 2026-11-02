@@ -9,7 +9,6 @@ import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.database.given
@@ -171,10 +170,16 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(Place("zqmp_site", "Zqmpetra", PlaceKind.Site, pt(140.0)), List(PlaceName("Zqmpetra"))),
-          PlaceInput(Place("zqmp_region", "Zqmpjordan", PlaceKind.Region, pt(141.0)), List(PlaceName("Zqmpjordan"))),
           PlaceInput(
-            Place("pleiades_99900002", "Zqmp Zygouries", PlaceKind.Site, pt(142.0)),
+            Place("zqmp_site", "Zqmpetra", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            List(PlaceName("Zqmpetra"))
+          ),
+          PlaceInput(
+            Place("zqmp_region", "Zqmpjordan", com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
+            List(PlaceName("Zqmpjordan"))
+          ),
+          PlaceInput(
+            Place("pleiades_99900002", "Zqmp Zygouries", com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
             List(PlaceName("Zqmp Zygouries"))
           )
         )

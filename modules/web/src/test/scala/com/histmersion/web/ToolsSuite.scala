@@ -10,6 +10,9 @@ import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.library.{Ingest, IngestParams}
 import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Manager
+import com.histmersion.domain.automation.Run
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.
@@ -136,14 +139,12 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.kindLabel("basemap-fetch"), "Download the background map")
     assertEquals(JobsView.kindLabel(Ingest.KindIngest), "Bring in a source")
     assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
-    import com.histmersion.values.ApprovalKind
-    assert(ApprovalKind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
+    assert(Approval.Kind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
     assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("unblocks its review")))
     assert(com.histmersion.domain.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
   }
 
   test("every value a filter button, chip or menu offers has a meaning on hover") {
-    import com.histmersion.values.{ApprovalState, ManagerKind, RunState}
     import com.histmersion.domain.automation.{ItemStatus, ProviderKind}
     assert(JobState.values.forall(s => JobsView.stateMeaning(s).nonEmpty))
     val jobKinds = List(
@@ -165,7 +166,7 @@ class ToolsSuite extends munit.FunSuite:
     )
     assertEquals(jobKinds.filter(JobsView.kindMeaning(_).isEmpty), Nil)
     assertEquals(JobsView.kindMeaning("something-new"), None)
-    assert(RunState.values.forall(s => RunsView.stateMeaning(s).nonEmpty))
+    assert(Run.State.values.forall(s => RunsView.stateMeaning(s).nonEmpty))
     assert(Agents.Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
     assertEquals(RunsView.originLabel("scheduler"), "by a goal's schedule")
     val providers = List(
@@ -179,10 +180,10 @@ class ToolsSuite extends munit.FunSuite:
     assert(providers.forall(p => RunsView.providerMeaning(p.wire).nonEmpty))
     assertEquals(RunsView.providerMeaning("some-plugin"), None)
     assert(ApprovalsView.States.forall(s => ApprovalsView.stateMeaning(s).nonEmpty))
-    assert(ApprovalState.values.forall(s => ApprovalsView.States.contains(s.wire)))
+    assert(Approval.State.values.forall(s => ApprovalsView.States.contains(s.wire)))
     assert(ListFilters.DecidedBy.values.forall(d => ApprovalsView.decidedByMeaning(d.wire).nonEmpty))
     assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).nonEmpty))
-    assert(ManagerKind.values.forall(k => ManagersView.managerMeaning(k.wire).nonEmpty))
+    assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(k.wire).nonEmpty))
     assert(ManagersView.managerMeaning(Managers.seedId("sea-peoples")).exists(_.contains("sea-peoples")))
     assertEquals(ManagersView.managerMeaning("nobody"), None)
     val jobTypes = List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")

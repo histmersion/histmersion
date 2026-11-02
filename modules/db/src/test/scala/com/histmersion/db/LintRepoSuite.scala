@@ -13,7 +13,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.Lint.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
@@ -43,7 +42,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   private def source(
       citekey: String,
-      status: SourceStatus = SourceStatus.Current,
+      status: com.histmersion.domain.library.Source.Status = com.histmersion.domain.library.Source.Status.Current,
       regions: List[String] = List("Anatolia"),
       period: Option[Period] = Some(Period(-2000, -1500)),
       summary: Option[String] = Some("a summary"),
@@ -130,7 +129,15 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
-    put(source(Prefix + "bare", status = SourceStatus.Unassessed, regions = Nil, period = None, summary = Some("   ")))
+    put(
+      source(
+        Prefix + "bare",
+        status = com.histmersion.domain.library.Source.Status.Unassessed,
+        regions = Nil,
+        period = None,
+        summary = Some("   ")
+      )
+    )
     put(
       source(
         Prefix + "full",

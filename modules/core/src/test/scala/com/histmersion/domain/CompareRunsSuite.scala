@@ -12,9 +12,9 @@ import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.research.workflows.ReviewComparison
 import io.circe.syntax.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.FindingInput
+import com.histmersion.domain.library.Source
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote check read back
   * from accepted AND rejected answers, the claims only one run made, and the major findings two review runs share.
@@ -198,7 +198,7 @@ class CompareRunsSuite extends munit.FunSuite:
               Nil,
               Some(Period(-1600, -1200)),
               None,
-              SourceStatus.Current,
+              Source.Status.Current,
               ""
             ).asJson.noSpaces
           )

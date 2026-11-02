@@ -14,7 +14,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Ingest, Source}
@@ -41,7 +40,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = SourceStatus.Unassessed,
+    status = com.histmersion.domain.library.Source.Status.Unassessed,
     topics = Nil,
     regions = Nil,
     tags = Nil,

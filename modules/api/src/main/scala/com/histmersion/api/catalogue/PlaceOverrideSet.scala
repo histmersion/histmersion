@@ -3,7 +3,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
@@ -20,7 +19,7 @@ object PlaceOverrideSet:
   given Schema[PlaceOverrideSet] = KindlingsSchema
     .derived[PlaceOverrideSet]
     .schema
-    .modify(_.kind)(_.description(s"one of ${PlaceKind.all.mkString(", ")}"))
+    .modify(_.kind)(_.description(s"one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}"))
     .modify(_.reason)(
       _.description("why: the evidence the decision rests on (required with a point: where the point comes from)")
     )

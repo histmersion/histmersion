@@ -6,9 +6,9 @@ import com.histmersion.api.catalogue.{SiteTile, TileLayer}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
-import com.histmersion.values.PlaceKind
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.catalogue.Place
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
   * box ([[siteCandidates]], [[EventSql.tileCandidates]], another domain's layer's — every item, never a limit), placed
@@ -155,12 +155,12 @@ private[maptiles] object TileRepo:
         s" ${RangeSql.start("p.period")} AS ps, ${RangeSql.end("p.period")} AS pe, $ub AS ub" +
         " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
         " ELSE ST_PointOnSurface(p.geom) END AS pt) q" +
-        s" WHERE p.kind = '${PlaceKind.Site}' AND p.geom IS NOT NULL" +
+        s" WHERE p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL" +
         s" AND NOT (coalesce(p.import_source, '') IN ${PlaceSql.ImportedList} AND lower_inf(p.period) AND upper_inf(p.period))" +
         " AND p.geom && "
     ) ++ envelope ++
       Sql.of(" AND p.label !~* ?", Param.S(PlaceSql.UninformativeLabel)) ++
-      Sql.raw(s" AND ${PlaceSql.inWindowSql("p", tw, Some(PlaceKind.Site), Some(modernFrom))}") ++
+      Sql.raw(s" AND ${PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Site), Some(modernFrom))}") ++
       siteType
         .map(_.trim.toLowerCase)
         .filter(_.nonEmpty)

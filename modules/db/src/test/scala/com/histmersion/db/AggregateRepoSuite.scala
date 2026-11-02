@@ -6,7 +6,6 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, PeriodRow}
 import com.histmersion.api.library.{Aggregate, Filter, Finding, Source}
@@ -30,7 +29,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = List("Anatolia"),
     tags = Nil,
@@ -63,7 +62,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,
@@ -96,7 +95,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,
@@ -117,7 +116,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = List("zzaggtag"),

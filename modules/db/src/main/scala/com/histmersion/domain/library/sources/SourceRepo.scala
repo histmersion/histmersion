@@ -13,7 +13,6 @@ import com.histmersion.api.{ApiError, GeoPoint, Write}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{
   CalibreGap,

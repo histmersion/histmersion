@@ -3,7 +3,6 @@ package com.histmersion.domain.library.citations
 import com.histmersion.util.database.Vocab
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.sources.EdgeRow
-import com.histmersion.values.SourceStatus
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{
@@ -15,6 +14,7 @@ import com.histmersion.api.library.{
   NeighborTarget,
   SourceGraph
 }
+import com.histmersion.domain.library.Source
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
@@ -67,7 +67,7 @@ private[citations] object CitationRepo:
       else
         val found = sql"""SELECT citekey, title, year, status FROM sources
                             WHERE citekey = ANY($frontier::text[]) ORDER BY citekey"""
-          .query[(String, Option[String], Option[Int], Option[SourceStatus])]
+          .query[(String, Option[String], Option[Int], Option[Source.Status])]
           .run()
           .map((ck, t, y, st) => GraphNode(ck, t, y, st, d))
         val grown = nodes ++ found

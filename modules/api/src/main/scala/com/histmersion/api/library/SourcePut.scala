@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
@@ -14,7 +13,7 @@ final case class SourcePut(
     doi: Option[String] = None,
     year: Option[Int] = None,
     venue: Option[String] = None,
-    status: Option[SourceStatus] = None,
+    status: Option[com.histmersion.domain.library.Source.Status] = None,
     topics: List[String] = Nil,
     regions: List[String] = Nil,
     tags: List[String] = Nil,
@@ -55,5 +54,5 @@ object SourcePut:
     provenance = s.provenance,
     calibreId = s.calibreId,
     findings = s.findings.map(FindingInput.of),
-    edges = s.edges.flatMap(e => EdgeKind.fromWire(e.kind).map(EdgeInput(e.dst, _)))
+    edges = s.edges.flatMap(e => com.histmersion.domain.library.Edge.Kind.fromWire(e.kind).map(EdgeInput(e.dst, _)))
   )

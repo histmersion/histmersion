@@ -10,7 +10,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
@@ -51,7 +50,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2011),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,

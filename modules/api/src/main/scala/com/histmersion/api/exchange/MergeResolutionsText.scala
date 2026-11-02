@@ -1,7 +1,7 @@
 package com.histmersion.api.exchange
-import com.histmersion.values.{DecidedBy, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.given
+import com.histmersion.util.data.exchange.Issue
 
 object MergeResolutionsText:
 
@@ -30,13 +30,13 @@ object MergeResolutionsText:
         case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
         case (None, Some(_), _) =>
           s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}"
-        case (None, None, IssueSeverity.Default) =>
+        case (None, None, Issue.Severity.Default) =>
           s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}"
-        case (None, None, _) if i.decidedBy.contains(DecidedBy.Policy) =>
+        case (None, None, _) if i.decidedBy.contains(Issue.DecidedBy.Policy) =>
           s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what"
         case (None, None, _) =>
           s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
-    val issues = p.issues.filter(_.severity != IssueSeverity.Info)
+    val issues = p.issues.filter(_.severity != Issue.Severity.Info)
     List(
       List(
         s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",

@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.{AttestationPut, CatalogRecord, EventLinkCa
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.events.{CatalogMerge, EventSelection, EventSql}
-import com.histmersion.values.EventLinkStatus
+import com.histmersion.domain.catalogue.Event
 
 /** The contract of the facts the leads and an event's card are computed from: the sources attesting an event (its own
   * first), and each event's lead — its tier, its catalogue's size, the sources proposed and confirmed — the catalogue's
@@ -58,6 +58,6 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       s.leads.leads(EventSelection(Filter(), narrow = EventSql.Narrow(tier = Some(EventTier.Catalogue))), 50, 50, 10, 0)
     assertEquals(catalogueOnly._1, 2)
     assertEquals(s.leads.leadOf("gvp_8", 50, 50).map(r => (r.vei, r.proposed, r.attesting)), List((Some(3), 1, 0)))
-    assert(s.eventLinks.setStatus("gvp_8", "zzld2020_own", EventLinkStatus.Confirmed))
+    assert(s.eventLinks.setStatus("gvp_8", "zzld2020_own", Event.LinkStatus.Confirmed))
     assertEquals(s.leads.leadOf("gvp_8", 50, 50).map(r => (r.proposed, r.attesting)), List((0, 1)))
   }

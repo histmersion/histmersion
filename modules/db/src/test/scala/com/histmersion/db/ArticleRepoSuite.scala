@@ -9,7 +9,6 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.{ListPatch, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
@@ -41,7 +40,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = Some(2014),
         venue = None,
-        status = SourceStatus.Foundational,
+        status = com.histmersion.domain.library.Source.Status.Foundational,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -123,7 +122,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val cited = ArticleFixtures.sourcesCited(ds, slug).head
     assertEquals(
       (cited.title, cited.year, cited.status),
-      (Some("Title of zz_cline2014_year"), Some(2014), Some(SourceStatus.Foundational))
+      (Some("Title of zz_cline2014_year"), Some(2014), Some(com.histmersion.domain.library.Source.Status.Foundational))
     )
     // the article link is stored too — it is what makes the target's backlinks work
     val _ = ArticleFixtures.put(ds, article("# Other\n\n[[zz_article_sea]]", "zz_article_other"))

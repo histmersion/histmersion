@@ -1,6 +1,5 @@
 package com.histmersion.api.library
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
@@ -37,8 +36,8 @@ object FilterDocs:
   val status = Param(
     "status",
     "status",
-    s"ANY matches — ${SourceStatus.values.map(_.wire).mkString("|")}",
-    s"Any of ${SourceStatus.values.map(_.wire).mkString("|")}"
+    s"ANY matches — ${com.histmersion.domain.library.Source.Status.values.map(_.wire).mkString("|")}",
+    s"Any of ${com.histmersion.domain.library.Source.Status.values.map(_.wire).mkString("|")}"
   )
   val yearFrom = Param("yearFrom", "yearFrom", "Earliest publication year (inclusive)", "Earliest publication year")
   val yearTo = Param("yearTo", "yearTo", "Latest publication year (inclusive)", "Latest publication year")

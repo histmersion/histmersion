@@ -7,9 +7,9 @@ import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.plugin.{GazetteerSource, PluginHttp}
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.storage.{Store, StoreKey}
-import com.histmersion.values.PlaceKind
 
 import scala.collection.immutable.ListMap
+import com.histmersion.domain.catalogue.Place
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -53,7 +53,7 @@ final class GazetteerImports(
         seed
           .get(f)
           .toRight(s"${f.value}: not found")
-          .flatMap(blob => Lpf.parse(blob.text(), kind.getOrElse(PlaceKind.Region)).left.map(e => s"${f.value}: $e"))
+          .flatMap(blob => Lpf.parse(blob.text(), kind.getOrElse(Place.Kind.Region)).left.map(e => s"${f.value}: $e"))
           .map(_.grouped(batch).foldLeft(PlaceImportResult(0, 0, 0, Nil)) { (sum, b) =>
             val r = places.importPlaces(b, Dataset.Seed)
             PlaceImportResult(

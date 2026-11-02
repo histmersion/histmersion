@@ -2,8 +2,8 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.domain.*
 
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
+import com.histmersion.domain.catalogue.Place
 
 /** What a Pleiades "region" really is (2026-10-09) — the survey's own examples. */
 class PlaceReviewSuite extends munit.FunSuite:
@@ -14,7 +14,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       id: String,
       label: String,
       types: String,
-      kind: String = PlaceKind.Region,
+      kind: String = Place.Kind.Region,
       start: Option[Long] = None,
       end: Option[Long] = None,
       items: List[LinkedItem] = Nil
@@ -35,14 +35,14 @@ class PlaceReviewSuite extends munit.FunSuite:
       )
     do
       val p = PlaceReview.propose(ev(id, label, types))
-      assertEquals(kindOf(p), Some(PlaceKind.People), s"$label: $p")
+      assertEquals(kindOf(p), Some(Place.Kind.People), s"$label: $p")
       assert(p.get.describe.startsWith(s"$id $label: region → people — a people or civic tribe"), p.get.describe)
       assertEquals(p.get.detail, p.get.describe.stripPrefix(s"$id "), "a lint item carries the id beside the line")
       assert(p.get.describe.contains(s"Pleiades types: ${types.replace(",", ", ")}"), p.get.describe)
 
   test("a province or diocese is a polity, with its period where a source states one"):
     val vienn = PlaceReview.propose(ev("pleiades_992074", "Viennensis (diocese)", "province"))
-    assertEquals(kindOf(vienn), Some(PlaceKind.Polity))
+    assertEquals(kindOf(vienn), Some(Place.Kind.Polity))
     assert(vienn.get.describe.contains("no source states its period"), vienn.get.describe)
     // Pleiades dates Palaestina I to its late-antique period: kept, not rewritten
     val pal = PlaceReview.propose(
@@ -54,8 +54,8 @@ class PlaceReviewSuite extends munit.FunSuite:
         Proposal.Reclassify(
           "pleiades_1001939",
           "Palaestina I (late Roman province)",
-          PlaceKind.Region,
-          PlaceKind.Polity,
+          Place.Kind.Region,
+          Place.Kind.Polity,
           None,
           "an administrative unit (a polity)",
           List("Pleiades types: province")
@@ -78,19 +78,19 @@ class PlaceReviewSuite extends munit.FunSuite:
     val pylos = PlaceReview.propose(
       ev("pleiades_226979725", "Hither Province (Pylos)", "region,province-2", start = Some(-1600L), end = Some(2100L))
     )
-    assertEquals(pylos.collect { case r: Proposal.Reclassify => (r.to, r.period) }, Some((PlaceKind.Polity, None)))
+    assertEquals(pylos.collect { case r: Proposal.Reclassify => (r.to, r.period) }, Some((Place.Kind.Polity, None)))
     assert(pylos.get.describe.contains("no source states its period"), pylos.get.describe)
     // the seed filed `province-2` alone as a site: still a province
     assertEquals(
       kindOf(
         PlaceReview.propose(
-          ev("pleiades_991374", "Thessalia (late Roman province)", "province-2", kind = PlaceKind.Site)
+          ev("pleiades_991374", "Thessalia (late Roman province)", "province-2", kind = Place.Kind.Site)
         )
       ),
-      Some(PlaceKind.Polity)
+      Some(Place.Kind.Polity)
     )
     // …but a provincial capital that is a settlement stays a site
-    assertEquals(PlaceReview.propose(ev("pleiades_x", "Capital", "settlement,province", kind = PlaceKind.Site)), None)
+    assertEquals(PlaceReview.propose(ev("pleiades_x", "Capital", "settlement,province", kind = Place.Kind.Site)), None)
     // a polity that already is one, dated as stated, is left alone
     assertEquals(
       PlaceReview.propose(
@@ -98,7 +98,7 @@ class PlaceReviewSuite extends munit.FunSuite:
           "pleiades_1001939",
           "Palaestina I",
           "province",
-          kind = PlaceKind.Polity,
+          kind = Place.Kind.Polity,
           start = Some(300L),
           end = Some(640L)
         )
@@ -108,7 +108,7 @@ class PlaceReviewSuite extends munit.FunSuite:
 
   test("a deme or a settlement filed as a region is a site; a plain region stays; a feature is never touched"):
     val pir = PlaceReview.propose(ev("pleiades_580062", "Peiraieus/Piraeus", "region,settlement,deme-attic"))
-    assertEquals(kindOf(pir), Some(PlaceKind.Site))
+    assertEquals(kindOf(pir), Some(Place.Kind.Site))
     assert(pir.get.describe.contains("a settlement (deme-attic, settlement), not a region"), pir.get.describe)
     assertEquals(PlaceReview.propose(ev("pleiades_307963010", "Regio I (Porta Capena)", "region")), None)
     assertEquals(PlaceReview.propose(ev("pleiades_570585", "Petras", "region,label")), None)
@@ -120,7 +120,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       "the label says region"
     )
     assertEquals(
-      PlaceReview.propose(ev("pleiades_109341", "Sequana (river)", "river,people", kind = PlaceKind.Feature)),
+      PlaceReview.propose(ev("pleiades_109341", "Sequana (river)", "river,people", kind = Place.Kind.Feature)),
       None
     )
 
@@ -141,7 +141,7 @@ class PlaceReviewSuite extends munit.FunSuite:
     assertEquals(PlaceReview.duplicateOf("Withdrawn duplicate: Moesia Superior"), Some("Moesia Superior"))
     assertEquals(PlaceReview.duplicateOf("Withdrawn: Untitled"), None)
     assertEquals(PlaceReview.duplicateKeys("Peiros/Piros (river)"), List("peiros piros", "peiros", "piros"))
-    val into = Candidate("pleiades_981517", "Creta et Cyrene (Roman province)", PlaceKind.Polity)
+    val into = Candidate("pleiades_981517", "Creta et Cyrene (Roman province)", Place.Kind.Polity)
     val m = PlaceReview.propose(dup, List(into))
     assertEquals(m.map(_.getClass.getSimpleName), Some("Merge"))
     assertEquals(
@@ -151,7 +151,7 @@ class PlaceReviewSuite extends munit.FunSuite:
     assert(m.get.fixable)
     val none = PlaceReview.propose(dup, Nil).get
     assert(!none.fixable && none.describe.contains("no seed place has that name"), none.describe)
-    val two = PlaceReview.propose(dup, List(into, Candidate("pleiades_2", "Creta et Cyrene", PlaceKind.Region))).get
+    val two = PlaceReview.propose(dup, List(into, Candidate("pleiades_2", "Creta et Cyrene", Place.Kind.Region))).get
     assert(!two.fixable && two.describe.contains("2 seed places have that name"), two.describe)
-    val withdrawn = PlaceReview.propose(ev("pleiades_9", "Withdrawn: Untitled", "", kind = PlaceKind.Site)).get
+    val withdrawn = PlaceReview.propose(ev("pleiades_9", "Withdrawn: Untitled", "", kind = Place.Kind.Site)).get
     assert(!withdrawn.fixable && withdrawn.describe.contains("no replacement named"), withdrawn.describe)

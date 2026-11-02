@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, RunState, SourceStatus}
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
@@ -8,6 +7,10 @@ import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{AcquireChecks, Ingest}
 import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Manager
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.Source
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.
@@ -32,10 +35,10 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.pipeline(Pipeline.AcquisitionSweep), "Look for copies to fetch")
 
   test("every approval kind has wording"):
-    ApprovalKind.values.foreach(k => readable(Wording.approvalKind(k), k.wire))
-    assertEquals(Wording.approvalKind(ApprovalKind.ArticlePublish), "Make an article readable")
-    assertEquals(Wording.approvalKind(ApprovalKind.StatusChange), "Change a source's status")
-    assertEquals(Wording.approvalKind(ApprovalKind.Edge), "Link two sources")
+    Approval.Kind.values.foreach(k => readable(Wording.approvalKind(k), k.wire))
+    assertEquals(Wording.approvalKind(Approval.Kind.ArticlePublish), "Make an article readable")
+    assertEquals(Wording.approvalKind(Approval.Kind.StatusChange), "Change a source's status")
+    assertEquals(Wording.approvalKind(Approval.Kind.Edge), "Link two sources")
 
   test("every job kind has wording, and the kinds are distinct"):
     RegisteredJobKinds.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
@@ -64,13 +67,13 @@ class WordingSuite extends munit.FunSuite:
     )
 
   test("every state, status and manager kind has wording"):
-    RunState.values.foreach(s => readable(Wording.runState(s), s.wire))
-    ApprovalState.values.foreach(s => readable(Wording.approvalState(s), s.wire))
+    Run.State.values.foreach(s => readable(Wording.runState(s), s.wire))
+    Approval.State.values.foreach(s => readable(Wording.approvalState(s), s.wire))
     JobState.values.foreach(s => assert(Wording.jobState(s).head.isUpper, s.toString))
-    ManagerKind.values.foreach(k => readable(Wording.managerKind(k), k.wire))
-    SourceStatus.values.foreach(s => assert(Wording.status(s).head.isUpper, s.toString))
-    assertEquals(Wording.status(SourceStatus.Unassessed), "Not assessed")
-    assertEquals(Wording.runState(RunState.WaitingApproval), "Waiting for a decision")
+    Manager.Kind.values.foreach(k => readable(Wording.managerKind(k), k.wire))
+    Source.Status.values.foreach(s => assert(Wording.status(s).head.isUpper, s.toString))
+    assertEquals(Wording.status(Source.Status.Unassessed), "Not assessed")
+    assertEquals(Wording.runState(Run.State.WaitingApproval), "Waiting for a decision")
 
   test("allowance windows read as the limit they are"):
     assertEquals(Wording.allowanceWindow("seven_day"), "This week's limit")

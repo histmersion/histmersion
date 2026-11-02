@@ -12,7 +12,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventGeoList, EventPatch, EventPut, EventSummary, Place, PlaceInput, PlaceName}
@@ -42,10 +41,16 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   )
 
   private val places = List(
-    PlaceInput(Place("zqes_site", "Zqes site", PlaceKind.Site, pt(124.0)), List(PlaceName("Zqes site"))),
-    PlaceInput(Place("zqes_area", "Zqes area", PlaceKind.Region, Square), List(PlaceName("Zqes area"))),
     PlaceInput(
-      Place("zqes_ptregion", "Zqes point region", PlaceKind.Region, pt(125.0)),
+      Place("zqes_site", "Zqes site", com.histmersion.domain.catalogue.Place.Kind.Site, pt(124.0)),
+      List(PlaceName("Zqes site"))
+    ),
+    PlaceInput(
+      Place("zqes_area", "Zqes area", com.histmersion.domain.catalogue.Place.Kind.Region, Square),
+      List(PlaceName("Zqes area"))
+    ),
+    PlaceInput(
+      Place("zqes_ptregion", "Zqes point region", com.histmersion.domain.catalogue.Place.Kind.Region, pt(125.0)),
       List(PlaceName("Zqes point region"))
     )
   )

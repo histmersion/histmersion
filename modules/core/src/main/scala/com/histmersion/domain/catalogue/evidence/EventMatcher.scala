@@ -4,7 +4,7 @@ import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.{AttestationPut, EventLinkCandidate, EventPassage, EventTaxonomy}
-import com.histmersion.values.EventLinkStatus
+import com.histmersion.domain.catalogue.Event
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 object EventMatcher:
@@ -84,7 +84,7 @@ object EventMatcher:
               }
               .toList
         Option.when(score >= w.minScore)(
-          EventLinkCandidate(eventId, ck, score, EventLinkStatus.Proposed, titles.get(ck), fs.map(_.id), ps, reasons)
+          EventLinkCandidate(eventId, ck, score, Event.LinkStatus.Proposed, titles.get(ck), fs.map(_.id), ps, reasons)
         )
       }
       .sortBy(c => (-c.score, c.citekey))

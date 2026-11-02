@@ -4,7 +4,6 @@ import com.histmersion.api.given
 import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.api.exchange.{
   BundleAlias,
@@ -35,6 +34,7 @@ import com.histmersion.api.exchange.{
   BundleTombstone,
   BundleUnresolvedEdge
 }
+import com.histmersion.util.data.exchange.Bundle
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
   * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256
@@ -78,18 +78,18 @@ final case class BundleEntities(
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
     def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
-      BundleKind.Source.file -> stamped(sources),
-      BundleKind.Finding.file -> stamped(findings),
-      BundleKind.Article.file -> stamped(articles),
-      BundleKind.ArticleVersion.file -> stamped(versions),
-      BundleKind.Asset.file -> stamped(assets),
-      BundleKind.AssetLink.file -> stamped(assetLinks),
-      BundleKind.Attestation.file -> stamped(attestations),
-      BundleKind.Event.file -> stamped(events),
-      BundleKind.Goal.file -> stamped(goals),
-      BundleKind.QueueItem.file -> stamped(queue),
-      BundleKind.Place.file -> stamped(places),
-      BundleKind.Period.file -> stamped(periods),
+      Bundle.Kind.Source.file -> stamped(sources),
+      Bundle.Kind.Finding.file -> stamped(findings),
+      Bundle.Kind.Article.file -> stamped(articles),
+      Bundle.Kind.ArticleVersion.file -> stamped(versions),
+      Bundle.Kind.Asset.file -> stamped(assets),
+      Bundle.Kind.AssetLink.file -> stamped(assetLinks),
+      Bundle.Kind.Attestation.file -> stamped(attestations),
+      Bundle.Kind.Event.file -> stamped(events),
+      Bundle.Kind.Goal.file -> stamped(goals),
+      Bundle.Kind.QueueItem.file -> stamped(queue),
+      Bundle.Kind.Place.file -> stamped(places),
+      Bundle.Kind.Period.file -> stamped(periods),
       BundleFiles.Edges -> plain(edges),
       BundleFiles.UnresolvedEdges -> plain(unresolvedEdges),
       BundleFiles.Assessments -> plain(assessments),
@@ -108,20 +108,20 @@ final case class BundleEntities(
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
-    def of[A: Encoder.AsObject](k: BundleKind, as: List[A])(uid: A => UUID, label: A => String) =
+    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
-    (of(BundleKind.Source, sources)(_.uid, _.citekey) ++
-      of(BundleKind.Finding, findings)(_.uid, _.id) ++
-      of(BundleKind.Article, articles)(_.uid, _.slug) ++
-      of(BundleKind.ArticleVersion, versions)(_.uid, v => v.articleUid.toString) ++
-      of(BundleKind.Asset, assets)(_.uid, _.name) ++
-      of(BundleKind.AssetLink, assetLinks)(_.uid, l => s"${l.relation} ${l.targetType} ${l.targetId}") ++
-      of(BundleKind.Attestation, attestations)(_.uid, t => s"${t.targetType} ${t.targetId}") ++
-      of(BundleKind.Event, events)(_.uid, _.id) ++
-      of(BundleKind.Goal, goals)(_.uid, _.slug) ++
-      of(BundleKind.QueueItem, queue)(_.uid, _.text.take(60)) ++
-      of(BundleKind.Place, places)(_.uid, _.id) ++
-      of(BundleKind.Period, periods)(_.uid, _.id)).toMap
+    (of(Bundle.Kind.Source, sources)(_.uid, _.citekey) ++
+      of(Bundle.Kind.Finding, findings)(_.uid, _.id) ++
+      of(Bundle.Kind.Article, articles)(_.uid, _.slug) ++
+      of(Bundle.Kind.ArticleVersion, versions)(_.uid, v => v.articleUid.toString) ++
+      of(Bundle.Kind.Asset, assets)(_.uid, _.name) ++
+      of(Bundle.Kind.AssetLink, assetLinks)(_.uid, l => s"${l.relation} ${l.targetType} ${l.targetId}") ++
+      of(Bundle.Kind.Attestation, attestations)(_.uid, t => s"${t.targetType} ${t.targetId}") ++
+      of(Bundle.Kind.Event, events)(_.uid, _.id) ++
+      of(Bundle.Kind.Goal, goals)(_.uid, _.slug) ++
+      of(Bundle.Kind.QueueItem, queue)(_.uid, _.text.take(60)) ++
+      of(Bundle.Kind.Place, places)(_.uid, _.id) ++
+      of(Bundle.Kind.Period, periods)(_.uid, _.id)).toMap
 
   /** Every uid an entity line of this bundle names as its own. */
   def uids: Set[UUID] = revs.keySet
@@ -156,31 +156,32 @@ final case class BundleEntities(
     * here; a required one makes the line impossible to write.
     */
   def references: List[Reference] =
-    def req(kind: BundleKind, uid: UUID, owner: UUID, from: String) = Reference(kind, uid, owner, from, required = true)
-    def opt(kind: BundleKind, uid: UUID, owner: UUID, from: String) =
+    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
+      Reference(kind, uid, owner, from, required = true)
+    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
       Reference(kind, uid, owner, from, required = false)
-    findings.map(f => req(BundleKind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
-      edges.map(e => opt(BundleKind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
-      versions.map(v => req(BundleKind.Article, v.articleUid, v.uid, "article version")) ++
-      assets.map(a => req(BundleKind.Source, a.sourceUid, a.uid, s"asset ${a.name}")) ++
-      assetLinks.map(l => req(BundleKind.Asset, l.assetUid, l.uid, s"asset link to ${l.targetType} ${l.targetId}")) ++
+    findings.map(f => req(Bundle.Kind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
+      edges.map(e => opt(Bundle.Kind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
+      versions.map(v => req(Bundle.Kind.Article, v.articleUid, v.uid, "article version")) ++
+      assets.map(a => req(Bundle.Kind.Source, a.sourceUid, a.uid, s"asset ${a.name}")) ++
+      assetLinks.map(l => req(Bundle.Kind.Asset, l.assetUid, l.uid, s"asset link to ${l.targetType} ${l.targetId}")) ++
       attestations.map(t =>
-        req(BundleKind.Source, t.sourceUid, t.uid, s"attestation of ${t.targetType} ${t.targetId}")
+        req(Bundle.Kind.Source, t.sourceUid, t.uid, s"attestation of ${t.targetType} ${t.targetId}")
       ) ++
       events.flatMap(e =>
-        e.parentUid.map(opt(BundleKind.Event, _, e.uid, s"event ${e.id} parent")).toList ++
-          e.edges.map(g => opt(BundleKind.Event, g.dstUid, e.uid, s"event ${e.id} edge ${g.kind}"))
+        e.parentUid.map(opt(Bundle.Kind.Event, _, e.uid, s"event ${e.id} parent")).toList ++
+          e.edges.map(g => opt(Bundle.Kind.Event, g.dstUid, e.uid, s"event ${e.id} edge ${g.kind}"))
       ) ++
-      goals.flatMap(g => g.parentUid.map(opt(BundleKind.Goal, _, g.uid, s"goal ${g.slug} parent")).toList) ++
+      goals.flatMap(g => g.parentUid.map(opt(Bundle.Kind.Goal, _, g.uid, s"goal ${g.slug} parent")).toList) ++
       // the owned sets: their source must at least be in the bundle or here
-      edges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind}")) ++
-      unresolvedEdges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind} to ${e.dst}")) ++
-      assessments.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, "assessment")) ++
-      aliases.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, s"alias ${a.alias}")) ++
-      articleAliases.map(a => opt(BundleKind.Article, a.articleUid, a.articleUid, s"old slug ${a.alias}")) ++
-      eventAliases.map(a => opt(BundleKind.Event, a.eventUid, a.eventUid, s"old event id ${a.alias}")) ++
-      goalAliases.map(a => opt(BundleKind.Goal, a.goalUid, a.goalUid, s"old goal slug ${a.alias}")) ++
-      placeAliases.map(a => opt(BundleKind.Place, a.placeUid, a.placeUid, s"old place id ${a.alias}"))
+      edges.map(e => req(Bundle.Kind.Source, e.srcUid, e.srcUid, s"edge ${e.kind}")) ++
+      unresolvedEdges.map(e => req(Bundle.Kind.Source, e.srcUid, e.srcUid, s"edge ${e.kind} to ${e.dst}")) ++
+      assessments.map(a => opt(Bundle.Kind.Source, a.sourceUid, a.sourceUid, "assessment")) ++
+      aliases.map(a => opt(Bundle.Kind.Source, a.sourceUid, a.sourceUid, s"alias ${a.alias}")) ++
+      articleAliases.map(a => opt(Bundle.Kind.Article, a.articleUid, a.articleUid, s"old slug ${a.alias}")) ++
+      eventAliases.map(a => opt(Bundle.Kind.Event, a.eventUid, a.eventUid, s"old event id ${a.alias}")) ++
+      goalAliases.map(a => opt(Bundle.Kind.Goal, a.goalUid, a.goalUid, s"old goal slug ${a.alias}")) ++
+      placeAliases.map(a => opt(Bundle.Kind.Place, a.placeUid, a.placeUid, s"old place id ${a.alias}"))
 
   /** References no line of this bundle satisfies — fine in an incremental bundle as long as the receiving side has
     * them, a problem in a full one.
@@ -191,11 +192,11 @@ final case class BundleEntities(
 
 object BundleEntities:
 
-  final case class Rev(kind: BundleKind, rev: String, label: String)
+  final case class Rev(kind: Bundle.Kind, rev: String, label: String)
 
   /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
     */
-  final case class Reference(kind: BundleKind, uid: UUID, owner: UUID, from: String, required: Boolean)
+  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean)
 
   /** What a blob is for. */
   enum BlobUse:
@@ -223,23 +224,23 @@ object BundleEntities:
           case Left(e)  => problems += s"$path:${i + 1}: $e"; None
       }
     val es = BundleEntities(
-      sources = read[BundleSource](BundleKind.Source.file, true),
-      findings = read[BundleFinding](BundleKind.Finding.file, true),
+      sources = read[BundleSource](Bundle.Kind.Source.file, true),
+      findings = read[BundleFinding](Bundle.Kind.Finding.file, true),
       edges = read[BundleEdge](BundleFiles.Edges, false),
       unresolvedEdges = read[BundleUnresolvedEdge](BundleFiles.UnresolvedEdges, false),
       assessments = read[BundleAssessment](BundleFiles.Assessments, false),
       aliases = read[BundleAlias](BundleFiles.Aliases, false),
-      articles = read[BundleArticle](BundleKind.Article.file, true),
-      versions = read[BundleArticleVersion](BundleKind.ArticleVersion.file, true),
-      assets = read[BundleAsset](BundleKind.Asset.file, true),
-      assetLinks = read[BundleAssetLink](BundleKind.AssetLink.file, true),
-      attestations = read[BundleAttestation](BundleKind.Attestation.file, true),
-      events = read[BundleEvent](BundleKind.Event.file, true),
-      goals = read[BundleGoal](BundleKind.Goal.file, true),
-      queue = read[BundleQueueItem](BundleKind.QueueItem.file, true),
+      articles = read[BundleArticle](Bundle.Kind.Article.file, true),
+      versions = read[BundleArticleVersion](Bundle.Kind.ArticleVersion.file, true),
+      assets = read[BundleAsset](Bundle.Kind.Asset.file, true),
+      assetLinks = read[BundleAssetLink](Bundle.Kind.AssetLink.file, true),
+      attestations = read[BundleAttestation](Bundle.Kind.Attestation.file, true),
+      events = read[BundleEvent](Bundle.Kind.Event.file, true),
+      goals = read[BundleGoal](Bundle.Kind.Goal.file, true),
+      queue = read[BundleQueueItem](Bundle.Kind.QueueItem.file, true),
       tombstones = read[BundleTombstone](BundleFiles.Tombstones, false),
-      places = read[BundlePlace](BundleKind.Place.file, true),
-      periods = read[BundlePeriod](BundleKind.Period.file, true),
+      places = read[BundlePlace](Bundle.Kind.Place.file, true),
+      periods = read[BundlePeriod](Bundle.Kind.Period.file, true),
       articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false),
       eventAliases = read[BundleEventAlias](BundleFiles.EventAliases, false),
       goalAliases = read[BundleGoalAlias](BundleFiles.GoalAliases, false),

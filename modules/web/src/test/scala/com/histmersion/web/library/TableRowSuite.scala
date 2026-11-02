@@ -2,7 +2,7 @@ package com.histmersion.web.library
 
 import com.histmersion.api.research.ArticleSummary
 import com.histmersion.api.library.{Hit, SearchHit}
-import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Source
 
 class TableRowSuite extends munit.FunSuite:
 
@@ -12,7 +12,7 @@ class TableRowSuite extends munit.FunSuite:
         "cline2014_year",
         "1177 B.C.",
         Some(2014),
-        SourceStatus.Current,
+        Source.Status.Current,
         Nil,
         List("levant"),
         Some(-1250),
@@ -33,7 +33,7 @@ class TableRowSuite extends munit.FunSuite:
         "1177 B.C.",
         "Eric H. Cline",
         Some(2014),
-        Some(SourceStatus.Current),
+        Some(Source.Status.Current),
         "",
         "1250 BCE–1100 BCE",
         "/source/cline2014_year"

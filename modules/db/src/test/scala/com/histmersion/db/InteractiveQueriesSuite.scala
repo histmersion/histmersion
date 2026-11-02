@@ -17,7 +17,6 @@ import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{
@@ -55,33 +54,62 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   // a region > polity > site chain far from every other fixture, plus look-alike labels for search
   private val places = List(
     PlaceInput(
-      Place("zzi_land", "Zzia Land", PlaceKind.Region, Some(box(-130, -40, -120, -30))),
+      Place(
+        "zzi_land",
+        "Zzia Land",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        Some(box(-130, -40, -120, -30))
+      ),
       List(PlaceName("Zzia Land"), PlaceName("Zzialand", "xx"))
     ),
     PlaceInput(
-      Place("zzi_realm", "Zzia Realm", PlaceKind.Polity, Some(box(-129, -39, -125, -35)), Some(Period(-1600, -1000))),
+      Place(
+        "zzi_realm",
+        "Zzia Realm",
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
+        Some(box(-129, -39, -125, -35)),
+        Some(Period(-1600, -1000))
+      ),
       List(PlaceName("Zzia Realm"), PlaceName("Old Zziarealm", "xx", Some(Period(-1600, -1300)))),
       List(PlaceRelation("zzi_realm", "zzi_land", PlaceRelation.PartOf, Some(Period(-1600, -1000))))
     ),
     PlaceInput(
-      Place("zzi_town", "Zzia Town", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")),
+      Place(
+        "zzi_town",
+        "Zzia Town",
+        com.histmersion.domain.catalogue.Place.Kind.Site,
+        Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
+      ),
       List(PlaceName("Zzia Town")),
       List(PlaceRelation("zzi_town", "zzi_realm"))
     ),
     PlaceInput(
-      Place("zzi_east", "Zzia East", PlaceKind.Region, Some(box(-122, -40, -120, -38))),
+      Place(
+        "zzi_east",
+        "Zzia East",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        Some(box(-122, -40, -120, -38))
+      ),
       List(PlaceName("Zzia East"))
     ),
     // contains the query but does not START with it, and is only findable by a period-scoped name
     PlaceInput(
-      Place("zzi_hidden", "Hidden Place", PlaceKind.Site),
+      Place("zzi_hidden", "Hidden Place", com.histmersion.domain.catalogue.Place.Kind.Site),
       List(PlaceName("Hidden Place"), PlaceName("Zzia Hidden", "xx", Some(Period(-1500, -1200))))
     ),
-    PlaceInput(Place("zzi_inner", "The Zzia", PlaceKind.Site), List(PlaceName("The Zzia"))),
-    PlaceInput(Place("zzi_exact", "Zzia", PlaceKind.Site), List(PlaceName("Zzia"))),
+    PlaceInput(
+      Place("zzi_inner", "The Zzia", com.histmersion.domain.catalogue.Place.Kind.Site),
+      List(PlaceName("The Zzia"))
+    ),
+    PlaceInput(Place("zzi_exact", "Zzia", com.histmersion.domain.catalogue.Place.Kind.Site), List(PlaceName("Zzia"))),
     // a present-day GeoNames/Wikidata place (made one in beforeAll): never in a search before modern-from
     PlaceInput(
-      Place("zzi_wd_now", "Zzia Wikitown", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-127.0,-36.0]}""")),
+      Place(
+        "zzi_wd_now",
+        "Zzia Wikitown",
+        com.histmersion.domain.catalogue.Place.Kind.Site,
+        Some("""{"type":"Point","coordinates":[-127.0,-36.0]}""")
+      ),
       List(PlaceName("Zzia Wikitown"), PlaceName("Wikizzia", "xx"))
     )
   )
@@ -94,7 +122,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2011),
       venue = None,
-      status = SourceStatus.Current,
+      status = com.histmersion.domain.library.Source.Status.Current,
       topics = Nil,
       regions = List("Zzia region"),
       tags = tags,
@@ -448,7 +476,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_pol_ohm",
             "Zzi Kingdom",
-            PlaceKind.Polity,
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some(box(-140, -40, -135, -35)),
             Some(Period(-1500, -1000))
           ),
@@ -458,7 +486,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_pol_cl",
             "Zzi Kingdom",
-            PlaceKind.Polity,
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some(box(-139.5, -39.5, -135, -35)),
             Some(Period(-1500, -1000))
           ),
@@ -468,7 +496,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_imp_hit",
             "Zzi Imported Hit",
-            PlaceKind.Site,
+            com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
           ),
           List(PlaceName("Zzi Imported Hit"))
@@ -477,7 +505,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_imp_miss",
             "Zzi Imported Miss",
-            PlaceKind.Site,
+            com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-139.0,-36.0]}""")
           ),
           List(PlaceName("Zzi Imported Miss"))
@@ -488,7 +516,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_und_site",
             "Zzi Undated Site",
-            PlaceKind.Site,
+            com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-121.0,-39.0]}""")
           ),
           List(PlaceName("Zzi Undated Site"))
@@ -497,7 +525,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_feat",
             "Zzi Feature",
-            PlaceKind.Feature,
+            com.histmersion.domain.catalogue.Place.Kind.Feature,
             Some("""{"type":"Point","coordinates":[-122.0,-39.0]}""")
           ),
           List(PlaceName("Zzi Feature"))
@@ -506,7 +534,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_mod",
             "Zzi Modern Town",
-            PlaceKind.Site,
+            com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-123.0,-39.0]}"""),
             properties = Some("""{"modern":true}""")
           ),
@@ -518,7 +546,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_und_pol",
             "Zzi Undated Province",
-            PlaceKind.Polity,
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some("""{"type":"Point","coordinates":[-124.0,-39.0]}""")
           ),
           List(PlaceName("Zzi Undated Province"))
@@ -527,14 +555,19 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             "zzi_dat_pol",
             "Zzi Dated Province",
-            PlaceKind.Polity,
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some("""{"type":"Point","coordinates":[-125.0,-39.0]}"""),
             Some(Period(-1500, -1000))
           ),
           List(PlaceName("Zzi Dated Province"))
         ),
         PlaceInput(
-          Place("zzi_people", "Zzi Tribe", PlaceKind.People, Some("""{"type":"Point","coordinates":[-126.0,-39.0]}""")),
+          Place(
+            "zzi_people",
+            "Zzi Tribe",
+            com.histmersion.domain.catalogue.Place.Kind.People,
+            Some("""{"type":"Point","coordinates":[-126.0,-39.0]}""")
+          ),
           List(PlaceName("Zzi Tribe"))
         )
       )

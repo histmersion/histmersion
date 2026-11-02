@@ -2,9 +2,10 @@ package com.histmersion.cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.catalogue.PeriodInput
 import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, MetadataPatch, SourcePatch}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.
@@ -19,7 +20,7 @@ class PatchesSuite extends munit.FunSuite:
       topics: Option[String] = None,
       regions: Option[String] = None,
       summary: Option[String] = None,
-      status: Option[SourceStatus] = None,
+      status: Option[Source.Status] = None,
       title: Option[String] = None,
       period: Option[String] = None,
       addFindings: List[String] = Nil,
@@ -64,8 +65,8 @@ class PatchesSuite extends munit.FunSuite:
     assertEquals(p.regions, Some(List("Anatolia")))
 
   test("--status and --title fold into one metadata part"):
-    val p = build(status = Some(SourceStatus.Superseded), title = Some("New")).toOption.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("New"), status = Some(SourceStatus.Superseded))))
+    val p = build(status = Some(Source.Status.Superseded), title = Some("New")).toOption.get
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some("New"), status = Some(Source.Status.Superseded))))
 
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(
@@ -86,7 +87,7 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--json carries the parts that have no flag, e.g. edges"):
     val p = build(json = Some("""{"edges":{"add":[{"src":"a","dst":"b","kind":"refutes"}]}}""")).toOption.get
-    assertEquals(p.edges, Some(EdgesPatch(add = List(EdgeInput("b", EdgeKind.Refutes, Some("a"))))))
+    assertEquals(p.edges, Some(EdgesPatch(add = List(EdgeInput("b", Edge.Kind.Refutes, Some("a"))))))
     assertEquals(p.tags, None)
 
   // #603: typed edges could only be added through --json
@@ -101,11 +102,11 @@ class PatchesSuite extends munit.FunSuite:
       Some(
         EdgesPatch(
           add = List(
-            EdgeInput("a", EdgeKind.Refutes),
-            EdgeInput("lord1968_oralpoet", EdgeKind.Challenges),
-            EdgeInput("notopoulos1960_achaean", EdgeKind.Challenges)
+            EdgeInput("a", Edge.Kind.Refutes),
+            EdgeInput("lord1968_oralpoet", Edge.Kind.Challenges),
+            EdgeInput("notopoulos1960_achaean", Edge.Kind.Challenges)
           ),
-          remove = List(EdgeInput("old2001_x", EdgeKind.SupersededBy))
+          remove = List(EdgeInput("old2001_x", Edge.Kind.SupersededBy))
         )
       )
     )

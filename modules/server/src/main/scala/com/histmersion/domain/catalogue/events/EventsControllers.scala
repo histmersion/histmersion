@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.values.BundleKind
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -26,6 +25,7 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
+import com.histmersion.util.data.exchange.Bundle
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
@@ -121,8 +121,8 @@ final class EventsControllers(
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
-    rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Event, from, req.to))
-      .map((from, to) => LabelRenamed(BundleKind.Event, from, to))
+    rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Event, from, req.to))
+      .map((from, to) => LabelRenamed(Bundle.Kind.Event, from, to))
 
   def rename(caller: Caller, id: String, to: String => Either[ApiError, String]): Either[ApiError, (String, String)] =
     maintenance.guard("rename_event"):

@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.values.{BundleKind, IssueKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
@@ -56,6 +55,7 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
 import com.histmersion.api.media.{AssetLinkPut, AssetPatch}
 import com.histmersion.api.research.Article
+import com.histmersion.util.data.exchange.Issue
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —
@@ -157,7 +157,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     doi = Some(s"10.1234/$ck"),
     year = Some(2001),
     venue = Some("JNES"),
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = List("hittites"),
     regions = List("Anatolia"),
     tags = List("bronze-age", "z"),
@@ -474,7 +474,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val m = manifestOf(one)
     assertEquals(m.instance.id, instanceId(ds))
     assertEquals(m.files.map(_.path), BundleFiles.all)
-    assertEquals(m.files.find(_.path == BundleKind.Source.file).map(_.lines), Some(3))
+    assertEquals(
+      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Source.file).map(_.lines),
+      Some(3)
+    )
     // the blobs: two bodies, two figures, one version body, the original
     assertEquals(m.blobs.count, 6, es.map(_._1).mkString("\n"))
     assert(es.exists(_._1 == Bundle.blobPath(BundleFormat.sha256Hex(OriginalBytes))))
@@ -499,15 +502,24 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val es = entries(inc)
     val m = manifestOf(inc)
     assertEquals(m.since, Some(asOf))
-    assertEquals(m.files.find(_.path == BundleKind.Source.file).map(_.lines), Some(1))
-    assert(text(es, BundleKind.Source.file).contains(G1))
-    assertEquals(m.files.find(_.path == BundleKind.Finding.file).map(_.lines), Some(0))
+    assertEquals(
+      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Source.file).map(_.lines),
+      Some(1)
+    )
+    assert(text(es, com.histmersion.util.data.exchange.Bundle.Kind.Source.file).contains(G1))
+    assertEquals(
+      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Finding.file).map(_.lines),
+      Some(0)
+    )
     assert(text(es, BundleFiles.Tombstones).contains("asset-link"))
     assert(text(es, BundleFiles.Edges).nonEmpty, "the changed source carries its edges")
     // the one blob a changed line refers to: gamma's body (the receiver may not have it yet)
     assertEquals(m.blobs.count, 1)
     assert(es.exists(_._1.startsWith("blobs/")))
-    assertEquals(m.files.find(_.path == BundleKind.Asset.file).map(_.lines), Some(0))
+    assertEquals(
+      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Asset.file).map(_.lines),
+      Some(0)
+    )
 
   // ── M2 ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -590,7 +602,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       BundleFiles.EventCorrections -> 2,
       BundleFiles.PlaceSiteTypes -> 1
     ).foreach((f, n) => assertEquals(manifestOf(first).files.find(_.path == f).map(_.lines), Some(n), f))
-    assert(text(es, BundleKind.Event.file).contains("\"catalogue\":\"gvp\""), text(es, BundleKind.Event.file))
+    assert(
+      text(es, com.histmersion.util.data.exchange.Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
+      text(es, com.histmersion.util.data.exchange.Bundle.Kind.Event.file)
+    )
     val r1 = importInto(b, first, sb)
     assert(r1.applied, r1.problems.mkString("\n"))
     def one(ds: DataSource, q: String): String = connect(ds)(Sql.raw(q).frag.query[String].run().head)
@@ -669,7 +684,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("newer here")), cfg.limits.chunkChars)
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
-    assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1))
+    assertEquals(
+      r2.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      Some(1)
+    )
     assertEquals(SourceFixtures.load(a, A1).flatMap(_.summary), Some("newer here"))
 
   test("M2: the ledger fast-forwards what changed there only, keeps what changed here only, and reports both"):
@@ -680,21 +698,33 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // changed over there only → fast-forward
     val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work edit")), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
-    assertEquals(r1.counts.find(_.kind == BundleKind.Source).map(_.updated), Some(1), r1.toString)
+    assertEquals(
+      r1.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.updated),
+      Some(1),
+      r1.toString
+    )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // changed here only → kept
     val _ = SourceFixtures.patch(b, A1, SourcePatch(notes = Some("home edit")), cfg.limits.chunkChars)
     val r2 = importInto(b, exportOf(a, sa), sb)
-    assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1), r2.toString)
+    assertEquals(
+      r2.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      Some(1),
+      r2.toString
+    )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // changed on both sides → an open issue: the import is refused, nothing written (M3)…
     val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
     assert(!r3.applied)
-    assertEquals(r3.counts.find(_.kind == BundleKind.Source).map(_.conflicts), Some(1), r3.toString)
+    assertEquals(
+      r3.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.conflicts),
+      Some(1),
+      r3.toString
+    )
     assert(r3.conflicts.exists(_.contains(A1)), r3.conflicts.toString)
-    val conflict = r3.issues.find(_.kind == IssueKind.ChangedBothSides).getOrElse(fail(r3.toString))
+    val conflict = r3.issues.find(_.kind == Issue.Kind.ChangedBothSides).getOrElse(fail(r3.toString))
     assert(r3.problems.exists(_.startsWith(conflict.id)), r3.problems.toString)
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
@@ -710,7 +740,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // a deletion over there of a row unchanged here since the last import deletes it here
     val _ = Transactor(a).transact(GoalRepo.deleteIn("zzb_goal_sub"))
     val r4 = importInto(b, exportOf(a, sa), sb)
-    assertEquals(r4.counts.find(_.kind == BundleKind.Goal).map(_.deleted), Some(1), r4.toString)
+    assertEquals(
+      r4.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Goal).map(_.deleted),
+      Some(1),
+      r4.toString
+    )
     assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zzb_goal_sub'"), 0)
     // a rename over there is followed here: the citekey, its findings and an alias
     val _ = SourceFixtures.rename(a, G1, "zzb2004_gamma")
@@ -747,7 +781,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     exec(b, "DELETE FROM assets WHERE name = 'fig1.png'")
     val r = importInto(b, bundle, sb)
     assert(r.applied, r.problems.mkString("\n"))
-    assertEquals(r.counts.find(_.kind == BundleKind.Asset).map(_.skippedDeleted), Some(1), r.toString)
+    assertEquals(
+      r.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Asset).map(_.skippedDeleted),
+      Some(1),
+      r.toString
+    )
     assertEquals(count(b, "SELECT count(*)::int FROM assets WHERE name = 'fig1.png'"), 0)
 
   test("M2/M3: records another instance has under the same labels are refused — every one listed, nothing written"):
@@ -762,7 +800,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // the same work (same DOI) under another uid: merging is merge apply's (M5); its findings go with it
     assert(r.problems.exists(p => p.contains(s"source $A1") && p.contains("merge apply")), r.problems.mkString("\n"))
     assert(r.problems.exists(_.contains("article zzb_topic")), r.problems.mkString("\n"))
-    assert(r.issues.exists(i => i.kind == IssueKind.ArticleDiverged && i.open), r.issues.toString)
+    assert(r.issues.exists(i => i.kind == Issue.Kind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
 
   test("M2: a dry run reports and writes nothing"):
@@ -774,7 +812,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!r.applied)
     assert(r.dryRun)
     assertEquals(r.problems, Nil)
-    assertEquals(r.counts.find(_.kind == BundleKind.Source).map(_.inserted), Some(3))
+    assertEquals(
+      r.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.inserted),
+      Some(3)
+    )
     assert(java.util.Arrays.equals(exportOf(b, sb), empty), "a dry run wrote something")
 
   test("verify: a changed entity line, a corrupt blob and a truncated file are each reported"):
@@ -790,12 +831,16 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       out.toByteArray
     def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some("999"))
     val edited = rebuild { case (p, b) =>
-      if p == BundleKind.Goal.file then p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
+      if p == com.histmersion.util.data.exchange.Bundle.Kind.Goal.file then
+        p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
       else p -> b
     }
     val v1 = verify(edited)
     assert(!v1.ok)
-    assert(v1.problems.exists(_.contains(s"${BundleKind.Goal.file}: sha256")), v1.problems.mkString("\n"))
+    assert(
+      v1.problems.exists(_.contains(s"${com.histmersion.util.data.exchange.Bundle.Kind.Goal.file}: sha256")),
+      v1.problems.mkString("\n")
+    )
     assert(v1.problems.exists(_.contains("does not match its content")), v1.problems.mkString("\n"))
     val corrupt = rebuild { case (p, b) =>
       if p.startsWith("blobs/") && b.length > 5 then p -> b.updated(0, (b(0) ^ 1).toByte) else p -> b

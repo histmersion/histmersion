@@ -9,5 +9,5 @@ import scala.scalajs.js
   * `.status-badge.st-<status>`) and the word ([[Wording.status]]); the stored value on hover.
   */
 object StatusBadge:
-  def apply(s: com.histmersion.values.SourceStatus): HtmlElement =
+  def apply(s: com.histmersion.domain.library.Source.Status): HtmlElement =
     span(cls := s"status-badge st-${s.wire}", title := s"Status: ${Wording.status(s)} (${s.wire})", Wording.status(s))

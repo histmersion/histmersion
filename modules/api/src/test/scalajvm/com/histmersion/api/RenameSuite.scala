@@ -2,9 +2,9 @@ package com.histmersion.api
 
 import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.library.{Rename, RenameCount, RenameCounts, SourceDetail, SourceRenamed}
 import com.histmersion.api.research.ArticleLinks
+import com.histmersion.domain.library.Source
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how
   * finding ids and composite ids move, and the link rewrite that must change the link target and nothing else.
@@ -80,7 +80,7 @@ class RenameSuite extends munit.FunSuite:
       List("Page"),
       Some(1959),
       None,
-      SourceStatus.Foundational,
+      Source.Status.Foundational,
       Nil,
       Nil,
       Nil,

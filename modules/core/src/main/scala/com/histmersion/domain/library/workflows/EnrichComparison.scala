@@ -4,7 +4,6 @@ import com.histmersion.domain.{AgentVerify, CompareRuns}
 import com.histmersion.domain.CompareRuns.{EnrichSide, Run, Step}
 import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, VerifiedFindings}
 import com.histmersion.domain.automation.agents.OutputComparison
-import com.histmersion.values.StepStatus
 
 import io.circe.parser.decode
 import scala.annotation.tailrec
@@ -27,8 +26,8 @@ object EnrichComparison extends OutputComparison:
   def quoteCheck(steps: List[Step]): (Int, Int) =
     @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
       rest match
-        case Nil                                           => (checked, passed)
-        case s :: tail if s.status == StepStatus.Done.wire =>
+        case Nil                                                                              => (checked, passed)
+        case s :: tail if s.status == com.histmersion.domain.automation.Step.Status.Done.wire =>
           s.output.flatMap(decode[VerifiedFindings](_).toOption) match
             case Some(v) =>
               val n = v.proposed.getOrElse(v.findings.size)

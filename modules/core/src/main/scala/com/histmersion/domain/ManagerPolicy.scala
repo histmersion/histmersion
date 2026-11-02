@@ -7,7 +7,9 @@ import com.histmersion.api.given
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
-import com.histmersion.values.{ApprovalState, ManagerKind, ManagerState, RunState}
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Manager
+import com.histmersion.domain.automation.Run
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an item after its
   * run settled, the order items are dispatched in, how many runs a manager may start, the backoff, and the hold
@@ -38,7 +40,7 @@ object ManagerPolicy:
 
   object ReviewSettings:
     /** The settings of a manager of kind `k`. */
-    def forKind(k: ManagerKind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
+    def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(k, m).maxRuns))
       ReviewSettings(
         maxRuns,
@@ -55,14 +57,14 @@ object ManagerPolicy:
         math.max(1, m.maxBackoffMinutes)
       )
 
-    private def simple(k: ManagerKind, m: ManagerDefaults): ManagerRunDefaults = k match
-      case ManagerKind.Review => m.review
-      case ManagerKind.Enrich => m.enrich
-      case ManagerKind.Watch  => m.watch
-      case _                  => m.seed
+    private def simple(k: Manager.Kind, m: ManagerDefaults): ManagerRunDefaults = k match
+      case Manager.Kind.Review => m.review
+      case Manager.Kind.Enrich => m.enrich
+      case Manager.Kind.Watch  => m.watch
+      case _                   => m.seed
 
     /** The defaults of a manager of kind `k` (a kind whose defaults say more builds them itself). */
-    def defaultsFor(k: ManagerKind, m: ManagerDefaults): ManagerConfig =
+    def defaultsFor(k: Manager.Kind, m: ManagerDefaults): ManagerConfig =
       val s = simple(k, m)
       ManagerConfig(
         maxRuns = Some(s.maxRuns),
@@ -180,13 +182,13 @@ object ManagerPolicy:
       failures: Int,
       state: ItemState,
       run: String,
-      status: RunState,
+      status: Run.State,
       error: Option[String],
       facts: => StepFacts,
       now: Instant
   ): Next =
     status match
-      case RunState.Done =>
+      case Run.State.Done =>
         facts match
           case StepFacts.Finished(o)      => Next.Done(o, state)
           case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
@@ -208,8 +210,8 @@ object ManagerPolicy:
                 n,
                 s"$o ($n of ${s.maxFailures}); again"
               )
-      case RunState.Cancelled => Next.Stop("stopped: its run was cancelled", None, state)
-      case _                  =>
+      case Run.State.Cancelled => Next.Stop("stopped: its run was cancelled", None, state)
+      case _                   =>
         val n = failures + 1
         val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures then
@@ -229,7 +231,7 @@ object ManagerPolicy:
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
   def decided(state: String, result: Option[String]): Option[String] =
-    ApprovalState.parse(state).filter(_ != ApprovalState.Open).map { st =>
+    Approval.State.parse(state).filter(_ != Approval.State.Open).map { st =>
       st.wire + result.filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}")
     }
 
@@ -322,7 +324,7 @@ object ManagerPolicy:
 
   /** The status line a manager shows. */
   def statusNote(
-      state: ManagerState,
+      state: Manager.State,
       starved: Option[String],
       capacity: Int,
       pending: Int,
@@ -330,8 +332,8 @@ object ManagerPolicy:
       inFlight: Int,
       budget: Option[String]
   ): String =
-    if state == ManagerState.Stopped then "stopped"
-    else if state == ManagerState.Paused then
+    if state == Manager.State.Stopped then "stopped"
+    else if state == Manager.State.Paused then
       (if inFlight > 0 then s"paused (${Plural.count(inFlight, "run")} in flight)" else "paused"
     )
     else

@@ -5,8 +5,8 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.AgentVerify.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
+import com.histmersion.domain.library.Source
 
 class AgentVerifySuite extends munit.FunSuite:
 
@@ -73,7 +73,7 @@ class AgentVerifySuite extends munit.FunSuite:
     assert(periodProblems(-3000, -2900, 3000000, Some(Period(-1700, -1200))).exists(_.contains("outside")))
 
   test("status vocabulary: a typo is rejected, not turned into unassessed"):
-    assertEquals(status("Current"), Right(SourceStatus.Current))
+    assertEquals(status("Current"), Right(Source.Status.Current))
     assert(status("debunk").isLeft)
 
   test("links: dangling targets and escaped brackets are problems"):

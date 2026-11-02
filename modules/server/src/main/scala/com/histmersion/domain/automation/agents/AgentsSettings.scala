@@ -11,31 +11,31 @@ import com.histmersion.config.{
   ScheduledRefresh
 }
 import com.histmersion.domain.{ApprovalModes, PlanGoal, ReadSchedule}
-import com.histmersion.values.{ApprovalKind, ApprovalMode}
 import com.histmersion.domain.automation.{AgentRole, ProviderKind}
 
 import java.time.Duration
+import com.histmersion.domain.automation.Approval
 
 extension (c: AgentApprovalsConfig)
-  def statusMode: ApprovalMode = ApprovalModes.configured(c.statusChange)
-  def edgeMode: ApprovalMode = ApprovalModes.configured(c.edges)
+  def statusMode: Approval.Mode = ApprovalModes.configured(c.statusChange)
+  def edgeMode: Approval.Mode = ApprovalModes.configured(c.edges)
 
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
-  def publishMode: ApprovalMode = ApprovalModes.configured(c.articlePublish)
+  def publishMode: Approval.Mode = ApprovalModes.configured(c.articlePublish)
 
   /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
-  def filterMode: ApprovalMode = ApprovalModes.configured(c.articleFilter)
+  def filterMode: Approval.Mode = ApprovalModes.configured(c.articleFilter)
 
   /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the autopilot's auto
     * approvals): `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`
     * approves in the run at once, unchecked, and the supervisor only decides what was left open. Any other kind, or any
     * other value, is a person's.
     */
-  def checked(kind: ApprovalKind): Boolean = kind match
-    case ApprovalKind.ArticlePlan    => AgentApprovalsConfig.isChecked(c.articlePlan)
-    case ApprovalKind.GoalPlan       => AgentApprovalsConfig.isChecked(c.goalPlan)
-    case ApprovalKind.ArticlePublish => AgentApprovalsConfig.isChecked(c.articlePublish)
-    case _                           => false
+  def checked(kind: Approval.Kind): Boolean = kind match
+    case Approval.Kind.ArticlePlan    => AgentApprovalsConfig.isChecked(c.articlePlan)
+    case Approval.Kind.GoalPlan       => AgentApprovalsConfig.isChecked(c.goalPlan)
+    case Approval.Kind.ArticlePublish => AgentApprovalsConfig.isChecked(c.articlePublish)
+    case _                            => false
 
 extension (c: AgentsConfig)
   /** The HTTP provider block for a kind; the CLI providers have none. */

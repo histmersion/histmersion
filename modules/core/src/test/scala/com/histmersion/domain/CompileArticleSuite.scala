@@ -6,10 +6,10 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.automation.GoalPlans.DraftMode
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.automation.GoalPlans
 import com.histmersion.api.research.{ArticleFilter, CoverageReason}
+import com.histmersion.domain.library.Source
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model, and the code
   * self-check of a draft — fatal problems always sent back, the rest sent back until the last attempt, then listed for
@@ -65,9 +65,9 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(e.notUsed, Some("about Egypt, not the Aegean"))
 
   private val facts = List(
-    SourceFact("a2019_tin", "Tin", Some(2019), SourceStatus.Current),
-    SourceFact("b2024_iso", "Isotopes", Some(2024), SourceStatus.Contested),
-    SourceFact("c2001_old", "Old", Some(2001), SourceStatus.Current)
+    SourceFact("a2019_tin", "Tin", Some(2019), Source.Status.Current),
+    SourceFact("b2024_iso", "Isotopes", Some(2024), Source.Status.Contested),
+    SourceFact("c2001_old", "Old", Some(2001), Source.Status.Current)
   )
   private def claim(ck: String) = Claim(ck, s"claim of $ck", "q", None, None, Confidence.Medium, 1.0)
   private val extracted = List(

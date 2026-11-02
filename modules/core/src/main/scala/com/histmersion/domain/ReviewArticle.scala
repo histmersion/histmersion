@@ -26,8 +26,8 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.domain.AgentProposals.{Proposal, ProposalAnswer}
-import com.histmersion.values.ApprovalKind
 import com.histmersion.WireEnumValues
+import com.histmersion.domain.automation.Approval
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the
   * mechanical checks, the validation of each reviewer's answer, the merge of the panel (worst verdict wins,
@@ -1268,7 +1268,7 @@ object ReviewArticle:
           case None =>
             val proposed = f.pair.exists(ref =>
               proposals.exists(pp =>
-                pp.kind == ApprovalKind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))
+                pp.kind == Approval.Kind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))
               )
             )
             val why = f.pair.fold("it names no checklist pair")(ref =>

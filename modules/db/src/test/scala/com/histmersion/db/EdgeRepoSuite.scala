@@ -9,7 +9,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.{Edge, NeighborTarget, Source}
 import com.histmersion.api.research.Article
@@ -35,7 +34,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     doi = Some(s"10.1/$ck"),
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = topics,
     regions = Nil,
     tags = Nil,

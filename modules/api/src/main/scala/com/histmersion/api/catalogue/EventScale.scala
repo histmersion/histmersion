@@ -1,5 +1,4 @@
 package com.histmersion.api.catalogue
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.given
 
 /** Events follow CIDOC-CRM's four-point time-span: `notBefore`/`beginBy`/`endFrom`/`notAfter`, the outer span covering
@@ -60,9 +59,12 @@ object EventScale:
 
   def ofPlaceKind(placeKind: String): Option[String] =
     placeKind.trim.toLowerCase match
-      case PlaceKind.Site | PlaceKind.Feature                     => Some(Local)
-      case PlaceKind.Region | PlaceKind.Polity | PlaceKind.People => Some(Regional)
-      case _                                                      => None
+      case com.histmersion.domain.catalogue.Place.Kind.Site | com.histmersion.domain.catalogue.Place.Kind.Feature =>
+        Some(Local)
+      case com.histmersion.domain.catalogue.Place.Kind.Region | com.histmersion.domain.catalogue.Place.Kind.Polity |
+          com.histmersion.domain.catalogue.Place.Kind.People =>
+        Some(Regional)
+      case _ => None
 
   def ofGeometry(geometryType: String): Option[String] =
     geometryType.trim.toLowerCase.replace("st_", "") match

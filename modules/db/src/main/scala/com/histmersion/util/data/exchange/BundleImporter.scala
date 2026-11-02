@@ -18,7 +18,6 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
-import com.histmersion.values.{BundleKind, IssueKind}
 import com.histmersion.util.data.exchange.DecisionKind
 
 import com.augustnagro.magnum.*
@@ -26,6 +25,7 @@ import io.circe.syntax.*
 import java.io.InputStream
 import java.util.UUID
 import javax.sql.DataSource
+import com.histmersion.util.data.exchange.Issue
 
 /** `bundle import` and `merge apply` over the registry's carried kinds (docs/research-merge-import.md §6–§7): ONE
   * transaction, holding the import lock, in two passes over the bundle:
@@ -74,7 +74,7 @@ object BundleImporter:
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
   private def counted(decided: List[MergePlanner.Row]): List[BundleKindCounts] =
-    BundleKind.values.toList
+    com.histmersion.util.data.exchange.Bundle.Kind.values.toList
       .map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
       .filter(c =>
         c.inserted + c.updated + c.unchanged + c.keptLocal + c.conflicts + c.deleted + c.skippedDeleted + c.held > 0
@@ -115,7 +115,7 @@ object BundleImporter:
       holding.map(i => s"${named(i)}: open — decide it (`merge plan --write-template`)") ++
       plan.resolutionErrors.map(e => s"resolution $e") ++ planned.needsApply
     val conflictIssues =
-      plan.issues.filter(i => i.kind == IssueKind.ChangedBothSides || i.kind == IssueKind.DeletedThereChangedHere)
+      plan.issues.filter(i => i.kind == Issue.Kind.ChangedBothSides || i.kind == Issue.Kind.DeletedThereChangedHere)
     val conflicts = conflictIssues.map(i => named(i) + i.decision.fold(" — open")(d => s" — decided ${d.wire}"))
     val counts = counted(decided)
     val needed = neededBlobs(es, writes)

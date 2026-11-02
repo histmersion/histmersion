@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import com.histmersion.api.exchange.BundleKindCounts
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.values.BundleKind
+import com.histmersion.util.data.exchange.Bundle
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md
   * §7.3): a foreign row is the local row with the same uid, or no row. Pure; the importer gathers the local state and
@@ -90,7 +90,7 @@ object BundlePlan:
   /** The per-kind tally of the report. A recorded tombstone of a row that never existed here changes nothing visible,
     * so it counts as unchanged.
     */
-  def counts(kind: BundleKind, ds: Iterable[Decision]): BundleKindCounts =
+  def counts(kind: Bundle.Kind, ds: Iterable[Decision]): BundleKindCounts =
     val decisions = ds.iterator
     @tailrec def loop(
         inserted: Int,

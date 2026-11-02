@@ -3,8 +3,8 @@ package com.histmersion.domain
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
-import com.histmersion.values.RunState
 import com.histmersion.domain.library.Doi
+import com.histmersion.domain.automation.Run
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
   * now (the previous run, the daily/monthly cost caps, `max-concurrent-runs`), its cost cap, and the DOIs an
@@ -22,14 +22,14 @@ object Scheduling:
     case Defer(reason: String)
 
   /** A run that has not settled: a schedule does not start another beside it. */
-  def unsettled(s: RunState): Boolean = !s.isTerminal
+  def unsettled(s: Run.State): Boolean = !s.isTerminal
 
   /** Before a scheduled run starts: its previous run must have settled, today's and this month's agent spend must be
     * under the caps (checked BEFORE the start, so a scheduled run never begins past a cap), and fewer than
     * `maxConcurrent` runs may be queued or running.
     */
   def decide(
-      previous: Option[RunState],
+      previous: Option[Run.State],
       spentDay: BigDecimal,
       spentMonth: BigDecimal,
       dailyUsd: Double,

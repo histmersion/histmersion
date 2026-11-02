@@ -4,7 +4,7 @@ import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaSample}
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.{Licence, LicenceFamily}
+import com.histmersion.domain.Licence
 import com.histmersion.domain.media.assets.{ProviderAsset, Rights}
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.media.MediaText
@@ -51,7 +51,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
       case Right(rights) =>
         val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.getOrElse("").trim
         val read = Licence.ofStatement(stated)
-        val key = Some(if read.id.value.isEmpty then LicenceFamily.Unknown.wire else read.id.value)
+        val key = Some(if read.id.value.isEmpty then Licence.Family.Unknown.wire else read.id.value)
         item.withheld match
           case Some(why) => Verdict(key, Left(why))
           case None      =>

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
@@ -14,7 +13,7 @@ final case class MetadataPatch(
     year: Option[Int] = None,
     venue: Option[String] = None,
     doi: Option[String] = None,
-    status: Option[SourceStatus] = None,
+    status: Option[com.histmersion.domain.library.Source.Status] = None,
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     clear: List[MetadataField] = Nil

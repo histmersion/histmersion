@@ -3,9 +3,9 @@ package com.histmersion.domain.automation.goals
 import com.histmersion.api.automation.GoalPut
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
-import com.histmersion.values.GoalLinkKind
 
 import java.time.Instant
+import com.histmersion.domain.automation.Goal
 
 /** The contract the focus's reads and records keep: every goal with what the focus recorded; the goals of linked
   * sources and articles; each goal's last stop and its sources.
@@ -43,9 +43,9 @@ abstract class FocusServiceContract extends EngineStoreSuite:
 
   stest("the goals linked to sources and articles; each goal's sources; its last stop") { s =>
     List("zz-a", "zz-b").foreach(g => assert(s.goals.put(g, GoalPut(g)).isRight))
-    assert(s.goals.link("zz-b", GoalLinkKind.Source, "zz2020_s", None))
-    assert(s.goals.link("zz-a", GoalLinkKind.Source, "zz2020_s", None))
-    assert(s.goals.link("zz-a", GoalLinkKind.Article, "zz-art", None))
+    assert(s.goals.link("zz-b", Goal.LinkKind.Source, "zz2020_s", None))
+    assert(s.goals.link("zz-a", Goal.LinkKind.Source, "zz2020_s", None))
+    assert(s.goals.link("zz-a", Goal.LinkKind.Article, "zz-art", None))
     assertEquals(f(s).goalsOf("source", List("zz2020_s", "zz2020_none")), Map("zz2020_s" -> List("zz-a", "zz-b")))
     assertEquals(f(s).goalsOf("article", List("zz-art")), Map("zz-art" -> List("zz-a")))
     assertEquals(f(s).goalsOf("source", Nil), Map.empty)

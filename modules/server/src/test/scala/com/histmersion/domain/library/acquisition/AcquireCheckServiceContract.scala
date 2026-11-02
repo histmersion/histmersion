@@ -3,7 +3,6 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Source
 import com.histmersion.domain.{AcquireRecheck, Caller}
-import com.histmersion.values.SourceStatus
 
 import java.time.Instant
 
@@ -15,7 +14,24 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   private val T0 = Instant.parse("2026-10-20T10:00:00Z")
 
   private def source(ck: String, doi: Option[String], body: Option[String]) =
-    Source(ck, ck, Nil, doi, Some(2000), None, SourceStatus.Current, Nil, Nil, Nil, None, None, None, None, None, None)
+    Source(
+      ck,
+      ck,
+      Nil,
+      doi,
+      Some(2000),
+      None,
+      com.histmersion.domain.library.Source.Status.Current,
+      Nil,
+      Nil,
+      Nil,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
       .copy(ocrMarkdown = body)
 
   stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>

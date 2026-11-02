@@ -3,7 +3,6 @@ package com.histmersion.api
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import io.circe.parser.parse
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{
   ManualPlaceName,
   Period,
@@ -17,13 +16,14 @@ import com.histmersion.api.catalogue.{
   PlaceOverrides,
   PlaceOverrideSet
 }
+import com.histmersion.domain.catalogue.Place
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
 class PlaceEditsSuite extends munit.FunSuite:
 
   private def add(
       label: String = "Gornji Grad",
-      kind: String = PlaceKind.Site,
+      kind: String = Place.Kind.Site,
       lon: Double = 15.98,
       lat: Double = 45.81,
       source: String = "Wikidata Q1003020"
@@ -57,7 +57,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     val r = PlaceEdits.toInput(in).fold(e => fail(e.message), identity)
     assertEquals(r.place.id, "local_gornji_grad")
-    assertEquals(r.place.kind, PlaceKind.Site)
+    assertEquals(r.place.kind, Place.Kind.Site)
     assertEquals(r.place.period, Some(Period(-1300, -1100)))
     assertEquals(r.place.source, Some("Wikidata Q1003020"))
     assertEquals(

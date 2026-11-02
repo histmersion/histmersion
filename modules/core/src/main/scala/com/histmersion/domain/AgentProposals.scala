@@ -6,8 +6,9 @@ import com.histmersion.api.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-
-import com.histmersion.values.{ApprovalKind, ApprovalMode, EdgeKind, SourceStatus}
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
   * the pure rules that decide whether code applies one at once or records it for a person
@@ -18,17 +19,18 @@ object AgentProposals:
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
     */
-  val EdgeKinds: List[EdgeKind] = List(EdgeKind.Challenges, EdgeKind.Refutes, EdgeKind.Updates, EdgeKind.SupersededBy)
+  val EdgeKinds: List[Edge.Kind] =
+    List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy)
 
   /** A verified proposal. For a status change, `status` is the new status of `citekey`; for an edge, `edgeKind` runs
     * from `citekey` to `target` (`superseded_by` from the older source to the newer). `quote` is the passage the
     * proposal rests on, already found in the record by code.
     */
   final case class Proposal(
-      kind: ApprovalKind,
+      kind: Approval.Kind,
       citekey: String,
-      status: Option[SourceStatus] = None,
-      edgeKind: Option[EdgeKind] = None,
+      status: Option[Source.Status] = None,
+      edgeKind: Option[Edge.Kind] = None,
       target: Option[String] = None,
       evidence: String = "",
       quote: Option[String] = None
@@ -36,16 +38,16 @@ object AgentProposals:
         KindlingsSchema:
     /** One line for a person: what would change. */
     def describe: String = kind match
-      case ApprovalKind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
-      case ApprovalKind.Edge         =>
-        s"edge [[$citekey]] ${edgeKind.fold("?")(EdgeKind.wireOf)} [[${target.getOrElse("?")}]]"
+      case Approval.Kind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
+      case Approval.Kind.Edge         =>
+        s"edge [[$citekey]] ${edgeKind.fold("?")(Edge.Kind.wireOf)} [[${target.getOrElse("?")}]]"
       // a plan or an article is never a source proposal (it is carried by its own approval)
       case k => s"${k.wire} (not a source change)"
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
     def patch: SourcePatch = kind match
-      case ApprovalKind.StatusChange => SourcePatch(metadata = Some(MetadataPatch(status = status)))
-      case ApprovalKind.Edge         =>
+      case Approval.Kind.StatusChange => SourcePatch(metadata = Some(MetadataPatch(status = status)))
+      case Approval.Kind.Edge         =>
         SourcePatch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target yield EdgeInput(t, k)).toList)))
       case _ => SourcePatch()
 
@@ -67,17 +69,17 @@ object AgentProposals:
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
     * the edge mode.
     */
-  def route(p: Proposal, current: Option[SourceStatus], statusMode: ApprovalMode, edgeMode: ApprovalMode): Route =
+  def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
-      case ApprovalKind.StatusChange =>
+      case Approval.Kind.StatusChange =>
         if p.status.isEmpty || p.status == current then Route.Skip(s"already ${current.fold("?")(_.wire)}")
-        else if current.contains(SourceStatus.Unassessed) &&
-          p.status.exists(s => s == SourceStatus.Current || s == SourceStatus.Foundational)
+        else if current.contains(Source.Status.Unassessed) &&
+          p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
-        else if statusMode == ApprovalMode.Auto then Route.Apply
+        else if statusMode == Approval.Mode.Auto then Route.Apply
         else Route.Ask
-      case ApprovalKind.Edge =>
-        if edgeMode == ApprovalMode.Auto then Route.Apply else Route.Ask
+      case Approval.Kind.Edge =>
+        if edgeMode == Approval.Mode.Auto then Route.Apply else Route.Ask
       case k => Route.Skip(s"${k.wire} is not a source change")
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
@@ -140,20 +142,20 @@ object AgentProposals:
               .flatMap(AgentVerify.status)
               .left
               .map(m => s"$label: $m")
-            _ <- Either.cond(st != SourceStatus.Unassessed, (), s"$label: unassessed is not a change to propose")
+            _ <- Either.cond(st != Source.Status.Unassessed, (), s"$label: unassessed is not a change to propose")
             q <- quoted(List(ck))
-          yield Proposal(ApprovalKind.StatusChange, ck, status = Some(st), evidence = a.evidence.trim, quote = Some(q))
+          yield Proposal(Approval.Kind.StatusChange, ck, status = Some(st), evidence = a.evidence.trim, quote = Some(q))
         case "edge" =>
           for
             k <- a.edgeKind
-              .flatMap(EdgeKind.fromWire)
+              .flatMap(Edge.Kind.fromWire)
               .filter(EdgeKinds.contains)
-              .toRight(s"$label: edge kind must be one of ${EdgeKinds.map(EdgeKind.wireOf).mkString(", ")}")
+              .toRight(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}")
             t <- a.target.map(_.trim).filter(isCitekey).toRight(s"$label: the edge target is not a citekey")
             _ <- Either.cond(t != ck, (), s"$label: an edge from a source to itself")
             q <- quoted(List(ck, t))
           yield Proposal(
-            ApprovalKind.Edge,
+            Approval.Kind.Edge,
             ck,
             edgeKind = Some(k),
             target = Some(t),

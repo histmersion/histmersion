@@ -25,10 +25,10 @@ import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant
-import com.histmersion.values.{GoalStatus, SourceStatus}
 import com.histmersion.api.automation.{AgentScheduler, Goal, GoalPatch, GoalPut, Queue}
 import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
 import com.histmersion.api.research.{ArticleFilter, ArticlePatch, ArticlePlans, ArticlePut, CoverageReason}
+import com.histmersion.domain.library.Source
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the autopilot"): one switch
   * carries a planned goal through plan → sources → articles → review to `reviewed` with the checked auto approvals on —
@@ -126,7 +126,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
             title = "Bronze Age tin",
             year = Some(2019),
             topics = List("zzagent_tin"),
-            status = Some(SourceStatus.Current),
+            status = Some(Source.Status.Current),
             summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
             body = Some(
               "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
@@ -150,7 +150,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
+        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
         .isRight
     )
     assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
@@ -233,7 +233,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         on.changes.contains(s"$ReviewId resumed") && on.changes.contains(s"$EnrichId resumed"),
       on.changes
     )
-    assertEquals(status(Goal), GoalStatus.Seeding, "managed: seeding")
+    assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(Goal))).get
     assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger("@weekly", seedId(Goal)))))
     assertEquals(
@@ -307,7 +307,11 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     clock.tick(a)
     assertEquals(item(seedId(Goal), ArticleCompile, "zzagent_new").status, "done")
     clock.tick(a)
-    assertEquals(status(Goal), GoalStatus.Compiled, "an article, nothing left to compile")
+    assertEquals(
+      status(Goal),
+      com.histmersion.domain.automation.Goal.Status.Compiled,
+      "an article, nothing left to compile"
+    )
 
     // 4. the review (settled by hand: it converged) → the goal is reviewed
     val rev = runOf(ReviewId, ArticleReview, "zzagent_new")
@@ -317,7 +321,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     clock.tick(a)
     assertEquals(item(ReviewId, ArticleReview, "zzagent_new").status, "done")
     clock.tick(a)
-    assertEquals(status(Goal), GoalStatus.Reviewed)
+    assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Reviewed)
     assert(
       connect(ds)(ManagerRepo.events(seedId(Goal), None, 200))
         .exists(e => e.kind == Feed.Autopilot && e.text.contains("compiled → reviewed"))
@@ -326,7 +330,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val st = a.managing.autopilot
     note("autopilot, the goal reviewed", a.autopilotPage(st))
     val g = st.goals.find(_.slug == Goal).get
-    assertEquals((g.status, g.articles, g.openApprovals), (GoalStatus.Reviewed, 1, 0))
+    assertEquals(
+      (g.status, g.articles, g.openApprovals),
+      (com.histmersion.domain.automation.Goal.Status.Reviewed, 1, 0)
+    )
     assert(g.doneLast7 >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
@@ -396,7 +403,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     List(Goal, "zzagent-apchild", "zzagent-apgrand").foreach { g =>
       assertEquals(connect(ds)(ManagerRepo.get(seedId(g))).map(_.state), Some("active"), g)
       assertEquals(connect(ds)(ManagerRepo.get(watchId(g))).map(_.state), Some("active"), g)
-      assertEquals(status(g), GoalStatus.Seeding, g)
+      assertEquals(status(g), com.histmersion.domain.automation.Goal.Status.Seeding, g)
     }
     Clock().tick(a)
     assertEquals(
@@ -444,7 +451,9 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("a reviewed goal gets a watcher on the slow cron and no seeding manager"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    assert(h.goals.patch(Goal, GoalPatch(status = Some(GoalStatus.Reviewed))).isRight)
+    assert(
+      h.goals.patch(Goal, GoalPatch(status = Some(com.histmersion.domain.automation.Goal.Status.Reviewed))).isRight
+    )
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     assertEquals(connect(ds)(ManagerRepo.get(seedId(Goal))), None)
     assertEquals(

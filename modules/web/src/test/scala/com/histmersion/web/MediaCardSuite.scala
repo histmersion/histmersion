@@ -1,12 +1,13 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{EventSummary, PlaceLink, PlaceSummary}
 import com.histmersion.api.library.{SourceDetail, SourceWithFindings}
 import com.histmersion.api.media.{MediaCount, MediaGeoHit, MediaProvider, MediaThumb}
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Source
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first picture with its
   * credit and licence, an event element previews an event, the layer's filter menus and popup. Pure.
@@ -26,7 +27,7 @@ class MediaCardSuite extends munit.FunSuite:
   )
 
   private val mycenae = PlaceDetail(
-    PlaceSummary("pleiades_570491", "Mycenae", PlaceKind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
+    PlaceSummary("pleiades_570491", "Mycenae", Place.Kind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
     geometry = Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
     parents = Nil,
     children = Nil,
@@ -52,7 +53,7 @@ class MediaCardSuite extends munit.FunSuite:
       List("Anthony, David W."),
       Some(2007),
       None,
-      SourceStatus.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       Nil,

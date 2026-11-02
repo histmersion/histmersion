@@ -2,12 +2,12 @@ package com.histmersion.web.settings
 
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.automation.ListFilters
-import com.histmersion.values.JobKind
 import com.histmersion.api.automation.Activity.Entry
 import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.util.jobs.Job
 
 /** The downloads under way — the background map, the gazetteers, the event catalogues, the pictures — each with Pause,
   * Resume and Cancel in place (the jobs' own controls). Asked again while one is going.
@@ -15,7 +15,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object DownloadJobs:
 
   /** The job kinds Data and downloads follows. */
-  val Kinds: List[JobKind] =
+  val Kinds: List[Job.Kind] =
     List(
       com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind,
       com.histmersion.api.exchange.ExchangeJobKinds.Init.kind,
@@ -41,7 +41,7 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
-  def busy(kind: JobKind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.value))
+  def busy(kind: Job.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.value))
 
   def panel: HtmlElement =
     div(

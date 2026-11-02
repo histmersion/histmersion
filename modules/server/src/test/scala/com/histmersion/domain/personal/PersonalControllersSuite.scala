@@ -9,12 +9,12 @@ import com.histmersion.domain.personal.marks.Readable
 import com.histmersion.domain.personal.notes.NoteService
 import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.RunId
 import com.histmersion.{Latitude, Longitude, Year}
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.ItemKind
+import com.histmersion.domain.automation.Run
 
 /** What the endpoints answer, over the in-memory services: inputs checked, the codes the statuses come from, the
   * caller's own marks.
@@ -133,7 +133,7 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("the marks are the caller's own; an automated run has none"):
     val c = fixture()
-    val run = Caller.Automation(RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b"))
+    val run = Caller.Automation(Run.Id("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b"))
     assert(c.listBookmarks(run, None, None, None).isLeft)
     assert(c.addBookmark(run, BookmarkNew(Target.item(ItemKind.Source, "zz"))).isLeft)
     val someone = Caller.Person(com.histmersion.UserId("someone"), Caller.Role.Reader)

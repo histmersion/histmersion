@@ -5,7 +5,6 @@ import io.circe.Decoder
 import io.circe.parser.decode
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
-import com.histmersion.values.{RunState, StepStatus}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
   * side by side; `billing` names how a configured model is paid for (a plan pool or a price — the server knows, from
@@ -162,7 +161,7 @@ object CompareRuns:
         StepRow(n, runs.map(d => Option(d.steps.filter(_.name == n)).filter(_.nonEmpty).map(stepSide(_, billing))))
       )
       val notes = runs.collect {
-        case d if d.run.status != RunState.Done.wire =>
+        case d if d.run.status != com.histmersion.domain.automation.Run.State.Done.wire =>
           s"run ${d.run.id.take(8)} is ${d.run.status}, not done: its outputs are what it had so far"
       }
       val enrich = outputs.enrich(runs)
@@ -208,7 +207,7 @@ object CompareRuns:
       attempts.map(_.costUsd).sum,
       attempts.map(seconds).sum,
       attempts.size,
-      attempts.count(_.status == StepStatus.Failed.wire),
+      attempts.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire),
       attempts.flatMap(_.firstCallTokens).headOption,
       Option.when(attempts.exists(_.turns.isDefined))(attempts.flatMap(_.turns).sum)
     )
@@ -225,13 +224,13 @@ object CompareRuns:
       d.steps.map(_.costUsd).sum,
       d.steps.map(seconds).sum,
       d.steps.size,
-      d.steps.count(_.status == StepStatus.Failed.wire)
+      d.steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
   def output[O: Decoder](d: Run, name: String): Option[O] =
     d.steps
-      .filter(s => s.name == name && s.status == StepStatus.Done.wire)
+      .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
       .lastOption
       .flatMap(_.output)
       .flatMap(decode[O](_).toOption)

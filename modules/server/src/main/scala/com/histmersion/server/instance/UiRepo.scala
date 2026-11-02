@@ -2,10 +2,10 @@ package com.histmersion.server.instance
 
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.instance.UiNotices
-import com.histmersion.values.RunState
 import com.histmersion.api.instance.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.automation.Run
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read
   * in ONE statement; the per-window "seen" marks are the person's (`domain.personal.seen`). Stateless.
@@ -50,8 +50,8 @@ object UiRepo:
 
   private[instance] def agentsGlance(using DbCon): UiNotices.AgentsGlance =
     val (running, queued) =
-      sql"""SELECT (count(*) FILTER (WHERE status = ${RunState.Running.wire}))::int,
-                   (count(*) FILTER (WHERE status = ${RunState.Queued.wire}))::int
+      sql"""SELECT (count(*) FILTER (WHERE status = ${Run.State.Running.wire}))::int,
+                   (count(*) FILTER (WHERE status = ${Run.State.Queued.wire}))::int
             FROM jobs WHERE kind = ${Agents.JobKind}""".query[(Int, Int)].run().head
     val (on, draining) =
       sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id"

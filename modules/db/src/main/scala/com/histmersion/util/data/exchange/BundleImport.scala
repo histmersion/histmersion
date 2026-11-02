@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.{
   BundleFormat,
   BundleImporter,
@@ -22,6 +21,7 @@ import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.data.exchange.Bundle
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and

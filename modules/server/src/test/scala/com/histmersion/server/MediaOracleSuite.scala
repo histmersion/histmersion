@@ -5,8 +5,7 @@ import com.histmersion.domain.media.imports.BuiltinMedia
 import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.Attribution
-import com.histmersion.domain.{Licence, LicenceFamily}
-import com.histmersion.values.LicenceId
+import com.histmersion.domain.Licence
 import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi
 import com.histmersion.server.media.{FakeMediaHttp, MediaWire}
@@ -172,11 +171,11 @@ class MediaOracleSuite extends DbSuite:
       out ++= s"${ss.asJson.noSpaces} → ${lic(Licence.firstKnown(ss))} · ${r.id}|${r.family}\n"
     }
     out ++= "# allowList: csv → the families · each family allowed\n"
-    val families = LicenceFamily.allowable ++ List(LicenceFamily.AllRightsReserved, LicenceFamily.Unknown)
+    val families = Licence.Family.allowable ++ List(Licence.Family.AllRightsReserved, Licence.Family.Unknown)
     AllowLists.foreach { csv =>
       val allow = Licence.allowList(csv)
       out ++= s"${csv.asJson.noSpaces} → ${allow.toList.map(_.wire).sorted.mkString(",")} · " +
-        families.map(f => s"${f.wire}=${Licence.allowed(Licence(LicenceId("x"), f), allow)}").mkString(" ") + "\n"
+        families.map(f => s"${f.wire}=${Licence.allowed(Licence(Licence.Id("x"), f), allow)}").mkString(" ") + "\n"
     }
     out ++= "# the allowlist each collection is judged by: defaults, then a config with both key families\n"
     val names = BuiltinMedia.entries.map(_.name) ++ List("zq-portal", "zq-other")
@@ -199,7 +198,7 @@ class MediaOracleSuite extends DbSuite:
         val csv = BuiltinMedia.licencesFor(n, cfg)
         val allow = Licence.allowList(csv)
         out ++= s"$what $n: ${csv.asJson.noSpaces} → " +
-          families.filter(f => Licence.allowed(Licence(LicenceId("x"), f), allow)).map(_.wire).mkString(",") + "\n"
+          families.filter(f => Licence.allowed(Licence(Licence.Id("x"), f), allow)).map(_.wire).mkString(",") + "\n"
       }
     }
     out ++= "# a stated attribution as the host takes it\n"

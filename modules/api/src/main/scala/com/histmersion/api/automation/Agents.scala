@@ -6,10 +6,15 @@ import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.research.ArticlePlans
 import com.histmersion.api.given
+import com.histmersion.domain.automation.Approval
 
 object Agents:
 
-  export com.histmersion.values.{ApprovalKind, ApprovalMode, ApprovalState, RunState, StepStatus}
+  export com.histmersion.domain.automation.Approval.Kind as ApprovalKind
+  export com.histmersion.domain.automation.Approval.Mode as ApprovalMode
+  export com.histmersion.domain.automation.Approval.State as ApprovalState
+  export com.histmersion.domain.automation.Run.State as RunState
+  export com.histmersion.domain.automation.Step.Status as StepStatus
   export com.histmersion.domain.automation.{AgentRole as Role, Pipeline, ProviderKind, TargetKind}
 
   /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
@@ -284,7 +289,7 @@ object Agents:
       heartbeatAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isWaiting: Boolean = status == RunState.WaitingApproval.wire
+    def isWaiting: Boolean = status == com.histmersion.domain.automation.Run.State.WaitingApproval.wire
 
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
@@ -445,7 +450,7 @@ object Agents:
       target: Option[String] = None,
       evidence: String = "",
       quote: Option[String] = None,
-      state: String = ApprovalState.Open.wire,
+      state: String = Approval.State.Open.wire,
       note: Option[String] = None,
       result: Option[String] = None,
       createdAt: String = "",
@@ -458,7 +463,7 @@ object Agents:
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
+    def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
       * plan of articles), its rationale as the evidence; None for a kind that carries none.

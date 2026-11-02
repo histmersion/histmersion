@@ -5,8 +5,10 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
-import com.histmersion.values.{ApprovalDecidedBy, GoalStatus, ManagerKind, ManagerState}
 import com.histmersion.domain.automation.ItemStatus
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.Manager
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers
@@ -204,9 +206,9 @@ object AutopilotPolicy:
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
     val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours).toLong * 3600L).isAfter(now))
     Option.when(
-      cooldownHours > 0 && f.status != GoalStatus.Done && f.articles > 0 &&
+      cooldownHours > 0 && f.status != Goal.Status.Done && f.articles > 0 &&
         articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(
-          ManagerState.Active.wire
+          Manager.State.Active.wire
         ) && !open && cooled
     )(
       s"its ${Plural.count(f.articles, "article")} are compiled and passed review: its next article is proposed " +
@@ -217,7 +219,7 @@ object AutopilotPolicy:
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
-  val NotePrefix: String = ApprovalDecidedBy.AutopilotNote
+  val NotePrefix: String = Approval.DecidedBy.AutopilotNote
   def note(v: Verdict): Option[String] = v match
     case Verdict.Approve(r) => Some(s"$NotePrefix approved — $r")
     case Verdict.Reject(r)  => Some(s"$NotePrefix rejected — $r")
@@ -248,7 +250,7 @@ object AutopilotPolicy:
       children: List[String]
   )
 
-  private def rank(s: String): Int = GoalStatus.all.indexOf(s)
+  private def rank(s: String): Int = Goal.Status.all.indexOf(s)
 
   /** The status the facts support, when it is FURTHER than the goal's own (never back; `done` and an unknown status are
     * a person's): seeding once it is managed; compiled once it has an article (a parent: once its sub-goals are
@@ -257,16 +259,16 @@ object AutopilotPolicy:
     */
   def advance(f: GoalFacts): Option[(String, String)] =
     val cur = rank(f.status)
-    if cur < 0 || f.status == GoalStatus.Done then None
+    if cur < 0 || f.status == Goal.Status.Done then None
     else
       val kids = f.children.map(rank)
       val hasOwn = f.articles > 0
-      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen && kids.forall(_ >= rank(GoalStatus.Compiled))
-      val reviewed = compiled && (!hasOwn || f.reviewed) && kids.forall(_ >= rank(GoalStatus.Reviewed))
+      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen && kids.forall(_ >= rank(Goal.Status.Compiled))
+      val reviewed = compiled && (!hasOwn || f.reviewed) && kids.forall(_ >= rank(Goal.Status.Reviewed))
       val (target, why) =
         if reviewed then
           (
-            GoalStatus.Reviewed,
+            Goal.Status.Reviewed,
             (if hasOwn then s"its ${Plural.count(f.articles, "article")} passed review" else "") +
               (if kids.nonEmpty then
                  s"${if hasOwn then ", " else ""}its ${Plural.count(kids.size, "sub-goal")} are reviewed"
@@ -274,12 +276,12 @@ object AutopilotPolicy:
           )
         else if compiled then
           (
-            GoalStatus.Compiled,
+            Goal.Status.Compiled,
             (if hasOwn then s"${Plural.count(f.articles, "article")} compiled, none left to compile"
              else "nothing left to compile") +
               (if kids.nonEmpty then s", its ${Plural.count(kids.size, "sub-goal")} are compiled" else "")
           )
-        else if f.managed then (GoalStatus.Seeding, "its seeding manager and watcher are active")
+        else if f.managed then (Goal.Status.Seeding, "its seeding manager and watcher are active")
         else (f.status, "")
       Option.when(rank(target) > cur)((target, why))
 
@@ -339,7 +341,7 @@ object AutopilotPolicy:
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
     */
-  def finished(status: String): Boolean = status == GoalStatus.Reviewed || status == GoalStatus.Done
+  def finished(status: String): Boolean = status == Goal.Status.Reviewed || status == Goal.Status.Done
 
   /** What must change so every goal has its managers (idempotent: nothing, when they are there). Library-wide: `review`
     * and `enrich` active (`review` with the extend threshold). Every unfinished goal: a seeding manager (a plan-goal
@@ -356,7 +358,7 @@ object AutopilotPolicy:
     val byId = managers.map(m => m.id -> m).toMap
     val library = List(ReviewId, EnrichId).flatMap { id =>
       byId.get(id).toList.flatMap { m =>
-        Option.when(m.state == ManagerState.Paused.wire)(Step.Resume(id)).toList ++
+        Option.when(m.state == Manager.State.Paused.wire)(Step.Resume(id)).toList ++
           Option
             .when(id == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew > 0)(Step.ExtendMinNew(id, s.extendMinNew))
             .toList
@@ -368,10 +370,10 @@ object AutopilotPolicy:
         case None if done => Nil
         case None         => List(Step.CreateSeed(g.slug, stagger(s.seedCron, seedId(g.slug)), g.needsPlan))
         case Some(m)      =>
-          Option.when(pausedByAutopilot(m.id) && m.state == ManagerState.Paused.wire)(Step.Resume(m.id)).toList ++
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(!done && m.cron.isEmpty)(Step.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
             Option
-              .when(!done && g.needsPlan && !m.planItem && m.state != ManagerState.Stopped.wire)(
+              .when(!done && g.needsPlan && !m.planItem && m.state != Manager.State.Stopped.wire)(
                 Step.AddPlanItem(m.id, g.slug)
               )
               .toList
@@ -379,7 +381,7 @@ object AutopilotPolicy:
       val watch = byId.get(watchId(g.slug)) match
         case None    => List(Step.CreateWatch(g.slug, stagger(watchCron, watchId(g.slug)), s.watchIngestPerDay))
         case Some(m) =>
-          Option.when(pausedByAutopilot(m.id) && m.state == ManagerState.Paused.wire)(Step.Resume(m.id)).toList ++
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(m.cron.isEmpty)(Step.SetCron(m.id, stagger(watchCron, m.id))).toList ++
             Option.when(m.autoIngest.isEmpty)(Step.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
       seed ++ watch
@@ -392,7 +394,7 @@ object AutopilotPolicy:
   def toPause(managers: List[ManagerRow]): List[String] =
     managers
       .filter(m =>
-        m.state == ManagerState.Active.wire && (m.kind == ManagerKind.Seed.wire || m.kind == ManagerKind.Watch.wire)
+        m.state == Manager.State.Active.wire && (m.kind == Manager.Kind.Seed.wire || m.kind == Manager.Kind.Watch.wire)
       )
       .map(_.id)
 

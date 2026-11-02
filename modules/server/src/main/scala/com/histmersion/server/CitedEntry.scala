@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Source
 
 /** One line of an article's "Sources cited" footer; `number` is its citation number in the prose (first appearance),
   * `None` for a source cited only outside it (e.g. under "Not used").
@@ -14,5 +14,5 @@ final case class CitedEntry(
     authors: List[String],
     year: Option[Int],
     title: Option[String],
-    status: Option[SourceStatus]
+    status: Option[Source.Status]
 )

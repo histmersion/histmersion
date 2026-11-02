@@ -17,7 +17,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{EventLinkStatus, PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{
@@ -33,6 +32,7 @@ import com.histmersion.api.catalogue.{
   PlaceName
 }
 import com.histmersion.api.library.{Filter, Finding, Source}
+import com.histmersion.domain.catalogue.Event
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /
@@ -59,7 +59,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = List("zqec"),
@@ -236,7 +236,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       EvidenceFixtures.candidates(ds, "zztest_b").map(x => (x.citekey, x.status, x.passages.head.start)),
       List(("zqec_src2020", "proposed", 10))
     )
-    assert(EvidenceFixtures.setStatus(ds, "zztest_b", "zqec_src2020", EventLinkStatus.Rejected))
+    assert(EvidenceFixtures.setStatus(ds, "zztest_b", "zqec_src2020", Event.LinkStatus.Rejected))
     EvidenceFixtures.saveCandidates(ds, "zztest_b", List(c)) // a recompute keeps the rejection
     assertEquals(EvidenceFixtures.candidates(ds, "zztest_b"), Nil)
     assertEquals(EvidenceFixtures.candidates(ds, "zztest_b", withRejected = true).map(_.status), List("rejected"))
@@ -284,7 +284,12 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     val pt = Some(s"""{"type":"Point","coordinates":[152.0,$Lat]}""")
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(PlaceInput(Place("zqec_site", "Zqec site", PlaceKind.Site, pt), List(PlaceName("Zqec site"))))
+      List(
+        PlaceInput(
+          Place("zqec_site", "Zqec site", com.histmersion.domain.catalogue.Place.Kind.Site, pt),
+          List(PlaceName("Zqec site"))
+        )
+      )
     )
     connect(ds):
       val _ =

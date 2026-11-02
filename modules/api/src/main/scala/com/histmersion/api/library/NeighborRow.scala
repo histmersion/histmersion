@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 final case class NeighborRow(
@@ -10,7 +9,7 @@ final case class NeighborRow(
     kind: String,
     citekey: String,
     title: Option[String],
-    status: Option[SourceStatus] = None,
+    status: Option[com.histmersion.domain.library.Source.Status] = None,
     target: NeighborTarget = NeighborTarget.Source
 ) derives KindlingsCodecAsObject,
       KindlingsSchema

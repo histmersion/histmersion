@@ -5,7 +5,6 @@ import com.histmersion.api.given
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
-import com.histmersion.values.{BundleKind, SourceStatus}
 import com.histmersion.api.exchange.{
   Bundle,
   BundleBlobs,
@@ -20,6 +19,7 @@ import com.histmersion.api.exchange.{
   BundleRange,
   BundleReference
 }
+import com.histmersion.domain.library.Source
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
   * bundle's kinds and the import report.
@@ -172,7 +172,7 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("kinds: wire names match the tombstone trigger's, files are distinct"):
     assertEquals(
-      BundleKind.values.toList.map(_.wire),
+      com.histmersion.util.data.exchange.Bundle.Kind.values.toList.map(_.wire),
       List(
         "source",
         "finding",
@@ -189,7 +189,9 @@ class BundleFormatSuite extends munit.FunSuite:
       )
     )
     assertEquals(BundleFiles.all.distinct.size, BundleFiles.all.size)
-    BundleKind.values.foreach(k => assertEquals(BundleKind.fromWire(k.wire), Some(k)))
+    com.histmersion.util.data.exchange.Bundle.Kind.values.foreach(k =>
+      assertEquals(com.histmersion.util.data.exchange.Bundle.Kind.fromWire(k.wire), Some(k))
+    )
 
   test("markdown: an import report says what it did, and lists every problem"):
     val r = BundleImportResult(
@@ -197,7 +199,7 @@ class BundleFormatSuite extends munit.FunSuite:
       BundleInstance(I, Some("work")),
       dryRun = false,
       applied = false,
-      List(BundleKindCounts(BundleKind.Source, inserted = 2)),
+      List(BundleKindCounts(com.histmersion.util.data.exchange.Bundle.Kind.Source, inserted = 2)),
       0,
       List("source x: clash"),
       Nil,

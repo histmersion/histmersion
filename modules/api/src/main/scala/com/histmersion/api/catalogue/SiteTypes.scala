@@ -1,5 +1,4 @@
 package com.histmersion.api.catalogue
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.given
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
@@ -328,7 +327,8 @@ object SiteTypes:
       wikidataClass: Option[String],
       p31: List[String] = Nil
   ): Option[String] =
-    if placeKind != PlaceKind.Site && placeKind != PlaceKind.Feature then None
+    if placeKind != com.histmersion.domain.catalogue.Place.Kind.Site && placeKind != com.histmersion.domain.catalogue.Place.Kind.Feature
+    then None
     else
       stored
         .filter(byId.contains)

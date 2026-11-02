@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.api.library.SearchMarkdown
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{
   Facet,
@@ -15,6 +14,7 @@ import com.histmersion.api.library.{
   SearchResult,
   Sort
 }
+import com.histmersion.domain.library.Source
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
   * *why* each source matched. All pure.
@@ -125,7 +125,7 @@ class FilterSuite extends munit.FunSuite:
       "cline2014_collapse",
       "1177 BC",
       Some(2014),
-      SourceStatus.Current,
+      Source.Status.Current,
       List("collapse"),
       List("Levant"),
       Some(-1300),

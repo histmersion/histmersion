@@ -2,10 +2,10 @@ package com.histmersion.domain.automation.goals
 
 import com.histmersion.api.automation.{GoalPatch, GoalPut}
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
-import com.histmersion.values.GoalLinkKind
 import com.histmersion.domain.automation.ScheduleKind
 
 import java.time.Instant
+import com.histmersion.domain.automation.Goal
 
 /** The contract the goals keep: put and read back (sub-goals, a refused period), links in their order with what they
   * point at, plans and caps, the schedules not moved yet and their move.
@@ -45,42 +45,42 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   ) { s =>
     assert(g(s).put("zz-g", GoalPut("G")).isRight)
     s.source("zz2020_src", "A source")
-    assert(!g(s).link("zz-none", GoalLinkKind.Source, "zz2020_src", None), "no such goal")
-    assert(g(s).link("zz-g", GoalLinkKind.Query, "tin trade", None))
-    assert(g(s).link("zz-g", GoalLinkKind.Article, "zz-art", Some("why")))
-    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("first")))
-    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", None))
+    assert(!g(s).link("zz-none", Goal.LinkKind.Source, "zz2020_src", None), "no such goal")
+    assert(g(s).link("zz-g", Goal.LinkKind.Query, "tin trade", None))
+    assert(g(s).link("zz-g", Goal.LinkKind.Article, "zz-art", Some("why")))
+    assert(g(s).link("zz-g", Goal.LinkKind.Source, "zz2020_src", Some("first")))
+    assert(g(s).link("zz-g", Goal.LinkKind.Source, "zz2020_src", None))
     val ls = g(s).links("zz-g")
     assertEquals(
       ls.map(l => (l.kind, l.ref, l.note, l.title)),
       List(
-        (GoalLinkKind.Source, "zz2020_src", Some("first"), Some("A source")),
-        (GoalLinkKind.Article, "zz-art", Some("why"), None),
-        (GoalLinkKind.Query, "tin trade", None, None)
+        (Goal.LinkKind.Source, "zz2020_src", Some("first"), Some("A source")),
+        (Goal.LinkKind.Article, "zz-art", Some("why"), None),
+        (Goal.LinkKind.Query, "tin trade", None, None)
       )
     )
     assert(ls.forall(_.createdAt.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")), ls)
-    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("second")))
+    assert(g(s).link("zz-g", Goal.LinkKind.Source, "zz2020_src", Some("second")))
     assertEquals(g(s).links("zz-g").head.note, Some("second"))
     assertEquals(g(s).linkCounts(), Map(("zz-g", "source") -> 1, ("zz-g", "query") -> 1))
     s.article("zz-art", "An article")
     assertEquals(g(s).linkCounts().get(("zz-g", "article")), Some(1))
     assertEquals(g(s).links("zz-g")(1).title, Some("An article"))
-    assert(g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
-    assert(!g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
-    assertEquals(g(s).links("zz-g").map(_.kind), List(GoalLinkKind.Source, GoalLinkKind.Article))
+    assert(g(s).unlink("zz-g", Goal.LinkKind.Query, "tin trade"))
+    assert(!g(s).unlink("zz-g", Goal.LinkKind.Query, "tin trade"))
+    assertEquals(g(s).links("zz-g").map(_.kind), List(Goal.LinkKind.Source, Goal.LinkKind.Article))
   }
 
   stest("the refs of one kind of a goal's links, oldest first; another kind's and another goal's left out") { s =>
     assert(s.goals.put("zz-g", GoalPut("A goal")).isRight)
     assert(s.goals.put("zz-h", GoalPut("Another")).isRight)
-    assert(s.goals.link("zz-g", GoalLinkKind.SearchQuery, "storm gods", None))
-    assert(s.goals.link("zz-g", GoalLinkKind.SearchQuery, "anatolia", None))
-    assert(s.goals.link("zz-g", GoalLinkKind.QueueItem, "7", Some("10.5555/zz")))
-    assert(s.goals.link("zz-h", GoalLinkKind.SearchQuery, "elsewhere", None))
-    assertEquals(s.goals.refs("zz-g", GoalLinkKind.SearchQuery), List("storm gods", "anatolia"))
-    assertEquals(s.goals.refs("zz-g", GoalLinkKind.QueueItem), List("7"))
-    assertEquals(s.goals.refs("zz-none", GoalLinkKind.SearchQuery), Nil)
+    assert(s.goals.link("zz-g", Goal.LinkKind.SearchQuery, "storm gods", None))
+    assert(s.goals.link("zz-g", Goal.LinkKind.SearchQuery, "anatolia", None))
+    assert(s.goals.link("zz-g", Goal.LinkKind.QueueItem, "7", Some("10.5555/zz")))
+    assert(s.goals.link("zz-h", Goal.LinkKind.SearchQuery, "elsewhere", None))
+    assertEquals(s.goals.refs("zz-g", Goal.LinkKind.SearchQuery), List("storm gods", "anatolia"))
+    assertEquals(s.goals.refs("zz-g", Goal.LinkKind.QueueItem), List("7"))
+    assertEquals(s.goals.refs("zz-none", Goal.LinkKind.SearchQuery), Nil)
   }
 
   stest("an approved plan and a run cap; the planned goals") { s =>
@@ -157,14 +157,14 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assert(g(s).put("zz-old", GoalPut("Old")).isRight)
     assert(g(s).put("zz-other", GoalPut("Other")).isRight)
     assert(g(s).put("zz-kid", GoalPut("Kid", parentSlug = Some("zz-old"))).isRight)
-    assert(g(s).link("zz-old", GoalLinkKind.Query, "tin", None))
+    assert(g(s).link("zz-old", Goal.LinkKind.Query, "tin", None))
     assert(g(s).rename("zz-old", "zz-other").isLeft)
     assert(g(s).rename("zz-none", "zz-x").isLeft)
     assertEquals(g(s).rename(" zz-old ", "zz-new "), Right(()))
     assertEquals(g(s).get("zz-old"), None)
     assertEquals(bare(s, "zz-new").map(_.title), Some("Old"))
     assertEquals(bare(s, "zz-kid").flatMap(_.parentSlug), Some("zz-new"))
-    assertEquals(g(s).refs("zz-new", GoalLinkKind.Query), List("tin"))
+    assertEquals(g(s).refs("zz-new", Goal.LinkKind.Query), List("tin"))
     assert(g(s).put("zz-third", GoalPut("Third")).isRight)
     assert(g(s).rename("zz-third", "zz-old").left.exists(_.message.contains("old slug of 'zz-new'")))
     assert(g(s).delete("zz-other"))
@@ -174,9 +174,9 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   stest("the goals linking work-list items, an item's goals by title") { s =>
     assert(g(s).put("zz-g1", GoalPut("Beta")).isRight)
     assert(g(s).put("zz-g2", GoalPut("Alpha")).isRight)
-    assert(g(s).link("zz-g1", GoalLinkKind.QueueItem, "7", None))
-    assert(g(s).link("zz-g2", GoalLinkKind.QueueItem, "7", None))
-    assert(g(s).link("zz-g2", GoalLinkKind.QueueItem, "8", None))
+    assert(g(s).link("zz-g1", Goal.LinkKind.QueueItem, "7", None))
+    assert(g(s).link("zz-g2", Goal.LinkKind.QueueItem, "7", None))
+    assert(g(s).link("zz-g2", Goal.LinkKind.QueueItem, "8", None))
     assertEquals(g(s).goalsOfItems(List(7)), List((7, "zz-g2", "Alpha"), (7, "zz-g1", "Beta")))
     assertEquals(g(s).goalsOfItems(Nil), Nil)
   }

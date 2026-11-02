@@ -25,7 +25,6 @@ import com.histmersion.util.data.exchange.{
   SourcePair
 }
 import com.histmersion.util.text.MinHash
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.{EditionsPolicy, MatchMethod, MatchOutcome}
 
@@ -33,6 +32,9 @@ import hearth.kindlings.optics.syntax.*
 import SourceMatcher.{Outcome, Pair, Side}
 import java.util.UUID
 import scala.collection.mutable
+import com.histmersion.domain.library.Source
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats the sources themselves (docs/research-merge-import.md §5.2–§5.3): the bundle's sources
   * matched with the ones here ([[SourceMatcher]]), the question whether a pair is one work, the fields of a pair that
@@ -48,7 +50,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   private val sourcesByUid = in.sources.map(s => s.uid -> s).toMap
   private val (rights, lefts) = matchSides(in)
   private val pairOf = mutable.LinkedHashMap.empty[UUID, Pair] // the bundle's source → its pair
-  private val pairFieldIds = mutable.Map.empty[UUID, Map[IssueKind, String]] // the fields' issues, by pair
+  private val pairFieldIds = mutable.Map.empty[UUID, Map[Issue.Kind, String]] // the fields' issues, by pair
   private val fatesSeen = mutable.Map.empty[UUID, SourceFate]
   private val sourceLine = mutable.Map.empty[UUID, BundleEntities => BundleSource]
 
@@ -75,8 +77,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       pairOf(p.right.uid) = p
       val gate = Option.when(p.outcome == Outcome.NeedsDecision)(
         MergePlanner.issueId(
-          IssueKind.SameWork,
-          BundleKind.Source,
+          Issue.Kind.SameWork,
+          Bundle.Kind.Source,
           List(p.right.uid),
           List(p.left.uid),
           rightRev(p.right.source),
@@ -90,8 +92,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     }
 
   private def gateOf(p: Pair): String = MergePlanner.issueId(
-    IssueKind.SameWork,
-    BundleKind.Source,
+    Issue.Kind.SameWork,
+    Bundle.Kind.Source,
     List(p.right.uid),
     List(p.left.uid),
     rightRev(p.right.source),
@@ -114,9 +116,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       questions.ask(
         MergeIssue(
           gateOf(p),
-          IssueKind.SameWork,
-          IssueSeverity.Blocking,
-          BundleKind.Source,
+          Issue.Kind.SameWork,
+          Issue.Severity.Blocking,
+          Bundle.Kind.Source,
           title,
           Some(MergeIssueDetail.side(p.left.source)),
           Some(MergeIssueDetail.side(p.right.source)),
@@ -146,18 +148,18 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     val (fu, lu) = (List(r.uid), List(l.uid))
     val (rr, ll) = (rightRev(r), leftRev(l.uid))
     def mk(
-        kind: IssueKind,
+        kind: Issue.Kind,
         title: String,
         opts: List[DecisionKind],
         suggested: Option[MergeDecision] = None,
-        sev: IssueSeverity = IssueSeverity.Blocking,
+        sev: Issue.Severity = Issue.Severity.Blocking,
         why: List[String] = Nil
     ): MergeIssue =
       MergeIssue(
-        MergePlanner.issueId(kind, BundleKind.Source, fu, lu, rr, ll),
+        MergePlanner.issueId(kind, Bundle.Kind.Source, fu, lu, rr, ll),
         kind,
         sev,
-        BundleKind.Source,
+        Bundle.Kind.Source,
         title,
         Some(MergeIssueDetail.side(l)),
         Some(MergeIssueDetail.side(r)),
@@ -173,7 +175,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     val ds = List(
       Option.when(doiR.isDefined && doiL.isDefined && doiR != doiL)(
         mk(
-          IssueKind.DoiDiffers,
+          Issue.Kind.DoiDiffers,
           s"DOI differs: ${l.doi.get} here, ${r.doi.get} in the bundle",
           lr,
           why = p.evidence.strong.map(k => s"matched by $k: one record has the wrong DOI")
@@ -182,39 +184,39 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       r.year.zip(l.year).filter((a, b) => a != b && !(math.abs(a - b) == 1 && sameDoi)).map { (a, b) =>
         val earliest = if b <= a then km.KeepLeft else km.KeepRight
         mk(
-          IssueKind.YearDiffers,
+          Issue.Kind.YearDiffers,
           s"year differs: $b here, $a in the bundle",
           lr,
           Some(MergeDecision.of(earliest)),
           why = List("the suggestion keeps the earliest year (the first edition)")
         )
       },
-      Option.when(r.status != l.status && r.status != SourceStatus.Unassessed && l.status != SourceStatus.Unassessed)(
-        mk(IssueKind.StatusDiffers, s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle", lr)
+      Option.when(r.status != l.status && r.status != Source.Status.Unassessed && l.status != Source.Status.Unassessed)(
+        mk(Issue.Kind.StatusDiffers, s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle", lr)
       ),
       Option.when(p.evidence.titleDiffers)(
-        mk(IssueKind.TitleDiffers, "title differs", lr, why = List(s"here: ${l.title}", s"bundle: ${r.title}"))
+        mk(Issue.Kind.TitleDiffers, "title differs", lr, why = List(s"here: ${l.title}", s"bundle: ${r.title}"))
       ),
       Option.when(p.evidence.authors == MergeText.AuthorAgreement.Disjoint)(
         mk(
-          IssueKind.AuthorsDiffers,
+          Issue.Kind.AuthorsDiffers,
           "no author in common",
           lr,
           why = List(s"here: ${l.authors.mkString("; ")}", s"bundle: ${r.authors.mkString("; ")}")
         )
       ),
       differs(r.summary, l.summary).map(_ =>
-        mk(IssueKind.SummaryDiffers, "summary differs", List(km.KeepLeft, km.KeepRight, km.Concat))
+        mk(Issue.Kind.SummaryDiffers, "summary differs", List(km.KeepLeft, km.KeepRight, km.Concat))
       ),
       differs(r.notes, l.notes).map(_ =>
-        mk(IssueKind.NotesDiffers, "notes differ", List(km.KeepLeft, km.KeepRight, km.Concat))
+        mk(Issue.Kind.NotesDiffers, "notes differ", List(km.KeepLeft, km.KeepRight, km.Concat))
       ),
       r.period
         .zip(l.period)
         .filter((a, b) => a != b)
         .map((a, b) =>
           mk(
-            IssueKind.PeriodDiffers,
+            Issue.Kind.PeriodDiffers,
             s"period differs: ${MergeIssueDetail.rangeText(Some(b))} here, ${MergeIssueDetail.rangeText(Some(a))} in the bundle",
             List(km.KeepLeft, km.KeepRight, km.Hull),
             Some(MergeDecision.of(km.Hull))
@@ -227,11 +229,11 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           .map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), 2)})")
           .getOrElse("")
         mk(
-          IssueKind.BodyDiffers,
+          Issue.Kind.BodyDiffers,
           s"OCR bodies differ$sim",
           lr,
           Some(MergeDecision.of(km.KeepLeft)),
-          IssueSeverity.Default,
+          Issue.Severity.Default,
           List("by default this collection's body stays; keep-right takes the bundle's (and its figures)")
         )
       }
@@ -261,16 +263,16 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       val suggestion = renameSuggestion(s, in, fes)
       MergeIssue(
         MergePlanner.issueId(
-          IssueKind.CitekeyCollision,
-          BundleKind.Source,
+          Issue.Kind.CitekeyCollision,
+          Bundle.Kind.Source,
           List(s.uid),
           List(o.uid),
           rightRev(s),
           leftRev(o.uid)
         ),
-        IssueKind.CitekeyCollision,
-        IssueSeverity.Blocking,
-        BundleKind.Source,
+        Issue.Kind.CitekeyCollision,
+        Issue.Severity.Blocking,
+        Bundle.Kind.Source,
         title,
         Some(MergeIssueDetail.side(o)),
         Some(MergeIssueDetail.side(s)),
@@ -283,10 +285,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       )
     }
 
-  override def bodyIssue(right: UUID): Option[String] = pairFieldIds.get(right).flatMap(_.get(IssueKind.BodyDiffers))
+  override def bodyIssue(right: UUID): Option[String] = pairFieldIds.get(right).flatMap(_.get(Issue.Kind.BodyDiffers))
 
-  override def rowDetail(kind: BundleKind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
-    if kind != BundleKind.Source then None
+  override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
+    if kind != Bundle.Kind.Source then None
     else
       sourcesByUid
         .get(u)
@@ -295,7 +297,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
   override def labelsTakenFirst(questions: PlanQuestions): Unit =
     questions.labelTaken(
-      BundleKind.Source,
+      Bundle.Kind.Source,
       questions.localized.sources.filter(s => questions.here(s.uid)),
       (s: BundleSource) => s.uid,
       (s: BundleSource) => s.citekey,
@@ -329,7 +331,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         )
       case _ => None
 
-  override def pairIssue(kind: IssueKind): Boolean = PairKinds(kind)
+  override def pairIssue(kind: Issue.Kind): Boolean = PairKinds(kind)
 
   override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
     pairOf
@@ -392,17 +394,17 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 object SourcePlan:
 
   /** The questions of a pair of sources: their decisions are carried out with the pair's fold. */
-  private val PairKinds: Set[IssueKind] = Set(
-    IssueKind.DoiDiffers,
-    IssueKind.YearDiffers,
-    IssueKind.StatusDiffers,
-    IssueKind.TitleDiffers,
-    IssueKind.AuthorsDiffers,
-    IssueKind.SummaryDiffers,
-    IssueKind.NotesDiffers,
-    IssueKind.PeriodDiffers,
-    IssueKind.BodyDiffers,
-    IssueKind.SameWork
+  private val PairKinds: Set[Issue.Kind] = Set(
+    Issue.Kind.DoiDiffers,
+    Issue.Kind.YearDiffers,
+    Issue.Kind.StatusDiffers,
+    Issue.Kind.TitleDiffers,
+    Issue.Kind.AuthorsDiffers,
+    Issue.Kind.SummaryDiffers,
+    Issue.Kind.NotesDiffers,
+    Issue.Kind.PeriodDiffers,
+    Issue.Kind.BodyDiffers,
+    Issue.Kind.SameWork
   )
 
   /** The bundle's sources that need matching (no identity here), and the sources here they may match (not already some
@@ -462,14 +464,14 @@ object SourcePlan:
   def fold(
       l: BundleSource,
       r: BundleSource,
-      decided: Map[IssueKind, MergeDecision],
+      decided: Map[Issue.Kind, MergeDecision],
       citekey: String
   ): BundleSource =
-    def pick[A](k: IssueKind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
+    def pick[A](k: Issue.Kind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
       case Some(DecisionKind.KeepRight) => right
       case Some(DecisionKind.KeepLeft)  => left
       case _                            => auto
-    def prose(k: IssueKind, a: Option[String], b: Option[String]): Option[String] =
+    def prose(k: Issue.Kind, a: Option[String], b: Option[String]): Option[String] =
       (trimmed(a), trimmed(b)) match
         case (Some(x), Some(y)) if x != y =>
           decided.get(k).map(_.kind) match
@@ -479,25 +481,25 @@ object SourcePlan:
         case (Some(_), _) => a
         case (_, Some(_)) => b
         case _            => a
-    val keepRightBody = decided.get(IssueKind.BodyDiffers).exists(_.kind == DecisionKind.KeepRight) ||
+    val keepRightBody = decided.get(Issue.Kind.BodyDiffers).exists(_.kind == DecisionKind.KeepRight) ||
       (l.bodySha256.isEmpty && r.bodySha256.isDefined)
     val period: Option[BundleRange] = (l.period, r.period) match
       case (Some(a), Some(b)) if a != b =>
-        decided.get(IssueKind.PeriodDiffers).map(_.kind) match
+        decided.get(Issue.Kind.PeriodDiffers).map(_.kind) match
           case Some(DecisionKind.KeepRight) => Some(b)
           case Some(DecisionKind.Hull)      => Some(MergeFold.hull(a, b))
           case _                            => Some(a)
       case (a, b) => a.orElse(b)
     val status =
-      if l.status == r.status || r.status == SourceStatus.Unassessed then l.status
-      else if l.status == SourceStatus.Unassessed then r.status
-      else pick(IssueKind.StatusDiffers, l.status, l.status, r.status)
+      if l.status == r.status || r.status == Source.Status.Unassessed then l.status
+      else if l.status == Source.Status.Unassessed then r.status
+      else pick(Issue.Kind.StatusDiffers, l.status, l.status, r.status)
     l.copy(
       citekey = citekey,
-      title = pick(IssueKind.TitleDiffers, MergeFold.richer(l.title, r.title), l.title, r.title),
-      authors = pick(IssueKind.AuthorsDiffers, richerAuthors(l.authors, r.authors), l.authors, r.authors),
-      doi = pick(IssueKind.DoiDiffers, l.doi.orElse(r.doi), l.doi.orElse(r.doi), r.doi.orElse(l.doi)),
-      year = pick(IssueKind.YearDiffers, l.year.orElse(r.year), l.year.orElse(r.year), r.year.orElse(l.year)),
+      title = pick(Issue.Kind.TitleDiffers, MergeFold.richer(l.title, r.title), l.title, r.title),
+      authors = pick(Issue.Kind.AuthorsDiffers, richerAuthors(l.authors, r.authors), l.authors, r.authors),
+      doi = pick(Issue.Kind.DoiDiffers, l.doi.orElse(r.doi), l.doi.orElse(r.doi), r.doi.orElse(l.doi)),
+      year = pick(Issue.Kind.YearDiffers, l.year.orElse(r.year), l.year.orElse(r.year), r.year.orElse(l.year)),
       venue = (trimmed(l.venue), trimmed(r.venue)) match
         case (Some(a), Some(b)) if MergeText.fingerprint(a) == MergeText.fingerprint(b) => Some(MergeFold.richer(a, b))
         case (a, b)                                                                     => a.orElse(b),
@@ -506,8 +508,8 @@ object SourcePlan:
       regions = MergeFold.unionNames(l.regions, r.regions),
       tags = MergeFold.unionTags(l.tags, r.tags),
       period = period,
-      summary = prose(IssueKind.SummaryDiffers, l.summary, r.summary),
-      notes = prose(IssueKind.NotesDiffers, l.notes, r.notes),
+      summary = prose(Issue.Kind.SummaryDiffers, l.summary, r.summary),
+      notes = prose(Issue.Kind.NotesDiffers, l.notes, r.notes),
       provenance = l.provenance.orElse(r.provenance),
       citedByCount =
         l.citedByCount.zip(r.citedByCount).map((a, b) => math.max(a, b)).orElse(l.citedByCount).orElse(r.citedByCount),

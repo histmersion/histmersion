@@ -12,7 +12,6 @@ import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
@@ -35,18 +34,24 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
     s"""{"type":"Polygon","coordinates":[[[$minLon,$minLat],[$maxLon,$minLat],[$maxLon,$maxLat],[$minLon,$maxLat],[$minLon,$minLat]]]}"""
 
-  private val asia = Place("zzp_asia", "Asia", PlaceKind.Region)
-  private val turkey = Place("zzp_turkey", "Turkey", PlaceKind.Region, Some(box(26, 36, 45, 42)))
+  private val asia = Place("zzp_asia", "Asia", com.histmersion.domain.catalogue.Place.Kind.Region)
+  private val turkey =
+    Place("zzp_turkey", "Turkey", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(26, 36, 45, 42)))
   private val hatti = Place(
     "zzp_hatti",
     "Hittite Empire",
-    PlaceKind.Polity,
+    com.histmersion.domain.catalogue.Place.Kind.Polity,
     Some(box(30, 38, 36, 41)),
     Some(Period(-1650, -1180)),
     Some("test fixture")
   )
   private val hattusa =
-    Place("zzp_hattusa", "Hattusa", PlaceKind.Site, Some("""{"type":"Point","coordinates":[34.615,40.019]}"""))
+    Place(
+      "zzp_hattusa",
+      "Hattusa",
+      com.histmersion.domain.catalogue.Place.Kind.Site,
+      Some("""{"type":"Point","coordinates":[34.615,40.019]}""")
+    )
 
   private val batch = List(
     PlaceInput(asia, List(PlaceName("Asia"))),
@@ -66,7 +71,11 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       List(PlaceRelation("zzp_hattusa", "zzp_hatti"))
     ),
     // a relation to a place nobody declared → reported, not fatal
-    PlaceInput(Place("zzp_orphan", "Orphan", PlaceKind.Site), Nil, List(PlaceRelation("zzp_orphan", "zzp_nowhere")))
+    PlaceInput(
+      Place("zzp_orphan", "Orphan", com.histmersion.domain.catalogue.Place.Kind.Site),
+      Nil,
+      List(PlaceRelation("zzp_orphan", "zzp_nowhere"))
+    )
   )
 
   private val src = Source(
@@ -76,7 +85,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = List("Anatolia"),
     tags = Nil,
@@ -175,8 +184,8 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   test("a finding on a border counts in EVERY containing place (counts are non-additive)"):
     seed()
     // the shared edge of two adjoining boxes: a point ON it is within both
-    val west = Place("zzp_west", "West", PlaceKind.Polity, Some(box(0, 0, 10, 10)))
-    val east = Place("zzp_east", "East", PlaceKind.Polity, Some(box(10, 0, 20, 10)))
+    val west = Place("zzp_west", "West", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(0, 0, 10, 10)))
+    val east = Place("zzp_east", "East", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(10, 0, 20, 10)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(west, List(PlaceName("West"))), PlaceInput(east, List(PlaceName("East"))))
@@ -217,7 +226,12 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     seed()
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(PlaceInput(Place("zzp_under", "Zzp_Under 50%", PlaceKind.Site), List(PlaceName("Zzp_Under 50%"))))
+      List(
+        PlaceInput(
+          Place("zzp_under", "Zzp_Under 50%", com.histmersion.domain.catalogue.Place.Kind.Site),
+          List(PlaceName("Zzp_Under 50%"))
+        )
+      )
     )
     assertEquals(PlaceFixtures.search(ds, Some("Zzp_U"), None, 10).map(_.id), Vector("zzp_under"))
     assertEquals(PlaceFixtures.search(ds, Some("50%"), None, 10).map(_.id), Vector("zzp_under"))

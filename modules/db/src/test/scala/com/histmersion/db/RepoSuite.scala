@@ -8,7 +8,6 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
@@ -30,7 +29,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = List("t"),
     regions = List("Anatolia"),
     tags = List("x"),

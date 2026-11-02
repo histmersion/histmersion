@@ -14,7 +14,6 @@ import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
 import com.histmersion.domain.library.sources.{MergeText, SourceMatcher}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{BundlePlan, PairQuestions, PlanFolds, PlanRelabels, PlanRun, SourceFate}
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
 
@@ -22,6 +21,8 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import scala.annotation.tailrec
 import scala.collection.mutable
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -41,8 +42,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   private val assignedIds = mutable.Set.from(in.local.findings.map(_.id))
   private def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
 
-  override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] =
-    if kind == BundleKind.Finding then findingSource.get(foreign) else None
+  override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
+    if kind == Bundle.Kind.Finding then findingSource.get(foreign) else None
 
   // rows of the bundle that already have their own uid here are not matched again inside a pair
   override def pairFirst(
@@ -62,8 +63,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     ms.foreach {
       case Match.Near(rf, lf, j) =>
         val id = MergePlanner.issueId(
-          IssueKind.FindingNearDuplicate,
-          BundleKind.Finding,
+          Issue.Kind.FindingNearDuplicate,
+          Bundle.Kind.Finding,
           List(rf.uid),
           List(lf.uid),
           questions.rightRev(rf.uid),
@@ -73,9 +74,9 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
         questions.ask(
           MergeIssue(
             id,
-            IssueKind.FindingNearDuplicate,
-            IssueSeverity.Default,
-            BundleKind.Finding,
+            Issue.Kind.FindingNearDuplicate,
+            Issue.Severity.Default,
+            Bundle.Kind.Finding,
             s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, 2)})",
             Some(IssueSide(lf.id, lf.uid, List(MergeIssueDetail.preview(lf.claim)))),
             Some(IssueSide(rf.id, rf.uid, List(MergeIssueDetail.preview(rf.claim)))),
@@ -112,7 +113,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
       case _ => ()
     }
 
-  override def pairIssue(kind: IssueKind): Boolean = kind == IssueKind.FindingNearDuplicate
+  override def pairIssue(kind: Issue.Kind): Boolean = kind == Issue.Kind.FindingNearDuplicate
 
   // the same claim folds, a near duplicate folds when decided `merge`, the rest arrive under the survivor's citekey,
   // numbered after its last
@@ -130,10 +131,10 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     incoming.zip(ids).foreach((rf, id) => findingLine(rf.uid) = es => findingIn(es, rf.uid).modify(_.id).setTo(id))
     ms.foreach {
       case Match.Same(rf, lf) =>
-        folds.fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
+        folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
         folds.count(_.modify(_.findingsMerged).using(_ + 1))
       case Match.Near(rf, lf, _) if merging(rf) =>
-        folds.fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
+        folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
         folds.count(_.modify(_.findingsMerged).using(_ + 1))
       case _ => ()
     }
@@ -161,7 +162,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
       .toSet
     relabels.rows
       .filter(r =>
-        r.decision == BundlePlan.Decision.Insert && r.kind == BundleKind.Finding &&
+        r.decision == BundlePlan.Decision.Insert && r.kind == Bundle.Kind.Finding &&
           !findingLine.contains(r.foreignUid) && !findingSource.get(r.foreignUid).exists(colliding)
       )
       .foreach { r =>

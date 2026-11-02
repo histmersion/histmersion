@@ -4,9 +4,9 @@ import com.histmersion.api.automation.GoalPut
 import com.histmersion.api.automation.Agents.JobKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
-import com.histmersion.values.GoalLinkKind
 
 import java.time.Instant
+import com.histmersion.domain.automation.Goal
 
 /** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
@@ -173,7 +173,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).sweepOutcomes(), Map("zz-g" -> "swept 3"))
     assert(m(s).lastProgress().contains("zz-g"))
     assertEquals(m(s).lastProgress().keySet, Set("zz-g"))
-    assert(s.goals.link("zz-g", GoalLinkKind.Source, "zz2020_s", None))
+    assert(s.goals.link("zz-g", Goal.LinkKind.Source, "zz2020_s", None))
     assert(m(s).lastProgress()("zz-g").matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"))
   }
 

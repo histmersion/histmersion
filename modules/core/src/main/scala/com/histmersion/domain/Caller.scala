@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.values.RunId
 import com.histmersion.UserId
+import com.histmersion.domain.automation.Run
 
 /** Who asks for an operation: a person, or an automated workflow run acting through the same service methods. */
 enum Caller:
   case Person(user: UserId, role: Caller.Role)
-  case Automation(run: RunId)
+  case Automation(run: Run.Id)
 
   /** The person asking; none for an automated run, which acts for nobody's own data. */
   def person: Option[UserId] = this match

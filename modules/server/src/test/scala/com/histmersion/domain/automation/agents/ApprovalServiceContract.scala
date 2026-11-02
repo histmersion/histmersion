@@ -5,9 +5,10 @@ import com.histmersion.api.automation.ListFilters.DecidedBy
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.values.{EdgeKind, SourceStatus}
 
 import java.time.Instant
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** The contract the approvals keep: a source's open proposal is not doubled; a run's step approval opens once; a
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's
@@ -18,7 +19,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
   private def propose(
       s: EngineStores,
       p: Proposal,
-      current: Option[SourceStatus],
+      current: Option[Source.Status],
       st: ApprovalState = ApprovalState.Open,
       result: Option[String] = None
   ) =
@@ -36,12 +37,12 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
     )
   private def before(s: EngineStores, p: Proposal) =
     a(s).proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target)
-  private val status = Proposal(ApprovalKind.StatusChange, "zz2020_a", Some(SourceStatus.Contested), evidence = "e")
-  private val edge = Proposal(ApprovalKind.Edge, "zz2020_a", None, Some(EdgeKind.Refutes), Some("zz2021_b"))
+  private val status = Proposal(ApprovalKind.StatusChange, "zz2020_a", Some(Source.Status.Contested), evidence = "e")
+  private val edge = Proposal(ApprovalKind.Edge, "zz2020_a", None, Some(Edge.Kind.Refutes), Some("zz2021_b"))
 
   stest("a source's open proposal is not doubled; once decided, it may be proposed again; ever proposed is known") {
     s =>
-      val first = propose(s, status, Some(SourceStatus.Current)).get
+      val first = propose(s, status, Some(Source.Status.Current)).get
       assertEquals(
         (first.kind, first.citekey, first.status, first.current, first.state, first.evidence, first.decidedAt),
         ("status-change", "zz2020_a", Some("contested"), Some("current"), "open", "e", None)
@@ -135,7 +136,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
         "zz2020_x",
         None,
         None,
-        Some(EdgeKind.Refutes),
+        Some(Edge.Kind.Refutes),
         Some("zz2019_y"),
         "{}",
         ApprovalState.Open,

@@ -10,7 +10,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.KindHint
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{
@@ -103,7 +102,12 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   private def load(source: String, version: String, rs: List[GazRecord]): GazetteerLoadCounts =
     connect(ds)(GazetteerRepo.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
 
-  private val Patones = rec(wd("Q999500001"), "Zzpt Kingdom of Patones", PlaceKind.Polity, Span(None, Some(1769)))
+  private val Patones = rec(
+    wd("Q999500001"),
+    "Zzpt Kingdom of Patones",
+    com.histmersion.domain.catalogue.Place.Kind.Polity,
+    Span(None, Some(1769))
+  )
   private val PatonesId = "wikidata_q999500001"
 
   /** A source whose findings sit ON the fixtures' point, one per period (materialised on write). */
@@ -117,7 +121,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         doi = None,
         year = Some(2026),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -178,7 +182,15 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     load(
       "geonames",
       "v1",
-      List(rec(gn("999500002"), "Zzpt Kingdom of Patones", PlaceKind.Polity, Span.always, dx = 0.5))
+      List(
+        rec(
+          gn("999500002"),
+          "Zzpt Kingdom of Patones",
+          com.histmersion.domain.catalogue.Place.Kind.Polity,
+          Span.always,
+          dx = 0.5
+        )
+      )
     )
     def at(p: Period) =
       connect(ds)(
@@ -199,7 +211,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   test(
     "an undated GeoNames place: found by name with no time, at a time only by a finding dated then, never on a time-sliced map"
   ):
-    val g = rec(gn("999500003"), "Zzpt Bogazkale", PlaceKind.Site, Span.always)
+    val g = rec(gn("999500003"), "Zzpt Bogazkale", com.histmersion.domain.catalogue.Place.Kind.Site, Span.always)
     load("geonames", "v1", List(g))
     val id = "geonames_999500003"
     assertEquals(
@@ -220,7 +232,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       Place(
         "zzpt_region",
         "Zzpt Region",
-        PlaceKind.Region,
+        com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(
           s"""{"type":"Polygon","coordinates":[[[${Lon - 1},${Lat - 1}],[${Lon + 1},${Lat - 1}],[${Lon + 1},${Lat + 1}],[${Lon - 1},${Lat + 1}],[${Lon - 1},${Lat - 1}]]]}"""
         ),
@@ -236,7 +248,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       None,
       "lpf_zzpt_1",
       "Zzpt Lpf State",
-      PlaceKind.Polity,
+      com.histmersion.domain.catalogue.Place.Kind.Polity,
       pt(),
       Span(None, Some(1769)),
       Gazetteer.mergeNames(List(GazName("Zzpt Lpf State"))),
@@ -255,7 +267,12 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     assertEquals(PlaceFixtures.get(ds, "zzpt_region").get.place.dating, PlaceDating.Stated)
 
   test("the base layers draw an imported place only once a finding is attached"):
-    val dated = rec(wd("Q999500004"), "Zzpt Dated Site", PlaceKind.Site, Span(Some(-1500), Some(-1200)))
+    val dated = rec(
+      wd("Q999500004"),
+      "Zzpt Dated Site",
+      com.histmersion.domain.catalogue.Place.Kind.Site,
+      Span(Some(-1500), Some(-1200))
+    )
     load("wikidata", "v1", List(dated))
     assertEquals(onMap("site", Some(-1300L)), Set.empty[String])
     findingsAt("zzpt_src", Period(-1350, -1300))
@@ -301,7 +318,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       Place(
         "zzpt_land",
         "Zzpt Land",
-        PlaceKind.Region,
+        com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(
           s"""{"type":"Polygon","coordinates":[[[${Lon - 2},${Lat - 2}],[${Lon + 2},${Lat - 2}],[${Lon + 2},${Lat + 2}],[${Lon - 2},${Lat + 2}],[${Lon - 2},${Lat - 2}]]]}"""
         ),
@@ -315,7 +332,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       Place(
         "zzpt_town",
         "Zzpt Town",
-        PlaceKind.Site,
+        com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[${Lon + 1},$Lat]}"""),
         None,
         Some("fixture"),
@@ -325,7 +342,13 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       List(PlaceRelation("zzpt_town", "zzpt_land"))
     )
     val _ = PlaceFixtures.upsertPlaces(ds, List(region, town))
-    load("geonames", "v1", List(rec(gn("999500010"), "Zzpt Village", PlaceKind.Site, Span.always, dx = 0.5)))
+    load(
+      "geonames",
+      "v1",
+      List(
+        rec(gn("999500010"), "Zzpt Village", com.histmersion.domain.catalogue.Place.Kind.Site, Span.always, dx = 0.5)
+      )
+    )
     // an edge to an imported place (an old spatial-hierarchy run, a hand edit) is not followed
     connect(ds)(sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
                       VALUES ('geonames_999500010', 'zzpt_land', 'part_of', int8range(NULL, NULL))""".update.run())
@@ -349,15 +372,26 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       "wikidata",
       "v1",
       List(
-        rec(wd("Q999500011"), "Zzpt Near", PlaceKind.Site, Span(Some(-2000), Some(2000)), dx = 0.02),
-        rec(wd("Q999500012"), "Zzpt On", PlaceKind.Site, Span(Some(-2000), Some(2000)))
+        rec(
+          wd("Q999500011"),
+          "Zzpt Near",
+          com.histmersion.domain.catalogue.Place.Kind.Site,
+          Span(Some(-2000), Some(2000)),
+          dx = 0.02
+        ),
+        rec(
+          wd("Q999500012"),
+          "Zzpt On",
+          com.histmersion.domain.catalogue.Place.Kind.Site,
+          Span(Some(-2000), Some(2000))
+        )
       )
     )
     val seedPt = PlaceInput(
       Place(
         "zzpt_seed_site",
         "Zzpt Seed Site",
-        PlaceKind.Site,
+        com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[${Lon + 0.02},$Lat]}"""),
         None,
         Some("fixture"),

@@ -1,32 +1,32 @@
 package com.histmersion.domain
 
-import com.histmersion.values.LicenceId
-
 import java.util.Locale
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A licence classified into its family: `id` is what is stored and shown, `family` what an allowlist names. Shared by
   * every domain that keeps a licence — a picture's, a source's open-access licence, a dataset's. Pure throughout.
   */
-final case class Licence(id: LicenceId, family: LicenceFamily)
+final case class Licence(id: Licence.Id, family: Licence.Family)
 
 object Licence:
 
   /** A licence nobody can read: never stored. */
-  def unknown(statement: String): Licence = Licence(LicenceId(statement), LicenceFamily.Unknown)
+  def unknown(statement: String): Licence = Licence(Licence.Id(statement), Licence.Family.Unknown)
 
   /** Pure: the families a config string allows (`"cc0,public-domain,cc-by,cc-by-sa"`). Unknown names and the
     * never-allowed ones are dropped.
     */
-  def allowList(csv: String): Set[LicenceFamily] =
+  def allowList(csv: String): Set[Licence.Family] =
     Option(csv).toList
       .flatMap(_.split(",").toList)
       .map(_.trim.toLowerCase(Locale.ROOT))
-      .flatMap(LicenceFamily.fromWire)
+      .flatMap(Licence.Family.fromWire)
       .filterNot(_.never)
       .toSet
 
   /** Whether a licence may be stored under an allowlist: never one of the never-stored families. */
-  def allowed(l: Licence, allow: Set[LicenceFamily]): Boolean = !l.family.never && allow(l.family)
+  def allowed(l: Licence, allow: Set[Licence.Family]): Boolean = !l.family.never && allow(l.family)
 
   private val CcRe = """^cc-by(-nc)?(-sa|-nd)?(?:-([0-9](?:\.[0-9])?))?(?:-([a-z]{2,3}))?$""".r
 
@@ -37,20 +37,21 @@ object Licence:
     val s = raw.trim.toLowerCase(Locale.ROOT).replaceAll("[\\s_]+", "-")
     s match
       case ""                                                        => unknown("")
-      case c if c.startsWith("cc0") || c == "cc-zero" || c == "cc-0" => Licence(LicenceId("CC0-1.0"), LicenceFamily.Cc0)
+      case c if c.startsWith("cc0") || c == "cc-zero" || c == "cc-0" =>
+        Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0)
       case p
           if p == "pd" || p.startsWith("pd-") || p.startsWith("public-domain") || p == "publicdomain" ||
             p.startsWith("pdm") =>
-        Licence(LicenceId("public-domain"), LicenceFamily.PublicDomain)
+        Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain)
       case CcRe(nc, variant, version, port) =>
-        val wire = LicenceFamily.CcBy.wire + Option(nc).getOrElse("") + Option(variant).getOrElse("")
+        val wire = Licence.Family.CcBy.wire + Option(nc).getOrElse("") + Option(variant).getOrElse("")
         val v = Option(version).map(x => if x.contains(".") then x else s"$x.0")
         val id = (wire.toUpperCase(Locale.ROOT) :: v.toList ++ Option(port).map(_.toUpperCase(Locale.ROOT)).toList)
           .mkString("-")
-        Licence(LicenceId(id), LicenceFamily.fromWire(wire).getOrElse(LicenceFamily.Unknown))
-      case g if g.startsWith("gfdl") => Licence(LicenceId("GFDL"), LicenceFamily.Gfdl)
+        Licence(Licence.Id(id), Licence.Family.fromWire(wire).getOrElse(Licence.Family.Unknown))
+      case g if g.startsWith("gfdl") => Licence(Licence.Id("GFDL"), Licence.Family.Gfdl)
       case a if a == "arr" || a == "all-rights-reserved" || a == "copyrighted" || a.startsWith("©") =>
-        Licence(LicenceId(LicenceFamily.AllRightsReserved.wire), LicenceFamily.AllRightsReserved)
+        Licence(Licence.Id(Licence.Family.AllRightsReserved.wire), Licence.Family.AllRightsReserved)
       case other => unknown(other)
 
   private val CcUrl =
@@ -66,8 +67,8 @@ object Licence:
   def ofUrl(url: String): Licence =
     val u = Option(url).getOrElse("").trim.toLowerCase(Locale.ROOT)
     u match
-      case PdUrl("zero")              => Licence(LicenceId("CC0-1.0"), LicenceFamily.Cc0)
-      case PdUrl(_)                   => Licence(LicenceId("public-domain"), LicenceFamily.PublicDomain)
+      case PdUrl("zero")              => Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0)
+      case PdUrl(_)                   => Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain)
       case CcUrl(code, version, port) => classify(s"cc-$code-$version" + Option(port).fold("")("-" + _))
       case _                          => unknown(u)
 
@@ -87,5 +88,46 @@ object Licence:
     val cands = statements.map(_.trim).filter(_.nonEmpty)
     cands.iterator
       .map(classify)
-      .find(_.family != LicenceFamily.Unknown)
+      .find(_.family != Licence.Family.Unknown)
       .getOrElse(unknown(cands.headOption.getOrElse("")))
+
+  /** A licence as it is stored and shown: an SPDX id (`CC-BY-SA-4.0`, `CC0-1.0`), `public-domain`, or — when it reads
+    * as no licence known — the statement itself. Classified into its family by the shared `domain.Licence`.
+    */
+  type Id = Id.T
+
+  object Id extends RefinedType[String, Pure]
+
+  /** What a licence allows, as an allowlist names it (`cc-by-sa`): a new version of an allowed licence needs no config
+    * change. Two families are never stored, whatever a config says: an unreadable licence and all rights reserved.
+    */
+  enum Family(val wire: String):
+    case Cc0 extends Family("cc0")
+    case PublicDomain extends Family("public-domain")
+    case CcBy extends Family("cc-by")
+    case CcBySa extends Family("cc-by-sa")
+    case CcByNc extends Family("cc-by-nc")
+    case CcByNcSa extends Family("cc-by-nc-sa")
+    case CcByNd extends Family("cc-by-nd")
+    case CcByNcNd extends Family("cc-by-nc-nd")
+    case Gfdl extends Family("gfdl")
+    case AllRightsReserved extends Family("all-rights-reserved")
+    case Unknown extends Family("unknown")
+
+    /** Whether the licence requires the author to be named: every CC BY variant and the GFDL. */
+    def needsAttribution: Boolean = wire.startsWith(Family.CcBy.wire) || this == Family.Gfdl
+
+    /** The ones that need no credit at all (the credit line is still shown, as a courtesy and a source). */
+    def isPublicDomain: Boolean = this == Family.Cc0 || this == Family.PublicDomain
+
+    /** Never stored, whatever an allowlist says. */
+    def never: Boolean = this == Family.AllRightsReserved || this == Family.Unknown
+
+  object Family:
+
+    /** Every family an allowlist may name, in the order the settings document them. */
+    val allowable: List[Family] = values.toList.filterNot(_.never)
+
+    private val byWire: Map[String, Family] = values.map(f => f.wire -> f).toMap
+
+    def fromWire(s: String): Option[Family] = byWire.get(s)

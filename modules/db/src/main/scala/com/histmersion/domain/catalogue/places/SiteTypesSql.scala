@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.catalogue.SiteTypes
-import com.histmersion.values.PlaceKind
+import com.histmersion.domain.catalogue.Place
 
 /** [[SiteTypes.of]] in SQL, over a `places` row aliased `a` (a site or a feature): the stored type, else the Pleiades
   * feature types (the most specific by [[SiteTypes]]' preference), else the GeoNames feature code, else the Wikidata
@@ -40,5 +40,5 @@ object SiteTypesSql:
     val wikidata = SiteTypes.wikidataClasses.toList.sorted
       .map((c, t) => s"WHEN ${quote(c)} THEN ${quote(t)}")
       .mkString(s"CASE btrim($a.properties->>'class') ", " ", " END")
-    s"(CASE WHEN $a.kind IN (${quote(PlaceKind.Site)}, ${quote(PlaceKind.Feature)}) THEN " +
+    s"(CASE WHEN $a.kind IN (${quote(Place.Kind.Site)}, ${quote(Place.Kind.Feature)}) THEN " +
       s"coalesce($stored, $pleiades, $geonames, $own, $wikidata) END)"

@@ -5,11 +5,11 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.{AuthorName, Title}
 import com.histmersion.{Offset, PageSize, WireEnumValues, Year}
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.library.Source
 
 /** The sources a person has not marked read, by title, as "Not read yet" lists them. */
 final class SourceReadable(db: Transactor) extends Readable:
@@ -39,7 +39,7 @@ final class SourceReadable(db: Transactor) extends Readable:
             Title(title),
             authors.map(AuthorName(_)),
             year.map(Year(_)),
-            status.flatMap(summon[WireEnumValues[SourceStatus]].fromWire),
+            status.flatMap(summon[WireEnumValues[Source.Status]].fromWire),
             start.map(y => Year(y.toInt)),
             end.map(y => Year(y.toInt))
           )

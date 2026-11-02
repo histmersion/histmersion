@@ -2,7 +2,7 @@ package com.histmersion.pluginhost
 
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.Attribution
-import com.histmersion.domain.{Licence, LicenceFamily}
+import com.histmersion.domain.Licence
 import com.histmersion.domain.media.imports.{LicencePolicy, MediaRecord}
 import com.histmersion.plugin.*
 
@@ -90,8 +90,8 @@ object PluginMedia:
       catch case NonFatal(_) => ""
     val byStatement = Licence.ofStatement(stated)
     val licence =
-      if byStatement.family != LicenceFamily.Unknown then byStatement
-      else r.licenceUrl.map(Licence.ofUrl).filter(_.family != LicenceFamily.Unknown).getOrElse(byStatement)
+      if byStatement.family != Licence.Family.Unknown then byStatement
+      else r.licenceUrl.map(Licence.ofUrl).filter(_.family != Licence.Family.Unknown).getOrElse(byStatement)
     val credit = Option(r.credit).getOrElse("").trim
     if credit.isEmpty then Left("no credit line")
     else

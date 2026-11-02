@@ -4,10 +4,11 @@ import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.CompileArticle.SourceFact
-import com.histmersion.values.{GoalLinkKind, SourceStatus}
 import com.histmersion.domain.research.DraftMode
 import com.histmersion.domain.automation.ScheduleKind
 import io.circe.syntax.*
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Source
 
 /** The vocabularies live in `values` with no codec; their wire instances are api's `VocabularyCodecs`. A record the
   * server derives a codec for must find those — a vocabulary encoded any other way (by case name, as an object) would
@@ -16,7 +17,7 @@ import io.circe.syntax.*
 class VocabularyWireSuite extends munit.FunSuite:
 
   test("a checkpointed record spells a vocabulary as the wire does"):
-    val found = CompileArticlePipeline.Found("f", 1, List(SourceFact("ck", "T", None, SourceStatus.Superseded)), Nil)
+    val found = CompileArticlePipeline.Found("f", 1, List(SourceFact("ck", "T", None, Source.Status.Superseded)), Nil)
     assert(found.asJson.noSpaces.contains("\"status\":\"superseded\""), found.asJson.noSpaces)
 
   test("a checkpointed snapshot spells its draft mode as the wire does"):
@@ -24,5 +25,5 @@ class VocabularyWireSuite extends munit.FunSuite:
     assert(snap.asJson.noSpaces.contains("\"mode\":\"extend\""), snap.asJson.noSpaces)
 
   test("goal links and schedules spell their kinds as the wire does"):
-    assertEquals(GoalLinkKind.QueueItem.asJson.noSpaces, "\"queue-item\"")
+    assertEquals(Goal.LinkKind.QueueItem.asJson.noSpaces, "\"queue-item\"")
     assertEquals(ScheduleKind.Acquisition.asJson.noSpaces, "\"acquisition\"")

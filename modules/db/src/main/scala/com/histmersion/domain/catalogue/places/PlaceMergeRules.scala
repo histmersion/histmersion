@@ -6,10 +6,10 @@ import com.histmersion.util.data.DataOwner
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.util.data.exchange.PlanRules
 import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats places: the ledger names one by its id; a plan knows which of the bundle's place ids and old ids
   * name a place here, which of the bundle's places with no uid here are one here — by id, or by label and geometry (the
@@ -18,7 +18,7 @@ import hearth.kindlings.optics.syntax.*
 object PlaceMergeRules extends MergeRules:
   override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
-  val kind: BundleKind = BundleKind.Place
+  val kind: Bundle.Kind = Bundle.Kind.Place
   override val ledgerLabel: Option[String] = Some("SELECT id FROM places WHERE uid = l.local_uid")
 
   override def gather(

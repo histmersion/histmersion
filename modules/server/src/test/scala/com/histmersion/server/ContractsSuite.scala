@@ -29,10 +29,10 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     the api outside a boundary file (routes, endpoints, tools, transformers, controllers);
   *   - `client-refined` (rule 2): a refined (not `Pure`) constraint in a client module (api, web, cli, plugin-api) —
   *     the server validates, once, where an api value becomes a domain value;
-  *   - `prefix` (rule 5): a type `<Entity><Property>` while a type `<Entity>` exists in the same layer — the property
-  *     belongs on the entity's companion (`Approval.Kind`); a component that works on the entity (`…Service`,
-  *     `…Routes`, …, `Components`), a newtype's constraint `<Name>Rule` and the web page's own components are not
-  *     properties;
+  *   - `prefix` (rule 5): a type `<Entity><Property>` while a type `<Entity>` exists in the same layer and package —
+  *     the property belongs on the entity's companion (`Approval.Kind`); a component that works on the entity
+  *     (`…Service`, `…Routes`, …, `Components`), a newtype's constraint `<Name>Rule` and the web page's own components
+  *     are not properties;
   *   - `bucket` (rule 10): a type in a layer bucket (`com.histmersion.db`, `com.histmersion.files`,
   *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package.
   *
@@ -149,8 +149,23 @@ object ContractsSuite:
     /** The newtypes' names, in every module (a concept with a newtype anywhere has one). */
     def newtypes(sources: List[SourceFile]): Set[String] =
       sources
-        .flatMap(s => Newtype.findAllMatchIn(s.code).map(m => Option(m.group(1)).getOrElse(m.group(2))))
+        .flatMap(s =>
+          Newtype.findAllMatchIn(s.code).map { m =>
+            val name = Option(m.group(1)).getOrElse(m.group(2))
+            val line = s.code.substring(s.code.lastIndexOf('\n', m.start) + 1, m.start)
+            if line.isBlank && line.nonEmpty then
+              Enclosing
+                .findAllMatchIn(s.code.substring(0, m.start))
+                .toList
+                .lastOption
+                .fold(name)(o => o.group(1) + name)
+            else name
+          }
+        )
         .toSet - "X" - "T"
+
+    /** The top-level object a nested newtype is defined in: `Run.Id` is the concept `RunId`. */
+    private val Enclosing = "(?m)^(?:(?:final|private|case)(?:\\[\\w+\\])?\\s+)*object\\s+([A-Z]\\w*)".r
 
     /** The newtype a name stands for: the longest newtype name the name (a plural taken as its singular) ends with,
       * ignoring case — `sourceDoi` is a `Doi`, `goalSlug` a `GoalSlug`.
@@ -465,12 +480,12 @@ object ContractsSuite:
         .map(_._1)
 
     private def prefix(sources: List[SourceFile]): List[Violation] =
-      val defs = sources.flatMap(s => topLevel(s).map((_, name, at) => (layerOf(module(s)), name, s, at)))
-      val byLayer = defs.groupBy(_._1).view.mapValues(_.map(_._2).toSet).toMap
+      val defs = sources.flatMap(s => topLevel(s).map((_, name, at) => ((layerOf(module(s)), s.pkg), name, s, at)))
+      val byPackage = defs.groupBy(_._1).view.mapValues(_.map(_._2).toSet).toMap
       defs
         .filterNot(d => module(d._3) == "web")
-        .flatMap { (layer, name, s, at) =>
-          propertyOf(name, byLayer(layer)).map(entity =>
+        .flatMap { (place, name, s, at) =>
+          propertyOf(name, byPackage(place)).map(entity =>
             Violation("prefix", s.key, s"$name → $entity.${name.drop(entity.length)}", 1, s"${s.key}:${s.lineOf(at)}")
           )
         }

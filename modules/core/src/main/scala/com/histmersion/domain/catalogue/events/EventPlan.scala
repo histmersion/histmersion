@@ -5,11 +5,12 @@ import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.values.{BundleKind, IssueKind}
 import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
   * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two
@@ -37,23 +38,23 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event"
 
   private def merged(f: UUID, o: UUID, folds: PlanFolds): Unit =
-    if f != o then folds.fold(f, o, BundleKind.Event)
+    if f != o then folds.fold(f, o, Bundle.Kind.Event)
     eventLine(o) = es => foldEvent(localEvent(o), eventIn(es, o))
     folds.count(_.modify(_.eventsMerged).using(_ + 1))
 
-  override def rowDetail(kind: BundleKind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
-    if kind != BundleKind.Event then None
+  override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
+    if kind != Bundle.Kind.Event then None
     else localEvent.get(u).zip(localized.events.find(_.uid == u)).map(MergeIssueDetail.eventDetail)
 
   override def conflict(row: MergePlanner.Row, localized: BundleEntities): Option[PlanMerge] =
     Option.when(
-      row.kind == BundleKind.Event &&
+      row.kind == Bundle.Kind.Event &&
         localEvent.get(row.uid).zip(localized.events.find(_.uid == row.uid)).exists((a, b) => sameCore(a, b))
     )(SameEvent)
 
   override def labelsTaken(q: PlanQuestions): Unit =
     q.labelTaken(
-      BundleKind.Event,
+      Bundle.Kind.Event,
       q.localized.events,
       _.uid,
       _.id,
@@ -85,7 +86,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
     Option.when(
-      issue.entity == BundleKind.Event && (decision.kind == km.RenameRight || decision.kind == km.RenameLeft)
+      issue.entity == Bundle.Kind.Event && (decision.kind == km.RenameRight || decision.kind == km.RenameLeft)
     ) {
       val eid = decision.argument.getOrElse("")
       val idsHere = in.local.events.map(_.id).toSet ++ in.foreign.events.map(_.id)
@@ -96,16 +97,16 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
-      case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), Some(o))
+      case (Issue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), Some(o))
           if d.kind == km.KeepRight && localEvent.contains(o) =>
-        folds.fold(f, o, BundleKind.Event)
+        folds.fold(f, o, Bundle.Kind.Event)
         eventLine(o) = es =>
           foldEvent(
             eventIn(es, o).copy(id = localEvent(o).id, origin = localEvent(o).origin),
             localEvent(o)
           )
         folds.count(_.modify(_.eventsMerged).using(_ + 1))
-      case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
+      case (Issue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
         d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).copy(id = eid))
       case _ => ()
 

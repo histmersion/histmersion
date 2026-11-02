@@ -6,7 +6,6 @@ import com.histmersion.api.automation.GoalPlans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.values.GoalStatus
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, GoalPut, GoalStages, ListFilters, Managers, Queue}
 import com.histmersion.api.research.Articles
 
@@ -115,7 +114,7 @@ object GoalsView:
               ok,
               GoalPut(
                 t,
-                GoalStatus.Planned,
+                com.histmersion.domain.automation.Goal.Status.Planned,
                 Option(notes.trim).filter(_.nonEmpty),
                 tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct
               ),

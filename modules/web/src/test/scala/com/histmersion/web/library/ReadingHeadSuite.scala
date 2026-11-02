@@ -2,9 +2,9 @@ package com.histmersion.web.library
 
 import com.histmersion.api.library.{FindingRow, SearchHit, SourceDetail, SourceWithFindings}
 import com.histmersion.api.media.MediaThumb
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.web.map.GeoBounds
+import com.histmersion.domain.library.Source
 
 class ReadingHeadSuite extends munit.FunSuite:
 
@@ -14,7 +14,7 @@ class ReadingHeadSuite extends munit.FunSuite:
     List("Eric H. Cline"),
     Some(2014),
     Some("Princeton University Press"),
-    SourceStatus.Current,
+    Source.Status.Current,
     Nil,
     List("levant", "anatolia"),
     Nil,
@@ -32,7 +32,7 @@ class ReadingHeadSuite extends munit.FunSuite:
         "cline2014_year",
         "1177 B.C.",
         Some(2014),
-        SourceStatus.Current,
+        Source.Status.Current,
         Nil,
         List("levant"),
         Some(-1250),
@@ -47,7 +47,7 @@ class ReadingHeadSuite extends munit.FunSuite:
         "2014",
         "1177 B.C.",
         "Eric H. Cline",
-        Some(SourceStatus.Current),
+        Some(Source.Status.Current),
         "1250 BCE–1100 BCE",
         "levant",
         Some("Sum.")

@@ -3,7 +3,6 @@ package com.histmersion.api
 import com.histmersion.api.catalogue.PlacesMarkdown
 import com.histmersion.api.library.SearchMarkdown
 
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{
   Lpf,
   Period,
@@ -23,11 +22,12 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.library.Facet
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.domain.catalogue.Place
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
 class PlacesSuite extends munit.FunSuite:
 
-  private def one(json: String, kind: String = PlaceKind.Region): PlaceInput =
+  private def one(json: String, kind: String = Place.Kind.Region): PlaceInput =
     Lpf.parse(json, kind) match
       case Right(x :: Nil) => x
       case other           => fail(s"expected exactly one place, got $other")
@@ -51,7 +51,7 @@ class PlacesSuite extends munit.FunSuite:
     val p = one(hattusa)
     assertEquals(p.place.id, "pleiades_550595")
     assertEquals(p.place.label, "Hattusa")
-    assertEquals(p.place.kind, PlaceKind.Site, "types[].label 'settlement' maps to site")
+    assertEquals(p.place.kind, Place.Kind.Site, "types[].label 'settlement' maps to site")
     assertEquals(p.place.period, Some(Period(-1650, -1180)))
     assert(p.place.geometry.exists(_.contains("\"Point\"")), p.place.geometry.toString)
     assert(p.place.properties.exists(_.contains("ccodes")), "unmodelled properties are kept verbatim")
@@ -83,7 +83,7 @@ class PlacesSuite extends munit.FunSuite:
     val p = one(json)
     assertEquals(p.place.period, None, "no `when` = valid at every date")
     assertEquals(p.place.label, "Turkey", "plain GeoJSON falls back to properties.NAME")
-    assertEquals(p.place.kind, PlaceKind.Region, "the caller's --kind wins when nothing declares one")
+    assertEquals(p.place.kind, Place.Kind.Region, "the caller's --kind wins when nothing declares one")
     assert(p.place.geometry.exists(_.contains("MultiPolygon")))
     assertEquals(p.names.map(_.name), List("Turkey"))
     assertEquals(p.relations, Nil)
@@ -94,9 +94,9 @@ class PlacesSuite extends munit.FunSuite:
         | {"type":"Feature","properties":{"title":"Hittite Empire","kind":"polity",
         |   "period":[-1400,-1180],"parent":"anatolia","source":"AWMC LBA map"},
         |  "geometry":{"type":"Polygon","coordinates":[[[30.0,38.0],[36.0,38.0],[36.0,41.0],[30.0,41.0],[30.0,38.0]]]}}]}""".stripMargin
-    val p = one(json, PlaceKind.Site)
+    val p = one(json, Place.Kind.Site)
     assertEquals(p.place.id, "hittite_empire", "no @id → a slug of the title")
-    assertEquals(p.place.kind, PlaceKind.Polity)
+    assertEquals(p.place.kind, Place.Kind.Polity)
     assertEquals(p.place.period, Some(Period(-1400, -1180)))
     assertEquals(p.place.source, Some("AWMC LBA map"))
     assertEquals(p.relations.map(_.parentId), List("anatolia"))
@@ -155,7 +155,7 @@ class PlacesSuite extends munit.FunSuite:
     val p = one(tracedPolity)
     assertEquals(p.place.id, "hittite_empire_lba")
     assertEquals(p.place.label, "Hittite Empire")
-    assertEquals(p.place.kind, PlaceKind.Polity)
+    assertEquals(p.place.kind, Place.Kind.Polity)
     assertEquals(p.place.period, Some(Period(-1400, -1180)))
     assertEquals(p.place.source, Some("traced by hand after Bryce (2005)"))
     assertEquals(p.names.map(n => (n.name, n.lang)).toSet, Set(("Hatti", "hit"), ("Hittite Empire", "en")))
@@ -188,21 +188,21 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(Lpf.parse(Lpf.render(parsed)), Right(parsed))
 
   test("PlaceKind.parse maps foreign vocabularies onto the four kinds"):
-    assertEquals(PlaceKind.parse("settlement"), Some(PlaceKind.Site))
-    assertEquals(PlaceKind.parse("Kingdom"), Some(PlaceKind.Polity))
-    assertEquals(PlaceKind.parse("Sovereign country"), Some(PlaceKind.Polity))
-    assertEquals(PlaceKind.parse("continent"), Some(PlaceKind.Region))
-    assertEquals(PlaceKind.parse("river"), Some(PlaceKind.Feature))
-    assertEquals(PlaceKind.parse("zzz"), None)
-    assertEquals(PlaceKind.parse(""), None)
+    assertEquals(Place.Kind.parse("settlement"), Some(Place.Kind.Site))
+    assertEquals(Place.Kind.parse("Kingdom"), Some(Place.Kind.Polity))
+    assertEquals(Place.Kind.parse("Sovereign country"), Some(Place.Kind.Polity))
+    assertEquals(Place.Kind.parse("continent"), Some(Place.Kind.Region))
+    assertEquals(Place.Kind.parse("river"), Some(Place.Kind.Feature))
+    assertEquals(Place.Kind.parse("zzz"), None)
+    assertEquals(Place.Kind.parse(""), None)
 
   // ── rendering ───────────────────────────────────────────────────────────────────────────────
   private val turkey =
-    PlaceSummary("ne_country_tur", "Turkey", PlaceKind.Region, None, None, Some("Natural Earth"), "Turkey, Türkiye")
+    PlaceSummary("ne_country_tur", "Turkey", Place.Kind.Region, None, None, Some("Natural Earth"), "Turkey, Türkiye")
   private val disputed = PlaceSummary(
     "israel_united_monarchy_ia1",
     "Israel (united monarchy, as narrated) (contested)",
-    PlaceKind.Polity,
+    Place.Kind.Polity,
     Some(-1030),
     Some(-930),
     Some("Carta Bible Atlas"),
@@ -210,7 +210,7 @@ class PlacesSuite extends munit.FunSuite:
     contested = true
   )
   private val hatti =
-    PlaceSummary("hatti_lba", "Hatti", PlaceKind.Polity, Some(-1400), Some(-1180), None, "Hatti", contested = true)
+    PlaceSummary("hatti_lba", "Hatti", Place.Kind.Polity, Some(-1400), Some(-1180), None, "Hatti", contested = true)
 
   test("a disputed extent is marked wherever its label is drawn"):
     assertEquals(Markdown.contestedMark(true, "Hatti"), " (contested)")
@@ -249,9 +249,9 @@ class PlacesSuite extends munit.FunSuite:
   test("the hierarchy renders as an indented list, one level of indent per depth"):
     val md = PlacesMarkdown.placeTree(
       Vector(
-        PlaceTreeRow("continent_asia", "Asia", PlaceKind.Region, 0, 400),
-        PlaceTreeRow("ne_country_tur", "Turkey", PlaceKind.Region, 1, 122),
-        PlaceTreeRow("hatti_lba", "Hatti", PlaceKind.Polity, 2, 44, contested = true)
+        PlaceTreeRow("continent_asia", "Asia", Place.Kind.Region, 0, 400),
+        PlaceTreeRow("ne_country_tur", "Turkey", Place.Kind.Region, 1, 122),
+        PlaceTreeRow("hatti_lba", "Hatti", Place.Kind.Polity, 2, 44, contested = true)
       )
     )
     assertEquals(md.linesIterator.map(_.takeWhile(_ == ' ').length).toList, List(0, 2, 4))
@@ -263,13 +263,13 @@ class PlacesSuite extends munit.FunSuite:
       PlaceDetail(
         disputed,
         Some("""{"type":"Polygon","coordinates":[]}"""),
-        List(PlaceSummary("levant", "Levant", PlaceKind.Region, None, None, None, "Levant")),
+        List(PlaceSummary("levant", "Levant", Place.Kind.Region, None, None, None, "Levant")),
         List(turkey),
         5,
         Some(-1000),
         contested = true
       ),
-      Vector(PlaceTreeRow("israel_united_monarchy_ia1", disputed.label, PlaceKind.Polity, 0, 5, true))
+      Vector(PlaceTreeRow("israel_united_monarchy_ia1", disputed.label, Place.Kind.Polity, 0, 5, true))
     )
     assert(md.startsWith("# Israel (united monarchy, as narrated) (contested)\n"), md.take(80))
     assert(!md.contains("(contested) (contested)"), md.take(120))

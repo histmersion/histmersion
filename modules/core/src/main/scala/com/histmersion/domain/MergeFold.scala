@@ -14,8 +14,9 @@ import com.histmersion.api.checks.Lint
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
-import com.histmersion.values.{GoalStatus, IssueKind}
 import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.automation.Goal
+import com.histmersion.util.data.exchange.Issue
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
@@ -75,7 +76,7 @@ object MergeFold:
     * `planDecision` answers a [[IssueKind.GoalPlanDiffers]].
     */
   def foldGoal(l: BundleGoal, r: BundleGoal, from: String, planDecision: Option[DecisionKind] = None): BundleGoal =
-    def rank(s: String) = GoalStatus.all.indexOf(s)
+    def rank(s: String) = Goal.Status.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")

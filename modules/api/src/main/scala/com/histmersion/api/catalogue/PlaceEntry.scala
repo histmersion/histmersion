@@ -9,7 +9,6 @@ import com.histmersion.api.catalogue.{
   PlaceTimeBasis,
   PlaceType
 }
-import com.histmersion.values.LocationPrecision
 
 /** The gazetteer's record of one place: the row, its GeoJSON geometry and the hierarchy around it at `asOf`, its
   * footprints, links, types and records; `counts`, what the corpus holds for it, filled by whoever shows its card. Not
@@ -31,7 +30,8 @@ final case class PlaceEntry(
     descriptions: List[PlaceDescription] = Nil,
     timeBasis: PlaceTimeBasis = PlaceTimeBasis.Dated,
     /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
-    locationPrecision: LocationPrecision = LocationPrecision.Stated,
+    locationPrecision: com.histmersion.domain.catalogue.Place.Precision =
+      com.histmersion.domain.catalogue.Place.Precision.Stated,
     siteType: Option[String] = None,
     record: PlaceRecord = PlaceRecord()
 ) extends PlaceCard

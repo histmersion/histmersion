@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
-import com.histmersion.values.RunState
+import com.histmersion.domain.automation.Run
 
 /** `agents.auto-enrich`: after an ingest job stores a source, an `enrich-source` run is queued for it — unless agents
   * are off, the switch is off, or the source is ALREADY ENRICHED. Pure: the server gathers the facts, this decides and
@@ -24,7 +24,7 @@ object AutoEnrich:
     case Enriched(why: String)
 
   /** One earlier `enrich-source` run of the source: its id and state. */
-  final case class PriorRun(id: String, state: RunState)
+  final case class PriorRun(id: String, state: Run.State)
 
   /** Whether to queue; Left = why not. */
   def decide(
@@ -39,7 +39,7 @@ object AutoEnrich:
 
   /** Why the source counts as already enriched, if it does. */
   def enrichedBy(findings: Int, notes: Option[String], runs: List[PriorRun]): Option[String] =
-    val live = runs.find(r => r.state != RunState.Failed && r.state != RunState.Cancelled)
+    val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings > 0 then Some(s"it already has ${Plural.count(findings, "finding")}")
     else if notes.exists(_.trim.nonEmpty) then Some("it already has notes")
     else live.map(r => s"enrich-source run ${r.id} is ${r.state.wire}")

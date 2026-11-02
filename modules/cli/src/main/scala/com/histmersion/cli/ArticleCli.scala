@@ -8,12 +8,12 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.SeedResult
 import com.histmersion.api.research.{ArticleCoverage, ArticleEdits, ArticleImport, ArticleMarkdown, ArticleReviewView}
+import com.histmersion.util.data.exchange.Bundle
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -433,5 +433,5 @@ object ArticleCli:
       "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"
     ) {
       list orElse get orElse put orElse patch orElse lint orElse check orElse coverage orElse review orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
-        LabelRenameCmd(BundleKind.Article)
+        LabelRenameCmd(Bundle.Kind.Article)
     }

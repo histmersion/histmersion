@@ -1,11 +1,11 @@
 package com.histmersion.api
 
 import com.histmersion.api.ValueCodecs.given
-import com.histmersion.values.WikidataId
 import com.histmersion.domain.library.{Citekey, Doi}
 import com.histmersion.{Latitude, Longitude, Year}
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.domain.catalogue.places.Wikidata
 
 class ValueCodecsSuite extends munit.FunSuite:
 
@@ -16,7 +16,7 @@ class ValueCodecsSuite extends munit.FunSuite:
     assertEquals(Year(-3300).asJson.noSpaces, "-3300")
     assertEquals(decode[Year]("-3300").map(y => y.value: Int), Right(-3300))
     assert(decode[Doi]("\"10.3390/rel10040258\"").isRight && decode[Doi]("\"doi:10.1/x\"").isLeft)
-    assert(decode[WikidataId]("\"Q12554\"").isRight && decode[WikidataId]("\"P31\"").isLeft)
+    assert(decode[Wikidata.Id]("\"Q12554\"").isRight && decode[Wikidata.Id]("\"P31\"").isLeft)
     assert(decode[Latitude]("41.9").isRight && decode[Latitude]("91").isLeft && decode[Longitude]("-181").isLeft)
 
   test("the schemas are the base types'"):

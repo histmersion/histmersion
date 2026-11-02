@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.api.research.ArticleLint
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.research.{
@@ -18,6 +17,7 @@ import com.histmersion.api.research.{
   CoverageSource,
   DriftKind
 }
+import com.histmersion.domain.library.Source
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the uncited remainder, the
   * status breakdown, the counts sentence, the reasons (present or missing), the Method note, the drift, and Markdown
@@ -25,17 +25,17 @@ import com.histmersion.api.research.{
   */
 class ArticleCoverageSuite extends munit.FunSuite:
 
-  private def src(ck: String, st: SourceStatus = SourceStatus.Current) =
+  private def src(ck: String, st: Source.Status = Source.Status.Current) =
     CoverageSource(ck, s"Title of $ck", Some(2000), st, List("Ann Author"))
 
   private val filter = ArticleFilter(query = Some("Theseus"), topics = List("greek_myth"))
   private val hits = List(
-    src("walker1995_theseus", SourceStatus.Foundational),
-    src("graves2017_greek", SourceStatus.Contested),
+    src("walker1995_theseus", Source.Status.Foundational),
+    src("graves2017_greek", Source.Status.Contested),
     src("gantz1993_earlymyth"),
     src("bremmer2008_religion"),
     src("graf1993_mythology"),
-    src("nilsson1927_minoan", SourceStatus.Superseded)
+    src("nilsson1927_minoan", Source.Status.Superseded)
   )
   private val cited = List("walker1995_theseus", "gantz1993_earlymyth", "middleton2020_collapse")
   private val reasons = Map(
@@ -86,10 +86,10 @@ class ArticleCoverageSuite extends munit.FunSuite:
     assertEquals(
       c.statuses,
       List(
-        StatusCount(SourceStatus.Foundational, 1),
-        StatusCount(SourceStatus.Current, 3),
-        StatusCount(SourceStatus.Contested, 1),
-        StatusCount(SourceStatus.Superseded, 1)
+        StatusCount(Source.Status.Foundational, 1),
+        StatusCount(Source.Status.Current, 3),
+        StatusCount(Source.Status.Contested, 1),
+        StatusCount(Source.Status.Superseded, 1)
       )
     )
     assertEquals(c.edges, List(CoverageEdge("simpson1970_catalogue", "challenges", "gantz1993_earlymyth")))

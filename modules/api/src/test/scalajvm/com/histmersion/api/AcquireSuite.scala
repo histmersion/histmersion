@@ -1,8 +1,8 @@
 package com.histmersion.api
 
 import com.histmersion.api.library.Acquire.{EdgeKinds, Ident, Verdicts}
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.library.{Acquire, FollowupRow, RetractionNotice, UpdateNotice, WorkRef}
+import com.histmersion.domain.library.Source
 
 /** The pure rules of stream 2.6: citekeys, identifier parsing, verdicts, follow-up classification and the Retraction
   * Watch CSV. No network, no database.
@@ -47,7 +47,7 @@ class AcquireSuite extends munit.FunSuite:
 
   // #699
   test("assess --apply: only unassessed is overwritten, unless forced; a retraction always is"):
-    import SourceStatus.*
+    import com.histmersion.domain.library.Source.Status.*
     assertEquals(Acquire.statusDecision(Verdicts.Current, Unassessed, force = false), Some(Right(Current)))
     assertEquals(Acquire.statusDecision(Verdicts.Current, Contested, force = false), Some(Left(Contested)))
     assertEquals(Acquire.statusDecision(Verdicts.Current, Foundational, force = false), Some(Left(Foundational)))
@@ -120,9 +120,9 @@ class AcquireSuite extends munit.FunSuite:
   test("verdict → flagged, status and recommendation"):
     assert(Acquire.flagged(Verdicts.Retracted) && Acquire.flagged(Verdicts.Corrected))
     assert(!Acquire.flagged(Verdicts.Current) && !Acquire.flagged(Verdicts.LowImpact))
-    assertEquals(Acquire.statusFor(Verdicts.Retracted), Some(SourceStatus.Retracted))
-    assertEquals(Acquire.statusFor(Verdicts.Corrected), Some(SourceStatus.Contested))
-    assertEquals(Acquire.statusFor(Verdicts.Current), Some(SourceStatus.Current))
+    assertEquals(Acquire.statusFor(Verdicts.Retracted), Some(Source.Status.Retracted))
+    assertEquals(Acquire.statusFor(Verdicts.Corrected), Some(Source.Status.Contested))
+    assertEquals(Acquire.statusFor(Verdicts.Current), Some(Source.Status.Current))
     // low-impact is about reach, not correctness: it must never overwrite a curated status
     assertEquals(Acquire.statusFor(Verdicts.LowImpact), None)
     assertEquals(Acquire.statusFor(Verdicts.Unassessed), None)

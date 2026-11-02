@@ -10,11 +10,12 @@ import com.histmersion.api.exchange.{
   MergePlan
 }
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
 import com.histmersion.api.exchange.PlanMatches
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for.
   */
@@ -26,11 +27,11 @@ class PlanRunsSuite extends munit.FunSuite:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
       es.copy(aliases = es.aliases :+ BundleAlias(name, uid(name), "2026-01-01T00:00:00.000000Z"))
     override def notices: List[String] = List(s"$name notice")
-    override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] = Option.when(answers)(uid(name))
+    override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
     override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] = Set(name)
     override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
       Option.when(answers)(Left(name))
-    override def pairIssue(kind: IssueKind): Boolean = answers && kind == IssueKind.AttestationUnanchored
+    override def pairIssue(kind: Issue.Kind): Boolean = answers && kind == Issue.Kind.AttestationUnanchored
     override def dropped: Set[UUID] = Set(uid(name))
     override def bodyIssue(right: UUID): Option[String] = Option.when(answers)(name)
     override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
@@ -47,7 +48,7 @@ class PlanRunsSuite extends munit.FunSuite:
   private object NoFolds extends PlanFolds:
     def input: com.histmersion.domain.MergePlanner.Input = fail("not asked")
     def localized: BundleEntities = BundleEntities()
-    def fold(foreign: UUID, here: UUID, kind: BundleKind): Unit = ()
+    def fold(foreign: UUID, here: UUID, kind: Bundle.Kind): Unit = ()
     def foldedTo(foreign: UUID): Option[UUID] = None
     def here(u: UUID): Boolean = false
     def toLocal(u: UUID): UUID = u
@@ -57,7 +58,17 @@ class PlanRunsSuite extends munit.FunSuite:
 
   private val runs = PlanRuns(List(Named("a", answers = false), Named("b", answers = true), Named("c", answers = true)))
   private val issue =
-    MergeIssue("E-00000000", IssueKind.LabelTaken, IssueSeverity.Blocking, BundleKind.Event, "x", None, None, Nil, Nil)
+    MergeIssue(
+      "E-00000000",
+      Issue.Kind.LabelTaken,
+      Issue.Severity.Blocking,
+      Bundle.Kind.Event,
+      "x",
+      None,
+      None,
+      Nil,
+      Nil
+    )
 
   test("the stages that transform or collect run every kind in order"):
     assertEquals(runs.localized(BundleEntities(), Map.empty).aliases.map(_.alias), List("a", "b", "c"))
@@ -66,11 +77,11 @@ class PlanRunsSuite extends munit.FunSuite:
     assertEquals(runs.dropped, Set(uid("a"), uid("b"), uid("c")))
 
   test("the stages that ask take the first kind that answers"):
-    assertEquals(runs.ownerSource(uid("x"), BundleKind.Attestation), Some(uid("b")))
+    assertEquals(runs.ownerSource(uid("x"), Bundle.Kind.Attestation), Some(uid("b")))
     assertEquals(runs.argument(issue, MergeDecision(DecisionKind.RenameRight, Some("y"))), Some(Left("b")))
-    assert(runs.pairIssue(IssueKind.AttestationUnanchored))
-    assert(!runs.pairIssue(IssueKind.TitleDiffers))
-    assertEquals(PlanRuns(Nil).ownerSource(uid("x"), BundleKind.Attestation), None)
+    assert(runs.pairIssue(Issue.Kind.AttestationUnanchored))
+    assert(!runs.pairIssue(Issue.Kind.TitleDiffers))
+    assertEquals(PlanRuns(Nil).ownerSource(uid("x"), Bundle.Kind.Attestation), None)
     assertEquals(runs.bodyIssue(uid("x")), Some("b"))
     assertEquals(runs.citekeyArgument(issue, MergeDecision(DecisionKind.Map, Some("y"))), Some(Left("b citekey")))
     assertEquals(PlanRuns(Nil).citekeyArgument(issue, MergeDecision(DecisionKind.Map, Some("y"))), None)
@@ -86,7 +97,7 @@ class PlanRunsSuite extends munit.FunSuite:
       None,
       None,
       None,
-      com.histmersion.values.SourceStatus.Current,
+      com.histmersion.domain.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,

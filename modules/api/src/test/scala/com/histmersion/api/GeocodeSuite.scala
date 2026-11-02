@@ -1,8 +1,8 @@
 package com.histmersion.api
 
 import com.histmersion.api.catalogue.Geocode.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.Period
+import com.histmersion.domain.catalogue.Place
 
 /** The geocoder's pure half (#981): the name key, the readings of a name, and the ranking — each case mirrors a real
   * failure of 2026-10-06.
@@ -84,7 +84,7 @@ class GeocodeSuite extends munit.FunSuite:
   private val iranSite = c(
     "pleiades_903043",
     "[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania",
-    PlaceKind.Site,
+    Place.Kind.Site,
     byLabel = false,
     from = Some(-750),
     to = Some(1599),
@@ -93,11 +93,11 @@ class GeocodeSuite extends munit.FunSuite:
     lon = 45.86,
     lat = 34.47
   )
-  private val country = c("ne_country_alb", "Albania", PlaceKind.Region, area = 3.0, lon = 19.97, lat = 41.25)
+  private val country = c("ne_country_alb", "Albania", Place.Kind.Region, area = 3.0, lon = 19.97, lat = 41.25)
   private val caucasian = c(
     "pleiades_863731",
     "Albania",
-    PlaceKind.Region,
+    Place.Kind.Region,
     from = Some(-330),
     to = Some(2100),
     dim = 0,
@@ -106,7 +106,7 @@ class GeocodeSuite extends munit.FunSuite:
     lat = 41.38
   )
   private val snap1920 =
-    c("cliopatria_albania_1920_1935", "Albania", PlaceKind.Polity, from = Some(1920), to = Some(1935), area = 2.9)
+    c("cliopatria_albania_1920_1935", "Albania", Place.Kind.Polity, from = Some(1920), to = Some(1935), area = 2.9)
   private val albania = List(iranSite, country, caucasian, snap1920)
 
   private def best(cs: List[Candidate], hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
@@ -133,28 +133,28 @@ class GeocodeSuite extends munit.FunSuite:
 
   test("Mesopotamia: Pleiades' placeholder points at 37.5/37.5 rank after the curated region"):
     val ph = (1 to 3).toList.map(i =>
-      c(s"pleiades_$i", "Mesopotamia", PlaceKind.Region, dim = 0, area = 0, shared = 17, lon = 37.5, lat = 37.5)
+      c(s"pleiades_$i", "Mesopotamia", Place.Kind.Region, dim = 0, area = 0, shared = 17, lon = 37.5, lat = 37.5)
     )
-    val curated = c("mesopotamia", "Mesopotamia", PlaceKind.Region, area = 50.0, lon = 43.74, lat = 33.15)
+    val curated = c("mesopotamia", "Mesopotamia", Place.Kind.Region, area = 50.0, lon = 43.74, lat = 33.15)
     assertEquals(best(ph :+ curated), "mesopotamia")
     // alone, a placeholder still resolves — and the choice says it is rough
     val r = choose("Mesopotamia", Attempt("Mesopotamia"), rank(ph, KindHint.Unknown, None, Min), Min).get
     assertEquals(r.approximate, List(Approximation.Rough(17)))
     assert(r.describe.contains("placeholder point shared by 17 places"), r.describe)
     assert(
-      !isPlaceholder(c("x", "x", PlaceKind.Site, dim = 0, shared = 3), Min),
+      !isPlaceholder(c("x", "x", Place.Kind.Site, dim = 0, shared = 3), Min),
       "fewer than the minimum is a real point"
     )
 
   test("Thessalia: a point on an atlas grid square's centre ranks below every precise candidate, and says so"):
     // the live pair (2026-10-09): the late Roman province at the 5° cell's centre 37.5 N 22.5 E — in
     // the Peloponnese — and the region at its real point; both Pleiades, both labelled Thessalia
-    val province = c("pleiades_1001895", "Thessalia", PlaceKind.Region, dim = 0, area = 0, lon = 22.5, lat = 37.5)
+    val province = c("pleiades_1001895", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.5, lat = 37.5)
       .copy(gridCell = true)
-    val region = c("pleiades_1332", "Thessalia", PlaceKind.Region, dim = 0, area = 0, lon = 22.29543, lat = 39.44387)
+    val region = c("pleiades_1332", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.29543, lat = 39.44387)
     assertEquals(best(List(province, region)), "pleiades_1332")
     assertEquals(best(List(province, region), at = Some(Period(400, 500))), "pleiades_1332")
-    val site = c("pleiades_x", "Thessalia", PlaceKind.Site, byLabel = false, dim = 0, area = 0, lon = 22.4, lat = 39.6)
+    val site = c("pleiades_x", "Thessalia", Place.Kind.Site, byLabel = false, dim = 0, area = 0, lon = 22.4, lat = 39.6)
     assertEquals(best(List(province, site)), "pleiades_x", "a precise alias beats a grid-square label")
     // alone, it still resolves — marked approximate
     val r = choose("Thessalia", Attempt("Thessalia"), rank(List(province), KindHint.Unknown, None, Min), Min).get
@@ -163,7 +163,7 @@ class GeocodeSuite extends munit.FunSuite:
 
   test("Kievan Rus': the snapshot whose period covers the finding's, else the nearest in time"):
     val snaps = List((882L, 883L), (990L, 1017L), (1040L, 1235L), (1236L, 1240L)).map((a, b) =>
-      c(s"cliopatria_kievan_rus_${a}_$b", "Kievan Rus'", PlaceKind.Polity, from = Some(a), to = Some(b), area = 1.0)
+      c(s"cliopatria_kievan_rus_${a}_$b", "Kievan Rus'", Place.Kind.Polity, from = Some(a), to = Some(b), area = 1.0)
     )
     assertEquals(best(snaps, at = Some(Period(1000, 1000))), "cliopatria_kievan_rus_990_1017")
     assertEquals(best(snaps, at = Some(Period(1100, 1200))), "cliopatria_kievan_rus_1040_1235")
@@ -192,22 +192,22 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(best(rump), "cliopatria_kievan_rus_1040_1235")
 
   test("Ur: without a hint the broad entity, with 'site' the city"):
-    val city = c("pleiades_912985", "Ur(i)", PlaceKind.Site, dim = 0, area = 0, from = Some(-6200), to = Some(2100))
-    val polity = c("ur_iii", "Ur", PlaceKind.Polity, from = Some(-2112), to = Some(-2004))
+    val city = c("pleiades_912985", "Ur(i)", Place.Kind.Site, dim = 0, area = 0, from = Some(-6200), to = Some(2100))
+    val polity = c("ur_iii", "Ur", Place.Kind.Polity, from = Some(-2112), to = Some(-2004))
     assertEquals(best(List(city, polity)), "ur_iii")
     assertEquals(best(List(city, polity), hint = KindHint.Site), "pleiades_912985")
     assertEquals(best(List(city, polity), hint = KindHint.Site, at = Some(Period(-2100, -2000))), "pleiades_912985")
 
   test("water: a feature before a site of the same name"):
-    val sea = c("pleiades_697709", "Mortuum Mare", PlaceKind.Feature, dim = 0, area = 0)
-    val town = c("x_town", "Mortuum Mare", PlaceKind.Site, dim = 0, area = 0)
+    val sea = c("pleiades_697709", "Mortuum Mare", Place.Kind.Feature, dim = 0, area = 0)
+    val town = c("x_town", "Mortuum Mare", Place.Kind.Site, dim = 0, area = 0)
     assertEquals(best(List(town, sea), hint = KindHint.Water), "pleiades_697709")
     assertEquals(best(List(town, sea), hint = KindHint.Site), "x_town")
 
   test("an undated finding prefers an undated place over a dated snapshot"):
     val snap =
-      c("cliopatria_denmark_1945_1945", "Denmark", PlaceKind.Polity, from = Some(1945), to = Some(1945), area = 1.0)
-    val ne = c("ne_country_dnk", "Denmark", PlaceKind.Region, area = 5.0)
+      c("cliopatria_denmark_1945_1945", "Denmark", Place.Kind.Polity, from = Some(1945), to = Some(1945), area = 1.0)
+    val ne = c("ne_country_dnk", "Denmark", Place.Kind.Region, area = 5.0)
     assertEquals(best(List(snap, ne)), "ne_country_dnk")
 
   test("a qualifier-stripped choice is approximate and says what was dropped"):
@@ -220,11 +220,11 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(choose("Dead Sea", Attempt("Dead Sea"), Nil, Min), None)
 
   test("period overlap and gap use inclusive bounds"):
-    val p = c("p", "p", PlaceKind.Polity, from = Some(-100), to = Some(100))
+    val p = c("p", "p", Place.Kind.Polity, from = Some(-100), to = Some(100))
     assert(p.overlaps(Period(100, 200)) && p.overlaps(Period(-300, -100)))
     assertEquals(p.gap(Period(150, 160)), 50L)
     assertEquals(p.gap(Period(-300, -200)), 100L)
-    assert(c("u", "u", PlaceKind.Region).overlaps(Period(-5000, -4000)), "undated is always valid")
+    assert(c("u", "u", Place.Kind.Region).overlaps(Period(-5000, -4000)), "undated is always valid")
 
   test("kind hints parse leniently: a model's synonym is a hint, anything else none"):
     assertEquals(KindHint.parse("Site"), KindHint.Site)
@@ -293,9 +293,9 @@ class GeocodeSuite extends munit.FunSuite:
   // ── the external sources (#1064) ─────────────────────────────────────────────────────────────
 
   test("tier: a bulk-imported place never outranks a seed place of the same label ('Varna' stays the city)"):
-    val city = c("ne_city_varna", "Varna", PlaceKind.Site, dim = 0, area = 0)
+    val city = c("ne_city_varna", "Varna", Place.Kind.Site, dim = 0, area = 0)
     val province =
-      c("geonames_864563", "Varna", PlaceKind.Region, dim = 0, area = 0).copy(tier = tierOf(Some("geonames")))
+      c("geonames_864563", "Varna", Place.Kind.Region, dim = 0, area = 0).copy(tier = tierOf(Some("geonames")))
     assertEquals(
       rank(List(province, city), KindHint.Unknown, None, 4).map(_.id),
       List("ne_city_varna", "geonames_864563")
@@ -309,13 +309,13 @@ class GeocodeSuite extends munit.FunSuite:
     val dated = c(
       "geonames_174710",
       "Yeghegnadzor",
-      PlaceKind.Site,
+      Place.Kind.Site,
       byLabel = false,
       from = Some(1935),
       to = Some(1956),
       dim = 0,
       area = 0
     )
-    val undated = c("geonames_100", "Mikoyan farm", PlaceKind.Site, byLabel = false, dim = 0, area = 0)
+    val undated = c("geonames_100", "Mikoyan farm", Place.Kind.Site, byLabel = false, dim = 0, area = 0)
     assertEquals(rank(List(undated, dated), KindHint.Unknown, Some(Period(1940, 1945)), 4).head.id, "geonames_174710")
     assertEquals(rank(List(dated, undated), KindHint.Unknown, Some(Period(1990, 2000)), 4).head.id, "geonames_100")

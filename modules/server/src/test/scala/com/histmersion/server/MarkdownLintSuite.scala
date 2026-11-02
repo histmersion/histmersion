@@ -3,7 +3,6 @@ package com.histmersion.server
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import MarkdownLint.Context
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
 import com.histmersion.api.research.{
   ArticleCoverage,
@@ -13,6 +12,7 @@ import com.histmersion.api.research.{
   CoverageSearch,
   CoverageSource
 }
+import com.histmersion.domain.library.Source
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own
@@ -412,15 +412,15 @@ class MarkdownLintSuite extends munit.FunSuite:
   test(
     "#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"
   ):
-    val src = (ck: String, st: SourceStatus) => CoverageSource(ck, ck, Some(2000), st)
+    val src = (ck: String, st: Source.Status) => CoverageSource(ck, ck, Some(2000), st)
     val c = ArticleCoverage.compute(
       "tin",
       ArticleFilter(query = Some("tin_trade *x*"), topics = List("bronze_age")),
       812,
       List(
-        src("knapp2016_tin", SourceStatus.Current),
-        src("egypt2001_old", SourceStatus.Contested),
-        src("iso2024_new", SourceStatus.Current)
+        src("knapp2016_tin", Source.Status.Current),
+        src("egypt2001_old", Source.Status.Contested),
+        src("iso2024_new", Source.Status.Current)
       ),
       Set("knapp2016_tin"),
       List("knapp2016_tin", "other2020_x"),

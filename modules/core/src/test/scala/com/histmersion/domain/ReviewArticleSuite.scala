@@ -7,7 +7,6 @@ import com.histmersion.config.given
 import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.research.{
   ArticleCoverage,
   ArticleEdits,
@@ -17,6 +16,7 @@ import com.histmersion.api.research.{
   CoverageReason,
   CoverageSource
 }
+import com.histmersion.domain.library.Source
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,
   * escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines.
@@ -203,7 +203,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val (r, ws) =
       checkSkeptic(SkepticAnswer("PASS", Nil, List(ok, bad), 3), last = false, isCk, record.get, 0.9).toOption.get
-    assertEquals(r.proposals.map(_.status), List(Some(SourceStatus.Contested)))
+    assertEquals(r.proposals.map(_.status), List(Some(Source.Status.Contested)))
     assert(ws.exists(_.contains("not in the record")), ws)
 
   test("merge: dedupe by where + problem, worst verdict, C and S on the same passage both kept"):
@@ -418,9 +418,9 @@ class ReviewArticleSuite extends munit.FunSuite:
     ArticleFilter(topics = List("tin")),
     3,
     List(
-      CoverageSource("knapp2016_tin", "Tin", Some(2016), SourceStatus.Current),
-      CoverageSource("egypt2001_old", "Egypt", Some(2001), SourceStatus.Current),
-      CoverageSource("iso2024_new", "Isotopes", Some(2024), SourceStatus.Contested)
+      CoverageSource("knapp2016_tin", "Tin", Some(2016), Source.Status.Current),
+      CoverageSource("egypt2001_old", "Egypt", Some(2001), Source.Status.Current),
+      CoverageSource("iso2024_new", "Isotopes", Some(2024), Source.Status.Contested)
     ),
     Set("knapp2016_tin"),
     List("knapp2016_tin"),
@@ -863,8 +863,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     val long = "A " * 80
     val lines = ReviewArticle.citedLines(
       List(
-        CitedSource("watkins1995_dragon", Some("How to Kill a Dragon"), Some(1995), Some(SourceStatus.Foundational)),
-        CitedSource("x2020_y", Some(long), None, Some(SourceStatus.Contested)),
+        CitedSource("watkins1995_dragon", Some("How to Kill a Dragon"), Some(1995), Some(Source.Status.Foundational)),
+        CitedSource("x2020_y", Some(long), None, Some(Source.Status.Contested)),
         CitedSource("ghost2001_z", None, None, None)
       )
     )

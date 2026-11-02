@@ -21,7 +21,6 @@ import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
 import io.scalaland.chimney.dsl.*
@@ -43,6 +42,8 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
 import com.histmersion.api.research.Article
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned
@@ -136,7 +137,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       year: Int,
       doi: Option[String] = None,
       body: Option[String] = None,
-      status: SourceStatus = SourceStatus.Current,
+      status: com.histmersion.domain.library.Source.Status = com.histmersion.domain.library.Source.Status.Current,
       notes: Option[String] = None,
       venue: Option[String] = None,
       summary: Option[String] = None,
@@ -283,7 +284,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         List("Trevor Bryce"),
         2006,
         doi = Some("10.1093/acprof:oso/9780199279081.001.0001"),
-        status = SourceStatus.Contested,
+        status = com.histmersion.domain.library.Source.Status.Contested,
         edges = List("guterbock1997_perspectives" -> "references")
       )
     )
@@ -438,7 +439,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     (work, home, sw, sh)
 
   /** kind, id letter, left label, right label, severity, conditional on. */
-  private type Shape = (IssueKind, String, Option[String], Option[String], IssueSeverity, Option[DecisionKind])
+  private type Shape = (Issue.Kind, String, Option[String], Option[String], Issue.Severity, Option[DecisionKind])
 
   private def shape(p: MergePlan): Set[Shape] =
     p.issues
@@ -454,7 +455,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .toSet
 
-  import IssueKind.*, IssueSeverity.*
+  import com.histmersion.util.data.exchange.Issue.Kind.*
+  import com.histmersion.util.data.exchange.Issue.Severity.*
   private val expected: Set[Shape] = Set(
     (NotesDiffers, "S", Some("guterbock1997_hittite"), Some("guterbock1997_perspectives"), Blocking, None),
     (DoiDiffers, "S", Some("kuhrt1995_ancient"), Some("kuhrt1995_near"), Blocking, None),
@@ -570,7 +572,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(p.matches.byLedger, 1)
     val r = importInto(b, bundle, sb)
     assert(r.applied, r.problems.mkString("\n"))
-    assertEquals(r.counts.find(_.kind == BundleKind.Source).map(_.updated), Some(1), r.toString)
+    assertEquals(r.counts.find(_.kind == Bundle.Kind.Source).map(_.updated), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM sources"), 1)
     assertEquals(SourceFixtures.load(b, "zzx2001_here").flatMap(_.summary), Some("v2 from there"))
     assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE uid = '$uidHere' AND citekey = 'zzx2001_here'"), 1)
@@ -591,7 +593,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     EventFixtures.put(b, "zz_both", EventPut("Event at b", "battle", TimeSpan(Some(-1300), None, None, Some(-1290))))
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
-    val taken = p.open.find(_.kind == IssueKind.LabelTaken).getOrElse(fail(p.issues.toString))
+    val taken = p.open.find(_.kind == Issue.Kind.LabelTaken).getOrElse(fail(p.issues.toString))
     assertEquals(p.open.size, 1, p.issues.mkString("\n"))
     val r = importInto(b, bundle, sb, MergeResolutions(List(MergeResolution(taken.id, "keep-left"))))
     assert(r.applied, r.problems.mkString("\n"))
@@ -635,19 +637,19 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     */
   private def decide(i: MergeIssue): MergeResolution =
     val d = i.kind match
-      case SameWork                                           => s"map:${i.left.get.label}"
-      case YearDiffers                                        => "keep-left"
-      case CitekeyCollision                                   => i.suggested.get.wire
-      case AliasConflict                                      => "keep-left"
-      case DoiDiffers                                         => "keep-left"
-      case StatusDiffers                                      => "keep-right"
-      case NotesDiffers                                       => "concat"
-      case ChangedBothSides if i.entity == BundleKind.Article => "file:merged.md"
-      case ChangedBothSides                                   => "keep-right"
-      case DeletedThereChangedHere                            => "keep-left"
-      case ArticleDiverged                                    => "both"
-      case LabelTaken                                         => "rename-right:zz_siege_work"
-      case AttestationUnanchored                              => "drop"
+      case SameWork                                            => s"map:${i.left.get.label}"
+      case YearDiffers                                         => "keep-left"
+      case CitekeyCollision                                    => i.suggested.get.wire
+      case AliasConflict                                       => "keep-left"
+      case DoiDiffers                                          => "keep-left"
+      case StatusDiffers                                       => "keep-right"
+      case NotesDiffers                                        => "concat"
+      case ChangedBothSides if i.entity == Bundle.Kind.Article => "file:merged.md"
+      case ChangedBothSides                                    => "keep-right"
+      case DeletedThereChangedHere                             => "keep-left"
+      case ArticleDiverged                                     => "both"
+      case LabelTaken                                          => "rename-right:zz_siege_work"
+      case AttestationUnanchored                               => "drop"
       case _ => i.suggested.fold(DecisionKind.wireOf(i.options.head))(_.wire)
     MergeResolution(i.id, d, Option.when(d.startsWith("file:"))(confText))
 
@@ -706,7 +708,10 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       1
     )
-    assertEquals(SourceFixtures.load(home, "bryce2005_kingdom_hittites").map(_.status), Some(SourceStatus.Contested))
+    assertEquals(
+      SourceFixtures.load(home, "bryce2005_kingdom_hittites").map(_.status),
+      Some(com.histmersion.domain.library.Source.Status.Contested)
+    )
     assertEquals(SourceFixtures.load(home, "page1959_history").flatMap(_.year), Some(1959))
     assertEquals(
       SourceFixtures.load(home, "smith2019_ritualkingship").map(_.title),

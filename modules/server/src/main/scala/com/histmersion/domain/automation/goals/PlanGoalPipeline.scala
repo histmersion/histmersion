@@ -19,9 +19,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import javax.sql.DataSource
-import com.histmersion.values.GoalStatus
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{AgentsMarkdown, GoalPut}
+import com.histmersion.domain.automation.Goal
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -170,7 +170,7 @@ final class PlanGoalPipeline(
           g.slug,
           GoalPut(
             g.title,
-            GoalStatus.Planned,
+            Goal.Status.Planned,
             g.notes,
             g.tags,
             parent.toList.flatMap(_.regions),

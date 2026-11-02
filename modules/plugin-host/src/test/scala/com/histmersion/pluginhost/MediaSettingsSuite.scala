@@ -2,7 +2,7 @@ package com.histmersion.pluginhost
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Licence
-import com.histmersion.domain.LicenceFamily.*
+import com.histmersion.domain.Licence.Family.*
 import com.histmersion.plugin.LicenceRead
 
 class MediaSettingsSuite extends munit.FunSuite:

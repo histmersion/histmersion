@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given
 
@@ -160,19 +159,19 @@ object Acquire:
       case Verdicts.LowImpact => s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic"
       case _                  => s"UNASSESSED — $cited; judge relevance to the topic by hand"
 
-  def statusFor(verdict: String): Option[SourceStatus] = verdict match
-    case Verdicts.Retracted => Some(SourceStatus.Retracted)
-    case Verdicts.Corrected => Some(SourceStatus.Contested)
-    case Verdicts.Current   => Some(SourceStatus.Current)
+  def statusFor(verdict: String): Option[com.histmersion.domain.library.Source.Status] = verdict match
+    case Verdicts.Retracted => Some(com.histmersion.domain.library.Source.Status.Retracted)
+    case Verdicts.Corrected => Some(com.histmersion.domain.library.Source.Status.Contested)
+    case Verdicts.Current   => Some(com.histmersion.domain.library.Source.Status.Current)
     case _                  => None
 
   def statusDecision(
       verdict: String,
-      current: SourceStatus,
+      current: com.histmersion.domain.library.Source.Status,
       force: Boolean
-  ): Option[Either[SourceStatus, SourceStatus]] =
+  ): Option[Either[com.histmersion.domain.library.Source.Status, com.histmersion.domain.library.Source.Status]] =
     statusFor(verdict).map { target =>
-      if target == SourceStatus.Retracted || force || current == SourceStatus.Unassessed || current == target
+      if target == com.histmersion.domain.library.Source.Status.Retracted || force || current == com.histmersion.domain.library.Source.Status.Unassessed || current == target
       then Right(target)
       else Left(current)
     }
