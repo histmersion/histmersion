@@ -5,15 +5,15 @@ import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
-/** The events' endpoints bound to their controllers, in their old order. */
+/** The events' endpoints bound to their controllers, in their old order; `page` is an event's page (get, put and patch
+  * one), which shows its pictures and the articles citing its sources beside the catalogue's record.
+  */
 object EventsRoutes:
-  def apply(events: EventsControllers): List[ServerEndpoint[Any, Identity]] =
+  def apply(events: EventsControllers, page: List[ServerEndpoint[Any, Identity]]): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(
       Api.events.serverLogicSuccess[Identity](q => events.list(q)),
-      Api.eventsGeo.serverLogicSuccess[Identity](q => events.geo(q)),
-      Api.getEvent.serverLogic[Identity](id => events.get(id)),
-      Api.putEvent.serverLogic[Identity]((id, in) => events.put(me, id, in)),
-      Api.patchEvent.serverLogic[Identity]((id, p) => events.patch(me, id, p)),
+      Api.eventsGeo.serverLogicSuccess[Identity](q => events.geo(q))
+    ) ++ page ++ List(
       Api.deleteEvent.serverLogic[Identity](id => events.delete(me, id))
     )

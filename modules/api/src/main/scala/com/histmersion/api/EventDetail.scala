@@ -3,7 +3,9 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.catalogue.events.EventCard
 
+/** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
 final case class EventDetail(
     event: EventSummary,
     geometry: Option[String] = None,
@@ -23,7 +25,8 @@ final case class EventDetail(
     candidates: List[EventLinkCandidate] = Nil,
     leads: List[EventLead] = Nil,
     corrections: List[Correction] = Nil
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
+) extends EventCard derives KindlingsCodecAsObject, KindlingsSchema:
+  /** The page in Markdown, with its pictures. */
+  def markdown: String = com.histmersion.api.catalogue.events.EventsMarkdown.event(this, media.map(_.markdownLine))
 object EventDetail:
   given Schema[EventDetail] = summon[KindlingsSchema[EventDetail]].schema

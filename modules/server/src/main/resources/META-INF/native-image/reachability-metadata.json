@@ -13779,7 +13779,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.catalogue.events.EventsTools$EventsInput$",
+      "type": "com.histmersion.server.views.EventCardTools$EventsInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -13790,7 +13790,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.catalogue.events.EventsTools$PatchEventInput$",
+      "type": "com.histmersion.server.views.EventCardTools$PatchEventInput$",
       "fields": [
         {
           "name": "given_AsObject_PatchEventInput$lzy1"
@@ -15585,6 +15585,9 @@
         },
         {
           "name": "checks$lzy1"
+        },
+        {
+          "name": "eventCard$lzy1"
         },
         {
           "name": "events$lzy1"

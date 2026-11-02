@@ -126,7 +126,7 @@ object PlacesMarkdown:
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated"
 
-  def place(d: PlaceDetail, tree: Vector[PlaceTreeRow] = Vector.empty): String =
+  def place(d: PlaceCard, tree: Vector[PlaceTreeRow] = Vector.empty): String =
     val p = d.place
     val header = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +

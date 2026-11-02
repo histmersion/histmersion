@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.catalogue.events.EventEntry
+
 import com.histmersion.api.{
   ApiError,
   CorrectionTarget,
-  EventDetail,
   EventEdge,
   EventFields,
   EventGeoList,
@@ -113,7 +114,7 @@ private[events] object EventRepo:
             WHERE s.g IS NOT NULL AND """)
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
-  def get(id: String)(using DbCon): Option[EventDetail] =
+  def get(id: String)(using DbCon): Option[EventEntry] =
     sql"""SELECT ${SqlLiteral(summaryCols)}, ST_AsGeoJSON(e.geom)
           FROM ${SqlLiteral(fromEvents)} WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
       val parent = r.toSummary.parentId.flatMap { pid =>
@@ -149,7 +150,7 @@ private[events] object EventRepo:
         .run()
         .toList
       val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten
-      EventDetail(
+      EventEntry(
         r.toSummary,
         r.geometry,
         parent,

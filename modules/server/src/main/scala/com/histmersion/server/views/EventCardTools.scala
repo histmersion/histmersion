@@ -1,8 +1,9 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion.server.views
 
 import com.histmersion.util.identity.AliasKinds
 
 import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.domain.catalogue.events.EventsControllers
 
 import chimp.server.*
 import com.histmersion.api.{Aliases, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
@@ -13,8 +14,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 
-/** The events for agents: list or show, and patch one. */
-object EventsTools:
+/** The events for agents: list or show one (its page, with its pictures and the articles citing its sources), and patch
+  * one.
+  */
+object EventCardTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventsInput(
@@ -75,7 +78,7 @@ object EventsTools:
       .modify(_.wikidata)(_.description("The Wikidata item the event is (Q…); \"\" clears it"))
     given Codec.AsObject[PatchEventInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchEventInput]) // #813
 
-  def apply(events: EventsControllers) =
+  def apply(events: EventsControllers, page: EventCardView) =
     val listTool =
       tool("events")
         .description(
@@ -93,8 +96,8 @@ object EventsTools:
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case Some(id) =>
-              events.get(id) match
-                case Right(d) => ToolResult.text(EventsMarkdown.event(d))
+              page.get(id) match
+                case Right(d) => ToolResult.text(d.markdown)
                 case Left(e)  => McpOut.error(e)
             case None =>
               val q = Api.EventQuery(
@@ -140,11 +143,9 @@ object EventsTools:
                 scale = in.scale,
                 wikidata = in.wikidata
               )
-              events.patch(Caller.Local, in.id, p) match
+              page.patch(Caller.Local, in.id, p) match
                 case Right(d) =>
-                  ToolResult.text(
-                    Aliases.note(AliasKinds.EventRecords, in.id, d.event.id)(EventsMarkdown.event(d))
-                  )
+                  ToolResult.text(Aliases.note(AliasKinds.EventRecords, in.id, d.event.id)(d.markdown))
                 case Left(e) => McpOut.error(e)
         }
     List(listTool, patchTool)

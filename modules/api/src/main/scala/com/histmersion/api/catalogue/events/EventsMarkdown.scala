@@ -19,7 +19,8 @@ object EventsMarkdown:
   private[api] def eventScale(e: EventSummary): String =
     s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
 
-  def event(d: EventDetail): String =
+  /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
+  def event(d: EventCard, pictures: List[String] = Nil): String =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")
@@ -66,7 +67,7 @@ object EventsMarkdown:
         }
         .mkString("\n")
     val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
-    val media = if d.media.isEmpty then "" else "\n\n**Pictures**\n" + d.media.map(_.markdownLine).mkString("\n")
+    val media = if pictures.isEmpty then "" else "\n\n**Pictures**\n" + pictures.mkString("\n")
     header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
       corrections +
       EventLinksMarkdown.context(d)

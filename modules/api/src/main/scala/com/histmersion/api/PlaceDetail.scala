@@ -5,6 +5,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.LocationPrecision
 
+/** A place's page as the server answers it: the gazetteer's `PlaceCard` with the place's pictures. */
 final case class PlaceDetail(
     place: PlaceSummary,
     geometry: Option[String],
@@ -25,20 +26,6 @@ final case class PlaceDetail(
     media: List[MediaThumb] = Nil,
     siteType: Option[String] = None,
     record: PlaceRecord = PlaceRecord()
-) derives KindlingsCodecAsObject,
-      KindlingsSchema:
-  def pointOnlyArea: Boolean = geometry.isDefined && PlaceShape.pointOnlyArea(place.kind, hasBoundary)
-
-  def shapeNote: Option[String] =
-    Option
-      .when(pointOnlyArea)(PlaceShape.NoBoundaryNote)
-      .orElse(Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote))
-
-  def locationNote: Option[String] =
-    Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.Approximate)
-
-  def shapeNotes: List[String] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
-
-  def datedByFindings: Boolean = asOf.isDefined && timeBasis == PlaceTimeBasis.Findings
+) extends com.histmersion.api.catalogue.places.PlaceCard derives KindlingsCodecAsObject, KindlingsSchema
 object PlaceDetail:
   given Schema[PlaceDetail] = summon[KindlingsSchema[PlaceDetail]].schema

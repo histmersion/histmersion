@@ -34,7 +34,7 @@ object PlaceFixtures:
       id: String,
       asOf: Option[Long] = None,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Option[PlaceDetail] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
+  ): Option[com.histmersion.api.catalogue.places.PlaceEntry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
 
   def children(
       ds: DataSource,

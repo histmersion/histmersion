@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.catalogue.places.PlaceEntry
+
 import com.histmersion.api.LabelRename
 import com.histmersion.api.LabelRenames
 import com.histmersion.api.LabelRenamed
@@ -16,7 +18,6 @@ import com.histmersion.api.{
   ManualPlaceName,
   Period,
   PlaceAdd,
-  PlaceDetail,
   PlaceEdits,
   PlaceFootprint,
   PlaceGone,
@@ -85,7 +86,7 @@ final class PlacesControllers(
         Right(shapes.shapes(q.kind, time, cfg().places.geoLimit(q.limit, 100), modernFrom))
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
-  def get(id: String, asOf: Option[Long]): Either[ApiError, PlaceDetail] =
+  def get(id: String, asOf: Option[Long]): Either[ApiError, PlaceEntry] =
     places.get(placeId(id), asOf, modernFrom).toRight(ApiError(s"No place '$id'"))
 
   def children(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =

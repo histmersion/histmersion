@@ -221,7 +221,7 @@ api:api/EventCatalogueRef.scala	catalogue.events
 api:api/EventCount.scala	catalogue.events
 api:api/EventDating.scala	catalogue.events
 api:api/EventDeleted.scala	catalogue.events
-api:api/EventDetail.scala	catalogue.events
+api:api/EventDetail.scala	server.views
 api:api/EventEdge.scala	catalogue.events
 api:api/EventFields.scala	catalogue.events
 api:api/EventFindingRef.scala	catalogue.evidence
@@ -426,7 +426,7 @@ api:api/PlaceCounts.scala	catalogue.places
 api:api/PlaceDating.scala	catalogue.places
 api:api/PlaceDescription.scala	catalogue.places
 api:api/PlaceDesignation.scala	catalogue.places
-api:api/PlaceDetail.scala	catalogue.places
+api:api/PlaceDetail.scala	server.views
 api:api/PlaceEdits.scala	catalogue.places
 api:api/PlaceFootprint.scala	catalogue.places
 api:api/PlaceGone.scala	catalogue.places

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.catalogue.events.EventEntry
+
 import com.histmersion.api.LabelRename
 import com.histmersion.api.LabelRenames
 import com.histmersion.api.LabelRenamed
@@ -13,7 +15,6 @@ import com.histmersion.api.{
   ApiError,
   BBox,
   EventDeleted,
-  EventDetail,
   EventGeoList,
   EventGeometry,
   EventList,
@@ -31,12 +32,12 @@ import com.histmersion.util.identity.AliasKind
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
-  * sources, findings, proposals, lead, pictures and articles); `resolve` gives a list's filter its page size, `scope`
-  * the gazetteer's reading of its places; `mapView` the map's limit and outline tolerance.
+  * sources, findings, proposals, lead and the articles citing its sources); `resolve` gives a list's filter its page
+  * size, `scope` the gazetteer's reading of its places; `mapView` the map's limit and outline tolerance.
   */
 final class EventsControllers(
     events: EventService,
-    card: EventDetail => EventDetail,
+    card: EventEntry => EventEntry,
     current: (AliasKind, String) => String,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope,
@@ -92,11 +93,11 @@ final class EventsControllers(
 
   private def now(id: String): String = current(AliasKinds.EventRecords, id)
 
-  def get(id: String): Either[ApiError, EventDetail] =
+  def get(id: String): Either[ApiError, EventEntry] =
     events.get(now(id)).map(card).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
-  def put(caller: Caller, id: String, in: EventPut): Either[ApiError, EventDetail] =
+  def put(caller: Caller, id: String, in: EventPut): Either[ApiError, EventEntry] =
     maintenance.guard("put_event"):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
@@ -104,7 +105,7 @@ final class EventsControllers(
         get(to)
       }
 
-  def patch(caller: Caller, id: String, p: EventPatch): Either[ApiError, EventDetail] =
+  def patch(caller: Caller, id: String, p: EventPatch): Either[ApiError, EventEntry] =
     maintenance.guard("patch_event"):
       val to = now(id)
       validScale(p.scale)

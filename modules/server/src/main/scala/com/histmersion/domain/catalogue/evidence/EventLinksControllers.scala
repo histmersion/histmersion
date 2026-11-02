@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.api.catalogue.events.EventEntry
+
 import com.histmersion.values.AttestationTarget
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -12,7 +14,6 @@ import com.histmersion.api.{
   BBox,
   CatalogProviderInfo,
   EventCandidatesRequest,
-  EventDetail,
   EventLead,
   EventLeadList,
   EventLeads,
@@ -65,11 +66,11 @@ final class EventLinksControllers(
 
   private def notFound(m: String) = ApiError(m, Some(Write.CodeNotFound))
 
-  private def eventOrFail(id: String): Either[ApiError, EventDetail] =
+  private def eventOrFail(id: String): Either[ApiError, EventEntry] =
     events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(s"No event '$id'"))
 
   /** The names of an event worth searching for. */
-  private def namesOf(d: EventDetail): List[String] =
+  private def namesOf(d: EventEntry): List[String] =
     val stored = events.tierAndNames(d.event.id).map(_._2).getOrElse(Nil)
     EventMatcher.searchNames(d.event.label :: stored, ec.links.minNameChars)
 
@@ -103,7 +104,7 @@ final class EventLinksControllers(
       .sortBy(_.start)
 
   /** Compute and store an event's candidates. */
-  def compute(d: EventDetail): EventLinkList =
+  def compute(d: EventEntry): EventLinkList =
     val w = ec.links.weights
     val names = namesOf(d)
     val near = leadFacts
@@ -267,7 +268,7 @@ final class EventLinksControllers(
   /** The context an event's card shows: its tier and names, the catalogues that list it, the sources attesting it, the
     * findings near it, the proposed sources (stored — a card never computes them) and its lead.
     */
-  def context(d: EventDetail): EventDetail =
+  def context(d: EventEntry): EventEntry =
     val id = d.event.id
     val (tier, names, _) = events.tierAndNames(id).getOrElse((d.event.tier, Nil, None))
     val lead = leadFacts.leadOf(id, ec.leads.km, ec.leads.years).flatMap(leadOf)
