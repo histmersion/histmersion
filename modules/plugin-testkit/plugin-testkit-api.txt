@@ -118,20 +118,22 @@ com.histmersion.plugin.testkit.CatalogueReport _1(): scala.collection.immutable.
 com.histmersion.plugin.testkit.CatalogueReport _2(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport _3(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport _4(): scala.collection.immutable.List
-com.histmersion.plugin.testkit.CatalogueReport _5(): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport _6(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _5(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _6(): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport _7(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _8(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport accepted(): scala.collection.immutable.List
-com.histmersion.plugin.testkit.CatalogueReport apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport canEqual(java.lang.Object): boolean
 com.histmersion.plugin.testkit.CatalogueReport class
-com.histmersion.plugin.testkit.CatalogueReport copy(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport copy(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport equals(java.lang.Object): boolean
 com.histmersion.plugin.testkit.CatalogueReport failure(): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport fromProduct(scala.Product): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport hashCode(): int
+com.histmersion.plugin.testkit.CatalogueReport leftOut(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport log(): scala.collection.immutable.List
-com.histmersion.plugin.testkit.CatalogueReport new(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.CatalogueReport new(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List)
 com.histmersion.plugin.testkit.CatalogueReport pages(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport parts(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport productArity(): int
@@ -144,7 +146,7 @@ com.histmersion.plugin.testkit.CatalogueReport refused(): scala.collection.immut
 com.histmersion.plugin.testkit.CatalogueReport requests(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.CatalogueReport toString(): java.lang.String
 com.histmersion.plugin.testkit.CatalogueReport unapply(com.histmersion.plugin.testkit.CatalogueReport): com.histmersion.plugin.testkit.CatalogueReport
-com.histmersion.plugin.testkit.CatalogueReport$ apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport$ apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport$ class
 com.histmersion.plugin.testkit.CatalogueReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport$ toString(): java.lang.String

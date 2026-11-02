@@ -39,6 +39,12 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
     com.histmersion.plugin.MediaTarget
       .Id(if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places, t.id)
 
+  /** A use's Wikidata statement as the host checks it: one that is no item is left out, with a warning. */
+  private def wikidataOf(u: MediaUse): Option[String] =
+    val (q, why) = SpiValues.kept(u.wikidata)(SpiValues.wikidataOf)
+    why.foreach(w => scribe.warn(s"media import: ${u.item.key}: $w, left out"))
+    q.map(_.value)
+
   private def typeOf(t: com.histmersion.plugin.MediaTarget.Id): String = t.kind match
     case MediaTarget.Events => ImportRepo.Event
     case MediaTarget.Places => ImportRepo.Place
@@ -205,7 +211,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
               u.target.id,
               roleOf(u),
               u.statement.map(_.trim).filter(_.nonEmpty),
-              u.wikidata.map(_.value),
+              wikidataOf(u),
               u.rank,
               u.basis
             )

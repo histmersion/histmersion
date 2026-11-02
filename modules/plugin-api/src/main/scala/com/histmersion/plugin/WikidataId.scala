@@ -1,9 +1,11 @@
 package com.histmersion.plugin
 
 import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.string.Match
+import io.github.iltotore.iron.constraint.any.Pure
 
-/** A Wikidata item: `Q` and its number (`Q5788`). */
+/** A Wikidata item as a plugin states it (`Q5788`). Unrefined: the host checks it where it becomes the model's Wikidata
+  * id and leaves out one that is none (with a warning), keeping the rest of the record.
+  */
 type WikidataId = WikidataId.T
 
-object WikidataId extends RefinedType[String, Match["Q[1-9][0-9]*"]]
+object WikidataId extends RefinedType[String, Pure]

@@ -32,7 +32,7 @@ class CataloguesSuite extends munit.FunSuite:
 
   /** As the host stores an event of `provider`: checked, then dated inside `limits`. */
   private def stored(provider: String, e: CatalogueEvent, l: CatalogDating.Limits = limits): CatalogRecord =
-    PluginEvents.derive(PluginEvents.record(provider, e).fold(fail(_), identity), l)
+    PluginEvents.derive(PluginEvents.record(provider, e).fold(fail(_), _.record), l)
 
   // ── GVP ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -114,7 +114,7 @@ class CataloguesSuite extends munit.FunSuite:
       raw = None,
       description = Some("Confirmed Eruption at Hekla; dated by Tephrochronology")
     )
-    val r = PluginEvents.derive(PluginEvents.record("gvp", gvp.reread(legacy).get).fold(fail(_), identity), limits)
+    val r = PluginEvents.derive(PluginEvents.record("gvp", gvp.reread(legacy).get).fold(fail(_), _.record), limits)
     assertEquals((r.central, r.plusMinus, r.datingMethod), (Some(250L), Some(2500L), Some("Tephrochronology")))
     assertEquals(r.timeSpan, TimeSpan(Some(-2251), None, None, Some(2026)))
     assertEquals(r.description, Some("Confirmed Eruption at Hekla"))
@@ -122,8 +122,8 @@ class CataloguesSuite extends munit.FunSuite:
   test("a stored record goes to its catalogue and back unchanged"):
     val (recs, _) = GvpCatalogue.parse(fixture("gvp.json")).toOption.get
     recs.foreach { e =>
-      val r = PluginEvents.record("gvp", e).fold(fail(_), identity)
-      assertEquals(PluginEvents.event(r).flatMap(PluginEvents.record("gvp", _).toOption), Some(r))
+      val r = PluginEvents.record("gvp", e).fold(fail(_), _.record)
+      assertEquals(PluginEvents.event(r).flatMap(PluginEvents.record("gvp", _).toOption.map(_.record)), Some(r))
       assertEquals(PluginEvents.reread(gvp, "gvp", r), Some(r))
     }
 

@@ -5,13 +5,12 @@ import io.github.iltotore.iron.*
 /** The values the SPI exchanges about works, places, events and pictures, each a type that says what it means. They are
   * Iron newtypes: opaque, so at run time a `Year` is an `Int` and a `Doi` a `String`.
   *
-  * A literal is checked when the plugin compiles: `Year(-1600)`, `Doi("10.1234/abc")`, `Latitude(36.4)`. A value read
-  * at run time is parsed: `Doi.either(raw)` (`Left` with the reason), `Doi.option(raw)`. `.value` takes the plain value
-  * out. A value whose type says it always holds (`Year`, `Licence`) is built from any value of its base type:
-  * `Year(year.toInt)`.
+  * None of them judges validity — that is the host's: a value is built from any value of its base type (`Year(-1600)`,
+  * `Doi(raw.trim)`, `Latitude(lat)`), `.value` takes the plain value out.
   *
-  * The host checks every value a plugin hands over again (a plugin built against another constraint could hand over
-  * anything): what fails is refused for that record, with the value in the reason.
+  * The host checks every value a plugin hands over where it becomes the model's: a DOI that is none, a Wikidata id that
+  * is no item or a position off the globe is left out of its record with a warning (the rest of the record is kept); a
+  * dating that cannot be one refuses the record, with the value in the reason.
   */
 
 /** A span of deep time, both ends included; a single year is a period whose ends are the same year. Built with

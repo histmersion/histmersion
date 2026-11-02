@@ -1,11 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-client-refined	cli:cli/PluginId.scala	a refined constraint in a client	1
-client-refined	cli:cli/PluginRepository.scala	a refined constraint in a client	1
-client-refined	cli:cli/ScalaPackage.scala	a refined constraint in a client	1
-client-refined	plugin-api:plugin/Doi.scala	a refined constraint in a client	1
-client-refined	plugin-api:plugin/Latitude.scala	a refined constraint in a client	1
-client-refined	plugin-api:plugin/Longitude.scala	a refined constraint in a client	1
-client-refined	plugin-api:plugin/WikidataId.scala	a refined constraint in a client	1
 concept	layer core	Seconds in config:config/Seconds.scala server:util/ocr/Seconds.scala	2
 copy	api:api/Api.scala	.copy(	1
 copy	api:api/automation/Managers.scala	.copy(	24

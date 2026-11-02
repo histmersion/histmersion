@@ -216,8 +216,11 @@ final class EventImports(
               recs.foreach(rs =>
                 if rs.exists(_.isLeft) then
                   report = report.modify(_.failed).using(_ ++ rs.collect { case Left(w) => s"$part: $w" }.take(20))
+                rs.collect { case Right(c) => c.warnings }
+                  .flatten
+                  .foreach(w => scribe.warn(s"events import: $part: $w"))
               )
-              handle(part, recs.map(_.collect { case Right(r) => r }))
+              handle(part, recs.map(_.collect { case Right(c) => c.record }))
             }
           }
 

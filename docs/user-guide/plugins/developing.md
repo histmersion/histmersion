@@ -373,9 +373,11 @@ new jar with `histmersion plugin add`.
 What to change in a plugin:
 
 - Wrap literals: `Year(-1600)`, `Licence("CC0-1.0")`, `Doi("10.1234/abc")`, `Latitude(36.4)`.
-- Parse what you read from a provider: `WikidataId.option(raw.trim.toUpperCase)`, `Doi.option(raw)`,
-  `Latitude.option(lat)`; `Year(raw.toInt)` for a year (every integer is one). SPI 1's host corrected a
-  Wikidata id written in lower case and dropped one that was none; now the type does, in your code.
+- Wrap what you read from a provider: `WikidataId(raw.trim.toUpperCase)`, `Doi(raw.trim)`, `Latitude(lat)`;
+  `Year(raw.toInt)` for a year (every integer is one). The SPI's types judge nothing: the host checks each value
+  where it becomes its own, and leaves out a DOI that is none, a Wikidata id that is no item or a position off the
+  globe (or half a position) with a warning, keeping the rest of the record; the testkit's `CatalogueReport.leftOut`
+  lists them. A dating that runs backwards still refuses the record (`refused`).
 - Take values out with `.value` where you build text or URLs: `work.doi.map(_.value)`.
 - A tuple period becomes `Period.from(Year(a), Year(b))` (`Left` when it ends before it starts).
 - In munit, compare a value taken out with `.value` against a plain one through its base type
