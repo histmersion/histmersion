@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.links
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.*
 import com.histmersion.domain.media.{MediaState, MediaStoreSuite}
 import com.histmersion.domain.media.assets.{AssetService, NewFigure}
@@ -14,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference
 class AssetLinksControllersSuite extends munit.FunSuite:
 
   private val renamed = Map(
-    (AliasKindsAdapter.SourceRecords, "zqold") -> "zqnew2001_x",
-    (AliasKindsAdapter.PlaceRecords, "zq_oldplace") -> "zq_place"
+    (AliasKinds.SourceRecords, "zqold") -> "zqnew2001_x",
+    (AliasKinds.PlaceRecords, "zq_oldplace") -> "zq_place"
   )
   private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
 

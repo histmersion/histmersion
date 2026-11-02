@@ -1,12 +1,12 @@
 package com.histmersion.server
 
-import com.histmersion.api.{JobKindsAdapter, Wording}
+import com.histmersion.api.Wording
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** Every kind of background job the server starts is a registered one (`JobKindsAdapter.all`), so the web UI has a name
-  * for it ([[Wording.jobKind]]) and never shows `basemap-fetch` to a reader.
+/** Every kind of background job the server starts is a registered one (`com.histmersion.api.RegisteredJobKinds.all`),
+  * so the web UI has a name for it ([[Wording.jobKind]]) and never shows `basemap-fetch` to a reader.
   */
 class JobKindsSuite extends munit.FunSuite:
 
@@ -23,7 +23,7 @@ class JobKindsSuite extends munit.FunSuite:
       com.histmersion.domain.media.covers.CoversControllers.CoversJobKind,
       Bootstrap.JobKind
     )
-    assertEquals(kinds.filterNot(k => JobKindsAdapter.all.parse(k).isDefined), Nil)
+    assertEquals(kinds.filterNot(k => com.histmersion.api.RegisteredJobKinds.all.parse(k).isDefined), Nil)
     kinds.foreach(k => assert(Wording.jobKindOf(k) != k, k))
 
   test("no job kind is spelled as a literal outside the dictionary (a new one starts as a registered JobKind)"):

@@ -19,6 +19,9 @@ final class JobKinds(val entries: List[JobKindEntry]):
   /** May a person pause and cancel a job of the kind `wire` names? */
   def stoppable(wire: String): Boolean = byWire.get(wire).exists(_.stoppable)
 
+  /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
+  def ownControl(wire: String): Boolean = byWire.get(wire).exists(_.ownControl)
+
   /** The identifiers of the kinds a person may pause and cancel. */
   def stoppableKinds: Set[String] = entries.filter(_.stoppable).map(_.kind.value).toSet
 

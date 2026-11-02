@@ -1,9 +1,11 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.catalogue.events.EventsMarkdown
 
 import chimp.server.*
-import com.histmersion.api.{Aliases, AliasKindsAdapter, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
+import com.histmersion.api.{Aliases, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -141,7 +143,7 @@ object EventsTools:
               events.patch(Caller.Local, in.id, p) match
                 case Right(d) =>
                   ToolResult.text(
-                    Aliases.note(AliasKindsAdapter.EventRecords, in.id, d.event.id)(EventsMarkdown.event(d))
+                    Aliases.note(AliasKinds.EventRecords, in.id, d.event.id)(EventsMarkdown.event(d))
                   )
                 case Left(e) => McpOut.error(e)
         }

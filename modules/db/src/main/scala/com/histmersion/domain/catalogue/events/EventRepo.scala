@@ -355,7 +355,7 @@ private[events] object EventRepo:
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
   def renamedTo(id: String)(using DbCon): Option[String] =
-    com.histmersion.util.identity.AliasTablesAdapter.EventAliases.renamedToIn(id)
+    EventAliasTable.table.renamedToIn(id)
 
   def delete(id: String)(using DbCon): Boolean =
     sql"DELETE FROM events WHERE id = $id".update.run() > 0 // its corrections go (a trigger)

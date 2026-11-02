@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.{connect, transact}
@@ -599,18 +601,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Event, from, req.to))
       .map((from, to) => LabelRenamed(BundleKind.Event, from, to))
 
-  /** A REFERENCE to a record of a renamed kind (an asset link's target) names it by its current identifier (#1799):
-    * `event`, `place`, `source` and `article` targets resolve an old one; other targets are kept as given.
-    */
-  private def refId(targetType: String, id: String): String =
-    val kind = targetType.trim.toLowerCase(java.util.Locale.ROOT) match
-      case "event"   => Some(AliasKindsAdapter.EventRecords)
-      case "place"   => Some(AliasKindsAdapter.PlaceRecords)
-      case "source"  => Some(AliasKindsAdapter.SourceRecords)
-      case "article" => Some(AliasKindsAdapter.ArticleRecords)
-      case _         => None
-    kind.fold(id)(current(_, id))
-
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
   /** What attests a data point: the attestations' operations. */
@@ -630,30 +620,30 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** An old goal slug (V053) answers as the goal it was renamed to. */
   def getGoal(slug: String): Either[ApiError, Goal] =
-    connect(ds)(GoalRepo.get(current(AliasKindsAdapter.GoalRecords, slug)))
+    connect(ds)(GoalRepo.get(current(AliasKinds.GoalRecords, slug)))
       .toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
 
   /** A write to an OLD slug goes to the goal it was renamed to (#1799); a put replaces it. */
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
     maintenance.guard("put_goal"):
-      val now = current(AliasKindsAdapter.GoalRecords, slug)
+      val now = current(AliasKinds.GoalRecords, slug)
       transact(ds)(GoalRepo.put(now, in)).flatMap(_ => getGoal(now))
 
   def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
     maintenance.guard("patch_goal"):
-      val now = current(AliasKindsAdapter.GoalRecords, slug)
+      val now = current(AliasKinds.GoalRecords, slug)
       GoalRepo.patch(ds, now, p).flatMap(_ => getGoal(now))
 
   def deleteGoal(slug: String): Either[ApiError, GoalDeleted] =
     maintenance.guard("delete_goal"):
-      val now = current(AliasKindsAdapter.GoalRecords, slug)
+      val now = current(AliasKinds.GoalRecords, slug)
       if GoalRepo.delete(ds, now) then Right(GoalDeleted(now, true))
       else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
   def renameGoal(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_goal"):
-      val from = current(AliasKindsAdapter.GoalRecords, slug)
+      val from = current(AliasKinds.GoalRecords, slug)
       for
         to <- LabelRenames.validate(BundleKind.Goal, from, req.to)
         _ <- GoalRepo.rename(ds, from, to)
@@ -841,5 +831,5 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
 object Handlers:
   /** The `jobs.kind` of a `places fetch` (a gazetteer, or the land) and of a hierarchy build (#1946). */
-  val PlacesFetchJobKind = com.histmersion.api.JobKindsAdapter.PlacesFetch.value
-  val PlacesHierarchyJobKind = com.histmersion.api.JobKindsAdapter.PlacesHierarchy.value
+  val PlacesFetchJobKind = com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesFetch.kind.value
+  val PlacesHierarchyJobKind = com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesHierarchy.kind.value

@@ -1,8 +1,10 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{AliasKindsAdapter, Api, ApiError, EventPatch, EventPut, Filter, TimeSpan, Write}
+import com.histmersion.api.{Api, ApiError, EventPatch, EventPut, Filter, TimeSpan, Write}
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
@@ -16,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
   * lock.
   */
 class EventsControllersSuite extends munit.FunSuite:
-  private val renamed = Map[(AliasKind, String), String]((AliasKindsAdapter.EventRecords, "zz_old") -> "zz_ev")
+  private val renamed = Map[(AliasKind, String), String]((AliasKinds.EventRecords, "zz_old") -> "zz_ev")
   private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
   private val span = TimeSpan(Some(-1200), None, None, Some(-1190))
 

@@ -167,7 +167,7 @@ final class ImportsControllers(
     out.modify(_.pending).setTo(imp.pending(since))
 
 object ImportsControllers:
-  val ImportJobKind: String = com.histmersion.api.JobKindsAdapter.MediaImport.value
+  val ImportJobKind: String = com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind.value
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
   def single(req: MediaImportRequest): Boolean =

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.automation.agents.AgentStateMarkdown
 import com.histmersion.api.automation.goals.GoalsMarkdown
 
@@ -254,7 +256,7 @@ final class McpTools(
           GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
+            ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
       }
 
@@ -276,7 +278,7 @@ final class McpTools(
         )
         h.patchGoal(in.slug, p) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
+            ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
       }
 

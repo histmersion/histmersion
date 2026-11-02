@@ -2,7 +2,7 @@ package com.histmersion.api
 
 object Vacuum:
 
-  val JobKind = com.histmersion.api.JobKindsAdapter.Vacuum.value
+  val JobKind = com.histmersion.util.data.maintenance.MaintenanceJobKinds.Vacuum.kind.value
 
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r

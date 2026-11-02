@@ -1,14 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{
-  ApiError,
-  EventCount,
-  JobInfo,
-  JobKindsAdapter,
-  SiteTypes,
-  SiteTypesReport,
-  SiteTypesRequest
-}
+import com.histmersion.api.{ApiError, EventCount, JobInfo, SiteTypes, SiteTypesReport, SiteTypesRequest}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
@@ -103,4 +95,4 @@ final class SiteTypesControllers(
       report.copy(pending = sites.countSitesToType(req.refresh, Some(started)), requests = c.requests)
 
 object SiteTypesControllers:
-  val SiteTypesJobKind: String = JobKindsAdapter.SiteTypes.value
+  val SiteTypesJobKind: String = com.histmersion.api.catalogue.places.PlacesJobKinds.SiteTypes.kind.value

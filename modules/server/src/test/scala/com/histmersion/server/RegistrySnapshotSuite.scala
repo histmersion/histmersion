@@ -1,16 +1,18 @@
 package com.histmersion.server
 
+import com.histmersion.util.identity.AliasKinds
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
 /** What the composition registers, written as text to `src/test/resources/oracle/registries/` and compared byte for
-  * byte, recorded on the code before the transition adapters and `Handlers` went (slice 12, part 2): every owner's
-  * data contribution in the registry's order (its tables, stores, backup share, carried kinds with their import steps,
-  * merge rules, mirror notes, caches, upkeep and checks), the lint order, the alias kinds; and, on a server's
-  * composition, the engine's registry (workflows, agent tools, manager kinds, objectives, the approval kinds an effect
-  * applies), the REST routes in the order they are matched (the MCP tools' order is `ContractSnapshotSuite`'s `mcp-tools.json`).
-  * `HISTMERSION_UPDATE_ORACLE=1` rewrites it. No database: the composition runs over one that refuses every
-  * connection, as `ContractSnapshotSuite`'s does.
+  * byte, recorded on the code before the transition adapters and `Handlers` went (slice 12, part 2): every owner's data
+  * contribution in the registry's order (its tables, stores, backup share, carried kinds with their import steps, merge
+  * rules, mirror notes, caches, upkeep and checks), the lint order, the alias kinds; and, on a server's composition,
+  * the engine's registry (workflows, agent tools, manager kinds, objectives, the approval kinds an effect applies), the
+  * REST routes in the order they are matched (the MCP tools' order is `ContractSnapshotSuite`'s `mcp-tools.json`).
+  * `HISTMERSION_UPDATE_ORACLE=1` rewrites it. No database: the composition runs over one that refuses every connection,
+  * as `ContractSnapshotSuite`'s does.
   */
 class RegistrySnapshotSuite extends munit.FunSuite:
 
@@ -51,7 +53,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
     }
     val order = com.histmersion.util.data.checks.CheckRulesAdapter.order
     val lint = List(s"lint report\t${order.report.mkString(",")}", s"lint fixes\t${order.fixes.mkString(",")}")
-    val aliases = com.histmersion.api.AliasKindsAdapter.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
+    val aliases = com.histmersion.util.identity.AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
     check("data.txt", (owners ++ lint ++ aliases).mkString("", "\n", "\n"))
 
   private val loaded = com.histmersion.config.AppConfig

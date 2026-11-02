@@ -1,6 +1,8 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{AliasKindsAdapter, AttestationPut}
+import com.histmersion.util.identity.AliasKinds
+
+import com.histmersion.api.AttestationPut
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.evidence.passages.{PassageReader, PassageSource}
@@ -15,8 +17,8 @@ import java.util.concurrent.atomic.AtomicReference
   */
 class AttestationsControllersSuite extends munit.FunSuite:
   private val renamed: Map[(AliasKind, String), String] = Map(
-    (AliasKindsAdapter.SourceRecords, "zzold1990_x") -> "zznew1990_x",
-    (AliasKindsAdapter.PlaceRecords, "zz_old_hill") -> "zz_hill"
+    (AliasKinds.SourceRecords, "zzold1990_x") -> "zznew1990_x",
+    (AliasKinds.PlaceRecords, "zz_old_hill") -> "zz_hill"
   )
   private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
 

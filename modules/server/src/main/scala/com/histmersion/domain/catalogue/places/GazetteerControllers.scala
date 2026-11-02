@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{ApiError, JobDetail, JobInfo, JobKindsAdapter, PlaceImportResult, SpatialHierarchyResult}
+import com.histmersion.api.{ApiError, JobDetail, JobInfo, PlaceImportResult, SpatialHierarchyResult}
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, WorkCarrier}
@@ -50,7 +50,7 @@ final class GazetteerControllers(
           .flatMap { src =>
             if dryRun then imports.fetch(src, dryRun = true).left.map(ApiError(_))
             else
-              job(JobKindsAdapter.PlacesFetch.value, s"fetch $name")(
+              job(com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesFetch.kind.value, s"fetch $name")(
                 imports
                   .fetch(src, dryRun = false)
                   .map(r =>
@@ -66,7 +66,7 @@ final class GazetteerControllers(
   private def land(dryRun: Boolean): Either[ApiError, PlaceImportResult] =
     if dryRun then imports.land(dryRun = true).left.map(ApiError(_))
     else
-      job(JobKindsAdapter.PlacesFetch.value, "fetch land")(
+      job(com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesFetch.kind.value, "fetch land")(
         imports
           .land(dryRun = false)
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
@@ -77,7 +77,10 @@ final class GazetteerControllers(
     */
   def buildHierarchy(caller: Caller): Either[ApiError, SpatialHierarchyResult] =
     maintenance.guard("places/build-hierarchy"):
-      job(JobKindsAdapter.PlacesHierarchy.value, "build the spatial hierarchy") {
+      job(
+        com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesHierarchy.kind.value,
+        "build the spatial hierarchy"
+      ) {
         val r = geometry.buildHierarchy()
         Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
       }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id)))

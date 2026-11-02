@@ -16,7 +16,7 @@ final case class InitPlan(
 object InitPlan:
   given Schema[InitPlan] = summon[KindlingsSchema[InitPlan]].schema
 
-  val JobKind = com.histmersion.api.JobKindsAdapter.Init.value
+  val JobKind = com.histmersion.util.data.exchange.ExchangeJobKinds.Init.kind.value
 
   def describe(p: InitPlan): String =
     val bundled = List(

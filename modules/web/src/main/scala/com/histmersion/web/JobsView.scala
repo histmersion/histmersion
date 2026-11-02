@@ -69,7 +69,8 @@ object JobsView:
   def kindLabel(kind: String): String = Wording.jobKindOf(kind)
 
   /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
-  def kindMeaning(kind: String): Option[String] = JobKindsAdapter.all.parse(kind).map(_.meaning.value)
+  def kindMeaning(kind: String): Option[String] =
+    com.histmersion.api.RegisteredJobKinds.all.parse(kind).map(_.meaning.value)
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: JobState): String = s match
@@ -293,7 +294,7 @@ object JobsView:
         div(
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
-          if j.kind == JobKindsAdapter.Agent.value then
+          if j.kind == com.histmersion.api.automation.agents.AgentJobKinds.Agent.kind.value then
             WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
           else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),

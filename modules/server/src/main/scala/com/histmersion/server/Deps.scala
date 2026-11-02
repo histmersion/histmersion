@@ -146,10 +146,18 @@ object Deps:
       )
     )
 
-  /** Every alias table: how an old identifier of each renamed kind is followed. */
+  /** Every alias table, each registered by the kind's owner in the order of the kinds: how an old identifier of each
+    * renamed kind is followed.
+    */
   val aliasTables: com.histmersion.util.identity.AliasTables =
-    com.histmersion.util.identity.AliasTablesAdapter.withOwn(
-      List(com.histmersion.domain.research.articles.ArticleAliasTable.table)
+    com.histmersion.util.identity.AliasTables(
+      List(
+        com.histmersion.domain.library.sources.SourceAliasTable.table,
+        com.histmersion.domain.research.articles.ArticleAliasTable.table,
+        com.histmersion.domain.catalogue.events.EventAliasTable.table,
+        com.histmersion.domain.automation.goals.GoalAliasTable.table,
+        com.histmersion.domain.catalogue.places.PlaceAliasTable.table
+      )
     )
 
   /** The reload of a server that was started without a config file to read again. */

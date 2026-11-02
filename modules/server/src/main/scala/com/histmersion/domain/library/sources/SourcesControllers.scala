@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.api.library.sources.SourceWrite
 
 import com.histmersion.api.library.sources.SourcesMarkdown
@@ -71,7 +73,7 @@ final class SourcesControllers(
     */
   def put(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
-      Citekey.of(citekey).map(_ => current(AliasKindsAdapter.SourceRecords, citekey)).flatMap { ck =>
+      Citekey.of(citekey).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
         SourceWrite
           .applyPut(ck, in, sources.aliasesOf(ck))
           .left
@@ -96,7 +98,7 @@ final class SourcesControllers(
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
   def rename(citekey: String, req: RenameRequest): Either[ApiError, SourceRenamed] =
     maintenance.guard("rename_source"):
-      val from = current(AliasKindsAdapter.SourceRecords, citekey)
+      val from = current(AliasKinds.SourceRecords, citekey)
       sources.rename(from, req.newCitekey, Caller.Local).flatMap { counts =>
         val now = req.newCitekey.trim
         get(now, body = false).map(sw => SourceRenamed(from, now, sw.source, counts, sources.calibreId(now)))
@@ -107,7 +109,7 @@ final class SourcesControllers(
     * an MCP tool, like deleting an article: a person's decision.
     */
   def delete(citekey: String, req: SourceDeleteRequest): Either[ApiError, SourceDeletion] =
-    val ck = current(AliasKindsAdapter.SourceRecords, citekey)
+    val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply then sources.deletion(ck).map(p => p.deletion.modify(_.files).setTo(originals.find(p)))
     else
       maintenance.guard("delete_source"):

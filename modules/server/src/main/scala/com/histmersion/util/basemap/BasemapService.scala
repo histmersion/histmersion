@@ -1050,7 +1050,7 @@ object BasemapService:
       )
     )
 
-  val JobKind = com.histmersion.api.JobKindsAdapter.BasemapFetch.value
+  val JobKind = com.histmersion.util.basemap.BasemapJobKinds.BasemapFetch.kind.value
 
   /** Where the focus regions' relief archives are, in the base map's store. */
   val FocusDir: StoreKey = StoreKey.applyUnsafe("terrain-focus")

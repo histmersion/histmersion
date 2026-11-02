@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.util.identity.AliasKinds
+
 import com.histmersion.values.BundleKind
 
 import cats.syntax.all.*
@@ -18,7 +20,7 @@ object LabelRenameCmd:
       case BundleKind.Event   => ("an event a new id", "attestations and asset links follow")
       case BundleKind.Place   => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
       case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
-    Opts.subcommand("rename", s"Give $what — $effect. ${AliasKindsAdapter.of(kind).fold(Aliases.Rule)(Aliases.rule)}") {
+    Opts.subcommand("rename", s"Give $what — $effect. ${AliasKinds.of(kind).fold(Aliases.Rule)(Aliases.rule)}") {
       (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).tupled
         .mapValidated((from, to, json) =>
           LabelRenames.validate(kind, from, to).leftMap(_.message).toValidatedNel.map(t => (from.trim, t, json))
