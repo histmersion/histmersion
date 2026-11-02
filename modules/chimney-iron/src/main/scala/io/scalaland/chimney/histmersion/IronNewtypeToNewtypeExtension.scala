@@ -28,6 +28,10 @@ final class IronNewtypeToNewtypeExtension extends ChimneyMacroExtension:
                 pairs.rewrap[To](from, to, quotedExpr(sourceOf(using context))) match
                   case Some(rewrapped) => specialCasedTotal(hearthExpr(rewrapped))
                   case None            => specialCaseYield[To]
+              case pairs.NewtypePair.DifferentConstraints(from, to) if pairs.judgesNothing(to) =>
+                specialCasedTotal(hearthExpr(pairs.unchecked[To](from, to, quotedExpr(sourceOf(using context)))))
+              case pairs.NewtypePair.DifferentConstraints(from, to) if isPartialContext(using context) =>
+                specialCasedPartial(hearthExpr(pairs.checked[To](from, to, quotedExpr(sourceOf(using context)))))
               case pairs.NewtypePair.DifferentConstraints(from, to) =>
                 MIO.fail(DerivationError.PolicyViolation(pairs.differentConstraintsMessage(from, to)))
               case pairs.NewtypePair.NotSameNamedNewtypes => specialCaseYield[To]

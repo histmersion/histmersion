@@ -629,6 +629,8 @@ def buildMetaSource(base: File): String = {
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
+  // the api's newtypes (Pure) into the domain's, checked, and back, at the boundaries: compile time only
+  .dependsOn(chimneyIron % Provided)
   // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
   .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile", pluginsEvents.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
