@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.api.research.articles.ArticleLint
+
 import com.histmersion.api.*
 import com.histmersion.api.Lint.*
 import com.histmersion.db.Sql
@@ -13,8 +15,8 @@ import javax.sql.DataSource
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
   * Every rule is either a **projection** (one SQL statement yielding `(slug, detail)`, in [[projections]]) or a **fetch
-  * + pure classifier** (`Lint.articleFiller`, `Lint.articleCritiquePairing`, …, pure and unit-tested without a
-  * database). No rule takes a parameter; the statements are constants, spliced through [[Sql.raw]].
+  * + pure classifier** (`ArticleLint.articleFiller`, `ArticleLint.articleCritiquePairing`, …, pure and unit-tested
+  * without a database). No rule takes a parameter; the statements are constants, spliced through [[Sql.raw]].
   */
 private[articles] object ArticleCheckRepo:
 
@@ -72,12 +74,12 @@ private[articles] object ArticleCheckRepo:
   /** One rule's report, on the run's connection; `format` is the formatting check. */
   def report(r: Rule, format: FormatChecker, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name match
-      case ArticleFiller           => Lint.articleFiller(run(ArticleRows))
-      case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(run(ArticleRows))
+      case ArticleFiller           => ArticleLint.articleFiller(run(ArticleRows))
+      case ArticleUncitedParagraph => ArticleLint.articleUncitedParagraphs(run(ArticleRows))
       case ArticleCritiquePairing  =>
         val p = pairingCorpusIn()
-        Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
-      case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
+        ArticleLint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
+      case ArticleThinSummary => ArticleLint.articleThinSummary(pairs(articleSummariesSql))
       case ArticleFormat      =>
         Lint.formatItems(
           triples(articleTextsSql).flatMap((slug, body, summary) =>

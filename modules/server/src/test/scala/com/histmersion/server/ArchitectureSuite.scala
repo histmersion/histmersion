@@ -149,8 +149,9 @@ object ArchitectureSuite:
         case "com" :: "histmersion" :: "util" :: area :: rest => Some(("util" :: area :: rest).mkString("."))
         case "com" :: "histmersion" :: "api" :: d :: feature :: rest if Domains.contains(d) || d == Personal =>
           Some((d :: feature :: rest).mkString("."))
-        case "com" :: "histmersion" :: "domain" :: Nil => Some("kernel")
-        case _                                         => None
+        case "com" :: "histmersion" :: "server" :: (sub @ ("views" | "instance")) :: _ => Some(s"server.$sub")
+        case "com" :: "histmersion" :: "domain" :: Nil                                 => Some("kernel")
+        case _                                                                         => None
 
     /** The layer the direction rule compares: a domain, `util.<area>`, or a shared or composition place. */
     def layer(place: String): String = place.split('.').toList match

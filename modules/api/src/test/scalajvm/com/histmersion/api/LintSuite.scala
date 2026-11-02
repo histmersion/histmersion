@@ -1,5 +1,8 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.citations.CitationLint
+import com.histmersion.api.research.articles.ArticleLint
+
 import com.histmersion.api.Lint.*
 
 /** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and what the report says
@@ -63,7 +66,7 @@ class LintSuite extends munit.FunSuite:
       edge("anthony2015_ringe", "heggarty2023"), // short form
       edge("kassian2025_critique", "gone2001_missing")
     ) // truly dead
-    val items = Lint.danglingEdges(edges, corpus, 3)
+    val items = CitationLint.danglingEdges(edges, corpus, 3)
     assertEquals(items.size, 2)
     assert(
       items.exists(i => i.citekey == "anthony2015_ringe" && i.detail.contains("heggarty2023_language")),
@@ -81,14 +84,14 @@ class LintSuite extends munit.FunSuite:
     // the seeded corpus has 1 050 article links and exactly ONE dead source reference; the report
     // must not bury it.
     val edges = (1 to 5).toList.map(i => edge("s", s"concept_$i")) :+ edge("s", "gray_atkinson_2003")
-    val items = Lint.danglingEdges(edges, corpus, 3)
+    val items = CitationLint.danglingEdges(edges, corpus, 3)
     assert(items.head.detail.contains("gray_atkinson_2003"), items.head.detail)
     assert(items.head.detail.endsWith("(no such source)"), items.head.detail)
     assert(items(1).detail.contains("looks like a concept/article link"), items(1).detail)
 
   test("dangling-edges deduplicates and orders by (src, kind, dst)"):
     val e = edge("b_src", "gone", "cites")
-    val items = Lint.danglingEdges(List(e, e, edge("a_src", "gone", "cites")), corpus, 1)
+    val items = CitationLint.danglingEdges(List(e, e, edge("a_src", "gone", "cites")), corpus, 1)
     assertEquals(items.map(_.citekey), List("a_src", "b_src"))
 
   test("unresolved-short-citekeys covers only prefixes of real citekeys, and flags the fixable ones"):
@@ -97,7 +100,7 @@ class LintSuite extends munit.FunSuite:
       edge("b", "knapp2016"), // two expansions → needs a human
       edge("c", "gone2001_missing")
     ) // not a short form at all
-    val items = Lint.unresolvedShortCitekeys(edges, corpus, 3)
+    val items = CitationLint.unresolvedShortCitekeys(edges, corpus, 3)
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.contains("resolves to heggarty2023_language"), items.head.detail)
     assert(items.head.detail.contains("lint --fix"))
@@ -207,7 +210,7 @@ class LintSuite extends munit.FunSuite:
     assert(items.head.detail.contains("Cline| Eric H."))
 
   test("articleFiller flags banned phrases"):
-    val items = Lint.articleFiller(
+    val items = ArticleLint.articleFiller(
       List(
         ("clean", "The sources agree on this point."),
         ("bad", "It is worth noting that the evidence is clear. Interestingly, this sheds light on...")
@@ -228,8 +231,8 @@ class LintSuite extends munit.FunSuite:
                     |The evidence supports this claim.
                     |
                     |Further analysis in [[haak2015_massive]] confirms the pattern.""".stripMargin
-    assertEquals(Lint.articleUncitedParagraphs(List(("ok", bodyOk))), Nil)
-    val items = Lint.articleUncitedParagraphs(List(("bad", bodyBad)))
+    assertEquals(ArticleLint.articleUncitedParagraphs(List(("ok", bodyOk))), Nil)
+    val items = ArticleLint.articleUncitedParagraphs(List(("bad", bodyBad)))
     assertEquals(items.size, 1)
     assertEquals(items.head.citekey, "bad")
     assert(items.head.detail.contains("1 paragraph(s)"))
@@ -273,8 +276,8 @@ class LintSuite extends munit.FunSuite:
     val two = "Theseus was a king of Athens. These sources say so:"
     assertEquals(paras(s"$two\n\n- [[a2001]]"), List(two))
     // and the lint rule agrees
-    assertEquals(Lint.articleUncitedParagraphs(List("t" -> s"$leadIn\n\n- [[a2001]]")), Nil)
-    assertEquals(Lint.articleUncitedParagraphs(List("t" -> s"$two\n\n- [[a2001]]")).size, 1)
+    assertEquals(ArticleLint.articleUncitedParagraphs(List("t" -> s"$leadIn\n\n- [[a2001]]")), Nil)
+    assertEquals(ArticleLint.articleUncitedParagraphs(List("t" -> s"$two\n\n- [[a2001]]")).size, 1)
 
   test("sentenceCount: abbreviations, initials and dates do not end a sentence"):
     assertEquals(Lint.sentenceCount(""), 0)
@@ -290,7 +293,7 @@ class LintSuite extends munit.FunSuite:
   test("article-thin-summary flags missing, stand-in and label-length summaries, not real ones"):
     val real =
       "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
-    val items = Lint.articleThinSummary(
+    val items = ArticleLint.articleThinSummary(
       List(
         "a_missing" -> "",
         "b_placeholder" -> "placeholder",

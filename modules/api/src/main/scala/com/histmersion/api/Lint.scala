@@ -169,6 +169,8 @@ object Lint:
     )
   )
 
+  val MinSummaryChars = 80
+
   val names: List[String] = all.map(_.name)
 
   def rule(name: String): Option[Rule] = all.find(_.name == name.trim.toLowerCase)
@@ -207,35 +209,6 @@ object Lint:
       scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take(max)
 
   def looksLikeCitekey(target: String): Boolean = """\d{4}""".r.findFirstIn(target).isDefined
-
-  def danglingEdges(edges: List[Edge], citekeys: Set[String], maxSuggestions: Int): List[LintItem] =
-    edges.distinct
-      .filterNot(e => citekeys.contains(e.dst))
-      .sortBy(e => (if looksLikeCitekey(e.dst) then 0 else 1, e.src, e.kind, e.dst))
-      .map { e =>
-        val near = suggest(e.dst, citekeys, maxSuggestions)
-        val what =
-          if looksLikeCitekey(e.dst) then "no such source"
-          else "no such source — looks like a concept/article link, not a citekey"
-        val tail = if near.isEmpty then "" else s" — closest: ${near.mkString(", ")}"
-        LintItem(e.src, s"${e.kind} → ${e.dst} ($what)$tail")
-      }
-
-  def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[String], maxSuggestions: Int): List[LintItem] =
-    edges.distinct
-      .filterNot(e => citekeys.contains(e.dst))
-      .flatMap { e =>
-        val near = citekeys.filter(ck => ck.startsWith(e.dst + "_")).toList.sorted
-        if near.isEmpty then None
-        else
-          val shown = near.take(maxSuggestions)
-          val more = if near.sizeIs > shown.size then s", +${near.size - shown.size} more" else ""
-          val verdict =
-            if near.sizeIs == 1 then s"resolves to ${near.head} (fixable: lint --fix)"
-            else s"ambiguous between ${shown.mkString(", ")}$more"
-          Some(LintItem(e.src, s"${e.kind} → ${e.dst} $verdict"))
-      }
-      .sortBy(i => (i.citekey, i.detail))
 
   def duplicates(rows: List[(String, String)], label: String): List[LintItem] =
     rows
@@ -284,96 +257,6 @@ object Lint:
         authors.filter(_.contains("|")).map(a => LintItem(ck, s"author '$a'"))
       }
       .sortBy(i => (i.citekey, i.detail))
-
-  val FillerPhrases: List[String] = List(
-    "it is worth noting",
-    "it should be noted",
-    "it is important to note",
-    "interestingly",
-    "notably",
-    "significantly",
-    "it is clear that",
-    "needless to say",
-    "of course",
-    "as is well known",
-    "it goes without saying",
-    "in conclusion",
-    "to summarize",
-    "in summary",
-    "broadly speaking",
-    "generally speaking",
-    "it must be emphasized",
-    "it cannot be overstated",
-    "plays a crucial role",
-    "rich tapestry",
-    "sheds light on",
-    "shed new light",
-    "paved the way",
-    "remains to be seen",
-    "further research is needed"
-  )
-
-  private val FillerPattern: scala.util.matching.Regex =
-    FillerPhrases.map(p => java.util.regex.Pattern.quote(p)).mkString("(?i)(?:", "|", ")").r
-
-  val MinSummaryChars = 80
-
-  def articleThinSummary(rows: List[(String, String)]): List[LintItem] =
-    rows
-      .flatMap { (slug, summary) =>
-        val s = summary.trim
-        val why =
-          if s.isEmpty then Some("no summary")
-          else
-            Articles
-              .summaryOf(Some(s))
-              .left
-              .toOption
-              .map(_ => s"stand-in summary: \"$s\"")
-              .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
-        why.map(LintItem(slug, _))
-      }
-      .sortBy(_.citekey)
-
-  def articleFiller(articles: List[(String, String)]): List[LintItem] =
-    articles
-      .flatMap { (slug, body) =>
-        val matches = FillerPattern.findAllMatchIn(body).map(_.matched.toLowerCase).toList.distinct
-        if matches.isEmpty then None
-        else
-          Some(
-            LintItem(
-              slug,
-              s"filler: ${matches.take(3).mkString(", ")}${
-                  if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""
-                }"
-            )
-          )
-      }
-      .sortBy(_.citekey)
-
-  private val WikilinkCitekey =
-    """\[\[((?=[a-z0-9_]*(?:_|\d{4}))[a-z][a-z0-9_]*)""".r
-
-  def articleUncitedParagraphs(articles: List[(String, String)]): List[LintItem] =
-    articles
-      .flatMap { (slug, body) =>
-        val paras = extractParagraphs(body)
-        val uncited = paras.filter(p => WikilinkCitekey.findFirstIn(p).isEmpty)
-        if uncited.isEmpty then None
-        else Some(LintItem(slug, s"${uncited.size} paragraph(s) with no [[citekey]]: \"${uncited.head.take(60)}…\""))
-      }
-      .sortBy(_.citekey)
-
-  def articleCritiquePairing(
-      articles: List[(String, String)],
-      resolve: String => Option[String],
-      edges: List[CoverageEdge],
-      work: String => Option[CritiquePairing.Work]
-  ): List[LintItem] =
-    articles
-      .flatMap((slug, body) => CritiquePairing.hits(body, resolve, edges, work).map(h => LintItem(slug, h.line)))
-      .sortBy(_.citekey)
 
   val MaxListLeadIn = 300
 

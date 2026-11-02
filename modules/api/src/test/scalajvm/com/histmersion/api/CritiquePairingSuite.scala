@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.research.articles.ArticleLint
+
 import com.histmersion.api.CritiquePairing.*
 
 /** The pairing rule (docs/research-review-convergence.md §6.9), pure: the names a source is called by, the paragraphs
@@ -163,7 +165,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     )
 
   test("the lint rule: one item per hit, per article"):
-    val items = Lint.articleCritiquePairing(
+    val items = ArticleLint.articleCritiquePairing(
       List("achilles_origins" -> excerpt, "clean" -> "Nothing here [[lord1960_singer]]."),
       resolve,
       edges,

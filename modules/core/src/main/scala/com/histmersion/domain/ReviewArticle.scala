@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.api.research.articles.ArticleLint
+
 import com.histmersion.api.{
   ArticleCoverage,
   ArticleEdits,
@@ -631,7 +633,7 @@ object ReviewArticle:
     val hs = headings(body)
     def f(sev: Severity, kind: String, where: String, quote: String, problem: String, fix: String) =
       (sev, kind, where, quote, problem, fix)
-    val filler = Lint
+    val filler = ArticleLint
       .articleFiller(List(slug -> body))
       .map(i =>
         f(
@@ -646,7 +648,7 @@ object ReviewArticle:
     // the lint rule's own test, one paragraph at a time (a link to an article is not a citation)
     val uncited = Lint
       .extractParagraphs(body)
-      .filter(p => Lint.articleUncitedParagraphs(List(slug -> p)).nonEmpty)
+      .filter(p => ArticleLint.articleUncitedParagraphs(List(slug -> p)).nonEmpty)
       .map(p =>
         f(
           Severity.Major,

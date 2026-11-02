@@ -411,7 +411,25 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] = research.articles.sourceArticles(citekey)
 
   /** `GET /api/resolve/{id}`: research's (a source, else an article). */
-  def resolveId(id: String): Either[ApiError, ResolvedId] = research.articles.resolveId(id)
+  def resolveId(id: String): Either[ApiError, ResolvedId] = resolveView(id)
+
+  private lazy val resolveView = com.histmersion.server.views.ResolveView(
+    id =>
+      library.sources
+        .get(id, body = false)
+        .toOption
+        .map(s =>
+          ResolvedSource(
+            s.source.citekey,
+            s.source.doi,
+            s.source.authors,
+            s.source.year,
+            s.source.title,
+            s.source.status
+          )
+        ),
+    research.articles.resolved
+  )
 
   /** THE identifier resolution of every renamed kind (#1799, [[Aliases]]): the identifier the record answers to now —
     * an old one resolves to where it went. Every read AND every write resolves here first, so a put, patch, delete or
