@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24; slice 11 part 2 built (research's workflows, its review manager kind, its settings and its data contribution) — §24: slice 11 is complete.; slice 12 part 1 built in part (the mixed wire files split by owner, the resolve view; six record groups left, listed in §25) — §25.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24; slice 11 part 2 built (research's workflows, its review manager kind, its settings and its data contribution) — §24: slice 11 is complete.; slice 12 part 1 built in part (the mixed wire files split by owner, the resolve view; six record groups left, listed in §25) — §25; slice 12 part 2 built in part (every transition adapter gone, `Handlers` and `OpsHandlers` deleted, the injected environment; `db` reduced to `util.database`, the record groups, the planner's work-list fold and the `files`/`config` file rows left, listed in §25) — §25.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -4479,3 +4479,144 @@ pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents
 (`HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`): 352
 tests identical on the unchanged code and after the last commit. No read path a `scripts/perf/*_live.py` driver covers
 changed (renderers and wire vocabularies only; the resolve view runs the same reads), so no live-volume run was made.
+
+### Part 2 as built, in part (the transition adapters, `Handlers` and `OpsHandlers`, the injected environment, 2026-11-02)
+
+Branch `refactor-s12b` from master b3396e4d. **Part 2 is built in part**, stopped at a deployable point as the brief
+allows: every transition adapter is gone, `Handlers` and `OpsHandlers` are deleted, the repository rows are all gone,
+and the process-environment readers take the injected environment; `db` reduced to `util.database`, the six record
+groups, the planner's work-list fold and the `files`/`config` file rows are left (below, with part 3). Endpoints, MCP
+tools, CLI commands, the toolbox and every answer schema, search results, facets, `query`, bundle entries, merge plans
+and lint output are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`, `WireSnapshotSuite`, every domain
+oracle, `SearchSqlSnapshotSuite`, the Calibre transcript, `ArchiveTrafficSuite`, the new `RegistrySnapshotSuite` and the
+gated agent transcripts held byte for byte; no snapshot was re-recorded after the first commit; no migration.
+
+**The oracle, recorded first.** `RegistrySnapshotSuite` (server, `oracle/registries/`, no database — the composition
+over a data source that refuses every connection, as `ContractSnapshotSuite`'s): `data.txt`, every owner's data
+contribution in the registry's order (tables, stores, backup share, carried kinds with their import stages and ranks,
+merge rules, mirror notes, caches, upkeep, checks with whether each has a safe fix), the lint report order and the
+safe fixes' order, the alias kinds; `engine.txt`, the engine's registry (each workflow's id, version, target and each
+role's allowed tools, whether it compares outputs; the tools in the toolbox's order; the manager kinds with their item
+kinds and cron; the objectives; the approval kinds an effect applies to; the roster's tools and roles); `routes.txt`,
+every REST route `HttpApi` binds in matching order (tapir's `show` of each endpoint). With `RegistriesOracleSuite`'s
+job kinds and alias tables, `ContractSnapshotSuite`'s `mcp-tools.json` (the MCP tools in `tools/list` order) and the
+gated transcripts, every route, tool, job kind, manager kind, approval effect, check, carried kind and alias table the
+adapters and `Handlers` registered is reached by a recorded output.
+
+**The transition adapters, each to its owner.**
+
+- **Alias kinds and tables**: `api.AliasKindsAdapter` → `util.identity.AliasKinds`, the identity area's closed
+  vocabulary of renamed kinds (as `BundleKind` is the bundle's: an attestation's or asset link's target in a lower
+  domain names a higher one's kind without naming that domain), with `ofTarget` (the references' target-type lookup
+  three controllers spelled out). `AliasTablesAdapter` → each owner's table (`SourceAliasTable`, `EventAliasTable`,
+  `GoalAliasTable`, `PlaceAliasTable` beside `ArticleAliasTable`), listed in `Deps.aliasTables` in the kinds' order.
+- **Job kinds**: `api.JobKindsAdapter` → each owner's entries (`api.library.ingest.IngestJobKinds`,
+  `api.library.acquisition.AcquisitionJobKinds`, `api.automation.agents.AgentJobKinds`,
+  `util.data.exchange.ExchangeJobKinds`, `util.data.maintenance.MaintenanceJobKinds`, `util.basemap.BasemapJobKinds`,
+  `api.catalogue.places.PlacesJobKinds`, `api.catalogue.events.EventsJobKinds`,
+  `api.catalogue.evidence.EvidenceJobKinds`, `api.media.imports.ImportJobKinds`, `api.media.covers.CoversJobKinds`),
+  listed in today's order by `api.RegisteredJobKinds` (placed `api`, as `Api.all` lists the features' endpoints: the
+  web page reads the same list). An agent run's controls are its entry's `ownControl`, so `util.jobs.JobControlRules`
+  names no automation kind.
+- **Data contributions**: `TransitionContributions`, `TablesAdapter`, `MaintenanceAdapter`, `BackupAdapter`,
+  `FiguresAdapter`, `CarriedKindsAdapter` and `MergeRulesAdapter` → every owner's own: `AutomationData` (its tables,
+  the agents' homes and Codex sessions; `AutomationExchange`: `GoalsCarried` and `QueueCarried` over `GoalBundleRepo`
+  and `QueueBundleRepo` in the db module, with the bundle rows `BGoalRow`, `BGoalLinkRow`, `BGoalScheduleRow`,
+  `BQueueRow` in their features, and `GoalMergeRules`, `QueueItemMergeRules`), `PersonalData`, `DataManagementData`
+  (the merges, the backups and bundles, the storage figures' cache), `JobsData` (the jobs counted by state through
+  `JobRepo.states`), `IdentityData` (with `TombstonesCarried` over `TombstoneBundleRepo`), `DatabaseData`; `Deps.data`
+  lists the ten in the owners' order. A merge's follow-ups (the review tasks and the worklog line, `BundleImport`'s
+  `mergeTasks`) are the automation's `WorkListMergeFollowUps` behind `util.data.exchange.MergeFollowUps`, which
+  `BundleImporter.apply` and `BundleService.Wiring` are given; `BundleImport`'s on-disk entry points are gone (the db
+  suites call `BundleImporter` with a `ByteSource`).
+- **Checks**: `CheckRulesAdapter` → each safe fix carries its own `FixRank` (the citation and index repairs 10–20,
+  the findings' places 30–40, the places' own 50–70, the articles' 80: today's order), and `CheckOrder(report)` reports
+  in `Lint.names`' order.
+- **Mirror**: `TransitionNotes` and `MirrorAdapter` → a kind's note is rendered by its owner's `MirrorNote`
+  (`SourceMirrorNote`, `ArticleMirrorNote`) handed to `Mirror`; `MirrorExport` describes a kind only.
+- **Engine**: `SeedManagerKind` and its settings view (`SeedManagerKind.plan`, was `TransitionSettings`) are research's
+  (`research.workflows`, over its `ResearchSite`; `ResearchWorkflows.seedKind`). `TransitionApprovalEffects` → each
+  owner's effect: the library's `SourceProposalEffect` (a `ProposalEffect`), research's `ArticleFilterApproval`
+  (a `SubjectEffect`, #8817), composed by `ApprovalEffects.of`. The library's agent tools are `LibraryWorkflows.tools`,
+  its acquisition routes among the managers' `domain.library.workflows.AcquisitionWorkRoutes` (was `TransitionRoutes`,
+  same slot). What stays in the composition is what the design gives it — the ports the engine owns, implemented by
+  the composition (§19): `server/agents/ServerEngineSite` (was `TransitionSite`), `ServerAutomationHost` (was
+  `TransitionHost`, the goals through the automation's own controllers), `EngineContributions` (was
+  `TransitionWorkflows`: the contributions in the engine's order, the roster) and `ToolboxOrder` (was `TransitionTools`,
+  kept to the domain-neutral order the toolbox lists every domain's tools in).
+
+**`Handlers` and `OpsHandlers` deleted.** `server/ServerWiring` is the composition's object graph (every wiring and
+controller, no operation). Their operations went to:
+
+- `server.instance`: `InstanceControllers` (version, health, About with its storage cache, the web page's settings and
+  `base-map-source`, the toolbar's counters and seen marks, the config reload; `UiRepo` moved there, a mechanism over
+  several domains' tables with no in-memory twin, as accepted), `MaintenanceControllers` (backup, its status, the
+  listing and an archive, restore under the lock, vacuum, reindex, the housekeeping block), `SeedControllers`;
+- `server.views`: `WorkListView` (a work list with its items' goals and the ACQUIRE list's checks), `FormatView`
+  (unsaved Markdown), `JobListView` (the jobs' and runs' filter, the job states with the run states), the place's card
+  (`ServerWiring.placeCard`) and the resolve view as values;
+- the domains: `automation.goals.GoalsControllers` (list, get, put, patch, delete, rename, the GOALS.md export) over
+  `GoalService`, which gained `page`, `patch`, `delete`, `rename` and `goalsOfItems` (`InMemory` keeps the goals' old
+  slugs in `AutomationState.goalAliases`; contract suite); `automation.agents.AgentStateService` (`AgentStateRepo`
+  private to the feature; `InMemory` prints a value as `jsonb::text` does — keys shortest first, then by bytes; contract
+  suite on both) and `AgentStateControllers`; `util.data.checks.CheckControllers`; the catalogue's renames on
+  `PlacesControllers.renamed` and `EventsControllers.renamed`; the jobs' query is `util.jobs.JobQuery` (out of
+  `JobRepo`), `Bootstrap` amends a job's detail through `BackgroundJob.amendDetail`.
+
+**The injected environment (#8787).** `GazetteerPaths.of`, `AgentTrees` (its root, the Codex home, a requested output
+directory — given the engine site's `userPaths`), `AgentDoctor`, `BackupWiring` (the `PATH`) and About's storage (the
+operating system) read the environment the entry point read once; a test's site has none. The command-line runtimes'
+own `~` (`ClaudeCode`, `PlanPools`, `AgentTrees.expand`) stays for their slice (part 3). `PlanQuotaRunSuite` had read
+the machine's Codex login through the real `HOME`; it now has a Codex home of its own.
+
+**Places corrected to the design**: `LabelRename` and `LabelRenames` → `util.identity` (any kind's rename, as
+`LabelRenamed` in part 1); `api/personal/ItemKind` → `kernel`, with the kernel's `ItemKind`, as the referables'
+vocabulary (decided; no case renamed). `util.database.ListSql`'s facet cap is a parameter (the lists' filters pass
+`ListFilters.FacetMax`).
+
+**`ArchitectureSuite`.** `exceptions.tsv` 72 → 56 rows, deletions only: direction 27 → 21 (`db/BundleImport` 3,
+`db/ListSql` 1, `api/personal/ItemKind` 2), filesystem 32 → 31 (`db/BundleImport`), process 4, repository 9 → 0
+(`Handlers` 3, `OpsHandlers` 2, `ListQueries`, `Bootstrap`, `BundleImport` 2). `places.tsv` 907 → 900 rows: the
+deleted and moved files' rows gone, the composition's new files (`ServerWiring`, `server/agents/EngineContributions`,
+`ServerAutomationHost`, `ServerEngineSite`, `ToolboxOrder`) placed `server`, `api/RegisteredJobKinds` `api`, `api/personal/ItemKind` `kernel`.
+
+**Native image** (`reachability-metadata.json`, server; checked with `javap -p` of the compiled classes):
+`server.Handlers` → `server.ServerWiring` with its lazy fields (`agentState`, `checks`, `formats`, `goals`, `instance`,
+`jobList`, `mirror`, `placeCard`, `seeding`, `upkeep`, `workListView` added beside the kept ones, each `$lzy1`);
+`db.BGoalRow$`, `BGoalLinkRow$`, `BGoalScheduleRow$` → `domain.automation.goals.*$`, `db.BQueueRow$` →
+`domain.automation.worklists.BQueueRow$`, `db.BTombstoneRow$` → `util.identity.BTombstoneRow$` (each
+`derived$DbCodec$lzy1`); `db.GoalRepo$package$`'s `given_DbCodec_AgentStateEntry$lzy1` →
+`domain.automation.agents.AgentStateRepo$`. Every other new object holds eager values. To check at the bundle:
+`--self-check`; `smoke.sh` (no line it expects changed); `about` (storage, job counts, the agent lease), `health`,
+`version`, the web page's counters and seen marks, `config reload`; `goals` list/show/put/patch/delete/rename and
+`queue export meta` (GOALS.md); `agent state` set/get/list/delete; `queue list acquire` (checks, goals), `jobs` with
+its filters; `lint`, `lint --fix`; `backup`, `backups`, `restore` on a scratch copy, `vacuum`, `reindex`, `seed`;
+`bundle export`/`import`, `merge plan`/`apply` (the review tasks and the worklog line); `agent doctor`, `agent
+generate`; an approval of an article filter and of a source proposal; `places`/`events` rename.
+
+**Deviations.**
+
+- Stopped at a deployable point (the brief's clause); what is left is listed below.
+- `AliasKinds` and the job-kind registry are shared vocabularies (`util.identity`, `api`), not one object per owner:
+  a lower domain must name a higher one's kind of record (a reference's target), and the web page reads the job kinds.
+- The engine's ports stay implemented in the composition (`server/agents`), renamed from `Transition*`: §19 makes them
+  ports the composition implements; only what an owner can contribute moved to it.
+- The agent state's `set` keeps failing on a value that is not JSON as the database's cast does (a 500, as before),
+  rather than a 400, so the wire is unchanged.
+
+**Left from part 2** (with the way each goes, unchanged from part 1's table where it is a record group):
+
+| rows | how it goes |
+|---|---|
+| the six record groups (`api/EventDetail`, `PlaceDetail`; `JobDetail`; `Agents`, `AgentsMarkdown`, `Managers`, `GoalPlans`, `MergeIssueDetail`; `Autopilot`, `Queue`, `ManagersApi`; `MergePlan`, `MergeMarkdown`) — 19 direction rows | as part 1's table says (the `ItemKind` group is done) |
+| `core/MergeFold`, `core/MergePlanner` naming `Queue` | the goals' and work lists' folds out of the planner into the automation's `PlanRules` (`GoalMergeRules`, `QueueItemMergeRules` gain `planning`), as slices 8–10 did for theirs |
+| filesystem: `db/MergeState` (`java.nio.file`), `config/UserConfigFile`, `files/Frontmatter`, `files/SafePath`, `files/PluginKit` (`File(` is the case `Origin.File`) | through `util.storage`; the `files` and `config` modules need a storage interface below `server` (`util.files`, §7.1) first |
+| `db` reduced to `util.database` | the db module's `com.histmersion.db` package (22 files) to their owners' packages and the module's repositories and migrations to `server` (§7.1, §7.2), with the native metadata renamed |
+
+**Part 3** is as part 1 listed it, with the above where part 2 left it.
+
+**Tests.** After the last commit, every module named (`just test-quick` with every module): see the report of the run
+(the counts are in the slice's report). The gated transcripts (`HISTMERSION_ORACLE_RUNS=1
+HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`): 352 tests on the unchanged code
+and after the last commit. No read path a `scripts/perf/*_live.py` driver covers changed (the same controllers and SQL
+behind the same routes), so no live-volume run was made.
