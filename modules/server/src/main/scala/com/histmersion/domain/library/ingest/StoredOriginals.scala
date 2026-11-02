@@ -2,7 +2,7 @@ package com.histmersion.domain.library.ingest
 
 import com.histmersion.domain.library.sources.{SourceDeletePlan, SourceOriginals}
 import com.histmersion.util.storage.{Store, StoreKey}
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 /** The files the server keeps of a source's original (#969), which a delete removes after its commit:
   *

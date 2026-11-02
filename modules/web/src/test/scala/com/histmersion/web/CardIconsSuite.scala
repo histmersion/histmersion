@@ -1,6 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.values.{Confidence, MediaRole, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{PlaceSummary, SiteTypes}
 import com.histmersion.api.library.{GeoHit, SourceDetail, SourceKinds, SourceWithFindings}
 import com.histmersion.api.media.MediaThumb

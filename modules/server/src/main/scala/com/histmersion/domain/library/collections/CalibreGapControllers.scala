@@ -6,7 +6,7 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.library.ingest.StoredOriginals
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, CalibrePushResult}

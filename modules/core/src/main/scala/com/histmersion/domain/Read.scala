@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.values.Period
+import com.histmersion.Period
 
 import io.circe.ACursor
 

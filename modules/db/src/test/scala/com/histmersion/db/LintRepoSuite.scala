@@ -13,7 +13,8 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.Lint.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.{FormatIssue, FormatRule, FormatSeverity, Lint}

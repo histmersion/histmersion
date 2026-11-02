@@ -1,6 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.values.{Confidence, EdgeKind, SourceStatus, WireEnumValues}
+import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
+import com.histmersion.WireEnumValues
 import com.histmersion.api.library.{Label, SourceRef}
 import com.histmersion.api.research.ArticleKind
 

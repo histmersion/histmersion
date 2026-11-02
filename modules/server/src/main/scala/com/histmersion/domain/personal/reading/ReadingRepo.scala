@@ -4,7 +4,7 @@ import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.values.{PageSize, UserId}
+import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
 

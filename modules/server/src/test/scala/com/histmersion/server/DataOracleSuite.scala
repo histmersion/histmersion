@@ -15,7 +15,8 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.{Dataset, GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.augustnagro.magnum.*
 import io.circe.{parser, Json}
 import ox.supervised

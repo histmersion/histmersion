@@ -5,7 +5,7 @@ import com.histmersion.domain.personal.PersonalState.StoredMark
 import com.histmersion.domain.personal.marks.{Readable, UnreadItems}
 import com.histmersion.domain.personal.{MarkTime, PersonalState, TargetLabel}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{Offset, PageSize, UserId}
+import com.histmersion.{Offset, PageSize, UserId}
 
 import hearth.kindlings.optics.syntax.*
 

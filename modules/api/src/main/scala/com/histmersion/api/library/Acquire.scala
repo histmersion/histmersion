@@ -15,8 +15,8 @@ object Acquire:
   private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
-  /** DOIs are case-insensitive, so they are stored lower-case ([[com.histmersion.values.Doi.normalize]]). */
-  def normalizeDoi(raw: String): Option[String] = com.histmersion.values.Doi.normalize(raw)
+  /** DOIs are case-insensitive, so they are stored lower-case ([[com.histmersion.domain.library.Doi.normalize]]). */
+  def normalizeDoi(raw: String): Option[String] = com.histmersion.domain.library.Doi.normalize(raw)
 
   def normalizeArxiv(raw: String): Option[String] =
     Option(raw).map(_.trim).filter(_.nonEmpty).flatMap { s =>

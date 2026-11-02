@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom

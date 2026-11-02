@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** What an issue is about. The wire name is part of the issue id, so it never changes. */
+
+import com.histmersion.WireEnumValues
 enum IssueKind:
   /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years
     * far apart): merge them (`map:<citekey>`) or keep both.

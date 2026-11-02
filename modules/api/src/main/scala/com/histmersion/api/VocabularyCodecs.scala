@@ -3,21 +3,18 @@ package com.histmersion.api
 import com.histmersion.values.{
   ApprovalKind,
   BundleKind,
-  Confidence,
   DecidedBy,
-  DecisionKind,
-  DraftMode,
   EdgeKind,
-  EditionsPolicy,
   GoalLinkKind,
   IssueKind,
   IssueSeverity,
   LocationPrecision,
-  MatchMethod,
-  MatchOutcome,
-  ScheduleKind,
   SourceStatus
 }
+import com.histmersion.domain.library.{Confidence, EditionsPolicy, MatchMethod, MatchOutcome}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.research.DraftMode
+import com.histmersion.domain.automation.ScheduleKind
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 

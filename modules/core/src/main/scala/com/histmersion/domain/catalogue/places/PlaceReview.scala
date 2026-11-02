@@ -4,7 +4,8 @@ import com.histmersion.domain.*
 
 import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.Geocode
-import com.histmersion.values.{Period, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.Period
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
   * people, a civic tribe, a province, a deme and a district alike as a "region" with one representative point; this

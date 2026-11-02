@@ -13,7 +13,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
 
   private def rec(
       geo: List[(String, String)],
-      period: Option[com.histmersion.values.Period] = DeepTime.span(-1400L, -1200L)
+      period: Option[com.histmersion.Period] = DeepTime.span(-1400L, -1200L)
   ) =
     MediaRecord(
       "k",

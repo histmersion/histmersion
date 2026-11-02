@@ -1,5 +1,6 @@
 package com.histmersion.values
 
+import com.histmersion.Year
 enum PeriodError:
   case EndsBeforeStart(start: Year, end: Year)
 

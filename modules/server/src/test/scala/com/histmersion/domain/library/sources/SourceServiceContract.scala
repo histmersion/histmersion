@@ -3,7 +3,8 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.{LibraryStores, LibraryStoreSuite}
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{
   DeletePart,

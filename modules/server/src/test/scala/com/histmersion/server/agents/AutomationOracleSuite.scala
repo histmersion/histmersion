@@ -66,7 +66,7 @@ class AutomationOracleSuite extends munit.FunSuite:
   test("workflows.txt: every workflow the engine runs, its roles and the tools its agents may use"):
     val defs = Generated.defs()
     val agents = defs.agents.sortBy(_.name).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
-    val pipelines = com.histmersion.values.Pipeline.values.toList.map { p =>
+    val pipelines = com.histmersion.domain.automation.Pipeline.values.toList.map { p =>
       s"workflow ${p.wire}\tv${p.version}\t${p.targetKind.wire}\troles=${p.roles.map(_.wire).mkString(",")}\n  ${p.describe}"
     }
     val tools = ToolboxOrder.names.map(t => s"tool ${t.value}")

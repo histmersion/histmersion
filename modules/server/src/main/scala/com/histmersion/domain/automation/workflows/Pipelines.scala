@@ -15,7 +15,7 @@ private[histmersion] object Pipelines:
   /** The goal a run works for: its own, else the goal it targets. */
   def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[String] =
     run.goal
-      .orElse(Option.when(run.targetKind == com.histmersion.values.TargetKind.Goal.wire)(run.target))
+      .orElse(Option.when(run.targetKind == com.histmersion.domain.automation.TargetKind.Goal.wire)(run.target))
       .filter(_.nonEmpty)
 
   /** A bookkeeping item a run writes: it names the run and the goal the run works for. */

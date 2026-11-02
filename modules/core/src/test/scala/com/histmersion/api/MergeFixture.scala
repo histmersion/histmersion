@@ -9,7 +9,8 @@ import io.scalaland.chimney.dsl.*
 import MergePlanner.{Input, Labels, LedgerEntry}
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{

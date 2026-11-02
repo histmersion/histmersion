@@ -2,7 +2,8 @@ package com.histmersion.web.library
 
 import com.histmersion.api.library.{FindingRow, SearchHit, SourceDetail, SourceWithFindings}
 import com.histmersion.api.media.MediaThumb
-import com.histmersion.values.{MediaRole, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.web.map.GeoBounds
 
 class ReadingHeadSuite extends munit.FunSuite:

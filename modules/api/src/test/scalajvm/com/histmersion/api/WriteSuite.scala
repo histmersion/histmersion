@@ -2,7 +2,8 @@ package com.histmersion.api
 
 import com.histmersion.api.library.SourceWrite
 
-import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
+import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.automation.{GoalPatch, Queue}
 import com.histmersion.api.catalogue.{AttestationPatch, EventPatch, Period, PeriodInput}
 import com.histmersion.api.library.{

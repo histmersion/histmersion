@@ -13,7 +13,8 @@ import io.circe.Codec
 import com.histmersion.api.{Api, ApiError, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{EditionsPolicy, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.aliases.{Aliases, LabelRename}

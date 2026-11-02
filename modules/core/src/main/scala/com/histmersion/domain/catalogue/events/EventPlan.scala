@@ -5,7 +5,8 @@ import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
+import com.histmersion.values.{BundleKind, IssueKind}
+import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID

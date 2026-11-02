@@ -4,7 +4,8 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.research.BacklinksMarkdown
 
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.{
   FindingRow,
   Hit,

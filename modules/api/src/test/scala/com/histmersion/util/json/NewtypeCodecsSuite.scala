@@ -8,6 +8,9 @@ import io.circe.syntax.*
 import sttp.tapir.Schema
 
 import java.util.UUID
+import com.histmersion.{Latitude, Longitude, Offset, PageSize, UserId, Year}
+import com.histmersion.domain.library.{ArchiveId, ArxivId, AuthorName, Doi, Isbn, Pmcid, Pmid, Title}
+import com.histmersion.domain.research.Slug
 
 class NewtypeCodecsSuite extends munit.FunSuite:
 

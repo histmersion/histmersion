@@ -2,7 +2,7 @@ package com.histmersion.domain.research.articles.review
 
 import com.histmersion.api.research.{ReviewApproval, ReviewGoal}
 import com.histmersion.domain.ArticleReviewStatus.{Facts, ItemFacts, LedgerFacts}
-import com.histmersion.values.ItemStatus
+import com.histmersion.domain.automation.ItemStatus
 
 import com.histmersion.util.database.given
 

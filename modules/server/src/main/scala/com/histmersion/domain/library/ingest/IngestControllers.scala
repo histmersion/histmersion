@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.{Blob, Store, StoreKey}
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import hearth.kindlings.optics.syntax.*
 

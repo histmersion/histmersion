@@ -25,16 +25,9 @@ import com.histmersion.util.data.exchange.{
   SourcePair
 }
 import com.histmersion.util.text.MinHash
-import com.histmersion.values.{
-  BundleKind,
-  DecisionKind,
-  EditionsPolicy,
-  IssueKind,
-  IssueSeverity,
-  MatchMethod,
-  MatchOutcome,
-  SourceStatus
-}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.{EditionsPolicy, MatchMethod, MatchOutcome}
 
 import hearth.kindlings.optics.syntax.*
 import SourceMatcher.{Outcome, Pair, Side}

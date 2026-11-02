@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*

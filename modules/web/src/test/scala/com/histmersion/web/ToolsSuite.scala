@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import com.histmersion.api.ApiError
 import sttp.model.Method
@@ -139,11 +139,12 @@ class ToolsSuite extends munit.FunSuite:
     import com.histmersion.values.ApprovalKind
     assert(ApprovalKind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
     assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("unblocks its review")))
-    assert(com.histmersion.values.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
+    assert(com.histmersion.domain.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
   }
 
   test("every value a filter button, chip or menu offers has a meaning on hover") {
-    import com.histmersion.values.{ApprovalState, ItemStatus, ManagerKind, ProviderKind, RunState}
+    import com.histmersion.values.{ApprovalState, ManagerKind, RunState}
+    import com.histmersion.domain.automation.{ItemStatus, ProviderKind}
     assert(JobState.values.forall(s => JobsView.stateMeaning(s).nonEmpty))
     val jobKinds = List(
       Ingest.KindIngest,

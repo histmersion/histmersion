@@ -2,7 +2,7 @@ package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.{AgentDefinitions, Halt, OutputComparison, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.{PipelineDef, ToolName, WorkflowDefinition, WorkflowId}
-import com.histmersion.values.{AgentRole, Pipeline, TargetKind}
+import com.histmersion.domain.automation.{AgentRole, Pipeline, TargetKind}
 
 /** One of the library's pipelines as the workflow it registers: its identifier, version, target, roles and description
   * are the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents in that role

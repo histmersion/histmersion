@@ -11,7 +11,8 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint

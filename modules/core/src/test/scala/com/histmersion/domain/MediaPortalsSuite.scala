@@ -52,7 +52,7 @@ class MediaPortalsSuite extends munit.FunSuite:
   private def rec(
       ids: List[(String, String)],
       geo: List[(String, String)],
-      period: Option[com.histmersion.values.Period] = DeepTime.span(-200L, 360L)
+      period: Option[com.histmersion.Period] = DeepTime.span(-200L, 360L)
   ) =
     MediaRecord("k", "t", "p", Some("i"), None, None, Left("x"), geo, period, ids)
   private val idsOnMap: MediaMatch.ResolveId = Map(

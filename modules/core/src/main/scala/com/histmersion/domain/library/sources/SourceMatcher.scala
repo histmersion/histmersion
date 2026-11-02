@@ -11,7 +11,7 @@ import MergeText.AuthorAgreement
 import com.histmersion.util.text.MinHash
 
 import java.util.UUID
-import com.histmersion.values.EditionsPolicy
+import com.histmersion.domain.library.EditionsPolicy
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *

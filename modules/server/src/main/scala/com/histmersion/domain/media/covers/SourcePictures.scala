@@ -11,7 +11,7 @@ import com.histmersion.domain.media.imports.ImportService
 import com.histmersion.util.ocr.ConverterClient
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{
   AssetKind,
   ImageSize,

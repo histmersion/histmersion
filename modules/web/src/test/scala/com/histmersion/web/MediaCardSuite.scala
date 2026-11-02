@@ -1,7 +1,8 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.values.{MediaRole, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{EventSummary, PlaceLink, PlaceSummary}
 import com.histmersion.api.library.{SourceDetail, SourceWithFindings}
 import com.histmersion.api.media.{MediaCount, MediaGeoHit, MediaProvider, MediaThumb}

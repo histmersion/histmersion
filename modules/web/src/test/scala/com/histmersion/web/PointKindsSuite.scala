@@ -1,7 +1,8 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.values.{Confidence, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.library.{GeoHit, SourceKinds}
 import com.histmersion.api.media.MediaGeoHit

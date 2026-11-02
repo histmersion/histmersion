@@ -4,7 +4,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import java.util.UUID
-import com.histmersion.values.{IssueKind, MatchMethod, MatchOutcome}
+import com.histmersion.values.IssueKind
+import com.histmersion.domain.library.{MatchMethod, MatchOutcome}
 import com.histmersion.api.given
 
 final case class SourceMatch(

@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.values.{RunId, UserId}
+import com.histmersion.values.RunId
+import com.histmersion.UserId
 
 class CallerSuite extends munit.FunSuite:
 

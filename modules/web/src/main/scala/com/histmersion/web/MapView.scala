@@ -10,7 +10,7 @@ import org.scalajs.dom
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.{GeoTime, MapTilesUiConfig, Period, PlaceTimeBasis, TileLayer, TilesApi}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Filter, GeoHit, SourceKinds}

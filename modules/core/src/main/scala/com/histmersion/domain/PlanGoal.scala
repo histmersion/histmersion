@@ -7,7 +7,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.GoalPlans.{Plan, PlannedGoal, PlannedWork}
-import com.histmersion.values.{Doi, Slug}
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.research.Slug
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,

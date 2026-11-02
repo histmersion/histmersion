@@ -1,7 +1,9 @@
 package com.histmersion.api
 
 import com.histmersion.api.ValueCodecs.given
-import com.histmersion.values.{Citekey, Doi, Latitude, Longitude, WikidataId, Year}
+import com.histmersion.values.WikidataId
+import com.histmersion.domain.library.{Citekey, Doi}
+import com.histmersion.{Latitude, Longitude, Year}
 import io.circe.parser.decode
 import io.circe.syntax.*
 

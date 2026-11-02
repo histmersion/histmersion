@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** What a goal is linked to. */
+
+import com.histmersion.WireEnumValues
 enum GoalLinkKind(val wire: String):
   case Source extends GoalLinkKind("source")
   case Article extends GoalLinkKind("article")

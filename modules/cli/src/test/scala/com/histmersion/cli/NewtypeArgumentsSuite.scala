@@ -2,7 +2,9 @@ package com.histmersion.cli
 
 import cats.data.Validated
 import com.histmersion.cli.NewtypeArguments.given
-import com.histmersion.values.{PluginId, Slug, Year}
+import com.histmersion.values.PluginId
+import com.histmersion.domain.research.Slug
+import com.histmersion.Year
 import com.monovore.decline.Argument
 
 class NewtypeArgumentsSuite extends munit.FunSuite:

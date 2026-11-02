@@ -15,7 +15,8 @@ import com.histmersion.domain.MergePlanner.AttestationFix
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PairQuestions, PlanFolds, PlanRun}
 import com.histmersion.util.text.Anchor
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID

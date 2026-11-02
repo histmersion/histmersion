@@ -3,7 +3,7 @@ package com.histmersion.domain
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
 
-import com.histmersion.values.Period
+import com.histmersion.Period
 
 /** The host's dates rule for the key-gated collections: a collection's latest year refuses a modern record, and an
   * ancient one is matched within the place's period up to it. The Smithsonian and Europeana parsers are the media

@@ -15,7 +15,8 @@ import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 import com.augustnagro.magnum.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{Geocode, Lpf, Period, PlaceAdd, PlaceEdits, PlaceInput}

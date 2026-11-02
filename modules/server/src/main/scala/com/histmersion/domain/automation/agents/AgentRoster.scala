@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
 import com.histmersion.domain.automation.workflows.ToolName
-import com.histmersion.values.AgentRole
+import com.histmersion.domain.automation.AgentRole
 
 /** What the domains contribute that the agent definitions are held to and the definitions generator renders from: the
   * agent tools they offer, and the roles their workflows' agents take (with the engine's own probe). A definition may

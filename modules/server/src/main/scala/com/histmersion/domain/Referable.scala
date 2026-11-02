@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.values.Title
+import com.histmersion.domain.library.Title
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference

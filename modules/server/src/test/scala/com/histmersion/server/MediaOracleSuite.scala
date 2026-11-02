@@ -4,7 +4,8 @@ import com.histmersion.domain.media.imports.BuiltinMedia
 
 import com.histmersion.api.ApiError
 import com.histmersion.config.*
-import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
+import com.histmersion.domain.Attribution
+import com.histmersion.domain.{Licence, LicenceFamily}
 import com.histmersion.values.LicenceId
 import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi

@@ -21,7 +21,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place, PlaceInput, PlaceName}
 import com.histmersion.api.media.{AssetKind, AssetLinkPut, MediaProvider, MediaTarget, MediaThumb}

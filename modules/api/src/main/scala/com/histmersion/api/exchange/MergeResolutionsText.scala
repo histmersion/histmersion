@@ -1,5 +1,6 @@
 package com.histmersion.api.exchange
-import com.histmersion.values.{DecidedBy, DecisionKind, IssueSeverity}
+import com.histmersion.values.{DecidedBy, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.given
 
 object MergeResolutionsText:

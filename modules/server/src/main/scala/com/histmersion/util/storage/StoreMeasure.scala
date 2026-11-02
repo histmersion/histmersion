@@ -1,6 +1,6 @@
 package com.histmersion.util.storage
 
-import com.histmersion.values.ByteCount
+import com.histmersion.ByteCount
 
 /** What a bounded walk of a store counted: the bytes and files below it, whether its directory is there, whether the
   * budget stopped the walk first (the counts are then a lower bound), and how many entries could not be read.

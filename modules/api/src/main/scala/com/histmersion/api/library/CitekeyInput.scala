@@ -1,5 +1,5 @@
 package com.histmersion.api.library
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.{ApiError, Write}
 import com.histmersion.api.given
 

@@ -1,6 +1,6 @@
 package com.histmersion.util.storage
 
-import com.histmersion.values.ByteCount
+import com.histmersion.ByteCount
 
 /** What a prune removed. */
 final case class PruneReport(removed: List[Stored]):

@@ -10,7 +10,8 @@ import com.histmersion.api.exchange.{
   MergePlan
 }
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
 import com.histmersion.api.exchange.PlanMatches

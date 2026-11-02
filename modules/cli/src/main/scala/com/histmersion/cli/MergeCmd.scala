@@ -6,7 +6,8 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{DecisionKind, EditionsPolicy}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.util.data.exchange.MergeResolutionsFile
 import com.histmersion.api.exchange.{
   BundleUpload,

@@ -3,7 +3,7 @@ package com.histmersion.domain.personal
 import com.histmersion.api.personal.{BookmarkId, BookmarkLabel, NoteId, NoteText}
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.personal.seen.SeenBoard
-import com.histmersion.values.UserId
+import com.histmersion.UserId
 
 /** What the in-memory bookmarks, notes, read marks and seen marks hold together, as the database's tables hold it:
   * every row with its tombstone.

@@ -12,7 +12,8 @@ import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
 import com.histmersion.api.library.{FacetField, Filter, Finding, Source, SourcePatch}

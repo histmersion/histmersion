@@ -1,6 +1,6 @@
 package com.histmersion.util.storage
 
-import com.histmersion.values.{ByteCount, ByteOffset, Sha256}
+import com.histmersion.{ByteCount, ByteOffset, Sha256}
 
 import java.io.{InputStream, IOException, OutputStream}
 import java.nio.ByteBuffer

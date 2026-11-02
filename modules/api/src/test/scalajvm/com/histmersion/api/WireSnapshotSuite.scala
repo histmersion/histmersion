@@ -9,7 +9,8 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.media.MediaMarkdown
 
-import com.histmersion.values.{Confidence, LocationPrecision, SourceStatus}
+import com.histmersion.values.{LocationPrecision, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import hearth.kindlings.optics.syntax.*
 import io.circe.syntax.*
 

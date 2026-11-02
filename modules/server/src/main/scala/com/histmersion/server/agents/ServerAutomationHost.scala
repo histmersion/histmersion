@@ -11,7 +11,7 @@ import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRe
 import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.automation.worklists.QueueItemId
-import com.histmersion.values.TargetKind
+import com.histmersion.domain.automation.TargetKind
 import com.histmersion.api.checks.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 import com.histmersion.domain.automation.workflows.AutomationHost

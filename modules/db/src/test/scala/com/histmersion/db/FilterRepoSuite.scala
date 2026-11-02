@@ -8,7 +8,8 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{FacetField, Filter, Finding, Hit, SearchResult, Sort, Source}

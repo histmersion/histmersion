@@ -4,7 +4,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.WorkRef
 
 /** A gold open-access work whose publisher refuses scripts, as an acquisition item: which works qualify and what the

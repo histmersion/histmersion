@@ -2,7 +2,8 @@ package com.histmersion.api.library
 import scala.annotation.tailrec
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.Write.*
-import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
+import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Period
 
 /** A source's put and patch checked and applied to the stored record: the findings numbered, the edges and the metadata

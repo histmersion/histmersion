@@ -1,5 +1,6 @@
 package com.histmersion.values
 
+import com.histmersion.{Ascii, WireEnumValues}
 enum SourceStatus:
   case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 

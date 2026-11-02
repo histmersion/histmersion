@@ -2,7 +2,8 @@ package com.histmersion.server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.{FindingRow, SourceRef}
 import com.histmersion.api.research.{
   ArticleRef,

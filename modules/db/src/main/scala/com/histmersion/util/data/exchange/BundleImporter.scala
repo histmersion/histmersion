@@ -18,7 +18,8 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
+import com.histmersion.values.{BundleKind, IssueKind}
+import com.histmersion.util.data.exchange.DecisionKind
 
 import com.augustnagro.magnum.*
 import io.circe.syntax.*

@@ -5,7 +5,7 @@ import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.values.{Latitude, Longitude, UserId, Year}
+import com.histmersion.{Latitude, Longitude, UserId, Year}
 
 import com.augustnagro.magnum.DbCodec
 

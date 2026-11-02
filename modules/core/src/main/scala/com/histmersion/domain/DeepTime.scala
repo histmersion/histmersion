@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.values.{Period, Year}
+import com.histmersion.{Period, Year}
 
 /** Years as the corpus stores them (signed `Long`s, BCE negative) made into the model's `Year` and `Period`.
   */

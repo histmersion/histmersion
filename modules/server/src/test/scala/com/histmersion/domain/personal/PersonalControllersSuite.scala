@@ -9,7 +9,8 @@ import com.histmersion.domain.personal.marks.Readable
 import com.histmersion.domain.personal.notes.NoteService
 import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.{Latitude, Longitude, RunId, Year}
+import com.histmersion.values.RunId
+import com.histmersion.{Latitude, Longitude, Year}
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
@@ -135,7 +136,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     val run = Caller.Automation(RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b"))
     assert(c.listBookmarks(run, None, None, None).isLeft)
     assert(c.addBookmark(run, BookmarkNew(Target.item(ItemKind.Source, "zz"))).isLeft)
-    val someone = Caller.Person(com.histmersion.values.UserId("someone"), Caller.Role.Reader)
+    val someone = Caller.Person(com.histmersion.UserId("someone"), Caller.Role.Reader)
     c.addBookmark(someone, BookmarkNew(Target.item(ItemKind.Source, "zz")))
     assertEquals(c.listBookmarks(me, None, None, None).map(_.size), Right(0))
     assertEquals(c.listBookmarks(someone, None, None, None).map(_.size), Right(1))

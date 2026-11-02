@@ -4,7 +4,9 @@ import com.histmersion.api.exchange.{BundleSource, IssueCondition, IssueDetail, 
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
-import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind}
+import com.histmersion.values.{BundleKind, IssueKind}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.EditionsPolicy
 
 import java.util.UUID
 

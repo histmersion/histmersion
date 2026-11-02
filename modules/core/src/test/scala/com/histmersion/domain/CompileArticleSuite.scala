@@ -6,7 +6,8 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.automation.GoalPlans.DraftMode
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.automation.GoalPlans
 import com.histmersion.api.research.{ArticleFilter, CoverageReason}
 

@@ -1,7 +1,9 @@
 package com.histmersion.domain.personal.marks
 
 import com.histmersion.domain.ItemKey
-import com.histmersion.values.{AuthorName, SourceStatus, Title, Year}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.{AuthorName, Title}
+import com.histmersion.Year
 
 /** A record a person has not marked read, as "Not read yet" lists it. */
 final case class UnreadItem(

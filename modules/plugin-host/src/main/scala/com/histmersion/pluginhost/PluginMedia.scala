@@ -1,7 +1,8 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
+import com.histmersion.domain.Attribution
+import com.histmersion.domain.{Licence, LicenceFamily}
 import com.histmersion.domain.media.imports.{LicencePolicy, MediaRecord}
 import com.histmersion.plugin.*
 

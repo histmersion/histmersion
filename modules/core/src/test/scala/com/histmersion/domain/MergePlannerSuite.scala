@@ -12,16 +12,9 @@ import com.histmersion.config.given
 
 import BundlePlan.Decision
 import MergeFixture.*
-import com.histmersion.values.{
-  BundleKind,
-  DecidedBy,
-  DecisionKind,
-  EditionsPolicy,
-  IssueKind,
-  IssueSeverity,
-  MatchMethod,
-  MatchOutcome
-}
+import com.histmersion.values.{BundleKind, DecidedBy, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.{EditionsPolicy, MatchMethod, MatchOutcome}
 import com.histmersion.api.exchange.{
   BundleArticleVersion,
   BundleAttestation,

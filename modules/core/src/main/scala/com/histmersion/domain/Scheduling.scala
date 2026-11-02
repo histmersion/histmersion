@@ -3,7 +3,8 @@ package com.histmersion.domain
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
-import com.histmersion.values.{Doi, RunState}
+import com.histmersion.values.RunState
+import com.histmersion.domain.library.Doi
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
   * now (the previous run, the daily/monthly cost caps, `max-concurrent-runs`), its cost cap, and the DOIs an

@@ -1,5 +1,5 @@
 package com.histmersion.api.checks
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 

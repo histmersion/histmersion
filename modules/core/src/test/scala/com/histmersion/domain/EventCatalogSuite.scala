@@ -8,7 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.values.Historicity
+import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.catalogue.{CatalogRecord, EventCount, EventImportReport, EventTaxonomy}
 
 /** #1449, the host's pure half: the kind taxonomy, the thresholds, and the merge of records into one event per thing.

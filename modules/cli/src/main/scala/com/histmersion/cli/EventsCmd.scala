@@ -6,7 +6,8 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.values.{BundleKind, Historicity}
+import com.histmersion.values.BundleKind
+import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.catalogue.{
   Corrections,
   CorrectionStatus,

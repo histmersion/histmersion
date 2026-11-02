@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.values.ScheduleKind
+import com.histmersion.domain.automation.ScheduleKind
 
 import java.time.Instant
 

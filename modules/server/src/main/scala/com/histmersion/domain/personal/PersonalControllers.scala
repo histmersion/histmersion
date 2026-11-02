@@ -27,7 +27,7 @@ import com.histmersion.domain.personal.bookmarks.BookmarkService
 import com.histmersion.domain.personal.notes.{NoteEditRefused, NoteService}
 import com.histmersion.domain.personal.reading.{ReadingService, ReadingShow}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.{Offset, PageSize, UserId}
+import com.histmersion.{Offset, PageSize, UserId}
 
 import java.time.{Clock, Instant}
 import scala.util.Try

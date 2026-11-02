@@ -3,7 +3,7 @@ package com.histmersion.util.data.diagnostics
 import com.histmersion.api.TableSize
 import com.histmersion.server.Deps
 import com.histmersion.util.data.{DataOwner, TableName}
-import com.histmersion.values.ByteCount
+import com.histmersion.ByteCount
 
 /** The figures read from the registry: only registered tables are sized, in the order the database gives them. */
 class DiagnosticsServiceSuite extends munit.FunSuite:

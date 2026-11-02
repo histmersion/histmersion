@@ -7,7 +7,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Files
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.{Period, PeriodInput}

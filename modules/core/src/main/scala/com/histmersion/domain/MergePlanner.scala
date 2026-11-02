@@ -51,15 +51,9 @@ import com.histmersion.api.text.SafeName
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
-import com.histmersion.values.{
-  BundleKind,
-  DecidedBy,
-  DecisionKind,
-  EditionsPolicy,
-  IssueKind,
-  IssueSeverity,
-  MatchOutcome
-}
+import com.histmersion.values.{BundleKind, DecidedBy, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.{EditionsPolicy, MatchOutcome}
 import com.histmersion.util.data.exchange.BundleEntities
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,

@@ -2,7 +2,7 @@ package com.histmersion.api.exchange
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-import com.histmersion.values.DecisionKind
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.given
 
 final case class MergeDecision(kind: DecisionKind, argument: Option[String] = None):

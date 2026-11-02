@@ -4,7 +4,7 @@ import com.histmersion.api.ApiError
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.{
   ArchiveImportRequest,
   ArchiveItem,

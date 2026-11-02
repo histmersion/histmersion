@@ -2,7 +2,7 @@ package com.histmersion.domain.personal.seen
 
 import com.histmersion.domain.personal.{MarkTime, PersonalState}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.UserId
+import com.histmersion.UserId
 
 import hearth.kindlings.optics.syntax.*
 

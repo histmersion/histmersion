@@ -12,7 +12,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import scala.util.Random
-import com.histmersion.values.Historicity
+import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{

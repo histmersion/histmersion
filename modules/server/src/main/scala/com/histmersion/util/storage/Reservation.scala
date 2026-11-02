@@ -1,6 +1,6 @@
 package com.histmersion.util.storage
 
-import com.histmersion.values.{ByteCount, ByteOffset}
+import com.histmersion.{ByteCount, ByteOffset}
 
 import java.io.OutputStream
 

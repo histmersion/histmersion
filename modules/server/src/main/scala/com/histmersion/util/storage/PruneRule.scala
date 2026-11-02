@@ -1,6 +1,6 @@
 package com.histmersion.util.storage
 
-import com.histmersion.values.ByteCount
+import com.histmersion.ByteCount
 
 import java.time.Instant
 

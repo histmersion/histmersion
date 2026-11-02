@@ -12,7 +12,7 @@ import com.histmersion.util.data.diagnostics.{DiagnosticsService, StorageCache, 
 import com.histmersion.util.jobs.JobsData
 import com.histmersion.util.ocr.ConverterState
 import com.histmersion.util.storage.MeasureBudget
-import com.histmersion.values.UserId
+import com.histmersion.UserId
 import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant

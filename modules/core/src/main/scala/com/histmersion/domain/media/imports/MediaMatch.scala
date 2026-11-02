@@ -3,7 +3,7 @@ package com.histmersion.domain.media.imports
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.places.ExternalIds
-import com.histmersion.values.Period
+import com.histmersion.Period
 
 import java.util.Locale
 

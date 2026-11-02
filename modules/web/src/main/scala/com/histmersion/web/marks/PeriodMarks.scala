@@ -3,7 +3,7 @@ package com.histmersion.web.marks
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.personal.{Bookmark, Target}
 import com.histmersion.api.ItemKind
-import com.histmersion.values.Year
+import com.histmersion.Year
 import com.histmersion.web.*
 import com.histmersion.web.settings.SettingsStore
 import com.histmersion.web.ui.Flash

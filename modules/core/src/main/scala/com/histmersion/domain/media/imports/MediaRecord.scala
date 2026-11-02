@@ -1,7 +1,7 @@
 package com.histmersion.domain.media.imports
 
 import com.histmersion.domain.Attribution
-import com.histmersion.values.Period
+import com.histmersion.Period
 
 /** One object or map of an open-access collection (#1446), as its API describes it — the pure, provider-neutral shape
   * every collection parser produces and the import judges.

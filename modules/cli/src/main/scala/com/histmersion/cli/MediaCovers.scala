@@ -4,7 +4,7 @@ import com.histmersion.domain.media.covers.CoverChoice
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaProvider, MediaSourceLine, SourceCoverParams}
 
 /** The host-side half of a source's cover (#1446): the cover the local Calibre library keeps beside a linked book is

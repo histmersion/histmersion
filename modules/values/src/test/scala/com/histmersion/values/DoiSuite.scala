@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** A DOI read out of a text: the resolver URL and `doi:` stripped, lower case, the sentence's punctuation left out. */
+
+import com.histmersion.domain.library.Doi
 class DoiSuite extends munit.FunSuite:
 
   test("a DOI in any of its written forms, lower case"):

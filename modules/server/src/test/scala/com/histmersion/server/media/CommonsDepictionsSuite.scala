@@ -7,7 +7,7 @@ import com.histmersion.pluginhost.HttpAnswer
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaProvider}
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons — the `media-depicts` plugin's collection,

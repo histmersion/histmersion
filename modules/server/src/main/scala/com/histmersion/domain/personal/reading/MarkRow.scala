@@ -4,7 +4,7 @@ import com.histmersion.domain.personal.PersonalState.StoredMark
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.values.UserId
+import com.histmersion.UserId
 
 import com.augustnagro.magnum.DbCodec
 

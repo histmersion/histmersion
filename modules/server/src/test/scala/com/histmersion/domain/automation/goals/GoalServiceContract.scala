@@ -2,7 +2,8 @@ package com.histmersion.domain.automation.goals
 
 import com.histmersion.api.automation.{GoalPatch, GoalPut}
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
-import com.histmersion.values.{GoalLinkKind, ScheduleKind}
+import com.histmersion.values.GoalLinkKind
+import com.histmersion.domain.automation.ScheduleKind
 
 import java.time.Instant
 

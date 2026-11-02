@@ -4,7 +4,9 @@ import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.CompileArticle.SourceFact
-import com.histmersion.values.{DraftMode, GoalLinkKind, ScheduleKind, SourceStatus}
+import com.histmersion.values.{GoalLinkKind, SourceStatus}
+import com.histmersion.domain.research.DraftMode
+import com.histmersion.domain.automation.ScheduleKind
 import io.circe.syntax.*
 
 /** The vocabularies live in `values` with no codec; their wire instances are api's `VocabularyCodecs`. A record the

@@ -4,7 +4,8 @@ import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
 
 import com.histmersion.util.text.ComparedText
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of

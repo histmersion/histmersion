@@ -1,7 +1,9 @@
 package com.histmersion.config
 
 import com.histmersion.config.NewtypeReaders.given
-import com.histmersion.values.{PluginId, Slug, Year}
+import com.histmersion.values.PluginId
+import com.histmersion.domain.research.Slug
+import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigValueFactory
 

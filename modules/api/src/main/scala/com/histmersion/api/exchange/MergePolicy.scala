@@ -3,7 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.values.EditionsPolicy
+import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.api.given
 
 final case class MergePolicy(editions: Option[EditionsPolicy] = None) derives KindlingsCodecAsObject, KindlingsSchema

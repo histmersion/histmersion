@@ -1,5 +1,12 @@
 package com.histmersion.values
 
+import com.histmersion.{Ascii, WireEnumValues}
+import com.histmersion.domain.automation.{Pipeline, ProviderKind, ScheduleKind}
+import com.histmersion.domain.catalogue.Historicity
+import com.histmersion.domain.library.{Confidence, EditionsPolicy, MatchMethod, MatchOutcome}
+import com.histmersion.domain.media.MediaRole
+import com.histmersion.domain.research.DraftMode
+import com.histmersion.util.data.exchange.DecisionKind
 class VocabularySuite extends munit.FunSuite:
 
   private def roundTrips[E](using w: WireEnumValues[E]): Unit =

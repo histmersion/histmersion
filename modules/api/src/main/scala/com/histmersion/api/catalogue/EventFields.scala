@@ -1,7 +1,7 @@
 package com.histmersion.api.catalogue
 import io.circe.Json
 import io.circe.syntax.*
-import com.histmersion.values.Historicity
+import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.Span
 import com.histmersion.api.library.Label
 import com.histmersion.api.given

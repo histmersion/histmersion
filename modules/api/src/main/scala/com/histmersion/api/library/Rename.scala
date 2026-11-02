@@ -1,6 +1,6 @@
 package com.histmersion.api.library
 import com.histmersion.api.text.WikiLinks
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.{ApiError, Write}
 import com.histmersion.api.given
 import com.histmersion.api.library.of

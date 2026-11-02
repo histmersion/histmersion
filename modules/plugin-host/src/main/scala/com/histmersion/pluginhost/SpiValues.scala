@@ -19,7 +19,7 @@ object SpiValues:
 
   // ── towards a plugin ────────────────────────────────────────────────────────────────────────
 
-  def year(y: values.Year): spi.Year = spi.Year(y.value)
+  def year(y: com.histmersion.Year): spi.Year = spi.Year(y.value)
 
   /** A stored year, `None` beyond what a `Year` holds. */
   def year(y: Long): Option[spi.Year] = Option.when(y.isValidInt)(spi.Year(y.toInt))
@@ -27,7 +27,7 @@ object SpiValues:
   /** A stored year as a bound of a query: held at the nearest year a `Year` holds. */
   def yearBound(y: Long): spi.Year = spi.Year(y.max(Int.MinValue).min(Int.MaxValue).toInt)
 
-  def period(p: values.Period): Option[spi.Period] = spi.Period.from(year(p.start), year(p.end)).toOption
+  def period(p: com.histmersion.Period): Option[spi.Period] = spi.Period.from(year(p.start), year(p.end)).toOption
 
   /** Two stored years in either order. */
   def period(a: Long, b: Long): Option[spi.Period] =
@@ -61,40 +61,40 @@ object SpiValues:
 
   // ── from a plugin ───────────────────────────────────────────────────────────────────────────
 
-  def yearOf(y: spi.Year): Either[String, values.Year] =
-    spi.Year.either(y.value).map(ok => values.Year(ok.value)).left.map(_ => s"year ${y.value} is not a year")
+  def yearOf(y: spi.Year): Either[String, com.histmersion.Year] =
+    spi.Year.either(y.value).map(ok => com.histmersion.Year(ok.value)).left.map(_ => s"year ${y.value} is not a year")
 
   /** A plugin's period, its ends in either order (a period a plugin could not have built that way is still one span of
     * years).
     */
-  def periodOf(p: spi.Period): Either[String, values.Period] =
+  def periodOf(p: spi.Period): Either[String, com.histmersion.Period] =
     for
       a <- yearOf(p.start)
       b <- yearOf(p.end)
-      period <- values.Period
+      period <- com.histmersion.Period
         .from(if a.value <= b.value then a else b, if a.value <= b.value then b else a)
         .left
         .map(_.message)
     yield period
 
-  def latitudeOf(l: spi.Latitude): Either[String, values.Latitude] =
+  def latitudeOf(l: spi.Latitude): Either[String, com.histmersion.Latitude] =
     spi.Latitude
       .either(l.value)
-      .map(ok => values.Latitude(ok.value))
+      .map(ok => com.histmersion.Latitude(ok.value))
       .left
       .map(_ => s"latitude ${l.value} is not between -90 and 90")
 
-  def longitudeOf(l: spi.Longitude): Either[String, values.Longitude] =
+  def longitudeOf(l: spi.Longitude): Either[String, com.histmersion.Longitude] =
     spi.Longitude
       .either(l.value)
-      .map(ok => values.Longitude(ok.value))
+      .map(ok => com.histmersion.Longitude(ok.value))
       .left
       .map(_ => s"longitude ${l.value} is not between -180 and 180")
 
-  def doiOf(d: spi.Doi): Either[String, values.Doi] =
+  def doiOf(d: spi.Doi): Either[String, com.histmersion.domain.library.Doi] =
     spi.Doi
       .either(d.value)
-      .map(ok => values.Doi(ok.value))
+      .map(ok => com.histmersion.domain.library.Doi(ok.value))
       .left
       .map(_ => s"DOI '${d.value}' is not a DOI (10.<registrant>/<suffix>)")
 

@@ -12,6 +12,8 @@ package com.histmersion.values
   * not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
   * `PlaceCleanupSuite`.
   */
+
+import com.histmersion.{Ascii, WireEnumValues}
 enum LocationPrecision:
   case Stated, GridCell
 

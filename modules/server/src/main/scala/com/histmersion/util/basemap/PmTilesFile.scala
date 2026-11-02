@@ -1,7 +1,7 @@
 package com.histmersion.util.basemap
 
 import com.histmersion.util.storage.{Blob, RandomReader}
-import com.histmersion.values.ByteOffset
+import com.histmersion.ByteOffset
 import io.circe.Json
 
 import java.util.concurrent.ConcurrentHashMap

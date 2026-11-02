@@ -14,7 +14,8 @@ import com.histmersion.util.database.{Db, Migrate}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.backup.Backup

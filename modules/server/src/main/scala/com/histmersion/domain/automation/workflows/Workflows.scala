@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.workflows
 
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
-import com.histmersion.values.AgentRole
+import com.histmersion.domain.automation.AgentRole
 
 /** The engine's registry of contributed workflows, tools and manager kinds, in the order they were registered. Built
   * once by [[Workflows.of]], which refuses two workflows with one identifier, two tools with one name, a workflow whose
