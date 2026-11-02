@@ -1,7 +1,7 @@
 package com.histmersion.domain.research.articles
 
 import com.histmersion.api.Api
-import com.histmersion.server.{Article, PageKind}
+import com.histmersion.server.{ArticleHtml, PageKind}
 import sttp.model.{Header, MediaType}
 import sttp.shared.Identity
 import sttp.tapir.*
@@ -49,12 +49,12 @@ object ArticleRoutes:
         .serverLogicSuccess[Identity] { case (slug, fragment, q) =>
           pages.article(slug, q) match
             case Some((title, inner)) =>
-              (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner, PageKind.Article))
+              (sttp.model.StatusCode.Ok, if fragment then inner else ArticleHtml.page(title, inner, PageKind.Article))
             case None =>
-              val body = s"<p>No article <code>${Article.esc(slug)}</code>.</p>"
+              val body = s"<p>No article <code>${ArticleHtml.esc(slug)}</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
-                if fragment then body else Article.page("Not found", body, PageKind.Article)
+                if fragment then body else ArticleHtml.page("Not found", body, PageKind.Article)
               )
         }
 

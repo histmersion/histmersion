@@ -244,7 +244,7 @@ server:domain/activity/ActivityRepo.scala	automation.activity
 server:domain/activity/ActivityRow.scala	automation.activity
 server:domain/activity/ActivityService.scala	automation.activity
 server:server/AcquisitionWiring.scala	server
-server:server/Article.scala	server
+server:server/ArticleHtml.scala	server
 server:server/ArticlePage.scala	research.articles
 server:server/AuthHandler.scala	server
 server:server/BackupWiring.scala	server

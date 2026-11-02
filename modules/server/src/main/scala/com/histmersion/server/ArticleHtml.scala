@@ -11,7 +11,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 /** Pure helpers for the article pages. */
-object Article:
+object ArticleHtml:
   /** HTML-escape a value destined for an attribute or text node. */
   def esc(s: String): String = HtmlRender.esc(s)
 

@@ -274,7 +274,7 @@ class PagesSuite extends munit.FunSuite:
     assert(html.contains(HtmlRender.articleRef(topic)), html)
 
   test("a standalone page loads the Scala.js bundle and names its page kind"):
-    val doc = com.histmersion.server.Article.page("T", "<p>x</p>", PageKind.Source)
+    val doc = com.histmersion.server.ArticleHtml.page("T", "<p>x</p>", PageKind.Source)
     assert(doc.contains("""<script src="/web/app.bundle.js"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
     assert(!doc.contains("article.js") && !doc.contains("citations.js"), doc)

@@ -4,7 +4,7 @@ import com.histmersion.api.{HtmlAtoms, Plural, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
-import com.histmersion.server.Article
+import com.histmersion.server.ArticleHtml
 import com.histmersion.api.automation.GoalStages
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
 import com.histmersion.api.library.{Label, SourceRef}
@@ -140,7 +140,7 @@ object Pages:
       prose(p.notes).fold("")(h => s"""<h2>Notes</h2><div class="reading">$h</div>""") +
       findings +
       citations(p.cites, p.citedBy) +
-      Article.toggle(r.citekey, p.fullText != FullText.Hidden, p.query) +
+      ArticleHtml.toggle(r.citekey, p.fullText != FullText.Hidden, p.query) +
       body
 
   /** "Cites" and "Cited by", each omitted when empty — and nothing at all when both are. */

@@ -9,24 +9,24 @@ class ArticleQuerySuite extends munit.FunSuite:
 
   test("the full-text toggle carries ?q= through, url-encoded"):
     assertEquals(
-      Article.toggle("abc_d", false, Some("sea peoples")),
+      ArticleHtml.toggle("abc_d", false, Some("sea peoples")),
       """<p class="toggle"><a href="/source/abc_d?full=true&amp;q=sea+peoples">▼ show full text (whole paper)</a></p>"""
     )
     assertEquals(
-      Article.toggle("abc_d", true, Some("q&a")),
+      ArticleHtml.toggle("abc_d", true, Some("q&a")),
       """<p class="toggle"><a href="/source/abc_d?q=q%26a">▲ hide full text</a></p>"""
     )
 
   test("without a query the toggle is exactly what it was before"):
     assertEquals(
-      Article.toggle("abc_d", false),
+      ArticleHtml.toggle("abc_d", false),
       """<p class="toggle"><a href="/source/abc_d?full=true">▼ show full text (whole paper)</a></p>"""
     )
 
   test("match control: hidden at zero, singular at one, points at the first mark"):
-    assertEquals(Article.matchNav(0), "")
-    assert(Article.matchNav(1).contains("1 match ·"), Article.matchNav(1))
-    val nav = Article.matchNav(7)
+    assertEquals(ArticleHtml.matchNav(0), "")
+    assert(ArticleHtml.matchNav(1).contains("1 match ·"), ArticleHtml.matchNav(1))
+    val nav = ArticleHtml.matchNav(7)
     assert(nav.contains("""data-matches="7""""), nav)
     assert(nav.contains("7 matches"), nav)
     assert(nav.contains("""href="#hl1""""), nav)

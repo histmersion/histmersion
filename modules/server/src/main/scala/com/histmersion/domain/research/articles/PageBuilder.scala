@@ -3,7 +3,7 @@ package com.histmersion.domain.research.articles
 import com.histmersion.domain.Highlight
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
-import com.histmersion.server.{Article, ArticlePage, Citation, FullText, Pages, SourcePage}
+import com.histmersion.server.{ArticleHtml, ArticlePage, Citation, FullText, Pages, SourcePage}
 import com.histmersion.api.library.{Label, NeighborRow, NeighborTarget, SourceRef}
 import com.histmersion.api.research.{ArticleCoverage, ArticleLinks, ArticleRef}
 
@@ -86,5 +86,5 @@ final class PageBuilder(
   private def highlighted(html: String, term: Option[String]): String = term match
     case Some(t) =>
       val (out, n) = Highlight(html, t)
-      Article.matchNav(n) + out
+      ArticleHtml.matchNav(n) + out
     case None => html

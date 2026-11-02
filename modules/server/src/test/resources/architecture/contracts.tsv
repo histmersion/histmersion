@@ -1415,7 +1415,6 @@ prefix	api:api/library/FilterQuery.scala	FilterQuery → Filter.Query	1
 prefix	api:api/library/FindingInput.scala	FindingInput → Finding.Input	1
 prefix	api:api/library/FindingMatch.scala	FindingMatch → Finding.Match	1
 prefix	api:api/library/FindingRow.scala	FindingRow → Finding.Row	1
-prefix	api:api/library/GeoHitPage.scala	GeoHitPage → GeoHit.Page	1
 prefix	api:api/library/IngestAccepted.scala	IngestAccepted → Ingest.Accepted	1
 prefix	api:api/library/IngestParams.scala	IngestParams → Ingest.Params	1
 prefix	api:api/library/IngestReport.scala	IngestReport → Ingest.Report	1
@@ -1509,11 +1508,9 @@ prefix	config:config/OpencodeConfig.scala	OpencodeConfig → Opencode.Config	1
 prefix	config:config/PassageLimits.scala	PassageLimits → Passage.Limits	1
 prefix	config:config/RetractionWatchConfig.scala	RetractionWatchConfig → RetractionWatch.Config	1
 prefix	config:config/StorageConfig.scala	StorageConfig → Storage.Config	1
-prefix	core:domain/ArticleReviewStatus.scala	ArticleReviewStatus → Article.ReviewStatus	1
 prefix	core:domain/CodexRetention.scala	CodexRetention → Codex.Retention	1
 prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
 prefix	core:domain/catalogue/events/StoredEvent.scala	StoredEvent → Stored.Event	1
-prefix	files:domain/research/articles/ArticleNote.scala	ArticleNote → Article.Note	1
 prefix	files:util/data/mirror/MirrorPlacement.scala	MirrorPlacement → Mirror.Placement	1
 prefix	plugin-api:plugin/AiHttpResponse.scala	AiHttpResponse → AiHttp.Response	1
 prefix	plugin-api:plugin/AiToolCall.scala	AiToolCall → AiTool.Call	1
@@ -1549,7 +1546,6 @@ prefix	server:domain/automation/workflows/PipelineDef.scala	PipelineDef → Pipe
 prefix	server:domain/catalogue/evidence/passages/PassageSource.scala	PassageSource → Passage.Source	1
 prefix	server:domain/catalogue/periods/PeriodSources.scala	PeriodSources → Period.Sources	1
 prefix	server:domain/catalogue/periods/StoredPeriod.scala	StoredPeriod → Stored.Period	1
-prefix	server:domain/library/acquisition/ArticleCitations.scala	ArticleCitations → Article.Citations	1
 prefix	server:domain/library/acquisition/CitationAlerts.scala	CitationAlerts → Citation.Alerts	1
 prefix	server:domain/library/acquisition/CoreQuotaLend.scala	CoreQuotaLend → CoreQuota.Lend	1
 prefix	server:domain/library/collections/StoredOriginal.scala	StoredOriginal → Stored.Original	1
@@ -1559,13 +1555,6 @@ prefix	server:domain/personal/notes/NoteEditRefused.scala	NoteEditRefused → No
 prefix	server:domain/personal/notes/NoteItem.scala	NoteItem → Note.Item	1
 prefix	server:domain/personal/notes/NoteRow.scala	NoteRow → Note.Row	1
 prefix	server:domain/personal/reading/ReadMark.scala	ReadMark → Read.Mark	1
-prefix	server:domain/research/articles/ArticleCitedSources.scala	ArticleCitedSources → Article.CitedSources	1
-prefix	server:domain/research/articles/ArticleMirrorNote.scala	ArticleMirrorNote → Article.MirrorNote	1
-prefix	server:domain/research/articles/ArticleReadable.scala	ArticleReadable → Article.Readable	1
-prefix	server:domain/research/articles/ArticleReferable.scala	ArticleReferable → Article.Referable	1
-prefix	server:domain/research/workflows/ArticleFilterApproval.scala	ArticleFilterApproval → Article.FilterApproval	1
-prefix	server:domain/research/workflows/ArticleObjectives.scala	ArticleObjectives → Article.Objectives	1
-prefix	server:server/ArticlePage.scala	ArticlePage → Article.Page	1
 prefix	server:server/HttpDownload.scala	HttpDownload → Http.Download	1
 prefix	server:server/SeedNoteFiles.scala	SeedNoteFiles → SeedNote.Files	1
 prefix	server:server/StorageLocations.scala	StorageLocations → Storage.Locations	1
@@ -1599,7 +1588,6 @@ prefix	upstreams:upstreams/wikidata/WikidataEntities.scala	WikidataEntities → 
 prefix	upstreams:upstreams/wikidata/WikidataItem.scala	WikidataItem → Wikidata.Item	1
 prefix	upstreams:upstreams/wikidata/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
 prefix	values:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
-prefix	values:values/ArticleUid.scala	ArticleUid → Article.Uid	1
 prefix	values:values/DecidedBy.scala	DecidedBy → Decided.By	1
 prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1
 prefix	values:values/LocationPrecision.scala	LocationPrecision → Location.Precision	1
