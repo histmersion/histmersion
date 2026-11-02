@@ -1,0 +1,2010 @@
+# lib, crafted
+== put alpha
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann",
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zralpha1990_walls",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# The Walls of Zrtown\n\nThe walls of Zrtown and its harbour, as The Walls of Zrtown tells it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zrtown.",
+    "tags" : [
+      "zr-walls",
+      "zr-oracle"
+    ],
+    "title" : "The Walls of Zrtown",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zralpha1990_walls",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1990
+  }
+}
+== put beta (challenges alpha)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zrbeta2001_harbour",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# The Harbour of Zrtown\n\nThe walls of Zrtown and its harbour, as The Harbour of Zrtown tells it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "contested",
+    "summary" : "A study of The Harbour of Zrtown.",
+    "tags" : [
+      "zr-trade",
+      "zr-oracle"
+    ],
+    "title" : "The Harbour of Zrtown",
+    "topics" : [
+      "bronze age",
+      "trade"
+    ],
+    "uid" : "source:zrbeta2001_harbour",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 2001
+  }
+}
+== put gamma (superseded by alpha, refutes beta)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann"
+    ],
+    "citekey" : "zrgamma1975_kings",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Kings of Zrland\n\nThe walls of Zrtown and its harbour, as Kings of Zrland tells it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1600,
+    "periodStart" : -2000,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "superseded",
+    "summary" : "A study of Kings of Zrland.",
+    "tags" : [
+      "zr-kings",
+      "zr-oracle"
+    ],
+    "title" : "Kings of Zrland",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zrgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1975
+  }
+}
+== put delta (a filter returns it, nobody cites it)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrother, Cy"
+    ],
+    "citekey" : "zrdelta2010_survey",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# A Survey of Zrland\n\nThe walls of Zrtown and its harbour, as A Survey of Zrland tells it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Survey of Zrland.",
+    "tags" : [
+      "zr-oracle"
+    ],
+    "title" : "A Survey of Zrland",
+    "topics" : [
+      "bronze age",
+      "survey"
+    ],
+    "uid" : "source:zrdelta2010_survey",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 2010
+  }
+}
+== put eps (to be deleted)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrother, Cy"
+    ],
+    "citekey" : "zreps1999_lost",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# A Lost Report\n\nThe walls of Zrtown and its harbour, as A Lost Report tells it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Lost Report.",
+    "tags" : [
+      "zr-lost"
+    ],
+    "title" : "A Lost Report",
+    "topics" : [
+      "archive"
+    ],
+    "uid" : "source:zreps1999_lost",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1999
+  }
+}
+== put walls
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "Region-wide.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "Region-wide."
+      }
+    ],
+    "searches" : [
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== put harbour
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n",
+    "kind" : "myth",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Harbour",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== put kings
+200 {
+  "article" : {
+    "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",
+    "kind" : "timeline",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_kings",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Kings",
+    "uid" : "article:zr_dynasty",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+# home and inc imported lib
+{
+  "applied" : true,
+  "blobs" : 5,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "article",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+{
+  "applied" : true,
+  "blobs" : 5,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "article",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+# both went on
+== lib: walls, the first paragraph
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "Harbour"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "Region-wide.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "Region-wide."
+      }
+    ],
+    "searches" : [
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== home: walls, the same paragraph
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "Harbour"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== home: walls, another reason
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "Harbour"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== lib: harbour, another paragraph only
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Harbour",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== lib: rename kings
+200 {
+  "entity" : "article",
+  "from" : "zr_kings",
+  "rewritten" : [
+  ],
+  "to" : "zr_dynasty"
+}
+== home: patch kings
+200 {
+  "article" : {
+    "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",
+    "kind" : "timeline",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_kings",
+    "summary" : null,
+    "tags" : [
+      "zr-home"
+    ],
+    "title" : "Kings",
+    "uid" : "article:zr_dynasty",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== lib: a new article
+200 {
+  "article" : {
+    "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_lib_only",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Lib's",
+    "uid" : "article:zr_lib_only",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    }
+  ]
+}
+== home: a new article
+200 {
+  "article" : {
+    "body" : "## Overview\n\nHome [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_home_only",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Home's",
+    "uid" : "article:zr_home_only",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    }
+  ]
+}
+# lib, whole
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson (4 lines)
+{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
+{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
+{   "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",   "kind" : "timeline",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_dynasty",   "tags" : [   ],   "title" : "Kings",   "uid" : "article:zr_dynasty",   "updatedAt" : "TS" }
+{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
+== entities/article-versions.ndjson (2 lines)
+{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+== entities/assets.ndjson
+== entities/asset-links.ndjson
+== entities/attestations.ndjson
+== entities/events.ndjson
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson
+== entities/periods.ndjson
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson (1 lines)
+{   "alias" : "zr_kings",   "articleUid" : "article:zr_dynasty",   "createdAt" : "TS" }
+== entities/event-aliases.ndjson
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson
+== entities/event-catalogue.ndjson
+== entities/event-candidates.ndjson
+== entities/event-checks.ndjson
+== entities/corrections.ndjson
+== entities/site-types.ndjson
+== entities/tombstones.ndjson
+# lib, since the shared history
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson (3 lines)
+{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
+{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
+{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
+== entities/article-versions.ndjson (2 lines)
+{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+== entities/assets.ndjson
+== entities/asset-links.ndjson
+== entities/attestations.ndjson
+== entities/events.ndjson
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson
+== entities/periods.ndjson
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson (1 lines)
+{   "alias" : "zr_kings",   "articleUid" : "article:zr_dynasty",   "createdAt" : "TS" }
+== entities/event-aliases.ndjson
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson
+== entities/event-catalogue.ndjson
+== entities/event-candidates.ndjson
+== entities/event-checks.ndjson
+== entities/corrections.ndjson
+== entities/site-types.ndjson
+== entities/tombstones.ndjson
+# the whole bundle imported into an empty collection
+{
+  "applied" : true,
+  "blobs" : 7,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 4,
+      "keptLocal" : 0,
+      "kind" : "article",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "article-version",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+## articles 4 rows
+{ "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_lib_only", "summary" : null, "tags" : [ ], "title" : "Lib's", "uid" : "article:zr_lib_only" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]].", "tags" : [ "zr-art" ], "title" : "The walls of Zrtown", "uid" : "article:zr_walls" }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myth", "period" : null, "regions" : [ ], "slug" : "zr_harbour", "summary" : null, "tags" : [ ], "title" : "Harbour", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n", "coverage_reasons" : {  }, "kind" : "timeline", "period" : null, "regions" : [ ], "slug" : "zr_dynasty", "summary" : null, "tags" : [ ], "title" : "Kings", "uid" : "article:zr_dynasty" }
+## article_versions 2 rows
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : null }
+## article_links 7 rows
+{ "src_slug" : "zr_dynasty", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_harbour", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_lib_only", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+## article_aliases 1 rows
+{ "alias" : "zr_kings", "created_at" : "TS", "slug" : "zr_dynasty" }
+## article_critique_reasons 0 rows
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## sources 5 rows
+{ "citekey" : "zralpha1990_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zreps1999_lost" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 0 rows
+# the part since imported into inc
+{
+  "applied" : true,
+  "blobs" : 2,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "article",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 2
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "article-version",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+## articles 4 rows
+{ "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_lib_only", "summary" : null, "tags" : [ ], "title" : "Lib's", "uid" : "article:zr_lib_only" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]].", "tags" : [ "zr-art" ], "title" : "The walls of Zrtown", "uid" : "article:zr_walls" }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myth", "period" : null, "regions" : [ ], "slug" : "zr_harbour", "summary" : null, "tags" : [ ], "title" : "Harbour", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n", "coverage_reasons" : {  }, "kind" : "timeline", "period" : null, "regions" : [ ], "slug" : "zr_kings", "summary" : null, "tags" : [ ], "title" : "Kings", "uid" : "article:zr_dynasty" }
+## article_versions 2 rows
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : null }
+## article_links 7 rows
+{ "src_slug" : "zr_harbour", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_kings", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_lib_only", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+## article_aliases 0 rows
+## article_critique_reasons 0 rows
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## sources 5 rows
+{ "citekey" : "zralpha1990_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zreps1999_lost" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 0 rows
+# home merges lib: the first plan
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 4,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "info" : [
+    "article zr_kings: this collection's text already contains the bundle's — kept"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+        ],
+        "place" : null,
+        "text" : {
+          "base" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+          "hunks" : [
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "## The question",
+                ""
+              ],
+              "right" : [
+              ]
+            },
+            {
+              "base" : [
+                "When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour"
+              ],
+              "conflict" : true,
+              "left" : [
+                "When were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour"
+              ],
+              "right" : [
+                "When were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour"
+              ]
+            },
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "trade paid for them [[zrbeta2001_harbour]].",
+                "",
+                "## What the sources say",
+                "",
+                "An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].",
+                "",
+                "## Unresolved",
+                "",
+                "Whether the gate is older than the walls [[zralpha1990_walls]].",
+                ""
+              ],
+              "right" : [
+              ]
+            }
+          ],
+          "left" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+          "right" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n"
+        }
+      },
+      "entity" : "article",
+      "id" : "A-issue:changed-both-sides:zr_walls",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zr_walls",
+        "lines" : [
+        ],
+        "uid" : "article:zr_walls"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "both",
+        "file"
+      ],
+      "right" : {
+        "label" : "zr_walls",
+        "lines" : [
+        ],
+        "uid" : "article:zr_walls"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since a common version: 1 conflicting region",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 5,
+    "deletedHere" : 0,
+    "sources" : 5,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 0,
+  "schemaVersion" : "109",
+  "sources" : [
+  ]
+}
+# home merges lib: the plan, every issue answered
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 5,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : null
+  },
+  "info" : [
+    "article zr_kings: this collection's text already contains the bundle's — kept"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+        ],
+        "place" : null,
+        "text" : {
+          "base" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+          "hunks" : [
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "## The question",
+                ""
+              ],
+              "right" : [
+              ]
+            },
+            {
+              "base" : [
+                "When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour"
+              ],
+              "conflict" : true,
+              "left" : [
+                "When were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour"
+              ],
+              "right" : [
+                "When were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour"
+              ]
+            },
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "trade paid for them [[zrbeta2001_harbour]].",
+                "",
+                "## What the sources say",
+                "",
+                "An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].",
+                "",
+                "## Unresolved",
+                "",
+                "Whether the gate is older than the walls [[zralpha1990_walls]].",
+                ""
+              ],
+              "right" : [
+              ]
+            }
+          ],
+          "left" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+          "right" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n"
+        }
+      },
+      "entity" : "article",
+      "id" : "A-issue:changed-both-sides:zr_walls",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zr_walls",
+        "lines" : [
+        ],
+        "uid" : "article:zr_walls"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "both",
+        "file"
+      ],
+      "right" : {
+        "label" : "zr_walls",
+        "lines" : [
+        ],
+        "uid" : "article:zr_walls"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since a common version: 1 conflicting region",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 5,
+    "deletedHere" : 0,
+    "sources" : 5,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 1,
+  "schemaVersion" : "109",
+  "sources" : [
+  ]
+}
+# home merges lib: applied
+200 {
+  "bundle" : "BUNDLE-WHOLE",
+  "elapsedMs" : "N",
+  "error" : null,
+  "job" : "UUID",
+  "planHash" : "DIGEST",
+  "result" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 5,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "article",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "article-version",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:lib",
+      "label" : null
+    },
+    "issues" : [
+    ],
+    "logEntry" : 2,
+    "mergeId" : "UUID",
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : 0,
+    "reviews" : [
+      "zr_walls"
+    ],
+    "tally" : {
+      "aliases" : 0,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 0,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 0,
+      "sourcesRenamed" : 0
+    }
+  },
+  "state" : "done"
+}
+# home merges lib: merges
+200 [
+  {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 6,
+    "planHash" : "DIGEST",
+    "redirects" : 0
+  },
+  {
+    "appliedAt" : "TS",
+    "backup" : null,
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 5,
+    "planHash" : null,
+    "redirects" : 0
+  }
+]
+# home merges lib: the merge
+200 {
+  "applied" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 5,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "article",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "article-version",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:lib",
+      "label" : null
+    },
+    "issues" : [
+    ],
+    "logEntry" : null,
+    "mergeId" : null,
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : null,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 0,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 0,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 0,
+      "sourcesRenamed" : 0
+    }
+  },
+  "imported" : null,
+  "merge" : {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 6,
+    "planHash" : "DIGEST",
+    "redirects" : 0
+  },
+  "remembered" : [
+    {
+      "decision" : "keep-right",
+      "issue" : "A-issue:changed-both-sides:zr_walls",
+      "text" : null
+    }
+  ],
+  "resolutions" : {
+    "bundle" : null,
+    "policy" : {
+      "editions" : null
+    },
+    "resolve" : [
+      {
+        "decision" : "keep-right",
+        "issue" : "A-issue:changed-both-sides:zr_walls",
+        "text" : null
+      }
+    ]
+  }
+}
+# home merges lib: the ledger
+200 {
+  "entries" : [
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zr_walls",
+      "kind" : "article",
+      "label" : "zr_walls",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zr_walls",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zr_harbour",
+      "kind" : "article",
+      "label" : "zr_harbour",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zr_harbour",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Kept",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zr_dynasty",
+      "kind" : "article",
+      "label" : "zr_kings",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zr_dynasty",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zr_lib_only",
+      "kind" : "article",
+      "label" : "zr_lib_only",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zr_lib_only",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zralpha1990_walls",
+      "kind" : "source",
+      "label" : "zralpha1990_walls",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zralpha1990_walls",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zrbeta2001_harbour",
+      "kind" : "source",
+      "label" : "zrbeta2001_harbour",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zrbeta2001_harbour",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zrgamma1975_kings",
+      "kind" : "source",
+      "label" : "zrgamma1975_kings",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zrgamma1975_kings",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zrdelta2010_survey",
+      "kind" : "source",
+      "label" : "zrdelta2010_survey",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zrdelta2010_survey",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zreps1999_lost",
+      "kind" : "source",
+      "label" : "zreps1999_lost",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zreps1999_lost",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    }
+  ],
+  "query" : null,
+  "redirects" : [
+  ]
+}
+# home's rows
+## articles 5 rows
+{ "body" : "## Overview\n\nHome [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_home_only", "summary" : null, "tags" : [ ], "title" : "Home's", "uid" : "article:zr_home_only" }
+{ "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_lib_only", "summary" : null, "tags" : [ ], "title" : "Lib's", "uid" : "article:zr_lib_only" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "coverage_reasons" : { "zrdelta2010_survey" : "Home's reason." }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]].", "tags" : [ "zr-art" ], "title" : "The walls of Zrtown", "uid" : "article:zr_walls" }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myth", "period" : null, "regions" : [ ], "slug" : "zr_harbour", "summary" : null, "tags" : [ ], "title" : "Harbour", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n", "coverage_reasons" : {  }, "kind" : "timeline", "period" : null, "regions" : [ ], "slug" : "zr_kings", "summary" : null, "tags" : [ "zr-home" ], "title" : "Kings", "uid" : "article:zr_dynasty" }
+## article_versions 5 rows
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1510 BC, as home reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : null }
+{ "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n", "slug" : "zr_kings", "summary" : null }
+## article_links 8 rows
+{ "src_slug" : "zr_harbour", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_home_only", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_kings", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_lib_only", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+## article_aliases 0 rows
+## article_critique_reasons 0 rows
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## sources 5 rows
+{ "citekey" : "zralpha1990_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zreps1999_lost" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 0 rows
+# lib's rows
+## articles 4 rows
+{ "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_lib_only", "summary" : null, "tags" : [ ], "title" : "Lib's", "uid" : "article:zr_lib_only" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "coverage_reasons" : { "zrdelta2010_survey" : "Region-wide." }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]].", "tags" : [ "zr-art" ], "title" : "The walls of Zrtown", "uid" : "article:zr_walls" }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myth", "period" : null, "regions" : [ ], "slug" : "zr_harbour", "summary" : null, "tags" : [ ], "title" : "Harbour", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n", "coverage_reasons" : {  }, "kind" : "timeline", "period" : null, "regions" : [ ], "slug" : "zr_dynasty", "summary" : null, "tags" : [ ], "title" : "Kings", "uid" : "article:zr_dynasty" }
+## article_versions 2 rows
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : null }
+## article_links 7 rows
+{ "src_slug" : "zr_dynasty", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_harbour", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_lib_only", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+## article_aliases 1 rows
+{ "alias" : "zr_kings", "created_at" : "TS", "slug" : "zr_dynasty" }
+## article_critique_reasons 0 rows
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## sources 5 rows
+{ "citekey" : "zralpha1990_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zreps1999_lost" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 0 rows
