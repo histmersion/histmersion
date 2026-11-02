@@ -120,3 +120,9 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def bodyRenames: Map[UUID, List[(String, String)]] = runs.flatMap(_.bodyRenames).toMap
 
   override def planned(plan: MergePlan): MergePlan = runs.foldLeft(plan)((p, r) => r.planned(p))
+
+  override def relinked(text: String, citekeys: Map[String, String]): String =
+    @tailrec def loop(rest: List[PlanRun], t: String): String = rest match
+      case r :: tail => loop(tail, r.relinked(t, citekeys))
+      case Nil       => t
+    loop(runs, text)

@@ -1,6 +1,7 @@
 package com.histmersion.util.data.mirror
 
 import com.histmersion.api.ApiError
+import com.histmersion.domain.research.ResearchData
 import com.histmersion.server.Deps
 import com.histmersion.util.data.TablesAdapter
 
@@ -21,15 +22,15 @@ class MirrorSuite extends munit.FunSuite:
       Deps.data.mirror.map(e => (e.owner, e.records, e.placement)),
       List(
         (TablesAdapter.LibraryOwner, MirrorAdapter.SourceNotes, MirrorPlacement.SourceFiles),
-        (TablesAdapter.ResearchOwner, MirrorAdapter.ArticleNotes, MirrorPlacement.ArticleFiles)
+        (TablesAdapter.ResearchOwner, ResearchData.ArticleNotes, MirrorPlacement.ArticleFiles)
       )
     )
 
   test("a note from the registered member of its kind"):
     assertEquals(mirror.note(MirrorAdapter.SourceNotes, "anthony2007_horse"), Right("source anthony2007_horse"))
-    assertEquals(mirror.note(MirrorAdapter.ArticleNotes, "zz"), Right("article zz"))
-    assertEquals(mirror.note(MirrorAdapter.ArticleNotes, "gone").left.map(_.message), Left("no such article"))
+    assertEquals(mirror.note(ResearchData.ArticleNotes, "zz"), Right("article zz"))
+    assertEquals(mirror.note(ResearchData.ArticleNotes, "gone").left.map(_.message), Left("no such article"))
 
   test("a kind nobody registered is refused"):
     assert(mirror.note(MirrorRecords("events"), "x").isLeft)
-    assertEquals(mirror.kinds, List(MirrorAdapter.SourceNotes, MirrorAdapter.ArticleNotes))
+    assertEquals(mirror.kinds, List(MirrorAdapter.SourceNotes, ResearchData.ArticleNotes))

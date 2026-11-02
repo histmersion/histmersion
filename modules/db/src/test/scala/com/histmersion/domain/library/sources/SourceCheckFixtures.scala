@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.api.Lint.{FormatChecker, LintReport, Rule}
-import com.histmersion.db.LintRepo
+import com.histmersion.domain.research.articles.ArticleCheckFixtures
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.connect
@@ -27,7 +27,7 @@ object SourceCheckFixtures:
       val context = SourceCheckRepo.Context(suggestions, format, geocode)
       LintReport(rules.map { r =>
         if SourceCheckRepo.sqlOf(r.name).nonEmpty then SourceCheckRepo.report(r, context, maxItems)
-        else LintRepo.report(r, format, maxItems)
+        else ArticleCheckFixtures.report(r, format, maxItems)
       })
 
-  def sqlOf(rule: String): List[String] = SourceCheckRepo.sqlOf(rule) ++ LintRepo.sqlOf(rule)
+  def sqlOf(rule: String): List[String] = SourceCheckRepo.sqlOf(rule) ++ ArticleCheckFixtures.sqlOf(rule)

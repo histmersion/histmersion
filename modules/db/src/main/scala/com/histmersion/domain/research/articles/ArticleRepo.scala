@@ -29,7 +29,7 @@ given DbCodec[ArticleVersionFull] = DbCodec.derived
   * Every method runs on the connection it is given; the service opens the transaction. Private to research but for the
   * bundle import's rename and link rewrite (`BundleImport`), which research's carried kinds take over.
   */
-private[histmersion] object ArticleRepo:
+private[articles] object ArticleRepo:
 
   private given DbCodec[Backlink] = DbCodec.derived
   private given DbCodec[ArticleVersion] = DbCodec.derived
@@ -417,6 +417,9 @@ private[histmersion] object ArticleRepo:
       .toList
 
   /** One historical version's full body. */
+  /** How many articles are stored. */
+  def count()(using DbCon): Long = sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong
+
   /** The newest saved version of an article: after a write, the row holding the text it replaced. */
   def latestVersion(slug: String)(using DbCon): Option[Long] =
     sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten

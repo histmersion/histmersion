@@ -4,18 +4,14 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.files.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.worklists.QueueRepo
-import com.histmersion.domain.research.articles.ArticleRepo
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.{
-  BlobSink,
   BundleFormat,
   BundleImporter,
   BundlePlan,
@@ -168,7 +164,6 @@ object BundleImport:
     /** citekey / slug of a uid as it stands NOW (after the writes so far). */
     def citekeyOf(u: UUID): String =
       sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().head
-    private def slugOf(u: UUID): String = sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().head
 
     /** The citekey of a source here, when its uid names one. */
     def citekeyHere(u: UUID): Option[String] =
@@ -197,10 +192,8 @@ object BundleImport:
       importing(true)
 
     // what the derived step and pass 2 need
-    private val copied = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val sourcesInserted = scala.collection.mutable.LinkedHashSet.empty[UUID]
-    private val versionsBy = es.versions.map(v => v.uid -> v).toMap
     private val computed = scala.collection.mutable.Map.empty[Once[?], Any]
 
     /** A source a kind's step wrote under: its finding places are placed again in the derived step. */
@@ -251,60 +244,8 @@ object BundleImport:
         }
       }
 
-    def articleRenames(): Unit =
-      followRenames(es.articles, _.uid, _.slug, local.articles.map(a => a.uid -> a.slug).toMap, "article")(
-        ArticleRepo.renameIn
-      )
-
     def goalRenames(): Unit =
       followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
-
-    /** The articles: the text a merge replaces kept as a version first, the rows, and an article kept beside one here
-      * (`both`).
-      */
-    def articles(): Unit =
-      merged.snapshots.toList.filter(writes).foreach { u =>
-        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
-              SELECT slug, body, summary, updated_at FROM articles WHERE uid = $u""".update.run()
-      }
-      es.articles.filter(a => writes(a.uid)).foreach { a =>
-        sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at)
-              VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
-                ${a.tags}::text[], ${a.regions}::text[],
-                ${rLit(a.period)}::int8range,
-                ${a.updatedAt}::timestamptz)
-              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
-                kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
-                regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
-      }
-      // an article kept beside one here (`both`), and the bundle's texts the merge replaced or
-      // rewrote, recorded as versions: the next merge finds them in this collection's history
-      merged.copies.foreach { a =>
-        sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period)
-              VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
-                ${a.regions}::text[],
-                ${rLit(a.period)}::int8range)
-              ON CONFLICT (uid) DO NOTHING""".update.run()
-        copied += a.uid
-      }
-
-    /** Old slugs, as old citekeys: never one that is a slug here, never one another article has. */
-    def articleAliases(): Unit =
-      es.articleAliases.foreach { a =>
-        sql"""INSERT INTO article_aliases (alias, slug, created_at)
-              SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM articles
-              WHERE uid = ${a.articleUid} AND slug <> ${a.alias}
-                AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = ${a.alias})
-              ON CONFLICT (alias) DO NOTHING""".update.run()
-      }
-
-    /** The versions a merge records beside the article texts it wrote. */
-    def mergedVersions(): Unit =
-      merged.versions.foreach { v =>
-        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
-              SELECT slug, ${v.body}, ${v.summary}, ${v.versionOf}::timestamptz FROM articles WHERE uid = ${v.articleUid}""".update
-          .run()
-      }
 
     /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is
       * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
@@ -382,39 +323,3 @@ object BundleImport:
                 reason = EXCLUDED.reason, created_at = EXCLUDED.created_at, done_at = EXCLUDED.done_at,
                 updated_at = EXCLUDED.updated_at""".update.run()
       }
-
-    // ── pass 2: the blobs, each use by its kind ──
-
-    /** Where a blob use of these lines goes: a version's text into its row. A source's body and original are taken by
-      * the library's own kind, an asset's bytes by the media's.
-      */
-    def blobSink(use: BlobUse, sha: String, files: ContentStore): BlobSink = use match
-      case BlobUse.VersionBody(u) =>
-        BlobSink.Held { bytes =>
-          val v = versionsBy(u)
-          sql"""INSERT INTO article_versions (uid, origin, slug, body, summary, updated_at, created_at)
-                VALUES (${v.uid}, ${v.origin}, ${slugOf(v.articleUid)}, ${String(bytes, UTF_8)},
-                  ${v.summary}, ${v.versionOf}::timestamptz, ${v.updatedAt}::timestamptz)
-                ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, slug = EXCLUDED.slug,
-                  body = EXCLUDED.body, summary = EXCLUDED.summary,
-                  updated_at = EXCLUDED.updated_at, created_at = EXCLUDED.created_at""".update.run(): Unit
-        }
-      case BlobUse.AssetBytes(u) => throw IllegalArgumentException(s"asset $u: its bytes are the media's kind to take")
-      case BlobUse.Body(u)       => throw IllegalArgumentException(s"source $u: its body is the library's kind to take")
-      case BlobUse.Original(_, _) =>
-        throw IllegalArgumentException(s"original $sha: it is the library's kind to take")
-
-    // ── the derived state, recomputed for what changed (with the import flag OFF: local consequences) ──
-
-    /** The links of the articles written — of every article when a new source can turn an `[[x]]` that named nothing
-      * into a source link.
-      */
-    def articleLinks(): Unit =
-      val relink =
-        if sourcesInserted.nonEmpty || merged.renames.nonEmpty then
-          sql"SELECT slug, body FROM articles ORDER BY slug".query[(String, String)].run().toList
-        else
-          (es.articles.filter(a => writes(a.uid)).map(_.uid) ++ copied).flatMap(u =>
-            sql"SELECT slug, body FROM articles WHERE uid = $u".query[(String, String)].run().headOption
-          )
-      relink.foreach((slug, body) => ArticleRepo.writeLinks(slug, body))

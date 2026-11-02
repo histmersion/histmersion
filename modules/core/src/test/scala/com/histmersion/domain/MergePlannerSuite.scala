@@ -2,6 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.domain.library.LibraryPlan
+import com.histmersion.domain.research.ResearchPlan
 
 import com.histmersion.util.data.exchange.{BundleFormat, BundlePlan, MergeResolutionsFile}
 import com.histmersion.api.*
@@ -30,7 +31,7 @@ import com.histmersion.values.{
 class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   private def plan(in: MergePlanner.Input = input(), res: MergeResolutions = MergeResolutions()): MergePlanner.Result =
-    MergePlanner.plan(in, sketches, res, cfg, List(CataloguePlan, LibraryPlan))
+    MergePlanner.plan(in, sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 
   private def resolve(pairs: (String, String)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
@@ -215,7 +216,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val rnd = scala.util.Random(20261004L)
     (1 to 25).foreach { i =>
       val p = MergePlanner
-        .plan(shuffled(rnd, input()), sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan))
+        .plan(shuffled(rnd, input()), sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
         .plan
       assertEquals(p.issues, base.issues, s"round $i")
       assertEquals(p.planHash, base.planHash, s"round $i")
@@ -368,7 +369,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       local = in0.local.copy(attestations = List(att("t-home", "h-kuhrt", "home's OCR", home))),
       bodies = Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody)
     )
-    val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan))
+    val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val body = issue(r0.plan, IssueKind.BodyDiffers, "kuhrt1995_near")
     val lost =
       r0.plan.issues.find(i => i.kind == IssueKind.AttestationUnanchored && i.right.exists(_.uid == uid("t-lost"))).get
@@ -388,7 +389,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       sketches,
       resolve(lost.id -> "drop", issue(r0.plan, IssueKind.DoiDiffers, "kuhrt1995_near").id -> "keep-left"),
       cfg,
-      List(CataloguePlan, LibraryPlan)
+      List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
     val found = r1.localized.attestations.find(_.uid == uid("t-found")).get
     assertEquals(found.sourceUid, uid("h-kuhrt"))
@@ -397,7 +398,13 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(r1.apply.tombstones.map(_._1), List(uid("t-lost")))
     assertEquals(r1.rows.find(_.foreignUid == uid("t-lost")).map(_.decision), Some(Decision.Skip))
     // taking work's body instead: the lost one is no question any more, home's own is
-    val r2 = MergePlanner.plan(in, sketches, resolve(body.id -> "keep-right"), cfg, List(CataloguePlan, LibraryPlan))
+    val r2 = MergePlanner.plan(
+      in,
+      sketches,
+      resolve(body.id -> "keep-right"),
+      cfg,
+      List(CataloguePlan, LibraryPlan, ResearchPlan)
+    )
     assert(!r2.plan.issues.exists(_.id == lost.id))
     assert(r2.plan.open.exists(_.id == mine.id), r2.plan.open.mkString("\n"))
     val r3 = MergePlanner.plan(
@@ -405,7 +412,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       sketches,
       resolve(body.id -> "keep-right", mine.id -> "keep-unanchored"),
       cfg,
-      List(CataloguePlan, LibraryPlan)
+      List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
     assertEquals(r3.apply.attestations, List(MergePlanner.AttestationFix(uid("t-home"), None, None, drop = false)))
 
@@ -417,7 +424,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       List(BundleEdge(uid("w-olsen"), earlier, "superseded_by"), BundleEdge(uid("w-olsen"), uid("w-new"), "references"))
     )
     val in = input(es).copy(uidAliases = Map(earlier -> uid("h-olsen")))
-    val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan))
+    val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val olsen = r.localized.edges.filter(_.srcUid == uid("h-olsen"))
     assertEquals(olsen, List(BundleEdge(uid("h-olsen"), uid("w-new"), "references")))
     assertEquals(r.apply.tally.selfLoopsDropped, 1)
@@ -444,7 +451,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       local = in0.local.copy(articles = in0.local.articles :+ ours),
       articleHistory = Map(shared.uid -> List(baseSha -> base))
     )
-    val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan))
+    val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     assert(!r.plan.issues.exists(_.left.exists(_.label == "zz_shared")), r.plan.issues.mkString("\n"))
     assertEquals(
       r.localized.articles.find(_.uid == shared.uid).map(_.body),
@@ -460,7 +467,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       sketches,
       MergeResolutions(),
       cfg,
-      List(CataloguePlan, LibraryPlan)
+      List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
     val q = c.plan.issues.find(_.left.exists(_.label == "zz_shared")).get
     assertEquals(q.kind, IssueKind.ChangedBothSides)
@@ -471,7 +478,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       sketches,
       MergeResolutions(List(MergeResolution(q.id, "file:merged.md", Some("By hand.")))),
       cfg,
-      List(CataloguePlan, LibraryPlan)
+      List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
     assertEquals(f.localized.articles.find(_.uid == shared.uid).map(_.body), Some("By hand."))
 

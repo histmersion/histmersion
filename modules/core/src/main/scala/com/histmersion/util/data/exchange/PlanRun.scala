@@ -145,3 +145,8 @@ trait PlanRun:
 
   /** The plan with what the kind lists of its own (how each of the bundle's sources was matched). */
   def planned(plan: MergePlan): MergePlan = plan
+
+  /** A text of the bundle the merge writes here, its links to sources pointed at the citekeys those sources have here
+    * (`citekeys`: the bundle's citekey → this collection's, of the sources whose citekey changes).
+    */
+  def relinked(text: String, citekeys: Map[String, String]): String = text

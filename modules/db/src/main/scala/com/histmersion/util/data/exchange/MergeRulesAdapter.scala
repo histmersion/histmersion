@@ -3,8 +3,8 @@ package com.histmersion.util.data.exchange
 import com.histmersion.util.data.DataOwner
 import com.histmersion.values.BundleKind
 
-/** Today's merge rules of the owners that do not register their own yet (the catalogue, the media and the library do),
-  * by owner.
+/** Today's merge rules of the owners that do not register their own yet (the catalogue, the media, the library and
+  * research do), by owner.
   */
 object MergeRulesAdapter:
 
@@ -23,9 +23,7 @@ object MergeRulesAdapter:
   /** Every kind, by owner. */
   val all: List[MergeRules] = List(
     Adapted(DataOwner("automation"), kind("goal"), label("slug", "goals"), referable = true),
-    Adapted(DataOwner("automation"), kind("queue-item"), label("left(text, 60)", "queue_items"), referable = false),
-    Adapted(DataOwner("research"), kind("article"), label("slug", "articles"), referable = true),
-    Adapted(DataOwner("research"), kind("article-version"), None, referable = false)
+    Adapted(DataOwner("automation"), kind("queue-item"), label("left(text, 60)", "queue_items"), referable = false)
   )
 
   def of(owner: DataOwner): List[MergeRules] = all.filter(_.owner == owner)

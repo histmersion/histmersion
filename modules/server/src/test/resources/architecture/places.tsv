@@ -805,7 +805,6 @@ db:db/GoalLinkRepo.scala	automation.goals
 db:db/GoalRepo.scala	automation.goals
 db:db/Jsonb.scala	util.common
 db:db/Keyset.scala	util.database
-db:db/LintRepo.scala	util.data.checks
 db:db/ListSql.scala	util.database
 db:db/ManagerRepo.scala	automation.managers
 db:db/MergeState.scala	util.data.exchange
