@@ -13530,12 +13530,6 @@
           "name": "given_DbCodec_Option$lzy1"
         },
         {
-          "name": "given_DbCodec_PlaceDating$lzy1"
-        },
-        {
-          "name": "given_DbCodec_PlaceTimeBasis$lzy1"
-        },
-        {
           "name": "given_DbCodec_SourceStatus$lzy1"
         }
       ]
@@ -14403,6 +14397,17 @@
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.places.PlaceVocabularyCodecs$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_PlaceDating$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceTimeBasis$lzy1"
         }
       ]
     },
@@ -15604,6 +15609,9 @@
         },
         {
           "name": "researchSite$lzy1"
+        },
+        {
+          "name": "resolveView$lzy1"
         },
         {
           "name": "seenMarks$lzy1"
