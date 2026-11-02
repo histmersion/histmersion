@@ -8,14 +8,14 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Tree.RegionNode
+import com.histmersion.api.catalogue.places.RegionNode
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
-  * [[com.histmersion.api.Tree]] (pure) buckets and nests.
+  * [[com.histmersion.api.library.search.Tree]] (pure) buckets and nests.
   */
 private[places] object TreeRepo:
 
@@ -67,8 +67,8 @@ private[places] object TreeRepo:
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as a property, some
-    * only as a `Withdrawn (duplicate): …` label — [[Tree.rootEligible]] checks the label too, so both spellings are
-    * caught wherever they come from.
+    * only as a `Withdrawn (duplicate): …` label — [[RegionNode.rootEligible]] checks the label too, so both spellings
+    * are caught wherever they come from.
     */
   def nodesQuery(ids: List[String]): Sql =
     Sql(

@@ -1,5 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.catalogue.places.RegionNode
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.api.*
 import com.histmersion.util.identity.AliasTablesAdapter
 import com.augustnagro.magnum.{connect, transact, DbCon}
@@ -108,7 +111,7 @@ object PlaceFixtures:
     connect(ds)(FindingPlaceRepo.unresolvedPlaceholdersIn())
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
-  def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[Tree.RegionNode], List[PlaceRelation]) =
+  def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[PlaceRelation]) =
     connect(ds)(TreeRepo.gazetteer(rows.iterator.flatMap(_.placeIds).toList))
 
   def setOverride(

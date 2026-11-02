@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.values.AttestationTarget
+
 import com.histmersion.api.{
   AliasKindsAdapter,
   ApiError,
@@ -8,7 +10,6 @@ import com.histmersion.api.{
   AttestationList,
   AttestationPatch,
   AttestationPut,
-  AttestationTarget,
   Write
 }
 import com.histmersion.domain.Caller

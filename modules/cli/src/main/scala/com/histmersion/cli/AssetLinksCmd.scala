@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.values.AssetLinkTarget
+
 import com.histmersion.api.media.assets.MediaMarkdown
 
 import cats.syntax.all.*

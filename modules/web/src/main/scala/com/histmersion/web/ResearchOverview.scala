@@ -109,7 +109,7 @@ object ResearchOverview:
       onMountCallback(_ => ApiClient.agentQuota.foreach(q => quota.set(weekly(q)))),
       div(
         cls := "research-agents-text",
-        div(cls := "research-agents-head", child.text <-- mode.map(_.fold("Research agents")(Wording.agentsHeading))),
+        div(cls := "research-agents-head", child.text <-- mode.map(_.fold("Research agents")(_.heading))),
         div(
           cls := "muted",
           child.text <-- Notices.agents.combineWith(quota.signal).map { (g, q) =>
@@ -130,7 +130,7 @@ object ResearchOverview:
             cls("on") <-- mode.map(_.contains(m)),
             aria.checked <-- mode.map(_.contains(m).toString),
             disabled <-- busy.signal,
-            Wording.agentMode(m),
+            m.wording,
             onClick --> (_ => choose(m))
           )
         }

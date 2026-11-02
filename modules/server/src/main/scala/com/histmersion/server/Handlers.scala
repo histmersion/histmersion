@@ -793,8 +793,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         .left
         .map(e => ApiError(s"restored ${req.file}, but migrating it failed: ${e.getMessage}"))
       _ = com.histmersion.db.Db.ensureDatabaseSettings(ds)
-      role = com.histmersion.db.Db
-        .provisionQueryRole(ds, cfg.query)
+      role = com.histmersion.domain.library.search.QueryAccess
+        .provision(ds, cfg.query)
         .left
         .toOption
         .map(m => s"the read-only role '${cfg.query.user}' was not re-provisioned: $m")

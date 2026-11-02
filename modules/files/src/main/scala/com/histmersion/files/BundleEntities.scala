@@ -74,8 +74,8 @@ final case class BundleEntities(
       BundleFiles.EventCatalogue -> plain(eventCatalogue),
       BundleFiles.EventCandidates -> plain(eventCandidates),
       BundleFiles.EventChecks -> plain(eventChecks),
-      BundleFiles.Corrections -> plain(corrections),
-      BundleFiles.SiteTypes -> plain(siteTypes),
+      BundleFiles.EventCorrections -> plain(corrections),
+      BundleFiles.PlaceSiteTypes -> plain(siteTypes),
       BundleFiles.Tombstones -> plain(tombstones)
     )
 
@@ -220,7 +220,7 @@ object BundleEntities:
       eventCatalogue = read[BundleEventCatalogue](BundleFiles.EventCatalogue, false),
       eventCandidates = read[BundleEventCandidate](BundleFiles.EventCandidates, false),
       eventChecks = read[BundleEventCheck](BundleFiles.EventChecks, false),
-      corrections = read[BundleCorrection](BundleFiles.Corrections, false),
-      siteTypes = read[BundleSiteType](BundleFiles.SiteTypes, false)
+      corrections = read[BundleCorrection](BundleFiles.EventCorrections, false),
+      siteTypes = read[BundleSiteType](BundleFiles.PlaceSiteTypes, false)
     )
     (es, problems.result())

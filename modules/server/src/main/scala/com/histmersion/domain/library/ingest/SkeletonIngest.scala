@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.ingest
 
+import com.histmersion.api.library.sources.SourceWrite
+
 import com.histmersion.api.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
@@ -36,7 +38,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
     }
 
   private def create(citekey: String, meta: IngestMeta): Either[String, Unit] =
-    Write
+    SourceWrite
       .applyPut(
         citekey,
         SourcePut(

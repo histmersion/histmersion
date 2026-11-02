@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -10,7 +12,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Tree.TreeRow
+import com.histmersion.api.library.search.Tree.TreeRow
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.

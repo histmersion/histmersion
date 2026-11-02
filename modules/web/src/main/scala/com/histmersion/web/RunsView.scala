@@ -104,7 +104,7 @@ object RunsView:
       "Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item."
     case Agents.Origin.Run =>
       "Started by another run, such as a compile-article run starting the review of its article."
-    case Agents.Origin.Ingest =>
+    case Agents.Origin.FromIngest =>
       "Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over."
     case Agents.Origin.Manager => "Dispatched by a process manager for one of its work items."
   }

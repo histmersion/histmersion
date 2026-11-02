@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.values.AttestationTarget
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{
@@ -7,7 +9,6 @@ import com.histmersion.api.{
   ApiError,
   ArticleEventLead,
   Attestation,
-  AttestationTarget,
   BBox,
   CatalogProviderInfo,
   EventCandidatesRequest,

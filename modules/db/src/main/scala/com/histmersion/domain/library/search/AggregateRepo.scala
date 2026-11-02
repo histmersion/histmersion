@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.search
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.db.*
 import com.histmersion.db.given
 
@@ -125,8 +127,8 @@ private[search] object AggregateRepo:
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0) ") ++
         FilterSql.orderBySql(filter)
 
-  /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.Tree]], pure), hung off the
-    * gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
+  /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.search.Tree]], pure),
+    * hung off the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
   def treeRows(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
     treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run().map(_.toRow)

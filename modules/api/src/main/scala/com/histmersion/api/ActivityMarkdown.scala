@@ -35,7 +35,7 @@ object ActivityMarkdown:
       e.approval.map(a => s"approval #$a")
 
   def line(e: Entry): String =
-    val kind = e.entryKind.fold(e.kind)(Wording.activityKind)
+    val kind = e.entryKind.fold(e.kind)(_.wording)
     val state = stateOf(e)
     val id = e.entryKind
       .filter(k => k == EntryKind.Run || k == EntryKind.Job)

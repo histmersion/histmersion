@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.QueryAccess
+
 import com.histmersion.config.{DbConfig, QueryConfig}
 import com.zaxxer.hikari.HikariDataSource
 
@@ -25,7 +27,7 @@ abstract class DbSuite extends munit.FunSuite:
 
   /** The read-only role's pool on `db`'s database, this suite's own. */
   protected def testQueryPool(db: DbConfig, q: QueryConfig): DataSource = owned.synchronized {
-    owned.getOrElseUpdate((db.url, q.user), Db.queryPool(db, q))
+    owned.getOrElseUpdate((db.url, q.user), QueryAccess.pool(db, q))
   }
 
   /** Fresh, migrated, EMPTY databases for this suite, named `<prefix>_<n>_test` beside `cfg`'s database: each a copy

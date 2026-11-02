@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.search.QueryAccess
+
 import com.histmersion.util.data.maintenance.{ReadOnlyPool, WriteGate}
 
 import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
@@ -211,10 +213,11 @@ object ServerGraph:
     * Failing to boot instead would take the whole server down over one optional endpoint.
     */
   private def readOnly(cfg: AppConfig, app: DataSource)(using ox.OxUnsupervised): ReadOnlyPool =
-    Db.provisionQueryRole(app, cfg.query)
+    QueryAccess
+      .provision(app, cfg.query)
       .left
       .foreach(m => scribe.error(s"could not provision the read-only role '${cfg.query.user}': $m"))
-    val q = useInScope(Db.queryPool(cfg.db, cfg.query))(_.close())
+    val q = useInScope(QueryAccess.pool(cfg.db, cfg.query))(_.close())
     Db.canConnect(q) match
       case Right(_) =>
         scribe.info(s"/api/query runs as the read-only role '${cfg.query.user}'")

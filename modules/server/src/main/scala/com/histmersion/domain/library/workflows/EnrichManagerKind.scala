@@ -88,7 +88,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
               case Right(()) if cfg.managers.enabled => Some(ingested(a.managers, ck))
               case Right(())                         =>
                 Some(
-                  a.startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)
+                  a.startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.FromIngest, None)
                     .fold(e => AutoEnrich.notQueued(e.message), r => AutoEnrich.queued(r.id))
                 )
       }
@@ -106,7 +106,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
   private def ingested(c: ManagerContext, citekey: String): String =
     val _ = c.ensure(Kind.Review, ReviewId, None)
     val _ = c.ensure(Kind.Enrich, EnrichId, None)
-    val (itemId, isNew) = c.upsert(EnrichId, SourceEnrich, citekey, ItemOrigin.Ingest, 0, reopen = true)
+    val (itemId, isNew) = c.upsert(EnrichId, SourceEnrich, citekey, ItemOrigin.FromIngest, 0, reopen = true)
     c.event(
       EnrichId,
       Some(itemId),

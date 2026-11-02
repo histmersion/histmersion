@@ -18,8 +18,8 @@ object BundleFiles:
   val EventCatalogue = "entities/event-catalogue.ndjson"
   val EventCandidates = "entities/event-candidates.ndjson"
   val EventChecks = "entities/event-checks.ndjson"
-  val Corrections = "entities/corrections.ndjson"
-  val SiteTypes = "entities/site-types.ndjson"
+  val EventCorrections = "entities/corrections.ndjson"
+  val PlaceSiteTypes = "entities/site-types.ndjson"
   val Tombstones = "entities/tombstones.ndjson"
 
   val all: List[String] =
@@ -36,7 +36,7 @@ object BundleFiles:
         EventCatalogue,
         EventCandidates,
         EventChecks,
-        Corrections,
-        SiteTypes,
+        EventCorrections,
+        PlaceSiteTypes,
         Tombstones
       )

@@ -22,7 +22,7 @@ object CatalogMerge:
     case New(eventId: String, why: String)
     def eventId: String
 
-  private def outer(ts: TimeSpan): Option[(Long, Long)] = EventGeo.outer(ts)
+  private def outer(ts: TimeSpan): Option[(Long, Long)] = ts.outer
 
   /** Pure: do two spans overlap once widened by `years`? An undated one overlaps nothing. */
   def overlaps(a: TimeSpan, b: TimeSpan, years: Long): Boolean =

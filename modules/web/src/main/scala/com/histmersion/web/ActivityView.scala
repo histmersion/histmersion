@@ -47,7 +47,7 @@ object ActivityView:
         case _                    => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
-  def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(e.kind))(Wording.activityKind)
+  def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(e.kind))(_.wording)
 
   /** The query string of a page of the list: its goal, kept from one chip to the next. */
   def search(goal: Option[String]): String = goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g)}")

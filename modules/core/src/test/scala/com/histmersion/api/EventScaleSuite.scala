@@ -109,19 +109,19 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventGeometry.check("near Kadesh").left.exists(_.contains("not GeoJSON")))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
-    assertEquals(EventGeo.outer(TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250))), Some((-1300L, -1250L)))
-    assertEquals(EventGeo.outer(TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260))), Some((-1290L, -1260L)))
-    assertEquals(EventGeo.outer(TimeSpan(notBefore = Some(-1274))), Some((-1274L, -1274L)))
-    assertEquals(EventGeo.outer(TimeSpan()), None)
+    assertEquals((TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250))).outer, Some((-1300L, -1250L)))
+    assertEquals((TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260))).outer, Some((-1290L, -1260L)))
+    assertEquals((TimeSpan(notBefore = Some(-1274))).outer, Some((-1274L, -1274L)))
+    assertEquals((TimeSpan()).outer, None)
 
   test("EventGeo.outer: an open-ended event stands at the end it states, not forever after (#1768)"):
     // a start alone: that year; a start window alone: the window; an end alone: that year
-    assertEquals(EventGeo.outer(TimeSpan(beginBy = Some(-1200))), Some((-1200L, -1200L)))
-    assertEquals(EventGeo.outer(TimeSpan(notBefore = Some(-1200), beginBy = Some(-1195))), Some((-1200L, -1195L)))
-    assertEquals(EventGeo.outer(TimeSpan(notAfter = Some(-1100))), Some((-1100L, -1100L)))
-    assertEquals(EventGeo.outer(TimeSpan(endFrom = Some(-1110), notAfter = Some(-1100))), Some((-1110L, -1100L)))
+    assertEquals((TimeSpan(beginBy = Some(-1200))).outer, Some((-1200L, -1200L)))
+    assertEquals((TimeSpan(notBefore = Some(-1200), beginBy = Some(-1195))).outer, Some((-1200L, -1195L)))
+    assertEquals((TimeSpan(notAfter = Some(-1100))).outer, Some((-1100L, -1100L)))
+    assertEquals((TimeSpan(endFrom = Some(-1110), notAfter = Some(-1100))).outer, Some((-1110L, -1100L)))
     // points recorded out of order are ordered, not inverted
-    assertEquals(EventGeo.outer(TimeSpan(notBefore = Some(-1000), notAfter = Some(-1100))), Some((-1100L, -1000L)))
+    assertEquals((TimeSpan(notBefore = Some(-1000), notAfter = Some(-1100))).outer, Some((-1100L, -1000L)))
     assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(-1200))), Some("end not recorded"))
     assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(-1200))), Some("start not recorded"))
     assertEquals(EventGeo.missingEnd(TimeSpan(Some(-1300), None, None, Some(-1250))), None)

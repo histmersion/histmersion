@@ -102,7 +102,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       val rs = runs
       assertEquals(rs.size, 1, rs)
       val run = rs.head
-      assertEquals((run.status, run.origin, run.target), ("queued", Some(Origin.Ingest.wire), Ck))
+      assertEquals((run.status, run.origin, run.target), ("queued", Some(Origin.FromIngest.wire), Ck))
       assert(job.progress.exists(_.contains(s"enrichment queued: run ${run.id}")), job.progress)
       assert(IngestMarkdown.job(job).contains(s"enrichment queued: run ${run.id}"), "jobs <id> shows it")
       // the same file again: the source is re-converted, the pending run covers it

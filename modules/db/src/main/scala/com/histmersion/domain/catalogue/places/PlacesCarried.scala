@@ -35,7 +35,7 @@ object PlacesCarried:
 
   val siteTypes: CarriedKind = CarriedKind.owned[BundleSiteType](
     Catalogue,
-    BundleEntry(BundleFiles.SiteTypes),
+    BundleEntry(BundleFiles.PlaceSiteTypes),
     List(rows(64)(PlaceBundleRepo.siteTypesIn))
   )(scope => PlaceBundleRepo.siteTypes(scope).toList)(_.checkedAt, (es, ls) => es.modify(_.siteTypes).setTo(ls))
 

@@ -37,10 +37,10 @@ class AgentModeSuite extends munit.FunSuite:
 
   test("the words: the control's three choices and the card's heading"):
     assertEquals(
-      AgentMode.values.toList.map(Wording.agentMode),
+      AgentMode.values.toList.map(_.wording),
       List("Working", "Finish current work, then pause", "Pause now")
     )
-    assertEquals(Wording.agentsHeading(AgentMode.Finishing), "Research agents are finishing current work, then pausing")
+    assertEquals(AgentMode.Finishing.heading, "Research agents are finishing current work, then pausing")
     assertEquals(AgentMode.parse("finish"), Some(AgentMode.Finishing))
     assertEquals(AgentMode.parse("Paused"), Some(AgentMode.Paused))
     assertEquals(AgentMode.parse("stop"), None)

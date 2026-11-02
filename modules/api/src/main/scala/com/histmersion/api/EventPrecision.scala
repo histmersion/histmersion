@@ -12,7 +12,7 @@ object EventPrecision:
 
   /** Widths are taken in astronomical years: historical years have no year 0. */
   def uncertainty(ts: TimeSpan, plusMinus: Option[Long]): Option[Long] =
-    EventGeo.outer(ts).map { (a, b) =>
+    ts.outer.map { (a, b) =>
       def a2(y: Long) = Years.toAstronomical(y)
       def width(x: Option[Long], y: Option[Long]): Long = (for p <- x; q <- y yield a2(q) - a2(p)).getOrElse(0L).max(0)
       val derived =

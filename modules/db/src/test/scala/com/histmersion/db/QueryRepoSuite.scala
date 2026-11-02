@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.QueryAccess
+
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -36,7 +38,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     */
   private lazy val queryDs =
     val _ = ds // migrate first: V011 creates the role
-    Db.provisionQueryRole(ds, cfg.query) match
+    QueryAccess.provision(ds, cfg.query) match
       case Right(_) => ()
       case Left(m)  => fail(s"could not provision the read-only role: $m")
     val q = testQueryPool(dbCfg, cfg.query)
@@ -242,8 +244,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     scala.util.Try(admin(s"DROP OWNED BY $role")); admin(s"DROP ROLE IF EXISTS $role")
     val qc = cfg.query.copy(user = role, password = "probe-pw")
     try
-      assertEquals(Db.provisionQueryRole(ds, qc), Right(()))
-      assertEquals(Db.provisionQueryRole(ds, qc), Right(()), "idempotent")
+      assertEquals(QueryAccess.provision(ds, qc), Right(()))
+      assertEquals(QueryAccess.provision(ds, qc), Right(()), "idempotent")
       val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
       assert(SearchFixtures.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)

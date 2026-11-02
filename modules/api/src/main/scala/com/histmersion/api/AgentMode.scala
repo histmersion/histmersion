@@ -9,6 +9,18 @@ enum AgentMode(val wire: String):
   case Finishing extends AgentMode("finish")
   case Paused extends AgentMode("pause")
 
+  /** The mode as the agents' switch offers it. */
+  def wording: String = this match
+    case Working   => "Working"
+    case Finishing => "Finish current work, then pause"
+    case Paused    => "Pause now"
+
+  /** The heading of the research overview in this mode. */
+  def heading: String = this match
+    case Working   => "Research agents are working"
+    case Finishing => "Research agents are finishing current work, then pausing"
+    case Paused    => "Research agents are paused"
+
 object AgentMode:
   def parse(s: String): Option[AgentMode] =
     val t = s.trim.toLowerCase

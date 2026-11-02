@@ -89,22 +89,6 @@ object Wording:
     "review" -> "Review an article"
   )
 
-  val waitCodes: Map[String, String] = Map(
-    "capacity" -> "No free place",
-    "pool" -> "Plan is full",
-    "manager-cap" -> "Manager is full",
-    "blocked" -> "Blocked",
-    "busy" -> "Busy",
-    "budget" -> "Spending cap reached",
-    "drain" -> "Finishing current work, then pausing",
-    AgentScheduler.Code.Person -> "Needs your decision",
-    AgentScheduler.Code.Held -> "Held by a person",
-    AgentScheduler.Code.NotDue -> "Not due yet",
-    AgentScheduler.Code.Running -> "Running",
-    AgentScheduler.Code.Settled -> "Settled",
-    AgentScheduler.Code.Paused -> "Paused"
-  )
-
   val strategies: Map[String, String] = Map(
     "type-balanced" -> "Balance the kinds of work",
     "goal-first" -> "One goal at a time",
@@ -139,34 +123,10 @@ object Wording:
     else if autopilotOn then "Agents: working"
     else "Agents: paused"
 
-  def agentsGlance(a: UiNotices.AgentsGlance): String =
-    def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
-    if !a.on || (a.draining && a.running == 0) then "Agents paused"
-    else if a.draining then s"Agents finishing current work · ${runs(a.running)}"
-    else if a.running > 0 then s"Agents working · ${runs(a.running)}"
-    else if a.queued > 0 then s"Agents working · ${a.queued} waiting"
-    else "Agents on · nothing to do"
-
   def decisions(open: Int): Option[String] =
     Option.when(open > 0)(if open == 1 then "1 needs your decision" else s"$open need your decision")
 
   def decisionsShort(open: Int): String = if open == 1 then "1 needs you" else s"$open need you"
-
-  def agentMode(m: AgentMode): String = m match
-    case AgentMode.Working   => "Working"
-    case AgentMode.Finishing => "Finish current work, then pause"
-    case AgentMode.Paused    => "Pause now"
-
-  def agentsHeading(m: AgentMode): String = m match
-    case AgentMode.Working   => "Research agents are working"
-    case AgentMode.Finishing => "Research agents are finishing current work, then pausing"
-    case AgentMode.Paused    => "Research agents are paused"
-
-  def activityKind(k: Activity.EntryKind): String = k match
-    case Activity.EntryKind.Run      => "Agent work"
-    case Activity.EntryKind.Job      => "Background job"
-    case Activity.EntryKind.Log      => "Note"
-    case Activity.EntryKind.Decision => "You decided"
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
@@ -204,16 +164,3 @@ object Wording:
     "1password" -> "1Password",
     "bitwarden" -> "Bitwarden"
   )
-
-  lazy val known: Map[String, String] =
-    schedulerJobTypes ++ waitCodes ++ strategies ++
-      JobKindsAdapter.all.entries.map(e => e.kind.value -> e.name.value) ++
-      ApprovalKind.values.map(k => k.wire -> approvalKind(k)) ++
-      Pipeline.values.map(p => p.wire -> pipeline(p)) ++
-      ManagerKind.values.map(k => k.wire -> managerKind(k)) ++
-      SourceStatus.values.map(s => s.wire -> status(s)) ++
-      ApprovalState.values.map(s => s.wire -> approvalState(s)) ++
-      JobState.values.map(s => s.wire -> jobState(s)) ++
-      RunState.values.map(s => s.wire -> runState(s))
-
-  def label(id: String): String = known.getOrElse(id.trim, humanize(id))

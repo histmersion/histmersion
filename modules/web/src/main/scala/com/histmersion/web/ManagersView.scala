@@ -680,7 +680,7 @@ object ManagersView:
 
   def strategyLabel(name: String): String = Wording.strategies.getOrElse(name, Wording.humanize(name))
   def jobTypeLabel(t: String): String = Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(t))
-  def waitLabel(code: String): String = Wording.waitCodes.getOrElse(code, Wording.humanize(code))
+  def waitLabel(code: String): String = AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(code))
 
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   def schedulerHead(s: AgentScheduler.SchedulerStatus): String =

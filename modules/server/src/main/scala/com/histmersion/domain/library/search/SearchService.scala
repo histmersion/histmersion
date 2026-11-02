@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.search
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.api.*
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor

@@ -1,6 +1,7 @@
-package com.histmersion.api
+package com.histmersion.api.library.search
 
-import com.histmersion.values.PlaceKind
+import com.histmersion.api.*
+import com.histmersion.api.catalogue.places.RegionNode
 
 object Tree:
 
@@ -21,28 +22,6 @@ object Tree:
       placeIds: List[String] = Nil
   ):
     def toPeriodRow: PeriodRow = PeriodRow(start, end)
-
-  final case class RegionNode(
-      id: String,
-      label: String,
-      kind: String,
-      period: Option[Period] = None,
-      contested: Boolean = false,
-      /** Pleiades marks superseded records `withdrawn`; they must never head a level. */
-      withdrawn: Boolean = false
-  )
-
-  val RootKinds: Set[String] = Set(PlaceKind.Region, PlaceKind.Polity, "continent")
-
-  /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
-    * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
-    */
-  def uncertainLabel(label: String): Boolean =
-    val l = label.trim
-    l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn")
-
-  def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(n.kind) && !n.withdrawn && !uncertainLabel(n.label)
 
   def coversAsOf(p: Option[Period], asOf: Option[Long]): Boolean = (p, asOf) match
     case (None, _)                     => true
@@ -230,7 +209,7 @@ object Tree:
       case None     =>
         byId.values.iterator
           .filter(n => coversAsOf(n.period, asOf) && parents.getOrElse(n.id, Nil).isEmpty)
-          .filter(rootEligible)
+          .filter(RegionNode.rootEligible)
           .map(_.id)
           .toList
     val located = level(rootIds, Set.empty, depth)

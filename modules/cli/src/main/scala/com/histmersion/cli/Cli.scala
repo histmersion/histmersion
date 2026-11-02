@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.api.library.search.SearchMarkdown
 import com.histmersion.api.library.sources.SourcesMarkdown
 

@@ -125,7 +125,7 @@ final class EventImports(
                 .fold(r)(k => r.modify(_.kind).setTo(EventProviders.WikidataEvents.moreSpecific(classOrder, k, r.kind)))
             )
           val judged = recs.map { r =>
-            val span = EventGeo.outer(r.timeSpan)
+            val span = r.timeSpan.outer
             val why =
               if span.exists(_._1 > to) then Left(s"after $to")
               else if from.exists(f => span.exists(_._2 < f)) then Left(s"before ${from.get}")
@@ -287,7 +287,7 @@ final class EventImports(
         progress(s"${(i + 1) * ec.rederiveBatch.max(1) min again.size} of ${again.size} record(s) re-derived")
       }
     val examples = changed.take(5).map { (id, a, b, _) =>
-      def years(r: CatalogRecord) = EventGeo.outer(r.timeSpan).fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
+      def years(r: CatalogRecord) = r.timeSpan.outer.fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
       s"$id: ${years(a)} → ${years(b)}${EventPrecision.note(b.central, b.plusMinus, b.datingMethod).fold("")(n => s" ($n)")}, ${prec(b)}"
     } ++ Option.when(undecodable > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
     val out = EventRederiveReport(

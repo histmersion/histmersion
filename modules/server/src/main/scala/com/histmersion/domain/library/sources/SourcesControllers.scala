@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.library.sources.SourceWrite
+
 import com.histmersion.api.library.sources.SourcesMarkdown
 
 import com.histmersion.api.*
@@ -70,7 +72,7 @@ final class SourcesControllers(
   def put(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
       Citekey.of(citekey).map(_ => current(AliasKindsAdapter.SourceRecords, citekey)).flatMap { ck =>
-        Write
+        SourceWrite
           .applyPut(ck, in, sources.aliasesOf(ck))
           .left
           .map(m => ApiError(m, Some(Write.CodeInvalid)))
