@@ -11,7 +11,8 @@ import com.histmersion.api.Autopilot.{AutopilotSet, FocusSet}
 import com.histmersion.api.Autopilot
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate, ReviewLedgerRepo}
+import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.syntax.*
 
@@ -110,15 +111,17 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
     }
     assert(
-      h.putArticle(
-        Art,
-        ArticlePut(
-          "Zz art",
-          "concept",
-          "Tin came by sea [[zzfocus_s1]].",
-          filter = Some(ArticleFilter(topics = List("zzfocus_t")))
+      h.research.articles
+        .put(
+          Art,
+          ArticlePut(
+            "Zz art",
+            "concept",
+            "Tin came by sea [[zzfocus_s1]].",
+            filter = Some(ArticleFilter(topics = List("zzfocus_t")))
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
     up.onIngest = d =>
@@ -519,7 +522,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(why.code == "blocked" && why.why.contains("articles in progress come first (1 to pass review)"), why)
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
     // the article passes its review (a clean ledger, no review item open), and the proposal had settled days ago
-    ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Art))
+    ReviewLedgerFixtures.put(ds, ReviewLedger.Ledger(Art))
     connect(ds)(ManagerRepo.itemFor(ReviewId, ArticleReview, Art))
       .foreach(i =>
         transact(ds)(

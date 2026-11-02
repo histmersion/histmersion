@@ -9,6 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
@@ -50,11 +51,13 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         prices = "scripted=1/2",
         roles = b.agents.roles
           .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
-        inferFilter = b.agents.inferFilter.copy(minHits = 1),
-        approvals = b.agents.approvals.copy(articlePublish = "auto"),
-        review = b.agents.review.copy(spotChecks = 0)
+        approvals = b.agents.approvals.copy(articlePublish = "auto")
       ),
-      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2))
+      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2)),
+      researchAgents = b.researchAgents.copy(
+        inferFilter = b.researchAgents.inferFilter.copy(minHits = 1),
+        review = b.researchAgents.review.copy(spotChecks = 0)
+      )
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -156,7 +159,9 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text("""{"rationale":"the tin sources","query":null,"topics":["zzagent_tin"],"tags":[],"extraQueries":[]}"""))
     )
     val (a, h) = handlers(c); seed(h)
-    assert(h.putArticle("zzagent_f1", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight)
+    assert(
+      h.research.articles.put("zzagent_f1", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
+    )
     a.managers.ensureDefaults()
     a.managing
       .update(
@@ -212,7 +217,9 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val auto =
       baseCfg.copy(agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articleFilter = "auto")))
     val (a, h) = handlers(c, auto); seed(h)
-    assert(h.putArticle("zzagent_f2", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight)
+    assert(
+      h.research.articles.put("zzagent_f2", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
+    )
     val r = a.managing.enqueue(EnqueueRequest("review", "zzagent_f2")).fold(e => fail(e.message), identity)
     a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
     assertEquals(r.items.map(_.kind), List(ArticleReview))
@@ -250,7 +257,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    assert(h.putArticle("zzagent_old", ArticlePut("Old", "concept", "Old text.")).isRight)
+    assert(h.research.articles.put("zzagent_old", ArticlePut("Old", "concept", "Old text.")).isRight)
     val m =
       a.managing.create(ManagerCreate("seed", Some(Goal), paused = Some(false))).fold(e => fail(e.message), identity)
     assertEquals((m.id, m.kind, m.goal), (seedId(Goal), "seed", Some(Goal)))
@@ -346,7 +353,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(item(EnrichId, SourceEnrich, Ck).status, "done")
     assert(item(EnrichId, SourceEnrich, Ck).outcome.exists(_.contains("already enriched")))
     // Enrich on an article: only its unenriched cited sources
-    assert(h.putArticle("zzagent_e1", ArticlePut("Zz", "concept", articleBody)).isRight)
+    assert(h.research.articles.put("zzagent_e1", ArticlePut("Zz", "concept", articleBody)).isRight)
     val r = a.managing.enqueue(EnqueueRequest("enrich", "zzagent_e1")).fold(e => fail(e.message), identity)
     assertEquals(r.items.map(_.target), List(Ck2))
     assert(r.skipped.exists(_.contains(Ck)), r.skipped)
@@ -366,16 +373,18 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("stale: a converged article whose filter gained a source is selected again, at the lowest priority"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     assert(
-      h.putArticle(
-        "zzagent_s1",
-        ArticlePut(
-          "Zz tin",
-          "concept",
-          articleBody,
-          tags = List(Tag),
-          filter = Some(ArticleFilter(topics = List("zzagent_tin")))
+      h.research.articles
+        .put(
+          "zzagent_s1",
+          ArticlePut(
+            "Zz tin",
+            "concept",
+            articleBody,
+            tags = List(Tag),
+            filter = Some(ArticleFilter(topics = List("zzagent_tin")))
+          )
         )
-      ).isRight
+        .isRight
     )
     a.managers.ensureDefaults()
     a.managing.update(
@@ -400,17 +409,19 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managers.tick(t0)
     val again = connect(ds)(ManagerRepo.item(id)).get
-    assertEquals((again.priority, again.origin), (ManagerPolicy.StalePriority, "selection"))
+    assertEquals((again.priority, again.origin), (ReviewManagerPolicy.StalePriority, "selection"))
     assert(again.outcome.exists(_.contains("its filter gained 1 source")), again.outcome)
     assert(Set("pending", "active").contains(again.status), again.status)
 
   test("extend: the article button queues an extension in the review manager; it compiles without a chained run"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     assert(
-      h.putArticle(
-        "zzagent_x1",
-        ArticlePut("Zz tin", "concept", s"Tin [[$Ck]].", filter = Some(ArticleFilter(topics = List("zzagent_tin"))))
-      ).isRight
+      h.research.articles
+        .put(
+          "zzagent_x1",
+          ArticlePut("Zz tin", "concept", s"Tin [[$Ck]].", filter = Some(ArticleFilter(topics = List("zzagent_tin"))))
+        )
+        .isRight
     )
     val r = a.managing.enqueue(EnqueueRequest("extend", "zzagent_x1")).fold(e => fail(e.message), identity)
     assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (ReviewId, List((ArticleExtend, 10))))

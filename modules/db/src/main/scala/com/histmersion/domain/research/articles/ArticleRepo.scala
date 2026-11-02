@@ -417,6 +417,10 @@ private[histmersion] object ArticleRepo:
       .toList
 
   /** One historical version's full body. */
+  /** The newest saved version of an article: after a write, the row holding the text it replaced. */
+  def latestVersion(slug: String)(using DbCon): Option[Long] =
+    sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
+
   def getVersion(slug: String, versionId: Long)(using DbCon): Option[ArticleVersionFull] =
     Sql
       .of(

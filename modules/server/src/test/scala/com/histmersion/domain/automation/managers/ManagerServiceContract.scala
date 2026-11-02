@@ -81,6 +81,9 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).get("review").map(_.inFlight), Some(1))
     val (c, _) = m(s).upsert("review", "article-review", "zz-c", ItemOrigin.Selection, 9, reopen = false)
     assertEquals(m(s).pending("review").map(_.id), List(c, b), "the most urgent first")
+    assertEquals(m(s).items("review", 10).map(_.id), List(a, c, b), "active first, then pending by priority")
+    assertEquals(m(s).items("review", 1).map(_.id), List(a))
+    assertEquals(m(s).items("enrich", 10), Nil)
     assert(m(s).create("enrich", Kind.Enrich, None, State.Paused, ManagerConfig()))
     assertEquals(m(s).list().map(_.id), List("review", "enrich"), "the oldest first")
   }

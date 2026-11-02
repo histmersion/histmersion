@@ -124,24 +124,11 @@ direction	api:api/Write.scala	util.common -> library: SourcePut	1
 direction	api:api/YearFmt.scala	util.common -> catalogue: EventGeo	1
 direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
-direction	config:config/AgentManagersConfig.scala	automation -> research: ReviewManagerConfig	1
-direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileConfig	1
-direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
-direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
-direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
-direction	core:domain/CompareRuns.scala	automation -> research: ReviewArticle	1
-direction	core:domain/ManagerDefaults.scala	automation -> research: ReviewManagerDefaults	1
-direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewArticle	1
-direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewLedger	1
-direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewManagerDefaults	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
-direction	core:domain/PlanGoal.scala	automation -> research: Articles	1
-direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
-direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
 direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
 direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
@@ -164,10 +151,6 @@ direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
-direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/InferFilterPipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
 direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:db/BundleImport.scala	java.nio.file	1
@@ -211,15 +194,7 @@ repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
-repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
 repository	server:server/Handlers.scala	UiRepo of server.instance	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/CompileArticlePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/CompileArticlePipeline.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/ProposeArticlesPipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automation.agents	1

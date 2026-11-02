@@ -10,7 +10,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.{LinkKind, Removed}
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
 import com.histmersion.api.Managers.*
 import com.histmersion.db.ManagerRepo
 
@@ -203,9 +202,9 @@ final class ManagersHandlers(
       .getOrElse(Nil)
       .foldLeft[Either[ApiError, Unit]](
         Either.cond(
-          c.rounds.forall(r => r >= 2 && r <= cfg.review.roundsCap),
+          c.rounds.forall(r => r >= 2 && r <= agents.roundsCap),
           (),
-          ApiError(s"rounds must be between 2 and ${cfg.review.roundsCap} (agents.review.rounds-cap)")
+          ApiError(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
         )
       ) { (acc, o) =>
         acc.flatMap(_ =>

@@ -338,18 +338,23 @@ object ManagerRepo:
       offset: Int,
       limit: Int
   ): (List[ManagerItem], Int) =
+    connect(ds)(itemPage(managerId, status, offset, limit))
+
+  /** [[items]] on the caller's connection. */
+  def itemPage(managerId: String, status: Option[ItemStatus], offset: Int, limit: Int)(using
+      DbCon
+  ): (List[ManagerItem], Int) =
     val where = Sql.of(" WHERE manager_id = ?", Param.S(managerId)) ++
       status.fold(Sql.empty)(s => Sql.of(" AND status = ?", Param.S(s.wire)))
-    connect(ds):
-      val total = (Sql.of("SELECT count(*)::int FROM manager_items") ++ where).frag.query[Int].run().head
-      val rows = (itemSelect ++ where ++ Sql.of(
-        """ ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 WHEN 'held' THEN 2 ELSE 3 END,
+    val total = (Sql.of("SELECT count(*)::int FROM manager_items") ++ where).frag.query[Int].run().head
+    val rows = (itemSelect ++ where ++ Sql.of(
+      """ ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 WHEN 'held' THEN 2 ELSE 3 END,
              priority DESC, coalesce(not_before, '-infinity'::timestamptz), updated_at DESC, id
            OFFSET ? LIMIT ?""",
-        Param.I(math.max(0, offset)),
-        Param.I(math.max(1, limit))
-      )).frag.query[ItemRow].run().toList.map(toItem)
-      (rows, total)
+      Param.I(math.max(0, offset)),
+      Param.I(math.max(1, limit))
+    )).frag.query[ItemRow].run().toList.map(toItem)
+    (rows, total)
 
   def withStatus(managerId: String, status: ItemStatus)(using DbCon): List[ManagerItem] =
 

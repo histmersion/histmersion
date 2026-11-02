@@ -31,11 +31,11 @@ final class LibraryWorkflowSite(h: Handlers, deps: Deps) extends LibrarySite:
     h.geocode(name, hint, at)
 
   def articleSources(slug: String): Either[ApiError, List[String]] =
-    h.getArticle(slug).map(v => h.citedSources(v.article.body))
+    h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
   def citedSources(slug: String): List[String] =
-    h.getArticle(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).map(_.citekey))
+    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).map(_.citekey))
 
-  def articleExists(slug: String): Boolean = h.articleExists(slug)
+  def articleExists(slug: String): Boolean = h.research.articleStore.exists(slug)
 
   def upstreamQuotas(now: Instant): List[UpstreamQuota] = h.upstreamQuotas(now)

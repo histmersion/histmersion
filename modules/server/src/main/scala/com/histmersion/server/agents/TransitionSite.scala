@@ -25,5 +25,5 @@ final class TransitionSite(deps: Deps, h: Handlers, digestOn: Option[java.time.C
   def roster: AgentRoster = TransitionWorkflows.roster
   def contributions(a: AgentsHandlers): Contributions = TransitionWorkflows.contributions(deps, h, a)
   def approvalEffects: com.histmersion.domain.automation.approvals.ApprovalEffects =
-    TransitionApprovalEffects(h, deps.ds)
+    TransitionApprovalEffects(h)
   def host(a: AgentsHandlers): AutomationHost = TransitionHost(h, () => TransitionWorkflows.work(a).acquisition)

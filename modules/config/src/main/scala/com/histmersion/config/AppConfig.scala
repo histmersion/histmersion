@@ -28,6 +28,8 @@ final case class AppConfig(
     agents: AgentsConfig,
     /** The library's part of the same `agents` block. */
     @configKey("agents") libraryAgents: LibraryAgentsConfig,
+    /** Research's part of the same `agents` block. */
+    @configKey("agents") researchAgents: ResearchAgentsConfig,
     media: MediaConfig,
     events: EventsConfig,
     config: ConfigReloadConfig,

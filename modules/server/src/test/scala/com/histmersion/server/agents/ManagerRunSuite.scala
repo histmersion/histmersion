@@ -13,7 +13,8 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRows, ReviewLedgerRepo}
+import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRows}
+import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 
@@ -63,11 +64,13 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         enabled = true,
         prices = "scripted=1/2",
         roles =
-          b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire),
-        managers =
-          b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30, inferFilter = false)),
+          b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire)
+      ),
+      researchAgents = b.researchAgents.copy(
+        managers = b.researchAgents.managers
+          .copy(review = b.researchAgents.managers.review.copy(cooldownMinutes = 30, inferFilter = false)),
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
-        review = b.agents.review.copy(spotChecks = 0)
+        review = b.researchAgents.review.copy(spotChecks = 0)
       )
     )
 
@@ -112,7 +115,9 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
         .isRight
     )
-    slugs.foreach(s => assert(h.putArticle(s, ArticlePut(s"Tin $s", "concept", Body, tags = List(Tag))).isRight))
+    slugs.foreach(s =>
+      assert(h.research.articles.put(s, ArticlePut(s"Tin $s", "concept", Body, tags = List(Tag))).isRight)
+    )
 
   /** The review manager, active, narrowed to this suite's articles. */
   private def activeReview(a: AgentsHandlers, cfg: ManagerConfig = ManagerConfig()): ManagerInfo =
@@ -130,7 +135,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def settle(run: String, slug: String, majors: List[Finding], status: RunState = RunState.Done): Unit =
     assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
     val l = absorb(Ledger(slug), majors, run, 1)._1
-    ReviewLedgerRepo.put(ds, l)
+    ReviewLedgerFixtures.put(ds, l)
     assert(
       TestRuns
         .transition(ds, run, RunState.Running, status, error = Option.when(status == RunState.Failed)("boom"))
@@ -144,7 +149,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m1", "zzagent_m2")
     activeReview(a, ManagerConfig(maxRuns = Some(2), maxRunsPerArticle = Some(3)))
     // m1 has open MAJORs (selected first), m2 was never reviewed
-    ReviewLedgerRepo.put(
+    ReviewLedgerFixtures.put(
       ds,
       absorb(Ledger("zzagent_m1"), List(finding("R1", Reviewer.Rules), finding("S1", Reviewer.Skeptic)), "old", 1)._1
     )
@@ -242,8 +247,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       s"Tin reached the Aegean by sea [[$Ck]].",
       s"Tin reached the Aegean by sea [[$Ck]], which [[zzagent2020_critic]] disputes."
     )
-    assert(h.patchArticle("zzagent_m5", ArticlePatch(body = Some(addressed))).isRight)
-    assertEquals(h.openCritiques("zzagent_m5"), Some(1))
+    assert(h.research.articles.patch("zzagent_m5", ArticlePatch(body = Some(addressed))).isRight)
+    assertEquals(h.research.articles.openCritiques("zzagent_m5"), Some(1))
     // (no cooldown: the tick that evaluates a run dispatches the next)
     a.managers.tick(t0)
     val run2 = item("zzagent_m5")
@@ -271,7 +276,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_m4")).fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     // m3: no progress in one run (2 before, 2 after)
-    ReviewLedgerRepo.put(
+    ReviewLedgerFixtures.put(
       ds,
       absorb(Ledger("zzagent_m3"), List(finding("R1", Reviewer.Rules), finding("R2", Reviewer.Rules)), "x", 1)._1
     )

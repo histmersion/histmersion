@@ -70,7 +70,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
   private def fixtures(cfg: AppConfig): Unit =
     import com.augustnagro.magnum.*
     val ds = testPool(cfg.db)
-    com.histmersion.db.ReviewLedgerRepo.put(ds, ledger)
+    com.histmersion.domain.research.workflows.ReviewLedgerFixtures.put(ds, ledger)
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
             ($RunA, ${Agents.JobKind}, 'done', '2026-10-01T10:00:00Z'::timestamptz),

@@ -216,7 +216,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     List(check("R1", fixed = true, "Tin, the scarce half of bronze, reached the Aegean by sea"))
   )
   private def ledgerOf(h: Handlers): Option[ReviewLedger.Ledger] =
-    com.histmersion.db.ReviewLedgerRepo.get(ds, Slug).toOption.flatten
+    com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, Slug).toOption.flatten
 
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
@@ -265,7 +265,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         )
         .isRight
     )
-    assert(h.putArticle(Slug, ArticlePut("Tin in the Bronze Age", "concept", Body)).isRight)
+    assert(h.research.articles.put(Slug, ArticlePut("Tin in the Bronze Age", "concept", Body)).isRight)
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
@@ -334,7 +334,11 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
           "ledger 0 fixed, 1 open"
       )
     )
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim, "review only: nothing written")
+    assertEquals(
+      h.research.articles.get(Slug).toOption.get.article.body.trim,
+      Body.trim,
+      "review only: nothing written"
+    )
 
   test("fix: the fixer's revision is written with ifUpdatedAt; a rejection raised again is escalated to the backlog"):
     val c = PanelClient(Model)
@@ -360,8 +364,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(run.status, "done", run.error)
     assertEquals(run.params, RunParams(fix = Some(true), rounds = Some(2)))
 
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
-    val versions = h.articleVersions(Slug).toOption.get
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Revised.trim)
+    val versions = h.research.articles.versions(Slug).toOption.get
     assert(versions.nonEmpty, "the previous text is kept, so the run can be undone")
     val names = connect(ds)(AgentRepo.steps(run.id, 10)).map(_.name)
     assertEquals(
@@ -463,7 +467,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Revised.trim)
     val prompts = c.requests
       .get("fixer")
       .asScala
@@ -501,7 +505,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Revised.trim)
     val retry = userPrompt(c.requests.get("fixer").asScala.toList(1).head)
     assertEquals(
       retryPoints(retry),
@@ -553,7 +557,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .toOption
       .get
     assertEquals(merged.findings.flatMap(_.evidence).map(e => (e.citekey, e.offset)), List((Ck, Some(75))))
-    assert(h.getArticle(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
+    assert(h.research.articles.get(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
 
   test("fix: check_edits, called inside the step, reports exactly the problems the validation then raises"):
     val c = PanelClient(Model)
@@ -576,10 +580,13 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", Seq(tool("check_edits", args), text(fixerAnswer(draft))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val direct =
-      h.checkArticle(Slug, io.circe.parser.decode[ArticleEdits.ArticleCheckRequest](args).toOption.get).toOption.get
+      h.research.articles
+        .check(Slug, io.circe.parser.decode[ArticleEdits.ArticleCheckRequest](args).toOption.get)
+        .toOption
+        .get
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Revised.trim)
     val first = c.requests.get("fixer").asScala.toList.head
     val toolOut =
       first.flatMap(_.history.entries.collect { case ConversationEntry.ToolResult(_, "check_edits", r) => r }).head
@@ -598,8 +605,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test("check_edits: a whole draft body, an unknown article, and neither edits nor body"):
     val c = PanelClient(Model)
     val (_, h) = handlers(c); seed(h)
-    val draft = h
-      .checkArticle("zzagent_new", ArticleEdits.ArticleCheckRequest(body = Some(s"New [[zzagent_ghost]].\n\nUncited.")))
+    val draft = h.research.articles
+      .check("zzagent_new", ArticleEdits.ArticleCheckRequest(body = Some(s"New [[zzagent_ghost]].\n\nUncited.")))
       .toOption
       .get
     assert(
@@ -610,14 +617,16 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(draft.kind, "concept")
     assert(
-      h.checkArticle(
-        "zzagent_new",
-        ArticleEdits.ArticleCheckRequest(edits = List(ArticleEdits.EditAnswer(ArticleEdits.Op.Delete, "x")))
-      ).isLeft
+      h.research.articles
+        .check(
+          "zzagent_new",
+          ArticleEdits.ArticleCheckRequest(edits = List(ArticleEdits.EditAnswer(ArticleEdits.Op.Delete, "x")))
+        )
+        .isLeft
     )
-    assert(h.checkArticle(Slug, ArticleEdits.ArticleCheckRequest()).isLeft)
-    val clean = h
-      .checkArticle(
+    assert(h.research.articles.check(Slug, ArticleEdits.ArticleCheckRequest()).isLeft)
+    val clean = h.research.articles
+      .check(
         Slug,
         ArticleEdits.ArticleCheckRequest(
           List(ArticleEdits.EditAnswer(ArticleEdits.Op.Replace, "Tin reached", Some("Tin, a metal, reached")))
@@ -627,7 +636,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .get
     assertEquals((clean.problems, clean.fatal, clean.edits.map(_.applied)), (Nil, false, List(true)))
     assert(ArticleEdits.markdown(clean).contains("No problems"), ArticleEdits.markdown(clean))
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim, "a check writes nothing")
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Body.trim, "a check writes nothing")
 
   test(
     "fix (#958): coverage drift is a mechanical finding; the fixer answers it with a reason and deletes the hand-written list"
@@ -650,7 +659,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       assert(h.library.sources.patch(ck, SourcePatch(topics = Some(List("zzagent_review_tin")))).isRight)
     )
     assert(
-      h.patchArticle(Slug, ArticlePatch(filter = Some(ArticleFilter(topics = List("zzagent_review_tin"))))).isRight
+      h.research.articles
+        .patch(Slug, ArticlePatch(filter = Some(ArticleFilter(topics = List("zzagent_review_tin")))))
+        .isRight
     )
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
@@ -670,7 +681,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       fixerPrompt
     )
     // written: the body without the hand-written list, and the reason
-    val after = h.getArticle(Slug).toOption.get
+    val after = h.research.articles.get(Slug).toOption.get
     assert(!after.article.body.contains("## Not used"), after.article.body)
     assertEquals(after.coverage.map(_.drift), Some(Nil))
     assertEquals(
@@ -718,10 +729,15 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val theirs = Body.replace("by sea", "by sea and by land")
-    c.before = w => if w == "fixer" then assert(h.patchArticle(Slug, ArticlePatch(body = Some(theirs))).isRight)
+    c.before =
+      w => if w == "fixer" then assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(theirs))).isRight)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, theirs.trim, "a stale fix never overwrites")
+    assertEquals(
+      h.research.articles.get(Slug).toOption.get.article.body.trim,
+      theirs.trim,
+      "a stale fix never overwrites"
+    )
     assert(run.warnings.exists(_.contains("changed while the fixer worked")), run.warnings)
     val patched = connect(ds)(AgentRepo.steps(run.id, 4000))
       .find(_.name == "patch-1")
@@ -909,7 +925,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(led.entry("S1").flatMap(_.closed).map(_.quote), Some("The cargo dates to about 1320 BCE"))
     assertEquals(led.entry("S2").map(_.finding.severity), Some(ReviewArticle.Severity.Minor))
     assertEquals(led.lessons.map(l => (l.text, l.source)), List((lesson, ReviewLedger.LessonSource.Recheck)))
-    assert(h.getArticle(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
+    assert(h.research.articles.get(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
     assert(
       log.exists(l =>
@@ -946,7 +962,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
       c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
       c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
-      val cfg = baseCfg.copy(agents = baseCfg.agents.copy(review = baseCfg.agents.review.copy(finalPanel = mode)))
+      val cfg = baseCfg.copy(researchAgents =
+        baseCfg.researchAgents.copy(review = baseCfg.researchAgents.review.copy(finalPanel = mode))
+      )
       val (a, h) = handlers(c, cfg); seed(h)
       (start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2))), c)
     val (clear, c1) = go("clear")
@@ -999,7 +1017,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(ledgerOf(h).flatMap(_.task), Some(item.id))
 
     // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
-    assert(h.patchArticle(Slug, ArticlePatch(body = Some(Revised))).isRight)
+    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(Revised))).isRight)
     // (the retry amends the answer without looking the record up again: the first attempt's call counts)
     val noChecks = looked(rules("PASS"))
     val checked = text(
@@ -1030,12 +1048,14 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
     // the mines are named; run 3 closes R2, and the item with it
     assert(
-      h.patchArticle(
-        Slug,
-        ArticlePatch(body =
-          Some(Revised.replace("Where the tin was mined is open", s"The tin was mined in Central Asia [[$Ck2]]"))
+      h.research.articles
+        .patch(
+          Slug,
+          ArticlePatch(body =
+            Some(Revised.replace("Where the tin was mined is open", s"The tin was mined in Central Asia [[$Ck2]]"))
+          )
         )
-      ).isRight
+        .isRight
     )
     // it now cites two sources: a spot-check on each, each record read
     val spotIso =
@@ -1110,7 +1130,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       "27 terms are undefined (more than 8)",
       "define each on first use, and add a Glossary"
     )
-    com.histmersion.db.ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(legacy, "old", 1))))
+    com.histmersion.domain.research.workflows.ReviewLedgerFixtures
+      .put(ds, ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(legacy, "old", 1))))
     val c = PanelClient(Model)
     c.add("rules", looked(rules("PASS")))
     // the reader still counts 12 and, as its instructions may say, calls that MAJOR
@@ -1173,13 +1194,16 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         )
       )
     )
-    com.histmersion.db.ReviewLedgerRepo.put(ds, l)
-    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, Slug), Right(Some(l)))
+    com.histmersion.domain.research.workflows.ReviewLedgerFixtures.put(ds, l)
+    assertEquals(com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, Slug), Right(Some(l)))
     val moved = Slug + "_moved"
     assert(h.renameArticle(Slug, LabelRename(moved)).isRight)
-    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, moved).map(_.map(_.entries)), Right(Some(l.entries)))
-    assert(h.deleteArticle(moved).isRight)
-    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, moved), Right(None))
+    assertEquals(
+      com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, moved).map(_.map(_.entries)),
+      Right(Some(l.entries))
+    )
+    assert(h.research.articles.delete(moved).isRight)
+    assertEquals(com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, moved), Right(None))
 
   // ── #992: dry runs, a role's own model, compare ──────────────────────────────────────────────────
 
@@ -1212,7 +1236,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(run.status, "done", run.error)
     assert(run.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Body.trim)
 
     val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     assertEquals(
@@ -1489,10 +1513,14 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     * answer carries one (the spot-checks are not what these tests are about).
     */
   private lazy val oneSpot =
-    baseCfg.copy(agents = baseCfg.agents.copy(review = baseCfg.agents.review.copy(spotChecks = 1)))
+    baseCfg.copy(researchAgents =
+      baseCfg.researchAgents.copy(review = baseCfg.researchAgents.review.copy(spotChecks = 1))
+    )
 
   private def states(h: Handlers): List[(String, String)] =
-    h.critiques(Slug, h.getArticle(Slug).toOption.get.article.body).map(p => (p.ref.wire, p.state.wire))
+    h.research.articles
+      .critiques(Slug, h.research.articles.get(Slug).toOption.get.article.body)
+      .map(p => (p.ref.wire, p.state.wire))
 
   test(
     "critiques: the skeptic rules on every open pair; one is taken up in one paragraph, one is not material — converged"
@@ -1564,7 +1592,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // the confirming skeptic was shown no open pair, only the reasoned one
     val confirm = userPrompt(c.requests.get("skeptic").asScala.toList(2).head)
     assert(confirm.contains("No pair is open.") && confirm.contains(s"$Ck3>$Ck: The article cites it"), confirm)
-    assertEquals(h.openCritiques(Slug), Some(0))
+    assertEquals(h.research.articles.openCritiques(Slug), Some(0))
 
   test(
     "critiques: a missing-critique MAJOR on no pair, and an unruled open pair, are sent back; the fixer sets one aside"
@@ -1599,7 +1627,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     val (a, h) = handlers(c); seed(h); critics(h)
-    val token = h.getArticle(Slug).toOption.get.article.updatedAt
+    val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     val retry = retryPoints(userPrompt(c.requests.get("skeptic").asScala.toList(1).head))
@@ -1624,8 +1652,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       List((Ck3, false), (Ck2, true))
     )
     // a set-aside alone writes no version and leaves the article's token as it was
-    assertEquals(h.getArticle(Slug).toOption.get.article.updatedAt, token)
-    assertEquals(h.articleVersions(Slug).toOption.get, Nil)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.updatedAt, token)
+    assertEquals(h.research.articles.versions(Slug).toOption.get, Nil)
     assertEquals(ledger.openMajors, Nil)
 
   test(
@@ -1777,8 +1805,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // the fixer answers nothing: the critique is written, only the citation of the work it answers is missing
     c.add("fixer", Seq(text(fixerAnswer(Nil, applied = Nil))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val body = h
-      .getArticle(Slug)
+    val body = h.research.articles
+      .get(Slug)
       .toOption
       .get
       .article
@@ -1787,11 +1815,12 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         s"Tin reached the Aegean by sea [[$Ck]].",
         s"Tin reached the Aegean by sea [[$Ck]].\n\nAn isotope study answers Tinley's sea route [[$Ck2]]."
       )
-    assert(h.patchArticle(Slug, ArticlePatch(body = Some(body))).isRight)
+    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(body))).isRight)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     assert(
-      h.getArticle(Slug)
+      h.research.articles
+        .get(Slug)
         .toOption
         .get
         .article
@@ -1904,7 +1933,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       List(("R1", ReviewLedger.Status.Fixed, 0), ("S1", ReviewLedger.Status.Fixed, 0))
     )
     assert(
-      h.getArticle(Slug)
+      h.research.articles
+        .get(Slug)
         .toOption
         .get
         .article

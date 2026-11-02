@@ -12,16 +12,8 @@ import com.histmersion.api.Autopilot.AutopilotSet
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
-import com.histmersion.db.{
-  AgentRepo,
-  AutopilotRepo,
-  GoalLinkRepo,
-  GoalRepo,
-  ManagerRepo,
-  Migrate,
-  QueueRows,
-  ReviewLedgerRepo
-}
+import com.histmersion.db.{AgentRepo, AutopilotRepo, GoalLinkRepo, GoalRepo, ManagerRepo, Migrate, QueueRows}
+import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.Json
 import sttp.ai.core.agent.*
@@ -69,10 +61,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
           goalPlan = "auto",
           auto = b.agents.approvals.auto.copy(publishMinSources = 2)
         ),
-        autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 2),
-        review = b.agents.review.copy(spotChecks = 0)
+        autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 2)
       ),
-      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2))
+      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2)),
+      researchAgents = b.researchAgents.copy(review = b.researchAgents.review.copy(spotChecks = 0))
     )
 
   /** The same with every approval a person's (the shipped defaults). */
@@ -302,7 +294,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(pub.state, "approved")
     assert(pub.note.exists(_.startsWith("autopilot: approved — filter 2 sources")), pub.note)
     assertEquals(exec(a, comp.id).status, "done", why(connect(ds)(AgentRepo.get(comp.id)).get))
-    assert(h.getArticle("zzagent_new").isRight)
+    assert(h.research.articles.get("zzagent_new").isRight)
     clock.tick(a)
     assertEquals(item(seedId(Goal), ArticleCompile, "zzagent_new").status, "done")
     clock.tick(a)
@@ -311,7 +303,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // 4. the review (settled by hand: it converged) → the goal is reviewed
     val rev = runOf(ReviewId, ArticleReview, "zzagent_new")
     assert(TestRuns.transition(ds, rev.id, RunState.Queued, RunState.Running).isDefined)
-    ReviewLedgerRepo.put(ds, absorb(Ledger("zzagent_new"), Nil, rev.id, 1)._1)
+    ReviewLedgerFixtures.put(ds, absorb(Ledger("zzagent_new"), Nil, rev.id, 1)._1)
     assert(TestRuns.transition(ds, rev.id, RunState.Running, RunState.Done).isDefined)
     clock.tick(a)
     assertEquals(item(ReviewId, ArticleReview, "zzagent_new").status, "done")
@@ -570,18 +562,20 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test("extend: an article whose filter returns uncited, unreasoned sources gets an article-extend item, then rests"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     assert(
-      h.putArticle(
-        "zzagent_x",
-        ArticlePut(
-          "Zz tin",
-          "concept",
-          s"Tin [[$Ck]].",
-          tags = List("zzx"),
-          filter = Some(ArticleFilter(topics = List("zzagent_tin")))
+      h.research.articles
+        .put(
+          "zzagent_x",
+          ArticlePut(
+            "Zz tin",
+            "concept",
+            s"Tin [[$Ck]].",
+            tags = List("zzx"),
+            filter = Some(ArticleFilter(topics = List("zzagent_tin")))
+          )
         )
-      ).isRight
+        .isRight
     )
-    assertEquals(h.newFilterSources("zzagent_x"), Some(1))
+    assertEquals(h.research.articles.newFilterSources("zzagent_x"), Some(1))
     a.managers.ensureDefaults()
     // no selection (refill batch 0): only the extension
     a.managing.update(
@@ -604,10 +598,11 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(item(ReviewId, ArticleExtend, "zzagent_x").status, "done")
     // a reason for the source: nothing new
     assert(
-      h.patchArticle("zzagent_x", ArticlePatch(reasons = List(CoverageReason(Ck2, "a later study, cited elsewhere"))))
+      h.research.articles
+        .patch("zzagent_x", ArticlePatch(reasons = List(CoverageReason(Ck2, "a later study, cited elsewhere"))))
         .isRight
     )
-    assertEquals(h.newFilterSources("zzagent_x"), Some(0))
+    assertEquals(h.research.articles.newFilterSources("zzagent_x"), Some(0))
 
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 

@@ -31,6 +31,11 @@ trait ManagerKindDefinition:
   /** A manager's settings when it saves none: the server's defaults for its kind. */
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig
 
+  /** A manager's settings in effect: its saved config `c` over the defaults of its kind (by default the run limits,
+    * failures and backoff the engine knows; a kind whose items have more to set reads them itself).
+    */
+  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(kind, c, m)
+
   /** The pipeline an item of `itemKind` runs. */
   def pipelineOf(itemKind: String): Pipeline
 

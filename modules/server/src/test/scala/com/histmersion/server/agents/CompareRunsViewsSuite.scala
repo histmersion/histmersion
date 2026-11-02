@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.workflows.ReviewComparison
+
 import com.histmersion.domain.automation.agents.{CompareRunsViews, OutputComparison}
 import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.automation.managers.Zero
@@ -74,7 +76,10 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       .compare(
         runs.toList.map(CompareRunsViews.run),
         _ => None,
-        if runs.headOption.exists(_.run.pipeline == "enrich-source") then EnrichComparison else OutputComparison.none
+        runs.headOption.map(_.run.pipeline) match
+          case Some("enrich-source")  => EnrichComparison
+          case Some("review-article") => ReviewComparison
+          case _                      => OutputComparison.none
       )
       .map(CompareRunsViews.comparison)
       .fold(fail(_), identity)

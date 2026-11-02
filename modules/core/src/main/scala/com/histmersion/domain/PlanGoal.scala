@@ -1,6 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.Articles
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -8,7 +7,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.GoalPlans.{Plan, PlannedGoal, PlannedWork}
-import com.histmersion.values.Doi
+import com.histmersion.values.{Doi, Slug}
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,
@@ -86,7 +85,7 @@ object PlanGoal:
 
     val goals = a.subGoals
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
-        Articles.slugOf(Option(g.slug).getOrElse("")) match
+        Slug.parse(Option(g.slug).getOrElse("")).map(_.value) match
           case Left(m)                                            => problems += s"sub-goal: $m"; acc
           case Right(s) if Option(g.title).forall(_.trim.isEmpty) => problems += s"sub-goal '$s' has no title"; acc
           case Right(s) if s == goal                              => dropped += s"sub-goal '$s' is the goal itself"; acc

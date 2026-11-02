@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.connect
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.approvals.AutoApprovals
@@ -13,13 +11,11 @@ import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.api.ArticlePlans.ArticlePlan
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.domain.PlanArticles.ArticlesAnswer
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
-import com.histmersion.server.Handlers
+import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-
-import javax.sql.DataSource
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -34,8 +30,12 @@ import javax.sql.DataSource
   * read only; a plan with nothing left after the checks goes back with why) · record (the approval) · close (the
   * worklog line). A DRY run records the approval it would open on its step.
   */
-final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, lib: => LibraryAgentsConfig)
-    extends PipelineDef:
+final class ProposeArticlesPipeline(
+    site: ResearchSite,
+    goals: GoalService,
+    managers: ManagerService,
+    lib: => LibraryAgentsConfig
+) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
@@ -51,7 +51,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
       )((a, last) => check(ctx, loaded, a, last).map(Checked(_, Nil)))
       recorded <- ctx.code[Recorded]("record")(record(ctx, goal, plan))
       closed <- ctx.code[String]("close")(
-        Pipelines.log(h.workLists, ctx, PlanArticles.logLine(goal, plan, recorded.line, ctx.run.id))
+        Pipelines.log(site.workLists, ctx, PlanArticles.logLine(goal, plan, recorded.line, ctx.run.id))
       )
     yield closed
 
@@ -70,30 +70,30 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
     */
   private def family(slug: String): List[String] =
     val up = Iterator
-      .iterate(connect(ds)(GoalRepo.get(slug)).flatMap(_.parentSlug))(
-        _.flatMap(p => connect(ds)(GoalRepo.get(p)).flatMap(_.parentSlug))
+      .iterate(goals.get(slug).flatMap(_.parentSlug))(
+        _.flatMap(p => goals.get(p).flatMap(_.parentSlug))
       )
       .takeWhile(_.isDefined)
       .take(16)
       .flatten
       .toList
     def down(s: String, depth: Int): List[String] =
-      if depth > 16 then Nil else connect(ds)(GoalRepo.children(s)).flatMap(c => c.slug :: down(c.slug, depth + 1))
+      if depth > 16 then Nil else goals.children(s).flatMap(c => c.slug :: down(c.slug, depth + 1))
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
   private def load(slug: String): Either[String, Loaded] =
-    h.getGoal(slug).left.map(_.message).map { g =>
-      val links = connect(ds)(GoalLinkRepo.links(g.slug))
+    site.goal(slug).left.map(_.message).map { g =>
+      val links = goals.links(g.slug)
       val area = g.slug :: family(g.slug)
-      val articles = area.flatMap(a => GoalLinkRepo.refs(ds, a, LinkKind.Article)).distinct.flatMap { ref =>
-        h.getArticle(ref).toOption.map { v =>
-          val f = h.research.articleStore.load(v.article.slug).flatMap(_.filter)
-          Existing(v.article.slug, v.article.title, f, h.citedSources(v.article.body))
+      val articles = area.flatMap(a => goals.refs(a, LinkKind.Article)).distinct.flatMap { ref =>
+        site.articles.get(ref).toOption.map { v =>
+          val f = site.articleStore.load(v.article.slug).flatMap(_.filter)
+          Existing(v.article.slug, v.article.title, f, site.articles.citedSources(v.article.body))
         }
       }
       // what its seeding manager (or a parent's or sub-area's) will compile already counts as the area's
       val planned = area
-        .flatMap(a => ManagerRepo.items(ds, Managers.seedId(a), None, 0, 1000)._1)
+        .flatMap(a => managers.items(Managers.seedId(a), 1000))
         .filter(i =>
           i.kind == Managers.ArticleCompile && !Managers.ItemStatus
             .parse(i.status)
@@ -102,7 +102,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         .flatMap(i => i.state.spec.map(sp => Existing(i.target, sp.title, Some(sp.filter), Nil)))
         .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
       val vocab = (field: String) =>
-        h.library.labels
+        site.labels
           .facets(field, None, Filter())
           .toOption
           .toList
@@ -147,7 +147,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
   private def sourcesOf(e: Existing): Set[String] =
-    e.filter.fold(Set.empty[String])(f => h.filterReach(f, Nil, OverlapCap)._3.toSet) ++ e.cited
+    e.filter.fold(Set.empty[String])(f => site.articles.filterReach(f, Nil, OverlapCap)._3.toSet) ++ e.cited
 
   private def check(ctx: RunCtx, l: Loaded, a: ArticlesAnswer, last: Boolean): Either[List[String], ArticlePlan] =
     val lim = limits(ctx)
@@ -159,8 +159,8 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         a.rationale,
         cs,
         dropped,
-        s => !taken(s) && !connect(ds)(AgentRepo.slugExists(s)) && h.getArticle(s).isLeft,
-        f => { val (n, _, rows) = h.filterReach(f, Nil, OverlapCap); (n, rows.toSet) },
+        s => !taken(s) && !site.articleStore.exists(s) && site.articles.get(s).isLeft,
+        f => { val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap); (n, rows.toSet) },
         existing,
         lim
       )

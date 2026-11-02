@@ -3,6 +3,7 @@ package com.histmersion.domain.research
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.LibraryStoreSuite.Ticking
 import com.histmersion.domain.research.articles.ArticleService
+import com.histmersion.domain.research.workflows.ReviewLedgerService
 import com.histmersion.util.database.Transactor
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
@@ -25,7 +26,8 @@ object ResearchStoreSuite:
     protected def fresh(test: String): Option[ResearchStores] =
       val state = AtomicReference(ResearchState.empty)
       Some(new ResearchStores:
-        val articles = ArticleService.InMemory(state, Ticking()))
+        val articles = ArticleService.InMemory(state, Ticking())
+        val ledgers = ReviewLedgerService.InMemory(state))
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends ResearchStoreSuite:
@@ -43,4 +45,5 @@ object ResearchStoreSuite:
         val db = Transactor(scratch(made.incrementAndGet().toString))
         new ResearchStores:
           val articles = ArticleService(db)
+          val ledgers = ReviewLedgerService(db)
       }

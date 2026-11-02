@@ -700,6 +700,8 @@ config:config/QueryConfig.scala	library.search
 config:config/QuotaConfig.scala	automation.agents
 config:config/RecheckConfig.scala	library.acquisition
 config:config/RefreshIntervalMinutes.scala	values
+config:config/ResearchAgentsConfig.scala	research.workflows
+config:config/ResearchManagersConfig.scala	research.workflows
 config:config/RetractionWatchConfig.scala	library.acquisition
 config:config/ReviewManagerConfig.scala	research.workflows
 config:config/RuntimeConfig.scala	automation.agents
@@ -811,7 +813,6 @@ db:db/Migrate.scala	util.common
 db:db/ModelSettingsRepo.scala	automation.agents
 db:db/Param.scala	util.common
 db:db/PlanQuotaRepo.scala	automation.agents
-db:db/ReviewLedgerRepo.scala	research.workflows
 db:db/Sql.scala	util.common
 db:db/UiRepo.scala	server.instance
 db:db/Vocab.scala	util.common
@@ -860,6 +861,7 @@ server:server/OpsTools.scala	split
 server:server/PageKind.scala	research.articles
 server:server/Pages.scala	research.articles
 server:server/ResearchWiring.scala	server
+server:server/ResearchWorkflowSite.scala	server
 server:server/SeedNoteFiles.scala	server
 server:server/ServerArgs.scala	server
 server:server/ServerGraph.scala	server
@@ -874,7 +876,6 @@ server:server/SystemContext.scala	server
 server:server/TimeZoneCheck.scala	server.instance
 server:server/UiConfigViews.scala	server.instance
 server:server/agents/AgentDoctor.scala	automation.agents
-server:server/agents/ArticleObjectives.scala	server
 server:server/agents/BuiltinAi.scala	automation.agents
 server:server/agents/ClaudeCode.scala	automation.agents
 server:server/agents/ClaudeCodeClient.scala	automation.agents
@@ -886,21 +887,15 @@ server:server/agents/CliRuntime.scala	automation.agents
 server:server/agents/Codex.scala	automation.agents
 server:server/agents/CodexExecClient.scala	automation.agents
 server:server/agents/CodexHome.scala	automation.agents
-server:server/agents/CompileArticlePipeline.scala	research.workflows
 server:server/agents/GeneratePluginMain.scala	server
 server:server/agents/HostAiProvider.scala	automation.agents
-server:server/agents/InferFilterPipeline.scala	research.workflows
 server:server/agents/Opencode.scala	automation.agents
 server:server/agents/OpencodeRunClient.scala	automation.agents
 server:server/agents/PipelineWorkflow.scala	server
 server:server/agents/PlanPools.scala	automation.agents
-server:server/agents/ProposeArticlesPipeline.scala	research.workflows
 server:server/agents/QuotaGuard.scala	automation.agents
 server:server/agents/RefreshGate.scala	automation.agents
 server:server/agents/Refreshed.scala	automation.agents
-server:server/agents/ResearchAnswers.scala	research.workflows
-server:server/agents/ReviewArticlePipeline.scala	research.workflows
-server:server/agents/ReviewManagerKind.scala	server
 server:server/agents/SeedManagerKind.scala	server
 server:server/agents/TransitionApprovalEffects.scala	server
 server:server/agents/TransitionHost.scala	server

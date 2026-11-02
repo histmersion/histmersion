@@ -16,7 +16,7 @@ import io.scalaland.chimney.dsl.*
 
 /** The engine's [[AutomationHost]] over today's handlers, until each operation's owner offers its own service. */
 final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends AutomationHost:
-  def articleExists(slug: String): Boolean = h.articleExists(slug)
+  def articleExists(slug: String): Boolean = h.research.articleStore.exists(slug)
   def goal(slug: String): Either[ApiError, Goal] = h.getGoal(slug)
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] = h.putGoal(slug, in)
   def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal] = h.patchGoal(slug, patch)
@@ -24,7 +24,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
     p.targetKind match
       case TargetKind.Source => Some(h.library.sources.get(raw, body = false).map(_.source.citekey))
       case TargetKind.Article if p == Pipeline.CompileArticle => Some(Articles.slugOf(raw).left.map(ApiError(_)))
-      case TargetKind.Article                                 => Some(h.getArticle(raw).map(_.article.slug))
+      case TargetKind.Article                                 => Some(h.research.articles.get(raw).map(_.article.slug))
       case TargetKind.Goal                                    => Some(h.getGoal(raw.trim).map(_.slug))
       case TargetKind.Manager                                 => None
 
@@ -42,7 +42,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
       case _ if req.rounds.exists(n => n < 1 || n > roundsCap) =>
         Left(ApiError(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)"))
       case Pipeline.CompileArticle =>
-        val exists = h.articleExists(target)
+        val exists = h.research.articleStore.exists(target)
         val filter =
           req.query.exists(_.trim.nonEmpty) || req.topics.exists(_.trim.nonEmpty) || req.tags.exists(_.trim.nonEmpty)
         for
@@ -70,7 +70,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
     (p.roles ++ (if p == Pipeline.CompileArticle then Pipeline.ReviewArticle.roles else Nil)).distinct
 
   def linkRef(kind: LinkKind, raw: String): Either[ApiError, String] =
-    if kind == LinkKind.Article then h.getArticle(raw).map(_.article.slug)
+    if kind == LinkKind.Article then h.research.articles.get(raw).map(_.article.slug)
     else h.library.sources.get(raw, body = false).map(_.source.citekey)
 
   def probeSubject(citekey: String): Either[ApiError, ProbeAnswer] =

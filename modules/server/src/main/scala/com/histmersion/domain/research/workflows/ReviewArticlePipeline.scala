@@ -1,8 +1,6 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
-
-import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.agents.{
   AgentDefinitions,
@@ -27,11 +25,7 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.Queue.QueuePatch
 import com.histmersion.domain.ReviewLedger.Ledger
-import com.histmersion.db.{AgentRepo, ReviewLedgerRepo}
-import com.histmersion.server.Handlers
 import io.circe.syntax.*
-
-import javax.sql.DataSource
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -73,9 +67,9 @@ import javax.sql.DataSource
   * MEMORY, so a `fix` dry run exercises every pass a real one would.
   */
 final class ReviewArticlePipeline(
-    h: Handlers,
-    ds: DataSource,
-    cfg: => AgentsConfig,
+    site: ResearchSite,
+    ledgers: => ReviewLedgerService,
+    cfg: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
     approvals: SourceProposals,
     definitions: AgentDefinitions
@@ -256,7 +250,7 @@ final class ReviewArticlePipeline(
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: String): Either[String, Ledger] =
-    ReviewLedgerRepo.get(ds, slug).map(_.getOrElse(Ledger(slug)))
+    ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
   private def persist(ctx: RunCtx, l: Ledger): Ledger =
@@ -264,7 +258,7 @@ final class ReviewArticlePipeline(
       s"review ledger of [[${l.slug}]]: ${l.open.size} open (${l.openMajors.size} major), " +
         s"${l.entries.size - l.open.size} closed, ${l.lessons.size} lesson(s)",
       l.asJson
-    )(ReviewLedgerRepo.put(ds, l))(())
+    )(ledgers.put(l))(())
     l
 
   /** A full pass into the ledger: the mechanical findings re-checked by code, each reviewer's checks of its open
@@ -349,7 +343,7 @@ final class ReviewArticlePipeline(
     if rs.nonEmpty then
       val p = ArticlePatch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
-        h.patchArticle(slug, p).left.map(_.message).map(_ => ())
+        site.articles.patch(slug, p).left.map(_.message).map(_ => ())
       )(Right(())) match
         case Left(m)  => ctx.warn(s"critique reasons not stored: $m")
         case Right(_) => ()
@@ -390,7 +384,7 @@ final class ReviewArticlePipeline(
       unwritten: Option[String],
       reasons: List[CritiqueReason]
   ): Either[String, Snapshot] =
-    h.getArticle(slug).left.map(_.message).flatMap { v =>
+    site.articles.get(slug).left.map(_.message).flatMap { v =>
       val a = v.article
       val body = unwritten.getOrElse(a.body)
       if body.trim.isEmpty then Left(s"article '$slug' has no body to review")
@@ -401,7 +395,7 @@ final class ReviewArticlePipeline(
         val linked = AgentVerify.wikilinks(text).toSet
         val cited = if unwritten.isEmpty then v.sourcesCited else v.sourcesCited.filter(c => linked(c.citekey))
         // a dry run's reasons were never written: its checklist counts them all the same
-        val critiques = h.critiques(a.slug, text, if ctx.dryRun then reasons else Nil)
+        val critiques = site.articles.critiques(a.slug, text, if ctx.dryRun then reasons else Nil)
         Right(Snapshot(a.slug, a.title, a.kind, text, a.updatedAt, cut, v.coverage, cited, critiques))
     }
 
@@ -420,7 +414,7 @@ final class ReviewArticlePipeline(
     val drift = s.coverage.toList.flatMap(coverageDrift(_, body.size + 1))
     val formatting = before.toList
       .flatMap { b =>
-        val corpus = h.bodyCorpus(List(b, s.body), generated = s.coverage.isDefined)
+        val corpus = site.articles.bodyCorpus(List(b, s.body), generated = s.coverage.isDefined)
         val old = corpus.formatErrors(b).toSet
         corpus.formatErrors(s.body).filterNot(old)
       }
@@ -443,15 +437,15 @@ final class ReviewArticlePipeline(
     * queries, as the page renderer does.
     */
   private def isTarget(body: String): String => Boolean =
-    val resolve = h.pageLinks(AgentVerify.wikilinks(body))
+    val resolve = site.articles.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: String): Boolean = h.library.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = site.sources.get(ck, body = false).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   private def recordText(ck: String): Option[String] =
-    h.library.sources.get(ck, body = true).toOption.map { s =>
+    site.sources.get(ck, body = true).toOption.map { s =>
       (s.source.summary.toList ++ s.findings.map(_.claim) ++ s.source.notes.toList ++ s.source.ocrMarkdown.toList)
         .mkString("\n\n")
     }
@@ -686,13 +680,13 @@ final class ReviewArticlePipeline(
     val pairsMemo = java.util.concurrent.ConcurrentHashMap[String, List[CritiquePair]]()
     val citedMemo = java.util.concurrent.ConcurrentHashMap[String, Set[String]]()
     def pairsOf(b: String) =
-      if b == s.body then s.critiques else pairsMemo.computeIfAbsent(b, x => h.critiques(s.slug, x, extra))
-    def cites(b: String, ck: String) = citedMemo.computeIfAbsent(b, x => h.citedSources(x).toSet)(ck)
+      if b == s.body then s.critiques else pairsMemo.computeIfAbsent(b, x => site.articles.critiques(s.slug, x, extra))
+    def cites(b: String, ck: String) = citedMemo.computeIfAbsent(b, x => site.articles.citedSources(x).toSet)(ck)
     def answered(b: String, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
     val guards = FixGuards(
       pairsOf,
       (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, lib.verify.quoteMinRatio),
-      b => h.repairPairing(b)
+      b => site.articles.repairPairing(b)
     )
     ctx.llm[FixerAnswer, Fix](
       s"fixer-$r",
@@ -703,7 +697,10 @@ final class ReviewArticlePipeline(
       turns
     ) { (a, last) =>
       val corpus =
-        h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text), generated = s.coverage.isDefined)
+        site.articles.bodyCorpus(
+          s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text),
+          generated = s.coverage.isDefined
+        )
       checkFix(
         a,
         m,
@@ -728,7 +725,7 @@ final class ReviewArticlePipeline(
     * unambiguous, after the fix.
     */
   private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
-    val (hits, resolve) = h.pairing(s.body)
+    val (hits, resolve) = site.articles.pairing(s.body)
     val units = Critiques.units(s.body)
     def near(f: Finding) =
       Option(
@@ -787,14 +784,14 @@ final class ReviewArticlePipeline(
            else s", ${f.setAside.size + f.pairsAside.size} critique(s) set aside") +
           (if f.repairs.isEmpty then "" else s", ${f.repairs.size} citation(s) added by the pairing repair"),
         p.asJson
-      )(h.patchArticle(s.slug, p).map(_ => true))(Right(false)) match
+      )(site.articles.patch(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
           Right(ReviewArticle.Patched(written = false, None, conflict = false))
         case Right(_) =>
           persist(ctx, after)
           Right(
-            ReviewArticle.Patched(written = true, connect(ds)(AgentRepo.latestArticleVersion(s.slug)), conflict = false)
+            ReviewArticle.Patched(written = true, site.articleStore.latestVersion(s.slug), conflict = false)
           )
         case Left(e) if e.code.contains(Write.CodePrecondition) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
@@ -815,22 +812,22 @@ final class ReviewArticlePipeline(
     val ledger = persist(ctx, backlog(ctx, slug, c.ledger))
     // the checklist as the run leaves it: the stored body (a dry run's revision held in memory)
     val body =
-      st.unwritten.orElse(h.getArticle(slug, brief = true).toOption.map(_.article.body)).getOrElse(st.snap.body)
-    val pairs = h.critiques(slug, body, if ctx.dryRun then c.reasons else Nil)
+      st.unwritten.orElse(site.articles.get(slug, brief = true).toOption.map(_.article.body)).getOrElse(st.snap.body)
+    val pairs = site.articles.critiques(slug, body, if ctx.dryRun then c.reasons else Nil)
     val line = logLine(outcome, last, ctx.run.id) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
       (if end.deferred.isEmpty then ""
        else s"; ${Plural.count(end.deferred.size, "new MAJOR")} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
-    Pipelines.log(h.workLists, ctx, line)
+    Pipelines.log(site.workLists, ctx, line)
 
   private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label
-    val open = h.queues.list(Queue.Kind.Tasks, QueueScope.Open)
+    val open = site.queues.list(Queue.Kind.Tasks, QueueScope.Open)
     // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)
     val current = l.task
-      .flatMap(i => h.queues.get(QueueItemId(i)))
+      .flatMap(i => site.queues.get(QueueItemId(i)))
       .filter(i => i.list == tasks && i.status == Queue.Open)
       .orElse(open.filter(i => ReviewLedger.articleTask(slug, i.text)).sortBy(_.id).headOption)
     val kept = ReviewLedger.taskText(l, ctx.run.id) match
@@ -839,18 +836,22 @@ final class ReviewArticlePipeline(
         current match
           case Some(item) =>
             val p = QueuePatch(text = Some(text))
-            ctx.write(s"tasks item #${item.id} rewritten", p.asJson)(h.ops.queuePatch(item.id, p).toOption.map(_.id))(
+            ctx.write(s"tasks item #${item.id} rewritten", p.asJson)(
+              site.workLists.patch(item.id, p).toOption.map(_.id)
+            )(
               Some(item.id)
             )
           case None =>
             val add = Pipelines.entry(ctx, text, Some("agent review"))
-            ctx.write("tasks item", add.asJson)(h.ops.queueAdd(tasks, add).toOption.map(_.id))(None)
+            ctx.write("tasks item", add.asJson)(site.workLists.add(tasks, add).toOption.map(_.id))(None)
       case None =>
         current.foreach { item =>
           val p =
             QueuePatch(status = Some(Queue.Done), reason = Some(s"no MAJOR open after agent run ${ctx.run.id.take(8)}"))
           val _ =
-            ctx.write(s"tasks item #${item.id} done", p.asJson)(h.ops.queuePatch(item.id, p).map(_ => ()))(Right(()))
+            ctx.write(s"tasks item #${item.id} done", p.asJson)(site.workLists.patch(item.id, p).map(_ => ()))(
+              Right(())
+            )
         }
         None
     // the items runs before #934 left, one per finding, and any second collapsed item of the article:
@@ -866,6 +867,6 @@ final class ReviewArticlePipeline(
         )
         val p = QueuePatch(status = Some(Queue.Done), reason = Some(why))
         val _ =
-          ctx.write(s"tasks item #${item.id} done", p.asJson)(h.ops.queuePatch(item.id, p).map(_ => ()))(Right(()))
+          ctx.write(s"tasks item #${item.id} done", p.asJson)(site.workLists.patch(item.id, p).map(_ => ()))(Right(()))
       }
     l.copy(task = kept)

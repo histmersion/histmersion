@@ -38,6 +38,9 @@ trait EngineSite:
   /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
   def sourcesToPlan: Int = config.libraryAgents.seed.minSources
 
+  /** The most panel rounds a run or a manager may ask a review for (`agents.review.rounds-cap`). */
+  def roundsCap: Int = config.researchAgents.review.roundsCap
+
   /** What the definitions are held to: the contributed tools and roles. */
   def roster: AgentRoster
 

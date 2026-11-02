@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.{connect, transact}
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
@@ -13,13 +11,10 @@ import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunReq
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.GoalPlans.{ArticleDraft, DraftMode, LinkKind}
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, GoalLinkRepo}
-import com.histmersion.server.Handlers
+import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-
-import javax.sql.DataSource
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -44,9 +39,10 @@ import javax.sql.DataSource
   * text for one to review.
   */
 final class CompileArticlePipeline(
-    h: Handlers,
-    ds: DataSource,
+    site: ResearchSite,
+    goals: GoalService,
     cfg: => AgentsConfig,
+    research: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
     startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]
 ) extends PipelineDef:
@@ -99,10 +95,10 @@ final class CompileArticlePipeline(
 
   private def snapshot(ctx: RunCtx, slug: String): Either[String, Snap] =
     val p = ctx.run.params
-    h.getArticle(slug) match
+    site.articles.get(slug) match
       case Right(v) =>
         val a = v.article
-        val stored = h.research.articleStore.load(a.slug)
+        val stored = site.articleStore.load(a.slug)
         val f = CompileArticle.runFilter(
           p.query,
           p.topics.getOrElse(Nil),
@@ -143,12 +139,12 @@ final class CompileArticlePipeline(
         )
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: String): Boolean = h.library.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = site.sources.get(ck, body = false).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
-    val f = af.toFilter.copy(limit = cfg.compile.maxSources)
-    val res = h.library.search.sources(f)
+    val f = af.toFilter.copy(limit = research.compile.maxSources)
+    val res = site.search.sources(f)
     val line = af.line
     val facts = res.hits.map(x => SourceFact(x.source.citekey, x.source.title, x.source.year, x.source.status))
     // cited, or listed (a hand-written Not used list, or a stored reason): handled already
@@ -161,14 +157,14 @@ final class CompileArticlePipeline(
     * `agents.compile.record-chars`.
     */
   private def record(ck: String): Option[String] =
-    h.library.sources.get(ck, body = true).toOption.map { s =>
+    site.sources.get(ck, body = true).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
         s.source.notes.map(n => s"Notes:\n$n"),
         s.source.ocrMarkdown.map(b => s"Text:\n$b")
       ).flatten
-      parts.mkString("\n\n").take(cfg.compile.recordChars)
+      parts.mkString("\n\n").take(research.compile.recordChars)
     }
 
   private def extractAll(ctx: RunCtx, s: Snap, found: Found): Either[Halt, List[Extracted]] =
@@ -188,7 +184,7 @@ final class CompileArticlePipeline(
               ResearchAnswers.extract
             ) { (a, last) =>
               CompileArticle
-                .checkExtract(a, ck, text, lib.verify.quoteMinRatio, cfg.compile.maxClaims, last)
+                .checkExtract(a, ck, text, lib.verify.quoteMinRatio, research.compile.maxClaims, last)
                 .map(Checked(_, _))
             }
             .map(sofar :+ _)
@@ -201,7 +197,7 @@ final class CompileArticlePipeline(
     */
   private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
     val edges = found.sources.flatMap { s =>
-      h.library.citations
+      site.citations
         .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList)
         .filter(n => n.direction == "out" && n.target == NeighborTarget.Source)
         .map(n => EdgeFact(s.citekey, n.kind, n.citekey))
@@ -232,13 +228,13 @@ final class CompileArticlePipeline(
         StepAgent.CompileWriter,
         user,
         ResearchAnswers.draft,
-        Some(cfg.compile.draftMaxTokens)
+        Some(research.compile.draftMaxTokens)
       ) { (a, last) =>
-        val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
+        val resolve = site.articles.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
         val corpus = Corpus(
           isCitekey,
           t => resolve(t).isDefined,
-          ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status)
+          ck => site.sources.get(ck, body = false).toOption.map(_.source.status)
         )
         val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title)
         CompileArticle
@@ -258,18 +254,18 @@ final class CompileArticlePipeline(
         s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})",
         Some("agent compile")
       )
-      val _ = ctx.write("tasks item", item.asJson)(h.ops.queueAdd("tasks", item).map(_ => ()))(Right(()))
+      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add("tasks", item).map(_ => ()))(Right(()))
     if !decided.approved then Right(Written(written = false, "the draft was rejected", None))
     else
       d.mode match
         case DraftMode.Create =>
-          if connect(ds)(AgentRepo.slugExists(s.slug)) then
+          if site.articleStore.exists(s.slug) then
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = false, "the slug was taken meanwhile", None))
           else
             val put = ArticlePut(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter, reasons = d.reasons)
             ctx.write(s"create article [[${s.slug}]]", put.asJson)(
-              h.putArticle(s.slug, put).left.map(_.message).map(_ => Written(written = true, "created", None))
+              site.articles.put(s.slug, put).left.map(_.message).map(_ => Written(written = true, "created", None))
             )(Right(Written(written = false, AgentsMarkdown.DryRunNote, None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
@@ -282,11 +278,11 @@ final class CompileArticlePipeline(
             reasons = d.reasons ++ stale
           )
           ctx.write(s"append to article [[${s.slug}]]${d.section.fold("")(x => s" under '$x'")}", patch.asJson)(
-            h.patchArticle(s.slug, patch).map(_ => true)
+            site.articles.patch(s.slug, patch).map(_ => true)
           )(Right(false)) match
             case Right(false) => Right(Written(written = false, AgentsMarkdown.DryRunNote, None))
             case Right(_)     =>
-              Right(Written(written = true, "appended", connect(ds)(AgentRepo.latestArticleVersion(s.slug))))
+              Right(Written(written = true, "appended", site.articleStore.latestVersion(s.slug)))
             case Left(e) if e.code.contains(Write.CodePrecondition) =>
               task(
                 "the article changed while the draft waited for approval; the section was NOT appended — compile again"
@@ -298,7 +294,7 @@ final class CompileArticlePipeline(
     * configured) is a warning: the article is written either way.
     */
   private def review(ctx: RunCtx, s: Snap, w: Written): Option[String] =
-    if !w.written || !ctx.run.params.chainReview.getOrElse(cfg.compile.review) then None
+    if !w.written || !ctx.run.params.chainReview.getOrElse(research.compile.review) then None
     else
       // the run's per-role models carry over to the roles the review uses
       val overrides =
@@ -321,12 +317,10 @@ final class CompileArticlePipeline(
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
     if w.written then
-      ctx.run.goal.foreach(g =>
-        transact(ds)(GoalLinkRepo.link(g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
-      )
+      ctx.run.goal.foreach(g => goals.link(g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(site.workLists, ctx, line)
 
 object CompileArticlePipeline:
 

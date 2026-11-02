@@ -468,6 +468,18 @@ object Agents:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
     def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
+
+    /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
+      * plan of articles), its rationale as the evidence; None for a kind that carries none.
+      */
+    def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
+      if approvalKind.exists(_.proposesFilter) then
+        val f = payload.flatMap(_.as[ArticlePlans.FilterProposal].toOption)
+        Some(copy(filter = f, evidence = f.map(_.rationale).getOrElse("")))
+      else if approvalKind.exists(_.proposesArticles) then
+        val p = payload.flatMap(_.as[ArticlePlans.ArticlePlan].toOption)
+        Some(copy(articles = p, evidence = p.map(_.rationale).getOrElse("")))
+      else None
   object ApprovalInfo:
     given Schema[ApprovalInfo] = summon[KindlingsSchema[ApprovalInfo]].schema
 
