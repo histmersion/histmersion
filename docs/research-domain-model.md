@@ -4468,3 +4468,14 @@ rewritten.
   renaming every enum case that shares a word with another domain's type, which the brief keeps (`BundleKind`, the wire
   spellings).
 - `notFound(citekey)` stays in `Write`: the catalogue's and the media's controllers answer a missing source with it.
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside, the format check and every module's suites with the DB
+suites on a throwaway database (`just test-quick` with every module named): 5 274 tests, 0 failed — values 25, valuesJS
+25, api 826 (`WireSnapshotSuite`), apiJS 88, config 67, files 73, core 773, pluginApi 45, upstreams 57, pluginHost 39,
+pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers
+58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 522, cli 232, web 639, server 1 568
+(1 skipped, 1 ignored). The first clean run found one db test reading place hits without the places' codecs in scope
+(a derived codec falls back silently); it was given them and db, cli, web and server re-run. The gated transcripts
+(`HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`): 352
+tests identical on the unchanged code and after the last commit. No read path a `scripts/perf/*_live.py` driver covers
+changed (renderers and wire vocabularies only; the resolve view runs the same reads), so no live-volume run was made.
