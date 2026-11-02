@@ -42,7 +42,7 @@ class MergeViewSuite extends munit.FunSuite:
       None,
       "cafe0123",
       MatchCounts(),
-      Nil,
+      com.histmersion.util.data.exchange.PlanMatches.empty,
       is,
       Nil,
       Nil,

@@ -355,7 +355,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.sources).setTo(MergePlanner.replaced(es0.sources, _.uid, sourceLine, es0, (_: BundleSource) => true))
 
   override def planned(plan: MergePlan): MergePlan =
-    plan.modify(_.sources).setTo(matches)
+    plan.modify(_.sources).setTo(SourceMatch.Matches.matches(matches))
 
   /** How each of the bundle's sources was matched, by citekey; one known by its uid or the ledger is not listed. */
   private def matches: List[SourceMatch] = fes.sources.sortBy(_.citekey).flatMap { s =>

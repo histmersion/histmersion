@@ -16,7 +16,7 @@ final case class MergePlan(
     asOf: Option[String],
     planHash: String,
     matches: MatchCounts,
-    sources: List[SourceMatch],
+    sources: com.histmersion.util.data.exchange.PlanMatches,
     issues: List[MergeIssue],
     info: List[String],
     problems: List[String],

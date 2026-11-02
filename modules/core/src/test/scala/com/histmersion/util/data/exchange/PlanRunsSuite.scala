@@ -108,5 +108,6 @@ class PlanRunsSuite extends munit.FunSuite:
       List("a fold", "b fold", "c fold", "a fold", "a renamed a2000_y", "b renamed a2000_y", "c renamed a2000_y")
     )
     val inst = BundleInstance(uid("i"), None)
-    val plan = MergePlan(uid("p"), inst, inst, 1, "1", None, "h", MatchCounts(), Nil, Nil, Nil, Nil, Nil, 0)
+    val plan =
+      MergePlan(uid("p"), inst, inst, 1, "1", None, "h", MatchCounts(), PlanMatches.empty, Nil, Nil, Nil, Nil, 0)
     assertEquals(runs.planned(plan).info, List("a", "b", "c"))

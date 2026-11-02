@@ -478,6 +478,7 @@ api:api/RefRow.scala	library.citations
 api:api/RefsRequest.scala	library.citations
 api:api/RefsResult.scala	library.citations
 api:api/RegisteredJobKinds.scala	api
+api:api/RegisteredPlanMatches.scala	api
 api:api/ReindexResult.scala	util.data.maintenance
 api:api/ReloadMarkdown.scala	util.settings
 api:api/ReloadReport.scala	util.settings

@@ -59,7 +59,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   test("the evidence behind the matches: strong keys, the score, a DOI on one side only is neutral"):
     val p = plan().plan
-    val byRight = p.sources.map(m => m.rightCitekey -> m).toMap
+    val byRight = com.histmersion.api.RegisteredPlanMatches.kind.all(p.sources).map(m => m.rightCitekey -> m).toMap
     assertEquals(byRight("kuhrt1995_near").method, MatchMethod.StrongKey)
     assert(byRight("kuhrt1995_near").why.exists(_.contains("sha256")), byRight("kuhrt1995_near").why.toString)
     assertEquals(byRight("bryce2005_kingdom").leftCitekey, Some("bryce2005_kingdom_hittites"))
@@ -126,7 +126,13 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(y.decidedBy, Some(DecidedBy.Policy))
     val separate = plan(res = MergeResolutions(policy = MergePolicy(Some(EditionsPolicy.Separate)))).plan
     assert(!separate.issues.exists(i => i.right.exists(_.label == "page2024_history")), separate.issues.mkString("\n"))
-    assertEquals(separate.sources.find(_.rightCitekey == "page2024_history").map(_.outcome), Some(MatchOutcome.New))
+    assertEquals(
+      com.histmersion.api.RegisteredPlanMatches.kind
+        .all(separate.sources)
+        .find(_.rightCitekey == "page2024_history")
+        .map(_.outcome),
+      Some(MatchOutcome.New)
+    )
 
   test("resolutions: invalid decisions and unknown ids are errors, never ignored; valid ones are counted"):
     val p0 = plan().plan
