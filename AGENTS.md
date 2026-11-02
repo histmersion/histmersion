@@ -400,7 +400,14 @@ repository is used only inside its feature. `ArchitectureSuite` (server tests) e
 process rule and the repository rule. A file not in its feature package yet has its destination in
 `architecture/places.tsv`; a new file goes in its feature package, or gets a row there. Today's violations are
 listed in `architecture/exceptions.tsv`, exactly: a change removes rows and adds none
-(`HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list; the diff must only delete lines).
+(`HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list; the diff must only delete lines). A member of a type
+(`BundleKind.Place`, `Pipeline.EnrichSource`) is that type's own word, not a reference to the top-level type of the
+same name; a package path (`api.Place`) or the bare name is. A wire record's Markdown is rendered by its feature
+(`api.<domain>.<feature>.<F>Markdown`: `SearchMarkdown`, `SourcesMarkdown`, `PlacesMarkdown`, `EventsMarkdown`,
+`AttestationsMarkdown`, `MediaMarkdown`, `GoalsMarkdown`, …) or by the record itself (`MediaThumb.markdownLine`,
+`AgentMode.wording`); `api.Markdown` and `api.Wording` keep only the generic helpers, and `api.UiLabels` (`api.ui`)
+the label table over every vocabulary. An answer that joins domains is a view in `server.views` (`ResolveView`,
+`EventCardView`, `PlaceCardView`); the packages `server.views` and `server.instance` are placed by their names.
 
 ### 11. Services own transactions
 

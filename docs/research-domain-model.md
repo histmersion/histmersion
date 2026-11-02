@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24; slice 11 part 2 built (research's workflows, its review manager kind, its settings and its data contribution) — §24: slice 11 is complete.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24; slice 11 part 2 built (research's workflows, its review manager kind, its settings and its data contribution) — §24: slice 11 is complete.; slice 12 part 1 built in part (the mixed wire files split by owner, the resolve view; six record groups left, listed in §25) — §25.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -4358,3 +4358,113 @@ pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents
 (1 skipped, 1 ignored; `ResearchOracleSuite`'s new test, `ReviewLedgerServiceContract` on both twins, the review
 defaults' conversion). A cached `scalafmtAll` had replayed over four files of the workflows' commit and two of the data
 contribution's; the clean format check found them, and each was formatted into its own commit before the clean run.
+
+## 25. Slice 12 as built, part 1 (the wire records' renderers and vocabularies, the resolve view, 2026-11-02)
+
+Branch `refactor-s12a` from master 4a2d996f (slices 1–11 deployed). **Part 1 is built in part**: the mixed wire files'
+renderers, writes, wordings, lint rules and vocabularies are split by owner, and the resolve endpoint is a view; the wire
+records that carry another domain's record as a field (listed under "Left from part 1") are not yet split. Endpoints, MCP
+tools, CLI commands, the toolbox and every answer schema, search results, facets, `query`, bundle entries, merge plans and
+lint output are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`, every domain oracle, `SearchSqlSnapshotSuite`,
+the Calibre transcript, `ArchiveTrafficSuite` and the gated agent transcripts held byte for byte; no snapshot was
+re-recorded after the first commit, and no migration was added.
+
+**The oracle, recorded first.** `WireSnapshotSuite` (api, `snapshot/wire.txt`): the Markdown of every renderer that moves
+and that no other suite asserts on (the brief search, a source's findings alone, the citation graph, the contradictions,
+the map feed, the body slice, the gazetteers, a place removed, added and rebuilt, an attestation, the agent state, a
+picture, the media list, facets and licence fill, an asset link, a backup's status), the event's and the place's pages
+with pictures, and the JSON of those pages, of a resolved id (a source, an article, nothing) and of a job's detail, over
+synthetic values. The other moved renderers were asserted already (`MarkdownSuite`, `PlacesSuite`, `TreeSuite`,
+`WordingSuite`, `LintSuite`, the domain oracles' MCP and CLI outputs).
+
+**What moved** (the records themselves stay in `com.histmersion.api`, as slices 5–11 left theirs, so the OpenAPI
+component names — simple names, numbered on a clash — and the snapshots stay as they are):
+
+- **`api.Markdown` split by feature**: `SearchMarkdown` (`api.library.search`: results, the brief list, facets, the map
+  feed, the histogram and the tree), `SourcesMarkdown` (`api.library.sources`: a source, its findings, neighbours, graph,
+  contradictions, a rename), `BacklinksMarkdown` (`api.research.articles`), `PlacesMarkdown` with the place's page
+  (`api.catalogue.places`), `EventsMarkdown` with the event's page (`api.catalogue.events`), `AttestationsMarkdown`
+  (`api.catalogue.evidence`), `GoalsMarkdown` (`api.automation.goals`), `AgentStateMarkdown` (`api.automation.agents`),
+  `MediaMarkdown` (`api.media.assets`); a picture's line is `MediaThumb.markdownLine`, so the catalogue's pages name no
+  media renderer. `Markdown` keeps the generic helpers (years, periods, coordinates, chips, the paging footer, the "as of"
+  note, the contested mark, the body slice) and the backups'.
+- **`api.Write`**: a source's put and patch checks are `SourceWrite` (`api.library.sources`); `Write` keeps the codes,
+  `notFound`, `applyList` and the decoding `Configuration`.
+- **`api.Wording`**: each sentence about an automation type is on it (`AgentMode.wording`/`heading`,
+  `Activity.EntryKind.wording`, `UiNotices.AgentsGlance.wording`, `AgentScheduler.waitCodes`); the label table over every
+  vocabulary is `api.UiLabels` (placed `api.ui`, as the design's UI-shared place).
+- **`api.Tree`** is the search's tree (`api.library.search.Tree`); the hierarchy's `RegionNode` with its root rules is the
+  catalogue's (`api.catalogue.places.RegionNode`).
+- **`api.Lint`**: the citations' rules are `CitationLint` (`api.library.citations`), the articles' `ArticleLint`
+  (`api.research.articles`); `Lint` keeps the report, the rule list and the generic helpers.
+- **`api.YearFmt`**: a time span's outer years are `TimeSpan.outer` (was `EventGeo.outer`).
+- **Vocabularies**: `AttestationTarget` and `AssetLinkTarget` are in `values` (closed vocabularies, §4.1); the ingest
+  origins are `Agents.Origin.FromIngest` and `Managers.ItemOrigin.FromIngest` (the wire value `ingest` unchanged, as the
+  alias `FromIngest` already named it); the bundle's entries `BundleFiles.EventCorrections`, `BundleFiles.PlaceSiteTypes`
+  (the file names unchanged); `CliProcess`'s private process tree is `ProcessTree`.
+- **db**: the places' column codecs are `domain.catalogue.places.PlaceVocabularyCodecs`; the read-only query role's pool
+  and provisioning are `domain.library.search.QueryAccess` (`Db.pooled` is the generic pool builder).
+- **`server.views.ResolveView`**: `GET /api/resolve/{id}` over the library's sources and research's articles
+  (`ArticlesControllers.resolved` gives the article); `ResolvedId` is placed in `server.views`.
+- **Places corrected to the design**: `StrictJson` → `util.json` (§3.11), `SeaFloorSource` → `util.basemap`,
+  `LabelRenamed` → `util.identity` (any kind's label renamed, leaving an alias).
+
+**`ArchitectureSuite`.** Two additions to how it reads the sources, no rule weakened for a real reference: a member of
+a type (`BundleKind.Place`, `Spi.Version`, `HttpClient.Version`) is that type's own word, not the top-level type of the
+same name (a package path or the bare name still is) — every one of the 24 rows this removed was such a member; and the
+packages `server.views` and `server.instance` are placed by name. `exceptions.tsv` 193 → 72 rows, deletions only:
+direction 148 → 27 (`api/Markdown` 59, `api/Write` 11, `api/Wording` 10, `files/BundleEntities` 8, `api/Lint` 4,
+`api/AgentsMarkdown` 3, `api/Tree` 3, `db/Codecs` 3, `api/MergeMarkdown` 2, `api/ResolvedId` 2, `api/AttestationTarget`
+2, `api/BundleFiles` 2, `api/Agents` 1, `api/Managers` 1, `api/AssetLinkTarget` 1, `api/GoalsExport` 1, `api/YearFmt` 1,
+`api/VacuumRequest` 1, `db/Db` 1, `config/BasemapBathymetryConfig` 1, `core/MergePlanner` 1 (`Goal`), `CliProcess` 1,
+`AgentDoctor` 1, `RelinkPlugins` 1), filesystem (32), process (4) and repository (9) unchanged.
+
+**Native image.** `reachability-metadata.json` (server): `db.Codecs$package$`'s `given_DbCodec_PlaceDating$lzy1` and
+`given_DbCodec_PlaceTimeBasis$lzy1` → `domain.catalogue.places.PlaceVocabularyCodecs$package$`; added `server.Handlers`'
+`resolveView$lzy1`. Checked with `javap -p` of the compiled classes: no other entry names a moved class or lazy field
+(the new objects hold eager values; the moved Markdown, Write, Wording, Lint and Tree objects had no entries). To check
+at the bundle: `--self-check`; `smoke.sh`; `search` (results, `--brief`, `--group time,region`), `get <ck>`, `neighbors`,
+`graph`, `contradictions`, `geo-when`, `histogram`; `places`, `place <id>` (pictures), `event <id>`, `attestations`;
+`media list`, `asset <ck> <name>`; `goal show`; `agent state`; `lint` (each article and citation rule);
+`/api/resolve/<ck>` and `/api/resolve/<slug>`; `query` (the read-only role provisioned at start and after a restore);
+the web page's labels, the top bar's agents glance and the research overview's heading.
+
+**Left from part 1** (each a wire record that carries another domain's record as a field, so its JSON and schema bind
+two owners; they need the split this part did not reach), with the way each goes:
+
+| rows | how it goes |
+|---|---|
+| `api/EventDetail`, `api/PlaceDetail` naming `MediaThumb` | the catalogue's record without `media` (a new name, not on the wire); the wire `EventDetail`/`PlaceDetail` assembled by `EventCardView`/`PlaceCardView`, and the event's and place's GET/PUT/PATCH routes and MCP tools that answer them moved to `server.views`; field order kept, so the JSON is identical (`WireSnapshotSuite`) |
+| `api/JobDetail` naming `EventImportReport`, `EventRederiveReport`, `SkippedPeriod`, `AcquireChecks` | the jobs keep a job's detail as its JSON; the wire `JobDetail` is decoded by the jobs' page view (`server.views`), each kind's fields filled by its `JobKinds` entry |
+| `api/Agents` (`ApprovalInfo` naming `ArticlePlans`), `api/AgentsMarkdown` (`ArticlePlans`), `api/Managers` (`ArticleSpec` naming `ArticleFilter`), `api/GoalPlans` naming `CoverageReason`, `api/MergeIssueDetail` naming `GoalPlans` | the approvals' and plans' payloads read by the kind that proposes them (research's approval kinds, `SeedManagerKind` moving to research in part 2); the listing record a view |
+| `api/Autopilot` naming `AcquireChecks`, `UpstreamQuota`; `api/Queue` naming `Acquire`, `AcquireChecks`; `api/ManagersApi` naming `AcquireChecks`, `RepairAcquire` | the autopilot's status and the ACQUIRE list's items as views over the library's acquisition; the two acquisition endpoints in the library's endpoints, `Api.all` keeping today's order |
+| `api/MergePlan`, `api/MergeMarkdown` naming `SourceMatch` | the plan's sources' section contributed by the library's merge rules (as its questions are), its Markdown with it |
+| `api/personal/ItemKind` naming `Place`, `Goal` | its cases are the kinds personal's marks name: a decision for the user (rename the two cases, or place the enum with the kernel's `ItemKind` as the referables' vocabulary) |
+
+**Part 2** (unchanged scope; its rows): `Handlers` (`AgentStateRepo`, `GoalRepo`, `UiRepo`) and `OpsHandlers`
+(`GoalLinkRepo`, `GoalRepo`) deleted; `server/ListQueries` and `server/Bootstrap` naming `JobRepo` through the jobs'
+service; the automation's carried kinds and merge rules out of the adapters (`db/BundleImport` naming `GoalRepo`, `Queue`,
+`QueueRepo`, its `java.nio.file`; `core/MergeFold`, `core/MergePlanner` naming `Queue`); `db/ListSql` naming
+`ListFilters` (the work lists' filter SQL into `automation.worklists`); `db/MergeState` (`java.nio.file`) through a store;
+`config/UserConfigFile`, `files/Frontmatter`, `files/SafePath`, `files/PluginKit` through `util.storage`; every
+transition adapter gone, with `SeedManagerKind` and the article-filter approval effect moved to research (#8817); the
+process-environment readers through the injected environment (#8787: `GazetteerPaths.of`, `AgentTrees`, `AgentDoctor`,
+`BackupWiring`); `db` reduced to `util.database`; and the six record groups left from part 1 above.
+
+**Part 3**: `cli.<domain>` packages and the web edges; `plugins/ai-cli` with SPI-9 (Q5), which removes the file and
+process rows of `server/agents` (`AgentDoctor`, `ClaudeCodeClient`, `CliProcess`, `CodexExecClient`, `CodexHome`,
+`OpencodeRunClient`, `PlanPools`) and, through a plugin store, `AgentTrees` and `Prompts`; `media covers`' Calibre read
+through the server and the CLI's second Calibre copy (#8603); the catalogue's dataset licences as `Attribution` (#8740);
+the stale native entry `db.JobRepo$package$`; `ArchitectureSuite` with no exceptions; AGENTS.md's module section
+rewritten.
+
+**Deviations.**
+
+- The records stay in `com.histmersion.api`; only the mixed files' functions moved into `api.<domain>.<feature>`
+  packages. A package move of the records is mechanical later and changes no wire name.
+- Renderers are per-feature objects (`<F>Markdown`), as every slice so far built them, not Q14's `MarkdownRender[A]`
+  type class; adopting the type class is one change over all 28 renderer objects, best made at once.
+- `ArchitectureSuite` reads members of types as their own vocabulary (above): without it, zero exceptions would mean
+  renaming every enum case that shares a word with another domain's type, which the brief keeps (`BundleKind`, the wire
+  spellings).
+- `notFound(citekey)` stays in `Write`: the catalogue's and the media's controllers answer a missing source with it.
