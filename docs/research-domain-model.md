@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`; acquisition, ingest and the collections are part 2, the workflows and data contributions part 3) — §23.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -3508,3 +3508,179 @@ chimneyIronTests 10, db 523 (`SearchSqlSnapshotSuite`, `SourceKeysSuite`, `Attes
 web 639, server 1 503 (1 skipped, 1 ignored; the library oracle, the two contract suites on both twins, the controllers'
 suite). The move's commit was formatted before it was made, after a fresh `scalafmtAll` without the cache (the cached
 one had replayed); every commit passes `fmt-check` as it is.
+
+### Part 2 as built (acquisition, ingest, the collections' running, the sources' licence, 2026-11-02)
+
+Branch `refactor-s10b` from master 076f698d (slice 10 part 1 deployed). Four commits: the oracle on the unchanged code,
+the move of acquisition, ingest and the collections' running with their services, a dataset's credit as its
+`Attribution`, the native metadata; then this section. Endpoints, MCP tools, CLI commands, search results, facets,
+`query`, bundle entries, merge plans and lint output are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `DataOracleSuite`, `CatalogueOracleSuite`, `MediaOracleSuite`, `LibraryOracleSuite`,
+`SearchSqlSnapshotSuite`, the Calibre transcript (`CalibreCommandsSuite`), the archive.org traffic (`ArchiveTrafficSuite`)
+and the new `AcquisitionOracleSuite` held byte for byte; no oracle or snapshot was re-recorded after the first commit, and
+no migration was added.
+
+**The oracle, first** (`AcquisitionOracleSuite`, server, DB; `oracle/acquisition/*.txt`, `HISTMERSION_UPDATE_ORACLE=1`
+rewrites them; recorded on the unchanged code and stable three runs in a row before anything moved). Two servers on
+scratch databases, every upstream a fixture on one loopback port (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
+Europe PMC, PMC's datasets, Zenodo, DataCite, the DOI handles, arXiv, archive.org, Wikipedia, the Retraction Watch CSV:
+no request leaves the machine), the acquisition chain the first-party fetcher plugins over it plus two fixture plugins
+(`zq-shelf`, an open fetcher stating its copy's licence; `zq-unauthorised`, one the config marks unauthorised, which
+only counts and misses), a fixture converter (a body naming the file and its size, two pages, one figure) and a copy of
+the fixture Calibre library (`CalibreFixture`, never the user's). Every request the upstreams received is recorded with
+the step that caused it.
+
+| file | what it records |
+|---|---|
+| `discovery.txt` | discover (a query, `notInDb`, a year and an order, a blank query), meta by DOI, arXiv id and citekey and its refusals, Wikipedia's references, a paper's deposited references, its follow-ups (dry and applied), the assessment (dry, applied, a status kept and forced, a retraction always written, refusals), the Retraction Watch refresh and its status; the MCP `discover`, `refs`, `assess`, `followups` |
+| `ingest.txt` | ingest by DOI with an open copy (its OCR job, the source written, its stored original by digest, its edges), again (the original kept) and with `refetch`, a plugin's copy with its licence (recorded once, kept on a refetch), by arXiv id, with no copy (the drop-in), a gold work on a refusing host (a browser download on the acquisition list), `legalOnly`, an unknown DOI with and without `--citekey`, by citekey, a bad citekey; uploads (one, the same bytes under another citekey refused then forced, empty, a bad citekey, one fulfilling an acquisition item, a done and a missing item), a re-OCR, the originals; the MCP `ingest` (a payload, nothing, an unseen path) and `ingest_doi` (with `legalOnly`); the job list; then, on a server whose config switches `acquire.allow-unauthorised` on: a person's ingest asks the unauthorised fixture (1), `legalOnly` does not (still 1), the re-check does not (still 1) |
+| `acquire.txt` | the acquisition list (add, blank refused, done, rm twice, the listing, export), the re-check (dry, one item, a pass with its job and its requests, nothing due again), the listing with its checks, `about`'s re-check; a goal's candidates (a query and a source linked, a dry sweep, a sweep over the five indexes and the citation and author alerts, an unknown goal, the list and a page, a mark, a bad state, the counts, a second sweep with CORE's search budget spent and its note), `about`'s upstream quotas; the MCP `queue` and `candidates` |
+| `collections.txt` | the collections, Calibre's info, search, gaps, audit, a push and a refused one, a sync dry and applied (each with the fake `calibredb`'s calls), the acquisition surface's Calibre gaps, meta and pushed; archive.org's search, info, a lending-only item refused, an import with its OCR job; the MCP `archive` and `collection` |
+| `licence.txt` | the sources' `license` as `query` reads it, the figures' licence fill (dry, then applied), a source's export (REST and MCP), the datasets' credits the web page shows |
+| `rows.txt` | both servers' rows of `sources` (with whether each has its original, its body's length and its licence), `edges`, `unresolved_edges`, `assessments`, `retraction_watch`, the acquisition list, `acquire_checks`, `source_candidates`, `candidate_watches`, `upstream_quota`, `jobs`, `assets` |
+
+Uids are `UUID`, timestamps `TS`, days `DAY` (inside a query string too), the server's port `SERVER`, scratch
+directories `TMP`. The first recording masked days only at a word boundary, which a sweep's look-back date in a query
+string (`%5B2025-11-01+TO`) is not; the mask was fixed and the oracle re-recorded on the unchanged code before the
+comparison (the oracle's one commit holds the fixed form).
+
+**`domain.library`, part 2, by feature** (db module for the repositories, server for the services):
+
+- **`acquisition`** — `AcquisitionControllers` (was `server/acquire/AcquireHandlers`: discover, meta, Wikipedia's
+  references, a work's references and follow-ups, the assessment and the Retraction Watch refresh, an ingest by
+  identifier with its three `IngestPath`s, archive.org's import, the goals' candidates; every write behind the
+  maintenance lock) over `AssessmentService` (the mirror and the verdicts) on `AssessmentRepo`, `CandidateService` (the
+  watches and candidates) on `CandidateRepo`, `UpstreamQuotaService` (CORE's kept budget; `CoreQuotaStore.of` lends it
+  to `CoreBudget`) on `UpstreamQuotaRepo`, `AcquireCheckService` (the acquisition list's checks, and what the corpus holds
+  of the items' DOIs) on `AcquireCheckRepo`, and the library's `SourceService`; `CandidateSearch` over those, the
+  automation's `GoalService` and `ArticleCitations` — the stored sources an article cites, an interface the library owns
+  and research implements (`domain.research.articles.ArticleCitedSources`); `AcquisitionRoutes` and `AcquisitionTools`
+  (was `AcquireRoutes`, `AcquireMcp`); the upstream clients, the indexes, `CoreBudget`, `FetcherGeneration`, `OaFetch`
+  and the HTTP client moved with them unchanged but for the package (every file of `server/acquire` but `Spool`).
+  `AcquireRepo` is gone: its Retraction Watch and assessment SQL is `AssessmentRepo`'s, its reads and writes of the
+  `sources` table (the DOI index, a source's existence, a status patch, the licence, the Calibre id, the gaps, the
+  digests) the sources feature's, through `SourceService`. The repositories are `private[acquisition]`; their rows
+  (`AcquireCheckRow`, `AssessmentRecord`) are public.
+- **`ingest`** — `IngestQueue` (the OCR jobs: the bounded pool, the converter and its bounded, cached health probe, the
+  job's write — a patch when the source exists, a skeleton put when not —, the acquisition item ticked off or matched,
+  `afterStore`) and `IngestControllers` (the parse boundary: an `Upload` validated, digested, refused as a duplicate,
+  stored content-addressed in the originals' store, queued; the MCP tool's path through `ToolFiles` or payload; re-OCR;
+  the original) were `server/IngestHandlers`; `QueuedIngest`, `SkeletonIngest`, `IngestJobs`, `IngestMeta` and
+  `IngestOutcome` hand an acquisition's `FetchedCopy` over through `SourceService`; `StoredOriginals` (a delete's files)
+  lists and removes through the two stores; `SeedImport` (was `db/Importer`) seeds through `SourceService` from a
+  `SeedFolder`, which the composition root reads from disk (`server/SeedNoteFiles`, with the figures beside the notes,
+  was `SeedFigureFiles`).
+- **`collections`** — `CalibreGapControllers` (the gaps with whether the server stores each original, a push's metadata,
+  the Calibre id written back: was `AcquireHandlers.calibre*`); the `CollectionLibrary` the composition root lends the
+  collections writes through the sources' controllers, `CalibreGapControllers` and `IngestControllers` (an import's bytes
+  are an `Upload`, no temporary directory).
+
+Beside them: `util.jobs.JobRecords` (the one-piece jobs' rows: create, read, compare-and-set, progress; trait,
+`Implementation` over the database, `InMemory`), `util.jobs.JobPool` (was `server/Jobs`), `util.jobs.JobListing` (one
+job, a page under a query; was in `IngestHandlers`; the filter's parse, `ListQueries`, is the automation's, so
+`Handlers.jobsPage` composes them), `util.ocr.Spool` over `Store(Spool)`. The composition root builds them in
+`server/IngestWiring` and `server/AcquisitionWiring` (the acquisition over the hot node of its clients), and lends the
+MCP tool's server-side files through `server/ServerToolFiles`. `Handlers.ingest` is that wiring; `Handlers.jobs`,
+`Handlers.storedOriginals` and `Handlers.calibreGaps` are new; `OpsHandlers` reads the checks and `Handlers` the quotas
+through their services.
+
+**Services and their twins.** `AssessmentService`, `CandidateService`, `UpstreamQuotaService` and `AcquireCheckService`
+keep records, so each is a trait with `Implementation` (over a `Transactor`) and `InMemory` (over `AcquisitionState`,
+the record they share; the checks' twin is given the work lists' and the library's services, as the database answers
+from `queue_items` and `sources`), and one contract suite run on both (`AssessmentServiceContract`,
+`CandidateServiceContract`, `UpstreamQuotaServiceContract`, `AcquireCheckServiceContract`, gathered in
+`AcquisitionStoreSuite`); `SourceServiceContract` gained the operations acquisition and ingest added to `SourceService`
+(existence, the DOI index, edges routed and counted, the original's digest, the licence, the Calibre gaps and id), and
+`JobRecordsContract` runs on both of its twins. The in-memory candidates hold no goals, so they do not refuse a
+candidate of a goal the database's foreign key would; the contract creates the goal on the database. `IngestQueue`,
+`IngestControllers` and `AcquisitionControllers` are mechanisms over the converter, the stores and the upstreams; their
+answers are in the oracle and the server's DB suites (`AcquireHandlerSuite`, `IngestQueueFailureSuite`,
+`AcquireRecheckDbSuite`, `CandidateSearchSuite`, `SeedImportSuite`).
+
+**The licence (Q26).** `SourceService.licence` reads `sources.license` as an `Option[Licence]`, classified as it is read
+(`Licence.classify`), and `recordLicence` takes a `LicenceId` (a blank one is never written, a recorded one is kept); the
+stored string, the ingest's `licence` step and every answer are unchanged. A dataset's credit is read as the reuse it
+allows by `Attribution.ofDataset` (the kernel): its stated licence classified, else its licence URL, the credit line
+kept; `DataCredit` stays the web page's wire record.
+
+**Equivalence.** The eleven oracles, snapshots and transcripts above identical after every commit. No read path that
+`scripts/perf/catalogue_live.py` or `library_live.py` covers changed (the search, facets, map feed, histogram, a
+source's detail, views, passages and export run the same services and SQL; the new `SourceService` methods are
+acquisition's and ingest's), so no live-volume run was made.
+
+**Architecture.** `exceptions.tsv` 330 → 283 rows, deletions only: direction 221 → 208 (`api/Acquire`, `api/Assessment`,
+`AcquireHandlers` and `DiscoveryClient` naming `UpdateNotice`; `IngestHandlers` naming `Deps` and `Jobs`;
+`AcquireHandlers` naming `Deps`; `CandidateSearch` naming `ArticleRepo`; `config/AcquireDefaults` naming
+`CitationCount`; `core/BrowserDownload` naming `Citation`; and `api/Activity`, `ActivityRules`, `ActivityRepo` naming
+`Jobs`, a word the renamed pool no longer collides with), filesystem 52 → 32 (`db/Importer`, `db/Originals`,
+`IngestHandlers`, `StoredOriginals`, `AcquireHandlers`, `IngestJobs`, `QueuedIngest`, `SkeletonIngest`, `Spool`),
+repository 53 → 39 (`SourceRepo` named by `AcquireRepo`, `Importer`, `IngestHandlers`, `AcquireHandlers`,
+`CandidateSearch`, `SkeletonIngest`; `JobRepo` by `IngestHandlers` and `server/Jobs`; `UpstreamQuotaRepo` by
+`Handlers`; `AcquireCheckRepo` by `OpsHandlers`; `ArticleRepo`, `GoalLinkRepo`, `GoalRepo` by `CandidateSearch`;
+`CandidateRepo` by `SeedService`, a part-3 row that went with the repository's narrowing), process (4) unchanged.
+`places.tsv` 982 → 940 lines: the moved files' rows gone; `server/AcquisitionWiring`, `IngestWiring`, `SeedNoteFiles`
+and `ServerToolFiles` placed in `server`; `api/UpdateNotice` re-placed from `server.instance` to `library.acquisition`
+(Crossref's update notice is the assessment's record) and `config/CitationCount` from `research.articles` to
+`library.acquisition` (only the acquisition's defaults use it); `BrowserDownload`'s nested `Citation` is `CitationText`
+(its name collided with research's top-level `Citation`).
+
+**Deviations.**
+
+- One commit moves acquisition, ingest and the collections' running: `AcquireHandlers` handed its copies to
+  `QueuedIngest` over `IngestHandlers`, the collections wrote through both, and `Handlers` built the ingest, so no part
+  compiled alone with the others unmoved.
+- The jobs' listing left `IngestHandlers` for `util.jobs.JobListing`; its filter's parse stays the automation's
+  `ListQueries`, composed in `Handlers.jobsPage` (the composition), so `util.jobs` names no domain.
+- `AcquireCheckRepo` reads `sources` (what the corpus holds of a DOI) and `queue_items` (the open acquisition items)
+  inside the library, as part 1's search and findings repositories read `sources`.
+- The MCP `ingest` tool's payload and a collection's import are no longer written to a temporary file first: the bytes
+  are an `Upload`, stored content-addressed as before; the stored file, the job and every answer are the same.
+- `GET /api/sources/{ck}/original` is served from where the originals' store keeps the file (`java.io.File(blob.where)`
+  in `HttpApi`, the composition root's edge): tapir's file body needs a file.
+- The seed's three db tests moved to the server (`SeedImportSuite`, four tests with a note without frontmatter), as the
+  seed now runs through `SourceService` over a `SeedFolder`.
+- `db/Originals` is gone: the db suites use `ContentDirectory` and `ContentStore.none` directly.
+- `SourceRepo` keeps `DataSource` forms of the original's digest as wrappers over the new connection forms, for the db
+  suites; part 3 narrows it.
+- `SeedService` and `AcquireRecheckService` (part 3's) now take `CandidateService` and `AcquireCheckService`, since their
+  repositories are narrowed to the feature; their other rows stay for part 3.
+- A dataset's `Attribution` is applied to the web page's credits; the catalogue's gazetteer sources and event
+  catalogues keep their stated licence strings as they are stored and sent (their rows and wire are slice 8's and
+  slice 12's).
+
+**Left for part 3** (the library rows that remain in `exceptions.tsv`, by the part or slice that removes them):
+
+| rows | removed by | what moves |
+|---|---|---|
+| direction: `server/agents/AcquireRecheckService`, `AcquisitionSweepPipeline`, `CurrencyCheckPipeline`, `EnrichSourcePipeline`, `OaBacklog`, `SeedService` naming `Handlers`; `config/AgentManagersConfig` naming `WatchManagerConfig`, `config/AgentsConfig` naming `AgentEnrichConfig`, `AgentSeedConfig`, `AgentVerifyConfig`; `core/ManagerDefaults` naming `WatchManagerDefaults`; `core/ManagerPolicy` naming `SeedPlanDefaults` — repository: `AcquireRecheckService` naming `JobRepo`, `ManagerRepo` | part 3 | the library's workflows, tools and the watch manager kind out of the slice-7 adapters |
+| direction: `db/BundleImport` naming `Edge`, `SourceRepo`; `db/LintRepo` naming `Edge`, `Hit`, `SourceRepo`; `db/MergeState` naming `MergeText`; `core/MergeFold` naming `FindingMatch`, `MergeText`; `core/MergePlanner` naming `Citekeys`, `Finding`, `FindingMatch`, `MergeText`, `SourceMatch`, `SourceMatcher`; `api/MergeMarkdown` naming `LabelRenamed`, `SourceMatch`; `api/MergePlan` naming `SourceMatch`; `api/Lint` naming `Edge` — repository: `SourceRepo` named by `BundleImport`, `LintRepo`, `ArticleRepo`, `CritiqueRepo` | part 3 | the library's data contribution (its carried kinds, `SourceMatcher` and the sources' merge rules, `MatchWeights`, its lint rules with the three place rules out of `LintRepo`, `Geocoder` narrowed), `SourceRepo` narrowed to `private[sources]` |
+| direction: `api/Agents`, `api/Managers` naming `Ingest`; `api/AgentsMarkdown` naming `Edge`, `Query`; `api/GoalsExport` naming `Query`; `api/Autopilot` naming `AcquireChecks`, `UpstreamQuota`; `api/ManagersApi` naming `AcquireChecks`, `RepairAcquire`; `api/Queue` naming `Acquire`, `AcquireChecks`; `api/JobDetail` naming `AcquireChecks`; `core/CompareRuns` naming `AgentVerify`, `EnrichSource`, `Finding`; `core/PlanGoal` naming `Acquire`, `WorkRef`; `core/Scheduling` naming `Acquire`, `AgentProposals`, `Edge`, `FollowupRow`, `WorkRef`; `db/AgentRepo` naming `AgentProposals` | part 3, where the automation's view of the library moves; the wire records' rows slice 12 | — |
+| direction: `api/Markdown` (16), `api/Write` (11), `api/Wording`, `api/Tree`, `api/ResolvedId`, `api/AssetLinkTarget`, `api/AttestationTarget`, `files/BundleEntities`, `db/Db`, `config/BasemapBathymetryConfig` (as listed under part 1) | slice 12 (wire records, `api.library.*`, the format's vocabulary) | — |
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled
+classes: `db.AcquireRepo$RwRow$` and `AssessmentRow$` → `domain.library.acquisition.AssessmentRepo$RwRow$`
+(`derived$DbCodec$lzy1`) and `$AssessmentRow$` (`lzy2`); `db.AcquireRepo$DoiKey$` and `GapRow$` →
+`domain.library.sources.SourceRepo$DoiKey$` (`lzy1`) and `$GapRow$` (`lzy2`); `db.CandidateRepo$Row$` and `WatchRow$` →
+`domain.library.acquisition.CandidateRepo$Row$` (`lzy2`) and `$WatchRow$` (`lzy1`); `server.acquire.AcquireMcp$` and its
+seven inputs → `domain.library.acquisition.AcquisitionTools$…$` (their codec and schema fields as `javap -p` reads them
+now); `server.Handlers` gained `calibreGaps$lzy1`, `ingest$lzy1`, `storedOriginals$lzy1`; removed `db.AcquireRepo$`'s and
+`db.CandidateRepo$`'s given fields, which the new objects do not have. The new services, controllers, wirings and stores
+hold eager values only (`SeedNoteFiles.notes` is a method). No tracing-agent run, no native build. To check at the
+bundle: `--self-check`; `smoke.sh`; `histmersion discover` (a query, `--doi`, `--wikipedia`), `refs` and `followups`
+(`--apply`), `assess` (`--apply`, `--update-retractions`), `ingest <doi>` (an open copy, none, `--legal-only`,
+`--refetch`), `ingest <file>` (a duplicate, `--force`, `--acquire-item`), `reocr`, `jobs`, `job <id>`, `queue acquire`
+(add, done, rm, export, `recheck` dry and a pass), `candidates` (`--sweep`, `--dry-run`, mark), `calibre gaps|push|sync|audit`,
+`archive search|info|import` (a lending-only item refused), `seed`, `about` (the upstream quotas, the re-check), a
+source's delete with stored originals; the MCP `discover`, `refs`, `assess`, `followups`, `ingest`, `ingest_doi`,
+`job_status`, `archive`, `candidates`, `collection`; the web UI's upload and a source's original.
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, every module's suites with
+the DB suites on a throwaway database (`just test-quick` with every module named; its `fmt-check` passed first): 5 225
+tests, 0 failed — values 21, valuesJS 21, api 825, apiJS 88, config 67, files 73, core 769 (`DatasetAttributionSuite`),
+pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15,
+pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23,
+chimneyIronTests 10, db 520 (523 at part 1: the seed's three tests moved to the server; `UpstreamQuotaRepoSuite` in
+`domain.library.acquisition`), cli 232, web 639, server 1 534 (1 skipped, 1 ignored; the acquisition oracle, the four
+acquisition contract suites and `JobRecordsContract` on both twins, the sources' contract's four new tests,
+`SeedImportSuite`). Every commit was formatted after a `scalafmtAll` without the cache (the cached one had replayed) and
+passes `fmt-check` as it is.
