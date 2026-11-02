@@ -205,9 +205,25 @@ object ArchitectureSuite:
             name -> (defs.head._2, defs.map(_._3).toSet)
         }
 
+    /** A member of a type or object (`BundleKind.Place`, `Queue.Kind.Acquire`): the qualifier before the dot is a
+      * capitalised name, so the word is that type's own vocabulary, never the top-level type of the same name — which a
+      * package path (`api.Place`) or the bare name reaches.
+      */
+    private val Member = "[A-Z]\\w*\\.$".r
+
+    private def isMember(code: String, start: Int): Boolean =
+      Member.findFirstIn(code.substring(math.max(0, start - 64), start)).isDefined
+
     /** The names a file uses, each with the offset of its first use outside its own definitions. */
     private def uses(s: SourceFile): Map[String, Int] =
-      Word.findAllMatchIn(s.code).toList.groupBy(_.matched).view.mapValues(_.head.start).toMap
+      Word
+        .findAllMatchIn(s.code)
+        .filterNot(m => isMember(s.code, m.start))
+        .toList
+        .groupBy(_.matched)
+        .view
+        .mapValues(_.head.start)
+        .toMap
 
     private def direction(placed: List[(SourceFile, String)]): List[Violation] =
       val defined = owners(placed)

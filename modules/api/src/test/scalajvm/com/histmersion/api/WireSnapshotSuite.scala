@@ -33,7 +33,10 @@ class WireSnapshotSuite extends munit.FunSuite:
   )
   private val result = SearchResult(
     3,
-    List(Hit(hit, Nil, List("tag zq")), Hit(hit.modify(_.citekey).setTo("zq_beta_1999").modify(_.year).setTo(None), Nil, Nil)),
+    List(
+      Hit(hit, Nil, List("tag zq")),
+      Hit(hit.modify(_.citekey).setTo("zq_beta_1999").modify(_.year).setTo(None), Nil, Nil)
+    ),
     offset = 0,
     next = Some(2)
   )
@@ -150,7 +153,8 @@ class WireSnapshotSuite extends munit.FunSuite:
     ),
     geometry = Some("POINT(30.5 40.25)"),
     children = List(EventSummary("zq-child", "Zq ash fall", "ashfall", TimeSpan(notBefore = Some(-1610)), "inferred")),
-    datings = List(EventDating("zq-event", "zq_alpha_2001", TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
+    datings =
+      List(EventDating("zq-event", "zq_alpha_2001", TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
     wikidata = Some("Q1"),
     media = List(thumb),
     names = List("Zq eruption", "Zq event")
@@ -172,12 +176,16 @@ class WireSnapshotSuite extends munit.FunSuite:
     val parts: List[(String, String)] = List(
       "briefResults" -> Markdown.briefResults(result),
       "briefResults empty" -> Markdown.briefResults(SearchResult(0, Nil)),
-      "sourceFindingsOnly" -> Markdown.sourceFindingsOnly(Vector(finding, finding.modify(_.claim).setTo("Zq claim two."))),
+      "sourceFindingsOnly" -> Markdown.sourceFindingsOnly(
+        Vector(finding, finding.modify(_.claim).setTo("Zq claim two."))
+      ),
       "sourceFindingsOnly empty" -> Markdown.sourceFindingsOnly(Vector.empty),
       "graph" -> Markdown.graph(graph),
       "contradictions" -> Markdown.contradictions(contradictions, Some("zq_alpha_2001")),
       "contradictions all" -> Markdown.contradictions(contradictions, None),
-      "geoPage" -> Markdown.geoPage(GeoHitPage(2, List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)),
+      "geoPage" -> Markdown.geoPage(
+        GeoHitPage(2, List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)
+      ),
       "geoResults empty" -> Markdown.geoResults(Vector.empty),
       "bodySlice" -> Markdown.bodySlice("Zq body text.", 10, 40),
       "gazetteerSources" -> Markdown.gazetteerSources(gazetteers),
@@ -224,7 +232,9 @@ class WireSnapshotSuite extends munit.FunSuite:
         )
       ),
       "mediaThumbLine" -> Markdown.mediaThumbLine(thumb),
-      "mediaList" -> Markdown.mediaList(MediaList(2, List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = Some(2))),
+      "mediaList" -> Markdown.mediaList(
+        MediaList(2, List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = Some(2))
+      ),
       "mediaFacets" -> Markdown.mediaFacets(
         MediaFacets(List(MediaCount("zq-provider", 3)), List(MediaCount("CC0-1.0", 2), MediaCount("zq", 1, false)))
       ),
@@ -245,9 +255,14 @@ class WireSnapshotSuite extends munit.FunSuite:
       "place json" -> place.asJson.spaces2,
       "resolved source json" -> ResolvedId(
         "zq_alpha_2001",
-        source = Some(ResolvedSource("zq_alpha_2001", Some("10.0/zq"), List("Zq A"), Some(2001), "Zq Alpha", SourceStatus.Current))
+        source = Some(
+          ResolvedSource("zq_alpha_2001", Some("10.0/zq"), List("Zq A"), Some(2001), "Zq Alpha", SourceStatus.Current)
+        )
       ).asJson.spaces2,
-      "resolved article json" -> ResolvedId("zq-article", article = Some(ResolvedArticle("zq-article", "Zq article"))).asJson.spaces2,
+      "resolved article json" -> ResolvedId(
+        "zq-article",
+        article = Some(ResolvedArticle("zq-article", "Zq article"))
+      ).asJson.spaces2,
       "resolved none json" -> ResolvedId("zq-nothing").asJson.spaces2,
       "job detail json" -> JobDetail(
         init = Some(InitPlan(gazetteer = true, fetch = List("zq-gaz"))),
