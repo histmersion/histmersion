@@ -1,0 +1,27 @@
+workflow	enrich-source	v2	source	extractor:facets+search	outputs=true
+workflow	review-article	v6	article	reviewer:article_coverage+get_source+neighbors+passages+query+search,cold-reader:,skeptic:followups+get_source+neighbors+passages+query+search,fixer:check_edits+get_source+neighbors+passages+query+search	outputs=true
+workflow	plan-goal	v1	goal	planner:facets+get_source+search	outputs=false
+workflow	compile-article	v2	article	extractor:,writer:check_edits	outputs=false
+workflow	currency-check	v1	goal		outputs=false
+workflow	acquisition-sweep	v1	goal	planner:	outputs=false
+workflow	infer-filter	v1	article	planner:facets+get_article+get_source+search	outputs=false
+workflow	propose-articles	v1	goal	planner:article_coverage+facets+get_article+get_source+search	outputs=false
+workflow	hint-effect	v1	manager	planner:	outputs=false
+tool	get_source
+tool	passages
+tool	search
+tool	facets
+tool	neighbors
+tool	query
+tool	get_article
+tool	followups
+tool	check_edits
+tool	article_coverage
+manager kind	review	items=article-review,infer-filter,article-extend	cron=-
+manager kind	enrich	items=source-enrich	cron=-
+manager kind	seed	items=propose-articles,article-compile,plan-goal	cron=-
+manager kind	watch	items=acquisition-sweep,currency-check,oa-ingest	cron=@weekly
+objectives	1
+approval subject kinds	ArticleFilter
+roster tools	get_source,passages,search,facets,neighbors,query,get_article,followups,check_edits,article_coverage
+roster roles	extractor,reviewer,cold-reader,skeptic,fixer,planner,writer,probe

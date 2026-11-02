@@ -1,0 +1,129 @@
+owner automation
+  tables	agent_allowances,agent_autopilot,agent_leases,agent_managers,agent_messages,agent_role_chains,agent_role_fallthrough,agent_state,agent_steps,approvals,manager_events,manager_hint_uses,manager_hints,manager_items,plan_pools,plan_quota_readings,plan_quota_refreshes,goals,goal_aliases,goal_focus,goal_links,goal_schedules,queue_items
+  stores	AgentHomes,CodexSessions
+  backup	stores= guarded=
+  carried	entities/goals.ndjson	record=Goal	table=goals	steps=Rows@42,Rows@48
+  carried	entities/queue.ndjson	record=QueueItem	table=queue_items	steps=Rows@50
+  carried	entities/goal-aliases.ndjson	record=-	table=-	steps=Rows@49
+  merge	Goal	label=SELECT slug FROM goals WHERE uid = l.local_uid	referable=true	planning=false
+  merge	QueueItem	label=SELECT left(text, 60) FROM queue_items WHERE uid = l.local_uid	referable=false	planning=false
+owner catalogue
+  tables	places,place_aliases,place_descriptions,place_footprints,place_links,place_names,place_overrides,place_relations,place_removals,place_types,gazetteer_sources,land,periods,seed_versions,events,event_aliases,event_catalogue,event_datings,event_edges,event_import_parts,event_link_candidates,event_link_checks,event_participants,corrections,attestations,site_undated_build,site_undated_cells,map_changes
+  stores	GazetteerExtracts,GazetteerFolder,GazetteerDrop,Basemap
+  backup	stores= guarded=
+  carried	entities/places.ndjson	record=Place	table=places	steps=Rows@30,Rows@31
+  carried	entities/place-aliases.ndjson	record=-	table=-	steps=Rows@33
+  carried	entities/site-types.ndjson	record=-	table=-	steps=Rows@64
+  carried	entities/periods.ndjson	record=Period	table=periods	steps=Rows@32
+  carried	entities/events.ndjson	record=Event	table=events	steps=Rows@41,Rows@46
+  carried	entities/event-aliases.ndjson	record=-	table=-	steps=Rows@47
+  carried	entities/event-catalogue.ndjson	record=-	table=-	steps=Rows@60
+  carried	entities/corrections.ndjson	record=-	table=-	steps=Rows@63
+  carried	entities/attestations.ndjson	record=Attestation	table=attestations	steps=AfterBlobs@101,AfterBlobs@103
+  carried	entities/event-candidates.ndjson	record=-	table=-	steps=Rows@61
+  carried	entities/event-checks.ndjson	record=-	table=-	steps=Rows@62
+  merge	Place	label=SELECT id FROM places WHERE uid = l.local_uid	referable=false	planning=true
+  merge	Period	label=SELECT id FROM periods WHERE uid = l.local_uid	referable=false	planning=true
+  merge	Event	label=SELECT id FROM events WHERE uid = l.local_uid	referable=true	planning=true
+  merge	Attestation	label=-	referable=false	planning=true
+  cache	map-tiles	map tiles	InMemory	stale=Restored
+  cache	undated-cells	undated sites by cell	InTables(List(site_undated_cells, site_undated_build))	stale=
+  cache	relief-cache	relief cache	InStore(Basemap,terrain-cache)	stale=
+  cache	map-cache	map cache	InStore(Basemap,vector-cache)	stale=
+  cache	sea-floor-cache	sea-floor cache	InStore(Basemap,sea-cache)	stale=
+  check	place-kind	fix=true
+  check	place-grid-point	fix=true
+  check	place-imported-point-area	fix=true
+  check	event-correction-conflict	fix=false
+owner media
+  tables	assets,asset_links,media_links,media_checks
+  stores	
+  backup	stores= guarded=
+  carried	entities/assets.ndjson	record=Asset	table=assets	steps=Rows@51
+  carried	entities/asset-links.ndjson	record=AssetLink	table=asset_links	steps=AfterBlobs@102
+  merge	Asset	label=SELECT name FROM assets WHERE uid = l.local_uid	referable=true	planning=true
+  merge	AssetLink	label=-	referable=false	planning=false
+  cache	thumbnails	picture thumbnails	InTables(List(assets))	stale=
+  check	media-licence	fix=false
+owner library
+  tables	sources,source_aliases,source_candidates,source_chunks,source_identifiers,findings,finding_places,edges,unresolved_edges,assessments,retraction_watch,candidate_watches,acquire_checks,upstream_quota
+  stores	IngestOriginals,Spool,CorpusFolder
+  backup	stores= guarded=sources:source
+  carried	entities/sources.ndjson	record=Source	table=sources	steps=Rows@10,AfterBlobs@100,Derived@200
+  carried	entities/findings.ndjson	record=Finding	table=findings	steps=Rows@23
+  carried	entities/edges.ndjson	record=-	table=-	steps=Rows@20
+  carried	entities/unresolved-edges.ndjson	record=-	table=-	steps=Rows@21
+  carried	entities/assessments.ndjson	record=-	table=-	steps=Rows@24
+  carried	entities/aliases.ndjson	record=-	table=-	steps=Rows@22
+  merge	Source	label=SELECT citekey FROM sources WHERE uid = l.local_uid	referable=true	planning=true
+  merge	Finding	label=SELECT id FROM findings WHERE uid = l.local_uid	referable=false	planning=true
+  mirror	sources	InDirectory(sources)
+  task	reindex
+  check	dangling-edges	fix=false
+  check	unresolved-short-citekeys	fix=true
+  check	no-findings	fix=false
+  check	no-period	fix=false
+  check	no-regions	fix=false
+  check	empty-summary	fix=false
+  check	unassessed-status	fix=false
+  check	duplicate-doi	fix=false
+  check	duplicate-sha256	fix=false
+  check	orphan-sources	fix=false
+  check	stale-chunks	fix=true
+  check	undated-findings	fix=false
+  check	unlocated-findings	fix=false
+  check	legacy-figure-links	fix=false
+  check	non-canonical-tag	fix=false
+  check	missing-year	fix=false
+  check	year-citekey-mismatch	fix=false
+  check	author-pipe	fix=false
+  check	superseded-without-edge	fix=false
+  check	note-markdown	fix=false
+  check	finding-geocode	fix=true
+  check	finding-unplaced	fix=true
+  check	finding-placeholder	fix=false
+owner research
+  tables	articles,article_aliases,article_critique_reasons,article_links,article_versions,review_ledgers
+  stores	
+  backup	stores= guarded=
+  carried	entities/articles.ndjson	record=Article	table=articles	steps=Rows@40,Rows@43,Derived@201
+  carried	entities/article-versions.ndjson	record=ArticleVersion	table=article_versions	steps=Rows@45
+  carried	entities/article-aliases.ndjson	record=-	table=-	steps=Rows@44
+  merge	Article	label=SELECT slug FROM articles WHERE uid = l.local_uid	referable=true	planning=true
+  merge	ArticleVersion	label=-	referable=false	planning=false
+  mirror	articles	ByType
+  check	dangling-article-links	fix=false
+  check	article-filler	fix=false
+  check	article-uncited-paragraph	fix=false
+  check	article-thin-summary	fix=false
+  check	article-critique-pairing	fix=true
+  check	article-markdown	fix=false
+owner personal
+  tables	bookmarks,notes,read_marks,ui_seen
+  stores	
+  backup	stores= guarded=
+owner util.data
+  tables	merges,merge_decisions,merge_ledger,merge_sessions
+  stores	Backups,Bundles
+  backup	stores= guarded=
+  cache	storage	storage figures	InMemory	stale=Expired
+owner util.jobs
+  tables	jobs
+  stores	
+  backup	stores= guarded=
+owner util.identity
+  tables	instance,uid_aliases,tombstones,alias_tombstones
+  stores	
+  backup	stores= guarded=
+  carried	entities/tombstones.ndjson	record=-	table=-	steps=Rows@0
+owner util.database
+  tables	flyway_schema_history,spatial_ref_sys
+  stores	DatabaseCluster
+  backup	stores= guarded=
+lint report	dangling-edges,unresolved-short-citekeys,no-findings,no-period,no-regions,empty-summary,unassessed-status,duplicate-doi,duplicate-sha256,orphan-sources,stale-chunks,undated-findings,unlocated-findings,legacy-figure-links,dangling-article-links,non-canonical-tag,missing-year,year-citekey-mismatch,author-pipe,article-filler,article-uncited-paragraph,article-thin-summary,article-critique-pairing,superseded-without-edge,article-markdown,note-markdown,finding-geocode,finding-unplaced,place-kind,place-grid-point,place-imported-point-area,finding-placeholder,media-licence,event-correction-conflict
+lint fixes	unresolved-short-citekeys,stale-chunks,finding-geocode,finding-unplaced,place-kind,place-grid-point,place-imported-point-area,article-critique-pairing
+alias kind	source	citekey
+alias kind	article	slug
+alias kind	event	id
+alias kind	goal	slug
+alias kind	place	id
