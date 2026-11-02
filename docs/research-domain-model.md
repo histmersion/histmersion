@@ -4626,3 +4626,90 @@ it was removed and `ArchitectureSuite` re-run. The gated transcripts (`HISTMERSI
 HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`): 352 tests on the unchanged code
 and after the last commit. No read path a `scripts/perf/*_live.py` driver covers changed (the same controllers and SQL
 behind the same routes), so no live-volume run was made.
+
+## 26. Contracts pass as built (2026-11-02, partial)
+
+What the pass set out to do is in its brief: every checkable rule of AGENTS.md (1–14) gets a mechanical check, and
+each check's list of today's violations shrinks to zero. This section records what is built and what is left.
+
+### The checks
+
+`ContractsSuite` (server tests) reads the sources of every main module (values, api, config, files, core, db,
+upstreams, the plugin modules, chimney-iron, server, cli, web and the built-in plugins), comments and string literals
+blanked, and lists each rule's violations in `architecture/contracts.tsv`, exact both ways: a new violation fails the
+build, and so does a row nothing violates any more; `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list.
+
+| rule | check | what it flags | before → after |
+|---|---|---|---|
+| 1, 3 | `primitive` | a public `def` of a `…Service`, `…Repo` or `…Controller(s)` file whose parameter or result is a `String`/`Int`/`Long` (alone, in an `Option` or a collection) named for a concept that has a newtype (the longest newtype name the name ends with, as a camel-case word) | 324 → 313 |
+| 1, 4 | `unwrap` | `.value` outside boundary code (the db, cli, web and config modules and the built-in plugins; routes, endpoints, tools, codecs, repositories, SQL, Markdown, JSON, wiring, transformer, API, CLI and command files; a newtype's own file) | 390 → 390 |
+| 3 | `concept` | one top-level type name defined in two files of one layer (layers: api = api and web, db, cli, plugin = plugin-api, each built-in plugin, core = the rest) | 3 → 3 |
+| 7 | `derives` | a codec, schema or config given written by hand (`given Encoder[…]`, `given Schema[…] = …`, `Kindlings…`, `DbCodec`, `ConfigReader`), a `.derived` call | 1042 → 1042 |
+| 8 | `copy` | `.copy(` | 479 → 479 |
+| 9 | `one-type` | a file with more than one top-level type; a companion, a newtype's alias, its `<Name>Rule` constraint and the cases of a sealed type or enum in its file are not counted | 47 → **0** |
+| 11 | `transaction` | a `…Repo` file that calls `connect(`/`transact(`, names a `Transactor`, calls `getConnection`, or has a method taking a `DataSource` | 220 → **0** |
+| 12 | `global` | `System.getenv`, `sys.env`, `sys.props`, `System.getProperty(ies)`, `"user.home"`, `"user.dir"`, `System.currentTimeMillis`, `Instant/LocalDate/LocalDateTime/OffsetDateTime/ZonedDateTime.now()`, `Clock.system…`, outside a file with a `@main def` and `SystemContext` (`System.nanoTime`, a duration, is not flagged) | 82 → 82 |
+| 13 | `service` | a `…Service` trait whose file defines no `class Implementation` or no `class InMemory` | 7 → 7 |
+| 14 | `helper` | a top-level object without a type of its name whose name is another type's plural or that type with `Ops`, `Utils`, `Helpers`, `Support`, `Syntax` or `Functions` | 26 → 26 |
+
+Rules 2, 5, 6 and 10 are judged in review (10 is also `ArchitectureSuite`'s direction rule). The checks are textual:
+they find what a reading of the sources finds, and the boundary list of `unwrap` and the layer map of `concept` are
+the suite's, in its companion.
+
+### Transactions (rule 11)
+
+Every repository method takes the `DbCon` it runs on. The `DataSource` forms of ManagerRepo, JobRepo, SourceRepo,
+PlanQuotaRepo, ModelSettingsRepo, FocusRepo, MergeRepo, GoalRepo, GoalLinkRepo, SourceCheckRepo, ArticleCheckRepo,
+BundleRepo, QueryRepo and UiRepo are gone: a form that only forwarded to its `…In` twin is deleted, the others take
+`(using DbCon)` and their callers open the connection (`read`) or transaction (`transact`) through
+`util.database.Transactor`, with the commit point each had. Three changed shape:
+
+- the work that runs as several transactions — the corpus re-chunk (one transaction per source), the stale re-chunk,
+  lint's safe fixes — is `SourceRepairs(db: Transactor)` beside the library's repositories;
+- `JobRepo.create`, `ManagerRepo.addHint` and `MergeRepo.putSession` insert and read the row back in one transaction
+  (they were an insert and a separate read);
+- `QueryRepo` runs on the caller's connection, in a read-only transaction of its own that is always rolled back, and
+  restores the connection's auto-commit; `QueryService` holds a `Transactor` per pool.
+
+Many callers still hold a `DataSource` and build `Transactor(ds)` where they call a repository; making them take a
+`Transactor` is left to the services' own slices.
+
+### The migration squash
+
+The 95 migrations up to V109 are one, `V109__schema.sql`: `pg_dump --schema-only --no-owner` of a database the old
+chain built, its session settings made transaction-local, the role `histmersion_query` (its settings written only when
+missing, so parallel databases of one cluster do not collide), the database's planner cost and the rows the chain
+seeded (the instance's id, the work lists' seen marks, the autopilot's row, the first map change). It keeps the number
+109, not 1, so the schema version that backups, bundles (`BundleFormat.compatible`) and `/api/health` carry keeps its
+meaning: a bundle written before the squash still imports. The next migration is V110.
+
+- A fresh database runs it; its schema is identical (`pg_dump --schema-only`) to the one the old chain builds through
+  Flyway.
+- A database the old chain built (its history starts at `001`) has its history replaced by one baseline at 109,
+  in one transaction under a table lock, before Flyway runs (`Migrate.squashHistory`, also before `validate`, which a
+  restore runs); no other row is touched. One the old chain had not brought to 109, or with a failed migration, is
+  refused with what to do (start it once with a build from before the squash). `baselineOnMigrate` is off: a non-empty
+  schema without a history is refused rather than assumed.
+- `Migrate.Replaced` (V097's replaced checksum) and its suite are gone with V097; the six tests that replayed one old
+  migration's data repair (V026, V027, V074 twice, V076, V090's text) are gone with their migrations.
+- The data survives (checked 2026-11-02 on a scratch cluster restored from the newest backup dump, 95 history rows at
+  109, then dropped): this build's `Migrate.run` replaced the history with one baseline at 109, `validate` passed, and
+  all 90 tables (28.3 million rows, the history excepted) have the same row count and the same checksum (the md5 of
+  their rows' md5s, sorted) before and after. The restored schema equals the old chain's except for three extensions
+  the old chain never created (`fuzzystrmatch`, `postgis_topology`, `postgis_tiger_geocoder`), which stay.
+- `MigrateSquashSuite`: a fresh database; an old-chain history at 109 keeps its rows and becomes one baseline
+  (idempotent); one at 108 is refused, untouched.
+
+The built-in plugins (calibre, events, fetchers, gazetteers, media, ai-http, vaults) are at version 0.1.0.
+
+### What is left, in order
+
+1. Rule 1/3/4: the companions' domain operations on newtypes (`Doi.normalize: String => Option[Doi]`, the raw-string
+   helpers such as `Acquire.normalizeDoi` gone), every service, repository and controller signature in newtypes
+   (`primitive`, 313), `.value` only at boundaries (`unwrap`, 390), the role types (a span's start and end, limit vs
+   count vs offset vs page size, milliseconds vs seconds, a citekey vs an alias), conversions newtype → newtype.
+2. The wire records of `com.histmersion.api` into `api.<domain>.*`, with the web page, CLI and MCP in the same commit.
+3. Rules 3, 7, 8, 12, 13, 14 to zero: `concept` (the page's own `ArticleLink`, the two `Frontmatter`s, the two
+   `Seconds`), `derives`, `copy`, `global`, `service` (InMemory twins for FindingService, LabelService, QueryService,
+   SearchService, CoverageService, ReviewStateService, BundleService), `helper`.
+4. The server suites that start a database without testing SQL, onto `InMemory`.

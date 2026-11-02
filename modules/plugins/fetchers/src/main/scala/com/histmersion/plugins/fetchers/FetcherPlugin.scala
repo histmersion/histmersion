@@ -11,4 +11,4 @@ trait FetcherPlugin(id: String) extends Plugin:
   val info: PluginInfo = PluginInfo(id, FetcherPlugin.Version, Spi.Version)
 
 object FetcherPlugin:
-  val Version = "1.0.0"
+  val Version = "0.1.0"

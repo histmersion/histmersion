@@ -152,31 +152,6 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     )
     assert(t.indexOf("ST_Intersects") < t.indexOf("ST_Intersection"), t)
 
-  test("V090 stores the normalised label word for word as the code writes it"):
-    val v090 = String(
-      getClass.getClassLoader.getResourceAsStream("db/migration/V090__place_shape_columns.sql").readAllBytes(),
-      java.nio.charset.StandardCharsets.UTF_8
-    )
-    assert(
-      v090.contains(s"label_norm text GENERATED ALWAYS AS (\n    ${PlaceFixtures.normLabelSql("label")}) STORED"),
-      "V090 and normLabelSql disagree"
-    )
-    assert(
-      v090.contains("USING gist (period, geom) WHERE kind <> 'site'"),
-      "the pairs' index and the pair query disagree"
-    )
-
-  test("V074 repairs stored rows with the configured window's default"):
-    val v074 = String(
-      getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
-      java.nio.charset.StandardCharsets.UTF_8
-    )
-    assert(
-      v074.contains(s"upper(period) - 1 - ${Gazetteer.DefaultOpenStartWindowYears}"),
-      "V074 and the default disagree"
-    )
-    assert(v074.contains("import_source IN ('wikidata', 'geonames')"), "only the bulk sources")
-
   // ── against Postgres ──────────────────────────────────────────────────────────────────────────
 
   private val testDb = TestDb.url

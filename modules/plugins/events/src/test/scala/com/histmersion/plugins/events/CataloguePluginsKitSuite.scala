@@ -19,7 +19,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
     List("events-gvp" -> "gvp", "events-noaa" -> "noaa", "events-wikidata" -> "wikidata").foreach { (id, catalogue) =>
       val h = load(id)
       assertEquals(h.contributions.eventCatalogues, List(catalogue), id)
-      assertEquals(h.plugin.info.version, "1.0.0", id)
+      assertEquals(h.plugin.info.version, "0.1.0", id)
       assertEquals(h.requests, Nil, s"$id asked an upstream while registering")
     }
 

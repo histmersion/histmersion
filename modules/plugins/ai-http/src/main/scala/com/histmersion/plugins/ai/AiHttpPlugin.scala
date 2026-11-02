@@ -22,4 +22,4 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
       .flatMap(s => ctx.aiProviders.add(name, provider(s)))
 
 object AiHttpPlugin:
-  val Version = "1.0.0"
+  val Version = "0.1.0"

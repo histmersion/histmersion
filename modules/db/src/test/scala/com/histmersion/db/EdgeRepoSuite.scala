@@ -53,47 +53,6 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run()
       sql"DELETE FROM articles WHERE slug LIKE ${Prefix + "%"}".update.run()
 
-  test("V026 moves topic-slug references into topics, parks other dangling edges, and adds the FKs"):
-    // replayed in a scratch schema holding the PRE-V026 shape, so the real data move is what runs
-    val script = scala.io.Source.fromResource("db/migration/V026__edges_between_sources.sql").mkString
-    val schema = "zz_v026_replay"
-    connect(ds):
-      val con = summon[DbCon].connection
-      val st = con.createStatement()
-      try
-        st.execute(s"DROP SCHEMA IF EXISTS $schema CASCADE; CREATE SCHEMA $schema; SET search_path TO $schema")
-        st.execute("""CREATE TABLE sources (citekey text PRIMARY KEY, topics text[] NOT NULL DEFAULT '{}');
-             CREATE TABLE edges (src text NOT NULL, dst text NOT NULL, kind text NOT NULL,
-                                 PRIMARY KEY (src, dst, kind));
-             INSERT INTO sources VALUES ('a2020_x', '{Bronze_Age_Collapse}'), ('b2021_y', '{}');
-             INSERT INTO edges VALUES
-               ('a2020_x', 'b2021_y',             'references'),  -- a real citation: stays
-               ('a2020_x', 'bronze_age_collapse', 'references'),  -- a topic already present: dropped
-               ('a2020_x', 'sea_peoples',         'references'),  -- a topic: moves into topics
-               ('b2021_y', 'sea_peoples',         'references'),
-               ('a2020_x', 'c2019_z',             'references'),  -- a work not ingested yet: parked
-               ('a2020_x', 'sea_peoples',         'challenges'),  -- typed, dangling: parked, not a topic
-               ('ghost',   'a2020_x',             'references')   -- out of a non-source: dropped""")
-        st.execute(script)
-        def rows(q: String): List[String] =
-          val rs = st.executeQuery(q)
-          Iterator.continually(rs).takeWhile(_.next()).map(_.getString(1)).toList
-        assertEquals(
-          rows("SELECT src || '>' || dst || ':' || kind FROM edges ORDER BY 1"),
-          List("a2020_x>b2021_y:references")
-        )
-        assertEquals(
-          rows("SELECT src || '>' || dst || ':' || kind FROM unresolved_edges ORDER BY 1"),
-          List("a2020_x>c2019_z:references", "a2020_x>sea_peoples:challenges")
-        )
-        assertEquals(
-          rows("SELECT array_to_string(topics, ',') FROM sources ORDER BY citekey"),
-          List("Bronze_Age_Collapse,sea_peoples", "sea_peoples")
-        )
-        // the invariant holds from now on
-        intercept[java.sql.SQLException](st.execute("INSERT INTO edges VALUES ('a2020_x', 'nope', 'cites')"))
-      finally st.execute(s"RESET search_path; DROP SCHEMA IF EXISTS $schema CASCADE")
-
   test("an edge to a source not stored yet is parked, listed as unresolved, and promoted when it arrives"):
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
     put(source(a, edges = List(Edge(a, b, "challenges"))))

@@ -10,4 +10,4 @@ trait EventsPlugin(id: String) extends Plugin:
   val info: PluginInfo = PluginInfo(id, EventsPlugin.Version, Spi.Version)
 
 object EventsPlugin:
-  val Version = "1.0.0"
+  val Version = "0.1.0"

@@ -16,4 +16,4 @@ final class CalibrePlugin extends Plugin:
     )
 
 object CalibrePlugin:
-  val Version = "1.0.0"
+  val Version = "0.1.0"

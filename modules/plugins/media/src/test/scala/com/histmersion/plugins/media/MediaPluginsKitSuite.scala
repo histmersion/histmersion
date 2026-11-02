@@ -52,7 +52,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       val h = load(id)
       assertEquals(h.contributions.mediaCollections, List(collection), id)
       assertEquals(h.contributions.sourceFetchers ++ h.contributions.eventCatalogues, Nil, id)
-      assertEquals(h.plugin.info.version, "1.0.0", id)
+      assertEquals(h.plugin.info.version, "0.1.0", id)
       assertEquals(h.plugin.info.spiVersion, Spi.Version, id)
       assertEquals(h.requests, Nil, s"$id asked an upstream while registering")
     }
