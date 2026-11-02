@@ -9,144 +9,16 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import MergeFixture.{home, src, uid, work}
-import MergeFold.{ArticleOutcome, FindingMatch}
+import MergeFold.ArticleOutcome
 import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
 import com.histmersion.util.data.exchange.BundleFormat
 
-/** Folding two records that are one into one (docs/research-merge-import.md §5.3–§5.4): sources field by field,
-  * findings, goals, queue items, events and articles.
+/** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
+  * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).
   */
 class MergeFoldSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"
-  private def finding(
-      id: String,
-      ck: String,
-      claim: String,
-      period: Option[BundleRange] = Some(BundleRange(Some(-1400), Some(-1200))),
-      lonLat: Option[(Double, Double)] = Some((34.6, 40.0)),
-      tags: List[String] = Nil,
-      confidence: Option[Confidence] = Some(Confidence.High),
-      region: Option[String] = Some("Anatolia")
-  ): BundleFinding =
-    BundleFinding(
-      uid(id),
-      work,
-      uid(ck),
-      id,
-      claim,
-      region,
-      lonLat.map(_._1),
-      lonLat.map(_._2),
-      period,
-      None,
-      tags,
-      confidence,
-      None,
-      At
-    )
-
-  test(
-    "a source folded: the richer title and authors, unions of tags and topics, the decisions where the sides differ"
-  ):
-    val l = src(
-      "h",
-      "guterbock1997_hittite",
-      "Perspectives on Hittite civilization",
-      List("Güterbock, H. G."),
-      Some(1997),
-      notes = Some("home's"),
-      origin = home
-    ).copy(tags = List("hittites", "Storm-God"), topics = List("Anatolia"))
-    val r = src(
-      "w",
-      "guterbock1997_perspectives",
-      "Perspectives on Hittite Civilization: Selected Writings",
-      List("Güterbock, Hans Gustav"),
-      Some(1997),
-      doi = Some("10.5555/oip26"),
-      notes = Some("work's")
-    )
-      .copy(
-        tags = List("storm_god", "religion"),
-        topics = List("anatolia", "Religion"),
-        status = SourceStatus.Contested
-      )
-    val f = MergeFold.foldSource(
-      l,
-      r,
-      Map(IssueKind.NotesDiffers -> MergeDecision.of(DecisionKind.Concat)),
-      "guterbock1997_hittite"
-    )
-    assertEquals(f.uid, l.uid)
-    assertEquals(f.origin, home)
-    assertEquals(f.citekey, "guterbock1997_hittite")
-    assertEquals(f.title, "Perspectives on Hittite Civilization: Selected Writings")
-    assertEquals(f.authors, List("Güterbock, Hans Gustav"))
-    assertEquals(f.doi, Some("10.5555/oip26")) // a DOI on one side only is carried over
-    assertEquals(f.tags, List("hittites", "Storm-God", "religion"))
-    assertEquals(f.topics, List("Anatolia", "Religion"))
-    assertEquals(f.notes, Some("home's\n\nwork's"))
-    assertEquals(f.status, l.status) // two verdicts: ours until decided…
-    val taken =
-      MergeFold.foldSource(l, r, Map(IssueKind.StatusDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
-    assertEquals(taken.status, SourceStatus.Contested) // …keep-right takes theirs
-    assertEquals(taken.notes, Some("home's")) // no decision on the notes: ours
-    // an unassessed side never wins over a verdict
-    assertEquals(
-      MergeFold.foldSource(l.copy(status = SourceStatus.Unassessed), r, Map.empty, l.citekey).status,
-      SourceStatus.Contested
-    )
-
-  test("a source folded: the period by hull, the body and original from the side decided"):
-    val l = src("h", "a2000_x", "X", Nil, Some(2000), body = Some("ours"), sha = Some("1" * 64), origin = home)
-      .copy(period = Some(BundleRange(Some(-1500), Some(-1300))))
-    val r = src("w", "a2000_y", "X", Nil, Some(2000), body = Some("theirs"), sha = Some("2" * 64))
-      .copy(period = Some(BundleRange(Some(-1400), Some(-1100))))
-    val hull =
-      MergeFold.foldSource(l, r, Map(IssueKind.PeriodDiffers -> MergeDecision.of(DecisionKind.Hull)), l.citekey)
-    assertEquals(hull.period, Some(BundleRange(Some(-1500), Some(-1100))))
-    assertEquals(hull.bodySha256, l.bodySha256)
-    val right =
-      MergeFold.foldSource(l, r, Map(IssueKind.BodyDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
-    assertEquals(right.bodySha256, r.bodySha256)
-    assertEquals(right.originalSha256, r.originalSha256)
-    // one side without a body: the other's
-    assertEquals(MergeFold.foldSource(l.copy(bodySha256 = None), r, Map.empty, l.citekey).bodySha256, r.bodySha256)
-
-  test("findings: the same claim folds, a near duplicate is offered, the rest are new — one to one"):
-    val lefts = List(
-      finding("h#1", "h", "Tarhunna is the storm god of Hatti", tags = List("home")),
-      finding("h#2", "h", "The storm god Tarhunna ruled Hatti")
-    )
-    val rights = List(
-      finding("w#1", "w", "the storm god of Hatti is Tarhunna", tags = List("work"), confidence = Some(Confidence.Low)),
-      finding("w#2", "w", "Tarhunna the storm god ruled Hatti and Arinna"),
-      finding("w#3", "w", "Hattusa burned around 1180 BC"),
-      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(BundleRange(Some(-500), Some(-400))))
-    )
-    val ms = MergeFold.matchFindings(lefts, rights, 50, 0.6)
-    assertEquals(ms.collect { case FindingMatch.Same(r, l) => r.id -> l.id }, List("w#1" -> "h#1"))
-    assertEquals(ms.collect { case FindingMatch.Near(r, l, _) => r.id -> l.id }, List("w#2" -> "h#2"))
-    // a different period is not the same finding
-    assertEquals(ms.collect { case FindingMatch.Unmatched(r) => r.id }, List("w#3", "w#4"))
-    val f = MergeFold.foldFinding(lefts.head, rights.head)
-    assertEquals(f.uid, lefts.head.uid)
-    assertEquals(f.tags, List("home", "work"))
-    assertEquals(f.confidence, Some(Confidence.Low)) // the more cautious
-    // far apart, and in different regions: not the same place
-    val far =
-      finding("w#5", "w", "Tarhunna is the storm god of Hatti", lonLat = Some((10.0, 50.0)), region = Some("Bavaria"))
-    assert(!MergeFold.samePlace(lefts.head, far, 50))
-    assert(MergeFold.samePlace(lefts.head, far.copy(region = Some("anatolia")), 50))
-
-  test("finding ids continue after the highest"):
-    assertEquals(
-      MergeFold.nextFindingIds("a2000_x", Set("a2000_x#1", "a2000_x#7", "b2000_y#9"), 2),
-      List("a2000_x#8", "a2000_x#9")
-    )
-    assertEquals(MergeFold.nextFindingIds("a2000_x", Set.empty, 1), List("a2000_x#1"))
-
   test("goals, queue items and events folded"):
     val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = GoalStatus.Seeding)
     val gr = MergeFixture.goal("g2", "zz_g", "Goal", work, Some("work's plan")).copy(status = GoalStatus.Compiled)

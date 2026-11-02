@@ -138,16 +138,8 @@ direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewArticle	
 direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewLedger	1
 direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewManagerDefaults	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
-direction	core:domain/MergeFold.scala	util.data -> library: FindingMatch	1
-direction	core:domain/MergeFold.scala	util.data -> library: MergeText	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
-direction	core:domain/MergePlanner.scala	util.data -> library: Citekeys	1
-direction	core:domain/MergePlanner.scala	util.data -> library: Finding	1
-direction	core:domain/MergePlanner.scala	util.data -> library: FindingMatch	1
-direction	core:domain/MergePlanner.scala	util.data -> library: MergeText	1
-direction	core:domain/MergePlanner.scala	util.data -> library: SourceMatch	1
-direction	core:domain/MergePlanner.scala	util.data -> library: SourceMatcher	1
 direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
 direction	core:domain/PlanGoal.scala	automation -> library: Acquire	1
 direction	core:domain/PlanGoal.scala	automation -> library: WorkRef	1

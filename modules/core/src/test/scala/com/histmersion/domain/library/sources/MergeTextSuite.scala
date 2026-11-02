@@ -1,10 +1,11 @@
-package com.histmersion.domain
+package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
+import com.histmersion.domain.Bounded
 import MergeText.AuthorAgreement
 
 /** The matcher's normalisers, on names and titles shaped like the live corpus's. */

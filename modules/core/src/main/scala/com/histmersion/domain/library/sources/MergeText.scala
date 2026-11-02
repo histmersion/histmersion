@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.domain.library.sources
 
 import scala.annotation.tailrec
 import com.histmersion.util.text.Fingerprint
