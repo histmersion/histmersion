@@ -56,7 +56,14 @@ object EngineContributions:
       .getOrElse(throw IllegalStateException("no enrich manager kind is registered"))
 
   /** The acquisition work the watch kind of `a`'s registry holds. */
-  def work(a: AgentsHandlers): AcquisitionWork =
+  def work(a: AgentsHandlers): AcquisitionWork = watch(a).work
+
+  /** The watch kind of `a`'s registry. */
+  def watch(a: AgentsHandlers): WatchManagerKind =
     a.workflows.managerKinds
-      .collectFirst { case w: WatchManagerKind => w.work }
+      .collectFirst { case w: WatchManagerKind => w }
       .getOrElse(throw IllegalStateException("no watch manager kind is registered"))
+
+  /** The autopilot's page over `a`: its status with the watch kind's upstreams and acquisition list's re-check. */
+  def autopilot(a: AgentsHandlers): com.histmersion.server.views.AutopilotView =
+    com.histmersion.server.views.AutopilotView(a.managing, watch(a).upstreams, work(a).acquireRecheck.status, a.clock)

@@ -78,7 +78,7 @@ final class AutopilotService(
   /** Turn it on (ensure and advance at once) or off (pause the seeding managers and watchers it runs). Idempotent; the
     * answer is the status with what it did.
     */
-  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
+  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val row = agents.autopilotRow.row()
     val changes =
@@ -390,7 +390,7 @@ final class AutopilotService(
   /** Per goal: its stage, managers, counts, open approvals, last activity and pace — a few queries for every goal at
     * once (readable with agents off).
     */
-  def status(now: Instant = Instant.now(agents.clock)): AutopilotStatus =
+  def status(now: Instant = Instant.now(agents.clock)): EngineStatus =
     val row = agents.autopilotRow.row()
     val goals = agents.goals.all()
     val managers = agents.managerStore.light()
@@ -424,7 +424,7 @@ final class AutopilotService(
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
           r.copy(mode = "auto (in the run, unchecked)")
         case r => r
-    val st = AutopilotStatus(
+    val st = EngineStatus(
       row.enabled,
       Some(row.changedAt),
       Option(row.changedBy).filter(_.nonEmpty),
@@ -464,5 +464,5 @@ final class AutopilotService(
       drain = agents.drain.info(),
       goalPlansWait = agents.focus.goalPlansWait()
     )
-    // the domains' parts: the ingest backlog, the upstreams' quotas, the acquisition list's re-check
+    // the domains' parts: the ingest backlog
     agents.workflows.managerKinds.foldLeft(st)((s, k) => k.status(s, now))

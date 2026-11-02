@@ -9,12 +9,15 @@ import com.histmersion.api.ManagersApi
   */
 object ManagersRoutes:
 
-  /** `acquisition`: the acquisition list's routes its domain binds (the repair and the legal re-check), in their place
-    * among these.
+  /** `switches` and `draining`: the autopilot's page's routes (read it, switch it, its mode; the drain), which show the
+    * library's part too; `acquisition`: the acquisition list's routes its domain binds (the repair and the legal
+    * re-check). Each in its place among these.
     */
   def apply(
       m: ManagersHandlers,
-      acquisition: List[ServerEndpoint[Any, Identity]]
+      switches: List[ServerEndpoint[Any, Identity]],
+      acquisition: List[ServerEndpoint[Any, Identity]],
+      draining: List[ServerEndpoint[Any, Identity]]
   ): List[ServerEndpoint[Any, Identity]] =
     List(
       ManagersApi.list.serverLogicSuccess[Identity](_ => m.list),
@@ -30,18 +33,15 @@ object ManagersRoutes:
       ManagersApi.removeHint.serverLogic[Identity]((id, h) => m.deleteHint(id, h)),
       ManagersApi.events.serverLogic[Identity]((id, before, limit) => m.events(id, before, limit)),
       ManagersApi.action.serverLogic[Identity]((id, action, runs) => m.action(id, action, runs)),
-      ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in)),
-      ManagersApi.autopilot.serverLogicSuccess[Identity](_ => m.autopilot),
-      ManagersApi.setAutopilot.serverLogic[Identity](in => m.setAutopilot(in)),
-      ManagersApi.setMode.serverLogic[Identity](in => m.setMode(in))
-    ) ++ acquisition ++ List(
+      ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in))
+    ) ++ switches ++ acquisition ++ List(
       ManagersApi.focus.serverLogicSuccess[Identity](_ => m.focus),
       ManagersApi.setFocus.serverLogic[Identity](in => m.setFocus(in)),
       ManagersApi.scheduler.serverLogicSuccess[Identity](limit => m.scheduler(limit)),
       ManagersApi.setScheduler.serverLogic[Identity](in => m.setScheduler(in)),
       ManagersApi.schedulerWhy.serverLogic[Identity](item => m.schedulerWhy(item)),
       ManagersApi.digest.serverLogicSuccess[Identity](_ => m.digest),
-      ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in)),
-      ManagersApi.drain.serverLogic[Identity](in => m.drain(in)),
+      ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in))
+    ) ++ draining ++ List(
       ManagersApi.stalls.serverLogicSuccess[Identity](days => m.stalls(days))
     )

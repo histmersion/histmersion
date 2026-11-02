@@ -25,16 +25,6 @@ object Queue:
   object QueueItem:
     given Schema[QueueItem] = summon[KindlingsSchema[QueueItem]].schema
 
-  final case class QueueListing(
-      list: String,
-      items: List[QueueItem],
-      checks: List[AcquireChecks.AcquireCheck] = Nil,
-      goals: List[ItemGoals] = Nil
-  ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QueueListing:
-    given Schema[QueueListing] = summon[KindlingsSchema[QueueListing]].schema
-
   final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema
   object ItemGoals:
     given Schema[ItemGoals] = summon[KindlingsSchema[ItemGoals]].schema
@@ -300,8 +290,8 @@ object Queue:
   private def instantKey(s: String): Long =
     scala.util.Try(java.time.Instant.parse(s).toEpochMilli).getOrElse(0L)
 
-  def markdown(kind: Kind, items: List[QueueItem], checks: List[AcquireChecks.AcquireCheck] = Nil): String =
-    val checked = checks.map(c => c.item -> c).toMap
+  /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
+  def markdown(kind: Kind, items: List[QueueItem], notes: Map[Int, String] = Map.empty): String =
     val shown = items.filterNot(_.status == Note)
     if shown.isEmpty then s"_${kind.label}: nothing queued._"
     else
@@ -316,7 +306,7 @@ object Queue:
           val box = if !kind.checkboxes then "" else if i.status == Done then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`" +
-            checked.get(i.id).fold("")(c => s"\n  - _${c.reason}_")
+            notes.get(i.id).fold("")(n => s"\n  - _${n}_")
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }

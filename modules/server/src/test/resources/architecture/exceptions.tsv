@@ -1,17 +1,11 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
 direction	api:api/Agents.scala	automation -> research: ArticlePlans	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
-direction	api:api/Autopilot.scala	automation -> library: AcquireChecks	1
-direction	api:api/Autopilot.scala	automation -> library: UpstreamQuota	1
 direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
 direction	api:api/Managers.scala	automation -> research: ArticleFilter	1
-direction	api:api/ManagersApi.scala	automation -> library: AcquireChecks	1
-direction	api:api/ManagersApi.scala	automation -> library: RepairAcquire	1
 direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: SourceMatch	1
 direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
-direction	api:api/Queue.scala	automation -> library: Acquire	1
-direction	api:api/Queue.scala	automation -> library: AcquireChecks	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1

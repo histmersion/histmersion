@@ -24,7 +24,11 @@ object AgentsTools:
   /** `repairAcquire`: the acquisition list's one-shot repair (dry run or not), as Markdown — the library's, bound by
     * the composition.
     */
-  def apply(a: AgentsHandlers, repairAcquire: Boolean => Either[ApiError, String]) =
+  def apply(
+      a: AgentsHandlers,
+      repairAcquire: Boolean => Either[ApiError, String],
+      autopilotPage: Autopilot.EngineStatus => String
+  ) =
     val start =
       tool("start_run")
         .description(
@@ -350,19 +354,19 @@ object AgentsTools:
                 .map(ManagersMarkdown.hint)
             case "autopilot" =>
               in.on match
-                case None    => Right(AutopilotMarkdown.status(m.autopilot))
-                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
+                case None    => Right(autopilotPage(m.autopilot))
+                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(autopilotPage)
             case "repair-acquire" =>
               repairAcquire(in.dryRun)
             case "drain" =>
-              m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(AutopilotMarkdown.status)
+              m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(ApiError("`mode` needs `mode`: working, finish or pause"))
                 .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some("mcp"))))
-                .map(AutopilotMarkdown.status)
+                .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                 case None    => Right(AutopilotMarkdown.focus(m.focus))

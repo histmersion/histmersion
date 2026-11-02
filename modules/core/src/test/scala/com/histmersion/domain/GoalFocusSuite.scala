@@ -402,7 +402,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val why =
       "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
     val st =
-      Autopilot.AutopilotStatus(on = true, agentsEnabled = true, managersEnabled = true, goalPlansWait = Some(why))
+      Autopilot.EngineStatus(on = true, agentsEnabled = true, managersEnabled = true, goalPlansWait = Some(why))
     assert(
       AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"),
       AutopilotMarkdown.status(st)

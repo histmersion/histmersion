@@ -169,7 +169,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Some(s"checked $day: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)")
     )
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
-    assert(Queue.markdown(Queue.Kind.Acquire, listing.items, listing.checks).contains(s"_checked $day: no legal copy"))
+    assert(listing.markdown.getOrElse("").contains(s"_checked $day: no legal copy"))
     assert(
       h.workListView.list("log", all = true).toOption.get.items.exists(_.text.startsWith("acquire re-check: 1 closed"))
     )
@@ -218,7 +218,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals((st.due, st.triedToday, st.perDay), (2, 3, 3))
     assert(st.nextPass.exists(_.startsWith("tomorrow")), st.toString)
     assert(
-      AutopilotMarkdown.status(a.autopilot.status()).contains("- acquire re-check: 2 of"),
+      a.autopilotPage(a.autopilot.status()).contains("- acquire re-check: 2 of"),
       "the autopilot status says it"
     )
 
@@ -503,7 +503,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no scheduled pass while the job runs")
     val line = AcquireChecksMarkdown.line(a.acquireRecheck.status())
     assert(line.contains(s"job ${job.id} running: 0/3 items"), line)
-    assert(AutopilotMarkdown.status(a.autopilot.status()).contains(s"job ${job.id} running"), "in the autopilot status")
+    assert(a.autopilotPage(a.autopilot.status()).contains(s"job ${job.id} running"), "in the autopilot status")
     gate.release.countDown()
     assertEquals(ended(a, job.id).status, JobState.Done.wire)
     assertEquals(asked(up).size, 3, "the tick tried none of them")

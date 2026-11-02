@@ -276,11 +276,7 @@ object Ops:
   private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[CliError, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all)
-        .map(l =>
-          Output.emit(json, l)(l =>
-            Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse("")
-          )
-        )
+        .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))
     case QueueCmd.Add(list, text, topic, reason) =>
       c.queueAdd(list, QueueAdd(text, topic, reason = reason))
         .map(i => Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
@@ -297,10 +293,11 @@ object Ops:
     case QueueCmd.Import(dir) =>
       readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
-      c.call(ManagersApi.acquireRecheck)(AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli"), all)).flatMap {
-        r =>
-          Output.emit(json, r)(AcquireChecksMarkdown.result)
-          r.job match
-            case Some(j) if !noWait && !json => IngestCmd.pollJob(c, j.id, 0)
-            case _                           => Right(())
+      c.call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.acquireRecheck)(
+        AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli"), all)
+      ).flatMap { r =>
+        Output.emit(json, r)(AcquireChecksMarkdown.result)
+        r.job match
+          case Some(j) if !noWait && !json => IngestCmd.pollJob(c, j.id, 0)
+          case _                           => Right(())
       }

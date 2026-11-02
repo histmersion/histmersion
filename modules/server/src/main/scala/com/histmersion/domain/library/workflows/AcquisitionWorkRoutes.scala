@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.ManagersApi
+import com.histmersion.api.library.acquisition.AcquisitionWorkApi
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -9,6 +9,6 @@ import sttp.tapir.server.ServerEndpoint
   */
 object AcquisitionWorkRoutes:
   def apply(work: => AcquisitionWork): List[ServerEndpoint[Any, Identity]] = List(
-    ManagersApi.repairAcquire.serverLogic[Identity](in => Right(work.oaBacklog.repair(in))),
-    ManagersApi.acquireRecheck.serverLogic[Identity](in => work.acquireRecheck.run(in))
+    AcquisitionWorkApi.repairAcquire.serverLogic[Identity](in => Right(work.oaBacklog.repair(in))),
+    AcquisitionWorkApi.acquireRecheck.serverLogic[Identity](in => work.acquireRecheck.run(in))
   )

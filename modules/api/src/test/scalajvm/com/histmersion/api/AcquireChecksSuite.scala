@@ -17,7 +17,7 @@ class AcquireChecksSuite extends munit.FunSuite:
   )
 
   test("`queue acquire` says under an item when it was last checked and what each fetcher answered"):
-    val md = Queue.markdown(Queue.Kind.Acquire, List(item), List(check))
+    val md = QueueListing(Queue.Kind.Acquire.label, List(item), List(check)).markdown.getOrElse("")
     assert(
       md.contains(
         "`#7`\n  - _checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)_"
@@ -55,8 +55,8 @@ class AcquireChecksSuite extends munit.FunSuite:
 
   test("the autopilot status and about carry the line; the re-check's finds are named among the day's ingests"):
     val r = RecheckStatus(enabled = true, withDoi = 3, due = 1, triedToday = 2, perDay = 40, fetchedToday = 2)
-    val st = Autopilot.AutopilotStatus(on = true, ingestedToday = 9, ingestCap = 60, acquireRecheck = Some(r))
-    val md = AutopilotMarkdown.status(st)
+    val st = AutopilotStatus(on = true, ingestedToday = 9, ingestCap = 60, acquireRecheck = Some(r))
+    val md = st.markdown
     assert(
       md.contains(
         "- legal open-access ingests today: 9 of 60 (all watchers), 2 of them by the acquisition list's re-check"
@@ -64,7 +64,7 @@ class AcquireChecksSuite extends munit.FunSuite:
       md
     )
     assert(md.contains("- acquire re-check: 1 of 3 items with a DOI due"), md)
-    assert(!AutopilotMarkdown.status(st.copy(acquireRecheck = None)).contains("re-check"))
+    assert(!st.copy(acquireRecheck = None).markdown.contains("re-check"))
 
   test("a pass's report: the counts and one line per item; a dry run says it asked no fetcher"):
     val r = RecheckResult(

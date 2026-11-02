@@ -106,7 +106,11 @@ object Autopilot:
   object DrainSet:
     given Schema[DrainSet] = summon[KindlingsSchema[DrainSet]].schema
 
-  final case class AutopilotStatus(
+  /** The autopilot as the automation knows it: the switches, the approvals' rules, the caps, the goals' progress, the
+    * focus and the drain. The page the server answers (`AutopilotStatus`) adds what the library knows of its upstreams
+    * and of the acquisition list's re-check.
+    */
+  final case class EngineStatus(
       on: Boolean,
       since: Option[String] = None,
       by: Option[String] = None,
@@ -126,14 +130,8 @@ object Autopilot:
       backlogDays: Option[Int] = None,
       focus: Option[FocusInfo] = None,
       drain: Option[DrainInfo] = None,
-      goalPlansWait: Option[String] = None,
-      upstreams: List[UpstreamQuota] = Nil,
-      /** Absent from an older server. */
-      acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
-  ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object AutopilotStatus:
-    given Schema[AutopilotStatus] = summon[KindlingsSchema[AutopilotStatus]].schema
-
+      goalPlansWait: Option[String] = None
+  )
+  object EngineStatus:
     val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +
       "each watcher sweeps once and never again, and no seeding manager proposes again — new sources are not looked for"

@@ -96,25 +96,26 @@ object ManagerCmd:
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse,
       Output.jsonFlag
     ).mapN { (verb, rest, dry, json) => (c: Client) =>
-      def status(call: Either[CliError, Autopilot.AutopilotStatus]) =
-        call.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
+      def status(call: Either[CliError, AutopilotStatus]) =
+        call.map(s => Output.emit(json, s)(_.markdown))
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
-            case List(m) => status(c.call(ManagersApi.setMode)(AgentMode.ModeSet(m, Some("cli"))))
+            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(m, Some("cli"))))
             case _ => Left(CliError("autopilot mode takes one of: working, finish, pause", exitCode = ExitCode.Usage))
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
             CliError(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage)
           )
-        case "status"  => status(c.call(ManagersApi.autopilot)(()))
-        case "on"      => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
-        case "off"     => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
-        case "drain"   => status(c.call(ManagersApi.drain)(Autopilot.DrainSet(on = true, Some("cli"))))
-        case "undrain" => status(c.call(ManagersApi.drain)(Autopilot.DrainSet(on = false, Some("cli"))))
+        case "status"  => status(c.call(AutopilotApi.autopilot)(()))
+        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
+        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
+        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = true, Some("cli"))))
+        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = false, Some("cli"))))
         case "repair-acquire" =>
-          c.call(ManagersApi.repairAcquire)(RepairAcquire.RepairRequest(dry, Some("cli")))
-            .map(r => Output.emit(json, r)(RepairAcquire.markdown))
+          c.call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.repairAcquire)(
+            RepairAcquire.RepairRequest(dry, Some("cli"))
+          ).map(r => Output.emit(json, r)(RepairAcquire.markdown))
         case "focus" =>
           focusRequest(rest)
             .flatMap {

@@ -447,7 +447,8 @@ final class McpTools(
                 .oaBacklog
                 .repair(RepairAcquire.RepairRequest(dry, Some("mcp")))
             )
-          )
+          ),
+        st => h.autopilot.page(st).markdown
       )
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ com.histmersion.domain.library.acquisition.AcquisitionTools(acquire, collections).tools

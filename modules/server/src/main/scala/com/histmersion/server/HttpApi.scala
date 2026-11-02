@@ -232,9 +232,15 @@ final class HttpApi(
       ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
         .ManagersRoutes(
           h.agents.managing,
+          List(
+            AutopilotApi.autopilot.serverLogicSuccess[Identity](_ => h.autopilot.autopilot),
+            AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in)),
+            AutopilotApi.setMode.serverLogic[Identity](in => h.autopilot.setMode(in))
+          ),
           com.histmersion.domain.library.workflows.AcquisitionWorkRoutes(
             com.histmersion.server.agents.EngineContributions.work(h.agents)
-          )
+          ),
+          List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in)))
         ) ++ acquireRoutes ++
       com.histmersion.domain.media.assets.IiifRoutes(h.media.iiif) ++
       List(sourcePage, static, apiNotFound, index)

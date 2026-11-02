@@ -90,11 +90,11 @@ object ApiClient:
   def markSeen(board: String, at: String): Future[UiNotices.Counters] =
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))
 
-  def queueList(list: String, all: Boolean = false): Future[Queue.QueueListing] =
+  def queueList(list: String, all: Boolean = false): Future[QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
-  def queueForGoal(list: String, goal: String, all: Boolean = false): Future[Queue.QueueListing] =
+  def queueForGoal(list: String, goal: String, all: Boolean = false): Future[QueueListing] =
     call(OpsApi.queueList)((list, all, Some(goal), None))
-  def queueOfJob(list: String, job: String): Future[Queue.QueueListing] =
+  def queueOfJob(list: String, job: String): Future[QueueListing] =
     call(OpsApi.queueList)((list, true, None, Some(job)))
   def activity(
       show: Option[String],
@@ -141,10 +141,10 @@ object ApiClient:
   def mediaProviders(): Future[List[MediaProviderInfo]] = call(Api.mediaProviders)(())
   def importMedia(provider: String): Future[JobInfo] =
     call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = false))
-  def setAgentMode(mode: AgentMode): Future[Autopilot.AutopilotStatus] =
-    call(ManagersApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
+  def setAgentMode(mode: AgentMode): Future[AutopilotStatus] =
+    call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
   def acquireRecheck(in: AcquireChecks.RecheckRequest): Future[AcquireChecks.RecheckResult] =
-    call(ManagersApi.acquireRecheck)(in)
+    call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.acquireRecheck)(in)
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
   def queueAdd(list: String, in: Queue.QueueAdd): Future[Queue.QueueItem] =
@@ -321,9 +321,9 @@ object ApiClient:
   // ── process managers (docs/research-process-managers.md) ─────────────────────────────────────────
 
   def managers: Future[List[Managers.ManagerInfo]] = call(ManagersApi.list)(())
-  def autopilot: Future[Autopilot.AutopilotStatus] = call(ManagersApi.autopilot)(())
-  def setAutopilot(on: Boolean): Future[Autopilot.AutopilotStatus] =
-    call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on, Some("web")))
+  def autopilot: Future[AutopilotStatus] = call(AutopilotApi.autopilot)(())
+  def setAutopilot(on: Boolean): Future[AutopilotStatus] =
+    call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on, Some("web")))
 
   /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
   def setFocus(action: String, goal: Option[String] = None, value: Option[Int] = None): Future[Autopilot.FocusInfo] =
@@ -336,8 +336,8 @@ object ApiClient:
   def schedulerWhy(item: String): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
 
   /** Drain (nothing new starts while the runs in flight finish) or lift it. */
-  def drain(on: Boolean): Future[Autopilot.AutopilotStatus] =
-    call(ManagersApi.drain)(Autopilot.DrainSet(on, Some("web")))
+  def drain(on: Boolean): Future[AutopilotStatus] =
+    call(AutopilotApi.drain)(Autopilot.DrainSet(on, Some("web")))
 
   /** The goals with no progress in `days` days, why, and what unblocks them. */
   def stalls(days: Option[Int] = None): Future[Stalls.StallReport] = call(ManagersApi.stalls)(days)
