@@ -6,9 +6,9 @@ import io.scalaland.chimney.dsl.*
 
 import java.time.{Clock, Instant}
 
-/** The autopilot's page as the automation and the library show it together: the automation's status (the switches,
-  * the rules, the goals, the focus, the drain) and the library's upstreams' quotas and its acquisition list's re-check
-  * at the same moment. What `GET` and `POST /api/agents/autopilot`, its mode and its drain answer.
+/** The autopilot's page as the automation and the library show it together: the automation's status (the switches, the
+  * rules, the goals, the focus, the drain) and the library's upstreams' quotas and its acquisition list's re-check at
+  * the same moment. What `GET` and `POST /api/agents/autopilot`, its mode and its drain answer.
   */
 final class AutopilotView(
     managers: ManagersHandlers,

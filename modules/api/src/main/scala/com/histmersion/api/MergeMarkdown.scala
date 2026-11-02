@@ -42,7 +42,7 @@ object MergeMarkdown:
       ),
       section(
         "Matches",
-        p.sources.filter(_.outcome != MatchOutcome.New).take(if all then Int.MaxValue else 20).map(sourceMatch)
+        RegisteredPlanMatches.kind.lines(p.sources, if all then Int.MaxValue else 20)
       )
     ).flatten
     val next =
@@ -194,8 +194,3 @@ object MergeMarkdown:
     case DecisionKind.RenameRight | DecisionKind.RenameLeft | DecisionKind.File =>
       i.suggested.filter(_.kind == k).flatMap(_.argument).fold(":<value>")(a => s":$a")
     case _ => ""
-
-  private def sourceMatch(s: SourceMatch): String =
-    val target = s.leftCitekey.fold("")(c => s" → `$c`")
-    val score = s.score.fold("")(x => s" · score ${math.round(x * 10) / 10.0}")
-    s"- `${s.rightCitekey}`$target · ${MatchOutcome.wireOf(s.outcome)}$score" + s.issue.fold("")(i => s" · $i")

@@ -13450,6 +13450,20 @@
       ]
     },
     {
+      "type": "com.histmersion.util.data.exchange.PlanMatches$",
+      "fields": [
+        {
+          "name": "given_Decoder_PlanMatches$lzy1"
+        },
+        {
+          "name": "given_Encoder_PlanMatches$lzy1"
+        },
+        {
+          "name": "given_Schema_PlanMatches$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.util.identity.BTombstoneRow$",
       "fields": [
         {

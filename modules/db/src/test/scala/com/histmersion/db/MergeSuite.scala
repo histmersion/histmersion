@@ -474,13 +474,14 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(p.from.label, Some("work"))
     assertEquals(p.into.label, Some("home"))
     // the ISBN and the near-identical OCR are what matched them
+    val matched = RegisteredPlanMatches.kind.all(p.sources)
     assert(
-      p.sources.exists(m => m.rightCitekey == "west1997_east" && m.why.exists(_.startsWith("ISBN"))),
-      p.sources.toString
+      matched.exists(m => m.rightCitekey == "west1997_east" && m.why.exists(_.startsWith("ISBN"))),
+      matched.toString
     )
     assert(
-      p.sources.exists(m => m.rightCitekey == "olsen2015_penelope" && m.why.exists(_.contains("OCR bodies alike"))),
-      p.sources.find(_.rightCitekey == "olsen2015_penelope").toString
+      matched.exists(m => m.rightCitekey == "olsen2015_penelope" && m.why.exists(_.contains("OCR bodies alike"))),
+      matched.find(_.rightCitekey == "olsen2015_penelope").toString
     )
     // deterministic, and pure: planning twice gives the same plan and writes nothing
     assertEquals(planIn(home, bundle, sh), p)

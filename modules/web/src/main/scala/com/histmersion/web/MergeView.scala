@@ -47,6 +47,9 @@ object MergeView:
     Group.values.toList.map(g => g -> issues.filter(groupOf(_) == g)).filter(_._2.nonEmpty)
 
   /** The counter: the blocking questions still open, of all the blocking ones that apply ("3 of 9"). */
+  /** How each of the bundle's sources was matched. */
+  def matched(p: MergePlan): List[SourceMatch] = RegisteredPlanMatches.kind.all(p.sources)
+
   def counter(p: MergePlan): (Int, Int) =
     val blocking = p.issues.filter(i => i.severity == IssueSeverity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
@@ -521,14 +524,14 @@ object MergeView:
           ul(p.info.map(x => li(x)))
         )
       ),
-      Option.when(p.sources.nonEmpty)(
+      Option.when(!p.sources.isEmpty)(
         htmlTag("details")(
           cls := "merge-info",
           htmlTag("summary")(
-            s"sources matched (${p.sources.count(_.outcome != MatchOutcome.New)}) and new (${p.sources.count(_.outcome == MatchOutcome.New)})"
+            s"sources matched (${matched(p).count(_.outcome != MatchOutcome.New)}) and new (${matched(p).count(_.outcome == MatchOutcome.New)})"
           ),
           ul(
-            p.sources.map(m =>
+            matched(p).map(m =>
               li(
                 code(m.rightCitekey),
                 m.leftCitekey.fold(span(" — new"))(l => span(" → ", SourceLink(l))),

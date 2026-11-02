@@ -1582,7 +1582,7 @@ object MergePlanner:
         in.manifest.asOf,
         hash,
         counts,
-        Nil,
+        com.histmersion.util.data.exchange.PlanMatches.empty,
         sorted,
         info.result() ++ notes.result(),
         problems,
