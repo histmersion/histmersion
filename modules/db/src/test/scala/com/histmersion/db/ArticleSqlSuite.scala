@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Param
 import com.histmersion.api.library.{Filter, Sort}
+import com.histmersion.util.database.given
 
 /** `ArticleFixtures.listWhere` is a pure function of the query parameters — asserted here without a database, like
   * `FilterSql` on the source side.

@@ -4,6 +4,7 @@ import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
 import com.histmersion.util.database.Migrate
+import com.histmersion.util.database.given
 
 /** The squash of the migration chain ([[Migrate.squashHistory]]): a fresh database gets the one migration; a database
   * the chain before it built keeps every row and has its history replaced by a baseline at 109; one that chain had not

@@ -13,6 +13,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Finding, Hit, SearchResult, Sort, Source}
 import com.histmersion.api.library.Facet
+import com.histmersion.util.database.given
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own

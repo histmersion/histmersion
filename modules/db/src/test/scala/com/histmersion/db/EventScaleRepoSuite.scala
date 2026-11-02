@@ -17,6 +17,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPatch, EventPut, EventSummary, Place}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.util.database.given
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the

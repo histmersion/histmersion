@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.util.database.given
 
 /** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance lines
   * of plan §5.2 stream 2.7 that need a database: put/patch, the link graph maintained from the body, backlinks in both

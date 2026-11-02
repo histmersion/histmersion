@@ -8,6 +8,7 @@ import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource
 import scala.util.Try
 import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.given
 
 /** A suite that owns the connection pools it opens: one per database and role it asks for ([[testPool]],
   * [[testQueryPool]]), opened on first use and closed when the suite is done — after its own clean-up ([[afterSuite]]),

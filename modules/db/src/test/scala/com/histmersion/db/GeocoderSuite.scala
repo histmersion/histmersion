@@ -17,6 +17,7 @@ import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.given
 
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
   * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test

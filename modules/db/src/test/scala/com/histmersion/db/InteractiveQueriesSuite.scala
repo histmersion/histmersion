@@ -22,6 +22,7 @@ import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{EventPut, Geocode, Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.util.database.given
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what the shapes they
   * replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Each test runs the new

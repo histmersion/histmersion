@@ -16,6 +16,7 @@ import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Sort}
 import com.histmersion.api.library.Facet
+import com.histmersion.util.database.given
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and

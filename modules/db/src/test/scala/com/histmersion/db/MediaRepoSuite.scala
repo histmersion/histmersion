@@ -26,6 +26,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place}
 import com.histmersion.api.media.{AssetKind, MediaProvider, MediaTarget, MediaThumb}
 import com.histmersion.api.media.AssetLink
+import com.histmersion.util.database.given
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no

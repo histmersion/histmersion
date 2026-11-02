@@ -13,6 +13,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.util.database.given
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both

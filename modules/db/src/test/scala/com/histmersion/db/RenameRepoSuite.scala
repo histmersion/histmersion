@@ -15,6 +15,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Edge, Finding, NeighborTarget, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.util.database.given
 
 /** Renaming a citekey (V027): the foreign keys cascade, every column without one is rewritten, finding ids move,
   * `[[links]]` in articles (versioned) and source notes follow, parked edges waiting for the new name are promoted, and

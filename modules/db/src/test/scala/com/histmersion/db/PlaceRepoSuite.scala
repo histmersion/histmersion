@@ -17,6 +17,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.library.Facet
+import com.histmersion.util.database.given
 
 /** The gazetteer against a real PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers what cannot be asserted
   * purely: containment, the point tolerance, period overlap, the recursive hierarchy and the `Filter.places` resolution

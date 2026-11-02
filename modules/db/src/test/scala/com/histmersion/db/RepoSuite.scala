@@ -12,6 +12,7 @@ import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source}
+import com.histmersion.util.database.given
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class RepoSuite extends com.histmersion.db.DbSuite:

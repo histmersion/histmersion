@@ -8,6 +8,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.api.library.{Filter, SearchHit, Source}
+import com.histmersion.util.database.given
 
 /** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the point of plan
   * §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable because they are chunked, and every hit

@@ -31,6 +31,7 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.util.database.given
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /

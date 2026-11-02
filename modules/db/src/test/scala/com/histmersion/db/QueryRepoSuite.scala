@@ -12,6 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Source
+import com.histmersion.util.database.given
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

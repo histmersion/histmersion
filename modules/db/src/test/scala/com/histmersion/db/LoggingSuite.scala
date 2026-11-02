@@ -1,4 +1,5 @@
 package com.histmersion.db
+import com.histmersion.util.database.given
 
 /** Library logs (Flyway, HikariCP, pgjdbc) reach scribe through SLF4J (#824). slf4j-api 2.x finds its binding through
   * ServiceLoader; with a 1.7-style binding on the classpath it found none, printed "No SLF4J providers were found" and

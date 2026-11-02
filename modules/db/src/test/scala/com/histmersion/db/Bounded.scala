@@ -2,6 +2,7 @@ package com.histmersion.db
 
 import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.concurrent.duration.Duration
+import com.histmersion.util.database.given
 
 /** munit bounds only ASYNCHRONOUS tests by `munitTimeout`; a synchronous body that hangs (a busy loop, a lock never
   * released) stalls the whole run — one did, for hours (#865). Mixed into a suite, every test body runs on its own

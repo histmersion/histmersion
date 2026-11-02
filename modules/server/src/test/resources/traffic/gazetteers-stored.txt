@@ -1,9 +1,9 @@
 ## import cliopatria: cliopatria.geojson, zipped
-result: Right(PlaceImportResult(6,3,4,List(),None))
+result: Right(ImportResult(6,3,4,List(),None))
 ## import awmc: awmc.geojson
-result: Right(PlaceImportResult(3,3,0,List(),None))
+result: Right(ImportResult(3,3,0,List(),None))
 ## import chronontology: chronontology.json
-result: Right(PlaceImportResult(3,5,0,List(),None))
+result: Right(ImportResult(3,5,0,List(),None))
 ## stored after the three imports
 places:
 {"id":"awmc_pleiades_511171","geom":{"crs":{"type":"name","properties":{"name":"EPSG:4326"}},"type":"MultiLineString","coordinates":[[[28.2,41.8],[28.7,42.2]]]},"kind":"feature","label":"Asticus M.","period":"(,)","source":"Ancient World Mapping Center (UNC), ODbL","dataset":"seed","shape_box":"BOX(28.2 41.8,28.7 42.2)","shape_dim":1,"site_type":null,"import_ref":null,"label_norm":"asticusm","properties":{"notes":"Should be 'field'","awmcType":"mountain","pleiadesId":"511171"},"shape_area":0,"shape_valid":true,"web_geojson":null,"geom_clipped":null,"import_source":null,"start_unknown":false,"import_version":null,"location_precision":null}
@@ -36,13 +36,13 @@ place_relations:
 {"kind":"part_of","period":"[-3200,-2700)","child_id":"cliopatria_kingdom_of_elam_-3200_-2701","parent_id":"cliopatria_kingdom_of_elam"}
 {"kind":"part_of","period":"[-3200,-2700)","child_id":"cliopatria_kingdom_of_elam_-3200_-2701","parent_id":"cliopatria_sumerian_city_states"}
 ## import cliopatria: cliopatria-more.geojson, zipped (over the first)
-result: Right(PlaceImportResult(12,6,8,List(),None))
+result: Right(ImportResult(12,6,8,List(),None))
 ## import awmc: awmc-more.geojson
-result: Right(PlaceImportResult(5,5,0,List(),None))
+result: Right(ImportResult(5,5,0,List(),None))
 ## import chronontology: chronontology-more.json
-result: Right(PlaceImportResult(3,6,0,List(),None))
+result: Right(ImportResult(3,6,0,List(),None))
 ## import cliopatria: cliopatria.geojson again, zipped
-result: Right(PlaceImportResult(6,3,4,List(),None))
+result: Right(ImportResult(6,3,4,List(),None))
 ## stored after the second imports
 places:
 {"id":"awmc_campus","geom":null,"kind":"feature","label":"Campus","period":"(,)","source":"Ancient World Mapping Center (UNC), ODbL","dataset":"seed","shape_box":null,"shape_dim":null,"site_type":null,"import_ref":null,"label_norm":"campus","properties":{"awmcType":"labeled feature"},"shape_area":null,"shape_valid":null,"web_geojson":null,"geom_clipped":null,"import_source":null,"start_unknown":false,"import_version":null,"location_precision":null}
@@ -119,4 +119,4 @@ place_relations:
 {"kind":"part_of","period":"(,)","child_id":"cliopatria_phrygia_undated_3","parent_id":"cliopatria_phrygia_undated"}
 ## names
 init.fetch-sources: cliopatria, awmc, chronontology, land, periodo, geonames, wikidata, lpf, tgn
-places fetch nowhere: Left(ApiError(unknown source 'nowhere' (available: cliopatria, awmc, chronontology, land),None))
+places fetch nowhere: Left(Error(unknown source 'nowhere' (available: cliopatria, awmc, chronontology, land),None))
