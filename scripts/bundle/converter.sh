@@ -43,9 +43,9 @@ cp "$here/app.py" "$out/"
 # the default set adds CodeFormula (610 MB), an ONNX layout copy and the figure classifier (unused)
 echo "→ docling models (layout, tableformer, rapidocr)"
 # a model host that fails can answer 200 with a JSON error, which the download stores as the model
-# (ModelScope did, 2026-11-02): check every file and retry, so a broken bundle never gets built
+# (ModelScope did, 2026-11-02): every file is checked, and a bundle is never built from broken ones
 models_ok() {
-  "$py" - "$out/models" <<'PY'
+  "$py" - "$1" <<'PY'
 import os, sys
 bad = []
 for root, _, files in os.walk(sys.argv[1]):
@@ -58,19 +58,33 @@ for root, _, files in os.walk(sys.argv[1]):
             bad.append(f"{p}: an error answer ({head[:120].decode('utf-8', 'replace')})")
         elif f.endswith((".onnx", ".pth", ".safetensors", ".bin")) and size < 64 * 1024:
             bad.append(f"{p}: {size} bytes")
+if not any(files for _, _, files in os.walk(sys.argv[1])):
+    bad.append(f"{sys.argv[1]}: no files")
 for b in bad:
     print(f"  bad model file: {b}", file=sys.stderr)
 sys.exit(1 if bad else 0)
 PY
 }
-for attempt in 1 2 3; do
-  rm -rf "$out/models"
-  "$py" -m docling.cli.tools models download -q -o "$out/models" layout tableformer rapidocr >/dev/null 2>&1
-  models_ok && break
-  [ "$attempt" -eq 3 ] && { echo "::error::the docling models did not download (a host answered with errors); try again later" >&2; exit 1; }
-  echo "  the models did not download whole, trying again in 30 s ($attempt/3)"
-  sleep 30
-done
+# the models are cached per docling version (HISTMERSION_MODELS_CACHE overrides the place), so a
+# bundle downloads them only when docling changes, and an outage of the host does not stop a build
+docling_version="$("$py" -c 'import importlib.metadata as m; print(m.version("docling"))')"
+cache="${HISTMERSION_MODELS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/histmersion/docling-models}/$docling_version"
+if [ -d "$cache" ] && models_ok "$cache" 2>/dev/null; then
+  echo "  from the cache ($cache)"
+else
+  mkdir -p "$(dirname "$cache")"
+  for attempt in 1 2 3; do
+    rm -rf "$cache.part"
+    "$py" -m docling.cli.tools models download -q -o "$cache.part" layout tableformer rapidocr >/dev/null 2>&1 \
+      || echo "  the models download exited with an error"
+    if models_ok "$cache.part"; then rm -rf "$cache" && mv "$cache.part" "$cache"; break; fi
+    [ "$attempt" -eq 3 ] && { rm -rf "$cache.part"; echo "::error::the docling models did not download (a host answered with errors); try again later" >&2; exit 1; }
+    echo "  the models did not download whole, trying again in 30 s ($attempt/3)"
+    sleep 30
+  done
+fi
+rm -rf "$out/models"
+cp -Rc "$cache" "$out/models" 2>/dev/null || cp -R "$cache" "$out/models"
 "$py" - <<'PY'
 import sys, torch, docling, pymupdf
 print(f"  python {sys.version.split()[0]} · torch {torch.__version__} (mps: {torch.backends.mps.is_available()}) · pymupdf {pymupdf.__version__}")
