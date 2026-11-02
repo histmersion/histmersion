@@ -13351,15 +13351,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BGoalLinkRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy2"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.BGoalRow$",
+      "type": "com.histmersion.domain.automation.goals.BGoalLinkRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13367,10 +13359,18 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BGoalScheduleRow$",
+      "type": "com.histmersion.domain.automation.goals.BGoalRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy3"
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.automation.goals.BGoalScheduleRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13423,18 +13423,18 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BQueueRow$",
+      "type": "com.histmersion.domain.automation.worklists.BQueueRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy4"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BTombstoneRow$",
+      "type": "com.histmersion.util.identity.BTombstoneRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy5"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
