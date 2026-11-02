@@ -1,6 +1,5 @@
 package com.histmersion.domain.library
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.library.sources.SourcesData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable, TableName}
 import com.histmersion.util.data.backup.{BackupShare, GuardedTable}
@@ -8,7 +7,7 @@ import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.MaintenanceTask
-import com.histmersion.util.data.mirror.{MirrorExport, MirrorPlacement, MirrorRecords, TransitionNotes}
+import com.histmersion.util.data.mirror.{MirrorExport, MirrorPlacement, MirrorRecords}
 import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
 
@@ -51,12 +50,11 @@ object LibraryData extends DataContribution:
   /** The sources' records in the mirror. */
   val SourceNotes: MirrorRecords = MirrorRecords("sources")
 
-  /** A source's note: its frontmatter and its notes, rendered by the notes the composition hands the mirror. */
+  /** The sources' notes (each its frontmatter and its notes, `SourceNotes`), in `sources/`. */
   override val mirror: List[MirrorExport] = List(new MirrorExport:
     val owner: DataOwner = LibraryData.owner
     val records: MirrorRecords = LibraryData.SourceNotes
-    val placement: MirrorPlacement = MirrorPlacement.SourceFiles
-    def note(id: String)(using notes: TransitionNotes): Either[ApiError, String] = notes.sourceNote(id))
+    val placement: MirrorPlacement = MirrorPlacement.SourceFiles)
 
   override val maintenance: List[MaintenanceTask] = List(SourcesData.reindex(owner))
 

@@ -4,7 +4,7 @@ import com.histmersion.api.Lint
 import com.histmersion.api.Lint.*
 import com.histmersion.api.ReindexResult
 import com.histmersion.util.data.DataOwner
-import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixWhen, SafeFix}
+import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice, MaintenanceTask, MaintenanceTaskName}
 import com.augustnagro.magnum.DbCon
@@ -46,14 +46,16 @@ object SourcesData:
 
   private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Check(owner, _, None))
 
-  private def fixed(owner: DataOwner, name: String, when: FixWhen)(run: CheckContext => LintFixResult): CheckRule =
-    Check(owner, name, Some(SafeFix(when, run)))
+  private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
+      run: CheckContext => LintFixResult
+  ): CheckRule =
+    Check(owner, name, Some(SafeFix(when, FixRank(rank), run)))
 
   /** The library's rules, in the order the report has always listed them. */
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(
-        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix)(c => SourceCheckRepo.resolveEdgesFix(c.dataSource))
+        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c => SourceCheckRepo.resolveEdgesFix(c.dataSource))
       ) ++
       listed(
         owner,
@@ -66,7 +68,7 @@ object SourcesData:
         DuplicateSha256,
         OrphanSources
       ) ++
-      List(fixed(owner, StaleChunks, FixWhen.EveryFix)(c => SourceCheckRepo.reindexFix(c.dataSource, c.config))) ++
+      List(fixed(owner, StaleChunks, FixWhen.EveryFix, 20)(c => SourceCheckRepo.reindexFix(c.dataSource, c.config))) ++
       listed(
         owner,
         UndatedFindings,
@@ -80,7 +82,7 @@ object SourcesData:
         NoteFormat
       ) ++
       List(
-        fixed(owner, FindingGeocode, FixWhen.WhenNamed)(c => SourceCheckRepo.regeocodeFix(c.dataSource, c.config)),
-        fixed(owner, FindingUnplaced, FixWhen.WhenNamed)(c => SourceCheckRepo.placeFix(c.dataSource, c.config))
+        fixed(owner, FindingGeocode, FixWhen.WhenNamed, 30)(c => SourceCheckRepo.regeocodeFix(c.dataSource, c.config)),
+        fixed(owner, FindingUnplaced, FixWhen.WhenNamed, 40)(c => SourceCheckRepo.placeFix(c.dataSource, c.config))
       ) ++
       listed(owner, FindingPlaceholder)

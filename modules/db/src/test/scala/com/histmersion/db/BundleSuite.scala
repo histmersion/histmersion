@@ -343,10 +343,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   ): BundleImportResult =
     val f = Files.createTempFile(tmp, "in-", ".hmx")
     Files.write(f, bundle)
-    BundleImport
+    com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
-        f,
+        com.histmersion.util.storage.ByteSource.file(f),
         BundleFormat.sha256Hex(bundle),
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         com.histmersion.util.storage.ContentDirectory(originals),

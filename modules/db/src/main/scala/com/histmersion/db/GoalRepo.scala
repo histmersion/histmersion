@@ -120,7 +120,7 @@ object GoalRepo:
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its sub-goals' parent
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
-  private[db] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, Unit] =
+  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, Unit] =
     def exists(s: String) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(ApiError(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))

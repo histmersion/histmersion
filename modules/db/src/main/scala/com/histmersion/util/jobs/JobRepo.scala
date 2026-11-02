@@ -110,6 +110,10 @@ object JobRepo:
     page(ds, JobQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList), limit, before, upTo)
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
+  /** The job queue by state, on the caller's connection (the jobs' figures). */
+  def states(using DbCon): List[(String, Int)] =
+    sql"SELECT status, count(*)::int FROM jobs GROUP BY status".query[(String, Int)].run().toList
+
   def stateCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM jobs"), "status")
 
   /** What the jobs list is filtered by (core `ListFilters.JobFilter`, validated): any of these states and kinds;

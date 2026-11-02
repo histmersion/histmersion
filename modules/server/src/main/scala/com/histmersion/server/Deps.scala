@@ -113,18 +113,23 @@ object Deps:
     */
   def apply(cfg: AppConfig, ds: DataSource): Deps = apply(cfg, ds, ds)
 
-  /** Every owner's data contribution: what data management runs its operations over. */
+  /** Every owner's data contribution, in the order every operation runs the owners in: the domains bottom up, personal,
+    * then the supporting areas.
+    */
   lazy val data: com.histmersion.util.data.DataContributions =
     com.histmersion.util.data.DataContributions
       .of(
-        com.histmersion.util.data.TransitionContributions.withOwn(
-          List(
-            com.histmersion.domain.catalogue.CatalogueData,
-            com.histmersion.domain.media.MediaData,
-            com.histmersion.domain.library.LibraryData,
-            com.histmersion.domain.research.ResearchData
-          ),
-          Nil
+        List(
+          com.histmersion.domain.automation.AutomationData,
+          com.histmersion.domain.catalogue.CatalogueData,
+          com.histmersion.domain.media.MediaData,
+          com.histmersion.domain.library.LibraryData,
+          com.histmersion.domain.research.ResearchData,
+          com.histmersion.domain.personal.PersonalData,
+          com.histmersion.util.data.DataManagementData,
+          com.histmersion.util.jobs.JobsData,
+          com.histmersion.util.identity.IdentityData,
+          com.histmersion.util.database.DatabaseData
         )
       )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)

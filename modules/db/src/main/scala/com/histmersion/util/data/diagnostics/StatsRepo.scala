@@ -3,8 +3,8 @@ package com.histmersion.util.data.diagnostics
 import com.augustnagro.magnum.*
 import com.histmersion.db.Sql
 
-/** The counts and sizes the diagnostics read: rows of a table, the jobs by state, the database's size and its tables'.
-  * Plain `count(*)`s over whole tables — the About panel is opened by hand, not polled.
+/** The counts and sizes the diagnostics read: rows of a table, the database's size and its tables'. Plain `count(*)`s
+  * over whole tables — the About panel is opened by hand, not polled.
   */
 object StatsRepo:
 
@@ -21,10 +21,6 @@ object StatsRepo:
       .run()
       .head
       .toLong
-
-  /** The job queue by state. */
-  def jobStates(using DbCon): List[(String, Int)] =
-    sql"SELECT status, count(*)::int FROM jobs GROUP BY status".query[(String, Int)].run().toList
 
   /** The database's name and its size on disk (`pg_database_size`: tables, indexes, TOAST — what a dump would read
     * back, plus the free space inside the files).

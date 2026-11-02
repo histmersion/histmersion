@@ -92,10 +92,10 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       res: MergeResolutions = MergeResolutions(),
       dryRun: Boolean = false
   ): BundleImportResult =
-    BundleImport
+    com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
-        bundle,
+        com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         com.histmersion.util.storage.ContentDirectory(originals),
@@ -590,10 +590,10 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       res: MergeResolutions,
       hash: String
   ): MergeApplyResult =
-    BundleImport
+    com.histmersion.util.data.exchange.BundleImporter
       .apply(
         ds,
-        bundle,
+        com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
           .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
@@ -603,7 +603,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         hash,
         () => { val _ = backupsTaken.incrementAndGet(); Right("stub.dump") },
         TestExchange.kinds,
-        TestExchange.rules
+        TestExchange.rules,
+        TestExchange.followUps
       )
       .fold(e => fail(e), identity)
 

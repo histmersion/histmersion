@@ -22,12 +22,8 @@ direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
-direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
-direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
-direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
-filesystem	db:db/BundleImport.scala	java.nio.file	1
 filesystem	db:db/MergeState.scala	java.nio.file	1
 filesystem	files:files/Frontmatter.scala	Files.*	3
 filesystem	files:files/Frontmatter.scala	java.nio.file	1
@@ -62,8 +58,6 @@ process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2
 process	server:server/agents/PlanPools.scala	ProcessBuilder	2
-repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
-repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1

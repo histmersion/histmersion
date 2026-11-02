@@ -2,14 +2,14 @@ package com.histmersion.util.data.checks
 
 import com.histmersion.api.Lint
 import com.histmersion.server.Deps
-import com.histmersion.util.data.TablesAdapter
+import com.histmersion.util.data.DataOwner
 
 /** Today's 34 rules, each registered once by the owner whose data it checks, reported in `Lint.all`'s order; the safe
-  * fixes in the order `lint --fix` applies them.
+  * fixes in the order `lint --fix` has always applied them (by each fix's rank).
   */
-class CheckRulesAdapterSuite extends munit.FunSuite:
+class CheckOrderSuite extends munit.FunSuite:
   private val rules = Deps.data.checks
-  private val runner = CheckRunner(rules, CheckRulesAdapter.order, null)
+  private val runner = CheckRunner(rules, CheckOrder(Lint.names), null)
 
   test("every rule registered once, reported in Lint.all's order"):
     assertEquals(rules.map(_.rule.name).sorted, Lint.names.sorted)
@@ -19,7 +19,7 @@ class CheckRulesAdapterSuite extends munit.FunSuite:
   test("the owners"):
     def of(owner: com.histmersion.util.data.DataOwner) = runner.rules.filter(_.owner == owner).map(_.rule.name)
     assertEquals(
-      of(TablesAdapter.ResearchOwner),
+      of(DataOwner("research")),
       List(
         Lint.DanglingArticleLinks,
         Lint.ArticleFiller,
@@ -30,14 +30,14 @@ class CheckRulesAdapterSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      of(TablesAdapter.CatalogueOwner),
+      of(DataOwner("catalogue")),
       List(Lint.PlaceKindRule, Lint.PlaceGridPoint, Lint.PlaceImportedPointArea, Lint.EventCorrectionConflict)
     )
-    assertEquals(of(TablesAdapter.MediaOwner), List(Lint.MediaLicenceRule))
-    assertEquals(of(TablesAdapter.LibraryOwner).size, 23)
+    assertEquals(of(DataOwner("media")), List(Lint.MediaLicenceRule))
+    assertEquals(of(DataOwner("library")).size, 23)
 
   test("the safe fixes: two on every call, the rest when named, in today's order"):
-    val fixes = CheckRulesAdapter.order.fixing(runner.rules).flatMap(r => r.fix.map(f => r.rule.name -> f.when))
+    val fixes = CheckOrder(Lint.names).fixing(runner.rules).flatMap(r => r.fix.map(f => r.rule.name -> f.when))
     assertEquals(
       fixes,
       List(

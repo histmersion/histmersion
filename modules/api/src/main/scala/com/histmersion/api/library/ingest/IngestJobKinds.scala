@@ -12,4 +12,8 @@ object IngestJobKinds:
   )
 
   val Reocr: JobKindEntry =
-    JobKindEntry.of(JobKind("reocr"), "Read a source's text again", "Converts a stored source's original file to text (OCR) again.")
+    JobKindEntry.of(
+      JobKind("reocr"),
+      "Read a source's text again",
+      "Converts a stored source's original file to text (OCR) again."
+    )
