@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.PlanQuota.*
 import com.histmersion.db.{AgentRepo, AutopilotRepo, Db, Migrate, PlanQuotaRepo}
-import com.histmersion.server.{Composition, Deps, Handlers}
+import com.histmersion.server.{Composition, Deps, ServerWiring}
 import io.circe.parser
 import sttp.ai.core.agent.*
 
@@ -109,14 +109,14 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       clients: Map[ModelRef, LlmClient],
       reads: Reads,
       cfg: AppConfig = baseCfg
-  ): (AgentsHandlers, Handlers) =
+  ): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     (
       AgentsHandlers(
-        TransitionSite(deps, h),
+        ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}"),
-        CliRuntime(cfg, TransitionWorkflows.roster),
+        CliRuntime(cfg, EngineContributions.roster),
         reads.seams
       ),
       h
@@ -137,7 +137,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
 
   /** 30% left of the 5-hour window (floor 25%), read an hour ago: stale, so it needs 35% — paused ONLY on its age.

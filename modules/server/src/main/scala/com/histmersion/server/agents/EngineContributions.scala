@@ -11,22 +11,19 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, WorkflowDefinit
 import com.histmersion.api.Agents.Pipeline
 import com.histmersion.values.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 
-/** What the domains register into the engine: the library's own contribution ([[LibraryWorkflows]]: its three workflows
-  * and the enrich and watch kinds), research's ([[ResearchWorkflows]]: its four workflows, the review kind, its measure
-  * of a goal and its tools), and the engine's own pipelines with the seed kind still registered through this adapter
-  * ([[PipelineWorkflow]], [[SeedManagerKind]]), with the read tools ([[TransitionTools]]) — in the order the engine has
-  * always listed them.
+/** What the domains register into the engine, in the order the engine has always listed them: the library's
+  * contribution ([[LibraryWorkflows]]: its three workflows, the enrich and watch kinds, its tools), research's
+  * ([[ResearchWorkflows]]: its four workflows, the review and seed kinds, its measure of a goal and its tools), and the
+  * engine's own pipelines ([[PipelineWorkflow]]); the tools in the toolbox's order ([[ToolboxOrder]]).
   */
-object TransitionWorkflows:
-  def contributions(deps: Deps, h: Handlers, a: AgentsHandlers): Contributions =
+object EngineContributions:
+  def of(deps: Deps, w: ServerWiring, a: AgentsHandlers): Contributions =
     def cfg = deps.cfg.agents
-    def lib = deps.cfg.libraryAgents
     val ds = deps.ds
-    val library = LibraryWorkflows(() => deps.cfg, ds, deps.transactor, h.librarySite, a)
-    val research = ResearchWorkflows(() => deps.cfg, h.researchSite, a, library.proposals)
-    val upstream = () => library.work.acquisition
+    val library = LibraryWorkflows(() => deps.cfg, ds, deps.transactor, w.librarySite, a)
+    val research = ResearchWorkflows(() => deps.cfg, w.researchSite, a, library.proposals)
     def engine(impl: PipelineDef): WorkflowDefinition = PipelineWorkflow.of(impl, a.definitions)
     val workflows: List[WorkflowDefinition] = List(
       library.enrichSource,
@@ -41,16 +38,16 @@ object TransitionWorkflows:
     )
     Contributions(
       workflows,
-      TransitionTools(h.librarySite, upstream, research.tools, cfg.tools).contributions,
-      List(research.reviewKind, library.enrichKind, SeedManagerKind(h, lib), library.watchKind),
+      ToolboxOrder.ordered(library.tools ++ research.tools),
+      List(research.reviewKind, library.enrichKind, research.seedKind, library.watchKind),
       List(research.objectives)
     )
 
-  /** What the agent definitions are held to and the generator renders from: the transition tools, and the roles of the
+  /** What the agent definitions are held to and the generator renders from: the toolbox's tools, and the roles of the
     * registered pipelines with the engine's own probe.
     */
   val roster: AgentRoster =
-    AgentRoster(TransitionTools.names, (Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct)
+    AgentRoster(ToolboxOrder.names, (Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct)
 
   /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
   def enrich(a: AgentsHandlers): EnrichManagerKind =

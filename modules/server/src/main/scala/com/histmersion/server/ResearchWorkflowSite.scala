@@ -10,9 +10,9 @@ import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleSer
 import com.histmersion.domain.research.workflows.{ResearchSite, ReviewLedgerService}
 
 /** Research's workflows' site over the composition: research's and the library's wiring, the work lists and the goals
-  * as today's handlers read them.
+  * as the composition wires them.
   */
-final class ResearchWorkflowSite(h: Handlers, deps: Deps) extends ResearchSite:
+final class ResearchWorkflowSite(h: ServerWiring, deps: Deps) extends ResearchSite:
   def workLists: WorkListControllers = deps.workLists
   def queues: QueueService = deps.queues
   def articles: ArticlesControllers = h.research.articles
@@ -23,4 +23,4 @@ final class ResearchWorkflowSite(h: Handlers, deps: Deps) extends ResearchSite:
   def citations: CitationsControllers = h.library.citations
   def search: SearchControllers = h.library.search
   def labels: LabelsControllers = h.library.labels
-  def goal(slug: String): Either[ApiError, Goal] = h.getGoal(slug)
+  def goal(slug: String): Either[ApiError, Goal] = h.goals.get(slug)

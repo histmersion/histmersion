@@ -24,7 +24,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     Migrate.run(ds)
     Deps(cfg, ds, testQueryPool(cfg.db, cfg.query))
 
-  private lazy val h = Handlers(deps, NoConverter)
+  private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
     def health: Either[String, String] = Right("ok")
@@ -54,8 +54,8 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     refused("put_source")(h.library.sources.put("zzlock_src", SourcePut(title = "T")))
     refused("patch_source")(h.library.sources.patch("zzlock_src", SourcePatch(summary = Some("x"))))
     refused("import")(h.library.sources.importNote(NoteImport(text = "---\ncitekey: zzlock_src\n---\n")))
-    refused("seed")(h.seed(SeedRequest(dir = "/tmp")))
-    refused("reindex")(h.reindex(None, None))
+    refused("seed")(h.seeding.seed(SeedRequest(dir = "/tmp")))
+    refused("reindex")(h.upkeep.reindex(None, None))
     refused("edges/resolve")(h.library.citations.resolveEdges)
     refused("delete_source")(h.library.sources.delete("zzlock_src", SourceDeleteRequest(apply = true)))
 
@@ -87,15 +87,15 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     finally { val _ = f.delete() }
 
   test("the ops writes are refused, while the READS still answer"):
-    refused("lint/fix")(h.ops.guardedLintFix())
-    refused("queue/add")(h.ops.queueAdd("tasks", Queue.QueueAdd(text = "zzlock item")))
-    refused("queue/patch")(h.ops.queuePatch(1, Queue.QueuePatch(status = Some("done"))))
-    refused("queue/delete")(h.ops.queueDelete(1))
-    refused("queue/import")(h.ops.queueImport("tasks", Queue.QueueImport(text = "")))
+    refused("lint/fix")(h.checks.guardedLintFix())
+    refused("queue/add")(h.workLists.add("tasks", Queue.QueueAdd(text = "zzlock item")))
+    refused("queue/patch")(h.workLists.patch(1, Queue.QueuePatch(status = Some("done"))))
+    refused("queue/delete")(h.workLists.delete(1))
+    refused("queue/import")(h.workLists.importText("tasks", Queue.QueueImport(text = "")))
     // reads are NOT blocked: a restore stops writes, it does not take the service down
-    val reads = underLock(h.ops.lint(Nil))
+    val reads = underLock(h.checks.lint(Nil))
     assert(reads.isRight, s"lint (a read) must still answer: $reads")
-    assert(underLock(h.ops.queueList("tasks", all = true)).isRight)
+    assert(underLock(h.workListView.list("tasks", all = true)).isRight)
 
   test("the OCR pool is paused for the duration of a restore, and resumed after"):
     assert(!h.ingest.queue.paused, "the pool starts running")

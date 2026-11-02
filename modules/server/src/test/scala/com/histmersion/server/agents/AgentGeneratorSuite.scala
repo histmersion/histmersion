@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters.*
   */
 class AgentGeneratorSuite extends munit.FunSuite:
 
-  private lazy val defs = AgentDefinitions(Prompts(""), TransitionWorkflows.roster)
+  private lazy val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
@@ -99,13 +99,13 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val bad =
       "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
     assert(
-      AgentDefinitions.parse("x", bad, TransitionTools.names).left.exists(_.contains("patch_source")),
-      AgentDefinitions.parse("x", bad, TransitionTools.names)
+      AgentDefinitions.parse("x", bad, ToolboxOrder.names).left.exists(_.contains("patch_source")),
+      AgentDefinitions.parse("x", bad, ToolboxOrder.names)
     )
-    assert(AgentDefinitions.parse("y", bad, TransitionTools.names).left.exists(_.contains("name 'x'")))
-    assert(AgentDefinitions.parse("x", "no header", TransitionTools.names).isLeft)
+    assert(AgentDefinitions.parse("y", bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
+    assert(AgentDefinitions.parse("x", "no header", ToolboxOrder.names).isLeft)
     val noRole = bad.replace("model-role: reviewer", "model-role: boss")
-    assert(AgentDefinitions.parse("x", noRole, TransitionTools.names).left.exists(_.contains("model-role")))
+    assert(AgentDefinitions.parse("x", noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
 
   test("placeholders render per runtime"):
     val t = "call {{tool:get_source}} then {{tool:*}}"
@@ -310,7 +310,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
 
   test("the whole tree generates under a server's runtimes dir"):
     val dir = Files.createTempDirectory("hm-gen-all-")
-    val rt = CliRuntime(FakeCli.app(dir), TransitionWorkflows.roster)
+    val rt = CliRuntime(FakeCli.app(dir), EngineContributions.roster)
     val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m), identity)
     assertEquals(r.runtimes, List("claude-code", "codex", "opencode"))
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
@@ -332,7 +332,7 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = PluginTree.tree(TransitionWorkflows.roster).fold(m => fail(m), identity)
+    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m), identity)
     val stale = tree.toList.sortBy(_._1).collect {
       case (rel, text) if !Files.isRegularFile(root.resolve(rel)) || Files.readString(root.resolve(rel)) != text => rel
     }

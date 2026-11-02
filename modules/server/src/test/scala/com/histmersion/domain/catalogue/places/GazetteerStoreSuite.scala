@@ -7,7 +7,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.db.TestDb
 import com.histmersion.plugin.PluginHttp
 import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
-import com.histmersion.server.{Bootstrap, Deps, Handlers}
+import com.histmersion.server.{Bootstrap, Deps, ServerWiring}
 
 import com.augustnagro.magnum.*
 
@@ -101,7 +101,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
     run("cliopatria", "cliopatria.geojson again, zipped", zipped("cliopatria.geojson"))
     sb ++= "## stored after the second imports\n" + stored
     // the names the server takes, and what it says to one it does not know
-    val h = Handlers(Deps(cfg, ds))
+    val h = ServerWiring(Deps(cfg, ds))
     sb ++= s"## names\ninit.fetch-sources: ${Bootstrap.sources.mkString(", ")}\n"
     sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(com.histmersion.domain.Caller.Local, "nowhere", dryRun = true)}\n"
     sb.result()

@@ -63,7 +63,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
 
   test("engine.txt and routes.txt: the engine's registry and the REST routes, in their order"):
     val deps = Deps(loaded.config, RefusingDataSource)
-    val h = Handlers(deps, OfflineConverter())
+    val h = ServerWiring(deps, OfflineConverter())
     val reg = h.agents.workflows
     val workflows = reg.definitions.map { d =>
       val tools = d.roles.map(r => s"${r.wire}:${d.allowedTools(r).toList.map(_.value).sorted.mkString("+")}")
@@ -76,7 +76,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
     )
     val objectives = s"objectives\t${reg.objectives.size}"
     val effects = com.histmersion.server.agents
-      .TransitionSite(deps, h)
+      .ServerEngineSite(deps, h)
       .approvalEffects
       .subjectKinds
       .toList

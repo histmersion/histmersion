@@ -93,7 +93,7 @@ object PromptBudget:
 
   def toolTable: String =
     "| tool | chars | ~tok |\n|---|---:|---:|\n" +
-      TransitionTools.names.map(t => s"| ${t.value} | ${toolChars(t)} | ${tokens(toolChars(t))} |").mkString("\n")
+      ToolboxOrder.names.map(t => s"| ${t.value} | ${toolChars(t)} | ${tokens(toolChars(t))} |").mkString("\n")
 
   /** The files `export` writes, relative to its directory. */
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =

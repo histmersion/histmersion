@@ -14,7 +14,7 @@ import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.api.RepairAcquire.RepairRequest
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
@@ -65,10 +65,10 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -88,8 +88,8 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(a: AgentsHandlers, h: Handlers, goal: String = Goal, query: String = Query): Unit =
-    assert(h.putGoal(goal, GoalPut(s"Zz $goal", notes = Some("where the tin came from"))).isRight)
+  private def seed(a: AgentsHandlers, h: ServerWiring, goal: String = Goal, query: String = Query): Unit =
+    assert(h.goals.put(goal, GoalPut(s"Zz $goal", notes = Some("where the tin came from"))).isRight)
     assert(a.addGoalLink(goal, LinkAdd(LinkKind.Query, query)).isRight)
 
   private def doi(n: String) = s"10.5555/zzagent.$n"
@@ -99,7 +99,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
 
   /** The fixture's legal ingest: stores the source, unless the DOI has no legal copy. */
-  private def legalIngest(h: Handlers, noCopy: Set[String] = Set.empty)(d: String): Either[String, IngestReport] =
+  private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[String, IngestReport] =
     if noCopy.contains(d) then Left(s"${IngestBacklog.NoLegalCopy} $d: no fetcher had it")
     else
       val ck = ck0(d)
@@ -134,8 +134,8 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   private def sweepRun(mid: String, goal: String): RunInfo =
     connect(ds)(AgentRepo.get(connect(ds)(ManagerRepo.itemFor(mid, AcquisitionSweep, goal)).get.runId.get)).get
 
-  private def acquire(h: Handlers): List[Queue.QueueItem] =
-    h.ops.queueList("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent"))
+  private def acquire(h: ServerWiring): List[Queue.QueueItem] =
+    h.workListView.list("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent"))
 
   private def backlog(mid: String): List[ManagerItem] =
     ManagerRepo.items(ds, mid, None, 0, 500)._1.filter(_.kind == OaIngest)
@@ -230,7 +230,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       11
     )
     assert(
-      h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("ingest backlog: 3 ingested"))
+      h.workListView.list("log", all = true).toOption.get.items.exists(_.text.startsWith("ingest backlog: 3 ingested"))
     )
     assertEquals(b.managing.get(m.id).toOption.get.manager.backlog, 0)
 
@@ -331,8 +331,8 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     // the old behaviour: a watcher without auto-ingest queues every pick (the overflow looked the same)
     val m = watcher(a, Goal, perDay = 5, auto = false)
     // a person's own item, in the same words, linked to the goal by its DOI
-    val mine = h.ops
-      .queueAdd(
+    val mine = h.workLists
+      .add(
         "acquire",
         QueueAdd(
           s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine",
@@ -385,7 +385,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     )
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent2023_c"))
     assert(
-      h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("repair-acquire (test): 1 legal"))
+      h.workListView
+        .list("log", all = true)
+        .toOption
+        .get
+        .items
+        .exists(_.text.startsWith("repair-acquire (test): 1 legal"))
     )
     // idempotent
     val again = a.oaBacklog.repair(RepairRequest())

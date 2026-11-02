@@ -11,21 +11,24 @@ import com.histmersion.values.TargetKind
 import com.histmersion.api.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 import com.histmersion.domain.automation.workflows.AutomationHost
-import com.histmersion.server.Handlers
+import com.histmersion.server.ServerWiring
 import io.scalaland.chimney.dsl.*
 
-/** The engine's [[AutomationHost]] over today's handlers, until each operation's owner offers its own service. */
-final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends AutomationHost:
+/** The engine's [[AutomationHost]] over the composition: the goals through the automation's own controllers, a run's
+  * target, options and links checked against the library's sources and research's articles, the plan's works looked up
+  * through the library's upstream, the vocabulary of its labels, and the housekeeping of this server.
+  */
+final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
   def articleExists(slug: String): Boolean = h.research.articleStore.exists(slug)
-  def goal(slug: String): Either[ApiError, Goal] = h.getGoal(slug)
-  def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] = h.putGoal(slug, in)
-  def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal] = h.patchGoal(slug, patch)
+  def goal(slug: String): Either[ApiError, Goal] = h.goals.get(slug)
+  def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] = h.goals.put(slug, in)
+  def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal] = h.goals.patch(slug, patch)
   def runTarget(p: Pipeline, raw: String): Option[Either[ApiError, String]] =
     p.targetKind match
       case TargetKind.Source => Some(h.library.sources.get(raw, body = false).map(_.source.citekey))
       case TargetKind.Article if p == Pipeline.CompileArticle => Some(Articles.slugOf(raw).left.map(ApiError(_)))
       case TargetKind.Article                                 => Some(h.research.articles.get(raw).map(_.article.slug))
-      case TargetKind.Goal                                    => Some(h.getGoal(raw.trim).map(_.slug))
+      case TargetKind.Goal                                    => Some(h.goals.get(raw.trim).map(_.slug))
       case TargetKind.Manager                                 => None
 
   def runOptions(p: Pipeline, req: RunRequest, target: String, roundsCap: Int): Either[ApiError, Unit] =
@@ -81,7 +84,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
   def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).map(_.transformInto[PlanGoal.Work])
   def vocabulary(field: String): List[String] =
     h.library.labels.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).map(_.value)
-  def housekeepingBlock: Option[String] = h.housekeepingBlock
-  def backup(): Either[ApiError, BackupStatus] = h.backup()
-  def backupStatus: Either[ApiError, BackupStatus] = h.backupStatus
-  def lintFix(): Either[ApiError, LintFixResult] = h.ops.guardedLintFix(Nil)
+  def housekeepingBlock: Option[String] = h.upkeep.housekeepingBlock
+  def backup(): Either[ApiError, BackupStatus] = h.upkeep.backup()
+  def backupStatus: Either[ApiError, BackupStatus] = h.upkeep.backupStatus
+  def lintFix(): Either[ApiError, LintFixResult] = h.checks.guardedLintFix(Nil)

@@ -9,7 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{Db, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.nio.file.Files
@@ -54,10 +54,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def handlers(c: ScriptedClient): AgentsHandlers =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     assert(h.library.sources.put(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
     AgentsHandlers(
-      TransitionSite(deps, h),
+      ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
     )
 
@@ -94,7 +94,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     * no plan pool is read).
     */
   private def claudeHandlers(fake: FakeCli.Fake): AgentsHandlers =
-    val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
+    val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,
@@ -102,10 +102,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
       rt
     )
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     assert(h.library.sources.put(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
     AgentsHandlers(
-      TransitionSite(deps, h),
+      ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")
     )
 

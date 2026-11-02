@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.GoalPut
+import com.histmersion.api.{GoalPatch, GoalPut}
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.{GoalLinkKind, ScheduleKind}
 
@@ -123,4 +123,59 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assertEquals(taken.map(_.kind).toSet, Set(ScheduleKind.Acquisition, ScheduleKind.Currency))
     assertEquals(g(s).schedules(None), Nil)
     assertEquals(g(s).scheduleGoals(), Nil)
+  }
+
+  stest("a page of goals by slug, of one status, with the total and the next offset") { s =>
+    List("zz-c" -> "active", "zz-a" -> "planned", "zz-b" -> "active").foreach((slug, st) =>
+      assert(g(s).put(slug, GoalPut(slug.toUpperCase, st)).isRight)
+    )
+    val first = g(s).page(None, 2, 0)
+    assertEquals(
+      (first.total, first.goals.map(_.slug), first.offset, first.next),
+      (3, List("zz-a", "zz-b"), 0, Some(2))
+    )
+    assertEquals(g(s).page(None, 2, 2).goals.map(_.slug), List("zz-c"))
+    assertEquals(g(s).page(Some(" ACTIVE "), 10, 0).goals.map(_.slug), List("zz-b", "zz-c"))
+  }
+
+  stest("a patch changes what it names, keeps a stored bound given the other alone, clears a cap of 0") { s =>
+    assert(g(s).put("zz-p", GoalPut("P", periodStart = Some(-2000), periodEnd = Some(-1000))).isRight)
+    assert(g(s).patch("zz-p", GoalPatch(title = Some("P2"), tags = Some(List("t")), periodEnd = Some(-1500))).isRight)
+    assertEquals(
+      bare(s, "zz-p").map(x => (x.title, x.tags, x.periodStart, x.periodEnd)),
+      Some(("P2", List("t"), Some(-2000L), Some(-1500L)))
+    )
+    assert(g(s).patch("zz-p", GoalPatch(budgetUsd = Some(3.5))).isRight)
+    assertEquals(g(s).planAndBudget("zz-p").flatMap(_._2), Some(BigDecimal(3.5)))
+    assert(g(s).patch("zz-p", GoalPatch(budgetUsd = Some(0))).isRight)
+    assertEquals(g(s).planAndBudget("zz-p").flatMap(_._2), None)
+    assert(g(s).patch("zz-none", GoalPatch(title = Some("x"))).left.exists(_.message.contains("zz-none")))
+  }
+
+  stest("a goal is deleted once; a rename moves its slug, keeps the old one, refuses a taken slug") { s =>
+    assert(g(s).put("zz-old", GoalPut("Old")).isRight)
+    assert(g(s).put("zz-other", GoalPut("Other")).isRight)
+    assert(g(s).put("zz-kid", GoalPut("Kid", parentSlug = Some("zz-old"))).isRight)
+    assert(g(s).link("zz-old", GoalLinkKind.Query, "tin", None))
+    assert(g(s).rename("zz-old", "zz-other").isLeft)
+    assert(g(s).rename("zz-none", "zz-x").isLeft)
+    assertEquals(g(s).rename(" zz-old ", "zz-new "), Right(()))
+    assertEquals(g(s).get("zz-old"), None)
+    assertEquals(bare(s, "zz-new").map(_.title), Some("Old"))
+    assertEquals(bare(s, "zz-kid").flatMap(_.parentSlug), Some("zz-new"))
+    assertEquals(g(s).refs("zz-new", GoalLinkKind.Query), List("tin"))
+    assert(g(s).put("zz-third", GoalPut("Third")).isRight)
+    assert(g(s).rename("zz-third", "zz-old").left.exists(_.message.contains("old slug of 'zz-new'")))
+    assert(g(s).delete("zz-other"))
+    assert(!g(s).delete("zz-other"))
+  }
+
+  stest("the goals linking work-list items, an item's goals by title") { s =>
+    assert(g(s).put("zz-g1", GoalPut("Beta")).isRight)
+    assert(g(s).put("zz-g2", GoalPut("Alpha")).isRight)
+    assert(g(s).link("zz-g1", GoalLinkKind.QueueItem, "7", None))
+    assert(g(s).link("zz-g2", GoalLinkKind.QueueItem, "7", None))
+    assert(g(s).link("zz-g2", GoalLinkKind.QueueItem, "8", None))
+    assertEquals(g(s).goalsOfItems(List(7)), List((7, "zz-g2", "Alpha"), (7, "zz-g1", "Beta")))
+    assertEquals(g(s).goalsOfItems(Nil), Nil)
   }

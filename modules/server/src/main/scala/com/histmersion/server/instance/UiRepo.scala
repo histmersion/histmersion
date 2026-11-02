@@ -1,4 +1,4 @@
-package com.histmersion.db
+package com.histmersion.server.instance
 
 import com.histmersion.api.{Agents, UiNotices}
 import com.histmersion.values.RunState
@@ -48,7 +48,7 @@ object UiRepo:
     */
   def agents(ds: DataSource): UiNotices.AgentsGlance = connect(ds)(agentsGlance)
 
-  private[db] def agentsGlance(using DbCon): UiNotices.AgentsGlance =
+  private[instance] def agentsGlance(using DbCon): UiNotices.AgentsGlance =
     val (running, queued) =
       sql"""SELECT (count(*) FILTER (WHERE status = ${RunState.Running.wire}))::int,
                    (count(*) FILTER (WHERE status = ${RunState.Queued.wire}))::int

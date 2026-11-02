@@ -14,18 +14,18 @@ import com.histmersion.api.VocabularyCodecs.given
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
   *
-  * Same rule as the rest of the server: a tool is a thin wrapper over [[OpsHandlers]] and returns Markdown, so the MCP
-  * output and the CLI output are the same bytes.
+  * Same rule as the rest of the server: a tool is a thin wrapper over the controllers REST binds and returns Markdown,
+  * so the MCP output and the CLI output are the same bytes.
   */
 object OpsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  def apply(ops: OpsHandlers, h: Handlers) =
+  def apply(h: ServerWiring) =
     val lint =
       tool("lint")
         .description(
-          s"Health-check the corpus and get a Markdown report grouped by rule. ${ops.lintRules.size} rules: " +
-            ops.lintRules.mkString(", ") +
+          s"Health-check the corpus and get a Markdown report grouped by rule. ${h.checks.lintRules.size} rules: " +
+            h.checks.lintRules.mkString(", ") +
             ". Run it after a batch of ingestion to find dead reference targets, un-enriched sources " +
             "(no findings / period / regions / summary), sources still at status=unassessed, " +
             "duplicate DOIs, non-canonical tags, year/citekey mismatches, article filler phrases, " +
@@ -44,18 +44,18 @@ object OpsTools:
           val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
           subject match
             case (Some(slug), _, _) =>
-              (if in.fix then h.fixArticle(slug) else h.lintArticle(slug))
+              (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
                 .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, Some(ck), _) =>
               (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
                 .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, _, Some(text)) =>
-              val r = h.lintText(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
+              val r = h.formats.check(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
               ToolResult.text(
                 FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
               )
             case _ =>
-              ops.lintWithFix(in.rules, in.fix) match
+              h.checks.lintWithFix(in.rules, in.fix) match
                 case Right(rep) => ToolResult.text(Lint.markdown(rep))
                 case Left(e)    => McpOut.error(e)
         }
@@ -76,7 +76,7 @@ object OpsTools:
             "date, so an added line lands in today's entry."
         )
         .input[QueueInput]
-        .handle(in => ToolResult.text(runQueue(ops, h, in)))
+        .handle(in => ToolResult.text(runQueue(h, in)))
 
     val backups =
       tool("backups")
@@ -87,7 +87,7 @@ object OpsTools:
         )
         .input[BackupsInput]
         .handle { _ =>
-          ops.backups match
+          h.upkeep.backupList match
             case Right(rows) => ToolResult.text(Markdown.backups(rows.toVector))
             case Left(e)     => McpOut.error(e)
         }
@@ -95,9 +95,9 @@ object OpsTools:
     List(lint, queue) ++ com.histmersion.domain.library.search.QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(ops: OpsHandlers, h: Handlers, in: QueueInput): String =
+  private def runQueue(h: ServerWiring, in: QueueInput): String =
     def render(list: String) =
-      ops.queueList(list, in.all) match
+      h.workListView.list(list, in.all) match
         case Right(l) =>
           Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse(s"_unknown list ${l.list}_")
         case Left(e) => McpOut.refusal(e)
@@ -108,19 +108,19 @@ object OpsTools:
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
-            ops.queueAdd(list, QueueAdd(text, in.topic, reason = in.reason)) match
+            h.workLists.add(list, QueueAdd(text, in.topic, reason = in.reason)) match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
           case _ => "_add needs both `list` and `text`_"
       case "done" =>
         in.id match
           case Some(id) =>
-            ops.queuePatch(id, QueuePatch(status = Some(Queue.Done))) match
+            h.workLists.patch(id, QueuePatch(status = Some(Queue.Done))) match
               case Right(i) => s"done **#${i.id}**: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        com.histmersion.server.agents.TransitionWorkflows
+        com.histmersion.server.agents.EngineContributions
           .work(h.agents)
           .acquireRecheck
           .run(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))

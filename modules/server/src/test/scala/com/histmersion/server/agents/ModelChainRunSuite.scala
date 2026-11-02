@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.ModelChains.*
 import com.histmersion.db.{AgentRepo, Db, Migrate, ModelSettingsRepo}
-import com.histmersion.server.{Composition, Deps, Handlers}
+import com.histmersion.server.{Composition, Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -72,12 +72,12 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def enrichScripts(c: ScriptedClient): Unit =
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$finding]}""")), Seq(text(notesJson)))
 
-  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     (
       AgentsHandlers(
-        TransitionSite(deps, h),
+        ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
       ),
       h
@@ -97,7 +97,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
 
   /** Spend `tokens` on `model`, finished `minutesAgo`, as a recorded LLM attempt of a run of its own. */
@@ -343,7 +343,9 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       val deps = Deps(cfg, ds)
       val a =
-        AgentsHandlers(TransitionSite(deps, Handlers(deps))) // the server's own factory: real clients, nothing called
+        AgentsHandlers(
+          ServerEngineSite(deps, ServerWiring(deps))
+        ) // the server's own factory: real clients, nothing called
       val d = a.doctor(offline = false)
       val local = d.providers.find(_.provider == "local").get
       assert(local.used && local.upstreamModels.contains("zzA"), local)
@@ -378,7 +380,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
       val lan = cfg.copy(server = cfg.server.copy(host = "0.0.0.0"))
-      val ld = AgentsHandlers(TransitionSite(Deps(lan, ds), Handlers(Deps(lan, ds)))).doctor(offline = true)
+      val ld = AgentsHandlers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = true)
       val bind = ld.providers.find(_.provider == "claude-code").get.checks.find(_.name == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
       assert(
@@ -416,7 +418,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .getOrElse(Set.empty)
     val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false)) // settings and tools need no run pool
     val list = """{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""
-    @volatile var hs: Option[Handlers] = None // the started server's handlers, for its run tokens
+    @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for its run tokens
     ox.supervised {
       val b = Composition
         .server(
@@ -424,7 +426,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           "127.0.0.1",
           0,
           com.histmersion.server.ConverterWiring.client(off.converter),
-          onHandlers = h => hs = Some(h)
+          onWiring = h => hs = Some(h)
         )
         .start()
       try
@@ -455,7 +457,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           Some(g.token)
         )
         assert(fs != 200 || fb.contains("error") || fb.contains("isError"), fb.take(500))
-        seed(Handlers(Deps(baseCfg, ds)))
+        seed(ServerWiring(Deps(baseCfg, ds)))
         val (cs, cb) = mcp(
           s"$url/mcp/agent",
           s"""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_source","arguments":{"citekey":"$Ck"}}}""",

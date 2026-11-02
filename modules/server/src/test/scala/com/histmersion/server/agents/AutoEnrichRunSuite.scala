@@ -8,7 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Db, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.util.ocr.ConverterClient
 
 import java.nio.file.{Files, Path}
@@ -69,8 +69,8 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   /** The handlers with their OCR pool running and the agent run pool NOT started. */
-  private def withHandlers[A](cfg: AppConfig = baseCfg)(f: Handlers => A): A =
-    val h = Handlers(Deps(cfg, ds), Stub)
+  private def withHandlers[A](cfg: AppConfig = baseCfg)(f: ServerWiring => A): A =
+    val h = ServerWiring(Deps(cfg, ds), Stub)
     val _ = h.ingest.queue.start()
     try f(h)
     finally
@@ -83,7 +83,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     p
 
   /** Ingest the fixture file and wait for its job to settle. */
-  private def ingest(h: Handlers): JobInfo =
+  private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
       .ingest(IngestParams(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile))
       .fold(e => fail(e.message), identity)

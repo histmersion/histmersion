@@ -12,7 +12,7 @@ import scala.collection.immutable.ListMap
 /** What the composition root gives the engine as it builds it: the settings and the database of the generation it runs
   * on, the work lists, how work keeps its generation, the plugins' AI providers, the agent roster, and — asked once the
   * engine exists — the domains' contributions and the host the engine reaches the rest of the server through
-  * (`server/agents/TransitionSite` over today's handlers).
+  * (`server/agents/ServerEngineSite` over the composition).
   */
 trait EngineSite:
   /** The settings now (a reload switches them). */

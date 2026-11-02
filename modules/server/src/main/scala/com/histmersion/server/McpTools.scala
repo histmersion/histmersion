@@ -17,9 +17,9 @@ import com.histmersion.values.{EditionsPolicy, PlaceKind}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
 
-/** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
+/** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(
-    h: Handlers,
+    h: ServerWiring,
     acquire: com.histmersion.domain.library.acquisition.AcquisitionControllers,
     collections: com.histmersion.domain.library.collections.CollectionsControllers
 ):
@@ -29,7 +29,7 @@ final class McpTools(
     tool("ping")
       .description("Liveness check for the Histmersion MCP server")
       .input[PingInput]
-      .handle(_ => ToolResult.text(s"${h.version.name} ${h.version.version} — ok"))
+      .handle(_ => ToolResult.text(s"${h.instance.version.name} ${h.instance.version.version} — ok"))
 
   // ── ingest, as a JOB (plan §1.8) ────────────────────────────────────────────────────────────
   private val ingest =
@@ -87,8 +87,8 @@ final class McpTools(
           case None =>
             val f = in.filter
             ToolResult.text(
-              h
-                .jobsPage(f, in.limit, in.before, None)
+              h.jobList
+                .page(f, java.time.Instant.now(h.clock), in.limit, in.before, None)
                 .fold(
                   McpOut.refusal,
                   (js, page) =>
@@ -165,7 +165,7 @@ final class McpTools(
         def page(f: com.histmersion.api.ConfigEdit.Page => String, prefix: Option[String]) =
           h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "reload" => ToolResult.text(ReloadMarkdown.report(h.configReload()))
+          case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
           case "get"    =>
             in.key.map(_.trim).filter(_.nonEmpty) match
               case Some(k) => page(p => p.field(k).fold(s"No setting called $k.")(ConfigEditMarkdown.field), Some(k))
@@ -197,7 +197,7 @@ final class McpTools(
       )
       .input[BackupInput]
       .handle { _ =>
-        h.backup() match
+        h.upkeep.backup() match
           case Right(r) => ToolResult.text(Markdown.backupStatus(r))
           case Left(e)  => McpOut.error(e)
       }
@@ -216,7 +216,7 @@ final class McpTools(
           "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`."
       )
       .input[VacuumRequest]
-      .handle(in => h.vacuum(in).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
+      .handle(in => h.upkeep.vacuum(in).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
 
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
   // human decision, made with `histmersion article delete`, not something a model should reach for while
@@ -240,7 +240,7 @@ final class McpTools(
               case Left(e)  => McpOut.error(e)
           case None =>
             val q = Api.GoalQuery(in.status, in.limit, in.offset)
-            ToolResult.text(GoalsMarkdown.goalList(h.listGoals(q)))
+            ToolResult.text(GoalsMarkdown.goalList(h.goals.list(q)))
       }
 
   private val putGoalTool =
@@ -254,7 +254,7 @@ final class McpTools(
       .handle { in =>
         val put =
           GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
-        h.putGoal(in.slug, put) match
+        h.goals.put(in.slug, put) match
           case Right(g) =>
             ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
@@ -276,7 +276,7 @@ final class McpTools(
           in.parentSlug,
           in.budgetUsd
         )
-        h.patchGoal(in.slug, p) match
+        h.goals.patch(in.slug, p) match
           case Right(g) =>
             ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
@@ -294,15 +294,15 @@ final class McpTools(
           case Some(key) =>
             in.value.map(_.trim).filter(_.nonEmpty) match
               case Some(v) =>
-                h.agentStateSet(key, AgentStatePut(v)) match
+                h.agentState.set(key, AgentStatePut(v)) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
               case None =>
-                h.agentStateGet(key) match
+                h.agentState.get(key) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(AgentStateMarkdown.agentStateList(h.agentStateList()))
+            ToolResult.text(AgentStateMarkdown.agentStateList(h.agentState.list()))
       }
 
   private val deleteAgentStateTool =
@@ -310,7 +310,7 @@ final class McpTools(
       .description("Delete an agent state key.")
       .input[DeleteAgentStateInput]
       .handle { in =>
-        h.agentStateDelete(in.key) match
+        h.agentState.delete(in.key) match
           case Right(d) => ToolResult.text(s"Deleted agent state key '${d.key}'.")
           case Left(e)  => McpOut.error(e)
       }
@@ -387,10 +387,10 @@ final class McpTools(
       .handle { in =>
         val req = LabelRename(in.to)
         val r = in.kind.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "article" => Right(h.renameArticle(in.from, req))
-          case "event"   => Right(h.renameEvent(in.from, req))
-          case "goal"    => Right(h.renameGoal(in.from, req))
-          case "place"   => Right(h.renamePlace(in.from, req))
+          case "article" => Right(h.research.articles.rename(in.from, req))
+          case "event"   => Right(h.events.renamed(in.from, req))
+          case "goal"    => Right(h.goals.rename(in.from, req))
+          case "place"   => Right(h.places.renamed(in.from, req))
           case other     => Left(s"_kind '$other' is not article, event, goal or place_")
         r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
@@ -405,7 +405,7 @@ final class McpTools(
       h.library.sources,
       h.library.findings,
       h.library.citations,
-      h.exportSource
+      ck => h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, ck)
     ) ++ List(
       backup,
       configTool,
@@ -433,7 +433,7 @@ final class McpTools(
         mergesTool,
         renameLabel
       )
-      ++ OpsTools(h.ops, h) // stream 2.8: lint · queue · query
+      ++ OpsTools(h) // stream 2.8: lint · queue · query
       ++ com.histmersion.domain.personal.PersonalTools(h.personal) // the person's bookmarks and notes, read only
       ++ com.histmersion.domain.catalogue.evidence.EventLinksTools(h.eventLinks) // event_links (proposed links, leads)
       ++ com.histmersion.domain.catalogue.events.CorrectionsTools(h.eventImports) // event_corrections
@@ -442,7 +442,7 @@ final class McpTools(
         dry =>
           Right(
             RepairAcquire.markdown(
-              com.histmersion.server.agents.TransitionWorkflows
+              com.histmersion.server.agents.EngineContributions
                 .work(h.agents)
                 .oaBacklog
                 .repair(RepairAcquire.RepairRequest(dry, Some("mcp")))

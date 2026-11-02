@@ -1,20 +1,20 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.server.agents.TransitionWorkflows
+import com.histmersion.server.agents.EngineContributions
 import com.histmersion.values.AgentRole
 
 /** The definitions take only the roles the contributed workflows run, as they list only the contributed tools. */
 class AgentRosterSuite extends munit.FunSuite:
 
   test("every bundled definition takes a contributed role"):
-    val defs = AgentDefinitions(Prompts(""), TransitionWorkflows.roster)
+    val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
     assert(defs.agents.isRight, defs.agents.left.toOption.getOrElse(""))
 
   test("the roster holds every role a registered pipeline runs, and the probe"):
-    assertEquals(TransitionWorkflows.roster.roles.toSet, AgentRole.values.toSet)
+    assertEquals(EngineContributions.roster.roles.toSet, AgentRole.values.toSet)
 
   test("a definition whose role no workflow contributes is refused, naming the roles there are"):
-    val roster = TransitionWorkflows.roster
+    val roster = EngineContributions.roster
     val without = roster.copy(roles = roster.roles.filterNot(_ == AgentRole.Skeptic))
     val skeptic = AgentDefinitions(Prompts(""), without).agentNames.map(AgentDefinitions(Prompts(""), without).agent)
     val refused = skeptic.collect { case Left(m) if m.contains("is no contributed workflow's") => m }

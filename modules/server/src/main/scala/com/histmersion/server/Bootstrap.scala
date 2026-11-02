@@ -14,7 +14,6 @@ import com.histmersion.domain.catalogue.places.{
   NaturalEarthLand,
   PlaceService
 }
-import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.storage.Location
 
 import java.nio.file.{Files, Path}
@@ -139,15 +138,11 @@ final class Bootstrap(
     // the definitions a period import left out go on the job (#771), not just into the log
     def withSkipped(r: PeriodImportResult): PeriodImportResult =
       if r.skippedCount > 0 then
-        JobRepo.get(ds, id).foreach { j =>
-          val d = j.detail.getOrElse(JobDetail(init = Some(p)))
-          JobRepo.setDetail(
-            ds,
-            id,
-            d.copy(
-              skippedPeriods = (d.skippedPeriods ++ r.skipped).take(Bootstrap.SkippedListed),
-              skippedPeriodCount = d.skippedPeriodCount + r.skippedCount
-            )
+        BackgroundJob.amendDetail(ds, id) { found =>
+          val d = if found == JobDetail() then JobDetail(init = Some(p)) else found
+          d.copy(
+            skippedPeriods = (d.skippedPeriods ++ r.skipped).take(Bootstrap.SkippedListed),
+            skippedPeriodCount = d.skippedPeriodCount + r.skippedCount
           )
         }
       r

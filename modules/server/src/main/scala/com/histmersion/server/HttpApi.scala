@@ -15,48 +15,50 @@ import com.histmersion.domain.*
   */
 final class HttpApi(
     deps: Deps,
-    h: Handlers,
+    h: ServerWiring,
     acquire: com.histmersion.domain.library.acquisition.AcquisitionControllers,
     collections: com.histmersion.domain.library.collections.CollectionsControllers
 ):
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
-    Api.version.serverLogicSuccess[Identity](_ => h.version),
-    Api.health.serverLogicSuccess[Identity](_ => h.health),
-    Api.about.serverLogicSuccess[Identity](_ => h.about()),
-    Api.config.serverLogicSuccess[Identity](_ => h.uiConfig),
+    Api.version.serverLogicSuccess[Identity](_ => h.instance.version),
+    Api.health.serverLogicSuccess[Identity](_ => h.instance.health),
+    Api.about.serverLogicSuccess[Identity](_ => h.instance.about()),
+    Api.config.serverLogicSuccess[Identity](_ => h.instance.uiConfig),
     // the toolbar's counts and "something new" marks: REST only, like `config` (UiApi says why)
-    UiApi.counters.serverLogicSuccess[Identity](_ => h.uiCounters),
-    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.markSeen(board, mark)),
+    UiApi.counters.serverLogicSuccess[Identity](_ => h.instance.uiCounters),
+    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.instance.markSeen(board, mark)),
     // the terrain base map: REST and the CLI only (BasemapApi says why); tiles before nothing else —
     // `basemap/fetch` is a POST, so the GET `basemap/{layer}/…` never shadows it
     BasemapApi.status.serverLogicSuccess[Identity](_ => h.basemap.status),
     BasemapApi.fetch.serverLogic[Identity](q => h.basemap.fetch(q)),
     BasemapApi.remove.serverLogic[Identity](q => h.basemap.remove(q)),
     BasemapApi.tile.serverLogic[Identity]((l, z, x, y, sub, keys) => h.basemap.tile(l, z, x, y, sub, keys)),
-    TilesApi.tile.serverLogic[Identity](q => h.tile(q))
+    TilesApi.tile.serverLogic[Identity](q => h.tiles.tile(q))
   ) ++ com.histmersion.domain.library.LibraryRoutes(
     h.library.search,
     h.library.labels,
     h.library.sources,
     h.library.findings,
     h.library.citations,
-    Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
-    OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.lintText(in)),
-    Api.resolveId.serverLogic[Identity](h.resolveId),
-    Api.seed.serverLogic[Identity](req => h.seed(req)),
+    Api.sourceArticles.serverLogic[Identity](ck => h.research.articles.sourceArticles(ck)),
+    OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.formats.check(in)),
+    Api.resolveId.serverLogic[Identity](id => h.resolveView(id)),
+    Api.seed.serverLogic[Identity](req => h.seeding.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
-    Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
-    Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit))
+    Api.exportSource.serverLogic[Identity](ck =>
+      h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, ck)
+    ),
+    Api.reindex.serverLogic[Identity]((after, limit) => h.upkeep.reindex(after, limit))
   ) ++ List[ServerEndpoint[Any, Identity]](
     // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
-    Api.configReload.serverLogic[Identity](_ => Right(h.configReload())),
-    Api.backup.serverLogic[Identity](_ => h.backup()),
-    Api.maintenanceVacuum.serverLogic[Identity](in => h.vacuum(in)),
-    Api.backupStatus.serverLogic[Identity](_ => h.backupStatus),
-    Api.backups.serverLogic[Identity](_ => h.backupList),
-    Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
-    Api.restore.serverLogic[Identity](req => h.restore(req)),
+    Api.configReload.serverLogic[Identity](_ => Right(h.instance.configReload())),
+    Api.backup.serverLogic[Identity](_ => h.upkeep.backup()),
+    Api.maintenanceVacuum.serverLogic[Identity](in => h.upkeep.vacuum(in)),
+    Api.backupStatus.serverLogic[Identity](_ => h.upkeep.backupStatus),
+    Api.backups.serverLogic[Identity](_ => h.upkeep.backupList),
+    Api.downloadBackup.serverLogic[Identity](file => h.upkeep.backupFile(file)),
+    Api.restore.serverLogic[Identity](req => h.upkeep.restore(req)),
     // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
     Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
     Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label)),
@@ -77,14 +79,14 @@ final class HttpApi(
     Api.mergeLedger.serverLogic[Identity]((uid, merge, limit) => h.bundles.mergeLedger(uid, merge, limit)),
     Api.mergeDetail.serverLogic[Identity](id => h.bundles.mergeDetail(id)),
     // ── label renames (V042, V053) ──
-    Api.renameArticle.serverLogic[Identity]((slug, req) => h.renameArticle(slug, req)),
-    Api.renameEvent.serverLogic[Identity]((id, req) => h.renameEvent(id, req)),
-    Api.renameGoal.serverLogic[Identity]((slug, req) => h.renameGoal(slug, req)),
-    Api.renamePlace.serverLogic[Identity]((id, req) => h.renamePlace(id, req))
+    Api.renameArticle.serverLogic[Identity]((slug, req) => h.research.articles.rename(slug, req)),
+    Api.renameEvent.serverLogic[Identity]((id, req) => h.events.renamed(id, req)),
+    Api.renameGoal.serverLogic[Identity]((slug, req) => h.goals.rename(slug, req)),
+    Api.renamePlace.serverLogic[Identity]((id, req) => h.places.renamed(id, req))
   ) ++ com.histmersion.domain.catalogue.places.PlacesRoutes(
     h.places,
     h.gazetteer,
-    (id, asOf, counts) => h.place(id, asOf, counts),
+    (id, asOf, counts) => h.placeCard(id, asOf, counts),
     () => h.bootstrap.gazetteerSources,
     (source, apply) => h.bootstrap.loadGazetteer(source, apply)
   ) ++ com.histmersion.domain.catalogue.periods.PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
@@ -93,16 +95,16 @@ final class HttpApi(
   ) ++ com.histmersion.domain.catalogue.events.EventsRoutes(h.events) ++ com.histmersion.domain.catalogue.evidence
     .AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
-    Api.goals.serverLogicSuccess[Identity](q => h.listGoals(q)),
-    Api.getGoal.serverLogic[Identity](slug => h.getGoal(slug)),
-    Api.putGoal.serverLogic[Identity]((slug, in) => h.putGoal(slug, in)),
-    Api.patchGoal.serverLogic[Identity]((slug, p) => h.patchGoal(slug, p)),
-    Api.deleteGoal.serverLogic[Identity](slug => h.deleteGoal(slug)),
+    Api.goals.serverLogicSuccess[Identity](q => h.goals.list(q)),
+    Api.getGoal.serverLogic[Identity](slug => h.goals.get(slug)),
+    Api.putGoal.serverLogic[Identity]((slug, in) => h.goals.put(slug, in)),
+    Api.patchGoal.serverLogic[Identity]((slug, p) => h.goals.patch(slug, p)),
+    Api.deleteGoal.serverLogic[Identity](slug => h.goals.delete(slug)),
     // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────
-    Api.agentStateList.serverLogicSuccess[Identity](_ => h.agentStateList()),
-    Api.agentStateGet.serverLogic[Identity](key => h.agentStateGet(key)),
-    Api.agentStateSet.serverLogic[Identity]((key, in) => h.agentStateSet(key, in)),
-    Api.agentStateDelete.serverLogic[Identity](key => h.agentStateDelete(key)),
+    Api.agentStateList.serverLogicSuccess[Identity](_ => h.agentState.list()),
+    Api.agentStateGet.serverLogic[Identity](key => h.agentState.get(key)),
+    Api.agentStateSet.serverLogic[Identity]((key, in) => h.agentState.set(key, in)),
+    Api.agentStateDelete.serverLogic[Identity](key => h.agentState.delete(key)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) =>
       h.ingest.controllers.ingest(p, com.histmersion.domain.library.ingest.Upload.handed(file))
@@ -121,7 +123,9 @@ final class HttpApi(
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
       h.activity.page(show, since, goal, limit, before)
     ),
-    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.jobsPage(f, limit, before, upTo))
+    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) =>
+      h.jobList.page(f, java.time.Instant.now(deps.clock), limit, before, upTo)
+    )
   ) ++ com.histmersion.domain.media.MediaRoutes(
     h.media.assets,
     h.media.links,
@@ -215,13 +219,15 @@ final class HttpApi(
       com.histmersion.domain.catalogue.evidence.EventLinksRoutes(h.eventLinks) ++
       com.histmersion.domain.catalogue.places.SiteTypesRoutes(h.siteTypes) ++ rest ++
       com.histmersion.domain.research.articles.ArticleRoutes(h.research.articles, h.research.pages) ++ OpsRoutes(
-        h.ops
+        h
       ) ++ com.histmersion.domain.library.search.QueryRoutes(
         h.library.query
       ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
         .ManagersRoutes(
           h.agents.managing,
-          com.histmersion.server.agents.TransitionRoutes.acquisition(h)
+          com.histmersion.domain.library.workflows.AcquisitionWorkRoutes(
+            com.histmersion.server.agents.EngineContributions.work(h.agents)
+          )
         ) ++ acquireRoutes ++
       com.histmersion.domain.media.assets.IiifRoutes(h.media.iiif) ++
       List(sourcePage, static, apiNotFound, index)

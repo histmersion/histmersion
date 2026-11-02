@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{ApiError, Goal, GoalPut, Write, YearFmt}
+import com.histmersion.api.{ApiError, Goal, GoalList, GoalPatch, GoalPut, Write, YearFmt}
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule}
 import com.histmersion.db.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.AutomationState
@@ -27,6 +27,25 @@ trait GoalService:
 
   /** Create or replace a goal; a period that starts after it ends is refused. */
   def put(slug: String, in: GoalPut): Either[ApiError, Unit]
+
+  /** One page of the goals (of one status, when given), by slug, with the total. */
+  def page(status: Option[String], limit: Int, offset: Int): GoalList
+
+  /** A goal's fields changed as given (a cap of 0 or less clears it; a bound given alone replaces that bound); no such
+    * goal is a not-found error.
+    */
+  def patch(slug: String, p: GoalPatch): Either[ApiError, Unit]
+
+  /** A goal removed; false when there was none. */
+  def delete(slug: String): Boolean
+
+  /** A new slug, the old one kept as an alias (V053): refused when there is no such goal, or the new slug is another
+    * goal's or another goal's old one.
+    */
+  def rename(from: String, to: String): Either[ApiError, Unit]
+
+  /** The goals that link each of these work-list items: (item id, goal slug, goal title), an item's goals by title. */
+  def goalsOfItems(items: List[Int]): List[(Int, String, String)]
 
   /** A goal's links with the title of what each points at: sources, articles, queries, queue items; oldest first. */
   def links(goal: String): List[GoalLink]
@@ -75,6 +94,12 @@ object GoalService:
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: String): List[Goal] = db.read(GoalRepo.children(slug))
     def put(slug: String, in: GoalPut): Either[ApiError, Unit] = db.transact(GoalRepo.put(slug, in))
+    def page(status: Option[String], limit: Int, offset: Int): GoalList =
+      db.read(GoalRepo.listIn(status, limit, offset))
+    def patch(slug: String, p: GoalPatch): Either[ApiError, Unit] = db.transact(GoalRepo.patchIn(slug, p))
+    def delete(slug: String): Boolean = db.transact(GoalRepo.deleteIn(slug))
+    def rename(from: String, to: String): Either[ApiError, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
+    def goalsOfItems(items: List[Int]): List[(Int, String, String)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
     def links(goal: String): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
     def link(goal: String, kind: GoalLinkKind, ref: String, note: Option[String]): Boolean =
       db.transact(GoalLinkRepo.link(goal, kind, ref, note))
@@ -149,6 +174,109 @@ object GoalService:
             )
           )
           Right(())
+    def page(status: Option[String], limit: Int, offset: Int): GoalList =
+      val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
+      val listed = all().filter(g => st.forall(_ == g.status))
+      GoalList.of(listed.size, listed.slice(offset.max(0), offset.max(0) + limit.max(1)), offset.max(0))
+
+    private def notFound(slug: String) = ApiError(s"No goal '$slug'", Some(Write.CodeNotFound))
+
+    def patch(slug: String, p: GoalPatch): Either[ApiError, Unit] =
+      goals.get(slug).toRight(notFound(slug)).flatMap { r =>
+        val g = r.goal
+        val start = p.periodStart.orElse(g.periodStart)
+        val end = p.periodEnd.orElse(g.periodEnd)
+        (start, end) match
+          case (Some(a), Some(b)) if a > b =>
+            Left(
+              ApiError(
+                s"goal '$slug': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
+                Some(Write.CodeInvalid)
+              )
+            )
+          case _ =>
+            val changed = g
+              .modify(_.title)
+              .using(p.title.getOrElse(_))
+              .modify(_.status)
+              .using(p.status.getOrElse(_))
+              .modify(_.notes)
+              .using(p.notes.map(Some(_)).getOrElse(_))
+              .modify(_.tags)
+              .using(p.tags.getOrElse(_))
+              .modify(_.regions)
+              .using(p.regions.getOrElse(_))
+              .modify(_.parentSlug)
+              .using(p.parentSlug.map(Some(_)).getOrElse(_))
+              .modify(_.periodStart)
+              .setTo(start)
+              .modify(_.periodEnd)
+              .setTo(end)
+            val budget = p.budgetUsd.fold(r.budgetUsd)(v => Option.when(v > 0)(BigDecimal(v)))
+            val touched = List(p.title, p.status, p.notes, p.tags, p.regions, p.parentSlug, p.budgetUsd).exists(
+              _.isDefined
+            ) || (start, end) != (g.periodStart, g.periodEnd)
+            val at = now
+            changeGoal(slug)(x =>
+              val y = x.modify(_.goal).setTo(changed).modify(_.budgetUsd).setTo(budget)
+              if touched then y.modify(_.updatedAt).setTo(at) else y
+            )
+            Right(())
+      }
+
+    def delete(slug: String): Boolean =
+      val before = state.getAndUpdate(
+        _.modify(_.goals)
+          .using(_ - slug)
+          .modify(_.links)
+          .using(_.filterNot(_.goal == slug))
+          .modify(_.schedules)
+          .using(_.filterNot(_.goal == slug))
+      )
+      before.goals.contains(slug)
+
+    def rename(from: String, to: String): Either[ApiError, Unit] =
+      val (old, now) = (from.trim, to.trim)
+      val aliasOf = state.get.goalAliases.get(now)
+      if !goals.contains(old) then Left(notFound(old))
+      else if goals.contains(now) then
+        Left(ApiError(s"'$now' is already the slug of another goal", Some(Write.CodeInvalid)))
+      else if aliasOf.exists(_ != old) then
+        Left(
+          ApiError(
+            s"'$now' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
+            Some(Write.CodeInvalid)
+          )
+        )
+      else
+        val _ = state.updateAndGet { st =>
+          val r = st.goals(old)
+          def moved(s: String) = if s == old then now else s
+          st.modify(_.goals)
+            .using(gs =>
+              (gs - old)
+                .updated(now, r.modify(_.goal.slug).setTo(now))
+                .view
+                .mapValues(_.modify(_.goal.parentSlug).using(_.map(moved)))
+                .toMap
+            )
+            .modify(_.links)
+            .using(_.map(_.modify(_.goal).using(moved)))
+            .modify(_.schedules)
+            .using(_.map(_.modify(_.goal).using(moved)))
+            .modify(_.goalAliases)
+            .using(as => (as - now).view.mapValues(moved).toMap.updated(old, now))
+        }
+        Right(())
+
+    def goalsOfItems(items: List[Int]): List[(Int, String, String)] =
+      val refs = items.map(_.toString).toSet
+      state.get.links
+        .filter(l => l.kind == GoalLinkKind.QueueItem && refs(l.ref))
+        .flatMap(l => goals.get(l.goal).flatMap(g => l.ref.toIntOption.map((_, g.goal.slug, g.goal.title))))
+        .toList
+        .sortBy((_, slug, title) => (title, slug))
+
     def links(goal: String): List[GoalLink] =
       state.get.links
         .filter(_.goal == goal)

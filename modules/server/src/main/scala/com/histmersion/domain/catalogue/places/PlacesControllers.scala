@@ -1,5 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.LabelRename
+import com.histmersion.api.LabelRenames
+import com.histmersion.api.LabelRenamed
+import com.histmersion.values.BundleKind
 import com.histmersion.util.identity.AliasKinds
 
 import com.histmersion.api.{
@@ -187,6 +191,13 @@ final class PlacesControllers(
         to <- validate(from)
         _ <- places.rename(from, to)
       yield (from, to)
+
+  /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055), in
+    * `GET /api/places/{old}` and in a `place=<old>` filter alike.
+    */
+  def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Place, from, req.to))
+      .map((from, to) => LabelRenamed(BundleKind.Place, from, to))
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places`; a rebuild arriving during a restore is refused like
     * every other write.

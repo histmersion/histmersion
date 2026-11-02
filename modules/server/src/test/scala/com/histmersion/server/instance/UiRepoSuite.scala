@@ -1,9 +1,10 @@
-package com.histmersion.db
+package com.histmersion.server.instance
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.UiNotices.Board
+import com.histmersion.db.Migrate
 
 import com.augustnagro.magnum.*
 
@@ -13,7 +14,7 @@ import com.augustnagro.magnum.*
   * (other suites write approvals and goals at the same time).
   */
 class UiRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

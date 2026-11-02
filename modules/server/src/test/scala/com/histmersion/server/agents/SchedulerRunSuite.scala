@@ -12,7 +12,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
@@ -47,10 +47,10 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -67,7 +67,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(Ck, SourcePut(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old")))
@@ -78,7 +78,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
         .put(Ck2, SourcePut(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new")))
         .isRight
     )
-    assert(h.putGoal(Goal, GoalPut("Zz scheduled tin")).isRight)
+    assert(h.goals.put(Goal, GoalPut("Zz scheduled tin")).isRight)
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, Ck, None)))
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
@@ -122,7 +122,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck))))
     assert(open.head.evidence.contains("we refute the old dating"), open.head.evidence)
     assertEquals(h.library.citations.neighbors(Ck2, List("refutes")), Nil, "nothing applied before approval")
-    def queued = h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.out"))
+    def queued = h.workListView.list("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.out"))
     assertEquals(queued.size, 1)
     assert(
       connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
@@ -154,7 +154,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     )
     val (a, h, up) = handlers(c); seed(h)
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, "zzagent tin trade")).isRight)
-    assert(h.ops.queueAdd("acquire", Queue.QueueAdd("Zzagent queued. https://doi.org/10.5555/zzagent.q")).isRight)
+    assert(h.workLists.add("acquire", Queue.QueueAdd("Zzagent queued. https://doi.org/10.5555/zzagent.q")).isRight)
     up.found = Map(
       "zzagent tin trade" -> List(
         work("10.5555/zzagent.a", "A"),
@@ -175,7 +175,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       offered
     )
     assertEquals(c.steps.size, 2, "the invented DOI was refused and the ranking asked again")
-    val items = h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.a"))
+    val items = h.workListView.list("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.a"))
     assertEquals(items.size, 1)
     assert(items.head.text.contains("for goal zzagent-sched: core study"), items.head.text)
     assert(run.progress.exists(_.contains("2 new candidate(s), 1 picked, 1 queued")), run.progress)
@@ -184,7 +184,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     c.scripts += Seq(text("""{"picks":[]}"""))
     val again = start(a, RunRequest("acquisition-sweep", Goal))
     assertEquals(again.status, "done", again.error)
-    assertEquals(h.ops.queueList("acquire", all = true).toOption.get.items.count(_.text.contains("zzagent.a")), 1)
+    assertEquals(h.workListView.list("acquire", all = true).toOption.get.items.count(_.text.contains("zzagent.a")), 1)
 
   /** The candidate search (#3761) answered from memory: what the goal's watches stored, and the marks set. */
   final private class CandidateUpstream extends AgentUpstream:
@@ -256,7 +256,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       up.stored.map(c => c.doi -> c.state).toMap,
       Map("10.5555/zzagent.a" -> "queued", "10.5555/zzagent.b" -> "seen")
     )
-    assert(h.ops.queueList("acquire", all = true).toOption.get.items.exists(_.text.contains("zzagent.a")))
+    assert(h.workListView.list("acquire", all = true).toOption.get.items.exists(_.text.contains("zzagent.a")))
     // the next sweep: every candidate decided — no model is asked
     val again = start(a, RunRequest("acquisition-sweep", Goal))
     assertEquals(again.status, "done", again.error)
@@ -350,7 +350,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       ev.head.text.contains("created paused") && ev.head.text.contains("`@daily` (fires most often)"),
       ev.head.text
     )
-    val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Goal))
+    val log = h.workListView.list("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Goal))
     assert(log.exists(_.contains("2 goal schedules moved into this watcher")), log)
     assertEquals(a.managers.migrateSchedules(Now), Nil, "idempotent")
     // a schedule brought in later (a bundle import) joins the watcher, which keeps its own cron
@@ -377,7 +377,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       a.startRunAs(RunRequest("acquisition-sweep", Goal), Origin.Scheduler, None).fold(e => fail(e.message), _.id)
     a.engine.execute(id)
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
-    def tasks = h.ops.queueList("tasks", all = false).toOption.get.items.map(_.text).filter(_.contains(Goal))
+    def tasks = h.workListView.list("tasks", all = false).toOption.get.items.map(_.text).filter(_.contains(Goal))
     assert(tasks.exists(t => t.contains("scheduled acquisition-sweep") && t.contains("paused (provider)")), tasks)
     val mine = start(a, RunRequest("acquisition-sweep", Goal))
     assertEquals(mine.status, "paused")

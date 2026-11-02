@@ -58,10 +58,3 @@ process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2
 process	server:server/agents/PlanPools.scala	ProcessBuilder	2
-repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
-repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
-repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
-repository	server:server/Handlers.scala	UiRepo of server.instance	1
-repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
-repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1

@@ -1,16 +1,15 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ApiError, JobState, ListFilters}
+import com.histmersion.api.{ApiError, ListFilters}
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
-import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
-import com.histmersion.util.jobs.JobRepo
+import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
 
 import java.time.Instant
 
-/** The list filters a client sent (core [[ListFilters]]), checked and turned into the repos' queries: a value outside a
-  * closed vocabulary (a state, a kind of approval, a pipeline, an origin) is a 400 naming the words that are allowed,
-  * and a time bound is read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they
-  * are. Pure.
+/** The engine's list filters a client sent (core [[ListFilters]]: the approvals' and the runs'; the jobs' are
+  * `util.jobs.JobListing.query`), checked and turned into the repos' queries: a value outside a closed vocabulary (a
+  * state, a kind of approval, a pipeline, an origin) is a 400 naming the words that are allowed, and a time bound is
+  * read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they are. Pure.
   */
 object ListQueries:
 
@@ -57,13 +56,3 @@ object ListQueries:
       tr._2,
       n.subject
     )
-
-  /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */
-  val JobStatuses: Seq[String] = (JobState.values.map(_.wire) ++ RunState.values.map(_.wire)).distinct.toSeq
-
-  def jobs(f: JobFilter, now: Instant): Either[ApiError, JobRepo.JobQuery] =
-    val n = f.normalized
-    for
-      st <- ListFilters.known("status", n.status, JobStatuses).left.map(bad)
-      tr <- ListFilters.range(n.since, n.until, now).left.map(bad)
-    yield JobRepo.JobQuery(st, n.kind, tr._1, tr._2, n.subject)

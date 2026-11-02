@@ -8,7 +8,7 @@ import com.histmersion.domain.automation.agents.AgentsHandlers
   * suites reach them: through the engine they built.
   */
 extension (a: AgentsHandlers)
-  def attach(u: AgentUpstream): Unit = TransitionWorkflows.work(a).attach(u)
-  def acquireRecheck: AcquireRecheckService = TransitionWorkflows.work(a).acquireRecheck
-  def oaBacklog: OaBacklog = TransitionWorkflows.work(a).oaBacklog
-  def autoEnrich(citekey: String): Option[String] = TransitionWorkflows.enrich(a).autoEnrich(citekey)
+  def attach(u: AgentUpstream): Unit = EngineContributions.work(a).attach(u)
+  def acquireRecheck: AcquireRecheckService = EngineContributions.work(a).acquireRecheck
+  def oaBacklog: OaBacklog = EngineContributions.work(a).oaBacklog
+  def autoEnrich(citekey: String): Option[String] = EngineContributions.enrich(a).autoEnrich(citekey)

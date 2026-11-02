@@ -8,4 +8,4 @@ import java.nio.file.Path
   * tools and roles the engine is given today.
   */
 @main def generatePlugin(root: String): Unit =
-  PluginTree.write(Path.of(root).toAbsolutePath.normalize, TransitionWorkflows.roster)
+  PluginTree.write(Path.of(root).toAbsolutePath.normalize, EngineContributions.roster)

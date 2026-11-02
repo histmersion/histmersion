@@ -13,9 +13,9 @@ import com.histmersion.util.jobs.JobListing
 import java.time.Instant
 
 /** The library's workflows' site over the composition: its own wiring, the work lists, the write gate, the jobs, the
-  * catalogue's geocoder and research's articles as today's handlers read them.
+  * catalogue's geocoder and research's articles as the composition wires them.
   */
-final class LibraryWorkflowSite(h: Handlers, deps: Deps) extends LibrarySite:
+final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite:
   def workLists: WorkListControllers = deps.workLists
   def queues: QueueService = deps.queues
   def maintenance: WriteGate = h.maintenance

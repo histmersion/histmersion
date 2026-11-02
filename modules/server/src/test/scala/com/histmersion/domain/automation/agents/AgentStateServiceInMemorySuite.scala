@@ -1,0 +1,5 @@
+package com.histmersion.domain.automation.agents
+
+import com.histmersion.domain.automation.EngineStoreSuite
+
+class AgentStateServiceInMemorySuite extends AgentStateServiceContract with EngineStoreSuite.InMemory

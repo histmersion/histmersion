@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.PlanQuota.*
 import com.histmersion.db.{AgentRepo, Db, Migrate, PlanQuotaRepo}
-import com.histmersion.server.{Composition, Deps, Handlers}
+import com.histmersion.server.{Composition, Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -67,12 +67,12 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(s"""{"notes":"Tin by sea [[$Ck]]."}"""))
     )
 
-  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     (
       AgentsHandlers(
-        TransitionSite(deps, h),
+        ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
       ),
       h
@@ -92,7 +92,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
 
   private val now = () => System.currentTimeMillis()
@@ -312,7 +312,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           .method(method, HttpRequest.BodyPublishers.ofString(body))
       )
     val keyed = baseCfg.copy(auth = baseCfg.auth.copy(apiKey = "zz-key"), agents = baseCfg.agents.copy(enabled = false))
-    @volatile var hs: Option[Handlers] = None // the started server's handlers, for a run token
+    @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for a run token
     ox.supervised {
       val b = Composition
         .server(
@@ -320,7 +320,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           "127.0.0.1",
           0,
           com.histmersion.server.ConverterWiring.client(keyed.converter),
-          onHandlers = h => hs = Some(h)
+          onWiring = h => hs = Some(h)
         )
         .start()
       try

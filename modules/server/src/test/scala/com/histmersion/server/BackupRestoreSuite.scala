@@ -165,7 +165,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
   // ── the acceptance line ──────────────────────────────────────────────────────────────────────
 
   test("backup → download → drop a source → restore --force → search finds it again"):
-    val h = Handlers(Deps(cfg, ds))
+    val h = ServerWiring(Deps(cfg, ds))
     assert(h.library.sources.put("zz_backup_a", fixture("zz_backup_a", "The Kept One")).isRight)
     assert(h.library.sources.put("zz_backup_b", fixture("zz_backup_b", "The Other One")).isRight)
     val before = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total
@@ -248,13 +248,13 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       finally b.stop()
     }
 
-  private def takeBackup(h: Handlers) =
-    val started = h.backup().toOption.getOrElse(fail("backup failed"))
+  private def takeBackup(h: ServerWiring) =
+    val started = h.upkeep.backup().toOption.getOrElse(fail("backup failed"))
     val deadline = System.nanoTime() + 300_000_000_000L
     var st = started
     while st.stateOf.contains(BackupState.Running) && System.nanoTime() < deadline do
       Thread.sleep(500)
-      st = h.backupStatus.toOption.getOrElse(st)
+      st = h.upkeep.backupStatus.toOption.getOrElse(st)
     st.result.getOrElse(fail(s"backup did not finish: $st"))
 
   private def scalar(d: javax.sql.DataSource, q: String): String =
@@ -267,7 +267,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   // A dump from another installation, whose roles are named differently, must still come back.
   test("a dump owned by and granted to roles this cluster no longer has restores cleanly"):
-    val h = Handlers(Deps(cfg, ds))
+    val h = ServerWiring(Deps(cfg, ds))
     assert(h.library.sources.put("zz_backup_roles", fixture("zz_backup_roles", "Under Old Names")).isRight)
     admin("DROP ROLE IF EXISTS zz_gone_owner"); admin("DROP ROLE IF EXISTS zz_gone_reader")
     admin("CREATE ROLE zz_gone_owner"); admin("CREATE ROLE zz_gone_reader")
@@ -279,7 +279,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     sql("DROP OWNED BY zz_gone_owner"); sql("DROP OWNED BY zz_gone_reader")
     admin("DROP ROLE zz_gone_owner"); admin("DROP ROLE zz_gone_reader")
 
-    val r = h.restore(RestoreRequest(dump.file, force = true))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = true))
     assert(r.isRight, r.toString)
     assert(!r.toOption.get.warnings.exists(_.contains("does not exist")), r.toString)
     assertEquals(
@@ -291,10 +291,10 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     assert(scalar(q, "SELECT count(*) FROM sources WHERE citekey = 'zz_backup_roles'") == "1")
 
   test("an empty database restores WITHOUT force"):
-    val h = Handlers(Deps(cfg, ds))
+    val h = ServerWiring(Deps(cfg, ds))
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
     assertEquals(h.library.search.sources(Filter(limit = 10)).total, 0)
-    val r = h.restore(RestoreRequest(dump.file, force = false))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = false))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter > 0, r.toString)

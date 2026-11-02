@@ -99,9 +99,12 @@ class ListQueriesSuite extends munit.FunSuite:
     assert(ListQueries.runs(RunFilter(since = Some("last week")), now).left.exists(_.message.startsWith("since:")))
 
   test("jobs: states are checked, any kind passes (plugins add their own)"):
-    val q = ListQueries.jobs(JobFilter(status = List("done,failed"), kind = List("basemap-fetch")), now).toOption.get
+    val q = com.histmersion.server.views.JobListView
+      .query(JobFilter(status = List("done,failed"), kind = List("basemap-fetch")), now)
+      .toOption
+      .get
     assertEquals((q.status, q.kinds), (List("done", "failed"), List("basemap-fetch")))
     // an agent run is a job too: its states filter the jobs list
-    assert(ListQueries.jobs(JobFilter(status = List("waiting")), now).isRight)
-    assert(ListQueries.jobs(JobFilter(status = List("stuck")), now).isLeft)
-    assert(ListQueries.jobs(JobFilter(until = Some("tomorrow")), now).isLeft)
+    assert(com.histmersion.server.views.JobListView.query(JobFilter(status = List("waiting")), now).isRight)
+    assert(com.histmersion.server.views.JobListView.query(JobFilter(status = List("stuck")), now).isLeft)
+    assert(com.histmersion.server.views.JobListView.query(JobFilter(until = Some("tomorrow")), now).isLeft)

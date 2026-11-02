@@ -405,8 +405,8 @@ private[sources] object SourceRepo:
 
   /** THE resolution of a citekey somebody asked for: the citekey itself when a source has it, else the source an OLD
     * citekey was renamed to, else `None`. Every read and write that takes a citekey goes through this (the server's
-    * `Handlers.canonical`, and [[patch]]), so an old id keeps working everywhere at once. Exact only: the short-form
-    * prefix rule belongs to wikilinks ([[resolveAliases]]), not to ids in URLs.
+    * `SourcesControllers.canonical`, and [[patch]]), so an old id keeps working everywhere at once. Exact only: the
+    * short-form prefix rule belongs to wikilinks ([[resolveAliases]]), not to ids in URLs.
     */
   def canonical(id: String)(using DbCon): Option[String] =
     canonicalAll(List(id)).get(id)

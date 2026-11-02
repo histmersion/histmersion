@@ -89,7 +89,8 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
 
   test("a seeding plan's checks: its article cap and least sources"):
     assertEquals(
-      AgentSeedConfig(maxArticles = 6, minSources = 5, maxOverlap = 0.5).seedPlan,
+      com.histmersion.domain.research.workflows.SeedManagerKind
+        .plan(AgentSeedConfig(maxArticles = 6, minSources = 5, maxOverlap = 0.5)),
       SeedPlanDefaults(maxArticles = 6, minSources = 5)
     )
 

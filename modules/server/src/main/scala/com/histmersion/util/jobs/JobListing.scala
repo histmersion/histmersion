@@ -19,7 +19,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
   /** One page under `q`: `before` = only jobs older than that one, `upTo` = only jobs down to it. */
   def page(
-      q: JobRepo.JobQuery,
+      q: JobQuery,
       limit: Option[Int],
       before: Option[String],
       upTo: Option[String]
@@ -36,6 +36,6 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
   /** The newest job of `kind`. */
   def newest(kind: String): Option[JobInfo] =
-    JobRepo.page(ds, JobRepo.JobQuery(kinds = List(kind)), 1, None, None).toOption.flatMap(_._1.headOption)
+    JobRepo.page(ds, JobQuery(kinds = List(kind)), 1, None, None).toOption.flatMap(_._1.headOption)
 
   private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)

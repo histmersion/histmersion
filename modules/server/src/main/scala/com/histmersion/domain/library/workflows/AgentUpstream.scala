@@ -7,8 +7,8 @@ import com.histmersion.domain.library.acquisition.AcquisitionControllers
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
-  * after [[com.histmersion.server.Handlers]], so it is attached to the agents once it exists), and so a test can answer
-  * from fixtures instead of the network.
+  * after [[com.histmersion.server.ServerWiring]], so it is attached to the agents once it exists), and so a test can
+  * answer from fixtures instead of the network.
   */
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */

@@ -31,4 +31,7 @@ object GoalsCarried:
       Automation,
       BundleEntry("entities/goal-aliases.ndjson"),
       List(rows(49)(GoalBundleRepo.goalAliasesIn))
-    )(scope => GoalBundleRepo.goalAliases(scope).toList)(a => Some(a.createdAt), (es, ls) => es.modify(_.goalAliases).setTo(ls))
+    )(scope => GoalBundleRepo.goalAliases(scope).toList)(
+      a => Some(a.createdAt),
+      (es, ls) => es.modify(_.goalAliases).setTo(ls)
+    )

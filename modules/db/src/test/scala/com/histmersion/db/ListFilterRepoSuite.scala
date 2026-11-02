@@ -192,14 +192,14 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
       pipeline = Some("enrich-source"),
       target = Some(s"${t}_d")
     )
-    def ids(q: JobRepo.JobQuery) = JobRepo.page(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
-    val mine = JobRepo.JobQuery(q = Some(t))
+    def ids(q: com.histmersion.util.jobs.JobQuery) = JobRepo.page(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
+    val mine = com.histmersion.util.jobs.JobQuery(q = Some(t))
     assertEquals(ids(mine), Set(i1, i2, m1, r1))
     assertEquals(ids(mine.copy(kinds = List("ingest", "media-import"))), Set(i1, i2, m1))
     assertEquals(ids(mine.copy(status = List("failed"))), Set(i2))
     assertEquals(ids(mine.copy(until = Some(Instant.parse("2026-09-03T00:00:00Z")))), Set(i1, i2))
     // the start of an id finds that job
-    assertEquals(ids(JobRepo.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
+    assertEquals(ids(com.histmersion.util.jobs.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
     val (states, facets) = JobRepo.facets(ds, mine.copy(kinds = List("ingest"), status = List("done")))
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
