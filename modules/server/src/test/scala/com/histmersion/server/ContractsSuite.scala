@@ -449,7 +449,10 @@ object ContractsSuite:
       "Transport",
       "Store",
       "Cmd",
-      "Views"
+      "Views",
+      "Html",
+      "Page",
+      "Pages"
     )
     private val Word = "[A-Z][a-z0-9]".r
 

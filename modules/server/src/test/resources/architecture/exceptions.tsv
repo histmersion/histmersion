@@ -5,6 +5,8 @@ direction	api:api/automation/GoalPlans.scala	automation -> research: CoverageRea
 direction	api:api/automation/Managers.scala	automation -> research: ArticleFilter	1
 direction	api:api/automation/Queue.scala	automation -> library: Acquire	1
 direction	api:api/exchange/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
+direction	api:api/library/DeleteBlockerKind.scala	library -> research: Article	1
+direction	api:api/library/NeighborTarget.scala	library -> research: Article	1
 direction	api:api/maintenance/StorageMarkdown.scala	util.data -> server: AboutMarkdown	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
@@ -28,6 +30,9 @@ direction	db:util/jobs/JobRepo.scala	util.jobs -> automation: Agents	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlocker	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlockerKind	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: RenameCount	1
+direction	server:domain/research/articles/ArticleRoutes.scala	research -> server: ArticleHtml	1
+direction	server:domain/research/articles/PageBuilder.scala	research -> server: ArticleHtml	1
+direction	server:server/Pages.scala	research -> server: ArticleHtml	1
 direction	server:util/ocr/HttpConverterClient.scala	util.ocr -> media: AssetLinks	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:util/data/exchange/MergeState.scala	java.nio.file	1

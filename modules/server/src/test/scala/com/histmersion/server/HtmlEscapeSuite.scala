@@ -12,15 +12,15 @@ class HtmlEscapeSuite extends munit.FunSuite:
 
   private val payload = """<script>alert(1)</script>"""
 
-  test("Article.page escapes the title into <title> (pure)"):
-    val html = Article.page(payload, "<p>body</p>", PageKind.Source)
+  test("ArticleHtml.page escapes the title into <title> (pure)"):
+    val html = ArticleHtml.page(payload, "<p>body</p>", PageKind.Source)
     // the page's own <head> script (the reader's theme) is not the payload
     assert(!html.contains(payload) && !html.contains("<script>alert"), html.take(300))
     assert(html.contains("&lt;script&gt;alert(1)&lt;/script&gt; · Histmersion"), html.take(300))
     assert(html.contains("<p>body</p>"), "the body is already HTML and stays as it is")
 
   test("a page title with quotes and ampersands survives escaping"):
-    val html = Article.page("""Sea "Peoples" & Co""", "", PageKind.Article)
+    val html = ArticleHtml.page("""Sea "Peoples" & Co""", "", PageKind.Article)
     assert(html.contains("Sea &quot;Peoples&quot; &amp; Co"), html.take(300))
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
@@ -46,7 +46,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
       assert(!b1.contains("<script>alert(1)</script>"), b1.take(400))
       assert(b1.contains("&lt;script&gt;"), b1.take(400))
 
-      // …and the fragment form, which skips Article.page entirely
+      // …and the fragment form, which skips ArticleHtml.page entirely
       val (s2, b2) = get(s"$url/source/$enc?fragment=true")
       assertEquals(s2, 404)
       assert(!b2.contains("<script>alert(1)</script>"), b2)

@@ -9,7 +9,7 @@ import sttp.tapir.json.circe.*
 import com.histmersion.api.{Api, ApiError, OpsApi, WebPaths}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.Article
+import com.histmersion.server.ArticleHtml
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.TilesApi
 import com.histmersion.api.instance.UiApi
@@ -170,23 +170,27 @@ final class HttpApi(
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
         val now = h.library.sources.canonical(ck)
         if now != ck then
-          val to = Article.sourceUrl(now, full, fragment, q)
+          val to = ArticleHtml.sourceUrl(now, full, fragment, q)
           (
             sttp.model.StatusCode.MovedPermanently,
             Some(to),
-            s"""<p>Moved to <a href="${Article.esc(to)}">${Article.esc(now)}</a>.</p>"""
+            s"""<p>Moved to <a href="${ArticleHtml.esc(to)}">${ArticleHtml.esc(now)}</a>.</p>"""
           )
         else
           pages.source(ck, full, q) match
             case Some((title, inner)) =>
-              (sttp.model.StatusCode.Ok, None, if fragment then inner else Article.page(title, inner, PageKind.Source))
+              (
+                sttp.model.StatusCode.Ok,
+                None,
+                if fragment then inner else ArticleHtml.page(title, inner, PageKind.Source)
+              )
             case None =>
               // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
-              val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
+              val body = s"<p>No source <code>${ArticleHtml.esc(ck)}</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
                 None,
-                if fragment then body else Article.page("Not found", body, PageKind.Source)
+                if fragment then body else ArticleHtml.page("Not found", body, PageKind.Source)
               )
       }
 
