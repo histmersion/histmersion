@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.domain.library.sources.SourceRepo
-
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.events.*
@@ -212,7 +210,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("goals (#881): the plan, its approval time, the run cap, links and schedules travel; ours are kept on a merge"):
     val (work, home) = (fresh("gw"), fresh("gh"))
     val (sw, sh) = (spool("gw"), spool("gh"))
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       work,
       Source(
         "zzgoal2020_src",

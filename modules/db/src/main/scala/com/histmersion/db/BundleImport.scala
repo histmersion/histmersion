@@ -1,7 +1,5 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
-
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -150,7 +148,8 @@ object BundleImport:
       skipAliases: Set[String],
       /** What the merge does besides writing the decided lines. */
       val merged: MergePlanner.Apply,
-      opts: Options,
+      /** The import's options: the chunk size, the point tolerance, the referrers a rename runs. */
+      val opts: Options,
       kinds: CarriedKinds
   )(using
       /** The import's transaction, which every step writes in. */
@@ -158,7 +157,12 @@ object BundleImport:
   ):
 
     private def decision(u: UUID): Option[Decision] = decisionOf.get(u)
-    private def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
+
+    /** Whether the line of `u` is a new row here. */
+    def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
+
+    /** Whether a source alias of the bundle is left out (an alias the merge gave to another work). */
+    def skipsAlias(alias: String): Boolean = skipAliases(alias)
 
     /** citekey / slug of a uid as it stands NOW (after the writes so far). */
     def citekeyOf(u: UUID): String =
@@ -193,14 +197,22 @@ object BundleImport:
 
     // what the derived step and pass 2 need
     private val copied = scala.collection.mutable.LinkedHashSet.empty[UUID]
-    private val bodyChanged = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
-    private val insertedSources = scala.collection.mutable.LinkedHashSet.empty[UUID]
+    private val sourcesInserted = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val versionsBy = es.versions.map(v => v.uid -> v).toMap
     private val computed = scala.collection.mutable.Map.empty[Once[?], Any]
 
     /** A source a kind's step wrote under: its finding places are placed again in the derived step. */
     def touchSource(u: UUID): Unit = sourcesTouched += u
+
+    /** The sources a step wrote under, in the order they were first touched. */
+    def touchedSources: List[UUID] = sourcesTouched.toList
+
+    /** A source a step inserted: an article's `[[x]]` may name it now (every article is linked again). */
+    def insertSource(u: UUID): Unit = sourcesInserted += u
+
+    /** The sources the import inserted, in the order they were. */
+    def insertedSources: List[UUID] = sourcesInserted.toList
 
     /** What `o` computes of this import, computed the first time a step asks. */
     def once[A](o: Once[A]): A = computed.getOrElseUpdate(o, o.make(this)).asInstanceOf[A]
@@ -219,130 +231,6 @@ object BundleImport:
                 VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)
                 ON CONFLICT (uid) DO UPDATE SET deleted_at = EXCLUDED.deleted_at""".update.run()
         }
-
-    def sources(): Unit =
-      // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
-      // old citekey does not stay an alias (it is the other work's now)
-      merged.renames.foreach { (_, from, to) =>
-        importing(false)
-        SourceRepo
-          .renameIn(from, to, opts.sourceReferrers)
-          .left
-          .foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
-        sql"DELETE FROM source_aliases WHERE alias = $from".update.run()
-        importing(true)
-      }
-      val localCk = local.sources.map(s => s.uid -> s.citekey).toMap ++
-        merged.renames.map((u, _, to) => u -> to)
-      es.sources.filter(s => writes(s.uid)).foreach { s =>
-        // renamed over there: the whole rename here first (findings, links, aliases follow)
-        localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
-          importing(false)
-          SourceRepo
-            .renameIn(old, s.citekey, opts.sourceReferrers)
-            .left
-            .foreach(e => throw ImportAbort(List(s"source $old → ${s.citekey}: ${e.message}")))
-          importing(true)
-        }
-        if inserts(s.uid) then
-          insertedSources += s.uid
-          bodyChanged ++= s.bodySha256.map(_ => s.uid)
-          sql"""INSERT INTO sources (uid, origin, citekey, title, authors, doi, year, venue, status, topics,
-                  regions, tags, period, summary, notes, source, cited_by_count, influential_citations,
-                  added_date, sha256, updated_at)
-                VALUES (${s.uid}, ${s.origin}, ${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.doi},
-                  ${s.year}, ${s.venue}, ${s.status.wire}, ${s.topics}::text[], ${s.regions}::text[],
-                  ${s.tags}::text[],
-                  ${rLit(s.period)}::int8range,
-                  ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
-                  ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz)""".update.run()
-        else
-          val before = local.sources.find(_.uid == s.uid)
-          if before.flatMap(_.bodySha256) != s.bodySha256 then
-            if s.bodySha256.isEmpty then
-              sql"UPDATE sources SET ocr_markdown = NULL WHERE uid = ${s.uid}".update.run()
-              sql"DELETE FROM source_chunks WHERE citekey = ${s.citekey}".update.run()
-            else bodyChanged += s.uid
-          sql"""UPDATE sources SET origin = ${s.origin}, title = ${s.title}, authors = ${s.authors}::text[],
-                  doi = ${s.doi}, year = ${s.year}, venue = ${s.venue}, status = ${s.status.wire},
-                  topics = ${s.topics}::text[], regions = ${s.regions}::text[], tags = ${s.tags}::text[],
-                  period = ${rLit(s.period)}::int8range,
-                  summary = ${s.summary}, notes = ${s.notes}, source = ${s.provenance},
-                  cited_by_count = ${s.citedByCount}, influential_citations = ${s.influentialCitations},
-                  added_date = ${s.addedDate}::date, sha256 = ${s.originalSha256},
-                  updated_at = ${s.updatedAt}::timestamptz
-                WHERE uid = ${s.uid}""".update.run()
-        sourcesTouched += s.uid
-        // the ISBNs (doi and sha256 are derived from the row by V032's trigger)
-        sql"DELETE FROM source_identifiers WHERE source_uid = ${s.uid} AND scheme = 'isbn'".update.run()
-        s.isbns
-          .getOrElse(Nil)
-          .foreach(i => sql"""INSERT INTO source_identifiers (source_uid, scheme, value) VALUES (${s.uid}, 'isbn', $i)
-                ON CONFLICT DO NOTHING""".update.run())
-      }
-
-    /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
-    def edges(): Unit =
-      es.sources.filter(s => writes(s.uid)).foreach { s =>
-        val ck = s.citekey
-        sql"DELETE FROM edges WHERE src = $ck".update.run()
-        sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run()
-      }
-      es.edges.filter(e => writes(e.srcUid)).foreach { e =>
-        // a target deleted here: the edge is left out (reported by the reference check)
-        citekeyHere(e.dstUid).foreach { dst =>
-          val src = citekeyOf(e.srcUid)
-          sql"INSERT INTO edges (src, dst, kind) VALUES ($src, $dst, ${e.kind}) ON CONFLICT DO NOTHING".update.run()
-        }
-      }
-
-    def unresolvedEdges(): Unit =
-      es.unresolvedEdges.filter(e => writes(e.srcUid)).foreach { e =>
-        val _ = SourceRepo.insertEdges(List(Edge(citekeyOf(e.srcUid), e.dst, e.kind)))
-      }
-
-    def aliases(): Unit =
-      es.aliases.filterNot(a => skipAliases(a.alias)).foreach { a =>
-        // never an alias equal to the source's own citekey (a key renamed back here, #827)
-        val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
-              SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources
-              WHERE uid = ${a.sourceUid} AND citekey <> ${a.alias}
-              ON CONFLICT (alias) DO NOTHING""".update.run()
-        if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
-      }
-
-    def findings(): Unit =
-      es.findings.filter(f => writes(f.uid)).foreach { f =>
-        sourcesTouched += f.sourceUid
-        val ck = citekeyOf(f.sourceUid)
-        sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
-                tags, confidence, significance, updated_at)
-              VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
-                CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
-                     ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
-                ${rLit(f.period)}::int8range,
-                ${f.periodName}, ${f.tags}::text[], ${f.confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
-              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
-                citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
-                geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,
-                tags = EXCLUDED.tags, confidence = EXCLUDED.confidence, significance = EXCLUDED.significance,
-                updated_at = EXCLUDED.updated_at""".update.run()
-      }
-
-    /** The newer verdict wins (§4); a source that is not here (deleted, skipped) has none. */
-    def assessments(): Unit =
-      es.assessments.foreach { a =>
-        sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
-              SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.printer.print(
-            a.notices
-          )}::jsonb,
-                     ${a.citedBy}, ${a.influential}, ${a.verdict}
-              FROM sources WHERE uid = ${a.sourceUid}
-              ON CONFLICT (citekey) DO UPDATE SET checked_at = EXCLUDED.checked_at,
-                retracted = EXCLUDED.retracted, notices = EXCLUDED.notices, cited_by = EXCLUDED.cited_by,
-                influential = EXCLUDED.influential, verdict = EXCLUDED.verdict
-              WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run()
-      }
 
     /** Rename what the other side renamed (the same uid, a new label), through the ordinary rename path, before the row
       * itself is written (an upsert keeps the label it finds).
@@ -496,16 +384,10 @@ object BundleImport:
 
     // ── pass 2: the blobs, each use by its kind ──
 
-    /** Where a blob use of these lines goes: a body and a version's text into their rows, a stored original into
-      * `files`. An asset's bytes are taken by the media's own kind.
+    /** Where a blob use of these lines goes: a version's text into its row. A source's body and original are taken by
+      * the library's own kind, an asset's bytes by the media's.
       */
     def blobSink(use: BlobUse, sha: String, files: ContentStore): BlobSink = use match
-      case BlobUse.Body(u) =>
-        BlobSink.Held(bytes =>
-          sql"UPDATE sources SET ocr_markdown = ${String(bytes, UTF_8)} WHERE uid = $u".update.run(): Unit
-        )
-      case BlobUse.Original(_, ext) =>
-        BlobSink.Streamed(in => files.store(sha, ext, in).left.toOption.map(m => s"original $sha: $m"))
       case BlobUse.VersionBody(u) =>
         BlobSink.Held { bytes =>
           val v = versionsBy(u)
@@ -517,39 +399,18 @@ object BundleImport:
                   updated_at = EXCLUDED.updated_at, created_at = EXCLUDED.created_at""".update.run(): Unit
         }
       case BlobUse.AssetBytes(u) => throw IllegalArgumentException(s"asset $u: its bytes are the media's kind to take")
-
-    // ── after the blobs ──
-
-    /** What a merge changes in a body it took from the bundle: the figures it renamed. */
-    def bodyRenames(): Unit =
-      merged.bodyRenames.foreach { (u, renames) =>
-        renames.foreach { (from, to) =>
-          sql"""UPDATE sources SET ocr_markdown = replace(ocr_markdown, ${"assets/" + from}, ${"assets/" + to})
-                WHERE uid = $u""".update.run()
-        }
-        bodyChanged += u
-      }
+      case BlobUse.Body(u)       => throw IllegalArgumentException(s"source $u: its body is the library's kind to take")
+      case BlobUse.Original(_, _) =>
+        throw IllegalArgumentException(s"original $sha: it is the library's kind to take")
 
     // ── the derived state, recomputed for what changed (with the import flag OFF: local consequences) ──
-
-    /** The search chunks of a changed body, the finding places of a touched source, a new source's parked edges. */
-    def sourcesDerived(): Unit =
-      bodyChanged.foreach { u =>
-        val (ck, md) =
-          sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(String, Option[String])].run().head
-        val _ = SourceRepo.replaceChunks(ck, md, opts.chunkChars)
-      }
-      sourcesTouched.foreach { u =>
-        val _ = SourceRepo.placeFindingsIn(citekeyOf(u), opts.toleranceKm)
-      }
-      insertedSources.foreach(u => SourceRepo.promote(citekeyOf(u)))
 
     /** The links of the articles written — of every article when a new source can turn an `[[x]]` that named nothing
       * into a source link.
       */
     def articleLinks(): Unit =
       val relink =
-        if insertedSources.nonEmpty || merged.renames.nonEmpty then
+        if sourcesInserted.nonEmpty || merged.renames.nonEmpty then
           sql"SELECT slug, body FROM articles ORDER BY slug".query[(String, String)].run().toList
         else
           (es.articles.filter(a => writes(a.uid)).map(_.uid) ++ copied).flatMap(u =>

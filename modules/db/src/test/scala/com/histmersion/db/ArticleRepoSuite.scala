@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -27,7 +26,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
 
   /** A source to cite, so a `[[citekey]]` in an article body is classifiable as a source link. */
   private def seedSource(ck: String, notes: Option[String] = None) =
-    SourceRepo.put(
+    SourceFixtures.put(
       ds,
       Source(
         citekey = ck,
@@ -89,9 +88,9 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
       Some(tags)
     )
     val _ = seedSource("zz_comma2020_authors")
-    val _ = SourceRepo.put(
+    val _ = SourceFixtures.put(
       ds,
-      SourceRepo
+      SourceFixtures
         .load(ds, "zz_comma2020_authors")
         .get
         .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")),

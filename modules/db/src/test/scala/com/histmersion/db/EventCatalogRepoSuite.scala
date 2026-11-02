@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -105,7 +104,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
+      SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
       // a compiled event: a source names it
       EventFixtures.put(
         ds,

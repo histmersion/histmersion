@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -82,7 +82,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     def f(n: Int, region: Option[String], at: Option[GeoPoint], period: Option[Period] = None) =
       Finding(s"zzph_src#$n", "zzph_src", s"claim $n", region, at, period, None, Nil, None)
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = "zzph_src",

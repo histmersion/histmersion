@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -26,7 +25,7 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
   private val ck = "zzvocab_src"
 
   test("an unknown confidence in the store reads as not stated, never as high"):
-    SourceRepo.put(
+    SourceFixtures.put(
       ds,
       Source(
         citekey = ck,

@@ -1,8 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceCheckFixtures
+import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.domain.catalogue.places.Geocoder
+import com.histmersion.domain.catalogue.places.GeocodeSettings
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -30,7 +31,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   private val Prefix = "zzlint_"
 
   private lazy val geo =
-    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
 
   private def source(
       citekey: String,
@@ -74,7 +75,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
     connect(ds)(sql"DELETE FROM edges WHERE src LIKE ${Prefix + "%"}".update.run())
 
-  private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a problem, so the
     * formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`.
@@ -95,7 +96,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     else Nil
 
   private def run(rule: String): List[LintItem] =
-    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
+    val rep =
+      SourceCheckFixtures.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
     rep.rules.head.items.filter(i => i.citekey.startsWith(Prefix))
 
   private def keys(rule: String): List[String] = run(rule).map(_.citekey).distinct
@@ -113,10 +115,10 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   test("every rule of the data management's has SQL behind it"):
-    Lint.names.filterNot(OwnRules).foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
+    Lint.names.filterNot(OwnRules).foreach(n => assert(SourceCheckFixtures.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
-    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
+    val rep = SourceCheckFixtures.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
@@ -166,7 +168,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     put(source(Prefix + "target_full"))
     assertEquals(run(UnresolvedShortCitekeys).size, 1)
     assert(run(UnresolvedShortCitekeys).head.detail.contains("resolves to"))
-    val _ = SourceRepo.resolveEdges(ds)
+    val _ = SourceFixtures.resolveEdges(ds)
     assertEquals(run(UnresolvedShortCitekeys), Nil)
     assertEquals(run(DanglingEdges), Nil)
 
@@ -201,13 +203,13 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
     // shared test database. That is exactly why it is best-effort per source; the assertion is about
     // THIS suite's fixture.
-    val r = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    val r = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
     assert(r.chunks > 0, s"reindexStale wrote no chunks: $r")
     assertEquals(keys(StaleChunks), Nil)
 
   test("reindexStale reports nothing left once it has swept everything stale"):
-    val _ = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
-    val r = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    val _ = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    val r = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
     assertEquals(r.remaining, 0)
 
   test("undated-findings and unlocated-findings, named by finding id"):
@@ -231,7 +233,14 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   test("the item cap trims the list but never the count"):
     (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
     val rep =
-      LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker, geocode = geo)
+      SourceCheckFixtures.run(
+        ds,
+        List(Lint.rule(NoFindings).get),
+        maxItems = 2,
+        suggestions = 3,
+        format = checker,
+        geocode = geo
+      )
     assertEquals(rep.rules.head.items.size, 2)
     assert(rep.rules.head.count >= 5, rep.rules.head.count.toString)
 

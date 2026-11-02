@@ -20,13 +20,7 @@ import javax.sql.DataSource
   *
   * Used by `enrich-source` for every finding's place and by the `finding-geocode` lint repair.
   */
-private[histmersion] object Geocoder:
-
-  /** `placeholderMin`: a point shared by this many places is a placeholder (`places.geocode-placeholder-min`);
-    * `repairKm`: the smallest move the repair makes (`places.geocode-repair-km`); `toleranceKm`: the point tolerance
-    * `finding_places` is re-materialised with after a repair.
-    */
-  final case class Settings(placeholderMin: Int, repairKm: Double, toleranceKm: Double)
+private[places] object Geocoder:
 
   private given DbCodec[Candidate] = DbCodec.derived
 
@@ -181,7 +175,7 @@ private[histmersion] object Geocoder:
   /** The moves the repair would make: every old-geocoder point that the current ranking puts more than `repairKm` away.
     * Read-only.
     */
-  def movesIn(s: Settings)(using DbCon): List[Move] =
+  def movesIn(s: GeocodeSettings)(using DbCon): List[Move] =
     Sql
       .raw(legacySql)
       .frag
@@ -194,7 +188,7 @@ private[histmersion] object Geocoder:
       }
       .filter(Geocode.worthMoving(_, s.repairKm))
 
-  def moves(s: Settings)(using DbCon): List[Move] = movesIn(s)
+  def moves(s: GeocodeSettings)(using DbCon): List[Move] = movesIn(s)
 
   /** Apply the moves: each finding gets the new point and the name that was asked as its region, but only while its
     * point is still the one the move was computed from (compare-and-set — a finding edited since is left alone). The
@@ -233,13 +227,13 @@ private[histmersion] object Geocoder:
     * uses (no kind hint: a stored finding has none; its period steers the choice). A finding that already has a point
     * is never listed. Read-only.
     */
-  def placementsIn(s: Settings)(using DbCon): List[Placement] =
+  def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] =
     Sql.raw(unplacedSql).frag.query[Unplaced].run().toList.flatMap { u =>
       resolveIn(u.region, KindHint.Unknown, Geocode.periodOf(u.from, u.to), s.placeholderMin)
         .map(r => Placement(u.id, u.citekey, u.region, r))
     }
 
-  def placements(s: Settings)(using DbCon): List[Placement] = placementsIn(s)
+  def placements(s: GeocodeSettings)(using DbCon): List[Placement] = placementsIn(s)
 
   /** Give each finding its point — only while it still has NONE (compare-and-set: a finding placed or edited since is
     * left alone; its name is never touched). The touched sources' `updated_at` moves and their `finding_places` are

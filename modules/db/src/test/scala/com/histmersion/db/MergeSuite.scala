@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.domain.library.sources.SourceRepo
-
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
 
@@ -167,7 +165,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       AttestationPut(ck, "place", target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
     )
 
-  private def put(ds: DataSource, s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   private val olsen: String =
     val rnd = scala.util.Random(2015)
@@ -193,9 +191,19 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(first.applied, first.problems.mkString("\n"))
     // …then both sides go on
     val _ =
-      SourceRepo.patch(work, "zzshared2001_alpha", SourcePatch(summary = Some("edited at work")), cfg.limits.chunkChars)
+      SourceFixtures.patch(
+        work,
+        "zzshared2001_alpha",
+        SourcePatch(summary = Some("edited at work")),
+        cfg.limits.chunkChars
+      )
     val _ =
-      SourceRepo.patch(home, "zzshared2001_alpha", SourcePatch(summary = Some("edited at home")), cfg.limits.chunkChars)
+      SourceFixtures.patch(
+        home,
+        "zzshared2001_alpha",
+        SourcePatch(summary = Some("edited at home")),
+        cfg.limits.chunkChars
+      )
     val _ = GoalRepo.delete(work, "zz_shared_goal")
     val _ = GoalRepo.patch(home, "zz_shared_goal", GoalPatch(notes = Some("edited at home")))
     val _ = ArticleRepo.put(work, Article("zz_shared_art", "Shared", "concept", "Intro (work).\n\nMiddle.\n\nEnd."))
@@ -240,7 +248,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         body = Some("Kuhrt body, work's OCR")
       )
     )
-    SourceRepo.setSha256(work, "kuhrt1995_near", kuhrtSha)
+    SourceFixtures.setSha256(work, "kuhrt1995_near", kuhrtSha)
     // one passage home's body has too (it moves), one only work's has (it cannot)
     attest(work, "kuhrt1995_near", "Kuhrt body", "zz_found")
     attest(work, "kuhrt1995_near", "work's OCR", "zz_lost")
@@ -339,7 +347,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         body = Some("Preface. Kuhrt body, home's OCR")
       )
     )
-    SourceRepo.setSha256(home, "kuhrt1995_ancient", kuhrtSha)
+    SourceFixtures.setSha256(home, "kuhrt1995_ancient", kuhrtSha)
     // home's own attestation: should the merge take work's body, it could not move
     attest(home, "kuhrt1995_ancient", "home's OCR", "zz_home")
     put(
@@ -530,7 +538,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         s"VALUES ('$uidThere', 'source', '$uidHere', 'old', '$uidHere', '$localRev', 'Merged')"
     )
     // it changes over there; ours has not changed since the merge → fast-forward onto OUR row
-    val _ = SourceRepo.patch(a, "zzx2001_there", SourcePatch(summary = Some("v2 from there")), cfg.limits.chunkChars)
+    val _ =
+      SourceFixtures.patch(a, "zzx2001_there", SourcePatch(summary = Some("v2 from there")), cfg.limits.chunkChars)
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     assertEquals(p.issues, Nil)
@@ -539,7 +548,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(r.counts.find(_.kind == BundleKind.Source).map(_.updated), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM sources"), 1)
-    assertEquals(SourceRepo.load(b, "zzx2001_here").flatMap(_.summary), Some("v2 from there"))
+    assertEquals(SourceFixtures.load(b, "zzx2001_here").flatMap(_.summary), Some("v2 from there"))
     assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE uid = '$uidHere' AND citekey = 'zzx2001_here'"), 1)
     assertEquals(
       count(b, s"SELECT count(*)::int FROM merge_ledger WHERE foreign_uid = '$uidThere' AND local_uid = '$uidHere'"),
@@ -660,8 +669,11 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     // sources: folded, renamed, new — and the redirects and old citekeys a merge leaves
     assertEquals(count(home, "SELECT count(*)::int FROM sources"), 11 + 2) // + zznew2020_only, smith2019_ritualkingship
     assertEquals(count(home, s"SELECT count(*)::int FROM uid_aliases WHERE alias_uid = '$uidW' AND uid = '$uidH'"), 1)
-    assertEquals(SourceRepo.load(home, "guterbock1997_hittite").flatMap(_.notes), Some("home's notes\n\nwork's notes"))
-    assertEquals(SourceRepo.load(home, "guterbock1997_hittite").map(_.doi), Some(Some("10.5555/oip26")))
+    assertEquals(
+      SourceFixtures.load(home, "guterbock1997_hittite").flatMap(_.notes),
+      Some("home's notes\n\nwork's notes")
+    )
+    assertEquals(SourceFixtures.load(home, "guterbock1997_hittite").map(_.doi), Some(Some("10.5555/oip26")))
     assertEquals(
       count(
         home,
@@ -669,17 +681,17 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       1
     )
-    assertEquals(SourceRepo.load(home, "bryce2005_kingdom_hittites").map(_.status), Some(SourceStatus.Contested))
-    assertEquals(SourceRepo.load(home, "page1959_history").flatMap(_.year), Some(1959))
+    assertEquals(SourceFixtures.load(home, "bryce2005_kingdom_hittites").map(_.status), Some(SourceStatus.Contested))
+    assertEquals(SourceFixtures.load(home, "page1959_history").flatMap(_.year), Some(1959))
     assertEquals(
-      SourceRepo.load(home, "smith2019_ritualkingship").map(_.title),
+      SourceFixtures.load(home, "smith2019_ritualkingship").map(_.title),
       Some("Ritual and Kingship in Early Mesopotamia")
     )
-    assertEquals(SourceRepo.load(home, "smith2019_ritual").map(_.title), Some("Ritual Economies of the Aegean"))
-    assertEquals(SourceRepo.load(home, "zzshared2001_alpha").flatMap(_.summary), Some("edited at work"))
+    assertEquals(SourceFixtures.load(home, "smith2019_ritual").map(_.title), Some("Ritual Economies of the Aegean"))
+    assertEquals(SourceFixtures.load(home, "zzshared2001_alpha").flatMap(_.summary), Some("edited at work"))
     // the kept body stays (keep-left by default); the ISBN and MinHash pairs folded too
     assertEquals(
-      SourceRepo.load(home, "kuhrt1995_ancient").flatMap(_.ocrMarkdown),
+      SourceFixtures.load(home, "kuhrt1995_ancient").flatMap(_.ocrMarkdown),
       Some("Preface. Kuhrt body, home's OCR")
     )
     assertEquals(
@@ -692,7 +704,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
 
     // findings: the same claim is one (tags unioned), the near duplicate kept beside it, the new one
     // numbered after home's last
-    val gf = SourceRepo.load(home, "guterbock1997_hittite").get.findings
+    val gf = SourceFixtures.load(home, "guterbock1997_hittite").get.findings
     assertEquals(
       gf.map(_.id).sorted,
       List("guterbock1997_hittite#1", "guterbock1997_hittite#2", "guterbock1997_hittite#3", "guterbock1997_hittite#4")

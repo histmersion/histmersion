@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.api.*
 import com.histmersion.files.*
@@ -61,7 +60,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def fresh(citekey: String = ck): String =
-    SourceRepo.put(ds, seedSource(citekey), 4000)
+    SourceFixtures.put(ds, seedSource(citekey), 4000)
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put → get round-trip, including notes and the updatedAt token"):
@@ -76,7 +75,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("put is idempotent and replaces everything under the citekey"):
     val _ = fresh()
     val s2 = seedSource().copy(tags = List("only"), findings = Nil, summary = None)
-    val _ = SourceRepo.put(ds, s2, 4000)
+    val _ = SourceFixtures.put(ds, s2, 4000)
     val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.tags, List("only"))
     assertEquals(fs.size, 0)
@@ -84,7 +83,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
 
   test("load reads the whole domain Source back (findings + edges + notes)"):
     val _ = fresh()
-    val s = SourceRepo.load(ds, ck).get
+    val s = SourceFixtures.load(ds, ck).get
     assertEquals(s.tags, List("adna", "yamnaya"))
     assertEquals(s.findings.map(_.id), List(s"$ck#0"))
     assertEquals(s.findings.head.geo, Some(GeoPoint(32.0, 39.0)))
@@ -95,10 +94,10 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   // ── patch: the §1.9a acceptance lines ────────────────────────────────────────────────────────
   test("patch {tags:{add:[sea-peoples]}} leaves findings and body untouched"):
     val _ = fresh()
-    val before = SourceRepo.load(ds, ck).get
-    val r = SourceRepo.patch(ds, ck, SourcePatch(tags = Some(ListPatch(add = List("sea-peoples")))), 4000)
+    val before = SourceFixtures.load(ds, ck).get
+    val r = SourceFixtures.patch(ds, ck, SourcePatch(tags = Some(ListPatch(add = List("sea-peoples")))), 4000)
     assert(r.isRight, r.toString)
-    val after = SourceRepo.load(ds, ck).get
+    val after = SourceFixtures.load(ds, ck).get
     assertEquals(after.tags, List("adna", "yamnaya", "sea-peoples"))
     assertEquals(after.findings, before.findings)
     assertEquals(after.ocrMarkdown, before.ocrMarkdown)
@@ -111,9 +110,9 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
       SourcePatch(findings =
         Some(FindingsPatch(add = List(FindingInput(claim = claim, lon = Some(1.0), lat = Some(2.0)))))
       )
-    assert(SourceRepo.patch(ds, ck, add("second"), 4000).isRight)
-    assert(SourceRepo.patch(ds, ck, add("third"), 4000).isRight)
-    val fs = SourceRepo.load(ds, ck).get.findings
+    assert(SourceFixtures.patch(ds, ck, add("second"), 4000).isRight)
+    assert(SourceFixtures.patch(ds, ck, add("third"), 4000).isRight)
+    val fs = SourceFixtures.load(ds, ck).get.findings
     assertEquals(fs.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2"))
     assertEquals(fs.map(_.id).distinct.size, 3)
     assertEquals(fs.map(_.claim), List("claim one", "second", "third"))
@@ -121,7 +120,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("patch findings remove drops exactly one, by id"):
     val _ = fresh()
     assert(
-      SourceRepo
+      SourceFixtures
         .patch(
           ds,
           ck,
@@ -130,37 +129,40 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
         )
         .isRight
     )
-    assert(SourceRepo.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight)
-    assertEquals(SourceRepo.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
+    assert(
+      SourceFixtures.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight
+    )
+    assertEquals(SourceFixtures.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
 
   test("patch bumps updatedAt; an unrelated source is untouched"):
     val t1 = fresh()
     val _ = fresh("zz_write_other")
-    val t2 = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("new")), 4000).toOption.get
+    val t2 = SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("new")), 4000).toOption.get
     assertNotEquals(t1, t2)
-    assertEquals(SourceRepo.load(ds, "zz_write_other").get.summary, Some("sum"))
+    assertEquals(SourceFixtures.load(ds, "zz_write_other").get.summary, Some("sum"))
 
   test("patch of a missing citekey is not_found, not a crash"):
-    val e = SourceRepo.patch(ds, "zz_no_such_source", SourcePatch(summary = Some("x")), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, "zz_no_such_source", SourcePatch(summary = Some("x")), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeNotFound))
 
   test("ifUpdatedAt: current token succeeds, stale token is refused and changes nothing"):
     val t1 = fresh()
-    assert(SourceRepo.patch(ds, ck, SourcePatch(summary = Some("one"), ifUpdatedAt = Some(t1)), 4000).isRight)
-    val e = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("two"), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
+    assert(SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("one"), ifUpdatedAt = Some(t1)), 4000).isRight)
+    val e =
+      SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("two"), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodePrecondition))
-    assertEquals(SourceRepo.load(ds, ck).get.summary, Some("one"))
+    assertEquals(SourceFixtures.load(ds, ck).get.summary, Some("one"))
 
   test("an invalid patch is rejected as invalid and writes nothing"):
     val _ = fresh()
-    val e = SourceRepo.patch(ds, ck, SourcePatch(period = Some(PeriodInput(-100, -900))), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, ck, SourcePatch(period = Some(PeriodInput(-100, -900))), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeInvalid))
-    assertEquals(SourceRepo.load(ds, ck).get.period, Some(Period(-2000, -1500)))
+    assertEquals(SourceFixtures.load(ds, ck).get.period, Some(Period(-2000, -1500)))
 
   // ── export ───────────────────────────────────────────────────────────────────────────────────
   test("export → parseNote round trip: frontmatter and notes survive the database"):
     val _ = fresh()
-    val stored = SourceRepo.load(ds, ck).get
+    val stored = SourceFixtures.load(ds, ck).get
     val exported = Export.note(stored)
     val back = Frontmatter.parseNote(exported, "fallback").get
     assertEquals(back.citekey, stored.citekey)
@@ -176,6 +178,6 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
 
   test("citekeys lists what was written, sorted"):
     val _ = fresh()
-    val ks = SourceRepo.citekeys(ds)
+    val ks = SourceFixtures.citekeys(ds)
     assert(ks.contains(ck))
     assertEquals(ks.toList, ks.toList.sorted)

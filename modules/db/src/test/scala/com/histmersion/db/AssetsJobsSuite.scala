@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.links.AssetLinkFixtures
@@ -49,7 +49,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     ocrMarkdown = body
   )
 
-  private def seed(): Unit = SourceRepo.upsert(ds, source(), AppConfig.load().limits.chunkChars)
+  private def seed(): Unit = SourceFixtures.upsert(ds, source(), AppConfig.load().limits.chunkChars)
 
   test("assets round-trip: write, list, read back the exact bytes"):
     seed()
@@ -143,17 +143,17 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
   test("the upload digest is stored on the source and finds it again"):
     seed()
     val sha = NewFigure.sha256(png(9))
-    SourceRepo.setSha256(ds, ck, sha)
-    assertEquals(SourceRepo.sha256Of(ds, ck), Some(sha))
-    assertEquals(SourceRepo.citekeyOfSha256(ds, sha), Some(ck))
-    assertEquals(SourceRepo.citekeyOfSha256(ds, "0" * 64), None)
+    SourceFixtures.setSha256(ds, ck, sha)
+    assertEquals(SourceFixtures.sha256Of(ds, ck), Some(sha))
+    assertEquals(SourceFixtures.citekeyOfSha256(ds, sha), Some(ck))
+    assertEquals(SourceFixtures.citekeyOfSha256(ds, "0" * 64), None)
 
   test("a body write does NOT clear the stored digest (put preserves sources.sha256)"):
     seed()
     val sha = NewFigure.sha256(png(4))
-    SourceRepo.setSha256(ds, ck, sha)
-    SourceRepo.upsert(ds, source(Some("new body")), AppConfig.load().limits.chunkChars)
-    assertEquals(SourceRepo.sha256Of(ds, ck), Some(sha), "reocr depends on this pointer surviving")
+    SourceFixtures.setSha256(ds, ck, sha)
+    SourceFixtures.upsert(ds, source(Some("new body")), AppConfig.load().limits.chunkChars)
+    assertEquals(SourceFixtures.sha256Of(ds, ck), Some(sha), "reocr depends on this pointer surviving")
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):

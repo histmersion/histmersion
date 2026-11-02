@@ -20,7 +20,7 @@ import com.histmersion.values.SourceStatus
   * `DataSource` forms are the entry points of the callers that move with the library's later parts (acquisition,
   * ingest, the bundle and the checks) and of research's article writes.
   */
-private[histmersion] object SourceRepo:
+private[sources] object SourceRepo:
 
   private given DbCodec[TocEntry] = DbCodec.derived
   private given DbCodec[SourceDetail] = DbCodec.derived
@@ -39,12 +39,12 @@ private[histmersion] object SourceRepo:
   private[histmersion] def placeFindingsIn(citekey: String, toleranceKm: Double)(using DbCon): Int =
     FindingPlacement(toleranceKm).placeSource(citekey)
 
-  /** The findings on a placeholder point (the places' [[FindingPlacement]]): `finding-placeholder`'s input. */
-  private[histmersion] def placeholderFindingsSql: String = FindingPlacement.placeholderFindingsSql
-
-  /** The findings on a placeholder point no named place resolves (the places' [[FindingPlacement]]). */
-  private[histmersion] def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] =
-    FindingPlacement.unresolvedPlaceholdersIn()
+  /** How many sources and findings are stored (what About counts). */
+  def counts()(using DbCon): (Long, Long) =
+    (
+      sql"SELECT count(*)::int FROM sources".query[Int].run().head.toLong,
+      sql"SELECT count(*)::int FROM findings".query[Int].run().head.toLong
+    )
 
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
     * [[put]] is the same write returning the new `updated_at` token.

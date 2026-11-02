@@ -9,10 +9,6 @@ import com.augustnagro.magnum.DbCon
   */
 object FiguresAdapter:
   def of(owner: DataOwner)(using DbCon): DataFigures = owner match
-    case LibraryOwner =>
-      DataFigures(
-        List(DataCount("sources", StatsRepo.rows("sources")), DataCount("findings", StatsRepo.rows("findings")))
-      )
     case ResearchOwner => DataFigures(List(DataCount("articles", StatsRepo.rows("articles"))))
     case JobsOwner     => DataFigures(StatsRepo.jobStates.map((state, n) => DataCount(state, n.toLong)))
     case _             => DataFigures.empty

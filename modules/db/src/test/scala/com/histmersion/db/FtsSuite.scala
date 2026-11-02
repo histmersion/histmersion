@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -62,12 +62,12 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       "\n\n## Ugarit destruction\n\nThe sea peoples burned the harbour quarter in the twelfth century.\n\n" +
       filler("omega")
     assert(big.length > 1_100_000, big.length)
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source("zz_fts_big", "Aegean stratigraphy", "A summary with no query terms.", big),
       chunkChars
     )
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source(
         "zz_fts_egypt",
@@ -77,7 +77,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       ),
       chunkChars
     )
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source(
         "zz_fts_title",
@@ -137,7 +137,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     // database, so wiping/rewriting every chunk row would collide with another suite's write
     transact(ds)(sql"DELETE FROM source_chunks WHERE citekey LIKE 'zz_fts_%'".update.run())
     assert(!search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
-    val r = SourceRepo.reindexChunks(ds, chunkChars, after = Some("zz_fts_a"), maxSources = Some(3))
+    val r = SourceFixtures.reindexChunks(ds, chunkChars, after = Some("zz_fts_a"), maxSources = Some(3))
     assert(r.sources == 3 && r.chunks > r.sources, r)
     assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
 

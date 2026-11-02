@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -140,7 +140,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def seed(): Unit =
-    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceRepo.upsert(ds, _, 4000))
+    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceFixtures.upsert(ds, _, 4000))
 
   /** The window to bucket travels in the filter's `period` (as the handler sets it). */
   private def win(from: Long, to: Long, f: Filter = Filter()): Filter = f.copy(period = Some(Period(from, to)))

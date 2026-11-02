@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.util.ocr.ConverterClient
 
@@ -96,7 +95,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     notes = None
   )
 
-  private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   private def clean(): Unit =
     connect(ds):
@@ -225,7 +224,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       ).map(_.toString)
     )
     // nothing moved
-    assert(SourceRepo.load(ds, Del).isDefined)
+    assert(SourceFixtures.load(ds, Del).isDefined)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
     assertEquals(count(sql"SELECT count(*)::int FROM edges WHERE dst = $Del"), 1)
 
@@ -241,7 +240,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(e.message.contains(s"cited by article $slug") && e.message.contains("no override"), e.message)
-      assert(SourceRepo.load(ds, Del).isDefined, "a refused delete deleted")
+      assert(SourceFixtures.load(ds, Del).isDefined, "a refused delete deleted")
       ArticleRepo.delete(ds, slug): Unit
     }
 
@@ -253,7 +252,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlockerKind.Event, DeleteBlockerKind.Job))
     assert(h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).isLeft)
-    assert(SourceRepo.load(ds, Del).isDefined)
+    assert(SourceFixtures.load(ds, Del).isDefined)
 
   test(
     "an old citekey follows the alias (#1799): the dry run names the source under its current key; an unknown one is not deleted"
@@ -266,7 +265,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         .left
         .exists(_.code.contains(Write.CodeNotFound))
     )
-    assert(SourceRepo.load(ds, Del).isDefined)
+    assert(SourceFixtures.load(ds, Del).isDefined)
 
   test(
     "--apply: every table is emptied of it, incoming edges are parked, aliases go, a tombstone and a log entry stay, the files go"
@@ -277,7 +276,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     assert(d.applied && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
-    assert(SourceRepo.load(ds, Del).isEmpty)
+    assert(SourceFixtures.load(ds, Del).isEmpty)
     def none(q: Frag) = assertEquals(count(q), 0, q.sqlString)
     none(sql"SELECT count(*)::int FROM sources WHERE citekey IN ($Del, $Old)")
     none(sql"SELECT count(*)::int FROM findings WHERE citekey = $Del")
@@ -350,4 +349,4 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     }
     assertEquals(out.swap.toOption.flatMap(_.code), Some(Backup.CodeMaintenance))
     assert(dry.isRight)
-    assert(SourceRepo.load(ds, Del).isDefined)
+    assert(SourceFixtures.load(ds, Del).isDefined)

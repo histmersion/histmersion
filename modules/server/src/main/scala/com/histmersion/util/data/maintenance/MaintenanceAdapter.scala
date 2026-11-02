@@ -15,7 +15,6 @@ object MaintenanceAdapter:
     */
   def stores(owner: DataOwner): List[Location] = owner match
     case AutomationOwner => List(Location.AgentHomes, Location.CodexSessions)
-    case LibraryOwner    => List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
     case DataArea        => List(Location.Backups, Location.Bundles)
     case DatabaseOwner   => List(Location.DatabaseCluster)
     case _               => Nil

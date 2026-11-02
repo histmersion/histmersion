@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.CitekeyResolver
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -41,7 +41,7 @@ object CritiqueRepo:
       case Some(m) => Left(ApiError(m, Some(Write.CodeInvalid)))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
-        val known = SourceRepo.canonicalAll(rs.flatMap(r => List(r.src, r.dst)).distinct)
+        val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).distinct)
         val kinds = Critiques.Kinds
         rs.foldLeft[Either[ApiError, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
           acc.flatMap { done =>

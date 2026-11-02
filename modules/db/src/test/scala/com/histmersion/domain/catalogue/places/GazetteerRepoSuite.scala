@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.db.*
 import com.histmersion.db.given
@@ -307,7 +307,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     run("lpf:zzgaz", "v1", List(undated, dated))
     def at(p: Option[Period]) =
-      connect(ds)(Geocoder.resolve("Zzgazmikoyan", KindHint.Unknown, p, cfg.places.geocodePlaceholderMin))
+      connect(ds)(PlaceFixtures.resolve("Zzgazmikoyan", KindHint.Unknown, p, cfg.places.geocodePlaceholderMin))
         .map(_.placeId)
     assertEquals(at(Some(Period(1940, 1945))), Some("zzgaz_b_village"))
     assertEquals(at(Some(Period(1990, 2000))), Some("zzgaz_a_farm"))
@@ -444,7 +444,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val area = rec(wd("Q999000741"), "Zzgaz attested region", kind = PlaceKind.Region)
     run("wikidata", "v1", List(area), kinds = Set.empty)
     connect(ds):
-      SourceRepo.upsert(
+      SourceFixtures.upsert(
         ds,
         Source(
           citekey = "zzgaz_src",

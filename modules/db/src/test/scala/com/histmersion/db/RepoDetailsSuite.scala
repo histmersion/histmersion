@@ -3,7 +3,7 @@ package com.histmersion.db
 import com.histmersion.domain.library.search.Search
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
@@ -30,7 +30,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
   private val ck = "zzdetail_src"
 
   private def seed(body: Option[String] = Some("The sea peoples reached the Nile delta.")): String =
-    SourceRepo.put(
+    SourceFixtures.put(
       ds,
       Source(
         citekey = ck,
@@ -95,7 +95,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
 
   private def png(byte: Byte) = NewFigure("fig1.png", "image/png", Array[Byte](1, 2, 3, byte), None, None)
 
-  private def updatedAt: String = SourceRepo.load(ds, ck).get.updatedAt.get
+  private def updatedAt: String = SourceFixtures.load(ds, ck).get.updatedAt.get
 
   test("add() leaves an asset already stored under that name alone, as its doc says"):
     val _ = seed()

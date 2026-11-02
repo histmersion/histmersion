@@ -1,8 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceCheckFixtures
+import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.domain.catalogue.places.Geocoder
+import com.histmersion.domain.catalogue.places.{GeocodeSettings, PlaceFixtures}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -27,7 +28,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     d
 
   private lazy val settings =
-    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
   private def min = cfg.places.geocodePlaceholderMin
 
   private val Ck = "zzgeo_src"
@@ -93,7 +94,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
-    connect(ds)(Geocoder.resolve(name, hint, at, min))
+    connect(ds)(PlaceFixtures.resolve(name, hint, at, min))
 
   private def chosen(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
     resolve(name, hint, at).map(_.placeId)
@@ -240,7 +241,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
         finding(4, "Zzlevant", 0, 0, "Levant claim.")
       )
     )
-    SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
     connect(ds):
       // the stored point of #3/#4 is EXACTLY the old geocoder's (its point on the surface)
       val _ =
@@ -256,7 +257,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output)
                     VALUES ('zzgeo_job', 4, 1, 'findings-1', 'llm', 'done', $out::jsonb)""".update.run()
 
-    val moves = connect(ds)(Geocoder.moves(settings)).filter(_.citekey == Ck)
+    val moves = connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey == Ck)
     assertEquals(
       moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1),
       List(
@@ -268,13 +269,13 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(moves.forall(_.km > settings.repairKm), moves.map(_.km))
 
     // the lint rule lists the same moves, under the source
-    val rep = LintRepo.run(ds, List(Lint.rule(Lint.FindingGeocode).get), 500, 3, (_, _, _) => Nil, settings)
+    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingGeocode).get), 500, 3, (_, _, _) => Nil, settings)
     val items = rep.rules.head.items.filter(_.citekey == Ck)
     assertEquals(items.size, 3, items)
     assert(items.exists(_.detail.contains(s"stored as '$siteLabel'")), items)
 
     val before1 = point(s"$Ck#1")
-    assertEquals(transact(ds)(Geocoder.apply(moves, settings.toleranceKm)), 3)
+    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, settings.toleranceKm)), 3)
     val (lon0, lat0, region0) = point(s"$Ck#0")
     assert(lon0 > 19.3 && lon0 < 21.0 && lat0 > 39.7 && lat0 < 42.6, (lon0, lat0))
     assertEquals(region0, Some("Zzalbania"), "the asked name replaces the alias site's label")
@@ -292,5 +293,5 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inAlbania, 1L)
 
     // idempotent: nothing is left to move, and a stale move is not applied over a newer point
-    assertEquals(connect(ds)(Geocoder.moves(settings)).filter(_.citekey == Ck), Nil)
-    assertEquals(transact(ds)(Geocoder.apply(moves, settings.toleranceKm)), 0)
+    assertEquals(connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey == Ck), Nil)
+    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, settings.toleranceKm)), 0)

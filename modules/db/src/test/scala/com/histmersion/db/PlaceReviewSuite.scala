@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -81,7 +81,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       rs.head.describe
     )
     // a finding ON the linked record's point: the moved place takes it by its new point
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = "zzrc_src2",

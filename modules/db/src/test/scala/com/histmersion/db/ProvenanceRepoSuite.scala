@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -49,11 +49,11 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a put and a patch store a provenance as written, a value no code knows included"):
     val a = s"${Prefix}a2020_x"
-    SourceRepo.upsert(ds, source(a, Some("Unheard-Of")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source(a, Some("Unheard-Of")), cfg.limits.chunkChars)
     assertEquals(stored(a), Some("Unheard-Of"))
-    SourceRepo.upsert(ds, source(a, Some(Provenance.ExternalFile)), cfg.limits.chunkChars)
-    assertEquals(SourceRepo.load(ds, a).flatMap(_.provenance), Some(Provenance.ExternalFile))
-    val patched = SourceRepo.patch(
+    SourceFixtures.upsert(ds, source(a, Some(Provenance.ExternalFile)), cfg.limits.chunkChars)
+    assertEquals(SourceFixtures.load(ds, a).flatMap(_.provenance), Some(Provenance.ExternalFile))
+    val patched = SourceFixtures.patch(
       ds,
       a,
       SourcePatch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),

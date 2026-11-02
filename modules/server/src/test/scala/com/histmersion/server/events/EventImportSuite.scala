@@ -1,7 +1,6 @@
 package com.histmersion.server.events
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.server.CatalogueWiring
 
@@ -155,12 +154,12 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
         Finding(s"$ck#0", ck, "a claim", None, Some(GeoPoint(lon, 47.53)), Some(Period(-55, -50)), None, Nil, None)
       )
     )
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       src("zqei_named2020", "# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war.", 4.5),
       chunk
     )
-    SourceRepo.upsert(ds, src("zqei_near2020", "# Gaul\n\nA hillfort was excavated nearby.", 4.6), chunk)
+    SourceFixtures.upsert(ds, src("zqei_near2020", "# Gaul\n\nA hillfort was excavated nearby.", 4.6), chunk)
     val h = CatalogueWiring(deps(cfg), http)
     val links = h.eventLinks.links("wikidata_q131386").toOption.get
     assertEquals(links.candidates.map(_.citekey).take(2), List("zqei_named2020", "zqei_near2020"))
@@ -188,7 +187,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                       VALUES ($id, $id, 'site', ST_SetSRID(ST_MakePoint($lon, 45.0), 4326), 'wikidata',
                               '{"class":"Q839954"}'::jsonb)""".update.run()
     val chunk = AppConfig.load().limits.chunkChars
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         "zqei_sites2020",

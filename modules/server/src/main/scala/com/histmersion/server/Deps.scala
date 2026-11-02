@@ -118,8 +118,12 @@ object Deps:
     com.histmersion.util.data.DataContributions
       .of(
         com.histmersion.util.data.TransitionContributions.withOwn(
-          List(com.histmersion.domain.catalogue.CatalogueData, com.histmersion.domain.media.MediaData),
-          com.histmersion.domain.library.sources.SourcesMaintenanceAdapter.tasks
+          List(
+            com.histmersion.domain.catalogue.CatalogueData,
+            com.histmersion.domain.media.MediaData,
+            com.histmersion.domain.library.LibraryData
+          ),
+          Nil
         )
       )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)

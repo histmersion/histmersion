@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.ocr.ConverterClient
 
@@ -68,7 +68,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
         Thread.sleep(10)
         job = jobs.job(accepted.jobId).toOption.get
         attempts += 1
-      assert(SourceRepo.load(ds, key).isDefined, "source must have been stored")
+      assert(SourceFixtures.load(ds, key).isDefined, "source must have been stored")
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))
       assertEquals(job.state, JobState.Done, s"stored source but job error: ${job.error}")
       assertEquals(job.error, None)

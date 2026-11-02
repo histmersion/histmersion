@@ -17,61 +17,6 @@ import com.histmersion.util.storage.ContentStore
 
 // ── flat rows (Magnum maps a SELECT's columns positionally) ─────────────────────────────────────────
 
-final private[histmersion] case class BSourceRow(
-    uid: UUID,
-    origin: UUID,
-    citekey: String,
-    title: String,
-    authors: List[String],
-    doi: Option[String],
-    year: Option[Int],
-    venue: Option[String],
-    status: SourceStatus,
-    topics: List[String],
-    regions: List[String],
-    tags: List[String],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    summary: Option[String],
-    notes: Option[String],
-    provenance: Option[String],
-    citedBy: Option[Int],
-    influential: Option[Int],
-    addedDate: String,
-    bodySha: Option[String],
-    bodyBytes: Option[Long],
-    originalSha: Option[String],
-    updatedAt: String,
-    isbns: List[String]
-) derives DbCodec
-final private[histmersion] case class BFindingRow(
-    uid: UUID,
-    origin: UUID,
-    sourceUid: UUID,
-    id: String,
-    claim: String,
-    region: Option[String],
-    lon: Option[Double],
-    lat: Option[Double],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    periodName: Option[String],
-    tags: List[String],
-    confidence: Option[Confidence],
-    significance: Option[String],
-    updatedAt: String
-) derives DbCodec
-final private[histmersion] case class BAssessmentRow(
-    sourceUid: UUID,
-    checkedAt: String,
-    retracted: Boolean,
-    notices: String,
-    citedBy: Option[Int],
-    influential: Option[Int],
-    verdict: String
-) derives DbCodec
 final private[histmersion] case class BArticleRow(
     uid: UUID,
     origin: UUID,
@@ -175,84 +120,6 @@ object BundleRepo:
       instance
 
   // ── reads, one per file ────────────────────────────────────────────────────────────────────
-
-  private[histmersion] def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
-    (Sql.raw(
-      s"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
-                       s.topics, s.regions, s.tags, ${rangeCols("s.period")}, s.summary, s.notes, s.source,
-                       s.cited_by_count, s.influential_citations, to_char(s.added_date, 'YYYY-MM-DD'),
-                       encode(sha256(convert_to(s.ocr_markdown, 'UTF8')), 'hex'),
-                       octet_length(convert_to(s.ocr_markdown, 'UTF8'))::bigint,
-                       nullif(lower(btrim(s.sha256)), ''), ${ts("s.updated_at")},
-                       coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
-                                 WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
-                FROM sources s WHERE """
-    ) ++ where(scope, "s.uid", "s.updated_at") ++ " ORDER BY s.uid").frag.query[BSourceRow].run()
-
-  private[histmersion] def findings(scope: BundleScope)(using DbCon): Vector[BundleFinding] =
-    (Sql.raw(s"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
-                       ${rangeCols("f.period")}, f.period_name, f.tags, f.confidence, f.significance,
-                       ${ts("f.updated_at")}
-                FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE """) ++
-      where(scope, "f.uid", "f.updated_at") ++ " ORDER BY f.uid").frag.query[BFindingRow].run().map { r =>
-      BundleFinding(
-        r.uid,
-        r.origin,
-        r.sourceUid,
-        r.id,
-        r.claim,
-        r.region,
-        r.lon,
-        r.lat,
-        range(r.pNull, r.pLo, r.pHi),
-        r.periodName,
-        r.tags,
-        r.confidence,
-        r.significance,
-        r.updatedAt
-      )
-    }
-
-  /** The out-edges of the sources in scope — a source carries its whole set. */
-  private[histmersion] def edges(scope: BundleScope)(using DbCon): Vector[BundleEdge] =
-    (Sql.raw("""SELECT a.uid, b.uid, e.kind FROM edges e
-                JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE """) ++
-      where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, b.uid, e.kind COLLATE "C"""").frag
-      .query[(UUID, UUID, String)]
-      .run()
-      .map(BundleEdge.apply)
-
-  private[histmersion] def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[BundleUnresolvedEdge] =
-    (Sql.raw("""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
-                JOIN sources a ON a.citekey = u.src WHERE """) ++
-      where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C"""").frag
-      .query[(UUID, String, String)]
-      .run()
-      .map(BundleUnresolvedEdge.apply)
-
-  private[histmersion] def assessments(scope: BundleScope)(using DbCon): Vector[BundleAssessment] =
-    (Sql.raw(s"""SELECT s.uid, ${ts("a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
-                       a.influential, a.verdict
-                FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
-      where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid").frag.query[BAssessmentRow].run().map { r =>
-      BundleAssessment(
-        r.sourceUid,
-        r.checkedAt,
-        r.retracted,
-        Jsonb.read[io.circe.Json](r.notices).getOrElse(io.circe.Json.arr()),
-        r.citedBy,
-        r.influential,
-        r.verdict
-      )
-    }
-
-  private[histmersion] def aliases(scope: BundleScope)(using DbCon): Vector[BundleAlias] =
-    (Sql.raw(s"""SELECT a.alias, s.uid, ${ts("a.created_at")}
-                FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
-      where(scope, "s.uid", "a.created_at") ++ """ ORDER BY a.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
-      .run()
-      .map(BundleAlias.apply)
 
   private[histmersion] def articles(scope: BundleScope)(using DbCon): Vector[BundleArticle] =
     (Sql.raw(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
@@ -406,35 +273,6 @@ object BundleRepo:
     BundleReference(np, dp, nq, dq)
 
   // ── as line types ──────────────────────────────────────────────────────────────────────────
-
-  /** A source row as its bundle line; `originals` says whether the stored original goes along. */
-  private[histmersion] def sourceLine(r: BSourceRow, originals: ContentStore): BundleSource =
-    BundleSource(
-      r.uid,
-      r.origin,
-      r.citekey,
-      r.title,
-      r.authors,
-      r.doi,
-      r.year,
-      r.venue,
-      r.status,
-      r.topics,
-      r.regions,
-      r.tags,
-      range(r.pNull, r.pLo, r.pHi),
-      r.summary,
-      r.notes,
-      r.provenance,
-      r.citedBy,
-      r.influential,
-      r.addedDate,
-      r.bodySha,
-      r.originalSha,
-      r.originalSha.flatMap(originals.find).map(_._2),
-      r.updatedAt,
-      isbns = Option.when(r.isbns.nonEmpty)(r.isbns)
-    )
 
   private[histmersion] def versionLine(r: BVersionRow): BundleArticleVersion =
     BundleArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)

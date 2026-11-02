@@ -13092,6 +13092,30 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.library.sources.BAssessmentRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.sources.BFindingRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.sources.BSourceRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.domain.library.sources.SourceRepo$DoiKey$",
       "fields": [
         {
@@ -13260,15 +13284,7 @@
       "type": "com.histmersion.db.BArticleRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.BAssessmentRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy3"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13321,21 +13337,10 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BFindingRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy2"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.db.BGoalLinkRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy7"
-        },
-        {
-          "name": "derived$DbCodec$lzy8"
+          "name": "derived$DbCodec$lzy4"
         }
       ]
     },
@@ -13343,10 +13348,7 @@
       "type": "com.histmersion.db.BGoalRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy6"
-        },
-        {
-          "name": "derived$DbCodec$lzy7"
+          "name": "derived$DbCodec$lzy3"
         }
       ]
     },
@@ -13354,10 +13356,7 @@
       "type": "com.histmersion.db.BGoalScheduleRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy8"
-        },
-        {
-          "name": "derived$DbCodec$lzy9"
+          "name": "derived$DbCodec$lzy5"
         }
       ]
     },
@@ -13413,18 +13412,7 @@
       "type": "com.histmersion.db.BQueueRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy10"
-        },
-        {
-          "name": "derived$DbCodec$lzy9"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.BSourceRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
+          "name": "derived$DbCodec$lzy6"
         }
       ]
     },
@@ -13432,10 +13420,7 @@
       "type": "com.histmersion.db.BTombstoneRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy10"
-        },
-        {
-          "name": "derived$DbCodec$lzy11"
+          "name": "derived$DbCodec$lzy7"
         }
       ]
     },
@@ -13443,43 +13428,13 @@
       "type": "com.histmersion.db.BVersionRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy5"
+          "name": "derived$DbCodec$lzy2"
         }
       ]
     },
     {
       "type": "com.histmersion.db.BundleRepo$package$",
       "fields": [
-        {
-          "name": "given_DbCodec_BArticleRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BAssessmentRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BFindingRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BGoalLinkRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BGoalRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BGoalScheduleRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BQueueRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BSourceRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BTombstoneRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BVersionRow$lzy1"
-        },
         {
           "name": "given_DbCodec_InstanceInfo$lzy1"
         }

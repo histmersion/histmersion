@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -133,7 +133,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   private def seed(): Unit =
     val _ = PlaceFixtures.upsertPlaces(ds, batch)
-    SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
 
   /** Only the fixture: the tag rides on the SOURCE, and the finding-level tag predicate unions
