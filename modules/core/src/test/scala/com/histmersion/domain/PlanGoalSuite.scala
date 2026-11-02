@@ -80,12 +80,10 @@ class PlanGoalSuite extends munit.FunSuite:
       List(ProposedWork("10.1000/a", "a"), ProposedWork("10.1000/b", "b"), ProposedWork("10.1000/c", "c")),
       Nil
     )
-    val lookup: String => Either[String, WorkRef] = {
+    val lookup: Lookup = {
       case "10.1000/a" =>
-        Right(
-          WorkRef(doi = Some("10.1000/a"), title = Some("A"), year = Some(2020), citekey = Some("a2020_x"), inDb = true)
-        )
-      case "10.1000/b" => Right(WorkRef(doi = Some("10.1000/b"), title = Some("B"), isRetracted = true))
+        Right(Work(Some("A"), Some(2020), Nil, Some("a2020_x"), inDb = true, isOa = false, isRetracted = false))
+      case "10.1000/b" => Right(Work(Some("B"), None, Nil, None, inDb = false, isOa = false, isRetracted = true))
       case _           => Left("404 from Crossref")
     }
     val plan = verify(p, "g", lookup)

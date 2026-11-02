@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
+import com.histmersion.domain.automation.agents.{Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.api.*
@@ -8,7 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.Pipeline
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.domain.Scheduling.{Candidate, Ranking}
+import AcquisitionSweepRules.{Candidate, Ranking}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
@@ -65,9 +65,9 @@ final class AcquisitionSweepPipeline(
               "rank",
               StepAgent.AcquisitionRanker,
               rankInput(goal, found),
-              AnswerSchemas.ranking
+              LibraryAnswers.ranking
             )((r, last) =>
-              Scheduling
+              AcquisitionSweepRules
                 .checkRanking(r, found.candidates, last)
                 .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws))
             )
@@ -220,7 +220,7 @@ final class AcquisitionSweepPipeline(
           case Right(r) => r.works.map(q -> _)
       }
       val (cands, skipped) =
-        Scheduling.candidates(found, queuedDois().keySet ++ backlogged(goal), cfg.scheduler.sweepCandidates)
+        AcquisitionSweepRules.candidates(found, queuedDois().keySet ++ backlogged(goal), cfg.scheduler.sweepCandidates)
       Found(g.title, g.notes, queries, cands, skipped)
     }
 
@@ -241,7 +241,7 @@ final class AcquisitionSweepPipeline(
     * open-access pick is tried.
     */
   private def ingest(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): List[Ingested] =
-    Scheduling
+    AcquisitionSweepRules
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa, allowed) { p =>
         ingestOne(ctx, goal, p) match
           case Left(m) =>
@@ -278,7 +278,8 @@ final class AcquisitionSweepPipeline(
     * anything else → the backlog, tried again on a later day).
     */
   private def ingestOa(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): Tried =
-    val (ok, ko) = Scheduling.ingestOa(picks, (p: Picked) => p.candidate.isOa, allowed)(ingestOne(ctx, goal, _))
+    val (ok, ko) =
+      AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
     Tried(ok.map(_._2), ko.map((p, why) => Failed(p.candidate.doi, why.take(500), IngestBacklog.isNoLegalCopy(why))))
 
@@ -309,7 +310,7 @@ final class AcquisitionSweepPipeline(
   private def queue(ctx: RunCtx, goal: String, picks: List[Picked]): Int =
     val queued = queuedDois()
     picks.count { p =>
-      queueOnce(ctx, goal, p.candidate.doi, Scheduling.acquireText(p.candidate, goal, p.why), queued) match
+      queueOnce(ctx, goal, p.candidate.doi, AcquisitionSweepRules.acquireText(p.candidate, goal, p.why), queued) match
         case Left(m)      => ctx.warn(s"queue: ${p.candidate.doi} not queued — $m"); false
         case Right(added) => added
     }

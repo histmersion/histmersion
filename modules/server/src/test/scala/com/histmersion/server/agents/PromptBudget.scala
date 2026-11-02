@@ -59,7 +59,7 @@ object PromptBudget:
     "article-skeptic" -> ResearchAnswers.skeptic,
     "article-fixer" -> ResearchAnswers.fixer,
     "goal-planner" -> AnswerSchemas.plan,
-    "acquisition-ranker" -> AnswerSchemas.ranking
+    "acquisition-ranker" -> LibraryAnswers.ranking
   )
 
   private lazy val toolbox = TestToolbox(null)

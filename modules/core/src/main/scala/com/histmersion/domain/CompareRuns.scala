@@ -3,6 +3,8 @@ package com.histmersion.domain
 import scala.annotation.tailrec
 import io.circe.Decoder
 import io.circe.parser.decode
+import com.histmersion.domain.automation.agents.OutputComparison
+import com.histmersion.util.text.ComparedText
 import com.histmersion.values.{Pipeline, RunState, StepStatus}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
@@ -132,15 +134,17 @@ object CompareRuns:
 
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 
-  /** A rejected findings answer's quote failures are counted from the verifier's own words. */
-  private val QuoteFailure = "the quote is not in the text"
-
   /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
     * of their words (Jaccard over the normalised words), or quote the same passage.
     */
   val ProblemSimilarity = 0.5
 
-  def compare(runs: List[Run], billing: String => Option[String]): Either[String, Comparison] =
+  /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
+  def compare(
+      runs: List[Run],
+      billing: String => Option[String],
+      outputs: OutputComparison
+  ): Either[String, Comparison] =
     for
       _ <- Either.cond(runs.size >= 2, (), "give at least two runs to compare")
       _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), "a run is given twice")
@@ -167,7 +171,7 @@ object CompareRuns:
         case d if d.run.status != RunState.Done.wire =>
           s"run ${d.run.id.take(8)} is ${d.run.status}, not done: its outputs are what it had so far"
       }
-      val enrich = if pipeline.contains(Pipeline.EnrichSource) then enrichSides(runs) else Nil
+      val enrich = outputs.enrich(runs)
       val review = if pipeline.contains(Pipeline.ReviewArticle) then runs.map(reviewSide) else Nil
       val overlaps = if pipeline.contains(Pipeline.ReviewArticle) then majorOverlaps(runs) else Nil
       Comparison(first.pipeline, first.target, runs.map(runSide), rows, enrich, review, overlaps, notes)
@@ -231,76 +235,12 @@ object CompareRuns:
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
-  private def output[O: Decoder](d: Run, name: String): Option[O] =
+  def output[O: Decoder](d: Run, name: String): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
       .flatMap(decode[O](_).toOption)
-
-  // ── enrich-source ──────────────────────────────────────────────────────────────────────────────
-
-  import EnrichSource.{Classified, Findings, Geocoded, VerifiedFindings}
-
-  private def isFindings(name: String) = name.startsWith("findings-")
-
-  /** The quote check over every attempt of every findings step: (checked, passed). A finished attempt says it itself; a
-    * rejected one holds the rejected answer, and the verifier's reasons say which quotes failed. An attempt with no
-    * readable answer checked nothing.
-    */
-  def quoteCheck(steps: List[Step]): (Int, Int) =
-    @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
-      rest match
-        case Nil                                           => (checked, passed)
-        case s :: tail if s.status == StepStatus.Done.wire =>
-          s.output.flatMap(decode[VerifiedFindings](_).toOption) match
-            case Some(v) =>
-              val n = v.proposed.getOrElse(v.findings.size)
-              loop(tail, checked + n, passed + n - v.quoteFailed.getOrElse(0))
-            case None => loop(tail, checked, passed)
-        case s :: tail =>
-          s.output.flatMap(decode[Findings](_).toOption) match
-            case Some(f) =>
-              val n = f.findings.size
-              val fails =
-                math.min(n, s.error.fold(0)(e => e.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1))
-              loop(tail, checked + n, passed + n - fails)
-            case None => loop(tail, checked, passed)
-    loop(steps.filter(s => isFindings(s.name)), 0, 0)
-
-  /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
-  private def claims(d: Run): List[String] =
-    output[Geocoded](d, "geocode")
-      .map(_.findings.map(_.claim))
-      .getOrElse(
-        d.steps
-          .map(_.name)
-          .distinct
-          .filter(isFindings)
-          .flatMap(n => output[VerifiedFindings](d, n).toList.flatMap(_.findings.map(_.claim)))
-      )
-
-  private def enrichSides(runs: List[Run]): List[EnrichSide] =
-    val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(c) -> c))
-    runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>
-      val others = all.patch(i, Nil, 1).flatten.map(_._1).toSet
-      val geo = output[Geocoded](d, "geocode")
-      val cls = output[Classified](d, "classify")
-      val (checked, passed) = quoteCheck(d.steps)
-      EnrichSide(
-        findings = mine.size,
-        quotesChecked = checked,
-        quotesPassed = passed,
-        placesAsked = geo.fold(0)(_.choices.size),
-        placesResolved = geo.fold(0)(_.choices.count(_.placeId.isDefined)),
-        datedFindings = geo.fold(0)(_.findings.count(f => f.periodStart.isDefined || f.periodEnd.isDefined)),
-        periodStart = cls.flatMap(_.period).map(_.start),
-        periodEnd = cls.flatMap(_.period).map(_.end),
-        summaryChars = cls.fold(0)(_.summary.trim.length),
-        notesChars = output[String](d, "notes").fold(0)(_.trim.length),
-        uniqueClaims = mine.filterNot((n, _) => others.contains(n)).map(_._2).distinct
-      )
-    }
 
   // ── review-article ─────────────────────────────────────────────────────────────────────────────
 
@@ -335,7 +275,7 @@ object CompareRuns:
     )
 
   private def words(s: String): Set[String] =
-    AgentVerify.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
+    ComparedText.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
   def similarity(a: String, b: String): Double =
@@ -347,9 +287,9 @@ object CompareRuns:
     */
   def sameMajor(a: Finding, b: Finding): Boolean =
     val (qa, qb) =
-      (AgentVerify.normalise(Option(a.quote).getOrElse("")), AgentVerify.normalise(Option(b.quote).getOrElse("")))
+      (ComparedText.normalise(Option(a.quote).getOrElse("")), ComparedText.normalise(Option(b.quote).getOrElse("")))
     val sameWhere =
-      AgentVerify.normalise(Option(a.where).getOrElse("")) == AgentVerify.normalise(Option(b.where).getOrElse(""))
+      ComparedText.normalise(Option(a.where).getOrElse("")) == ComparedText.normalise(Option(b.where).getOrElse(""))
     (qa.nonEmpty && qa == qb) || (sameWhere && similarity(a.problem, b.problem) >= ProblemSimilarity)
 
   /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */

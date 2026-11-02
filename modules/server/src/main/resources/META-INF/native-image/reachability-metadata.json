@@ -13184,6 +13184,14 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.automation.approvals.ProposalEvidence$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.db.AgentRepo$RunRow$",
       "fields": [
         {
@@ -15324,7 +15332,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.Scheduling$Candidate$",
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepRules$Candidate$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -15332,7 +15340,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.Scheduling$Pick$",
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepRules$Pick$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -15343,7 +15351,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.Scheduling$Ranking$",
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepRules$Ranking$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"

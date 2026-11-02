@@ -294,8 +294,8 @@ final class OaBacklog(
     val id = existing.orElse {
       val goal = goals.headOption.getOrElse("")
       val text = w.acquireText.getOrElse(
-        Scheduling.acquireText(
-          Scheduling.Candidate(
+        AcquisitionSweepRules.acquireText(
+          AcquisitionSweepRules.Candidate(
             doi,
             if w.title.nonEmpty then w.title else doi,
             w.year,

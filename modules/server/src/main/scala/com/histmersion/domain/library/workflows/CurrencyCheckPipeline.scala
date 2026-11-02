@@ -7,7 +7,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.Pipeline
-import com.histmersion.domain.Scheduling.CurrencyAction
+import CurrencyCheckRules.CurrencyAction
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
@@ -75,7 +75,7 @@ final class CurrencyCheckPipeline(
       upstream().followups(t.citekey, None, Some(cfg.scheduler.followupsPerSource)) match
         case Left(m)  => ctx.warn(s"followups ${t.citekey}: $m"); (0, 0, 0)
         case Right(r) =>
-          val acts = r.followups.map(Scheduling.currencyAction(t.citekey, _))
+          val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
               site.citations
@@ -90,7 +90,7 @@ final class CurrencyCheckPipeline(
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(Acquire.normalizeDoi).exists { doi =>
-              queueOnce(ctx, goal, doi, Scheduling.acquireText(row, t.citekey, goal), queued) match
+              queueOnce(ctx, goal, doi, CurrencyCheckRules.acquireText(row, t.citekey, goal), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added
             }

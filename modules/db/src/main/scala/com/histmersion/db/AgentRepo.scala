@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.api.Agents.*
-import com.histmersion.domain.AgentProposals
+import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.api.{ArticlePlans, GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
@@ -477,8 +477,8 @@ object AgentRepo:
           evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")
         )
       case _ =>
-        val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
-        base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
+        val p = Jsonb.read[ProposalEvidence](r.proposal)
+        base.copy(evidence = p.flatMap(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
 
   /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */
   def record(

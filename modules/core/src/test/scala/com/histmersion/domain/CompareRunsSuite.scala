@@ -9,6 +9,8 @@ import com.histmersion.domain.CompareRuns.{ModelChoice, Run, RunHead, Step, Toke
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
+import com.histmersion.domain.automation.agents.OutputComparison
+import com.histmersion.domain.library.workflows.EnrichComparison
 import io.circe.syntax.*
 import com.histmersion.values.SourceStatus
 
@@ -50,20 +52,24 @@ class CompareRunsSuite extends munit.FunSuite:
     case _                   => None
   }
 
+  /** The runs compared as `agent compare` does: enrich-source's outputs by the library's comparison. */
+  private def compare(runs: List[Run]) =
+    CompareRuns.compare(
+      runs,
+      billing,
+      if runs.headOption.exists(_.run.pipeline == "enrich-source") then EnrichComparison else OutputComparison.none
+    )
+
   test("refused: fewer than two runs, a run twice, two pipelines, two targets"):
     val a = run("a", "enrich-source", "x2020", Nil)
-    assert(CompareRuns.compare(List(a), billing).left.exists(_.contains("at least two")))
-    assert(CompareRuns.compare(List(a, a), billing).left.exists(_.contains("twice")))
+    assert(compare(List(a)).left.exists(_.contains("at least two")))
+    assert(compare(List(a, a)).left.exists(_.contains("twice")))
     assert(
-      CompareRuns
-        .compare(List(a, run("b", "review-article", "x2020", Nil)), billing)
-        .left
+      compare(List(a, run("b", "review-article", "x2020", Nil))).left
         .exists(_.contains("one pipeline"))
     )
     assert(
-      CompareRuns
-        .compare(List(a, run("b", "enrich-source", "y2021", Nil)), billing)
-        .left
+      compare(List(a, run("b", "enrich-source", "y2021", Nil))).left
         .exists(_.contains("one target"))
     )
 
@@ -167,7 +173,7 @@ class CompareRunsSuite extends munit.FunSuite:
       // an answer that was not JSON checked nothing
       step(7, "findings-4", "failed", output = None, model = Some("m"), error = Some("the answer is not the JSON"))
     )
-    assertEquals(CompareRuns.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
+    assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
 
   test("enrich-source: findings, places, dates, period, text lengths, and the claims only one run made"):
     def enrich(id: String, claims: List[FindingInput], choices: List[GeocodeChoice], notes: String) = run(
@@ -212,7 +218,7 @@ class CompareRunsSuite extends munit.FunSuite:
       "Notes [[x2020]]."
     )
     val b = enrich("b", List(FindingInput("tin  came by SEA."), FindingInput("Tin was rare.")), Nil, "N.")
-    val cmp = CompareRuns.compare(List(a, b), billing).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(fail(_), identity)
     assertEquals(
       cmp.enrich,
       List(
@@ -228,7 +234,7 @@ class CompareRunsSuite extends munit.FunSuite:
   test("a run that did not finish is compared with a note saying so"):
     val a = run("aaaaaaaa1", "enrich-source", "x2020", List(step(1, "load")))
     val b = run("bbbbbbbb2", "enrich-source", "x2020", List(step(1, "load")), status = "paused")
-    val cmp = CompareRuns.compare(List(a, b), billing).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(fail(_), identity)
     assertEquals(cmp.notes, List("run bbbbbbbb is paused, not done: its outputs are what it had so far"))
     assertEquals(
       cmp.steps,
@@ -328,7 +334,7 @@ class CompareRunsSuite extends munit.FunSuite:
       List(Merged(1, Verdict.Major, List(r1b), None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1b)))
     )
-    val cmp = CompareRuns.compare(List(a, b), billing).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(fail(_), identity)
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("PASS"), 2), (Some("MAJOR"), 1)))
     assertEquals(
       cmp.review.head.reviewers.map(r => (r.reviewer, r.verdict, r.majors, r.minors)),

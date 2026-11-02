@@ -129,8 +129,6 @@ direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileC
 direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
-direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
-direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
 direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
 direction	core:domain/CompareRuns.scala	automation -> research: ReviewArticle	1
 direction	core:domain/ManagerDefaults.scala	automation -> research: ReviewManagerDefaults	1
@@ -141,15 +139,7 @@ direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
-direction	core:domain/PlanGoal.scala	automation -> library: Acquire	1
-direction	core:domain/PlanGoal.scala	automation -> library: WorkRef	1
 direction	core:domain/PlanGoal.scala	automation -> research: Articles	1
-direction	core:domain/Scheduling.scala	automation -> library: Acquire	1
-direction	core:domain/Scheduling.scala	automation -> library: AgentProposals	1
-direction	core:domain/Scheduling.scala	automation -> library: Edge	1
-direction	core:domain/Scheduling.scala	automation -> library: FollowupRow	1
-direction	core:domain/Scheduling.scala	automation -> library: WorkRef	1
-direction	db:db/AgentRepo.scala	automation -> library: AgentProposals	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
 direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1

@@ -326,7 +326,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(problems(PlanAnswer("why", Nil, Nil, List(WorkAnswer(null, "x")))).exists(_.contains("is not a DOI")))
 
   test("ranking: a pick with an empty DOI fails; its reason stays optional"):
-    import Scheduling.*
+    import com.histmersion.domain.library.workflows.AcquisitionSweepRules.*
     val offered = List(Candidate("10.1000/a", "A", Some(2020), Nil, None, false, "q", None))
     assert(
       checkRanking(Ranking(List(Pick("", "fits"))), offered, last = false).left

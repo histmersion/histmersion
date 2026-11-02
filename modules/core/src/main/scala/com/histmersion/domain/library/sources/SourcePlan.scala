@@ -138,9 +138,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     // the fields of a pair that is (or may be) merged; a source that would be new under a citekey taken here
     fes.sources.foreach { s =>
       fates(s.uid) match
-        case SourceFate.Auto(p)    => fieldIssues(pairOf(p.right.uid), None, sketches).foreach(questions.ask(_, Set.empty))
+        case SourceFate.Auto(p) => fieldIssues(pairOf(p.right.uid), None, sketches).foreach(questions.ask(_, Set.empty))
         case SourceFate.Gate(p, g) =>
-          fieldIssues(pairOf(p.right.uid), Some(IssueCondition(g, km.Map)), sketches).foreach(questions.ask(_, Set.empty))
+          fieldIssues(pairOf(p.right.uid), Some(IssueCondition(g, km.Map)), sketches)
+            .foreach(questions.ask(_, Set.empty))
           collision(s, Some(IssueCondition(g, km.Both)), sketches, cfg).foreach(questions.ask(_, Set.empty))
         case SourceFate.New => collision(s, None, sketches, cfg).foreach(questions.ask(_, Set.empty))
         case _              => ()
@@ -338,7 +339,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   override def pairIssue(kind: IssueKind): Boolean = PairKinds(kind)
 
   override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
-    pairOf.get(right.uid).filterNot(_.evidence.strongKey).foreach(_ => folds.count(_.modify(_.sourcesByScore).using(_ + 1)))
+    pairOf
+      .get(right.uid)
+      .filterNot(_.evidence.strongKey)
+      .foreach(_ => folds.count(_.modify(_.sourcesByScore).using(_ + 1)))
     val fieldDec = pairFieldIds.getOrElse(right.uid, Map.empty).flatMap((k, id) => folds.decisionIn(id).map(k -> _))
     val merged = fold(left, right, fieldDec, citekey)
     sourceLine(left.uid) = _ => merged
@@ -359,7 +363,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       case SourceFate.Same(_, _) => None
       case SourceFate.Deleted    =>
         Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.DeletedHere))
-      case SourceFate.New     => Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New))
+      case SourceFate.New => Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New))
       case SourceFate.Auto(p) =>
         val ev = pairOf(s.uid).evidence
         Some(
