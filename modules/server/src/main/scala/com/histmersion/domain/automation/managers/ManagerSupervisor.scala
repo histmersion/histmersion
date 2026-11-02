@@ -842,13 +842,6 @@ final class ManagerSupervisor(
       nudge()
     }
 
-/** What a guarded step answers when it failed. */
-final private[automation] case class Zero[A](value: A)
-private[automation] object Zero:
-  given Zero[Unit] = Zero(())
-  given Zero[Boolean] = Zero(false)
-  given Zero[List[String]] = Zero(Nil)
-
 object ManagerSupervisor:
 
   /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */

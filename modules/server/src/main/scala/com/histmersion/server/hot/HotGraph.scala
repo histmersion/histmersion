@@ -12,30 +12,6 @@ import java.util.concurrent.locks.ReentrantLock
 import scala.concurrent.duration.*
 import scala.util.control.NonFatal
 
-/** What a node's build is given: the config being switched to, the values of its dependencies in the generation being
-  * built, and — on a rebuild — its own previous value and config (so a node may carry over what did not change, as the
-  * plugin node does per plugin).
-  */
-final class BuildCtx[C, A] private[hot] (
-    val config: C,
-    val previous: Option[A],
-    val previousConfig: Option[C],
-    /** The config keys this reload changed (empty for the first build). */
-    val changed: List[String],
-    dep: String => Any
-):
-  /** A dependency's value in the generation being built. */
-  def apply[B](h: Hot[B]): B =
-    // the map behind `dep` holds, under a node's name, a value of the type that node's Hot was made
-    // with (HotGraph.node is the only writer), so the name fixes the type
-    dep(h.name).asInstanceOf[B]
-
-/** A pin on one generation: while it is held, none of that generation's components is closed. */
-final class Pin private[hot] (private[hot] val snap: HotGraph.Snap[?]):
-  private val released = AtomicBoolean(false)
-  def generation: Long = snap.generation
-  def release(): Unit = if released.compareAndSet(false, true) then snap.release()
-
 /** The hot component graph (docs/research-plugins.md §3.6): Ox has no `Hotswap`, so this is one.
   *
   *   - A NODE is built from the config and the current values of its dependencies, inside its OWN Ox scope, on a thread

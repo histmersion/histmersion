@@ -9,21 +9,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 
-/** Flat projection of `jobs` (positional, like the other write-path rows). */
-final private[jobs] case class JobRow(
-    id: String,
-    kind: String,
-    status: String,
-    citekey: Option[String],
-    progress: Option[String],
-    error: Option[String],
-    sha256: Option[String],
-    createdAt: String,
-    updatedAt: String,
-    acquireItem: Option[Int],
-    detail: Option[String]
-) derives DbCodec
-
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no
   * job is left claiming to be in progress by a process that no longer exists. Re-running is idempotent — the same file

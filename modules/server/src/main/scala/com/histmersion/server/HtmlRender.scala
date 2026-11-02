@@ -5,9 +5,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
 
-/** What a `[[wikilink]]` resolves to on an HTML page: a stored source or a compiled article. */
-type LinkTarget = SourceRef | ArticleRef
-
 /** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
   * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
   * backlinks.
