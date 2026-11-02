@@ -166,7 +166,7 @@ object NoteService:
         at: MarkTime
     ): Note =
       val id =
-        com.histmersion.api.personal.Note.Id.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
+        com.histmersion.api.personal.Note.Id(newId().toString)
       val note = StoredNote(user, id, resolved(target, items), text, title, at, at)
       state.updateAndGet(_.modify(_.notes).using(_ :+ note)): Unit
       shown(List(note), items).head

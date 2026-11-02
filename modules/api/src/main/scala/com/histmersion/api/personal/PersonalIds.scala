@@ -1,7 +1,6 @@
 package com.histmersion.api.personal
 
 object PersonalIds:
-  type UuidRule = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
   val MaxLimit = 1000
   val DefaultLimit = 200

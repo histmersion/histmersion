@@ -58,6 +58,7 @@ final class PersonalControllers(
   private def target(t: Target, allowed: Set[MarkKind], what: String): Either[Api.Error, MarkTarget] =
     Target
       .check(t, allowed, what)
+      .flatMap(MarkTarget.zoomChecked)
       .flatMap(MarkTarget.fromWire(_).toRight(s"a $what on a ${t.kind.label.toLowerCase} names it"))
       .left
       .map(bad)
@@ -91,7 +92,7 @@ final class PersonalControllers(
     maintenance.guard("edit_bookmark"):
       for
         user <- person(caller)
-        bid <- com.histmersion.api.personal.Bookmark.Id.parse(id).left.map(bad)
+        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(bad)
         label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(bad)
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
@@ -100,7 +101,7 @@ final class PersonalControllers(
     maintenance.guard("remove_bookmark"):
       for
         user <- person(caller)
-        bid <- com.histmersion.api.personal.Bookmark.Id.parse(id).left.map(bad)
+        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(bad)
         b <- bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
@@ -123,7 +124,7 @@ final class PersonalControllers(
   def note(caller: Caller, id: String): Either[Api.Error, WireNote] =
     for
       user <- person(caller)
-      nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
+      nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(bad)
       n <- notes.get(user, nid).toRight(missing(s"note $id"))
     yield n.wire
 
@@ -139,7 +140,7 @@ final class PersonalControllers(
     maintenance.guard("edit_note"):
       for
         user <- person(caller)
-        nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
+        nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(bad)
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(bad)
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.trim).filter(_.nonEmpty)).left.map {
           case com.histmersion.domain.personal.notes.Note.EditRefused.Missing      => missing(s"note $id")
@@ -170,7 +171,7 @@ final class PersonalControllers(
     maintenance.guard("remove_note"):
       for
         user <- person(caller)
-        nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
+        nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(bad)
         n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
       yield n.wire
 

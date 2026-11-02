@@ -2,7 +2,7 @@ package com.histmersion.domain.personal.notes
 
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
-import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
+import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
 import com.histmersion.domain.library.Title
 import com.augustnagro.magnum.DbCodec
@@ -28,6 +28,11 @@ final case class Note(
   def wire: WireNote = WireNote(id, target.wire, text, title.value, createdAt.iso, updatedAt.iso)
 
 object Note:
+  /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
+  def idOf(raw: String): Either[String, WireNote.Id] =
+    val id = Option(raw).fold("")(_.trim.toLowerCase)
+    Either.cond(PersonalUuid.matches(id), WireNote.Id(id), s"not a note id: '$raw'")
+
   def of(stored: StoredNote, described: Map[ItemRef, Described]): Note =
     val (target, title) = stored.target.shown(described, stored.targetLabel)
     Note(stored.id, target, stored.text, title, stored.createdAt, stored.updatedAt)

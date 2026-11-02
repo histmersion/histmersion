@@ -63,6 +63,15 @@ enum MarkTarget:
 
 object MarkTarget:
 
+  /** The deepest zoom the map has; a target's zoom is between 0 and this. */
+  val MaxZoom = 24.0
+
+  /** The target, when its zoom (if any) is one the map has. */
+  def zoomChecked(t: Target): Either[String, Target] =
+    t.zoom.filterNot(z => z.value >= 0.0 && z.value <= MaxZoom) match
+      case Some(z) => Left(s"zoom ${z.value}: between 0 and ${MaxZoom.toInt}")
+      case None    => Right(t)
+
   /** The kind of record an item kind of the wire names. */
   def itemKind(k: MarkKind): ItemKind = ItemKind.applyUnsafe(k.wire)
 

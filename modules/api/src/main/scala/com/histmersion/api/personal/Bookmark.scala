@@ -30,11 +30,9 @@ object Bookmark:
 
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match[PersonalIds.UuidRule]]:
-    def parse(raw: String): Either[String, Id] =
-      either(Option(raw).fold("")(_.trim.toLowerCase)).left.map(_ => s"not a bookmark id: '$raw'")
+  object Id extends RefinedType[String, Pure]:
     given Encoder[Id] = Encoder.encodeString.contramap(_.value)
-    given Decoder[Id] = Decoder.decodeString.emap(parse)
+    given Decoder[Id] = Decoder.decodeString.map(Id(_))
     given Schema[Id] = Schema.string[Id]
 
   type Label = Label.T

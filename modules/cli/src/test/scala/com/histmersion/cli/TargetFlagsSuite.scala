@@ -22,5 +22,4 @@ class TargetFlagsSuite extends munit.FunSuite:
       Right(Some(-1300))
     )
     assert(TargetFlags.target(raw("point", lat = Some(97))).left.exists(_.message.contains("--lat")))
-    assert(TargetFlags.target(raw("view", zoom = Some(40))).left.exists(_.message.contains("--zoom")))
     assertEquals(TargetFlags.target(raw("thing")).left.map(_.exitCode), Left(ExitCode.Usage))

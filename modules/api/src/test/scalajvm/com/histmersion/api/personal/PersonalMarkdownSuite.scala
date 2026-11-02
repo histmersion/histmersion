@@ -5,8 +5,8 @@ import com.histmersion.api.ItemKind
 
 class PersonalMarkdownSuite extends munit.FunSuite:
 
-  private val id = Bookmark.Id.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
-  private val nid = Note.Id.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
+  private val id = Bookmark.Id("0190f3c2-1111-7000-8000-000000000001")
+  private val nid = Note.Id("0190f3c2-1111-7000-8000-000000000002")
 
   test("a bookmark line: its name, the item's title when renamed, what and where, when, its id"):
     val b = Bookmark(
