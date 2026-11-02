@@ -28,7 +28,22 @@ final class AcquisitionWork(deps: Deps, h: Handlers, a: AgentsHandlers):
 
   /** The acquisition list's legal re-check (the managers' tick runs it; `queue acquire recheck` by hand). */
   val acquireRecheck: AcquireRecheckService =
-    AcquireRecheckService(deps.ds, deps.cfg.acquire.recheck, h, () => upstream, a)
+    AcquireRecheckService(
+      deps.ds,
+      com.histmersion.domain.library.acquisition.AcquireCheckService(deps.transactor),
+      deps.cfg.acquire.recheck,
+      h,
+      () => upstream,
+      a
+    )
 
   /** Seed before the plan: goals with no source gather candidates (no model) before their plan is approved. */
-  val seeding: SeedService = SeedService(deps.ds, cfg, h, a, () => upstream, oaBacklog)
+  val seeding: SeedService = SeedService(
+    deps.ds,
+    com.histmersion.domain.library.acquisition.CandidateService(deps.transactor),
+    cfg,
+    h,
+    a,
+    () => upstream,
+    oaBacklog
+  )

@@ -16,7 +16,7 @@ import com.histmersion.domain.*
 final class HttpApi(
     deps: Deps,
     h: Handlers,
-    acquire: com.histmersion.server.acquire.AcquireHandlers,
+    acquire: com.histmersion.domain.library.acquisition.AcquisitionControllers,
     collections: com.histmersion.domain.library.collections.CollectionsControllers
 ):
 
@@ -104,10 +104,15 @@ final class HttpApi(
     Api.agentStateSet.serverLogic[Identity]((key, in) => h.agentStateSet(key, in)),
     Api.agentStateDelete.serverLogic[Identity](key => h.agentStateDelete(key)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
-    Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
-    Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
-    Api.original.serverLogic[Identity](ck => h.ingest.original(ck)),
-    Api.job.serverLogic[Identity](id => h.ingest.job(id)),
+    Api.ingest.serverLogic[Identity]((p, file) =>
+      h.ingest.controllers.ingest(p, com.histmersion.domain.library.ingest.Upload.handed(file))
+    ),
+    Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.controllers.reocr(ck, quality)),
+    Api.original.serverLogic[Identity](ck =>
+      // the stored original is served from where the store keeps it (the HTTP layer streams a file)
+      h.ingest.controllers.original(ck).map((blob, disposition) => (java.io.File(blob.where), disposition))
+    ),
+    Api.job.serverLogic[Identity](id => h.jobs.job(id)),
     Api.jobControl.serverLogic[Identity]((id, action) => h.jobControl.control(id, action)),
     ConfigEditApi.get.serverLogic[Identity](prefix => h.settings.page(prefix)),
     ConfigEditApi.write.serverLogic[Identity](w => h.settings.write(w)),
@@ -116,7 +121,7 @@ final class HttpApi(
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
       h.activity.page(show, since, goal, limit, before)
     ),
-    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo))
+    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.jobsPage(f, limit, before, upTo))
   ) ++ com.histmersion.domain.media.MediaRoutes(
     h.media.assets,
     h.media.links,
@@ -201,8 +206,9 @@ final class HttpApi(
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
   // Articles (2.7), ops (2.8) and acquisition (2.6) live in their own files; their routes are appended here.
-  private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire, collections).endpoints ++
-    com.histmersion.domain.library.collections.CollectionsRoutes(collections)
+  private val acquireRoutes =
+    com.histmersion.domain.library.acquisition.AcquisitionRoutes(acquire, collections, h.calibreGaps).endpoints ++
+      com.histmersion.domain.library.collections.CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     com.histmersion.domain.catalogue.events.EventImportsRoutes(h.eventImports) ++

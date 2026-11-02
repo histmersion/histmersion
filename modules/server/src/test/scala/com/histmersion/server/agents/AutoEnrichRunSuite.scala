@@ -71,10 +71,10 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** The handlers with their OCR pool running and the agent run pool NOT started. */
   private def withHandlers[A](cfg: AppConfig = baseCfg)(f: Handlers => A): A =
     val h = Handlers(Deps(cfg, ds), Stub)
-    val _ = h.ingest.start()
+    val _ = h.ingest.queue.start()
     try f(h)
     finally
-      h.ingest.stop()
+      h.ingest.queue.stop()
       h.agents.stop()
 
   private lazy val pdf: Path =
@@ -84,9 +84,11 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: Handlers): JobInfo =
-    val accepted = h.ingest.ingest(IngestParams(Ck, Some("tin.pdf")), pdf.toFile).fold(e => fail(e.message), identity)
+    val accepted = h.ingest.controllers
+      .ingest(IngestParams(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile))
+      .fold(e => fail(e.message), identity)
     def go(n: Int): JobInfo =
-      val j = h.ingest.job(accepted.jobId).fold(e => fail(e.message), identity)
+      val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message), identity)
       if j.isTerminal || n > 600 then j else { Thread.sleep(50); go(n + 1) }
     val j = go(0)
     assertEquals(j.state, JobState.Done, j.toString)

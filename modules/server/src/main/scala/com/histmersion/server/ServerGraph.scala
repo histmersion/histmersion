@@ -37,7 +37,7 @@ final class ServerGraph private (
     val migrations: Hot[String],
     val queryPool: Hot[ReadOnlyPool],
     val plugins: Hot[Generation],
-    val core: com.histmersion.server.acquire.CoreBudget
+    val core: com.histmersion.domain.library.acquisition.CoreBudget
 ):
 
   val ds: DataSource = HotDataSource(pool)(identity)
@@ -158,7 +158,8 @@ object ServerGraph:
       initial: HotConfig,
       source: Option[ConfigSource],
       plugins: Option[Generation],
-      core: com.histmersion.server.acquire.CoreBudget = com.histmersion.server.acquire.CoreBudget()
+      core: com.histmersion.domain.library.acquisition.CoreBudget =
+        com.histmersion.domain.library.acquisition.CoreBudget()
   ): Either[String, ServerGraph] =
     val graph = HotGraph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))

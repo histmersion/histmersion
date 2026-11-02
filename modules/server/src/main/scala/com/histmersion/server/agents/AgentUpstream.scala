@@ -3,12 +3,12 @@ package com.histmersion.server.agents
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.acquire.AcquireHandlers
+import com.histmersion.domain.library.acquisition.AcquisitionControllers
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
-  * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquireHandlers]] (built after
-  * [[com.histmersion.server.Handlers]], so it is attached to the agents once it exists), and so a test can answer from
-  * fixtures instead of the network.
+  * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
+  * after [[com.histmersion.server.Handlers]], so it is attached to the agents once it exists), and so a test can answer
+  * from fixtures instead of the network.
   */
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
@@ -80,7 +80,7 @@ object AgentUpstream:
     override def connected = false
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
-  def of(a: AcquireHandlers): AgentUpstream = new AgentUpstream:
+  def of(a: AcquisitionControllers): AgentUpstream = new AgentUpstream:
     def meta(doi: String) = a.meta(doi).left.map(_.message)
     def refs(citekey: String, apply: Boolean) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
     def assess(citekey: String, apply: Boolean) =

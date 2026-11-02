@@ -9,7 +9,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{CandidateRepo, FocusRepo, ManagerRepo}
+import com.histmersion.db.{FocusRepo, ManagerRepo}
+import com.histmersion.domain.library.acquisition.CandidateService
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -26,6 +27,7 @@ import javax.sql.DataSource
   */
 final class SeedService(
     ds: DataSource,
+    candidates: CandidateService,
     cfg: => AgentsConfig,
     h: com.histmersion.server.Handlers,
     agents: AgentsHandlers,
@@ -68,7 +70,7 @@ final class SeedService(
         connect(ds)(FocusRepo.sourceCounts()),
         watchers,
         g =>
-          (CandidateRepo.watches(ds, g).flatMap(_.lastRun).flatMap(ManagerPolicy.parseInstant) ++ Option(
+          (candidates.watches(g).flatMap(_.lastRun).flatMap(ManagerPolicy.parseInstant) ++ Option(
             seeded.get(g)
           )).maxOption,
         now

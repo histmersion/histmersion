@@ -1,13 +1,10 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
-direction	api:api/Acquire.scala	library -> server: UpdateNotice	1
-direction	api:api/Activity.scala	automation -> server: Jobs	1
 direction	api:api/Agents.scala	automation -> library: Ingest	1
 direction	api:api/Agents.scala	automation -> research: ArticlePlans	1
 direction	api:api/AgentsMarkdown.scala	automation -> library: Edge	1
 direction	api:api/AgentsMarkdown.scala	automation -> library: Query	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticleFilter	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
-direction	api:api/Assessment.scala	library -> server: UpdateNotice	1
 direction	api:api/AssetLinkTarget.scala	media -> library: Finding	1
 direction	api:api/AttestationTarget.scala	catalogue -> library: Edge	1
 direction	api:api/AttestationTarget.scala	catalogue -> library: Finding	1
@@ -127,7 +124,6 @@ direction	api:api/Write.scala	util.common -> library: SourcePut	1
 direction	api:api/YearFmt.scala	util.common -> catalogue: EventGeo	1
 direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
-direction	config:config/AcquireDefaults.scala	library -> research: CitationCount	1
 direction	config:config/AgentManagersConfig.scala	automation -> library: WatchManagerConfig	1
 direction	config:config/AgentManagersConfig.scala	automation -> research: ReviewManagerConfig	1
 direction	config:config/AgentsConfig.scala	automation -> library: AgentEnrichConfig	1
@@ -137,7 +133,6 @@ direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileC
 direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
-direction	core:domain/BrowserDownload.scala	library -> research: Citation	1
 direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
 direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
 direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
@@ -168,7 +163,6 @@ direction	core:domain/Scheduling.scala	automation -> library: AgentProposals	1
 direction	core:domain/Scheduling.scala	automation -> library: Edge	1
 direction	core:domain/Scheduling.scala	automation -> library: FollowupRow	1
 direction	core:domain/Scheduling.scala	automation -> library: WorkRef	1
-direction	core:domain/activity/ActivityRules.scala	automation -> server: Jobs	1
 direction	db:db/AgentRepo.scala	automation -> library: AgentProposals	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
@@ -198,14 +192,7 @@ direction	files:files/BundleEntities.scala	util.data -> catalogue: SiteTypes	1
 direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
-direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
-direction	server:server/IngestHandlers.scala	library -> server: Deps	1
-direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
 direction	server:server/PageBuilder.scala	research -> split: Handlers	1
-direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
-direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
-direction	server:server/acquire/CandidateSearch.scala	library -> research: ArticleRepo	1
-direction	server:server/acquire/DiscoveryClient.scala	library -> server: UpdateNotice	1
 direction	server:server/agents/AcquireRecheckService.scala	library -> split: Handlers	1
 direction	server:server/agents/AcquisitionSweepPipeline.scala	library -> split: Handlers	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
@@ -222,10 +209,7 @@ direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
 direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:db/BundleImport.scala	java.nio.file	1
-filesystem	db:db/Importer.scala	Files.*	2
-filesystem	db:db/Importer.scala	java.nio.file	1
 filesystem	db:db/MergeState.scala	java.nio.file	1
-filesystem	db:db/Originals.scala	java.nio.file	1
 filesystem	files:files/Frontmatter.scala	Files.*	3
 filesystem	files:files/Frontmatter.scala	java.nio.file	1
 filesystem	files:files/PluginKit.scala	File(	1
@@ -238,23 +222,6 @@ filesystem	server:domain/automation/agents/AgentTrees.scala	java.nio.file	1
 filesystem	server:domain/automation/agents/Prompts.scala	Files.*	2
 filesystem	server:domain/automation/agents/Prompts.scala	Path.of	1
 filesystem	server:domain/automation/agents/Prompts.scala	java.nio.file	1
-filesystem	server:server/IngestHandlers.scala	.toFile	3
-filesystem	server:server/IngestHandlers.scala	Files.*	11
-filesystem	server:server/IngestHandlers.scala	Path.of	1
-filesystem	server:server/IngestHandlers.scala	StandardCopyOption	2
-filesystem	server:server/IngestHandlers.scala	java.io.File	3
-filesystem	server:server/IngestHandlers.scala	java.nio.file	1
-filesystem	server:server/StoredOriginals.scala	Files.*	6
-filesystem	server:server/StoredOriginals.scala	java.nio.file	1
-filesystem	server:server/acquire/AcquireHandlers.scala	Path.of	1
-filesystem	server:server/acquire/AcquireHandlers.scala	java.nio.file	2
-filesystem	server:server/acquire/IngestJobs.scala	java.nio.file	1
-filesystem	server:server/acquire/QueuedIngest.scala	.toFile	1
-filesystem	server:server/acquire/QueuedIngest.scala	java.nio.file	1
-filesystem	server:server/acquire/SkeletonIngest.scala	java.nio.file	1
-filesystem	server:server/acquire/Spool.scala	Files.*	2
-filesystem	server:server/acquire/Spool.scala	Path.of	2
-filesystem	server:server/acquire/Spool.scala	java.nio.file	1
 filesystem	server:server/agents/AgentDoctor.scala	Files.*	2
 filesystem	server:server/agents/AgentDoctor.scala	java.nio.file	2
 filesystem	server:server/agents/ClaudeCodeClient.scala	Files.*	4
@@ -276,14 +243,12 @@ process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2
 process	server:server/agents/PlanPools.scala	ProcessBuilder	2
-repository	db:db/AcquireRepo.scala	SourceRepo of library.sources	1
 repository	db:db/ArticleRepo.scala	SourceRepo of library.sources	1
 repository	db:db/BundleImport.scala	ArticleRepo of research.articles	1
 repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
-repository	db:db/Importer.scala	SourceRepo of library.sources	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
@@ -294,21 +259,10 @@ repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
 repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
 repository	server:server/Handlers.scala	UiRepo of server.instance	1
-repository	server:server/Handlers.scala	UpstreamQuotaRepo of library.acquisition	1
-repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
-repository	server:server/IngestHandlers.scala	SourceRepo of library.sources	1
-repository	server:server/Jobs.scala	JobRepo of util.jobs	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
-repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisition	1
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/acquire/AcquireHandlers.scala	SourceRepo of library.sources	1
-repository	server:server/acquire/CandidateSearch.scala	ArticleRepo of research.articles	1
-repository	server:server/acquire/CandidateSearch.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/acquire/CandidateSearch.scala	GoalRepo of automation.goals	1
-repository	server:server/acquire/CandidateSearch.scala	SourceRepo of library.sources	1
-repository	server:server/acquire/SkeletonIngest.scala	SourceRepo of library.sources	1
 repository	server:server/agents/AcquireRecheckService.scala	JobRepo of util.jobs	1
 repository	server:server/agents/AcquireRecheckService.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/AcquisitionSweepPipeline.scala	GoalLinkRepo of automation.goals	1
@@ -326,6 +280,5 @@ repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of au
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/SeedService.scala	CandidateRepo of library.acquisition	1
 repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
 repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1

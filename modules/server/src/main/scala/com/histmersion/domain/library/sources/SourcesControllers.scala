@@ -2,7 +2,7 @@ package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
-import com.histmersion.db.Importer
+import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.Caller
 import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.media.assets.AssetsControllers
@@ -137,7 +137,7 @@ final class SourcesControllers(
         if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
         else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
-        else if !req.force && req.mtime.exists(m => Importer.isStale(sources.updatedAtMillis, ck, m))
+        else if !req.force && req.mtime.exists(m => SeedImport.isStale(sources.updatedAtMillis, ck, m))
         then Right(SeedResult(0, Nil, 0, List(ck)))
         else
           // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some

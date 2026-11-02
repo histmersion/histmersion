@@ -3,7 +3,6 @@ package com.histmersion.server
 import com.histmersion.api.{Api, ConfigEdit, PluginsReport}
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.util.settings.{SettingsService, SettingsViews}
-import com.histmersion.server.acquire.{AcquireHandlers, SkeletonIngest}
 import com.histmersion.server.agents.{Generated, PromptBudget, TransitionTools}
 import io.circe.Json
 import io.circe.syntax.*
@@ -58,14 +57,14 @@ class ContractSnapshotSuite extends munit.FunSuite:
   test("mcp-tools.json: the MCP tools/list"):
     val deps = Deps(loaded.config, RefusingDataSource)
     val h = Handlers(deps, OfflineConverter())
-    val acq = AcquireHandlers(
+    val acq = AcquisitionTesting.controllers(
       deps,
       discovery = ???,
       citations = ???,
       oa = ???,
       wiki = ???,
       retractionWatch = ???,
-      jobs = SkeletonIngest(RefusingDataSource, loaded.config.limits.chunkChars)
+      jobs = AcquisitionTesting.skeleton(deps)
     )
     val collections = com.histmersion.domain.library.collections.CollectionsControllers(
       com.histmersion.domain.library.collections.CollectionsService.InMemory(

@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
 import com.histmersion.config.AppConfig
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 
 /** OpenAlex pauses anonymous search under heavy load (HTTP 503, 2026-09-27): discovery must not go dark with it. The

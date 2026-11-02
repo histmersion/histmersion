@@ -9,7 +9,7 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo}
+import com.histmersion.db.{ArticleRepo, GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
 
@@ -23,6 +23,9 @@ final class OpsHandlers(deps: Deps):
   private val ds = deps.ds
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
+
+  /** The acquisition list's checks, shown with its items. */
+  private val acquireChecks = com.histmersion.domain.library.acquisition.AcquireCheckService(deps.transactor)
 
   // ── lint ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -99,8 +102,8 @@ final class OpsHandlers(deps: Deps):
       val checks =
         if k != Kind.Acquire then Nil
         else
-          AcquireCheckRepo
-            .of(ds, items.map(_.id))
+          acquireChecks
+            .of(items.map(_.id))
             .values
             .toList
             .sortBy(_.item)

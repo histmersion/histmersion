@@ -1,9 +1,9 @@
 package com.histmersion.server
 
 import com.histmersion.config.AppConfig
-import com.histmersion.server.acquire.agent
+import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.pluginhost.{Challenge, SttpTransport}
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 
 import java.net.InetSocketAddress

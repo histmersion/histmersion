@@ -4,7 +4,7 @@ import com.histmersion.pluginhost.OutboundTls
 
 import com.histmersion.config.{AppConfig, TlsConfig}
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.server.acquire.SttpHttp
+import com.histmersion.domain.library.acquisition.SttpHttp
 
 import java.nio.file.{Files, Path}
 import java.security.cert.{CertificateFactory, CertPathValidator, PKIXParameters, TrustAnchor, X509Certificate}

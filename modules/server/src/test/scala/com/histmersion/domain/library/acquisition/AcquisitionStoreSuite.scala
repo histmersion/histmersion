@@ -1,0 +1,64 @@
+package com.histmersion.domain.library.acquisition
+
+import com.histmersion.config.AppConfig
+import com.histmersion.domain.automation.worklists.{QueueService, WorkListState}
+import com.histmersion.domain.library.{LibraryState, LibraryStoreSuite}
+import com.histmersion.domain.library.sources.SourceService
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.histmersion.util.database.Transactor
+
+import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+
+/** A contract of the acquisition's services, run once in memory and once on the database (a scratch database per test,
+  * gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone.
+  */
+abstract class AcquisitionStoreSuite extends com.histmersion.db.DbSuite:
+  protected def fresh(test: String): Option[AcquisitionStores]
+
+  protected def stest(title: String)(body: AcquisitionStores => Unit): Unit =
+    test(title)(fresh(title).foreach(body))
+
+object AcquisitionStoreSuite:
+
+  /** The services in memory, the acquisition's sharing one state, the library's another. */
+  trait InMemory extends AcquisitionStoreSuite:
+    protected def fresh(test: String): Option[AcquisitionStores] =
+      val state = AtomicReference(AcquisitionState.empty)
+      val clock = LibraryStoreSuite.Ticking()
+      val src = SourceService.InMemory(AtomicReference(LibraryState.empty), clock, () => LibraryStoreSuite.Settings)
+      val q = QueueService.InMemory(AtomicReference(WorkListState.empty), clock)
+      Some(new AcquisitionStores:
+        val assessments = AssessmentService.InMemory(state, clock)
+        val candidates = CandidateService.InMemory(state, clock)
+        val quotas = UpstreamQuotaService.InMemory(state)
+        val checks = AcquireCheckService.InMemory(state, q, src)
+        val sources = src
+        val queues = q
+        def goal(slug: String) = ())
+
+  /** The services on a scratch database of their own per test. */
+  trait OnDatabase extends AcquisitionStoreSuite:
+    private val testDb = com.histmersion.db.TestDb.url
+    override def munitIgnore: Boolean = testDb.isEmpty
+    private lazy val scratch =
+      ScratchDatabases(
+        s"histmersion_s10q_${getClass.getSimpleName.toLowerCase.take(24)}",
+        AppConfig.load().db.copy(url = testDb.get)
+      )
+    private val made = AtomicLong(0L)
+    override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
+    protected def fresh(test: String): Option[AcquisitionStores] =
+      testDb.map { _ =>
+        val db = Transactor(scratch(made.incrementAndGet().toString))
+        new AcquisitionStores:
+          val assessments = AssessmentService(db)
+          val candidates = CandidateService(db)
+          val quotas = UpstreamQuotaService(db)
+          val checks = AcquireCheckService(db)
+          val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings)
+          val queues = QueueService(db)
+          def goal(slug: String) =
+            val _ = com.histmersion.domain.automation.goals
+              .GoalService(db)
+              .put(slug, com.histmersion.api.GoalPut(s"Goal $slug"))
+      }

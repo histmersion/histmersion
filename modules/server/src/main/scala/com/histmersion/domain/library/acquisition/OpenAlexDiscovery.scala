@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
 import com.histmersion.api.*
-import com.histmersion.server.acquire.DiscoveryClient
+import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */

@@ -416,11 +416,11 @@ class AcquisitionOracleSuite extends DbSuite:
       runtime = c.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
       basemap = c.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
     )
-    val core = com.histmersion.server.acquire.CoreBudget()
-    val http = com.histmersion.server.acquire.SttpHttp(cfg.acquire, tries = 1)
+    val core = com.histmersion.domain.library.acquisition.CoreBudget()
+    val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = 1)
     val plugins = ServerPlugins.fetchers(
       loaded,
-      () => com.histmersion.server.acquire.HttpPlugin(http),
+      () => com.histmersion.domain.library.acquisition.HttpPlugin(http),
       core,
       extra = List(ZqShelfPlugin(), ZqUnauthorisedPlugin(), CalibrePlugin())
     )

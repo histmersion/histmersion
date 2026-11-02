@@ -1,8 +1,8 @@
 package com.histmersion.server
 
 import com.histmersion.config.AppConfig
-import com.histmersion.server.acquire.agent
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.agent
+import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 
 /** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean "anonymous" — no

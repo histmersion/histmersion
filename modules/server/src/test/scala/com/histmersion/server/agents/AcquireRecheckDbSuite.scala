@@ -11,12 +11,12 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, Migrate}
+import com.histmersion.db.{AutopilotRepo, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, Handlers}
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 
 import java.time.Instant
 
@@ -196,7 +196,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val byId = a.acquireRecheck.run(RecheckRequest(id = Some(one))).fold(e => fail(e.message), identity)
     assertEquals(byId.rows.map(_.item), List(one))
     assertEquals(asked(up).size, 3)
-    assertEquals(AcquireCheckRepo.of(ds, List(one)).get(one).map(_.checks), Some(2))
+    assertEquals(com.histmersion.server.AcquisitionTesting.checks(ds).of(List(one)).get(one).map(_.checks), Some(2))
     assert(a.acquireRecheck.run(RecheckRequest(id = Some(999999))).isLeft, "no such open item")
     val _ = two
 
@@ -303,14 +303,14 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
     val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
-    val acq = AcquireHandlers(
+    val acq = com.histmersion.server.AcquisitionTesting.controllers(
       deps,
       Discovery,
       NoCitations,
       chain,
       NoWiki,
       NoRw,
-      SkeletonIngest(ds, cfg.limits.chunkChars),
+      com.histmersion.server.AcquisitionTesting.skeleton(deps),
       generation = "real"
     )
     a.attach(AgentUpstream.of(acq))
@@ -333,9 +333,13 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       SourceRepo.load(ds, "zzrecheck2020_" + doi("closed").replaceAll("[^a-z0-9]", "").takeRight(6)).isEmpty,
       "no legal copy: no metadata-only source is created"
     )
-    val why = AcquireCheckRepo.of(ds, List(closed)).get(closed).map(_.reason).getOrElse("")
+    val why =
+      com.histmersion.server.AcquisitionTesting.checks(ds).of(List(closed)).get(closed).map(_.reason).getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
-    assertEquals(AcquireCheckRepo.of(ds, List(oa)).get(oa).map(_.generation), Some("real"))
+    assertEquals(
+      com.histmersion.server.AcquisitionTesting.checks(ds).of(List(oa)).get(oa).map(_.generation),
+      Some("real")
+    )
 
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
@@ -383,7 +387,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     ids
       .take(2)
       .foreach(i =>
-        AcquireCheckRepo.record(ds, i, Instant.now().minusSeconds(3600), "g1", AcquireRecheck.Outcome.NoCopy, "x")
+        com.histmersion.server.AcquisitionTesting
+          .checks(ds)
+          .record(i, Instant.now().minusSeconds(3600), "g1", AcquireRecheck.Outcome.NoCopy, "x")
       )
     assertEquals(
       a.acquireRecheck.run(RecheckRequest(limit = Some(5))).toOption.get.allowance,
@@ -426,7 +432,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     assertEquals(status(h, full), Queue.Done)
-    val checks = AcquireCheckRepo.of(ds, ids)
+    val checks = com.histmersion.server.AcquisitionTesting.checks(ds).of(ids)
     assertEquals(checks.values.map(_.outcome).toList.sorted, List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy))
     assert(checks(ids(3)).reason.contains("no answer (HTTP 429"), checks(ids(3)).reason)
     assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
@@ -566,7 +572,11 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val _ = JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running)
     ids
       .take(2)
-      .foreach(i => AcquireCheckRepo.record(ds, i, since.plusSeconds(60), "g1", AcquireRecheck.Outcome.NoCopy, "x"))
+      .foreach(i =>
+        com.histmersion.server.AcquisitionTesting
+          .checks(ds)
+          .record(i, since.plusSeconds(60), "g1", AcquireRecheck.Outcome.NoCopy, "x")
+      )
     val _ = JobRepo.failInterrupted(ds)
     assertEquals(JobRepo.get(ds, j.id).flatMap(_.error), Some(JobState.Interrupted))
     val r = a.acquireRecheck.run(RecheckRequest(all = true))
@@ -611,14 +621,14 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     a.attach(
       AgentUpstream.of(
-        AcquireHandlers(
+        com.histmersion.server.AcquisitionTesting.controllers(
           deps,
           Discovery,
           NoCitations,
           chain,
           NoWiki,
           NoRw,
-          SkeletonIngest(ds, cfg.limits.chunkChars),
+          com.histmersion.server.AcquisitionTesting.skeleton(deps),
           generation = "real"
         )
       )
@@ -627,4 +637,4 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val done = ended(a, jobOf(a.acquireRecheck.run(RecheckRequest(all = true))).id)
     assertEquals(done.progress, Some("3/3 items · 0 closed · 0 fetched · 3 no legal copy · 0 failed"), done.toString)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
-    assertEquals(AcquireCheckRepo.of(ds, ids).size, 3)
+    assertEquals(com.histmersion.server.AcquisitionTesting.checks(ds).of(ids).size, 3)

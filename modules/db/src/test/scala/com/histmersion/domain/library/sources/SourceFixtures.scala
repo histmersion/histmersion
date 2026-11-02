@@ -27,6 +27,10 @@ object SourceFixtures:
     )
   )
 
+  /** Edges stored as acquisition stores them (routed by their target); how many were new. */
+  def addEdges(ds: DataSource, edges: List[Edge]): Int =
+    if edges.isEmpty then 0 else transact(ds)(SourceRepo.insertEdges(edges))
+
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds)(SourceRepo.get(citekey))
   def rename(ds: DataSource, oldCk: String, newRaw: String): Either[ApiError, RenameCounts] =

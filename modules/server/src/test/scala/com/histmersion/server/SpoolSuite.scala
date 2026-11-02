@@ -1,11 +1,12 @@
 package com.histmersion.server
 
-import com.histmersion.server.acquire.Spool
+import com.histmersion.util.ocr.Spool
+import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}
 
-/** `Spool.write` resolves `<dir>/<citekey>` on the server's disk. Defence in depth: the citekey must parse, AND the
-  * resolved directory must still be under the base — a path-traversal guard should not rest on one regex being read
-  * correctly. Pure filesystem, no database.
+/** `Spool.write` writes `<citekey>/paper.<ext>` in the acquisition spool. Defence in depth: the citekey must parse, AND
+  * the store's key must stay inside it — a path-traversal guard should not rest on one regex being read correctly. Pure
+  * filesystem, no database.
   */
 class SpoolSuite extends munit.FunSuite:
 
@@ -23,8 +24,13 @@ class SpoolSuite extends munit.FunSuite:
 
   private val bytes = "%PDF-1.4".getBytes("UTF-8")
 
+  /** The spool over `d`: the file each write names. */
+  private def write(d: Path, citekey: String, ext: String): Either[String, Path] =
+    val spool = Spool(Storage.at(Location.Spool, d))
+    spool.write(citekey, ext, bytes).map(k => Path.of(spool.where(k)))
+
   tmp.test("a valid citekey writes inside the spool") { d =>
-    val p = Spool.write(d.toString, "anthony2007_horse", "pdf", bytes)
+    val p = write(d, "anthony2007_horse", "pdf")
     assert(p.isRight, p.toString)
     assert(p.toOption.get.startsWith(d), p.toString)
     assertEquals(p.toOption.get.getFileName.toString, "paper.pdf")
@@ -35,7 +41,7 @@ class SpoolSuite extends munit.FunSuite:
     val outside = d.getParent.resolve("histmersion-spool-escaped")
     List("../histmersion-spool-escaped", "../../tmp/x", "/etc/histmersion", "a/../../b", "..")
       .foreach { evil =>
-        val r = Spool.write(d.toString, evil, "pdf", bytes)
+        val r = write(d, evil, "pdf")
         assert(r.isLeft, s"'$evil' was NOT refused: $r")
       }
     assert(!Files.exists(outside), "the traversal must not have created a directory")
@@ -43,7 +49,7 @@ class SpoolSuite extends munit.FunSuite:
   }
 
   tmp.test("the extension is sanitised too — it is the other half of the file name") { d =>
-    val p = Spool.write(d.toString, "x2020_y", "../../evil", bytes)
+    val p = write(d, "x2020_y", "../../evil")
     assert(p.isRight, p.toString)
     assert(p.toOption.get.startsWith(d), p.toString)
     assert(!p.toOption.get.toString.contains(".."), p.toString)

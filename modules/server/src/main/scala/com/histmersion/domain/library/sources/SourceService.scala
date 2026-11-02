@@ -1,7 +1,8 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
-import com.histmersion.domain.Caller
+import com.histmersion.domain.{Caller, Licence}
+import com.histmersion.values.LicenceId
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceReferrers}
 import com.histmersion.util.database.Transactor
@@ -82,6 +83,42 @@ trait SourceService:
   /** Promote the parked edges whose target now names one stored source; how many. */
   def resolveEdges(caller: Caller): Int
 
+  // ── what acquisition, ingest and the collections read and write of a source ───────────────
+
+  def exists(citekey: String): Boolean
+
+  /** `lower(doi) -> citekey` for the whole corpus. */
+  def doiIndex: Map[String, String]
+
+  /** Store edges routed by their target (one to a source not stored yet is parked); how many were new. */
+  def addEdges(edges: List[Edge], caller: Caller): Int
+
+  /** The digest of the source's stored original. */
+  def original(citekey: String): Option[String]
+
+  /** The source that holds an original with this digest. */
+  def holderOf(sha256: String): Option[String]
+
+  /** The digests of the stored originals of those of `citekeys` that have one. */
+  def originals(citekeys: List[String]): Map[String, String]
+
+  def setOriginal(citekey: String, sha256: String, caller: Caller): Unit
+
+  /** The licence the source is published under, classified as it is read (Q26). */
+  def licence(citekey: String): Option[Licence]
+
+  /** `licence` recorded as the source's when it has none; `true` when it was written. */
+  def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean
+
+  /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
+  def calibreGaps(limit: Option[Int]): List[CalibreGap]
+
+  /** What a push of the source into Calibre names it by. */
+  def calibrePushMeta(citekey: String): Option[CalibreGap]
+
+  /** The Calibre id written back after a push. */
+  def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit]
+
 object SourceService:
 
   def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings): SourceService =
@@ -131,6 +168,27 @@ object SourceService:
       db.transact(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
 
     def resolveEdges(caller: Caller): Int = db.transact(SourceRepo.resolveEdges())
+
+    def exists(citekey: String): Boolean = db.read(SourceRepo.exists(citekey))
+    def doiIndex: Map[String, String] = db.read(SourceRepo.doiIndex())
+    def addEdges(edges: List[Edge], caller: Caller): Int =
+      if edges.isEmpty then 0 else db.transact(SourceRepo.insertEdges(edges))
+    def original(citekey: String): Option[String] = db.read(SourceRepo.sha256Of(citekey))
+    def holderOf(sha256: String): Option[String] = db.read(SourceRepo.citekeyOfSha256(sha256))
+    def originals(citekeys: List[String]): Map[String, String] =
+      if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
+    def setOriginal(citekey: String, sha256: String, caller: Caller): Unit =
+      db.transact(SourceRepo.setSha256(citekey, sha256))
+    def licence(citekey: String): Option[Licence] =
+      db.read(SourceRepo.licenceOf(citekey)).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
+    def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean =
+      val v = licence.value.trim
+      v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, v))
+    def calibreGaps(limit: Option[Int]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
+    def calibrePushMeta(citekey: String): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
+    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit] =
+      db.transact:
+        if SourceRepo.setCalibreId(citekey, calibreId) == 0 then Left(Write.notFound(citekey)) else Right(())
 
   /** The sources the library holds in memory, as a database holding only the library's rows answers: no other domain
     * stores anything of a source, so a rename rewrites no other record and nothing refuses a delete; `clock` stands in
@@ -304,7 +362,9 @@ object SourceService:
         before.fold(UUID.randomUUID())(_.uid),
         s.findings.map(f => f.id -> before.flatMap(_.findingUids.get(f.id)).getOrElse(UUID.randomUUID())).toMap,
         s.ocrMarkdown.map(Chunker.chunk(_, settings().chunkChars)).getOrElse(Nil),
-        at
+        at,
+        before.flatMap(_.sha256),
+        before.flatMap(_.licence)
       )
       val placed = st.modify(_.sources).setTo(others.updated(ck, stored))
       val cleared =
@@ -532,3 +592,86 @@ object SourceService:
           .using(_ -- moves.map(_._1))
       }
       moved
+
+    // ── what acquisition, ingest and the collections read and write of a source ─────────────
+
+    def exists(citekey: String): Boolean = state.get.sources.contains(citekey)
+
+    def doiIndex: Map[String, String] =
+      state.get.sources.toList
+        .sortBy(_._1)
+        .flatMap((ck, x) => x.source.doi.filter(_.nonEmpty).map(_.toLowerCase -> ck))
+        .toMap
+
+    def addEdges(edges: List[Edge], caller: Caller): Int =
+      val es = edges.distinct
+      if es.isEmpty then 0
+      else
+        var added = 0
+        val _ = state.updateAndGet { st =>
+          val inserted = edgesInserted(st, es)
+          added = (inserted.edges -- st.edges).size + (inserted.parked -- st.parked).size
+          inserted
+        }
+        added
+
+    private def stored(citekey: String): Option[LibraryState.Stored] = state.get.sources.get(citekey)
+
+    def original(citekey: String): Option[String] = stored(citekey).flatMap(_.sha256)
+
+    def holderOf(sha256: String): Option[String] =
+      state.get.sources.toList.sortBy(_._1).collectFirst { case (ck, x) if x.sha256.contains(sha256) => ck }
+
+    def originals(citekeys: List[String]): Map[String, String] =
+      citekeys.flatMap(ck => original(ck).map(ck -> _)).toMap
+
+    private def updated(citekey: String)(f: LibraryState.Stored => LibraryState.Stored): Boolean =
+      val before = state.getAndUpdate(st =>
+        st.modify(_.sources).using(ss => ss.get(citekey).fold(ss)(x => ss.updated(citekey, f(x))))
+      )
+      before.sources.contains(citekey)
+
+    def setOriginal(citekey: String, sha256: String, caller: Caller): Unit =
+      val _ = updated(citekey)(_.modify(_.sha256).setTo(Some(sha256)))
+
+    def licence(citekey: String): Option[Licence] =
+      stored(citekey).flatMap(_.licence).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
+
+    def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean =
+      val v = licence.value.trim
+      val open = stored(citekey).exists(_.licence.forall(_.trim.isEmpty))
+      v.nonEmpty && open && updated(citekey)(
+        _.modify(_.licence).setTo(Some(v)).modify(_.updatedAt).setTo(clock.instant())
+      )
+
+    private def gapOf(x: LibraryState.Stored): CalibreGap =
+      val s = x.source
+      CalibreGap(
+        s.citekey,
+        s.title,
+        s.authors,
+        s.doi,
+        s.year,
+        s.venue,
+        s.summary,
+        s.topics,
+        s.provenance,
+        s.calibreId.filter(_.nonEmpty)
+      )
+
+    def calibreGaps(limit: Option[Int]): List[CalibreGap] =
+      state.get.sources.toList
+        .sortBy(_._1)
+        .map(_._2)
+        .filter(x => x.source.calibreId.forall(_.isEmpty) && !x.source.provenance.contains("calibre"))
+        .take(limit.filter(_ > 0).getOrElse(Int.MaxValue))
+        .map(gapOf)
+
+    def calibrePushMeta(citekey: String): Option[CalibreGap] = stored(citekey).map(gapOf)
+
+    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit] =
+      if updated(citekey)(
+          _.modify(_.source.calibreId).setTo(Some(calibreId)).modify(_.updatedAt).setTo(clock.instant())
+        )
+      then Right(())
+      else Left(Write.notFound(citekey))

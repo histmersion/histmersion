@@ -19,7 +19,7 @@ final case class BrowserDownload(
     publisher: BrowserDownload.PublisherHost,
     oaStatus: BrowserDownload.OaStatus,
     licence: Option[BrowserDownload.Licence],
-    citation: BrowserDownload.Citation
+    citation: BrowserDownload.CitationText
 ):
 
   /** The acquisition item's text: it names the DOI as a doi.org link, which is what finds the item again. */
@@ -42,8 +42,9 @@ object BrowserDownload:
   type Licence = Licence.T
   object Licence extends RefinedType[String, Not[Blank]]
 
-  type Citation = Citation.T
-  object Citation extends RefinedType[String, Not[Blank]]
+  /** The work as the acquisition item cites it: `Author et al. (2019). Title.` */
+  type CitationText = CitationText.T
+  object CitationText extends RefinedType[String, Not[Blank]]
 
   /** The work as a browser download, when it is gold (or diamond) open access, has a DOI, and one of its open-access
     * locations is on a host that refuses scripts — `refusingHost(url)`, the host of a location when it is one of
@@ -58,7 +59,7 @@ object BrowserDownload:
       (url, host) <- onRefusingHost.headOption
       landing <- LandingUrl.option(url)
       publisher <- PublisherHost.option(host)
-      citation <- Citation.option(citationOf(work, doi))
+      citation <- CitationText.option(citationOf(work, doi))
     yield BrowserDownload(
       doi,
       citekey,

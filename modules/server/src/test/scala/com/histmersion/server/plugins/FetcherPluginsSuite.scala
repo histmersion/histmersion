@@ -9,7 +9,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.{Fetch, FetchContext, PluginHttp, PluginLog, WorkKey}
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 import org.ekrich.config.{Config, ConfigFactory}
 

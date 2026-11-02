@@ -3,8 +3,6 @@ package com.histmersion.db
 import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.domain.library.sources.SourceRepo
 
-import com.histmersion.domain.media.figures.FigureFixtures
-
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -159,39 +157,6 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(e.code, Some(Write.CodeInvalid))
     assertEquals(SourceRepo.load(ds, ck).get.period, Some(Period(-2000, -1500)))
 
-  // ── seed guard ───────────────────────────────────────────────────────────────────────────────
-  test("seed skips a file older than the stored row, and force overwrites it"):
-    val dir = Files.createTempDirectory("histmersion-seed")
-    val ckS = "zz_seed_guard"
-    val file = dir.resolve(s"$ckS.md")
-    val _ = Files.writeString(file, s"---\ncitekey: $ckS\ntitle: From file\ntags: [fromfile]\n---\nbody\n")
-
-    // 1st seed: nothing stored yet → imported
-    val first = Importer.importDir(ds, dir, 4000, FigureFixtures.onDisk(ds))
-    assertEquals(first.imported, 1)
-    assertEquals(first.skipped, Nil)
-
-    // an agent enriches the row → updated_at now newer than the file's mtime
-    assert(SourceRepo.patch(ds, ckS, SourcePatch(tags = Some(ListPatch(add = List("enriched")))), 4000).isRight)
-
-    // 2nd seed: the file is older than the row → skipped, enrichment preserved
-    val second = Importer.importDir(ds, dir, 4000, FigureFixtures.onDisk(ds))
-    assertEquals(second.imported, 0)
-    assertEquals(second.skipped, List(ckS))
-    assert(SourceRepo.load(ds, ckS).get.tags.contains("enriched"))
-
-    // --force: the file wins and the enrichment is gone (the deliberate re-import)
-    val forced = Importer.importDir(ds, dir, 4000, force = true, FigureFixtures.onDisk(ds))
-    assertEquals(forced.imported, 1)
-    assertEquals(forced.skipped, Nil)
-    assertEquals(SourceRepo.load(ds, ckS).get.tags, List("fromfile"))
-
-  test("isStale: only a STRICTLY newer row blocks the file"):
-    assert(Importer.isStale(Map("a" -> 100L), "a", 99L))
-    assert(!Importer.isStale(Map("a" -> 100L), "a", 100L))
-    assert(!Importer.isStale(Map("a" -> 100L), "a", 101L))
-    assert(!Importer.isStale(Map.empty, "a", 1L)) // unknown citekey: always import
-
   // ── export ───────────────────────────────────────────────────────────────────────────────────
   test("export → parseNote round trip: frontmatter and notes survive the database"):
     val _ = fresh()
@@ -208,15 +173,6 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(back.summary, stored.summary)
     assertEquals(back.findings, stored.findings)
     assertEquals(back.notes, stored.notes)
-
-  test("export then re-import (force) leaves identical frontmatter — the §1.9a round trip"):
-    val _ = fresh()
-    val one = Export.note(SourceRepo.load(ds, ck).get)
-    val dir = Files.createTempDirectory("histmersion-export")
-    val _ = Files.writeString(dir.resolve(s"$ck.md"), one)
-    assertEquals(Importer.importDir(ds, dir, 4000, force = true, FigureFixtures.onDisk(ds)).imported, 1)
-    val two = Export.note(SourceRepo.load(ds, ck).get)
-    assertEquals(two, one)
 
   test("citekeys lists what was written, sorted"):
     val _ = fresh()

@@ -31,7 +31,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     assert(r.forall(_.citekey.isEmpty))
 
   test("a retraction notice reads as a retraction; the real citation contexts classify"):
-    val ups = com.histmersion.server.acquire.DiscoveryClient
+    val ups = com.histmersion.domain.library.acquisition.DiscoveryClient
       .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
       api.Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018),

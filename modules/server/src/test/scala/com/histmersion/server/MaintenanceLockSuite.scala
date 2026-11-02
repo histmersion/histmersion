@@ -78,8 +78,11 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     val f = java.io.File.createTempFile("zzlock", ".pdf")
     java.nio.file.Files.write(f.toPath, Array[Byte](1, 2, 3))
     try
-      refused("ingest")(h.ingest.ingest(IngestParams("zzlock_src", Some("a.pdf")), f))
-      refused("reocr")(h.ingest.reocr("zzlock_src", false))
+      refused("ingest")(
+        h.ingest.controllers
+          .ingest(IngestParams("zzlock_src", Some("a.pdf")), com.histmersion.domain.library.ingest.Upload.handed(f))
+      )
+      refused("reocr")(h.ingest.controllers.reocr("zzlock_src", false))
       refused("put_assets")(h.media.assets.putFigures("zzlock_src", List(png)))
     finally { val _ = f.delete() }
 
@@ -95,15 +98,15 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     assert(underLock(h.ops.queueList("tasks", all = true)).isRight)
 
   test("the OCR pool is paused for the duration of a restore, and resumed after"):
-    assert(!h.ingest.paused, "the pool starts running")
+    assert(!h.ingest.queue.paused, "the pool starts running")
     val _ = h.maintenance.exclusively("test-restore") {
-      h.ingest.pause()
+      h.ingest.queue.pause()
       try
-        assert(h.ingest.paused, "a restore must stop the workers writing into a dropped schema")
+        assert(h.ingest.queue.paused, "a restore must stop the workers writing into a dropped schema")
         Right(())
-      finally h.ingest.resume()
+      finally h.ingest.queue.resume()
     }
-    assert(!h.ingest.paused, "…and it must come back, whatever the restore did")
+    assert(!h.ingest.queue.paused, "…and it must come back, whatever the restore did")
 
   test("once the lock is released, the same writes go through"):
     assert(h.library.sources.put("zzlock_src", SourcePut(title = "T")).isRight)

@@ -194,7 +194,13 @@ class DataTreeOracleSuite extends DbSuite:
   private def spoolRun(): Unit =
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
     assert(
-      acquire.Spool.write(base.acquire.spoolDir, "zz_data_tree", "pdf", "%PDF-1.4 spooled".getBytes(UTF_8)).isRight
+      com.histmersion.util.ocr
+        .Spool(
+          com.histmersion.util.storage.Storage
+            .at(com.histmersion.util.storage.Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
+        )
+        .write("zz_data_tree", "pdf", "%PDF-1.4 spooled".getBytes(UTF_8))
+        .isRight
     )
 
   /** Every path under the root: `<kind> <relative path>[ <size>]`, sorted. A text file's size is taken with the root's
