@@ -26,15 +26,15 @@ class CheckRunnerSuite extends munit.FunSuite:
     def report(context: CheckContext, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, List.tabulate(items)(i => LintItem(s"${run(shared).head}$i", name)), maxItems)
 
-  private def fixing(line: String, edges: Int, when: FixWhen): Option[SafeFix] =
-    Some(SafeFix(when, _ => LintFixResult(List(line), edges, 0, 0, edges, findingsPlaced = edges)))
+  private def fixing(line: String, edges: Int, when: FixWhen, rank: Int): Option[SafeFix] =
+    Some(SafeFix(when, FixRank(rank), _ => LintFixResult(List(line), edges, 0, 0, edges, findingsPlaced = edges)))
 
-  private val order = CheckOrder(List("a", "b", "c"), List("c", "a", "b"))
+  private val order = CheckOrder(List("a", "b", "c"))
   private val registered = List(
-    Fake("b", 1, fixing("b fixed", 2, FixWhen.WhenNamed)),
+    Fake("b", 1, fixing("b fixed", 2, FixWhen.WhenNamed, 3)),
     Fake("z", 0),
-    Fake("a", 3, fixing("a fixed", 1, FixWhen.EveryFix)),
-    Fake("c", 0, fixing("c fixed", 4, FixWhen.WhenNamed))
+    Fake("a", 3, fixing("a fixed", 1, FixWhen.EveryFix, 2)),
+    Fake("c", 0, fixing("c fixed", 4, FixWhen.WhenNamed, 1))
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
   private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true)

@@ -11,7 +11,7 @@ import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
 import com.histmersion.db.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
-import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
+import com.histmersion.util.data.checks.{CheckContext, CheckOrder, CheckRunner, GuardedWrite}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the read-only query (plan
   * §5.2). Reached by REST through [[OpsRoutes]] and by MCP through [[OpsTools]]; the CLI reaches them over HTTP, like
@@ -30,7 +30,7 @@ final class OpsHandlers(deps: Deps, articleWrite: GuardedWrite):
   // ── lint ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The registered checks, run by util.data's lint runner in today's order. */
-  private val checks = CheckRunner(Deps.data.checks, CheckRulesAdapter.order, deps.transactor)
+  private val checks = CheckRunner(Deps.data.checks, CheckOrder(Lint.names), deps.transactor)
 
   /** The rule names, in report order. */
   def lintRules: List[String] = checks.names

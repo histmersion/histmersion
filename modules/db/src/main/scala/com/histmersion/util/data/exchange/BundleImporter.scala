@@ -246,7 +246,8 @@ object BundleImporter:
       planHash: String,
       backup: () => Either[String, String],
       kinds: CarriedKinds,
-      rules: MergeRuleSet
+      rules: MergeRuleSet,
+      followUps: MergeFollowUps
   ): Either[String, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -255,7 +256,21 @@ object BundleImporter:
         try
           Right(
             transact(ds)(
-              applyIn(bundle, bundleSha256, m, loaded, opts, files, resolutions, merge, planHash, backup, kinds, rules)
+              applyIn(
+                bundle,
+                bundleSha256,
+                m,
+                loaded,
+                opts,
+                files,
+                resolutions,
+                merge,
+                planHash,
+                backup,
+                kinds,
+                rules,
+                followUps
+              )
             )
           )
         catch
@@ -274,7 +289,8 @@ object BundleImporter:
       planHash: String,
       backup: () => Either[String, String],
       kinds: CarriedKinds,
-      rules: MergeRuleSet
+      rules: MergeRuleSet,
+      followUps: MergeFollowUps
   )(using DbCon): MergeApplyResult =
     MergeRepo.lockImports()
     val (input, planned) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
@@ -331,7 +347,7 @@ object BundleImporter:
             .getOrElse(throw ImportAbort(List("the merge wrote nothing")))
           MergeRepo.redirect(ap.folds, mergeId)
           MergeRepo.remember(ap.remember, mergeId)
-          val (reviews, logEntry) = BundleImport.mergeTasks(m, input.fromLabel, mergeId, ap, counts, dump)
+          val (reviews, logEntry) = followUps.recordIn(m, input.fromLabel, mergeId, ap, counts, dump)
           // the same bundle, planned again over what was just written: nothing should be left to do
           val (_, again) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
           report.copy(

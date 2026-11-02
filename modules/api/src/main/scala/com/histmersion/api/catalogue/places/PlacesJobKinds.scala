@@ -3,7 +3,8 @@ package com.histmersion.api.catalogue.places
 import com.histmersion.util.jobs.JobKindEntry
 import com.histmersion.values.JobKind
 
-/** The gazetteer's jobs, as the catalogue registers them: a gazetteer's download, the place hierarchy, the sites' types.
+/** The gazetteer's jobs, as the catalogue registers them: a gazetteer's download, the place hierarchy, the sites'
+  * types.
   */
 object PlacesJobKinds:
   val PlacesFetch: JobKindEntry = JobKindEntry.of(

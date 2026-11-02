@@ -51,8 +51,9 @@ class RegistrySnapshotSuite extends munit.FunSuite:
         s"  check\t${r.rule.name}\tfix=${r.fix.isDefined}"
       )
     }
-    val order = com.histmersion.util.data.checks.CheckRulesAdapter.order
-    val lint = List(s"lint report\t${order.report.mkString(",")}", s"lint fixes\t${order.fixes.mkString(",")}")
+    val order = com.histmersion.util.data.checks.CheckOrder(com.histmersion.api.Lint.names)
+    val fixes = order.fixing(data.checks).filter(_.fix.isDefined).map(_.rule.name)
+    val lint = List(s"lint report\t${order.report.mkString(",")}", s"lint fixes\t${fixes.mkString(",")}")
     val aliases = com.histmersion.util.identity.AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
     check("data.txt", (owners ++ lint ++ aliases).mkString("", "\n", "\n"))
 

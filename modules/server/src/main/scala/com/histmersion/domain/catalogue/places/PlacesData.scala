@@ -4,7 +4,7 @@ import com.histmersion.api.Lint
 import com.histmersion.api.Lint.*
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
-import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixWhen, SafeFix}
+import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
@@ -41,6 +41,7 @@ object PlacesData:
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
+        FixRank(50),
         c =>
           val (reclassified, merged) = geometry(c).reclassify(c.config.places.pointToleranceKm)
           LintFixResult(
@@ -63,6 +64,7 @@ object PlacesData:
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
+        FixRank(60),
         c =>
           val relocated = geometry(c).relocate(c.config.places.pointToleranceKm)
           LintFixResult(
@@ -86,6 +88,7 @@ object PlacesData:
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
+        FixRank(70),
         c =>
           val r = geometry(c).removePointAreas(pointAreaOf(c.config))
           LintFixResult(List(r.line), 0, 0, 0, 0, pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)

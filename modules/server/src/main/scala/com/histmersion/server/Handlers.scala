@@ -6,7 +6,6 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.{connect, transact}
 
-import com.histmersion.util.data.TablesAdapter.JobsOwner
 import com.histmersion.util.data.diagnostics.{DiagnosticsService, StorageCache, StorageFigures}
 import com.histmersion.util.data.backup.{BackupJobs, BackupService}
 import com.histmersion.util.data.maintenance.{
@@ -24,7 +23,7 @@ import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.util.identity.AliasKind
-import com.histmersion.util.data.mirror.{Mirror, MirrorAdapter, TransitionNotes}
+import com.histmersion.util.data.mirror.Mirror
 
 import com.histmersion.values.{BundleKind, Citekey, PlaceKind, UserId}
 import com.histmersion.files.*
@@ -144,6 +143,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           deps.clock,
           CarriedKinds(Deps.data.carried),
           MergeRuleSet(Deps.data.mergeRules),
+          com.histmersion.domain.automation.worklists.WorkListMergeFollowUps,
           applyJobs,
           () => backups.create(Instant.now()).map(_.file),
           Deps.sourceReferrers
@@ -275,7 +275,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     def attempt[A](what: String)(a: => A): Either[String, A] =
       scala.util.Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
     val jobs = attempt("job counts")(
-      JobCounts.of(diagnostics.figures(JobsOwner).counts.map(c => c.noun -> c.count.toInt))
+      JobCounts.of(
+        diagnostics.figures(com.histmersion.util.jobs.JobsData.owner).counts.map(c => c.noun -> c.count.toInt)
+      )
     )
     val counts = attempt("store counts")(corpusCounts)
     val listed = backups.list.left.map(e => s"backups: ${e.message}")
@@ -311,7 +313,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The corpus About counts: what the owners count of their records. */
   private def corpusCounts: CorpusCounts =
-    val figures = Deps.data.owners.filterNot(_ == JobsOwner).map(diagnostics.figures)
+    val figures = Deps.data.owners.filterNot(_ == com.histmersion.util.jobs.JobsData.owner).map(diagnostics.figures)
     def count(noun: String): Int = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
     CorpusCounts(
       count("sources"),
@@ -483,16 +485,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
-    mirror.note(MirrorAdapter.SourceNotes, citekey)(using transitionNotes)
+    mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, citekey)
 
-  /** The Markdown mirror over the registered notes, rendered by today's per-kind code below. */
-  private val mirror = Mirror(Deps.data.mirror)
-
-  private val transitionNotes: TransitionNotes = new TransitionNotes:
-    def sourceNote(citekey: String): Either[ApiError, String] =
-      library.sources.note(citekey)
-
-    def articleNote(slug: String): Either[ApiError, String] = research.articles.articleNote(slug)
+  /** The Markdown mirror over the registered kinds, each note rendered by its owner. */
+  private lazy val mirror = Mirror(
+    Deps.data.mirror,
+    List(
+      com.histmersion.domain.library.sources.SourceMirrorNote(library.sources),
+      com.histmersion.domain.research.articles.ArticleMirrorNote(research.articles)
+    )
+  )
 
   /** "Mentioned in articles" rides along with the default/all views rather than becoming a tool of its own: an LLM
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
@@ -826,7 +828,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       deps,
       library,
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
-      slug => mirror.note(com.histmersion.domain.research.ResearchData.ArticleNotes, slug)(using transitionNotes)
+      slug => mirror.note(com.histmersion.domain.research.ResearchData.ArticleNotes, slug)
     )
 
 object Handlers:

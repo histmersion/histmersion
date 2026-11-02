@@ -91,10 +91,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       .fold(e => fail(e), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
-    BundleImport
+    com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
-        bundle,
+        com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         com.histmersion.util.storage.ContentDirectory(originals),
@@ -112,10 +112,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       res: MergeResolutions = MergeResolutions()
   ): MergeApplyResult =
     val hash = planIn(ds, bundle, originals, res).planHash
-    BundleImport
+    com.histmersion.util.data.exchange.BundleImporter
       .apply(
         ds,
-        bundle,
+        com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
           .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
@@ -125,7 +125,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         hash,
         () => Right("stub.dump"),
         TestExchange.kinds,
-        TestExchange.rules
+        TestExchange.rules,
+        TestExchange.followUps
       )
       .fold(e => fail(e), identity)
 

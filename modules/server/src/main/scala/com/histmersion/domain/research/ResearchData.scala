@@ -1,12 +1,11 @@
 package com.histmersion.domain.research
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.research.articles.ArticlesData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable}
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
-import com.histmersion.util.data.mirror.{MirrorExport, MirrorPlacement, MirrorRecords, TransitionNotes}
+import com.histmersion.util.data.mirror.{MirrorExport, MirrorPlacement, MirrorRecords}
 import com.augustnagro.magnum.DbCon
 
 /** What research says about the data it owns: its tables, what a bundle carries of it and how a merge treats it, the
@@ -33,14 +32,11 @@ object ResearchData extends DataContribution:
   /** The articles' records in the mirror. */
   val ArticleNotes: MirrorRecords = MirrorRecords("articles")
 
-  /** An article's note, with its generated coverage sections, by its kind: rendered by the notes the composition hands
-    * the mirror.
-    */
+  /** The articles' notes (each with its generated coverage sections, `ArticleNotes`), by their kind. */
   override val mirror: List[MirrorExport] = List(new MirrorExport:
     val owner: DataOwner = ResearchData.owner
     val records: MirrorRecords = ResearchData.ArticleNotes
-    val placement: MirrorPlacement = MirrorPlacement.ArticleFiles
-    def note(id: String)(using notes: TransitionNotes): Either[ApiError, String] = notes.articleNote(id))
+    val placement: MirrorPlacement = MirrorPlacement.ArticleFiles)
 
   override val checks: List[CheckRule] = ArticlesData.checks(owner)
 

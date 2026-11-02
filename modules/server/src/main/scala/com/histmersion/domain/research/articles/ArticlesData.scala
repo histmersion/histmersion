@@ -3,7 +3,7 @@ package com.histmersion.domain.research.articles
 import com.histmersion.api.Lint
 import com.histmersion.api.Lint.*
 import com.histmersion.util.data.DataOwner
-import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixWhen, SafeFix}
+import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.augustnagro.magnum.DbCon
 
@@ -22,8 +22,10 @@ object ArticlesData:
 
   private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Check(owner, _, None))
 
-  private def fixed(owner: DataOwner, name: String, when: FixWhen)(run: CheckContext => LintFixResult): CheckRule =
-    Check(owner, name, Some(SafeFix(when, run)))
+  private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
+      run: CheckContext => LintFixResult
+  ): CheckRule =
+    Check(owner, name, Some(SafeFix(when, FixRank(rank), run)))
 
   /** The paragraphs that name a disagreement partner they do not cite get its citekey, one guarded write per article (a
     * concurrent writer wins; the next lint lists it again).
@@ -45,5 +47,5 @@ object ArticlesData:
   /** Research's rules, in the order the report has always listed them. */
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingArticleLinks, ArticleFiller, ArticleUncitedParagraph, ArticleThinSummary) ++
-      List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed)(pairCritiques)) ++
+      List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed, 80)(pairCritiques)) ++
       listed(owner, ArticleFormat)

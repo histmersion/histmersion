@@ -66,6 +66,7 @@ object BundleService:
       clock: Clock,
       carried: CarriedKinds,
       rules: MergeRuleSet,
+      followUps: MergeFollowUps,
       applyJobs: MergeApplyJobs,
       backup: () => Either[ApiError, String],
       sourceReferrers: SourceReferrers
@@ -247,7 +248,8 @@ object BundleService:
               planHash,
               () => w.backup().left.map(_.message),
               w.carried,
-              w.rules
+              w.rules,
+              w.followUps
             )
             .map { r =>
               if r.applied && r.mergeId.isDefined then MergeRepo.dropSession(w.ds, bundle)

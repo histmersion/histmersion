@@ -6,8 +6,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.domain.automation.worklists.QueueRepo
-import java.nio.file.Path
 import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.values.BundleKind
@@ -26,8 +24,8 @@ import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
-  * [[Writer]] whose steps the carried kinds register, and the entry points for a bundle on disk. The transaction, the
-  * lock, the plan's checks, the blob pass and the ledger are [[BundleImporter]]'s.
+  * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and
+  * the ledger are [[BundleImporter]]'s.
   *
   * A foreign row is the local row with the same uid, or no row; what happens to it is [[BundlePlan]]'s decision, or the
   * merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
@@ -40,88 +38,9 @@ object BundleImport:
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev: String = BundlePlan.DeletedRev
 
-  /** `bundle import` of a bundle on disk ([[BundleImporter.run]]). */
-  def run(
-      ds: DataSource,
-      file: Path,
-      bundleSha256: String,
-      opts: Options,
-      originals: ContentStore,
-      resolutions: MergeResolutions,
-      merge: MergeSettings,
-      kinds: CarriedKinds,
-      rules: MergeRuleSet
-  ): Either[String, BundleImportResult] =
-    BundleImporter.run(ds, ByteSource.file(file), bundleSha256, opts, originals, resolutions, merge, kinds, rules)
-
-  /** `merge apply` of a bundle on disk ([[BundleImporter.apply]]). */
-  def apply(
-      ds: DataSource,
-      file: Path,
-      bundleSha256: String,
-      opts: Options,
-      originals: ContentStore,
-      resolutions: MergeResolutions,
-      merge: MergeSettings,
-      planHash: String,
-      backup: () => Either[String, String],
-      kinds: CarriedKinds,
-      rules: MergeRuleSet
-  ): Either[String, MergeApplyResult] =
-    BundleImporter.apply(
-      ds,
-      ByteSource.file(file),
-      bundleSha256,
-      opts,
-      originals,
-      resolutions,
-      merge,
-      planHash,
-      backup,
-      kinds,
-      rules
-    )
-
-  /** What a merge leaves to do: a `/review-article` task per merged article, and a `log` entry. The articles to review,
-    * and the log entry's id.
-    */
-  def mergeTasks(
-      m: BundleManifest,
-      from: String,
-      mergeId: UUID,
-      ap: MergePlanner.Apply,
-      counts: List[BundleKindCounts],
-      dump: String
-  )(using DbCon): (List[String], Int) =
-    val short = mergeId.toString.take(8)
-    val reviews = ap.reviews.map { slug =>
-      QueueRepo.insert(
-        Queue.Kind.Tasks,
-        Queue.QueueAdd(
-          s"/review-article $slug --fix — merged with $from's (merge $short)",
-          topic = Some("merge"),
-          reason = Some(s"`merge apply` changed the article; a merged text is not reviewed")
-        )
-      )
-      slug
-    }
-    val t = ap.tally
-    val log = QueueRepo.insert(
-      Queue.Kind.Log,
-      Queue.QueueAdd(
-        s"Merged the bundle of $from (${m.bundleId.toString.take(8)}…) as merge $short: " +
-          s"${Plural.count(t.sourcesMerged, "source")} merged, ${counts.find(_.kind == BundleKind.Source).fold(0)(_.inserted)} new, " +
-          s"${Plural.count(reviews.size, "article")} to review; backup $dump",
-        topic = Some("merge")
-      )
-    )
-    (reviews, log.id)
-
   private def importing(on: Boolean)(using DbCon): Unit = MergeRepo.importing(on)
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
-
-  private def rLit(p: Option[BundleRange]): Option[String] = BundleSql.rangeLiteral(p)
 
   /** What an import's steps compute once, the first time one asks ([[Writer.once]]): an index of the bundle's lines a
     * kind's steps share.
@@ -168,8 +87,6 @@ object BundleImport:
     /** The citekey of a source here, when its uid names one. */
     def citekeyHere(u: UUID): Option[String] =
       sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().headOption
-    private def goalSlugOf(u: UUID): Option[String] =
-      sql"SELECT slug FROM goals WHERE uid = $u".query[String].run().headOption
 
     /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
     def targetLabel(tt: String, tid: String, tuid: Option[UUID]): String =
@@ -242,84 +159,4 @@ object BundleImport:
           rename(old, label(a)).left.foreach(e => throw ImportAbort(List(s"$what $old → ${label(a)}: ${e.message}")))
           importing(true)
         }
-      }
-
-    def goalRenames(): Unit =
-      followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
-
-    /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is
-      * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
-      * brought in has no next run until it is saved here: an imported collection never starts agent runs on its own.
-      */
-    private def goalSets(g: BundleGoal): Unit =
-      val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
-      g.links.getOrElse(Nil).foreach { l =>
-        val ref: Option[String] = l.kind match
-          case "source"  => l.refUid.flatMap(citekeyHere).orElse(Some(l.ref))
-          case "article" =>
-            l.refUid
-              .flatMap(u => sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().headOption)
-              .orElse(Some(l.ref))
-          case "queue-item" =>
-            l.refUid.flatMap(u => sql"SELECT id::text FROM queue_items WHERE uid = $u".query[String].run().headOption)
-          case _ => Some(l.ref)
-        ref.foreach { r =>
-          sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
-                VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz) ON CONFLICT DO NOTHING""".update
-            .run()
-        }
-      }
-      g.schedules.getOrElse(Nil).foreach { x =>
-        val usd = x.budgetUsd.map(BigDecimal(_))
-        sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
-              VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
-                'brought in by a merge: save it once here to schedule it')
-              ON CONFLICT DO NOTHING""".update.run()
-      }
-
-    /** Goals: the rows, their parents, then — after every goal is in (a link can name another goal's record, a schedule
-      * its own goal) — their sets.
-      */
-    def goals(): Unit =
-      val goals = es.goals.filter(g => writes(g.uid))
-      goals.foreach { g =>
-        val plan = g.plan.map(BundleFormat.printer.print)
-        val usd = g.budgetUsd.map(BigDecimal(_))
-        sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at,
-                plan, plan_approved_at, budget_usd)
-              VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
-                ${g.regions}::text[],
-                ${rLit(g.period)}::int8range,
-                ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd)
-              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
-                status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
-                regions = EXCLUDED.regions, period = EXCLUDED.period, created_at = EXCLUDED.created_at,
-                updated_at = EXCLUDED.updated_at, plan = EXCLUDED.plan, plan_approved_at = EXCLUDED.plan_approved_at,
-                budget_usd = EXCLUDED.budget_usd""".update.run()
-      }
-      goals.foreach { g =>
-        val parent = g.parentUid.flatMap(goalSlugOf)
-        sql"UPDATE goals SET parent_slug = $parent, updated_at = ${g.updatedAt}::timestamptz WHERE uid = ${g.uid}".update
-          .run()
-      }
-      goals.foreach(goalSets)
-
-    def goalAliases(): Unit =
-      es.goalAliases.foreach { a =>
-        sql"""INSERT INTO goal_aliases (alias, goal_slug, created_at)
-              SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM goals
-              WHERE uid = ${a.goalUid} AND slug <> ${a.alias}
-                AND NOT EXISTS (SELECT 1 FROM goals WHERE slug = ${a.alias})
-              ON CONFLICT (alias) DO NOTHING""".update.run()
-      }
-
-    def queueItems(): Unit =
-      es.queue.filter(q => writes(q.uid)).foreach { q =>
-        sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at)
-              VALUES (${q.uid}, ${q.origin}, ${q.list}, ${q.text}, ${q.topic}, ${q.status}, ${q.reason},
-                ${q.createdAt}::timestamptz, ${q.doneAt}::timestamptz, ${q.updatedAt}::timestamptz)
-              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, list = EXCLUDED.list,
-                text = EXCLUDED.text, topic = EXCLUDED.topic, status = EXCLUDED.status,
-                reason = EXCLUDED.reason, created_at = EXCLUDED.created_at, done_at = EXCLUDED.done_at,
-                updated_at = EXCLUDED.updated_at""".update.run()
       }

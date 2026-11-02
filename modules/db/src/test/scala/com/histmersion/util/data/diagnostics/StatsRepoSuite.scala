@@ -46,7 +46,7 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("#718: the job queue by state adds up to the jobs table"):
     val before = count("jobs")
-    val j = JobCounts.of(connect(ds)(StatsRepo.jobStates))
+    val j = JobCounts.of(connect(ds)(com.histmersion.util.jobs.JobRepo.states))
     val after = count("jobs")
     val total = JobState.values.toList.map(j.of).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
