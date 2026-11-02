@@ -1,0 +1,455 @@
+## briefResults
+### 2 of 3 source(s)
+
+- **zq_alpha_2001** — Zq Alpha  
+  _2001 · contested · 1450 BCE–1350 BCE_ — tag zq
+- **zq_beta_1999** — Zq Alpha  
+  _n.d. · contested · 1450 BCE–1350 BCE_
+
+_showing 1–2 of 3 — next: offset=2 — full set: limit=3_
+
+## briefResults empty
+_No matching sources._
+
+## sourceFindingsOnly
+## Findings (2)
+- Zq claim one.  
+  _@ Zqland (40.25, 30.5) · 1300 BCE–1200 BCE · (high) · [key]_
+- Zq claim two.  
+  _@ Zqland (40.25, 30.5) · 1300 BCE–1200 BCE · (high) · [key]_
+
+## sourceFindingsOnly empty
+_(no findings)_
+
+## graph
+### Source graph · zq_alpha_2001 (depth 2, 2 nodes, 1 link)
+
+**Nodes**
+- [[zq_alpha_2001]] (2001) _[current]_ **root** — Zq Alpha
+- [[zq_gamma]] **root**
+
+**Links**
+- `zq_alpha_2001` →_challenges_ `zq_gamma`
+
+## contradictions
+### 2 contradiction(s) · zq_alpha_2001
+
+- **zq_alpha_2001** (2001 · current) — refutes → **zq_gamma** (Zq Gamma · 1990 · debunked)
+- **zq_beta_1999** (n.d. · contested) — status: contested
+
+_Edge kinds: references, challenges, refutes, updates, superseded_by. An empty result is not evidence of agreement._
+
+## contradictions all
+### 2 contradiction(s)
+
+- **zq_alpha_2001** (2001 · current) — refutes → **zq_gamma** (Zq Gamma · 1990 · debunked)
+- **zq_beta_1999** (n.d. · contested) — status: contested
+
+_Edge kinds: references, challenges, refutes, updates, superseded_by. An empty result is not evidence of agreement._
+
+## geoPage
+### 2 finding(s)
+
+- **zq_alpha_2001** — Zq Alpha
+  - Zq claim. — _Zqland (40.25, 30.5)_
+  - Zq claim. — _Zqland_
+
+## geoResults empty
+_No findings match that place/time._
+
+## bodySlice
+Zq body text.
+
+_…17 more chars — pass offset=23_
+
+## gazetteerSources
+| source | file | pinned | imported | places | names | links | licence |
+|---|---|---|---|---:|---:|---:|---|
+| zq-gaz — Zq gazetteer | `zq.lpf.json` | 1.0 | 0.9 (2026-01-02) | 12 | 30 | 4 | CC-BY-4.0 |
+| zq-missing — Zq missing | — | — | — | — | — | — | — |
+
+## placeGone
+merged **Zq Tell** `zq_tell` into **Zqland** `zq_land` — `zq_tell` now resolves to it; no re-seed brings it back
+
+findings matched again: 3 → 2; **1** of them now have no place at all
+
+## placeGone none
+removed **Zq Tell** `zq_tell`; no re-seed brings it back
+
+findings matched again: 0 → 0
+
+## placeAdded
+added **Zq Tell** `zq_tell` _(settlement · 2000 BCE–1200 BCE)_ — source: zq-gaz
+
+It is this collection's own place (carried in a bundle, never touched by a re-seed). Run `histmersion places rebuild` to match findings to it.
+
+## placeRebuild
+10 finding→place link(s) over 7 place(s) (4 by geometry, 5 by region name); 9 finding(s) located, 1 unlocated
+
+## attestation
+# Attestation #7
+
+_[[zq_alpha_2001]] → event:`zq-event`_
+
+**Page:** 12  
+**Chars:** 10–22
+
+> …before**the zq quote**after…
+
+a zq note
+
+## agentStateList
+### 2 key(s)
+
+- `zq-key` = zq value
+- `zq-other` = x
+
+## agentStateList empty
+_No agent state entries._
+
+## agentState
+# `zq-key`
+
+```json
+zq value
+```
+
+## assetDetail
+# `zq_alpha_2001` / `zq.png`
+
+**Kind:** figure  
+**License:** CC-BY-4.0  
+**Size:** 1024 bytes  
+**Dimensions:** 10×20  
+**Location:** 40.25, 30.5  
+**Period:** 1500 BCE–1400 BCE
+
+> Zq figure
+
+## mediaThumbLine
+- _depiction_ — Zq Museum · [`CC0-1.0`](https://example.org/cc0) · [source](https://example.org/zq) · `/api/media/zq/thumb`
+
+## mediaList
+### 2 pictures
+
+- `00000000-0000-4000-8000-000000000002` [[zq_alpha_2001]] / `zq.jpg` · `CC-BY-4.0` · Zq Museum → place:zq_tell (depicts)
+- `00000000-0000-4000-8000-000000000002` [[zq_alpha_2001]] / `zq.jpg` · **no licence** · Zq Museum
+
+## mediaFacets
+**Providers:** zq-provider 3  
+**Licences:** CC0-1.0 2 · zq 1 (not allowed)
+
+## figureLicenceFill
+# Figure licences
+
+5 figures would take their source's licence (dry run; `--apply` writes it)
+
+- [[zq_alpha_2001]]: 3
+
+## assetLink
+# Link #3
+
+**Relation:** depicts  
+**Target:** place:zq_tell  
+**Asset:** zq_alpha_2001/zq.png  
+**Region:** 0,0,10,10  
+zq notes
+
+## assetLinkLine
+- **shows** event:zq-event ← zq_alpha_2001/zq.png
+
+## backupStatus
+### Backup written
+
+- **file:** zq.dump
+- **size:** 4.1 kB
+- **sha256:** `cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd`
+- **took:** 1500 ms
+- **pruned** (older than the newest kept): old.dump
+
+## backupStatus failed
+### Backup failed
+
+- **file:** zq.dump
+- **error:** zq error
+
+## event
+# Zq eruption
+
+_`zq-event` · eruption · attested · not before 1620 BCE, by 1610 BCE, until 1600 BCE, not after 1590 BCE_
+
+A zq eruption.  
+**Primary source:** [[zq_alpha_2001]]  
+**Place:** `zq_tell`  
+**Scale:** local (derived)  
+**Wikidata:** Q1  
+**Geometry:** POINT(30.5 40.25)… (GeoJSON)
+
+**Sub-events**
+- **Zq ash fall** `zq-child` _(ashfall · local · inferred · not before 1610 BCE)_
+
+**Datings**
+- [[zq_alpha_2001]] [c14]: not before 1620 BCE, not after 1590 BCE
+
+**Pictures**
+- _depiction_ — Zq Museum · [`CC0-1.0`](https://example.org/cc0) · [source](https://example.org/zq) · `/api/media/zq/thumb`
+
+**Tier:** attested  
+**Also called:** Zq eruption, Zq event
+
+## place
+# Zq Tell
+
+_`zq_tell` · settlement · 2000 BCE–1200 BCE · 3 finding(s) · as of 1500 BCE_  
+**Source:** zq-gaz  
+**Also known as:** Zq Tell; Tell Zq  
+**Geometry:** POINT(30.5 40.25)… (GeoJSON)
+
+**External links**
+- wikidata: [Q2](https://www.wikidata.org/wiki/Q2) (close_match)
+
+**Part of**
+- Zqland `zq_land` _(region)_
+
+## event json
+{
+  "event" : {
+    "id" : "zq-event",
+    "label" : "Zq eruption",
+    "kind" : "eruption",
+    "timeSpan" : {
+      "notBefore" : -1620,
+      "beginBy" : -1610,
+      "endFrom" : -1600,
+      "notAfter" : -1590
+    },
+    "historicity" : "attested",
+    "placeId" : "zq_tell",
+    "parentId" : null,
+    "description" : "A zq eruption.",
+    "citekey" : "zq_alpha_2001",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "precision" : "precise",
+    "central" : null,
+    "plusMinus" : null,
+    "datingMethod" : null
+  },
+  "geometry" : "POINT(30.5 40.25)",
+  "parent" : null,
+  "children" : [
+    {
+      "id" : "zq-child",
+      "label" : "Zq ash fall",
+      "kind" : "ashfall",
+      "timeSpan" : {
+        "notBefore" : -1610,
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : null
+      },
+      "historicity" : "inferred",
+      "placeId" : null,
+      "parentId" : null,
+      "description" : null,
+      "citekey" : null,
+      "scale" : "local",
+      "scaleStated" : false,
+      "tier" : "attested",
+      "precision" : "precise",
+      "central" : null,
+      "plusMinus" : null,
+      "datingMethod" : null
+    }
+  ],
+  "datings" : [
+    {
+      "eventId" : "zq-event",
+      "citekey" : "zq_alpha_2001",
+      "timeSpan" : {
+        "notBefore" : -1620,
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1590
+      },
+      "method" : "c14",
+      "note" : null
+    }
+  ],
+  "edges" : [
+  ],
+  "participants" : [
+  ],
+  "wikidata" : "Q1",
+  "media" : [
+    {
+      "uid" : "00000000-0000-4000-8000-000000000001",
+      "role" : "depiction",
+      "url" : "/api/media/zq/thumb",
+      "credit" : "Zq Museum",
+      "license" : "CC0-1.0",
+      "licenseUrl" : "https://example.org/cc0",
+      "sourceUrl" : "https://example.org/zq",
+      "width" : 640,
+      "height" : 480
+    }
+  ],
+  "tier" : "attested",
+  "names" : [
+    "Zq eruption",
+    "Zq event"
+  ],
+  "catalogue" : [
+  ],
+  "sources" : [
+  ],
+  "findings" : [
+  ],
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "leads" : [
+  ],
+  "corrections" : [
+  ]
+}
+
+## place json
+{
+  "place" : {
+    "id" : "zq_tell",
+    "label" : "Zq Tell",
+    "kind" : "settlement",
+    "periodStart" : -2000,
+    "periodEnd" : -1200,
+    "source" : "zq-gaz",
+    "names" : "Zq Tell; Tell Zq",
+    "contested" : false,
+    "dating" : "stated",
+    "importSource" : null
+  },
+  "geometry" : "POINT(30.5 40.25)",
+  "parents" : [
+    {
+      "id" : "zq_land",
+      "label" : "Zqland",
+      "kind" : "region",
+      "periodStart" : null,
+      "periodEnd" : null,
+      "source" : null,
+      "names" : "Zqland",
+      "contested" : false,
+      "dating" : "stated",
+      "importSource" : null
+    }
+  ],
+  "children" : [
+  ],
+  "findings" : 3,
+  "asOf" : -1500,
+  "contested" : false,
+  "footprints" : [
+  ],
+  "links" : [
+    {
+      "placeId" : "zq_tell",
+      "scheme" : "wikidata",
+      "externalId" : "Q2",
+      "relation" : "close_match"
+    }
+  ],
+  "types" : [
+  ],
+  "counts" : null,
+  "hasBoundary" : false,
+  "descriptions" : [
+  ],
+  "timeBasis" : "dated",
+  "locationPrecision" : "stated",
+  "media" : [
+    {
+      "uid" : "00000000-0000-4000-8000-000000000001",
+      "role" : "depiction",
+      "url" : "/api/media/zq/thumb",
+      "credit" : "Zq Museum",
+      "license" : "CC0-1.0",
+      "licenseUrl" : "https://example.org/cc0",
+      "sourceUrl" : "https://example.org/zq",
+      "width" : 640,
+      "height" : 480
+    }
+  ],
+  "siteType" : "tell",
+  "record" : {
+    "dateSource" : null,
+    "periods" : [
+    ],
+    "designations" : [
+    ],
+    "registers" : [
+    ]
+  }
+}
+
+## resolved source json
+{
+  "id" : "zq_alpha_2001",
+  "source" : {
+    "citekey" : "zq_alpha_2001",
+    "doi" : "10.0/zq",
+    "authors" : [
+      "Zq A"
+    ],
+    "year" : 2001,
+    "title" : "Zq Alpha",
+    "status" : "current"
+  },
+  "article" : null
+}
+
+## resolved article json
+{
+  "id" : "zq-article",
+  "source" : null,
+  "article" : {
+    "slug" : "zq-article",
+    "title" : "Zq article"
+  }
+}
+
+## resolved none json
+{
+  "id" : "zq-nothing",
+  "source" : null,
+  "article" : null
+}
+
+## job detail json
+{
+  "init" : {
+    "gazetteer" : true,
+    "periodPresets" : false,
+    "fetch" : [
+      "zq-gaz"
+    ],
+    "check" : false
+  },
+  "skippedPeriods" : [
+  ],
+  "skippedPeriodCount" : 2,
+  "planHash" : "zq-hash",
+  "vacuum" : {
+    "analyze" : true,
+    "tables" : [
+      "sources"
+    ]
+  },
+  "media" : "a media run",
+  "events" : "zq-catalogue",
+  "eventImport" : null,
+  "eventRederive" : null,
+  "about" : "zq_alpha_2001",
+  "recheck" : null
+}
