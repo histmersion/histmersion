@@ -1030,6 +1030,357 @@
     }
   ]
 }
+== lint fix (every safe rule)
+200 {
+  "applied" : [
+    "resolve-edges: 0 edge target(s) rewritten",
+    "reindex: 0 source(s) → 0 chunk(s)"
+  ],
+  "chunksWritten" : 0,
+  "edgesResolved" : 0,
+  "findingsPlaced" : 0,
+  "findingsRegeocoded" : 0,
+  "placesMerged" : 0,
+  "placesReclassified" : 0,
+  "placesRelocated" : 0,
+  "pointAreasRemaining" : 0,
+  "pointAreasRemoved" : 0,
+  "remaining" : 0,
+  "sourcesReindexed" : 0
+}
+== lint after
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles",
+      "items" : [
+      ],
+      "rule" : "dangling-edges"
+    },
+    {
+      "count" : 0,
+      "description" : "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones",
+      "items" : [
+      ],
+      "rule" : "unresolved-short-citekeys"
+    },
+    {
+      "count" : 5,
+      "description" : "sources with no findings mined out of them yet (un-enriched)",
+      "items" : [
+        {
+          "citekey" : "zralpha1990_walls",
+          "detail" : "The Walls of Zrtown"
+        },
+        {
+          "citekey" : "zrbeta2001_harbour",
+          "detail" : "The Harbour of Zrtown"
+        },
+        {
+          "citekey" : "zrdelta2010_survey",
+          "detail" : "A Survey of Zrland"
+        },
+        {
+          "citekey" : "zreps1999_lost",
+          "detail" : "A Lost Report"
+        },
+        {
+          "citekey" : "zrgamma1975_kings",
+          "detail" : "Kings of Zrland"
+        }
+      ],
+      "rule" : "no-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no deep-time period, so they appear on no timeline",
+      "items" : [
+      ],
+      "rule" : "no-period"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no regions, so they appear in no region tree",
+      "items" : [
+      ],
+      "rule" : "no-regions"
+    },
+    {
+      "count" : 0,
+      "description" : "sources whose summary is missing or blank",
+      "items" : [
+      ],
+      "rule" : "empty-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "sources still at status=unassessed",
+      "items" : [
+      ],
+      "rule" : "unassessed-status"
+    },
+    {
+      "count" : 0,
+      "description" : "the same DOI stored under more than one citekey",
+      "items" : [
+      ],
+      "rule" : "duplicate-doi"
+    },
+    {
+      "count" : 0,
+      "description" : "the same file hash stored under more than one citekey (skipped while the column is unpopulated)",
+      "items" : [
+      ],
+      "rule" : "duplicate-sha256"
+    },
+    {
+      "count" : 2,
+      "description" : "sources with no incoming and no outgoing edges — cited by nothing, citing nothing",
+      "items" : [
+        {
+          "citekey" : "zrdelta2010_survey",
+          "detail" : "A Survey of Zrland"
+        },
+        {
+          "citekey" : "zreps1999_lost",
+          "detail" : "A Lost Report"
+        }
+      ],
+      "rule" : "orphan-sources"
+    },
+    {
+      "count" : 0,
+      "description" : "sources that have a body but no full-text chunks — `lint --fix` reindexes them",
+      "items" : [
+      ],
+      "rule" : "stale-chunks"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with no period, so they are invisible to every time filter",
+      "items" : [
+      ],
+      "rule" : "undated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with neither coordinates nor a region — invisible on the map",
+      "items" : [
+      ],
+      "rule" : "unlocated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them",
+      "items" : [
+      ],
+      "rule" : "legacy-figure-links"
+    },
+    {
+      "count" : 1,
+      "description" : "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it",
+      "items" : [
+        {
+          "citekey" : "zr_escaped",
+          "detail" : "[[zr_nowhere]] resolves to nothing"
+        }
+      ],
+      "rule" : "dangling-article-links"
+    },
+    {
+      "count" : 8,
+      "description" : "tags not in lowercase_snake_case (the canonical form)",
+      "items" : [
+        {
+          "citekey" : "zralpha1990_walls",
+          "detail" : "tag 'zr-oracle' → 'zr_oracle'"
+        },
+        {
+          "citekey" : "zralpha1990_walls",
+          "detail" : "tag 'zr-walls' → 'zr_walls'"
+        },
+        {
+          "citekey" : "zrbeta2001_harbour",
+          "detail" : "tag 'zr-oracle' → 'zr_oracle'"
+        },
+        {
+          "citekey" : "zrbeta2001_harbour",
+          "detail" : "tag 'zr-trade' → 'zr_trade'"
+        },
+        {
+          "citekey" : "zrdelta2010_survey",
+          "detail" : "tag 'zr-oracle' → 'zr_oracle'"
+        },
+        {
+          "citekey" : "zreps1999_lost",
+          "detail" : "tag 'zr-lost' → 'zr_lost'"
+        },
+        {
+          "citekey" : "zrgamma1975_kings",
+          "detail" : "tag 'zr-kings' → 'zr_kings'"
+        },
+        {
+          "citekey" : "zrgamma1975_kings",
+          "detail" : "tag 'zr-oracle' → 'zr_oracle'"
+        }
+      ],
+      "rule" : "non-canonical-tag"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no publication year — rendered as n.d.",
+      "items" : [
+      ],
+      "rule" : "missing-year"
+    },
+    {
+      "count" : 0,
+      "description" : "the four-digit year in the citekey does not match the stored publication year",
+      "items" : [
+      ],
+      "rule" : "year-citekey-mismatch"
+    },
+    {
+      "count" : 0,
+      "description" : "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")",
+      "items" : [
+      ],
+      "rule" : "author-pipe"
+    },
+    {
+      "count" : 1,
+      "description" : "articles whose body contains banned filler phrases from the writing guide",
+      "items" : [
+        {
+          "citekey" : "zr_filler",
+          "detail" : "filler: it is important to note, needless to say"
+        }
+      ],
+      "rule" : "article-filler"
+    },
+    {
+      "count" : 2,
+      "description" : "article body paragraphs with no [[citekey]] citation",
+      "items" : [
+        {
+          "citekey" : "zr_filler",
+          "detail" : "1 paragraph(s) with no [[citekey]]: \"A paragraph with no citation at all.…\""
+        },
+        {
+          "citekey" : "zr_format",
+          "detail" : "1 paragraph(s) with no [[citekey]]: \"Trailing…\""
+        }
+      ],
+      "rule" : "article-uncited-paragraph"
+    },
+    {
+      "count" : 1,
+      "description" : "article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than 0 characters — the card and the search hit show nothing useful",
+      "items" : [
+        {
+          "citekey" : "zr_filler",
+          "detail" : "only 6 chars: \"Short.\""
+        }
+      ],
+      "rule" : "article-thin-summary"
+    },
+    {
+      "count" : 1,
+      "description" : "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work",
+      "items" : [
+        {
+          "citekey" : "zr_unpaired",
+          "detail" : "paragraph \"The harbour traded tin which Zrauthor (1975) disputes.\" names Zrauthor and cites [[zrbeta2001_harbour]] ([[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]) but not [[zrgamma1975_kings]] — cite [[zrgamma1975_kings]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)"
+        }
+      ],
+      "rule" : "article-critique-pairing"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with status=superseded but no superseded_by edge — set the edge or change the status",
+      "items" : [
+      ],
+      "rule" : "superseded-without-edge"
+    },
+    {
+      "count" : 1,
+      "description" : "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)",
+      "items" : [
+        {
+          "citekey" : "zr_escaped",
+          "detail" : "body L3:11 warning wikilink — an escaped wikilink `\\[\\[…\\]\\]` — the page un-escapes it, but every other reader (Obsidian, the exported wiki) shows the brackets as text · `The walls \\[\\[zralpha1990_walls\\]\\] and [[zr_nowhere]] and [[zralpha1990_wa…` · fix: remove the backslashes"
+        }
+      ],
+      "rule" : "article-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)",
+      "items" : [
+      ],
+      "rule" : "note-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+      ],
+      "rule" : "finding-geocode"
+    },
+    {
+      "count" : 0,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+      ],
+      "rule" : "finding-unplaced"
+    },
+    {
+      "count" : 0,
+      "description" : "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-kind"
+    },
+    {
+      "count" : 0,
+      "description" : "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-grid-point"
+    },
+    {
+      "count" : 0,
+      "description" : "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again",
+      "items" : [
+      ],
+      "rule" : "place-imported-point-area"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+      ],
+      "rule" : "finding-placeholder"
+    },
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    },
+    {
+      "count" : 0,
+      "description" : "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)",
+      "items" : [
+      ],
+      "rule" : "event-correction-conflict"
+    }
+  ]
+}
 # the rows
 ## articles 4 rows
 { "body" : "## Overview\n\n* one [[zralpha1990_walls]]\n* two [[zralpha1990_walls]]\n\n\n\nTrailing   \n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_format", "summary" : "A summary long enough to pass the thin-summary rule of the article lint, about the walls [[zralpha1990_walls]].", "tags" : [ ], "title" : "Format", "uid" : "article:zr_format" }
