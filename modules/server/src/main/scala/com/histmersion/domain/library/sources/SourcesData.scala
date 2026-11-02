@@ -22,8 +22,8 @@ object SourcesData:
   /** The rebuild of every source's full-text chunks from its OCR'd body: at most `limit` sources after `after` (and at
     * most `limits.reindex-chars` characters) per slice.
     */
-  def reindex(owner: DataOwner): MaintenanceTask = new MaintenanceTask:
-    val owner: DataOwner = owner
+  def reindex(of: DataOwner): MaintenanceTask = new MaintenanceTask:
+    val owner: DataOwner = of
     val name: MaintenanceTaskName = MaintenanceTaskName("reindex")
     def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult =
       SourceRepo.reindexChunks(
