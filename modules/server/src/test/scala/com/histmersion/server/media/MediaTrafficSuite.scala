@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.server.MediaWiring
 
 import com.histmersion.server.ServerPlugins
@@ -54,7 +56,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
 
     @annotation.tailrec
     def until(id: String, n: Int): JobInfo =
-      val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
+      val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
       if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(id, n - 1) }
 
     def job(name: String, req: MediaImportRequest): Unit =

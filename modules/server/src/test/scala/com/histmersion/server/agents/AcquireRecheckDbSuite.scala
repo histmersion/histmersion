@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -351,10 +353,10 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** The job once it ended (it runs on its own thread) and its slot is free. */
   private def ended(a: AgentsHandlers, id: String): JobInfo =
     awaitTrue(s"job $id")(
-      JobRepo.get(ds, id).exists(j => JobState.parse(j.status).exists(_.isTerminal)) &&
+      Transactor(ds).read(JobRepo.get(id)).exists(j => JobState.parse(j.status).exists(_.isTerminal)) &&
         !a.acquireRecheck.jobRunning
     )
-    JobRepo.get(ds, id).get
+    Transactor(ds).read(JobRepo.get(id)).get
 
   private def awaitTrue(what: String)(p: => Boolean): Unit =
     val until = System.currentTimeMillis() + 30000L
@@ -535,8 +537,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       resumed.exists(_.contains(s"job ${job.id} (${AcquireRecheck.StoppedDraining}) resumed as job")),
       resumed.toString
     )
-    val next = JobRepo
-      .page(ds, com.histmersion.util.jobs.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None)
+    val next = Transactor(ds)
+      .read(JobRepo.page(com.histmersion.util.jobs.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None))
       .toOption
       .get
       ._1
@@ -569,14 +571,15 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val ids = (1 to 4).toList.map(i => item(h, s"r$i"))
     val since = Instant.now().minusSeconds(600)
     // what a restart leaves: a job that ran, checked two items, and was failed as interrupted at startup
-    val j = JobRepo.create(
-      ds,
-      RecheckJob.JobKind,
-      None,
-      None,
-      detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = since.toString, by = "cli"))))
+    val j = Transactor(ds).transact(
+      JobRepo.create(
+        RecheckJob.JobKind,
+        None,
+        None,
+        detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = since.toString, by = "cli"))))
+      )
     )
-    val _ = JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running)
+    val _ = Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running))
     ids
       .take(2)
       .foreach(i =>
@@ -584,8 +587,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
           .checks(ds)
           .record(i, since.plusSeconds(60), "g1", AcquireRecheck.Outcome.NoCopy, "x")
       )
-    val _ = JobRepo.failInterrupted(ds)
-    assertEquals(JobRepo.get(ds, j.id).flatMap(_.error), Some(JobState.Interrupted))
+    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.error), Some(JobState.Interrupted))
     val r = a.acquireRecheck.run(RecheckRequest(all = true))
     val job = jobOf(r)
     assert(r.toOption.get.note.exists(_.contains(s"resumes job ${j.id}")), r.toString)
@@ -598,15 +601,18 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(asked(up).size, 6)
     // the tick resumes an interrupted one by itself
     Thread.sleep(5)
-    val k = JobRepo.create(
-      ds,
-      RecheckJob.JobKind,
-      None,
-      None,
-      detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = Instant.now().toString, by = "cli"))))
+    val k = Transactor(ds).transact(
+      JobRepo.create(
+        RecheckJob.JobKind,
+        None,
+        None,
+        detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = Instant.now().toString, by = "cli"))))
+      )
     )
-    val _ = JobRepo.transition(ds, k.id, JobState.Queued, JobState.Running)
-    val _ = JobRepo.transition(ds, k.id, JobState.Running, JobState.Failed, None, Some(JobState.Interrupted))
+    val _ = Transactor(ds).transact(JobRepo.transition(k.id, JobState.Queued, JobState.Running))
+    val _ = Transactor(ds).transact(
+      JobRepo.transition(k.id, JobState.Running, JobState.Failed, None, Some(JobState.Interrupted))
+    )
     assert(a.acquireRecheck.tick(Instant.now()).exists(_.contains(s"job ${k.id} (interrupted) resumed")))
     awaitTrue("the resumed job")(!a.acquireRecheck.jobRunning)
     assertEquals(asked(up).size, 10)

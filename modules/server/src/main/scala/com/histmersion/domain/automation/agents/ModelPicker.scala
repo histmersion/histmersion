@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.server.agents.{ClaudeCode, PlanPools}
 
 import com.histmersion.api.*
@@ -82,7 +84,7 @@ final class ModelPicker(
 
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. */
   def chain(role: Role): Either[String, (List[ModelRef], SettingSource)] =
-    ModelSettingsRepo.chains(ds).get(role.wire) match
+    Transactor(ds).read(ModelSettingsRepo.chains).get(role.wire) match
       case Some(ms) =>
         parseModels(ms, known()).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
       case None =>
@@ -110,8 +112,8 @@ final class ModelPicker(
     * `agents.quota.fallthrough`. Off, the run pauses until the plan's reset instead.
     */
   def fallthrough(role: Role): Boolean =
-    PlanQuotaRepo
-      .fallthrough(ds)
+    Transactor(ds)
+      .read(PlanQuotaRepo.fallthrough)
       .getOrElse(
         role.wire,
         cfg.quota.fallthrough.split(',').map(_.trim.toLowerCase(java.util.Locale.ROOT)).contains(role.wire)
@@ -129,7 +131,7 @@ final class ModelPicker(
     val (fromConfig, problem) = parseAllowances(cfg.allowances, known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
       case Left(m)   => (Nil, List(s"agents.allowances: $m"))
-    val saved = ModelSettingsRepo.allowances(ds).map { s =>
+    val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
       val a = for
         t <- Target.parse(s.target, known())
         ss <- s.limits
@@ -160,8 +162,8 @@ final class ModelPicker(
     else
       val secs = a.limits.map(_.window.seconds).max
       a.target match
-        case Target.Model(r)    => ModelSettingsRepo.spends(ds, List(r.wire), Nil, secs)
-        case Target.Provider(k) => ModelSettingsRepo.spends(ds, Nil, List(k.wire + ":"), secs)
+        case Target.Model(r)    => Transactor(ds).read(ModelSettingsRepo.spends(List(r.wire), Nil, secs))
+        case Target.Provider(k) => Transactor(ds).read(ModelSettingsRepo.spends(Nil, List(k.wire + ":"), secs))
 
   /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself). `unavailable`: it cannot be
     * offered at all (its plan's runtime has no login) — a configuration problem, not a wait. `refreshed`: what a fresh

@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
@@ -61,35 +60,33 @@ object FocusRepo:
       goals: List[String]
   ) derives DbCodec
 
-  def work(ds: DataSource): List[WorkRow] =
-    connect(ds):
-      sql"""SELECT i.id, i.manager_id, m.kind, i.kind, i.target, i.status, i.origin = 'person',
-                   i.status = 'held' AND i.hold->>'focus' IS NOT NULL,
-                   m.state = 'paused' OR (i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL),
-                   a.id, a.kind, m.config->>'autoApprove',
-                   CASE WHEN m.goal_slug IS NOT NULL THEN ARRAY[m.goal_slug]
-                        ELSE ARRAY(SELECT l.goal_slug FROM goal_links l WHERE l.kind = 'article' AND l.ref = i.target
-                                   ORDER BY l.goal_slug) END
-            FROM manager_items i
-            JOIN agent_managers m ON m.id = i.manager_id
-            LEFT JOIN jobs j ON j.id = i.run_id
-            LEFT JOIN LATERAL (
-              SELECT a.id, a.kind FROM approvals a
-              WHERE a.state = 'open'
-                AND ((i.status = 'held' AND a.id::text = i.hold->>'untilApproval')
-                     OR (i.status = 'active' AND j.status = 'waiting' AND a.job_id = i.run_id))
-              ORDER BY a.id DESC LIMIT 1) a ON true
-            WHERE i.status IN ('pending', 'held', 'active') AND m.state <> 'stopped'
-              AND m.kind IN ('seed', 'watch', 'review') AND i.kind NOT IN ('oa-ingest', 'currency-check')
-            ORDER BY i.id""".query[WorkRow].run().toList
+  def work(using DbCon): List[WorkRow] =
+    sql"""SELECT i.id, i.manager_id, m.kind, i.kind, i.target, i.status, i.origin = 'person',
+                 i.status = 'held' AND i.hold->>'focus' IS NOT NULL,
+                 m.state = 'paused' OR (i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL),
+                 a.id, a.kind, m.config->>'autoApprove',
+                 CASE WHEN m.goal_slug IS NOT NULL THEN ARRAY[m.goal_slug]
+                      ELSE ARRAY(SELECT l.goal_slug FROM goal_links l WHERE l.kind = 'article' AND l.ref = i.target
+                                 ORDER BY l.goal_slug) END
+          FROM manager_items i
+          JOIN agent_managers m ON m.id = i.manager_id
+          LEFT JOIN jobs j ON j.id = i.run_id
+          LEFT JOIN LATERAL (
+            SELECT a.id, a.kind FROM approvals a
+            WHERE a.state = 'open'
+              AND ((i.status = 'held' AND a.id::text = i.hold->>'untilApproval')
+                   OR (i.status = 'active' AND j.status = 'waiting' AND a.job_id = i.run_id))
+            ORDER BY a.id DESC LIMIT 1) a ON true
+          WHERE i.status IN ('pending', 'held', 'active') AND m.state <> 'stopped'
+            AND m.kind IN ('seed', 'watch', 'review') AND i.kind NOT IN ('oa-ingest', 'currency-check')
+          ORDER BY i.id""".query[WorkRow].run().toList
 
   /** Per goal: its seeding manager's approved articles not compiled yet (pending, held, active). */
-  def compileOpen(ds: DataSource): Map[String, Int] =
-    connect(ds):
-      sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-            WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
-              AND i.status IN ('pending', 'held', 'active')
-            GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+  def compileOpen(using DbCon): Map[String, Int] =
+    sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+          WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
+            AND i.status IN ('pending', 'held', 'active')
+          GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
 
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
@@ -104,8 +101,8 @@ object FocusRepo:
           WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
-  def openGoalPlans(ds: DataSource): Int =
-    connect(ds)(
+  def openGoalPlans(using DbCon): Int =
+    (
       sql"SELECT count(*)::int FROM approvals WHERE kind = 'goal-plan' AND state = 'open'".query[Int].run().head
     )
 
@@ -127,10 +124,9 @@ object FocusRepo:
         .groupMap(_._1)(_._2)
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
-  def recentTargets(ds: DataSource, managerId: String, n: Int): List[String] =
-    connect(ds):
-      sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
-            ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
+  def recentTargets(managerId: String, n: Int)(using DbCon): List[String] =
+    sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
+          ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -160,17 +156,16 @@ object FocusRepo:
           ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
 
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
-  def clearActive(ds: DataSource, why: String, now: java.time.Instant): Int =
+  def clearActive(why: String, now: java.time.Instant)(using DbCon): Int =
     val t = now.toString
-    transact(ds):
-      sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
-            WHERE active""".update.run()
+    sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
+          WHERE active""".update.run()
 
   /** A person's cap (None = the config's). */
-  def maxOverride(ds: DataSource): Option[Int] =
-    connect(ds)(sql"SELECT max_active_goals FROM agent_autopilot WHERE id".query[Option[Int]].run().headOption.flatten)
+  def maxOverride(using DbCon): Option[Int] =
+    (sql"SELECT max_active_goals FROM agent_autopilot WHERE id".query[Option[Int]].run().headOption.flatten)
 
-  def setMaxOverride(ds: DataSource, n: Option[Int]): Unit =
-    val _ = transact(ds):
+  def setMaxOverride(n: Option[Int])(using DbCon): Unit =
+    val _ =
       sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
       sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run()

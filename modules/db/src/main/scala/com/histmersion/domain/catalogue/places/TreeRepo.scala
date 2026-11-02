@@ -11,7 +11,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.places.RegionNode
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);

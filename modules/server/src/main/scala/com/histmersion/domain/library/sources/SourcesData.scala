@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.util.database.Transactor
 import com.histmersion.api.Lint
 import com.histmersion.api.Lint.*
 import com.histmersion.api.ReindexResult
@@ -26,8 +27,7 @@ object SourcesData:
     val owner: DataOwner = of
     val name: MaintenanceTaskName = MaintenanceTaskName("reindex")
     def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult =
-      SourceRepo.reindexChunks(
-        site.dataSource,
+      SourceRepairs(Transactor(site.dataSource)).reindexChunks(
         site.settings.limits.chunkChars,
         slice.after,
         slice.limit,
@@ -55,7 +55,9 @@ object SourcesData:
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(
-        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c => SourceCheckRepo.resolveEdgesFix(c.dataSource))
+        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c =>
+          SourceRepairs(Transactor(c.dataSource)).resolveEdgesFix()
+        )
       ) ++
       listed(
         owner,
@@ -68,7 +70,11 @@ object SourcesData:
         DuplicateSha256,
         OrphanSources
       ) ++
-      List(fixed(owner, StaleChunks, FixWhen.EveryFix, 20)(c => SourceCheckRepo.reindexFix(c.dataSource, c.config))) ++
+      List(
+        fixed(owner, StaleChunks, FixWhen.EveryFix, 20)(c =>
+          SourceRepairs(Transactor(c.dataSource)).reindexFix(c.config)
+        )
+      ) ++
       listed(
         owner,
         UndatedFindings,
@@ -82,7 +88,11 @@ object SourcesData:
         NoteFormat
       ) ++
       List(
-        fixed(owner, FindingGeocode, FixWhen.WhenNamed, 30)(c => SourceCheckRepo.regeocodeFix(c.dataSource, c.config)),
-        fixed(owner, FindingUnplaced, FixWhen.WhenNamed, 40)(c => SourceCheckRepo.placeFix(c.dataSource, c.config))
+        fixed(owner, FindingGeocode, FixWhen.WhenNamed, 30)(c =>
+          SourceRepairs(Transactor(c.dataSource)).regeocodeFix(c.config)
+        ),
+        fixed(owner, FindingUnplaced, FixWhen.WhenNamed, 40)(c =>
+          SourceRepairs(Transactor(c.dataSource)).placeFix(c.config)
+        )
       ) ++
       listed(owner, FindingPlaceholder)

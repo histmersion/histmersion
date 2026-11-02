@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -251,7 +253,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(gp.state, "approved")
     assert(gp.note.exists(_.startsWith("autopilot: approved — 0 sub-goals, 1 query")), gp.note)
     assertEquals(exec(a, plan.id).status, "done", why(connect(ds)(AgentRepo.get(plan.id)).get))
-    assertEquals(GoalLinkRepo.refs(ds, Goal, LinkKind.Query), List("Bronze Age tin isotopes"))
+    assertEquals(Transactor(ds).read(GoalLinkRepo.refsIn(Goal, LinkKind.Query)), List("Bronze Age tin isotopes"))
     assert(
       connect(ds)(ManagerRepo.events(seedId(Goal), None, 100))
         .exists(e => e.kind == Feed.Approval && e.text.contains("approved by the autopilot"))

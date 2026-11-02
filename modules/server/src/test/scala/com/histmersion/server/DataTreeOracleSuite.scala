@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.api.*
@@ -170,7 +172,7 @@ class DataTreeOracleSuite extends DbSuite:
       val d = testPool(cfg.db)
       Migrate.run(d); d
     def await(id: String, left: Int = 400): JobInfo =
-      val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
+      val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
     val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => Long.MaxValue / 4)
     def fetched(q: BasemapFetchQuery): Unit =

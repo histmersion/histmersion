@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.{JobInfo, JobState}
 
 import hearth.kindlings.optics.syntax.*
@@ -37,16 +39,16 @@ object JobRecords:
 
   final private class Implementation(ds: () => DataSource) extends JobRecords:
     def create(kind: String, citekey: Option[String], sha256: Option[String], acquireItem: Option[Int]): JobInfo =
-      JobRepo.create(ds(), kind, citekey, sha256, acquireItem)
-    def get(id: String): Option[JobInfo] = JobRepo.get(ds(), id)
+      Transactor(ds()).transact(JobRepo.create(kind, citekey, sha256, acquireItem))
+    def get(id: String): Option[JobInfo] = Transactor(ds()).read(JobRepo.get(id))
     def transition(
         id: String,
         from: JobState,
         to: JobState,
         progress: Option[String],
         error: Option[String]
-    ): Option[JobState] = JobRepo.transition(ds(), id, from, to, progress, error)
-    def progress(id: String, text: String): Unit = JobRepo.progress(ds(), id, text)
+    ): Option[JobState] = Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error))
+    def progress(id: String, text: String): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[String, JobInfo]], clock: Clock) extends JobRecords:

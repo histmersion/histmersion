@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.media.imports.ImportFixtures
 import com.histmersion.domain.media.imports.ImportsControllers
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -275,7 +277,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     )
     @annotation.tailrec
     def await(n: Int): JobInfo =
-      val now = JobRepo.get(ds, j.id).get
+      val now = Transactor(ds).read(JobRepo.get(j.id)).get
       if now.isTerminal || n <= 0 then now else { Thread.sleep(100); await(n - 1) }
     val end = await(300)
     assertEquals(end.status, "done", end.toString)

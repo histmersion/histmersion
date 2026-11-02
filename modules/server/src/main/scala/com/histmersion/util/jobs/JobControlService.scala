@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.{ApiError, JobInfo, JobState, Write}
 import com.histmersion.util.jobs.JobRepo
 
@@ -31,7 +33,7 @@ object JobControlService:
   ) extends JobControlService:
 
     def control(id: String, action: JobAction): Either[ApiError, JobInfo] =
-      def current = JobRepo.get(ds, id).toRight(notFound(id))
+      def current = Transactor(ds).read(JobRepo.get(id)).toRight(notFound(id))
       current.flatMap { job =>
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(conflict).flatMap {
           case JobControlStep.Run(a)         => runs(id, a).flatMap(_ => current)
@@ -39,8 +41,11 @@ object JobControlService:
           case JobControlStep.Resume         => stops.resume(id).left.map(conflict).flatMap(_ => current)
           case JobControlStep.CancelNow      =>
             stops.forget(id)
-            JobRepo
-              .transition(ds, id, job.state, JobState.Cancelled, job.progress, Some(JobControlRules.CancelledByPerson))
+            Transactor(ds)
+              .transact(
+                JobRepo
+                  .transition(id, job.state, JobState.Cancelled, job.progress, Some(JobControlRules.CancelledByPerson))
+              )
               .toRight(conflict(s"job $id moved on; look again"))
               .flatMap(_ => current)
         }

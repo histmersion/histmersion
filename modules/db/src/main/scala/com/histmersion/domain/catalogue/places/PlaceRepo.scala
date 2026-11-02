@@ -11,7 +11,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 import com.histmersion.values.{LocationPrecision, PlaceKind}
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only

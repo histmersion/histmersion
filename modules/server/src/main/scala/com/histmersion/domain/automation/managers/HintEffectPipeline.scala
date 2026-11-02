@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.histmersion.util.database.Transactor
+
 import com.augustnagro.magnum.{connect, transact}
 
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
@@ -66,9 +68,12 @@ final class HintEffectPipeline(
     for
       m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '$mid'")
       id <- hint.toRight("the run names no hint (RunParams.hint)")
-      ht <- ManagerRepo.hint(ds, id).filter(_.managerId == m.id).toRight(s"manager $mid has no hint #$id")
+      ht <- Transactor(ds)
+        .read(ManagerRepo.hint(id))
+        .filter(_.managerId == m.id)
+        .toRight(s"manager $mid has no hint #$id")
     yield
-      val (items, _) = ManagerRepo.items(ds, m.id, None, 0, ItemsShown)
+      val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, 0, ItemsShown))
       val lines = items.map(i => s"${i.target} (${i.kind}, ${i.status}, priority ${i.priority})")
       val itemTarget = ht.itemId.flatMap(connect(ds)(ManagerRepo.item(_))).map(_.target)
       Loaded(

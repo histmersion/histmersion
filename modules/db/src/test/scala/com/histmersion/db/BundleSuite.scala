@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -363,7 +365,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   private def count(ds: DataSource, q: String): Int =
     connect(ds)(Sql.raw(q).frag.query[Int].run().head)
 
-  private def instanceId(ds: DataSource): UUID = BundleRepo.instance(ds).id
+  private def instanceId(ds: DataSource): UUID = Transactor(ds).read(BundleRepo.instance).id
 
   // ── M0 ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -681,7 +683,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r3c.applied, r3c.problems.mkString("\n"))
     assertEquals(r3c.issues, Nil)
     // a deletion over there of a row unchanged here since the last import deletes it here
-    val _ = GoalRepo.delete(a, "zzb_goal_sub")
+    val _ = Transactor(a).transact(GoalRepo.deleteIn("zzb_goal_sub"))
     val r4 = importInto(b, exportOf(a, sa), sb)
     assertEquals(r4.counts.find(_.kind == BundleKind.Goal).map(_.deleted), Some(1), r4.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zzb_goal_sub'"), 0)

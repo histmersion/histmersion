@@ -12,7 +12,6 @@ import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.db.given
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the
   * safe repairs.
@@ -193,81 +192,5 @@ private[sources] object SourceCheckRepo:
 
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 
-  /** Re-chunk the sources that have a body but no full-text chunks (`stale-chunks`).
-    *
-    * Bounded by `maxChars` of body text per call — a whole-corpus rebuild takes minutes, far past any HTTP timeout —
-    * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
-    * with `remaining` = stale sources still untouched.
-    */
-  def reindexStale(ds: DataSource, chunkChars: Int, maxChars: Long): ReindexResult =
-    val pending = connect(ds):
-      Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()
-
-    val batch = pending
-      .scanLeft(("", 0L)) { case ((_, spent), (ck, len)) => (ck, spent + len.toLong) }
-      .drop(1)
-      .takeWhile((_, spent) => spent <= maxChars)
-      .map(_._1)
-    val take = if batch.isEmpty then pending.take(1).map(_._1) else batch
-
-    // Best effort, one transaction per source: another writer may re-chunk or remove a source between
-    // the scan and the rewrite, and a bulk repair that aborts on one row is worse than one that keeps
-    // going. A skipped source stays stale, so the next `lint` reports it again — nothing is hidden.
-    val done = take.map { ck =>
-      scala.util.Try {
-        transact(ds):
-          val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $ck".query[Option[String]].run()
-          SourceRepo.replaceChunks(ck, md.headOption.flatten, chunkChars)
-      }
-    }
-    done.zip(take).foreach {
-      case (scala.util.Failure(e), ck) => scribe.warn(s"reindex of $ck skipped: ${e.getMessage}")
-      case _                           => ()
-    }
-    val ok = done.collect { case scala.util.Success(n) => n }
-    ReindexResult(ok.size, ok.sum, take.lastOption, pending.size - take.size)
-
-  // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
-
-  /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
-  def resolveEdgesFix(ds: DataSource): LintFixResult =
-    val resolved = SourceRepo.resolveEdges(ds)
-    LintFixResult(List(s"resolve-edges: $resolved edge target(s) rewritten"), resolved, 0, 0, 0)
-
-  /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
-  def reindexFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val r = reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
-    val left = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
-    LintFixResult(
-      List(s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"),
-      0,
-      r.sources,
-      r.chunks,
-      r.remaining
-    )
-
-  /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
-  def regeocodeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val s = geocodeOf(cfg)
-    val moved = transact(ds)(FindingPlacement.move(connect(ds)(FindingPlacement.movesIn(s)), s.toleranceKm))
-    LintFixResult(
-      List(s"$FindingGeocode: $moved finding(s) moved to the place the current geocoder chooses"),
-      0,
-      0,
-      0,
-      0,
-      findingsRegeocoded = moved
-    )
-
-  /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
-  def placeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val s = geocodeOf(cfg)
-    val placed = transact(ds)(FindingPlacement.place(connect(ds)(FindingPlacement.placementsIn(s)), s.toleranceKm))
-    LintFixResult(
-      List(s"$FindingUnplaced: $placed finding(s) given the point of the place they name"),
-      0,
-      0,
-      0,
-      0,
-      findingsPlaced = placed
-    )
+  /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
+  def stale()(using DbCon): Vector[(String, Int)] = Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()

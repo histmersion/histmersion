@@ -8,7 +8,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.ApprovalDigest
 import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import javax.sql.DataSource
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options

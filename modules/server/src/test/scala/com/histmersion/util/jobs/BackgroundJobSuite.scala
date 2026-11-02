@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.*
@@ -39,7 +41,7 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
   private def await(id: String, left: Int = 200): JobInfo =
-    val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
+    val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   dbTest("a job runs on its own thread: its row moves queued → running → done with the summary"):

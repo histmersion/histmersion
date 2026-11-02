@@ -2,6 +2,8 @@ package com.histmersion.domain.library.search
 
 import com.histmersion.api.Query.{QueryResult, SchemaTable}
 
+import com.histmersion.util.database.Transactor
+
 import javax.sql.DataSource
 
 /** The read-only SQL escape hatch and the live schema it reads. A statement runs on the read-only role's pool
@@ -13,9 +15,10 @@ trait QueryService:
   def tables: List[SchemaTable]
 
 object QueryService:
-  def apply(queries: DataSource, schema: DataSource): QueryService = Implementation(queries, schema)
+  def apply(queries: DataSource, schema: DataSource): QueryService =
+    Implementation(Transactor(queries), Transactor(schema))
 
-  final private class Implementation(queries: DataSource, schema: DataSource) extends QueryService:
+  final private class Implementation(queries: Transactor, schema: Transactor) extends QueryService:
     def run(statement: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int): Either[String, QueryResult] =
-      QueryRepo.run(queries, statement, timeoutMs, maxRows, maxCellChars)
-    def tables: List[SchemaTable] = QueryRepo.tables(schema)
+      queries.read(QueryRepo.run(statement, timeoutMs, maxRows, maxCellChars))
+    def tables: List[SchemaTable] = schema.read(QueryRepo.tables)

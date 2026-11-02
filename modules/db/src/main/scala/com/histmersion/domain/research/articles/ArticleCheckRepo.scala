@@ -10,7 +10,6 @@ import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.db.given
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
@@ -133,14 +132,13 @@ private[articles] object ArticleCheckRepo:
     * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its
     * token.
     */
-  def pairingRepairs(ds: DataSource): List[PairingRepair] =
-    connect(ds):
-      val c = pairingCorpusIn()
-      sql"""SELECT slug, body, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM articles ORDER BY slug"""
-        .query[(String, String, Option[String])]
-        .run()
-        .toList
-        .flatMap { (slug, body, at) =>
-          val (fixed, done) = CritiquePairing.repair(body, CritiquePairing.hits(body, c.resolve, c.edges, c.work))
-          Option.when(done.nonEmpty)(PairingRepair(slug, at, fixed, done))
-        }
+  def pairingRepairs(using DbCon): List[PairingRepair] =
+    val c = pairingCorpusIn()
+    sql"""SELECT slug, body, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM articles ORDER BY slug"""
+      .query[(String, String, Option[String])]
+      .run()
+      .toList
+      .flatMap { (slug, body, at) =>
+        val (fixed, done) = CritiquePairing.repair(body, CritiquePairing.hits(body, c.resolve, c.edges, c.work))
+        Option.when(done.nonEmpty)(PairingRepair(slug, at, fixed, done))
+      }

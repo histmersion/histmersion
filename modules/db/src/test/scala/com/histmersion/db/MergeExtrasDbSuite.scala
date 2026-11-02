@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -254,8 +256,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       connect(home)(GoalLinkRepo.planAndBudget("zz_goal")).flatMap(_._1).exists(_.contains("work's plan")),
       true
     )
-    assertEquals(GoalLinkRepo.refs(home, "zz_goal", LinkKind.Source), List("zzgoal2020_src"))
-    val s = GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).getOrElse(fail("no schedule"))
+    assertEquals(Transactor(home).read(GoalLinkRepo.refsIn("zz_goal", LinkKind.Source)), List("zzgoal2020_src"))
+    val s =
+      Transactor(home).read(GoalLinkRepo.schedule("zz_goal", ScheduleKind.Currency)).getOrElse(fail("no schedule"))
     // brought in, it never fires here before a person saves it
     assertEquals((s.cron, s.nextRunAt), ("@weekly", None))
     assert(s.lastNote.exists(_.contains("save it once")), s.toString)
@@ -270,10 +273,13 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val a = applyIn(home, again, sh)
     assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(
-      GoalLinkRepo.refs(home, "zz_goal", LinkKind.Query).toSet,
+      Transactor(home).read(GoalLinkRepo.refsIn("zz_goal", LinkKind.Query)).toSet,
       Set("hittite storm god", "ahhiyawa", "mycenae")
     )
-    assertEquals(GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).map(_.cron), Some("@daily"))
+    assertEquals(
+      Transactor(home).read(GoalLinkRepo.schedule("zz_goal", ScheduleKind.Currency)).map(_.cron),
+      Some("@daily")
+    )
     assertEquals(a.replanChanges, Some(0))
 
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
@@ -336,19 +342,21 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(ArticleFixtures.view(home, "zz_first_slug").map(_.article.slug), Some("zz_second_slug"))
     assertEquals(a.replanChanges, Some(0))
     // what the merge left, read back
-    val list = MergeRepo.list(home, 10)
+    val list = Transactor(home).read(MergeRepo.list(10))
     assertEquals(list.map(_.planHash.isDefined), List(true))
     val m = list.head
     assert(m.redirects >= 1 && m.ledgerRows >= 2, m.toString)
-    val d = MergeRepo.detail(home, m.id.toString.take(8)).fold(e => fail(e.message), identity)
+    val d = Transactor(home).read(MergeRepo.detail(m.id.toString.take(8))).fold(e => fail(e.message), identity)
     assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
     assertEquals(d.merge.backup, Some("stub.dump"))
     val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
     val led =
-      MergeRepo.ledger(home, Some(evUid.toString), None, 50, TestExchange.rules).fold(e => fail(e.message), identity)
+      Transactor(home)
+        .read(MergeRepo.ledger(Some(evUid.toString), None, 50, TestExchange.rules))
+        .fold(e => fail(e.message), identity)
     assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
     assertEquals(led.redirects.map(_.uid), List(evUid))
-    assert(MergeRepo.detail(home, "zzzz").isLeft)
+    assert(Transactor(home).read(MergeRepo.detail("zzzz")).isLeft)
 
   test("label renames keep the old label as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("rn")
@@ -362,9 +370,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(EventFixtures.rename(ds, "zz_ev_b", "zz_ev_a").isRight)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), None)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_b"), Some("zz_ev_a"))
-    assert(GoalRepo.rename(ds, "zz_goal_a", "zz_goal_b").isRight)
-    assertEquals(GoalRepo.renamedTo(ds, "zz_goal_a"), Some("zz_goal_b"))
-    assert(GoalRepo.rename(ds, "zz_goal_b", "zz_goal_b").isLeft)
+    assert(Transactor(ds).transact(GoalRepo.renameIn("zz_goal_a", "zz_goal_b")).isRight)
+    assertEquals(Transactor(ds).read(GoalRepo.renamedTo("zz_goal_a")), Some("zz_goal_b"))
+    assert(Transactor(ds).transact(GoalRepo.renameIn("zz_goal_b", "zz_goal_b")).isLeft)
 
   // #888: a place renamed over there (a new id under the same uid) kept its old id here, and the
   // bundle's events that name the new id pointed at nothing
@@ -432,7 +440,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     transact(work)(GoalRepo.put("zz_goal_before", GoalPut("G")))
     assert(PlaceFixtures.rename(work, "zz_pl_before", "zz_pl_after").isRight)
     assert(EventFixtures.rename(work, "zz_ev_before", "zz_ev_after").isRight)
-    assert(GoalRepo.rename(work, "zz_goal_before", "zz_goal_after").isRight)
+    assert(Transactor(work).transact(GoalRepo.renameIn("zz_goal_before", "zz_goal_after")).isRight)
     val bundle = exportOf(work, sw)
     val es = entitiesOf(bundle)
     assertEquals(es.eventAliases.map(_.alias), List("zz_ev_before"))
@@ -441,7 +449,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val r = importInto(home, bundle, sh)
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
-    assertEquals(GoalRepo.renamedTo(home, "zz_goal_before"), Some("zz_goal_after"))
+    assertEquals(Transactor(home).read(GoalRepo.renamedTo("zz_goal_before")), Some("zz_goal_after"))
     assertEquals(PlaceFixtures.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
     // a filter on the OLD id is the filter on the place it names now, labelled with that place
     val scope = PlaceFixtures.scopeFor(home, List("zz_pl_before"), None)
@@ -482,28 +490,31 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       "abc123",
       notes = List("a note")
     )
-    val a = JobRepo.startMergeApply(ds, "a" * 64, "abc123")
-    assert(JobRepo.mergeApplyRunning(ds))
+    val a = Transactor(ds).transact(JobRepo.startMergeApply("a" * 64, "abc123"))
+    assert(Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
-      JobRepo.mergeApply(ds, a).map(j => (j.state, j.bundle, j.planHash)),
+      Transactor(ds).read(JobRepo.mergeApply(a)).map(j => (j.state, j.bundle, j.planHash)),
       Some((MergeJobState.Running, "a" * 64, "abc123"))
     )
-    JobRepo.finishMergeApply(ds, a, Right(res))
-    assert(!JobRepo.mergeApplyRunning(ds))
-    assertEquals(JobRepo.mergeApply(ds, a).map(j => (j.state, j.result)), Some((MergeJobState.Done, Some(res))))
-    val b = JobRepo.startMergeApply(ds, "b" * 64, "def456")
-    assertEquals(JobRepo.failInterrupted(ds), 1) // the startup reconciliation
-    assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
-    // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
-    JobRepo.finishMergeApply(ds, b, Right(res))
-    assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
-    val c = JobRepo.startMergeApply(ds, "c" * 64, "0")
-    JobRepo.finishMergeApply(ds, c, Left("merge apply crashed: boom"))
+    Transactor(ds).transact(JobRepo.finishMergeApply(a, Right(res)))
+    assert(!Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
-      JobRepo.mergeApply(ds, c).map(j => (j.state, j.error)),
+      Transactor(ds).read(JobRepo.mergeApply(a)).map(j => (j.state, j.result)),
+      Some((MergeJobState.Done, Some(res)))
+    )
+    val b = Transactor(ds).transact(JobRepo.startMergeApply("b" * 64, "def456"))
+    assertEquals(Transactor(ds).transact(JobRepo.failInterrupted()), 1) // the startup reconciliation
+    assertEquals(Transactor(ds).read(JobRepo.mergeApply(b)).map(_.state), Some(MergeJobState.Interrupted))
+    // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
+    Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
+    assertEquals(Transactor(ds).read(JobRepo.mergeApply(b)).map(_.state), Some(MergeJobState.Interrupted))
+    val c = Transactor(ds).transact(JobRepo.startMergeApply("c" * 64, "0"))
+    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left("merge apply crashed: boom")))
+    assertEquals(
+      Transactor(ds).read(JobRepo.mergeApply(c)).map(j => (j.state, j.error)),
       Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
     )
     // not a merge apply, or nothing: no answer
-    assertEquals(JobRepo.mergeApply(ds, "no-such-job"), None)
-    val ocr = JobRepo.create(ds, Ingest.KindIngest, Some("zz2020_x"), None)
-    assertEquals(JobRepo.mergeApply(ds, ocr.id), None)
+    assertEquals(Transactor(ds).read(JobRepo.mergeApply("no-such-job")), None)
+    val ocr = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some("zz2020_x"), None))
+    assertEquals(Transactor(ds).read(JobRepo.mergeApply(ocr.id)), None)

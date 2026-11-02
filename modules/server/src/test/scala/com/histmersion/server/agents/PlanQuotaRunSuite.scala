@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -153,7 +155,8 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.pools.poolOf(Gpt), Some(PoolId.ChatgptPlan))
     a.pools.record(PoolId.ClaudePlan, low())
     a.setPool("chatgpt-plan", PoolSet(hold = Some(true))).fold(e => fail(e.message), identity)
-    val reset = PlanQuotaRepo.readings(ds, PoolId.ClaudePlan).find(_.kind == "five_hour").flatMap(_.resetsAt).get
+    val reset =
+      Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).find(_.kind == "five_hour").flatMap(_.resetsAt).get
     val run = startAndRun(a)
     assertEquals(run.status, "paused", run.error)
     assert(run.error.exists(_.startsWith("plan-quota:")), run.error)
@@ -225,7 +228,9 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.setPool("claude-plan", PoolSet(floors = Some(""))).map(_.floorsSource), Right("config"))
     assert(a.setPool("nobody-plan", PoolSet(hold = Some(true))).left.exists(_.message.contains("unknown pool")))
     // the ChatGPT plan refused by the provider
-    PlanQuotaRepo.setRefusal(ds, PoolId.ChatgptPlan, Some("ordinary usage not allowed"), None, Some("prolite"))
+    Transactor(ds).transact(
+      PlanQuotaRepo.setRefusal(PoolId.ChatgptPlan, Some("ordinary usage not allowed"), None, Some("prolite"))
+    )
     val q = a.quota
     val gpt = q.plans.find(_.pool == "chatgpt-plan").get
     assert(!gpt.usable && gpt.reason.contains("ordinary usage not allowed") && gpt.planType.contains("prolite"), gpt)
@@ -295,7 +300,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List(Reading("claude", "five_hour", 99, None, false, now() - 60000, PlanQuota.Source.Mod))
     )
     assertEquals(
-      PlanQuotaRepo.readings(ds, PoolId.ClaudePlan).map(r => (r.usedPct, r.source)),
+      Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).map(r => (r.usedPct, r.source)),
       List((50.0, PlanQuota.Source.Run))
     )
 

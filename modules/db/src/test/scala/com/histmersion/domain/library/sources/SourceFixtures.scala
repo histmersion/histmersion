@@ -5,6 +5,8 @@ import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunk
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.catalogue.places.FindingPlacement
+import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 
 /** The db suites' reads and writes of the library's sources on a database of their own, each in a transaction of its
@@ -12,18 +14,46 @@ import javax.sql.DataSource
   * registers.
   */
 object SourceFixtures:
-  export SourceRepo.{
-    citekeyOfSha256,
-    citekeys,
-    load,
-    patch,
-    put,
-    reindexChunks,
-    resolveEdges,
-    setSha256,
-    sha256Of,
-    upsert
-  }
+  private def db(ds: DataSource): Transactor = Transactor(ds)
+
+  def citekeyOfSha256(ds: DataSource, sha: String): Option[String] = db(ds).read(SourceRepo.citekeyOfSha256(sha))
+  def citekeys(ds: DataSource): Vector[String] = db(ds).read(SourceRepo.citekeys())
+  def load(ds: DataSource, citekey: String): Option[Source] = db(ds).read(SourceRepo.load(citekey))
+  def resolveEdges(ds: DataSource): Int = db(ds).transact(SourceRepo.resolveEdges())
+  def setSha256(ds: DataSource, citekey: String, sha: String): Unit =
+    db(ds).transact(SourceRepo.setSha256(citekey, sha))
+  def sha256Of(ds: DataSource, citekey: String): Option[String] = db(ds).read(SourceRepo.sha256Of(citekey))
+
+  def put(
+      ds: DataSource,
+      s: Source,
+      chunkChars: Int,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
+  ): String = db(ds).transact(SourceRepo.putIn(s, chunkChars, toleranceKm))
+
+  def upsert(
+      ds: DataSource,
+      s: Source,
+      chunkChars: Int,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
+  ): Unit =
+    val _ = put(ds, s, chunkChars, toleranceKm)
+
+  def patch(
+      ds: DataSource,
+      requested: String,
+      p: SourcePatch,
+      chunkChars: Int,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
+  ): Either[ApiError, String] = db(ds).transact(SourceRepo.patchIn(requested, p, chunkChars, toleranceKm))
+
+  def reindexChunks(
+      ds: DataSource,
+      chunkChars: Int,
+      after: Option[String] = None,
+      maxSources: Option[Int] = None,
+      maxChars: Long = Long.MaxValue
+  ): ReindexResult = SourceRepairs(db(ds)).reindexChunks(chunkChars, after, maxSources, maxChars)
 
   /** The server's referrers, in its order (`Deps.sourceReferrers`). */
   val referrers: SourceReferrers = SourceReferrers(

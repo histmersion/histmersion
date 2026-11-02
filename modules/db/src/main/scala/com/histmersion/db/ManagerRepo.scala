@@ -6,7 +6,6 @@ import com.histmersion.api.Managers.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.managers.ManagerLight
-import javax.sql.DataSource
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -120,9 +119,9 @@ object ManagerRepo:
           ON CONFLICT (id) DO NOTHING""".update.run() > 0
 
   /** When its cron fires next (None: not scheduled). */
-  def setNextTick(ds: DataSource, id: String, next: Option[java.time.Instant]): Boolean =
+  def setNextTick(id: String, next: Option[java.time.Instant])(using DbCon): Boolean =
     val n = next.map(_.toString)
-    transact(ds)(sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
+    (sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
 
   def setState(id: String, state: State, pauseRuns: Boolean)(using DbCon): Boolean =
     sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
@@ -145,13 +144,12 @@ object ManagerRepo:
           WHERE id = $id""".update.run() > 0
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
-  def setStatusNote(ds: DataSource, id: String, note: String): Boolean =
-    transact(ds):
-      sql"""UPDATE agent_managers SET status_note = $note
-            WHERE id = $id AND status_note IS DISTINCT FROM $note""".update.run() > 0
+  def setStatusNote(id: String, note: String)(using DbCon): Boolean =
+    sql"""UPDATE agent_managers SET status_note = $note
+          WHERE id = $id AND status_note IS DISTINCT FROM $note""".update.run() > 0
 
-  def delete(ds: DataSource, id: String): Boolean =
-    transact(ds)(sql"DELETE FROM agent_managers WHERE id = $id".update.run() > 0)
+  def delete(id: String)(using DbCon): Boolean =
+    (sql"DELETE FROM agent_managers WHERE id = $id".update.run() > 0)
 
   def counts(id: String)(using DbCon): ItemCounts =
     ItemCounts.of(
@@ -330,16 +328,6 @@ object ManagerRepo:
       Param.S(target)
     )).frag.query[ItemRow].run().toList.map(toItem)
 
-  /** A page of a manager's items: by `status` (none = all), the most urgent first. */
-  def items(
-      ds: DataSource,
-      managerId: String,
-      status: Option[ItemStatus],
-      offset: Int,
-      limit: Int
-  ): (List[ManagerItem], Int) =
-    connect(ds)(itemPage(managerId, status, offset, limit))
-
   /** [[items]] on the caller's connection. */
   def itemPage(managerId: String, status: Option[ItemStatus], offset: Int, limit: Int)(using
       DbCon
@@ -411,8 +399,8 @@ object ManagerRepo:
 
   /** Active items whose run is terminal and not evaluated yet (or whose run is gone): the evaluation queue.
     */
-  def toEvaluate(ds: DataSource, managerId: String): List[(ManagerItem, Option[(String, Option[String])])] =
-    val rows = connect(ds):
+  def toEvaluate(managerId: String)(using DbCon): List[(ManagerItem, Option[(String, Option[String])])] =
+    val rows =
       (itemSelect ++ Sql.of(" WHERE manager_id = ? AND status = 'active' ORDER BY id", Param.S(managerId))).frag
         .query[ItemRow]
         .run()
@@ -420,7 +408,7 @@ object ManagerRepo:
         .map(toItem)
     rows.flatMap { i =>
       val run = i.runId.flatMap(r =>
-        connect(ds)(
+        (
           sql"SELECT status, error FROM jobs WHERE id = $r"
             .query[(String, Option[String])]
             .run()
@@ -438,7 +426,6 @@ object ManagerRepo:
     * is left in (`held`: waiting for an approval).
     */
   def evaluated(
-      ds: DataSource,
       itemId: Long,
       run: Option[String],
       status: ItemStatus,
@@ -447,16 +434,15 @@ object ManagerRepo:
       state: ItemState,
       outcome: Option[String],
       hold: Option[Hold] = None
-  ): Boolean =
+  )(using DbCon): Boolean =
     val nb = notBefore.map(_.toString)
     val key = run.getOrElse("")
-    transact(ds):
-      sql"""UPDATE manager_items SET status = ${status.wire}, evaluated_run = coalesce($run, evaluated_run),
-                                     not_before = $nb::timestamptz, failures = coalesce($failures, failures),
-                                     state = $state::jsonb, outcome = coalesce($outcome, outcome), hold = $hold::jsonb,
-                                     updated_at = now()
-            WHERE id = $itemId AND status = 'active'
-              AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
+    sql"""UPDATE manager_items SET status = ${status.wire}, evaluated_run = coalesce($run, evaluated_run),
+                                   not_before = $nb::timestamptz, failures = coalesce($failures, failures),
+                                   state = $state::jsonb, outcome = coalesce($outcome, outcome), hold = $hold::jsonb,
+                                   updated_at = now()
+          WHERE id = $itemId AND status = 'active'
+            AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
 
   /** A person's (or a hint's) change of one item. Each is a CAS on the statuses it may change. */
   def hold(itemId: Long, h: Hold)(using DbCon): Boolean =
@@ -497,8 +483,8 @@ object ManagerRepo:
       .run()
       .head
 
-  def setPriority(ds: DataSource, itemId: Long, priority: Int): Boolean =
-    transact(ds)(
+  def setPriority(itemId: Long, priority: Int)(using DbCon): Boolean =
+    (
       sql"UPDATE manager_items SET priority = $priority, updated_at = now() WHERE id = $itemId".update.run() > 0
     )
 
@@ -509,24 +495,22 @@ object ManagerRepo:
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
   /** Re-open a settled item: pending again, its run count and failures reset, how often recorded. */
-  def reopen(ds: DataSource, itemId: Long): Boolean =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, outcome = NULL,
-                                     hold = NULL,
-                                     state = jsonb_set(state - 'history', '{reopened}',
-                                       to_jsonb(coalesce((state->>'reopened')::int, 0) + 1)),
-                                     updated_at = now()
-            WHERE id = $itemId AND status IN ('done', 'stopped', 'failed', 'cancelled')""".update.run() > 0
+  def reopen(itemId: Long)(using DbCon): Boolean =
+    sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, outcome = NULL,
+                                   hold = NULL,
+                                   state = jsonb_set(state - 'history', '{reopened}',
+                                     to_jsonb(coalesce((state->>'reopened')::int, 0) + 1)),
+                                   updated_at = now()
+          WHERE id = $itemId AND status IN ('done', 'stopped', 'failed', 'cancelled')""".update.run() > 0
 
   /** A converged item selected again because it went stale: pending at `priority` (exactly: the lowest), its runs
     * counted from zero, its run history dropped (a new cycle), why in its outcome.
     */
-  def restale(ds: DataSource, itemId: Long, priority: Int, why: String): Boolean =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
-                                     priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
-                                     state = state - 'history', updated_at = now()
-            WHERE id = $itemId AND status = 'done'""".update.run() > 0
+  def restale(itemId: Long, priority: Int, why: String)(using DbCon): Boolean =
+    sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
+                                   priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
+                                   state = state - 'history', updated_at = now()
+          WHERE id = $itemId AND status = 'done'""".update.run() > 0
 
   /** A manager's open items (pending, held, active) as (kind, target) — what
     * [[com.histmersion.domain.ManagerPolicy.waitsFor]] reads.
@@ -536,168 +520,142 @@ object ManagerRepo:
           AND status IN ('pending', 'held', 'active')""".query[(String, String)].run().toList
 
   /** Does manager `managerId` have (or ever had) an item of `kind` on `target`? */
-  def hasItem(ds: DataSource, managerId: String, kind: String, target: String): Boolean =
-    connect(ds):
-      sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
-        .query[Int]
-        .run()
-        .nonEmpty
+  def hasItem(managerId: String, kind: String, target: String)(using DbCon): Boolean =
+    sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
+      .query[Int]
+      .run()
+      .nonEmpty
 
   /** Every open item of a manager cancelled (a stop); returns how many. */
-  def cancelOpen(ds: DataSource, managerId: String, why: String): Int =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
-            WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()
+  def cancelOpen(managerId: String, why: String)(using DbCon): Int =
+    sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
+          WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()
 
   /** Back to pending (an active item whose run vanished, or was never submitted). */
-  def requeue(ds: DataSource, itemId: Long, outcome: String): Boolean =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'pending', run_id = NULL, outcome = $outcome, updated_at = now()
-            WHERE id = $itemId AND status = 'active'""".update.run() > 0
+  def requeue(itemId: Long, outcome: String)(using DbCon): Boolean =
+    sql"""UPDATE manager_items SET status = 'pending', run_id = NULL, outcome = $outcome, updated_at = now()
+          WHERE id = $itemId AND status = 'active'""".update.run() > 0
 
   // ── selection: what the review manager picks by itself ─────────────────────────────────────────
 
   /** Articles with open MAJORs in their review ledger and no item of this manager yet, the most open MAJORs first;
     * `tags` (all of) and `goal` (linked to it) narrow them.
     */
-  def openMajorArticles(
-      ds: DataSource,
-      managerId: String,
-      kind: String,
-      tags: List[String],
-      goal: Option[String],
-      limit: Int
+  def openMajorArticles(managerId: String, kind: String, tags: List[String], goal: Option[String], limit: Int)(using
+      DbCon
   ): List[(String, Int)] =
-    connect(ds):
-      sql"""SELECT a.slug, m.n FROM articles a
-            JOIN review_ledgers l ON l.slug = a.slug
-            CROSS JOIN LATERAL (
-              SELECT count(*)::int AS n FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
-              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major') m
-            WHERE m.n > 0 AND a.kind <> 'index'
-              AND a.tags @> $tags::text[]
-              AND ($goal::text IS NULL OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $goal
-                                                   AND g.kind = 'article' AND g.ref = a.slug))
-              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $managerId AND i.kind = $kind
-                              AND i.target = a.slug)
-            ORDER BY m.n DESC, a.slug LIMIT ${math.max(1, limit)}""".query[(String, Int)].run().toList
+    sql"""SELECT a.slug, m.n FROM articles a
+          JOIN review_ledgers l ON l.slug = a.slug
+          CROSS JOIN LATERAL (
+            SELECT count(*)::int AS n FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
+            WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major') m
+          WHERE m.n > 0 AND a.kind <> 'index'
+            AND a.tags @> $tags::text[]
+            AND ($goal::text IS NULL OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $goal
+                                                 AND g.kind = 'article' AND g.ref = a.slug))
+            AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $managerId AND i.kind = $kind
+                            AND i.target = a.slug)
+          ORDER BY m.n DESC, a.slug LIMIT ${math.max(1, limit)}""".query[(String, Int)].run().toList
 
   /** Articles never reviewed (no ledger, no review-article run) and with no item of this manager. */
-  def unreviewedArticles(
-      ds: DataSource,
-      managerId: String,
-      kind: String,
-      tags: List[String],
-      goal: Option[String],
-      limit: Int
+  def unreviewedArticles(managerId: String, kind: String, tags: List[String], goal: Option[String], limit: Int)(using
+      DbCon
   ): List[String] =
-    connect(ds):
-      sql"""SELECT a.slug FROM articles a
-            WHERE a.kind <> 'index' AND a.tags @> $tags::text[]
-              AND NOT EXISTS (SELECT 1 FROM review_ledgers l WHERE l.slug = a.slug)
-              AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.kind = $JobKind AND j.pipeline = 'review-article'
-                              AND j.target_id = a.slug)
-              AND ($goal::text IS NULL OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $goal
-                                                   AND g.kind = 'article' AND g.ref = a.slug))
-              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $managerId AND i.kind = $kind
-                              AND i.target = a.slug)
-            ORDER BY a.updated_at, a.slug LIMIT ${math.max(1, limit)}""".query[String].run().toList
+    sql"""SELECT a.slug FROM articles a
+          WHERE a.kind <> 'index' AND a.tags @> $tags::text[]
+            AND NOT EXISTS (SELECT 1 FROM review_ledgers l WHERE l.slug = a.slug)
+            AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.kind = $JobKind AND j.pipeline = 'review-article'
+                            AND j.target_id = a.slug)
+            AND ($goal::text IS NULL OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $goal
+                                                 AND g.kind = 'article' AND g.ref = a.slug))
+            AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $managerId AND i.kind = $kind
+                            AND i.target = a.slug)
+          ORDER BY a.updated_at, a.slug LIMIT ${math.max(1, limit)}""".query[String].run().toList
 
   /** The review manager's stale candidates: its converged review items (by when they converged: their item's
     * `updated_at`, with the filter hits recorded then), then articles whose ledger holds no open MAJOR and that no item
     * of it drives (by the ledger's `updated_at`) — oldest first, `tags`/`goal` narrowing as in the selection. (slug,
     * converged at, filter hits then, the done item if any).
     */
-  def staleCandidates(
-      ds: DataSource,
-      managerId: String,
-      kind: String,
-      tags: List[String],
-      goal: Option[String],
-      limit: Int
+  def staleCandidates(managerId: String, kind: String, tags: List[String], goal: Option[String], limit: Int)(using
+      DbCon
   ): List[(String, String, Option[Int], Option[Long])] =
     val lim = math.max(1, limit)
     val g = goal.map(_.trim).getOrElse("")
-    connect(ds):
-      val done = Sql
-        .of(
-          s"""SELECT i.target, ${at("i.updated_at")}, (i.state->>'filterHits')::int, i.id FROM manager_items i
-            JOIN articles a ON a.slug = i.target
-            WHERE i.manager_id = ? AND i.kind = ? AND i.status = 'done' AND a.tags @> ?::text[]
-              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
-                                     AND g.kind = 'article' AND g.ref = a.slug))
-            ORDER BY i.updated_at, i.id LIMIT ?""",
-          Param.S(managerId),
-          Param.S(kind),
-          Param.A(tags),
-          Param.S(g),
-          Param.S(g),
-          Param.I(lim)
-        )
-        .frag
-        .query[(String, String, Option[Int], Long)]
-        .run()
-        .toList
-        .map((s, t, n, id) => (s, t, n, Some(id)))
-      val ledgers = Sql
-        .of(
-          s"""SELECT l.slug, ${at("l.updated_at")} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
-            WHERE a.kind <> 'index' AND a.tags @> ?::text[]
-              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
-                              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
-              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
-                                     AND g.kind = 'article' AND g.ref = a.slug))
-              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.kind = ? AND i.target = a.slug)
-            ORDER BY l.updated_at, l.slug LIMIT ?""",
-          Param.A(tags),
-          Param.S(g),
-          Param.S(g),
-          Param.S(managerId),
-          Param.S(kind),
-          Param.I(lim)
-        )
-        .frag
-        .query[(String, String)]
-        .run()
-        .toList
-        .map((s, t) => (s, t, None, None))
-      (done ++ ledgers).sortBy(_._2).take(lim)
+    val done = Sql
+      .of(
+        s"""SELECT i.target, ${at("i.updated_at")}, (i.state->>'filterHits')::int, i.id FROM manager_items i
+          JOIN articles a ON a.slug = i.target
+          WHERE i.manager_id = ? AND i.kind = ? AND i.status = 'done' AND a.tags @> ?::text[]
+            AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
+                                   AND g.kind = 'article' AND g.ref = a.slug))
+          ORDER BY i.updated_at, i.id LIMIT ?""",
+        Param.S(managerId),
+        Param.S(kind),
+        Param.A(tags),
+        Param.S(g),
+        Param.S(g),
+        Param.I(lim)
+      )
+      .frag
+      .query[(String, String, Option[Int], Long)]
+      .run()
+      .toList
+      .map((s, t, n, id) => (s, t, n, Some(id)))
+    val ledgers = Sql
+      .of(
+        s"""SELECT l.slug, ${at("l.updated_at")} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
+          WHERE a.kind <> 'index' AND a.tags @> ?::text[]
+            AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
+                            WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
+            AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
+                                   AND g.kind = 'article' AND g.ref = a.slug))
+            AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.kind = ? AND i.target = a.slug)
+          ORDER BY l.updated_at, l.slug LIMIT ?""",
+        Param.A(tags),
+        Param.S(g),
+        Param.S(g),
+        Param.S(managerId),
+        Param.S(kind),
+        Param.I(lim)
+      )
+      .frag
+      .query[(String, String)]
+      .run()
+      .toList
+      .map((s, t) => (s, t, None, None))
+    (done ++ ledgers).sortBy(_._2).take(lim)
 
   /** Articles that record a coverage filter and that no item of this manager has open (pending, held, active), with
     * when their last extension item settled (None: never extended) — the ones never extended first, then the longest
     * ago; `tags`/`goal` narrow as in the selection.
     */
-  def extendCandidates(
-      ds: DataSource,
-      managerId: String,
-      tags: List[String],
-      goal: Option[String],
-      limit: Int
+  def extendCandidates(managerId: String, tags: List[String], goal: Option[String], limit: Int)(using
+      DbCon
   ): List[(String, Option[String])] =
     val g = goal.map(_.trim).getOrElse("")
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT a.slug, ${at("x.updated_at")} FROM articles a
-            LEFT JOIN manager_items x ON x.manager_id = ? AND x.kind = ? AND x.target = a.slug
-            WHERE a.coverage_filter IS NOT NULL AND a.kind <> 'index' AND a.tags @> ?::text[]
-              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links gl WHERE gl.goal_slug = ?
-                                     AND gl.kind = 'article' AND gl.ref = a.slug))
-              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.target = a.slug
-                              AND i.status IN ('pending', 'held', 'active'))
-            ORDER BY x.updated_at NULLS FIRST, a.slug LIMIT ?""",
-          Param.S(managerId),
-          Param.S(ArticleExtend),
-          Param.A(tags),
-          Param.S(g),
-          Param.S(g),
-          Param.S(managerId),
-          Param.I(math.max(1, limit))
-        )
-        .frag
-        .query[(String, Option[String])]
-        .run()
-        .toList
+    Sql
+      .of(
+        s"""SELECT a.slug, ${at("x.updated_at")} FROM articles a
+          LEFT JOIN manager_items x ON x.manager_id = ? AND x.kind = ? AND x.target = a.slug
+          WHERE a.coverage_filter IS NOT NULL AND a.kind <> 'index' AND a.tags @> ?::text[]
+            AND (? = '' OR EXISTS (SELECT 1 FROM goal_links gl WHERE gl.goal_slug = ?
+                                   AND gl.kind = 'article' AND gl.ref = a.slug))
+            AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.target = a.slug
+                            AND i.status IN ('pending', 'held', 'active'))
+          ORDER BY x.updated_at NULLS FIRST, a.slug LIMIT ?""",
+        Param.S(managerId),
+        Param.S(ArticleExtend),
+        Param.A(tags),
+        Param.S(g),
+        Param.S(g),
+        Param.S(managerId),
+        Param.I(math.max(1, limit))
+      )
+      .frag
+      .query[(String, Option[String])]
+      .run()
+      .toList
 
   // ── the autopilot's views (few queries for every manager at once) ──────────────────────────────
 
@@ -764,30 +722,26 @@ object ManagerRepo:
       .head
 
   /** Open items on `target` in manager `id`, any kind. */
-  def openOn(ds: DataSource, managerId: String, target: String): Boolean =
-    connect(ds)(sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND target = $target
+  def openOn(managerId: String, target: String)(using DbCon): Boolean =
+    (sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND target = $target
                       AND status IN ('pending', 'held', 'active') LIMIT 1""".query[Int].run().nonEmpty)
 
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
-  def articleFacets(ds: DataSource, slug: String): (List[String], List[String]) =
-    connect(ds):
-      val tags = sql"SELECT tags FROM articles WHERE slug = $slug".query[List[String]].run().headOption.getOrElse(Nil)
-      val goals =
-        sql"SELECT goal_slug FROM goal_links WHERE kind = 'article' AND ref = $slug".query[String].run().toList
-      (tags, goals)
+  def articleFacets(slug: String)(using DbCon): (List[String], List[String]) =
+    val tags = sql"SELECT tags FROM articles WHERE slug = $slug".query[List[String]].run().headOption.getOrElse(Nil)
+    val goals =
+      sql"SELECT goal_slug FROM goal_links WHERE kind = 'article' AND ref = $slug".query[String].run().toList
+    (tags, goals)
 
   /** Is there a source with this citekey or DOI (a hold waiting for it is released)? */
-  def sourceExists(ds: DataSource, ref: String): Boolean =
+  def sourceExists(ref: String)(using DbCon): Boolean =
     val r = ref.trim
     val doi = r.toLowerCase.stripPrefix("https://doi.org/").stripPrefix("doi:")
-    connect(ds)(
+    (
       sql"""SELECT 1 FROM sources WHERE citekey = $r OR lower(doi) = $doi LIMIT 1""".query[Int].run().nonEmpty
     )
 
   // ── the watchers' ingest backlog (`oa-ingest` items) ───────────────────────────────────────────
-
-  /** Every pending backlog item of an ACTIVE watcher, the most urgent first (priority, then the oldest). */
-  def backlogPending(ds: DataSource): List[ManagerItem] = connect(ds)(backlogPendingIn())
 
   def backlogPendingIn()(using DbCon): List[ManagerItem] =
     (itemSelect ++ Sql.of(
@@ -797,17 +751,11 @@ object ManagerRepo:
       Param.S(OaIngest)
     )).frag.query[ItemRow].run().toList.map(toItem)
 
-  /** The open (pending, held, active) backlog items of every watcher — the dedupe across watchers. */
-  def backlogOpen(ds: DataSource): List[ManagerItem] = connect(ds)(backlogOpenIn())
-
   def backlogOpenIn()(using DbCon): List[ManagerItem] =
     (itemSelect ++ Sql.of(
       " WHERE kind = ? AND status IN ('pending', 'held', 'active') ORDER BY id",
       Param.S(OaIngest)
     )).frag.query[ItemRow].run().toList.map(toItem)
-
-  /** The open backlog item of any watcher for this DOI, if one exists (the oldest). */
-  def backlogOpenFor(ds: DataSource, doi: String): Option[ManagerItem] = connect(ds)(backlogOpenForIn(doi))
 
   def backlogOpenForIn(doi: String)(using DbCon): Option[ManagerItem] =
     (itemSelect ++ Sql.of(
@@ -826,32 +774,15 @@ object ManagerRepo:
       .map((m, p, h) => m -> (p, h))
       .toMap
 
-  /** Per manager: its events of `kind` since `since` (every watcher's ingests today, in one query). */
-  def countEventsBy(ds: DataSource, kind: String, since: java.time.Instant): Map[String, Int] =
-    connect(ds)(countEventsByIn(kind, since))
-
   def countEventsByIn(kind: String, since: java.time.Instant)(using DbCon): Map[String, Int] =
     val at = since.toString
     sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
           GROUP BY manager_id""".query[(String, Int)].run().toMap
 
-  /** An item's state replaced (a backlog entry gained a goal); a CAS on the statuses it may be in. */
-  def setItemState(ds: DataSource, itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean =
-    transact(ds)(setItemStateIn(itemId, state, from))
-
   def setItemStateIn(itemId: Long, state: ItemState, from: List[ItemStatus])(using DbCon): Boolean =
     val fs = from.map(_.wire)
     sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
-
-  /** A pending backlog item tried again later: one more failure, not before `notBefore`, why. */
-  def backlogRetry(
-      ds: DataSource,
-      itemId: Long,
-      failures: Int,
-      notBefore: java.time.Instant,
-      outcome: String
-  ): Boolean = transact(ds)(backlogRetryIn(itemId, failures, notBefore, outcome))
 
   def backlogRetryIn(itemId: Long, failures: Int, notBefore: java.time.Instant, outcome: String)(using
       DbCon
@@ -862,9 +793,9 @@ object ManagerRepo:
           WHERE id = $itemId AND status = 'pending'""".update.run() > 0
 
   /** The citekey of the source holding this DOI, if one does. */
-  def citekeyOfDoi(ds: DataSource, doi: String): Option[String] =
+  def citekeyOfDoi(doi: String)(using DbCon): Option[String] =
     val d = doi.trim.toLowerCase
-    connect(ds)(
+    (
       sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[String].run().headOption
     )
 
@@ -874,8 +805,6 @@ object ManagerRepo:
     * the run linked it to its goal by that DOI (`goal_links` kind `queue-item`, note = the DOI). A person's item, a
     * plan's, a currency check's match none of the three. `isOa` = the ranking marked the work open access.
     */
-
-  def sweepAcquireItems(ds: DataSource): List[SweepAcquireItem] = connect(ds)(sweepAcquireItemsIn())
 
   def sweepAcquireItemsIn()(using DbCon): List[SweepAcquireItem] =
     sql"""WITH picks AS (
@@ -901,8 +830,8 @@ object ManagerRepo:
             ORDER BY q.id, p.goal, p.oa DESC, p.job""".query[SweepAcquireItem].run().toList
 
   /** How many acquisition items are open. */
-  def openAcquireCount(ds: DataSource): Int =
-    connect(ds)(
+  def openAcquireCount(using DbCon): Int =
+    (
       sql"SELECT count(*)::int FROM queue_items WHERE list = 'acquire' AND status = 'open'".query[Int].run().head
     )
 
@@ -937,9 +866,9 @@ object ManagerRepo:
   def lastEvent(managerId: String)(using DbCon): Option[ManagerEvent] = events(managerId, None, 1).headOption
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
-  def countEvents(ds: DataSource, managerId: String, kind: String, since: java.time.Instant): Int =
+  def countEvents(managerId: String, kind: String, since: java.time.Instant)(using DbCon): Int =
     val at = since.toString
-    connect(ds)(sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
+    (sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
                       AND at >= $at::timestamptz""".query[Int].run().head)
 
   /** How many events of `kind` ALL managers recorded since `since` (every watcher's ingests today: the autopilot's
@@ -962,9 +891,9 @@ object ManagerRepo:
       Param.S(kind)
     )).frag.query[ManagerEvent].run().headOption
 
-  def pruneEvents(ds: DataSource, days: Int): Int =
+  def pruneEvents(days: Int)(using DbCon): Int =
     if days <= 0 then 0
-    else transact(ds)(sql"DELETE FROM manager_events WHERE at < now() - make_interval(days => $days)".update.run())
+    else (sql"DELETE FROM manager_events WHERE at < now() - make_interval(days => $days)".update.run())
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -1013,40 +942,37 @@ object ManagerRepo:
     )
 
   def addHint(
-      ds: DataSource,
       managerId: String,
       itemId: Option[Long],
       text: String,
       effect: Option[HintEffect],
       author: String,
       standing: Boolean
-  ): ManagerHint =
-    val id = transact(ds):
+  )(using DbCon): ManagerHint =
+    val id =
       sql"""INSERT INTO manager_hints (manager_id, item_id, text, effect, author, standing)
             VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, $standing) RETURNING id"""
         .query[Long]
         .run()
         .head
-    hint(ds, id).get
+    hint(id).get
 
-  def hint(ds: DataSource, id: Long): Option[ManagerHint] =
-    connect(ds)((hintSelect ++ Sql.of(" WHERE h.id = ?", Param.L(id))).frag.query[HintRow].run().headOption.map(toHint))
+  def hint(id: Long)(using DbCon): Option[ManagerHint] =
+    ((hintSelect ++ Sql.of(" WHERE h.id = ?", Param.L(id))).frag.query[HintRow].run().headOption.map(toHint))
 
   /** A manager's hints, oldest first; `live` = only the ones not retired. */
-  def hints(ds: DataSource, managerId: String, live: Boolean): List[ManagerHint] =
-    connect(ds):
-      (hintSelect ++ Sql.of(" WHERE h.manager_id = ?", Param.S(managerId)) ++
-        (if live then Sql.of(" AND h.retired_at IS NULL") else Sql.empty) ++ Sql
-          .of(" ORDER BY h.id")).frag.query[HintRow].run().toList.map(toHint)
+  def hints(managerId: String, live: Boolean)(using DbCon): List[ManagerHint] =
+    (hintSelect ++ Sql.of(" WHERE h.manager_id = ?", Param.S(managerId)) ++
+      (if live then Sql.of(" AND h.retired_at IS NULL") else Sql.empty) ++ Sql
+        .of(" ORDER BY h.id")).frag.query[HintRow].run().toList.map(toHint)
 
   /** The action a hint carries now (a model's proposal a person approved). */
-  def setHintEffect(ds: DataSource, id: Long, effect: Option[HintEffect]): Boolean =
-    transact(ds)(sql"UPDATE manager_hints SET effect = $effect::jsonb WHERE id = $id".update.run() > 0)
+  def setHintEffect(id: Long, effect: Option[HintEffect])(using DbCon): Boolean =
+    (sql"UPDATE manager_hints SET effect = $effect::jsonb WHERE id = $id".update.run() > 0)
 
-  def retireHint(ds: DataSource, managerId: String, id: Long): Boolean =
-    transact(ds):
-      sql"""UPDATE manager_hints SET retired_at = now() WHERE id = $id AND manager_id = $managerId
-            AND retired_at IS NULL""".update.run() > 0
+  def retireHint(managerId: String, id: Long)(using DbCon): Boolean =
+    sql"""UPDATE manager_hints SET retired_at = now() WHERE id = $id AND manager_id = $managerId
+          AND retired_at IS NULL""".update.run() > 0
 
   /** In the dispatch transaction: the hints a run was given, and the once-hints among them retired. */
   def usedIn(hints: List[ManagerHint], runId: String)(using DbCon): Unit =

@@ -305,7 +305,9 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         job = ap.job
       }
       // the server stopped while an apply ran (its row still says running)
-      val cut = com.histmersion.util.jobs.JobRepo.startMergeApply(testPool(own.db), "c" * 64, "feedbeef")
+      val cut = com.histmersion.util.database
+        .Transactor(testPool(own.db))
+        .transact(com.histmersion.util.jobs.JobRepo.startMergeApply("c" * 64, "feedbeef"))
       serve { url =>
         val done = get(s"$url/api/merge/apply/$job")
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))

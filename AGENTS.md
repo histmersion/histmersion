@@ -175,6 +175,8 @@ Chimney 2.1.0.
 
 ### 1. No primitives in the model
 
+_Check: `ContractsSuite` rules `primitive` (a public service, repository or controller method with a `String`/`Int`/`Long` named for a concept that has a newtype) and `unwrap` (`.value` outside boundary code)._
+
 Every value in the model has a type that says what it means: an Iron newtype, not a raw
 `String`/`Int`/`Long`, and not a bare refined type (`String :| Match[…]`) passed around as such. A
 constraint is optional (`Pure` accepts every value of the base type). A smart constructor exists only
@@ -210,6 +212,8 @@ final case class Person(name: PersonName, born: Year)        // no invariant: pu
 ```
 
 ### 3. Separate models per layer
+
+_Check: `ContractsSuite` rule `concept` (one top-level type name defined twice within one layer)._
 
 API, database and domain may each have their own package and model, in the representation that is
 natural there and works with the library that serves it (Kindlings derivation for codecs and schemas,
@@ -292,6 +296,8 @@ excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_
 
 ### 7. Derive in the `derives` clause
 
+_Check: `ContractsSuite` rule `derives` (a codec, schema or config given written by hand, a `.derived` call)._
+
 Type-class instances that Kindlings derives are requested in the type's `derives` clause, not as a
 separate `given … = …derived` line.
 
@@ -300,6 +306,8 @@ final case class BuildStamp(version: Version, commit: CommitId) derives Kindling
 ```
 
 ### 8. Lenses and loops, not copies and reallocating folds
+
+_Check: `ContractsSuite` rule `copy` (`.copy(`)._
 
 Updating one field of an accumulator (`acc.copy(queued = acc.queued + n)`) is a job for a lens
 (Kindlings' optics). A fold that allocates a new value for every element is written as a `@tailrec`
@@ -317,6 +325,8 @@ def of(states: List[(JobState, Int)]): JobCounts =
 ```
 
 ### 9. One top-level type per file
+
+_Check: `ContractsSuite` rule `one-type` (a companion, a newtype's alias and its `<Name>Rule` constraint and the cases of a sealed type in its file are not counted)._
 
 A file holds one top-level type with its companion, unless the types are genuinely one thing: a sealed
 hierarchy, or a helper so tied to a type that it could live in its companion. Several unrelated types in
@@ -417,11 +427,15 @@ the label table over every vocabulary. An answer that joins domains is a view in
 
 ### 11. Services own transactions
 
+_Check: `ContractsSuite` rule `transaction` (a `…Repo` that calls `connect`/`transact`, names a `Transactor`, calls `getConnection` or takes a `DataSource`)._
+
 A repository method takes the transaction it runs in; it never opens one. The service opens the
 transaction, so several repository calls are atomic together, through `util.database.Transactor`:
 `db.read(…)` on one connection, `db.transact(…)` in one transaction an exception rolls back.
 
 ### 12. No globals
+
+_Check: `ContractsSuite` rule `global` (`System.getenv`, `sys.env`, `sys.props`, `System.getProperty`, `"user.home"`/`"user.dir"`, `System.currentTimeMillis`, `….now()`, `Clock.system…` outside a `@main def` file and `SystemContext`)._
 
 Nothing reads the environment, system properties, the clock or the working directory directly
 (`System.getenv`, `sys.props`, `Instant.now()` …). Values come from configuration, or are passed in. The
@@ -430,6 +444,8 @@ the settings were loaded with, the `UserPaths` that follow from it) and the comp
 (`Deps.clock`, `Deps.environment`, `Deps.userPaths`); a test passes `Clock.fixed` or `SystemContext.isolated`.
 
 ### 13. Services are traits; controllers depend on them
+
+_Check: `ContractsSuite` rule `service` (a `…Service` trait whose file defines no `Implementation` or no `InMemory`)._
 
 A service is a trait. Its companion holds the implementations:
 
@@ -458,6 +474,8 @@ accounts exist every request is `Caller.Local`.
 
 ### 14. No free-standing helper objects
 
+_Check: `ContractsSuite` rule `helper` (a top-level object without a type of its name, named as another type's plural or with `Ops`/`Utils`/`Helpers`/`Support`/`Syntax`/`Functions`)._
+
 A function about a type is a method of the type or a member of its companion — an extension where the type's
 module must not know the function's dependencies. A closed set of strings is an `enum`. A top-level object
 without a same-named type is one of: a repository, a group of endpoints, CLI commands or views, a holder of
@@ -477,6 +495,11 @@ The entry points are `com.histmersion.server.histmersionServer`, `cli.histmersio
 `server.plugins.pluginTool` (the relink kit's tool), `server.agents.generatePlugin` (`just plugin`) and
 `pluginresolver.pluginResolver`. A `@main def` must not share its name, ignoring case, with a type of its
 package: on a case-insensitive file system their class files overwrite each other.
+
+Every check lists today's violations in `modules/server/src/test/resources/architecture/contracts.tsv`, exact both
+ways: a new violation fails the build, and so does a row nothing violates any more (`HISTMERSION_UPDATE_ARCHITECTURE=1`
+rewrites the list; a change only ever removes rows or lowers counts). Rules 2, 5, 6 and 10 are judged in review (10 is
+also `ArchitectureSuite`'s direction rule).
 
 Rules 7–14 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
 a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict

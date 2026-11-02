@@ -17,7 +17,8 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *   - `copy` (rule 8): `.copy(`;
   *   - `one-type` (rule 9): a file with more than one top-level type (a companion, a type alias of a newtype, its
   *     constraint `<Name>Rule` and the cases of a sealed type in its file not counted);
-  *   - `transaction` (rule 11): a repository that opens a connection or transaction, or takes a `DataSource`;
+  *   - `transaction` (rule 11): a repository that opens a connection or transaction (magnum's `connect`/`transact`, a
+  *     `Transactor`, `getConnection`), or takes a `DataSource`;
   *   - `global` (rule 12): the environment, system properties, the home or working directory, or the wall clock read
   *     outside an entry point (`@main def`, `SystemContext`);
   *   - `service` (rule 13): a `…Service` trait whose file has no `Implementation` and no `InMemory`;
@@ -97,11 +98,11 @@ object ContractsSuite:
 
   /** The layer a module belongs to: a concept may have one type per layer. */
   def layerOf(module: String): String = module match
-    case "api" | "web"                                                             => "api"
-    case "db"                                                                      => "db"
-    case "cli"                                                                     => "cli"
-    case "plugin-api"                                                              => "plugin"
-    case m if m.startsWith("plugins/")                                             => m
+    case "api" | "web"                 => "api"
+    case "db"                          => "db"
+    case "cli"                         => "cli"
+    case "plugin-api"                  => "plugin"
+    case m if m.startsWith("plugins/") => m
     case "values" | "core" | "config" | "files" | "upstreams" | "server" | "chimney-iron" | "plugin-host" |
         "plugin-resolver" | "plugin-vaults" =>
       "core"
@@ -123,7 +124,8 @@ object ContractsSuite:
     private def counted(rule: String, s: SourceFile, detail: String, hits: List[Int]): List[Violation] =
       hits.headOption.toList.map(h => Violation(rule, s.key, detail, hits.size, s"${s.key}:${s.lineOf(h)}"))
 
-    private val Newtype = "\\bobject\\s+([A-Z]\\w*)\\s+extends\\s+Refined(?:Sub)?Type\\b|\\bopaque\\s+type\\s+([A-Z]\\w*)".r
+    private val Newtype =
+      "\\bobject\\s+([A-Z]\\w*)\\s+extends\\s+Refined(?:Sub)?Type\\b|\\bopaque\\s+type\\s+([A-Z]\\w*)".r
 
     /** The newtypes' names, in every module (a concept with a newtype anywhere has one). */
     def newtypes(sources: List[SourceFile]): Set[String] =
@@ -186,7 +188,8 @@ object ContractsSuite:
         }
         .toList
 
-    private val Primitive = "^(?:(?:Option|List|Set|Seq|Vector|Iterable|NonEmptyList|Chunk)\\[)?(?:String|Int|Long)\\]?$".r
+    private val Primitive =
+      "^(?:(?:Option|List|Set|Seq|Vector|Iterable|NonEmptyList|Chunk)\\[)?(?:String|Int|Long)\\]?$".r
 
     private def isContractFile(s: SourceFile): Boolean =
       val b = baseName(s)
@@ -232,7 +235,13 @@ object ContractsSuite:
           case ((layer, name), defs) if defs.map(_._3.key).distinct.size > 1 =>
             val files = defs.map(_._3.key).distinct.sorted
             val (_, _, s, at) = defs.minBy(_._3.key)
-            Violation("concept", s"layer $layer", s"$name in ${files.mkString(" ")}", files.size, s"${s.key}:${s.lineOf(at)}")
+            Violation(
+              "concept",
+              s"layer $layer",
+              s"$name in ${files.mkString(" ")}",
+              files.size,
+              s"${s.key}:${s.lineOf(at)}"
+            )
         }
 
     private val Codecs =
@@ -271,7 +280,10 @@ object ContractsSuite:
           "transaction",
           s,
           "opens a connection or transaction",
-          "(?<![\\w.])(?:transact|connect)\\(".r.findAllMatchIn(s.code).map(_.start).toList
+          "(?<![\\w.])(?:transact|connect)\\(|\\bTransactor\\b|\\.getConnection\\b".r
+            .findAllMatchIn(s.code)
+            .map(_.start)
+            .toList
         ) ++ counted(
           "transaction",
           s,
@@ -297,9 +309,19 @@ object ContractsSuite:
 
     private def service(s: SourceFile): List[Violation] =
       ServiceTrait.findAllMatchIn(s.code).toList.flatMap { m =>
-        val missing = List("Implementation", "InMemory").filterNot(c => s"\\bclass\\s+$c\\b".r.findFirstIn(s.code).isDefined)
+        val missing =
+          List("Implementation", "InMemory").filterNot(c => s"\\bclass\\s+$c\\b".r.findFirstIn(s.code).isDefined)
         if missing.isEmpty then Nil
-        else List(Violation("service", s.key, s"${m.group(1)} without ${missing.mkString(" and ")}", 1, s"${s.key}:${s.lineOf(m.start)}"))
+        else
+          List(
+            Violation(
+              "service",
+              s.key,
+              s"${m.group(1)} without ${missing.mkString(" and ")}",
+              1,
+              s"${s.key}:${s.lineOf(m.start)}"
+            )
+          )
       }
 
     private val HelperSuffix = "^([A-Z]\\w*?)(s|Ops|Utils|Util|Helpers|Helper|Support|Syntax|Functions)$".r

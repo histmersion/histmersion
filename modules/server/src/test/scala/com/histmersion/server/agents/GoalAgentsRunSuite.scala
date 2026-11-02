@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.workflows.*
@@ -228,7 +230,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       List(("10.5555/zzagent.in", true), ("10.5555/zzagent.out", false))
     )
     assert(plan.dropped.exists(_.contains("10.5555/zzagent.ghost")), plan.dropped)
-    assert(!GoalRepo.exists(ds, "zzagent-tin-mines"), "nothing is created before approval")
+    assert(!Transactor(ds).read(GoalRepo.exists("zzagent-tin-mines")), "nothing is created before approval")
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
 
     // approve: the run goes back to the queue and applies exactly the approved plan
@@ -267,7 +269,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
     assert(done.progress.exists(_.contains("rejected")), done.progress)
-    assert(!GoalRepo.exists(ds, "zzagent-tin-mines"))
+    assert(!Transactor(ds).read(GoalRepo.exists("zzagent-tin-mines")))
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
     assert(h.workListView.list("acquire", all = true).toOption.get.items.forall(!_.text.contains("zzagent.out")))
 

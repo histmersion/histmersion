@@ -270,7 +270,7 @@ final class AgentsHandlers(
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
   def setFallthrough(role: String, in: PlanQuota.FallthroughSet): Either[ApiError, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
-      com.histmersion.db.PlanQuotaRepo.setFallthrough(ds, r.wire, in.fallthrough)
+      Transactor(ds).transact(com.histmersion.db.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough))
       quota
     }
 
@@ -435,7 +435,7 @@ final class AgentsHandlers(
         (),
         ApiError("a chain needs at least one provider:model (reset the role to go back to config)")
       )
-      _ = ModelSettingsRepo.setChain(ds, r.wire, ms.map(_.wire))
+      _ = Transactor(ds).transact(ModelSettingsRepo.setChain(r.wire, ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
@@ -443,7 +443,7 @@ final class AgentsHandlers(
   def resetChain(role: String): Either[ApiError, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      _ = ModelSettingsRepo.removeChain(ds, r.wire)
+      _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(r.wire))
       c <- chainOf(r)
     yield c
 
@@ -455,7 +455,7 @@ final class AgentsHandlers(
         case (Nil, ok) => Right(ok)
         case (errs, _) => Left(ApiError(errs.mkString("; ")))
       a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(ApiError(_))
-      _ = ModelSettingsRepo.setAllowance(ds, t.wire, a.limits.map(_.spec), a.reservePct)
+      _ = Transactor(ds).transact(ModelSettingsRepo.setAllowance(t.wire, a.limits.map(_.spec), a.reservePct))
       st <- picker
         .allowanceStatuses(System.currentTimeMillis())
         .find(_.target == t.wire)
@@ -468,7 +468,7 @@ final class AgentsHandlers(
       .parse(target, knownProviders)
       .left
       .map(ApiError(_))
-      .map(t => GoalPlans.Removed(ModelSettingsRepo.removeAllowance(ds, t.wire)))
+      .map(t => GoalPlans.Removed(Transactor(ds).transact(ModelSettingsRepo.removeAllowance(t.wire))))
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =

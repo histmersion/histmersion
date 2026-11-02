@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -143,18 +145,19 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
   /** 30% left of the 5-hour window (floor 25%), read an hour ago: stale, so it needs 35% — paused ONLY on its age.
     */
   private def staleReading(): Unit =
-    PlanQuotaRepo.record(
-      ds,
-      PoolId.ClaudePlan,
-      List(
-        Reading(
-          "claude",
-          "five_hour",
-          70,
-          Some(now() + 3 * 3600000L),
-          rejected = false,
-          now() - 60 * Min,
-          PlanQuota.Source.Run
+    Transactor(ds).transact(
+      PlanQuotaRepo.record(
+        PoolId.ClaudePlan,
+        List(
+          Reading(
+            "claude",
+            "five_hour",
+            70,
+            Some(now() + 3 * 3600000L),
+            rejected = false,
+            now() - 60 * Min,
+            PlanQuota.Source.Run
+          )
         )
       )
     )
@@ -225,7 +228,10 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       s"it waits for the reset: ${run.resumeAt}"
     )
     assertEquals(reads.probes.get(), 1)
-    assertEquals(PlanQuotaRepo.refreshes(ds, PoolId.ClaudePlan, 0)._2.map(r => (r.ok, r.mode)), Some((false, "probe")))
+    assertEquals(
+      Transactor(ds).read(PlanQuotaRepo.refreshes(PoolId.ClaudePlan, 0))._2.map(r => (r.ok, r.mode)),
+      Some((false, "probe"))
+    )
     // the check a minute later: still within stale-minutes of the last attempt — no second probe, still paused
     reads.probeOut = List(event(20, 30), Result)
     val soon = java.time.Instant.now().plusSeconds(60)
@@ -244,7 +250,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(paid.steps.size, 0)
-    assertEquals(PlanQuotaRepo.refreshes(ds, PoolId.ClaudePlan, 0)._1, 2)
+    assertEquals(Transactor(ds).read(PlanQuotaRepo.refreshes(PoolId.ClaudePlan, 0))._1, 2)
 
   test("#989: a run paused on a pool still below its floor stays paused; nothing is read without such a run"):
     val reads = Reads(); reads.probeOut = List(event(95, 30), Result)
@@ -265,7 +271,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     assertEquals(picked.client.model, Plan)
     assertEquals(reads.probes.get(), 1)
     assertEquals(
-      PlanQuotaRepo.readings(ds, PoolId.ClaudePlan).map(r => (r.kind, r.source)).toSet,
+      Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).map(r => (r.kind, r.source)).toSet,
       Set(("five_hour", PlanQuota.Source.Probe), ("seven_day", PlanQuota.Source.Probe))
     )
     // refresh off: today's behaviour — usable, unknown, nothing read
@@ -302,18 +308,19 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     assertEquals(onSchedule(when = at.plusSeconds(181 * 60)).map(_.ok), Right(true))
     assertEquals(reads.probes.get(), 2)
     // a reading a run recorded since counts like the schedule's own
-    PlanQuotaRepo.record(
-      ds,
-      PoolId.ClaudePlan,
-      List(
-        Reading(
-          "claude",
-          "five_hour",
-          40,
-          Some(now() + 3600000L),
-          rejected = false,
-          at.plusSeconds(300 * 60).toEpochMilli,
-          PlanQuota.Source.Run
+    Transactor(ds).transact(
+      PlanQuotaRepo.record(
+        PoolId.ClaudePlan,
+        List(
+          Reading(
+            "claude",
+            "five_hour",
+            40,
+            Some(now() + 3600000L),
+            rejected = false,
+            at.plusSeconds(300 * 60).toEpochMilli,
+            PlanQuota.Source.Run
+          )
         )
       )
     )
@@ -442,18 +449,19 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       providers = baseCfg.agents.providers.copy(codex = baseCfg.agents.providers.codex.copy(appServer = true))
     )
     val pools = PlanPools(ds, cfg, () => Some(home), reads.seams)
-    PlanQuotaRepo.record(
-      ds,
-      PoolId.ChatgptPlan,
-      List(
-        Reading(
-          "codex",
-          "300m",
-          72,
-          Some(now() + 3600000L),
-          rejected = false,
-          now() - 60 * Min,
-          PlanQuota.Source.AppServer
+    Transactor(ds).transact(
+      PlanQuotaRepo.record(
+        PoolId.ChatgptPlan,
+        List(
+          Reading(
+            "codex",
+            "300m",
+            72,
+            Some(now() + 3600000L),
+            rejected = false,
+            now() - 60 * Min,
+            PlanQuota.Source.AppServer
+          )
         )
       )
     )

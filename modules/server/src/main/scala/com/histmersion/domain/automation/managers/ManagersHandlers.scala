@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.histmersion.util.database.Transactor
+
 import com.augustnagro.magnum.{connect, transact}
 
 import com.histmersion.domain.automation.agents.*
@@ -73,7 +75,7 @@ final class ManagersHandlers(
       ManagerDetail(
         m,
         withRuns(connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Active))),
-        ManagerRepo.hints(ds, m.id, live = true),
+        Transactor(ds).read(ManagerRepo.hints(m.id, live = true)),
         connect(ds)(ManagerRepo.events(m.id, None, limits.page(None, 20)))
       )
     }
@@ -229,7 +231,7 @@ final class ManagersHandlers(
   def delete(id: String): Either[ApiError, Removed] =
     manager(id).map { m =>
       inFlight(m.id).foreach(r => agents.engine.cancel(r.id))
-      Removed(ManagerRepo.delete(ds, m.id))
+      Removed(Transactor(ds).transact(ManagerRepo.delete(m.id)))
     }
 
   private def inFlight(id: String): List[RunInfo] = agents.runs.forManager(id, active = true).toList
@@ -278,7 +280,7 @@ final class ManagersHandlers(
         case "stop" =>
           agents.managerStore.setState(m.id, State.Stopped, pauseRuns = false)
           val cancelled = inFlight(m.id).count(r => agents.engine.cancel(r.id).isRight)
-          val items = ManagerRepo.cancelOpen(ds, m.id, "the manager was stopped")
+          val items = Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, "the manager was stopped"))
           agents.managerStore.event(
             m.id,
             None,
@@ -304,7 +306,7 @@ final class ManagersHandlers(
         case None => Right(None)
     yield
       val (off, lim) = (math.max(0, offset.getOrElse(0)), limits.page(limit, 25))
-      val (rows, total) = ManagerRepo.items(ds, m.id, st, off, lim)
+      val (rows, total) = Transactor(ds).read(ManagerRepo.itemPage(m.id, st, off, lim))
       ItemPage(withRuns(rows), total, off, lim)
 
   /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
@@ -431,7 +433,7 @@ final class ManagersHandlers(
             )
         case "priority" =>
           in.priority.toRight(ApiError("give `priority`")).map { p =>
-            ManagerRepo.setPriority(ds, i.id, p)
+            Transactor(ds).transact(ManagerRepo.setPriority(i.id, p))
             agents.managerStore.event(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
         case "skip" =>
@@ -451,7 +453,7 @@ final class ManagersHandlers(
         case "reopen" =>
           Either
             .cond(
-              ManagerRepo.reopen(ds, i.id),
+              Transactor(ds).transact(ManagerRepo.reopen(i.id)),
               (),
               conflict(s"item #${i.id} is ${i.status}; only a settled item can be re-opened")
             )
@@ -467,7 +469,7 @@ final class ManagersHandlers(
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   def hints(id: String, all: Boolean): Either[ApiError, List[ManagerHint]] =
-    manager(id).map(m => ManagerRepo.hints(ds, m.id, live = !all))
+    manager(id).map(m => Transactor(ds).read(ManagerRepo.hints(m.id, live = !all)))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the next run only).
     * Its structured effect, if any, is applied now — prioritise, hold or skip the targets it names or matches (pending
@@ -497,14 +499,15 @@ final class ManagersHandlers(
       // a suggestion needs a run that can start: checked before the hint is recorded
       _ <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
       author = in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-      hint = ManagerRepo.addHint(
-        ds,
-        m.id,
-        item.map(_.id),
-        text,
-        if propose then None else eff,
-        author,
-        standing = !in.once.contains(true)
+      hint = Transactor(ds).transact(
+        ManagerRepo.addHint(
+          m.id,
+          item.map(_.id),
+          text,
+          if propose then None else eff,
+          author,
+          standing = !in.once.contains(true)
+        )
       )
       applied = eff.fold("")(e =>
         if propose then proposeEffect(m, hint.id, text, e, author) else applyEffect(m, hint.id, text, e)
@@ -522,7 +525,7 @@ final class ManagersHandlers(
         Feed.Hint,
         s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied$asked"
       )
-      out <- ManagerRepo.hint(ds, hint.id).toRight(notFound(s"hint ${hint.id} vanished"))
+      out <- Transactor(ds).read(ManagerRepo.hint(hint.id)).toRight(notFound(s"hint ${hint.id} vanished"))
     yield
       supervisor.nudge()
       out
@@ -578,7 +581,10 @@ final class ManagersHandlers(
   def applyProposal(p: HintProposal): Either[String, String] =
     for
       m <- manager(p.managerId).left.map(_.message)
-      ht <- ManagerRepo.hint(ds, p.hint).filter(_.managerId == m.id).toRight(s"hint #${p.hint} of ${m.id} is gone")
+      ht <- Transactor(ds)
+        .read(ManagerRepo.hint(p.hint))
+        .filter(_.managerId == m.id)
+        .toRight(s"hint #${p.hint} of ${m.id} is gone")
       _ <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
       e <- checkEffect(m, p.effect, ht.itemId.flatMap(agents.managerStore.item(_)), proposal = true).left.map(_.message)
       w <- e.action match
@@ -587,7 +593,7 @@ final class ManagersHandlers(
           val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
           Right(s" — settings now: ${ManagersHandlers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
-      _ = ManagerRepo.setHintEffect(ds, ht.id, Some(e))
+      _ = Transactor(ds).transact(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = agents.managerStore.event(
         m.id,
         ht.itemId,
@@ -609,7 +615,7 @@ final class ManagersHandlers(
     )
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
-        val (tags, goals) = ManagerRepo.articleFacets(ds, i.target)
+        val (tags, goals) = Transactor(ds).read(ManagerRepo.articleFacets(i.target))
         ManagerPolicy.matches(e.copy(targets = Nil), i.target, tags, Nil, goals)
       })
     }
@@ -620,7 +626,7 @@ final class ManagersHandlers(
           agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, p, reopen = true)
           true
         }
-        matched.foreach(i => ManagerRepo.setPriority(ds, i.id, math.max(i.priority, p)))
+        matched.foreach(i => Transactor(ds).transact(ManagerRepo.setPriority(i.id, math.max(i.priority, p))))
         matched.size + added
       case HintEffect.HoldAction =>
         val hold = Hold(e.until, e.untilSource, s"hint #$hintId: ${text.take(200)}", Some(hintId))
@@ -645,7 +651,7 @@ final class ManagersHandlers(
 
   def deleteHint(id: String, hint: Long): Either[ApiError, Removed] =
     manager(id).map { m =>
-      val gone = ManagerRepo.retireHint(ds, m.id, hint)
+      val gone = Transactor(ds).transact(ManagerRepo.retireHint(m.id, hint))
       if gone then agents.managerStore.event(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
       Removed(gone)
     }
@@ -659,7 +665,9 @@ final class ManagersHandlers(
     agents.managerStore
       .list()
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
-      .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ agents.goals.schedules(goal)
+      .flatMap(m =>
+        WatchSchedules.view(m, Transactor(ds).read(ManagerRepo.itemPage(m.id, None, 0, 20))._1)
+      ) ++ agents.goals.schedules(goal)
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — since phase 3 a goal's schedule is a sweep of its watcher
     * `watch:<goal>` (created PAUSED when it does not exist: resume it for the schedule to fire). `enabled` puts the
@@ -714,7 +722,7 @@ final class ManagersHandlers(
     yield
       supervisor.nudge()
       WatchSchedules
-        .view(m, ManagerRepo.items(ds, id, None, 0, 20)._1)
+        .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, 0, 20))._1)
         .find(_.kind == kind)
         .getOrElse(GoalPlans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
 

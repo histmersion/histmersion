@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 
 import com.histmersion.api.{
@@ -84,9 +86,9 @@ object BundleService:
     private def options(dryRun: Boolean): ImportOptions =
       ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, w.sourceReferrers)
 
-    def instance: InstanceInfo = BundleRepo.instance(w.ds)
+    def instance: InstanceInfo = Transactor(w.ds).read(BundleRepo.instance)
 
-    def setLabel(label: Option[String]): InstanceInfo = BundleRepo.setLabel(w.ds, label)
+    def setLabel(label: Option[String]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(label))
 
     def exportBundle(since: Option[String]): Either[ApiError, (HandedFile, BundleManifest)] =
       val store = bundles
@@ -252,7 +254,7 @@ object BundleService:
               w.followUps
             )
             .map { r =>
-              if r.applied && r.mergeId.isDefined then MergeRepo.dropSession(w.ds, bundle)
+              if r.applied && r.mergeId.isDefined then Transactor(w.ds).transact(MergeRepo.dropSession(bundle))
               r
             }
             .left
@@ -262,14 +264,14 @@ object BundleService:
 
     def applyStatus(job: String): Option[MergeApplyJob] = w.applyJobs.status(job)
 
-    def session(bundle: String): MergeSession = MergeRepo.session(w.ds, bundle)
+    def session(bundle: String): MergeSession = Transactor(w.ds).read(MergeRepo.session(bundle))
 
     def putSession(bundle: String, resolutions: MergeResolutions): MergeSession =
-      MergeRepo.putSession(w.ds, bundle, resolutions)
+      Transactor(w.ds).transact(MergeRepo.putSession(bundle, resolutions))
 
-    def merges(limit: Int): List[MergeInfo] = MergeRepo.list(w.ds, limit)
+    def merges(limit: Int): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
 
-    def mergeDetail(id: String): Either[ApiError, MergeDetail] = MergeRepo.detail(w.ds, id)
+    def mergeDetail(id: String): Either[ApiError, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
 
     def mergeLedger(uid: Option[String], merge: Option[String], limit: Int): Either[ApiError, MergeLedger] =
-      MergeRepo.ledger(w.ds, uid, merge, limit, w.rules)
+      Transactor(w.ds).read(MergeRepo.ledger(uid, merge, limit, w.rules))

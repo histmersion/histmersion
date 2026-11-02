@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.{JobState, MergeApplyJob, MergeApplyResult}
 
 import hearth.kindlings.optics.syntax.*
@@ -28,10 +30,12 @@ object MergeApplyRuns:
   def apply(ds: DataSource): MergeApplyRuns = Implementation(ds)
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
-    def running: Boolean = JobRepo.mergeApplyRunning(ds)
-    def start(bundle: String, planHash: String): String = JobRepo.startMergeApply(ds, bundle, planHash)
-    def finish(id: String, outcome: Either[String, MergeApplyResult]): Unit = JobRepo.finishMergeApply(ds, id, outcome)
-    def status(id: String): Option[MergeApplyJob] = JobRepo.mergeApply(ds, id)
+    def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
+    def start(bundle: String, planHash: String): String =
+      Transactor(ds).transact(JobRepo.startMergeApply(bundle, planHash))
+    def finish(id: String, outcome: Either[String, MergeApplyResult]): Unit =
+      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome))
+    def status(id: String): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
   final case class Run(bundle: String, planHash: String, outcome: Option[Either[String, MergeApplyResult]])

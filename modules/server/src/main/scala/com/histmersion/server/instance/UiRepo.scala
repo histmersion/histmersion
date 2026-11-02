@@ -5,7 +5,6 @@ import com.histmersion.values.RunState
 import com.histmersion.api.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read
   * in ONE statement; the per-window "seen" marks are the person's (`domain.personal.seen`). Stateless.
@@ -24,8 +23,8 @@ object UiRepo:
   /** Every board's counter, in [[Board]]'s order, with the reader's `seen` marks (board → ISO instant). A board with no
     * rows yet counts 0 and has no `latest`; one never opened has no `seen`.
     */
-  def counters(ds: DataSource, seen: Map[String, String]): Counters =
-    val rows = connect(ds):
+  def counters(seen: Map[String, String])(using DbCon): Counters =
+    val rows =
       sql"""WITH b(board, n, latest) AS (
               SELECT list, (count(*) FILTER (WHERE status = 'open'))::int, max(updated_at) FILTER (WHERE status <> 'note')
                 FROM queue_items GROUP BY list
@@ -46,7 +45,7 @@ object UiRepo:
   /** The research agents at a glance: the agent runs running and queued, and the autopilot's switch and drain (off and
     * not draining while it was never switched).
     */
-  def agents(ds: DataSource): UiNotices.AgentsGlance = connect(ds)(agentsGlance)
+  def agents(using DbCon): UiNotices.AgentsGlance = (agentsGlance)
 
   private[instance] def agentsGlance(using DbCon): UiNotices.AgentsGlance =
     val (running, queued) =
