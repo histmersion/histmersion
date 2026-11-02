@@ -39,6 +39,9 @@ trait FocusService:
   def priority(slug: String, n: Int): Boolean
 
 object FocusService:
+
+  /** A goal as the focus reads it. */
+  type Goal = FocusRepo.GoalRow
   def apply(db: Transactor): FocusService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends FocusService:

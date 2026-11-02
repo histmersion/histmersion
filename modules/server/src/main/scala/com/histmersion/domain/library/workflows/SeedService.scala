@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.{connect, transact}
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
@@ -9,11 +7,10 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{FocusRepo, ManagerRepo}
+import com.histmersion.domain.automation.goals.FocusService
 import com.histmersion.domain.library.acquisition.CandidateService
 
 import java.time.Instant
-import javax.sql.DataSource
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to
@@ -26,10 +23,9 @@ import javax.sql.DataSource
   * next tick.
   */
 final class SeedService(
-    ds: DataSource,
     candidates: CandidateService,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
+    site: LibrarySite,
     agents: AgentsHandlers,
     acquisition: () => AgentUpstream,
     backlog: OaBacklog
@@ -39,7 +35,7 @@ final class SeedService(
     * `seed-every-hours`. Pure over what it is given.
     */
   def due(
-      goals: List[FocusRepo.GoalRow],
+      goals: List[FocusService.Goal],
       sources: Map[String, Int],
       watchers: Set[String],
       lastSweep: String => Option[Instant],
@@ -61,13 +57,14 @@ final class SeedService(
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
     else
       val watchers =
-        connect(ds)(ManagerRepo.light())
+        agents.managerStore
+          .light()
           .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire)
           .map(_.id)
           .toSet
       val goals = due(
-        connect(ds)(FocusRepo.goals()),
-        connect(ds)(FocusRepo.sourceCounts()),
+        agents.focusStore.goals(),
+        agents.focusStore.sourceCounts(),
         watchers,
         g =>
           (candidates.watches(g).flatMap(_.lastRun).flatMap(ManagerPolicy.parseInstant) ++ Option(
@@ -80,7 +77,7 @@ final class SeedService(
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = h.ops.queueAdd("log", QueueAdd(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
+        val _ = site.workLists.add("log", QueueAdd(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
@@ -111,7 +108,5 @@ final class SeedService(
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(queued, "legal open-access work")} queued for ingest (the plan is not needed for this)"
-        transact(ds)(
-          ManagerRepo.event(watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
-        )
+        agents.managerStore.event(watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
         Some(line)

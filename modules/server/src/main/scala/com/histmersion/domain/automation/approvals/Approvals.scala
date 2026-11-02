@@ -12,7 +12,7 @@ import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
-  * a source's proposals first: `server/agents/SourceProposals`). Approving applies it through the domain's
+  * a source's proposals first: `domain.library.workflows.SourceProposals`). Approving applies it through the domain's
   * [[ApprovalEffects]], exactly the patch a person would send.
   *
   * A run does not wait for its approvals: it finishes, and the proposal stays open until decided.

@@ -58,12 +58,14 @@ object GoalLinkRepo:
           .flatMap((ref, slug, title) => ref.toIntOption.map((_, slug, title)))
 
   /** The refs of one kind (a sweep's queries, a currency check's sources). */
-  def refs(ds: DataSource, goal: String, kind: LinkKind): List[String] =
-    connect(ds):
-      sql"SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} ORDER BY created_at, ref"
-        .query[String]
-        .run()
-        .toList
+  def refs(ds: DataSource, goal: String, kind: LinkKind): List[String] = connect(ds)(refsIn(goal, kind))
+
+  /** [[refs]] on the caller's connection. */
+  def refsIn(goal: String, kind: LinkKind)(using DbCon): List[String] =
+    sql"SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} ORDER BY created_at, ref"
+      .query[String]
+      .run()
+      .toList
 
   /** Link (idempotent: an existing link keeps its note unless a new one is given). `false` = the goal does not exist.
     */

@@ -181,19 +181,12 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:server/PageBuilder.scala	research -> split: Handlers	1
-direction	server:server/agents/AcquireRecheckService.scala	library -> split: Handlers	1
-direction	server:server/agents/AcquisitionSweepPipeline.scala	library -> split: Handlers	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
 direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/CurrencyCheckPipeline.scala	library -> split: Handlers	1
-direction	server:server/agents/EnrichSourcePipeline.scala	library -> split: Handlers	1
-direction	server:server/agents/GoalSweep.scala	automation -> split: Handlers	1
 direction	server:server/agents/InferFilterPipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/OaBacklog.scala	library -> split: Handlers	1
 direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
 direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:db/BundleImport.scala	java.nio.file	1
@@ -247,22 +240,13 @@ repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/AcquireRecheckService.scala	JobRepo of util.jobs	1
-repository	server:server/agents/AcquireRecheckService.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/AcquisitionSweepPipeline.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/AcquisitionSweepPipeline.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/CompileArticlePipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/CompileArticlePipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/CompileArticlePipeline.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/EnrichSourcePipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/InferFilterPipeline.scala	ArticleRepo of research.articles	1
-repository	server:server/agents/OaBacklog.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/OaBacklog.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
-repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1

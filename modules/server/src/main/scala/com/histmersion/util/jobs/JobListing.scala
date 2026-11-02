@@ -34,4 +34,8 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
         (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
       }
 
+  /** The newest job of `kind`. */
+  def newest(kind: String): Option[JobInfo] =
+    JobRepo.page(ds, JobRepo.JobQuery(kinds = List(kind)), 1, None, None).toOption.flatMap(_._1.headOption)
+
   private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)

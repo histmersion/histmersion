@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
+
 import com.histmersion.api.{ApiError, Articles, BackupStatus, Filter, Goal, GoalPatch, GoalPut, Queue}
 import com.histmersion.api.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
 import com.histmersion.api.GoalPlans.LinkKind

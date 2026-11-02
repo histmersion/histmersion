@@ -79,6 +79,30 @@ trait ManagerService:
   /** Per watcher: its ingest backlog's (pending, held) items. */
   def backlogCounts(): Map[String, (Int, Int)]
 
+  /** Every pending item of the ingest backlog of an active watcher, the most urgent first (priority, then the oldest).
+    */
+  def backlogPending(): List[ManagerItem]
+
+  /** The open (pending, held, active) items of every watcher's ingest backlog, the oldest first. */
+  def backlogOpen(): List[ManagerItem]
+
+  /** The open backlog item of any watcher for `doi`, the oldest. */
+  def backlogOpenFor(doi: String): Option[ManagerItem]
+
+  /** A pending backlog item tried again later: one more attempt, its failures, not before `notBefore`, why; false = it
+    * was not pending.
+    */
+  def backlogRetry(itemId: Long, failures: Int, notBefore: Instant, outcome: String): Boolean
+
+  /** Per manager: its events of `kind` since `since`. */
+  def countEventsBy(kind: String, since: Instant): Map[String, Int]
+
+  /** An item's state replaced while it is in one of `from`; false = it was not. */
+  def setItemState(itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean
+
+  /** The open acquisition items a watcher's sweep created, found by the run that picked their DOI. */
+  def sweepAcquireItems(): List[SweepAcquireItem]
+
   /** Per manager: its open items, the items it settled since `since`, and its last event's time (the backlog not
     * counted).
     */
@@ -173,6 +197,16 @@ object ManagerService:
       db.read(ManagerRepo.lastEventOf(managerId, kind))
     def countEventsAll(kind: String, since: Instant): Int = db.read(ManagerRepo.countEventsAll(kind, since))
     def backlogCounts(): Map[String, (Int, Int)] = db.read(ManagerRepo.backlogCounts())
+    def backlogPending(): List[ManagerItem] = db.read(ManagerRepo.backlogPendingIn())
+    def backlogOpen(): List[ManagerItem] = db.read(ManagerRepo.backlogOpenIn())
+    def backlogOpenFor(doi: String): Option[ManagerItem] = db.read(ManagerRepo.backlogOpenForIn(doi))
+    def backlogRetry(itemId: Long, failures: Int, notBefore: Instant, outcome: String): Boolean =
+      db.transact(ManagerRepo.backlogRetryIn(itemId, failures, notBefore, outcome))
+    def countEventsBy(kind: String, since: Instant): Map[String, Int] =
+      db.read(ManagerRepo.countEventsByIn(kind, since))
+    def setItemState(itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean =
+      db.transact(ManagerRepo.setItemStateIn(itemId, state, from))
+    def sweepAcquireItems(): List[SweepAcquireItem] = db.read(ManagerRepo.sweepAcquireItemsIn())
     def pace(since: Instant): Map[String, (Int, Int, Option[String])] = db.read(ManagerRepo.pace(since))
     def hold(itemId: Long, h: Hold): Boolean = db.transact(ManagerRepo.hold(itemId, h))
     def release(itemId: Long): Boolean = db.transact(ManagerRepo.release(itemId))
@@ -423,6 +457,42 @@ object ManagerService:
         .view
         .mapValues(is => (is.count(_.status == "pending"), is.count(_.status == "held")))
         .toMap
+    private def backlog(i: ManagerItemRecord): Boolean = i.kind == OaIngest && Open(i.status)
+    def backlogPending(): List[ManagerItem] =
+      val active = managers.filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire).map(_.id).toSet
+      items
+        .filter(i => i.kind == OaIngest && i.status == "pending" && active(i.managerId))
+        .sortBy(i => (-i.priority, i.id))
+        .toList
+        .map(view)
+    def backlogOpen(): List[ManagerItem] = items.filter(backlog).sortBy(_.id).toList.map(view)
+    def backlogOpenFor(doi: String): Option[ManagerItem] =
+      items.filter(i => backlog(i) && i.target == doi).minByOption(_.id).map(view)
+    def backlogRetry(itemId: Long, failures: Int, notBefore: Instant, outcome: String): Boolean =
+      val at = now
+      changeItems(i => i.id == itemId && i.status == "pending")(
+        _.modify(_.failures)
+          .setTo(failures)
+          .modify(_.attempts)
+          .using(_ + 1)
+          .modify(_.notBefore)
+          .setTo(Some(notBefore))
+          .modify(_.outcome)
+          .setTo(Some(outcome))
+          .modify(_.updatedAt)
+          .setTo(at)
+      ) > 0
+    def countEventsBy(kind: String, since: Instant): Map[String, Int] =
+      counted(events.filter(e => e.kind == kind && !e.at.isBefore(since)).map(_.managerId))
+    def setItemState(itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean =
+      val at = now
+      changeItems(i => i.id == itemId && from.exists(_.wire == i.status))(
+        _.modify(_.state).setTo(state).modify(_.updatedAt).setTo(at)
+      ) > 0
+
+    /** The acquisition items are the work lists', which this state does not hold: none. */
+    def sweepAcquireItems(): List[SweepAcquireItem] = Nil
+
     def pace(since: Instant): Map[String, (Int, Int, Option[String])] =
       managers.map { m =>
         val mine = items.filter(i => i.managerId == m.id && i.kind != OaIngest)

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.workflows.*
+
 import com.augustnagro.magnum.connect
 
 import com.histmersion.api.Agents.*

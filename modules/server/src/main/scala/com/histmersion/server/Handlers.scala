@@ -75,6 +75,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   val maintenance: WriteGate = deps.maintenance
 
+  /** What the library's workflows are given. */
+  lazy val librarySite: com.histmersion.domain.library.workflows.LibrarySite = LibraryWorkflowSite(this, deps)
+
   /** Stream 2.8 — lint, the bookkeeping queues and the read-only query. Its own object (one file per stream), wired
     * into REST and MCP through this same `Handlers` value.
     */

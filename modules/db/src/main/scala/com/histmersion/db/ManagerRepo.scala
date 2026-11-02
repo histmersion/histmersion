@@ -4,6 +4,7 @@ import com.histmersion.api.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.Managers.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.managers.ManagerLight
 import javax.sql.DataSource
 
@@ -781,34 +782,34 @@ object ManagerRepo:
   // ── the watchers' ingest backlog (`oa-ingest` items) ───────────────────────────────────────────
 
   /** Every pending backlog item of an ACTIVE watcher, the most urgent first (priority, then the oldest). */
-  def backlogPending(ds: DataSource): List[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        """ WHERE kind = ? AND status = 'pending'
-            AND manager_id IN (SELECT id FROM agent_managers WHERE kind = 'watch' AND state = 'active')
-          ORDER BY priority DESC, id""",
-        Param.S(OaIngest)
-      )).frag.query[ItemRow].run().toList.map(toItem)
-    )
+  def backlogPending(ds: DataSource): List[ManagerItem] = connect(ds)(backlogPendingIn())
+
+  def backlogPendingIn()(using DbCon): List[ManagerItem] =
+    (itemSelect ++ Sql.of(
+      """ WHERE kind = ? AND status = 'pending'
+          AND manager_id IN (SELECT id FROM agent_managers WHERE kind = 'watch' AND state = 'active')
+        ORDER BY priority DESC, id""",
+      Param.S(OaIngest)
+    )).frag.query[ItemRow].run().toList.map(toItem)
 
   /** The open (pending, held, active) backlog items of every watcher — the dedupe across watchers. */
-  def backlogOpen(ds: DataSource): List[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        " WHERE kind = ? AND status IN ('pending', 'held', 'active') ORDER BY id",
-        Param.S(OaIngest)
-      )).frag.query[ItemRow].run().toList.map(toItem)
-    )
+  def backlogOpen(ds: DataSource): List[ManagerItem] = connect(ds)(backlogOpenIn())
+
+  def backlogOpenIn()(using DbCon): List[ManagerItem] =
+    (itemSelect ++ Sql.of(
+      " WHERE kind = ? AND status IN ('pending', 'held', 'active') ORDER BY id",
+      Param.S(OaIngest)
+    )).frag.query[ItemRow].run().toList.map(toItem)
 
   /** The open backlog item of any watcher for this DOI, if one exists (the oldest). */
-  def backlogOpenFor(ds: DataSource, doi: String): Option[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        " WHERE kind = ? AND target = ? AND status IN ('pending', 'held', 'active') ORDER BY id LIMIT 1",
-        Param.S(OaIngest),
-        Param.S(doi)
-      )).frag.query[ItemRow].run().headOption.map(toItem)
-    )
+  def backlogOpenFor(ds: DataSource, doi: String): Option[ManagerItem] = connect(ds)(backlogOpenForIn(doi))
+
+  def backlogOpenForIn(doi: String)(using DbCon): Option[ManagerItem] =
+    (itemSelect ++ Sql.of(
+      " WHERE kind = ? AND target = ? AND status IN ('pending', 'held', 'active') ORDER BY id LIMIT 1",
+      Param.S(OaIngest),
+      Param.S(doi)
+    )).frag.query[ItemRow].run().headOption.map(toItem)
 
   /** Per watcher: its backlog items by status (pending, held) — what the status lines count. */
   def backlogCounts()(using DbCon): Map[String, (Int, Int)] =
@@ -822,16 +823,21 @@ object ManagerRepo:
 
   /** Per manager: its events of `kind` since `since` (every watcher's ingests today, in one query). */
   def countEventsBy(ds: DataSource, kind: String, since: java.time.Instant): Map[String, Int] =
+    connect(ds)(countEventsByIn(kind, since))
+
+  def countEventsByIn(kind: String, since: java.time.Instant)(using DbCon): Map[String, Int] =
     val at = since.toString
-    connect(ds)(sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
-                      GROUP BY manager_id""".query[(String, Int)].run().toMap)
+    sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
+          GROUP BY manager_id""".query[(String, Int)].run().toMap
 
   /** An item's state replaced (a backlog entry gained a goal); a CAS on the statuses it may be in. */
   def setItemState(ds: DataSource, itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean =
+    transact(ds)(setItemStateIn(itemId, state, from))
+
+  def setItemStateIn(itemId: Long, state: ItemState, from: List[ItemStatus])(using DbCon): Boolean =
     val fs = from.map(_.wire)
-    transact(ds):
-      sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
-            WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
+    sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
+          WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
   /** A pending backlog item tried again later: one more failure, not before `notBefore`, why. */
   def backlogRetry(
@@ -840,12 +846,15 @@ object ManagerRepo:
       failures: Int,
       notBefore: java.time.Instant,
       outcome: String
+  ): Boolean = transact(ds)(backlogRetryIn(itemId, failures, notBefore, outcome))
+
+  def backlogRetryIn(itemId: Long, failures: Int, notBefore: java.time.Instant, outcome: String)(using
+      DbCon
   ): Boolean =
     val nb = notBefore.toString
-    transact(ds):
-      sql"""UPDATE manager_items SET failures = $failures, attempts = attempts + 1, not_before = $nb::timestamptz,
-                                     outcome = $outcome, updated_at = now()
-            WHERE id = $itemId AND status = 'pending'""".update.run() > 0
+    sql"""UPDATE manager_items SET failures = $failures, attempts = attempts + 1, not_before = $nb::timestamptz,
+                                   outcome = $outcome, updated_at = now()
+          WHERE id = $itemId AND status = 'pending'""".update.run() > 0
 
   /** The citekey of the source holding this DOI, if one does. */
   def citekeyOfDoi(ds: DataSource, doi: String): Option[String] =
@@ -860,25 +869,11 @@ object ManagerRepo:
     * the run linked it to its goal by that DOI (`goal_links` kind `queue-item`, note = the DOI). A person's item, a
     * plan's, a currency check's match none of the three. `isOa` = the ranking marked the work open access.
     */
-  final case class SweepAcquireItem(
-      item: Int,
-      text: String,
-      topic: Option[String],
-      goal: String,
-      managerId: String,
-      job: String,
-      doi: String,
-      isOa: Boolean,
-      title: Option[String],
-      year: Option[Int],
-      authors: List[String],
-      venue: Option[String],
-      why: Option[String]
-  ) derives DbCodec
 
-  def sweepAcquireItems(ds: DataSource): List[SweepAcquireItem] =
-    connect(ds):
-      sql"""WITH picks AS (
+  def sweepAcquireItems(ds: DataSource): List[SweepAcquireItem] = connect(ds)(sweepAcquireItemsIn())
+
+  def sweepAcquireItemsIn()(using DbCon): List[SweepAcquireItem] =
+    sql"""WITH picks AS (
               SELECT j.id AS job, j.target_id AS goal, j.manager_id, lower(p->'candidate'->>'doi') AS doi,
                      coalesce((p->'candidate'->>'isOa')::boolean, false) AS oa, p->'candidate'->>'title' AS title,
                      (p->'candidate'->>'year')::int AS year,

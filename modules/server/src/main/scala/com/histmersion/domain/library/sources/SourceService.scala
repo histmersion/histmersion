@@ -90,6 +90,9 @@ trait SourceService:
   /** `lower(doi) -> citekey` for the whole corpus. */
   def doiIndex: Map[String, String]
 
+  /** The citekey of the source holding `doi` (the first by citekey), if one does. */
+  def citekeyOfDoi(doi: String): Option[String]
+
   /** Store edges routed by their target (one to a source not stored yet is parked); how many were new. */
   def addEdges(edges: List[Edge], caller: Caller): Int
 
@@ -171,6 +174,7 @@ object SourceService:
 
     def exists(citekey: String): Boolean = db.read(SourceRepo.exists(citekey))
     def doiIndex: Map[String, String] = db.read(SourceRepo.doiIndex())
+    def citekeyOfDoi(doi: String): Option[String] = db.read(SourceRepo.citekeyOfDoi(doi))
     def addEdges(edges: List[Edge], caller: Caller): Int =
       if edges.isEmpty then 0 else db.transact(SourceRepo.insertEdges(edges))
     def original(citekey: String): Option[String] = db.read(SourceRepo.sha256Of(citekey))
@@ -596,6 +600,12 @@ object SourceService:
     // ── what acquisition, ingest and the collections read and write of a source ─────────────
 
     def exists(citekey: String): Boolean = state.get.sources.contains(citekey)
+
+    def citekeyOfDoi(doi: String): Option[String] =
+      val d = doi.trim.toLowerCase
+      state.get.sources.toList.sortBy(_._1).collectFirst {
+        case (ck, x) if x.source.doi.exists(_.toLowerCase == d) => ck
+      }
 
     def doiIndex: Map[String, String] =
       state.get.sources.toList

@@ -70,6 +70,18 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assertEquals(g(s).links("zz-g").map(_.kind), List(GoalLinkKind.Source, GoalLinkKind.Article))
   }
 
+  stest("the refs of one kind of a goal's links, oldest first; another kind's and another goal's left out") { s =>
+    assert(s.goals.put("zz-g", GoalPut("A goal")).isRight)
+    assert(s.goals.put("zz-h", GoalPut("Another")).isRight)
+    assert(s.goals.link("zz-g", GoalLinkKind.SearchQuery, "storm gods", None))
+    assert(s.goals.link("zz-g", GoalLinkKind.SearchQuery, "anatolia", None))
+    assert(s.goals.link("zz-g", GoalLinkKind.QueueItem, "7", Some("10.5555/zz")))
+    assert(s.goals.link("zz-h", GoalLinkKind.SearchQuery, "elsewhere", None))
+    assertEquals(s.goals.refs("zz-g", GoalLinkKind.SearchQuery), List("storm gods", "anatolia"))
+    assertEquals(s.goals.refs("zz-g", GoalLinkKind.QueueItem), List("7"))
+    assertEquals(s.goals.refs("zz-none", GoalLinkKind.SearchQuery), Nil)
+  }
+
   stest("an approved plan and a run cap; the planned goals") { s =>
     assert(g(s).put("zz-p", GoalPut("P")).isRight)
     assert(g(s).put("zz-q", GoalPut("Q")).isRight)

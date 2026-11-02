@@ -103,6 +103,11 @@ enum Pipeline(
 object Pipeline:
   def parse(s: String): Option[Pipeline] = values.find(_.wire == s.trim.toLowerCase)
 
+  /** The pipeline a manager's item that starts no agent run of its own is counted under (the review's, as the managers
+    * have always counted them).
+    */
+  val Fallback: Pipeline = ReviewArticle
+
 /** What a pipeline works on: a source (by citekey), an article (by slug), a goal (by slug) or a process manager (by
   * id).
   */

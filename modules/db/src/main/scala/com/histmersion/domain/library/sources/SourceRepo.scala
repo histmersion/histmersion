@@ -668,6 +668,11 @@ private[sources] object SourceRepo:
 
   final private case class DoiKey(doi: String, citekey: String) derives DbCodec
 
+  /** The citekey of the source holding `doi` (the first by citekey), if one does. */
+  def citekeyOfDoi(doi: String)(using DbCon): Option[String] =
+    val d = doi.trim.toLowerCase
+    sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[String].run().headOption
+
   def exists(citekey: String)(using DbCon): Boolean =
     sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run().headOption.exists(_ > 0)
 

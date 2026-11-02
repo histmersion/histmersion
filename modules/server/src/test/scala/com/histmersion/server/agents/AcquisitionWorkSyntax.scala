@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.workflows.*
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
 /** The library's parts of the engine (the watch kind's acquisition work, the enrich kind's auto-enrich) as the agent

@@ -238,6 +238,14 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sorted), Some(List("zq_not_yet", B)))
   }
 
+  stest("the citekey of a DOI: case and spaces ignored, the first by citekey of two holders, none for an unknown one") {
+    s =>
+      val _ = s.sources.put(source(B, "Cove").copy(doi = Some("10.5555/ZQ.Both")), Me)
+      val _ = s.sources.put(source(A, "Walls").copy(doi = Some("10.5555/zq.both")), Me)
+      assertEquals(s.sources.citekeyOfDoi(" 10.5555/zq.BOTH "), Some(List(A, B).min))
+      assertEquals(s.sources.citekeyOfDoi("10.5555/zq.none"), None)
+  }
+
   stest("a source's stored original: its digest, who holds one, set once a conversion is written") { s =>
     val _ = s.sources.put(source(A, "Walls"), Me)
     val _ = s.sources.put(source(B, "Cove"), Me)

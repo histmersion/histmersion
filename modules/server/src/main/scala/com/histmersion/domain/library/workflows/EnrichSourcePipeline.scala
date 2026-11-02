@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.connect
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -12,11 +10,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.EnrichSource.*
-import com.histmersion.db.AgentRepo
-import com.histmersion.server.Handlers
 import io.circe.syntax.*
 
-import javax.sql.DataSource
 import com.histmersion.values.SourceStatus
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
@@ -35,8 +30,7 @@ import com.histmersion.values.SourceStatus
   * read upstream).
   */
 final class EnrichSourcePipeline(
-    h: Handlers,
-    ds: DataSource,
+    site: LibrarySite,
     cfg: => AgentsConfig,
     lib: => LibraryAgentsConfig,
     upstream: () => AgentUpstream,
@@ -63,7 +57,7 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichNotes,
         notesInput(loaded, classified, verified),
         LibraryAnswers.notes
-      )((n, _) => checkNotes(n, isCitekey, slug => connect(ds)(AgentRepo.slugExists(slug))).map(Checked(_)))
+      )((n, _) => checkNotes(n, isCitekey, site.articleExists).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
       assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))
@@ -74,7 +68,7 @@ final class EnrichSourcePipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(ck: String): Either[String, Loaded] =
-    h.library.sources.get(ck, body = true).left.map(_.message).flatMap { sw =>
+    site.sources.get(ck, body = true).left.map(_.message).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
@@ -116,7 +110,7 @@ final class EnrichSourcePipeline(
     */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
-    val guards = lib.enrich.guards.guards((name, kind, at) => h.geocode(name, kind, at).isDefined)
+    val guards = lib.enrich.guards.guards((name, kind, at) => site.geocode(name, kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
@@ -153,7 +147,7 @@ final class EnrichSourcePipeline(
     */
   private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): Geocoded =
     val placed = fs.map { f =>
-      val hit = f.place.flatMap(p => h.geocode(p, f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
+      val hit = f.place.flatMap(p => site.geocode(p, f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
       f.place.foreach { p =>
         hit match
           case None => ctx.warn(s"geocode: no gazetteer place named '$p' (finding kept without a point)")
@@ -188,7 +182,7 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: String): Boolean = h.library.sources.get(s, body = false).isRight
+  private def isCitekey(s: String): Boolean = site.sources.get(s, body = false).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -204,7 +198,7 @@ final class EnrichSourcePipeline(
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
-      h.library.sources.patch(ck, p).map(_ => ())
+      site.sources.patch(ck, p).map(_ => ())
     )(Right(())) match
       case Right(_)                                           => Right(Patched(fs.size, fields, proposal))
       case Left(e) if e.code.contains(Write.CodePrecondition) =>
@@ -217,7 +211,7 @@ final class EnrichSourcePipeline(
             fs.filterNot(f => existing.contains(AgentVerify.normalise(f.claim))),
             Option(notes).filter(_.nonEmpty)
           )
-          h.library.sources
+          site.sources
             .patch(ck, p2)
             .left
             .map(_.message)
@@ -323,7 +317,7 @@ final class EnrichSourcePipeline(
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      h.library.sources.get(ck, body = false).toOption.toList.flatMap { s =>
+      site.sources.get(ck, body = false).toOption.toList.flatMap { s =>
         closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
@@ -337,15 +331,15 @@ final class EnrichSourcePipeline(
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    Pipelines.log(h.workLists, ctx, line).map(_ => Closed(line, lint, acquire))
+    Pipelines.log(site.workLists, ctx, line).map(_ => Closed(line, lint, acquire))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
     */
   private def tickOff(id: Int, ck: String, runId: String): String =
-    Queue.fulfillable(id, h.queues.get(QueueItemId(id))) match
+    Queue.fulfillable(id, site.queues.get(QueueItemId(id))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
-        h.ops.queuePatch(id, Queue.fulfil(item, ck, Some(runId))) match
+        site.workLists.patch(id, Queue.fulfil(item, ck, Some(runId))) match
           case Right(_) => s"ticked off acquisition item $id"
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"
