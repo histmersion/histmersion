@@ -1,4 +1,4 @@
-package com.histmersion.api
+package com.histmersion.values
 
 object AssetLinkTarget:
   val Event = "event"

@@ -41,7 +41,7 @@ final case class HeldEvent(
   def geometryType: Option[String] = geometry.flatMap(HeldEvent.typeOf)
 
   /** Its outer span: the earliest and the latest year it may cover. */
-  def outer: Option[(Long, Long)] = EventGeo.outer(timeSpan)
+  def outer: Option[(Long, Long)] = timeSpan.outer
 
   def uncertainty: Option[Long] = EventPrecision.uncertainty(timeSpan, plusMinus)
 

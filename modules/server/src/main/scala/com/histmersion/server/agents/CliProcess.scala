@@ -77,7 +77,7 @@ object CliProcess:
         .find(f => Files.isRegularFile(f) && Files.isExecutable(f))
 
   /** One live CLI: the process, whether it leads its own group, and every descendant seen so far. */
-  final private class Tree(val p: Process, val grouped: Boolean):
+  final private class ProcessTree(val p: Process, val grouped: Boolean):
     val seen: java.util.Set[ProcessHandle] = java.util.concurrent.ConcurrentHashMap.newKeySet[ProcessHandle]()
 
     /** Remember the descendants it has now. macOS's process-table read (`sysctl KERN_PROC`) fails now and then while
@@ -132,7 +132,7 @@ object CliProcess:
     pb.command((if grouped then groupPrefix ++ argv else argv).asJava)
     val p = try pb.start()
     catch case e: java.io.IOException => throw cannotStart(argv.head, e, hint)
-    val tree = Tree(p, grouped)
+    val tree = ProcessTree(p, grouped)
     val h = current
     h.foreach(_.register(p))
     val stdout = ConcurrentLinkedQueue[String]()
@@ -206,7 +206,7 @@ object CliProcess:
       h.foreach(_.unregister(p))
 
   /** Kill `p` and every descendant it has now (the descendants first, then the parent, then a check). */
-  def kill(p: Process): Unit = Tree(p, grouped = false).kill()
+  def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
   def withDir[A](prefix: String)(f: Path => A): A =

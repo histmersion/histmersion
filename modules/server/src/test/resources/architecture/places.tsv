@@ -64,7 +64,6 @@ api:api/AssetLink.scala	media
 api:api/AssetLinkDeleted.scala	media
 api:api/AssetLinkList.scala	media
 api:api/AssetLinkPut.scala	media
-api:api/AssetLinkTarget.scala	media
 api:api/AssetLinks.scala	media
 api:api/AssetPatch.scala	media
 api:api/AssetRelation.scala	media
@@ -75,7 +74,6 @@ api:api/AttestationDeleted.scala	catalogue.evidence
 api:api/AttestationList.scala	catalogue.evidence
 api:api/AttestationPatch.scala	catalogue.evidence
 api:api/AttestationPut.scala	catalogue.evidence
-api:api/AttestationTarget.scala	catalogue.evidence
 api:api/Autopilot.scala	automation.autopilot
 api:api/AutopilotMarkdown.scala	automation.autopilot
 api:api/BBox.scala	kernel
@@ -539,7 +537,7 @@ api:api/StorageEntry.scala	util.data.maintenance
 api:api/StorageMarkdown.scala	util.data.maintenance
 api:api/StorageReport.scala	util.data.maintenance
 api:api/StorageVolume.scala	util.data.maintenance
-api:api/StrictJson.scala	automation.agents
+api:api/StrictJson.scala	util.json
 api:api/TableSize.scala	kernel
 api:api/TileLayer.scala	catalogue.maptiles
 api:api/TileProps.scala	catalogue.maptiles
@@ -549,7 +547,6 @@ api:api/TimeConfig.scala	server.instance
 api:api/TimeHistogram.scala	library.search
 api:api/TimeSpan.scala	kernel
 api:api/TocEntry.scala	library.sources
-api:api/Tree.scala	catalogue.places
 api:api/UiApi.scala	server.instance
 api:api/UiConfig.scala	server.instance
 api:api/UiNotices.scala	server.instance
@@ -706,7 +703,7 @@ config:config/RetractionWatchConfig.scala	library.acquisition
 config:config/ReviewManagerConfig.scala	research.workflows
 config:config/RuntimeConfig.scala	automation.agents
 config:config/ScheduledRefresh.scala	config
-config:config/SeaFloorSource.scala	library.sources
+config:config/SeaFloorSource.scala	util.basemap
 config:config/Seconds.scala	values
 config:config/ServerConfig.scala	config
 config:config/ServiceConfig.scala	library.acquisition
@@ -910,3 +907,4 @@ server:server/hot/PinRequests.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins
 server:server/views/EventCardView.scala	server
 server:server/views/PlaceCardView.scala	server
+api:api/UiLabels.scala	api.ui

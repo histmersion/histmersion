@@ -1,8 +1,11 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.api.library.search.SearchMarkdown
 
-import com.histmersion.api.Tree.{RegionNode, TreeRow}
+import com.histmersion.api.library.search.Tree.TreeRow
+import com.histmersion.api.catalogue.places.RegionNode
 import com.histmersion.values.PlaceKind
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
@@ -303,27 +306,26 @@ class TreeSuite extends munit.FunSuite:
 
 /** Root eligibility and the "is this split worth drawing" rule (§1.6, UX items 7 and 8). Pure. */
 class TreeRootsSuite extends munit.FunSuite:
-  import Tree.RegionNode
 
   private def node(id: String, label: String, kind: String, withdrawn: Boolean = false) =
     RegionNode(id, label, kind, None, false, withdrawn)
 
   test("only a region, polity or continent may head the tree"):
-    assert(Tree.rootEligible(node("a", "Asia", "region")))
-    assert(Tree.rootEligible(node("b", "Akkad", "polity")))
-    assert(Tree.rootEligible(node("c", "Europe", "continent")))
-    assert(!Tree.rootEligible(node("d", "Asopos (river)", "feature")))
-    assert(!Tree.rootEligible(node("e", "Hattusa", "site")))
+    assert(RegionNode.rootEligible(node("a", "Asia", "region")))
+    assert(RegionNode.rootEligible(node("b", "Akkad", "polity")))
+    assert(RegionNode.rootEligible(node("c", "Europe", "continent")))
+    assert(!RegionNode.rootEligible(node("d", "Asopos (river)", "feature")))
+    assert(!RegionNode.rootEligible(node("e", "Hattusa", "site")))
 
   test("a withdrawn Pleiades record is never a root, however it is marked"):
-    assert(!Tree.rootEligible(node("f", "Mount Juktas", "region", withdrawn = true)))
-    assert(!Tree.rootEligible(node("g", "Withdrawn (duplicate): Creta et Cyrene", "region")))
+    assert(!RegionNode.rootEligible(node("f", "Mount Juktas", "region", withdrawn = true)))
+    assert(!RegionNode.rootEligible(node("g", "Withdrawn (duplicate): Creta et Cyrene", "region")))
 
   test("an uncertain or reconstructed name is never a root"):
-    assert(Tree.uncertainLabel("Theren? (river)"))
-    assert(Tree.uncertainLabel("*Granouas (river)"))
-    assert(!Tree.uncertainLabel("Anatolia"))
-    assert(!Tree.rootEligible(node("h", "Kisamon? Pr.", "region")))
+    assert(RegionNode.uncertainLabel("Theren? (river)"))
+    assert(RegionNode.uncertainLabel("*Granouas (river)"))
+    assert(!RegionNode.uncertainLabel("Anatolia"))
+    assert(!RegionNode.rootEligible(node("h", "Kisamon? Pr.", "region")))
 
   test("ineligible nodes are dropped from the ROOTS, not from the tree"):
     val rows = List(Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("river")))

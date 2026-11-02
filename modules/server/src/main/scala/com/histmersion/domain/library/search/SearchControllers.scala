@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.search
 
+import com.histmersion.api.library.search.Tree
+
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.AttestationTarget
+
 class AttestationTargetSuite extends munit.FunSuite:
 
   test("#3770: a target type is one of the five, trimmed and in any case; anything else is named with them"):

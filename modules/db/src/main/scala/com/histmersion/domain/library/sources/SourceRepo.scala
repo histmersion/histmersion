@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.library.sources.SourceWrite
+
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.domain.library.sources.referrers.{SourceReferrers, SourceRename}
 
@@ -73,9 +75,9 @@ private[sources] object SourceRepo:
     write(s, chunkChars, toleranceKm)
     token(s.citekey).getOrElse("")
 
-  /** Selective merge (`patch_source`): read → [[Write.applyPatch]] → write, all in one transaction, so two concurrent
-    * patches cannot interleave. The precondition is checked against the row we just read inside that transaction, which
-    * is what makes `ifUpdatedAt` meaningful.
+  /** Selective merge (`patch_source`): read → [[SourceWrite.applyPatch]] → write, all in one transaction, so two
+    * concurrent patches cannot interleave. The precondition is checked against the row we just read inside that
+    * transaction, which is what makes `ifUpdatedAt` meaningful.
     */
   def patch(
       ds: DataSource,
@@ -100,10 +102,10 @@ private[sources] object SourceRepo:
     load(citekey) match
       case None           => Left(Write.notFound(citekey))
       case Some(existing) =>
-        Write.precondition(existing, p) match
+        SourceWrite.precondition(existing, p) match
           case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
           case Right(_)  =>
-            Write.applyPatch(existing, Write.srcAliased(p, requested, citekey)) match
+            SourceWrite.applyPatch(existing, SourceWrite.srcAliased(p, requested, citekey)) match
               case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(token(citekey).getOrElse(""))

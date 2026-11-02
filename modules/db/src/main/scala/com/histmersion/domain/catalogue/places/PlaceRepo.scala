@@ -392,10 +392,10 @@ private[places] object PlaceRepo:
             AND ${SqlLiteral(inTimeSql("p", asOf))}
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""").query[PlaceSummary].run()
 
-  /** SQL twin of [[com.histmersion.api.Tree.rootEligible]]: a place that may head the hierarchy. Region, polity or
-    * continent; not a Pleiades `withdrawn` record (marked as a property in part of the export and only in the label in
-    * the rest); not an uncertain identification (`Theren? (river)`) or a reconstructed name (`*Granouas`). Applies ONLY
-    * to root selection — a river still appears under the region that contains it.
+  /** SQL twin of [[com.histmersion.api.catalogue.places.RegionNode.rootEligible]]: a place that may head the hierarchy.
+    * Region, polity or continent; not a Pleiades `withdrawn` record (marked as a property in part of the export and
+    * only in the label in the rest); not an uncertain identification (`Theren? (river)`) or a reconstructed name
+    * (`*Granouas`). Applies ONLY to root selection — a river still appears under the region that contains it.
     */
   private val rootEligibleSql =
     "p.kind IN ('region', 'polity', 'continent')" +

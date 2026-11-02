@@ -35,7 +35,7 @@ object EventPlayback:
   def playable(events: List[EventGeo]): Vector[(EventGeo, (Long, Long))] =
     events.toVector
       .filter(e => EventPrecision.mapped(e.precision))
-      .flatMap(e => EventGeo.outer(e.timeSpan).map(span => (e, span)))
+      .flatMap(e => e.timeSpan.outer.map(span => (e, span)))
 
   /** Pure: the line under an event's name — its kind and its years. */
   def note(e: EventGeo): String =

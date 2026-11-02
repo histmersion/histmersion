@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.{JobInfo, JobState, ListFilters, Wording}
+import com.histmersion.api.{JobInfo, JobState, ListFilters, UiLabels, Wording}
 import com.histmersion.api.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs windows): the chips, a
@@ -24,7 +24,10 @@ class ListFiltersViewSuite extends munit.FunSuite:
     assertEquals(ListFilterBar.optionLabel("review-article", 1223), "Review an article (1,223)")
     assertEquals(ListFilterBar.optionLabel("seed:x", 0, Wording.manager), "Seeding manager · X")
     assertEquals(ListFilterBar.optionLabel("some-new-kind", 2), "Some new kind (2)", "an identifier never reads raw")
-    assertEquals(ListFilterBar.tooltip("edge", Wording.label, _ => Some("A typed link.")), Some("A typed link. (edge)"))
+    assertEquals(
+      ListFilterBar.tooltip("edge", UiLabels.label, _ => Some("A typed link.")),
+      Some("A typed link. (edge)")
+    )
     assertEquals(ListFilterBar.tooltip("x", identity, _ => None), None)
 
   test("a typed text and a picked day commit trimmed, or not at all"):

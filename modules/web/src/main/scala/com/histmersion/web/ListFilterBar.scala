@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.{Paging, Wording}
+import com.histmersion.api.{Paging, UiLabels, Wording}
 import com.raquo.laminar.api.L.*
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`): a facet's values
@@ -32,7 +32,7 @@ object ListFilterBar:
   def date(s: String): Option[String] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}"""))
 
   /** `Review an article (223)` — a value and its count, as a `<select>` option reads. */
-  def optionLabel(v: String, n: Int, show: String => String = Wording.label): String =
+  def optionLabel(v: String, n: Int, show: String => String = UiLabels.label): String =
     if n > 0 then s"${show(v)} (${Paging.grouped(n)})" else show(v)
 
   /** Is any of these filters set (the "clear" button is offered then)? */
@@ -55,14 +55,14 @@ object ListFilterBar:
       case parts => Some(parts.mkString(" "))
 
   /** A facet as toggle chips: `label` then one chip per value with its count; hidden while it has none. `show` is a
-    * value's label — by default the label dictionary's ([[Wording.label]]), never the raw identifier; `hint` its
+    * value's label — by default the label dictionary's ([[UiLabels.label]]), never the raw identifier; `hint` its
     * meaning (with the identifier, its chip's tooltip), `about` what the group filters.
     */
   def chips(
       label: String,
       counts: Signal[List[(String, Int)]],
       field: Field[List[String]],
-      show: String => String = Wording.label,
+      show: String => String = UiLabels.label,
       hint: String => Option[String] = _ => None,
       about: String = ""
   ): HtmlElement =
@@ -96,7 +96,7 @@ object ListFilterBar:
       label: String,
       counts: Signal[List[(String, Int)]],
       field: Field[Option[String]],
-      show: String => String = Wording.label,
+      show: String => String = UiLabels.label,
       hint: String => Option[String] = _ => None,
       about: String = ""
   ): HtmlElement =

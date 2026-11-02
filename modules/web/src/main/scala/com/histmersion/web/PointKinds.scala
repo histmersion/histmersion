@@ -131,10 +131,10 @@ object PointKinds:
         (if undated(e) then s" ${MapView.UndatedClass}" else "")
 
     /** Pure: has it no known date (its outer span open on both sides)? */
-    def undated(e: EventGeo): Boolean = EventGeo.outer(e.timeSpan).isEmpty
+    def undated(e: EventGeo): Boolean = e.timeSpan.outer.isEmpty
     override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id)}""""
     def fill(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
-    private def mid(e: EventGeo): Option[Double] = EventGeo.outer(e.timeSpan).map((a, b) => (a + b).toDouble / 2)
+    private def mid(e: EventGeo): Option[Double] = e.timeSpan.outer.map((a, b) => (a + b).toDouble / 2)
     def member(e: EventGeo): Member =
       Member(
         DotKind.Event,

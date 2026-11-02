@@ -10,6 +10,13 @@ final case class TimeSpan(
     endFrom: Option[Long] = None,
     notAfter: Option[Long] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema:
+
+  /** The outer span: the earliest and latest years stated, one known end standing for both; `None` when undated. */
+  def outer: Option[(Long, Long)] =
+    val start = notBefore.orElse(beginBy).orElse(endFrom).orElse(notAfter)
+    val end = notAfter.orElse(endFrom).orElse(beginBy).orElse(notBefore)
+    for a <- start; b <- end yield (a.min(b), a.max(b))
+
 object TimeSpan:
   given Schema[TimeSpan] = summon[KindlingsSchema[TimeSpan]].schema

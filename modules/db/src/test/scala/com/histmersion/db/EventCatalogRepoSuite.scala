@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.values.AttestationTarget
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures

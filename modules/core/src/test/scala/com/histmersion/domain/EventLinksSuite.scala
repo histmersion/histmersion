@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.values.AttestationTarget
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 

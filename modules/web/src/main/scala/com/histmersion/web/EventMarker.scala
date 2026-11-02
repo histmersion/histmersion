@@ -35,6 +35,6 @@ object EventMarker:
     */
   def rampAt(e: EventGeo, span: (Long, Long)): Double =
     val (lo, hi) = (span._1.min(span._2).toDouble, span._1.max(span._2).toDouble)
-    EventGeo.outer(e.timeSpan).fold(0.5) { (a, b) =>
+    e.timeSpan.outer.fold(0.5) { (a, b) =>
       if hi == lo then 0.5 else (((a + b) / 2.0 - lo) / (hi - lo)).max(0).min(1)
     }

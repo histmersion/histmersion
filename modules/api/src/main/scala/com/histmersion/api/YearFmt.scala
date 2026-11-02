@@ -22,7 +22,7 @@ object YearFmt:
       case (None, None)       => none
 
   def span(ts: TimeSpan): String =
-    EventGeo.outer(ts).fold("undated")((a, b) => period(Some(a), Some(b)))
+    ts.outer.fold("undated")((a, b) => period(Some(a), Some(b)))
 
   def spanLong(ts: TimeSpan): String =
     val parts = List(

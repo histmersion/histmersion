@@ -12,6 +12,13 @@ object Activity:
     case Log extends EntryKind("log")
     case Decision extends EntryKind("decision")
 
+    /** The entry's kind as the activity list names it. */
+    def wording: String = this match
+      case Run      => "Agent work"
+      case Job      => "Background job"
+      case Log      => "Note"
+      case Decision => "You decided"
+
   object EntryKind:
     def parse(s: String): Option[EntryKind] = values.find(_.wire == s.trim.toLowerCase)
 

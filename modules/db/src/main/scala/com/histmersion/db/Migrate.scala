@@ -95,7 +95,7 @@ object Migrate:
         finally st.close()
     finally c.close()
 
-  /** The read-only login role migration V011 creates (and `Db.provisionQueryRole` configures). */
+  /** The read-only login role migration V011 creates (and `QueryAccess.provision` configures). */
   val QueryRole = "histmersion_query"
 
   private val MigrateAttempts = 5

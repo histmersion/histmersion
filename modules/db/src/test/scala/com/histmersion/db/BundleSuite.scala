@@ -538,8 +538,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       BundleFiles.EventCatalogue,
       BundleFiles.EventCandidates,
       BundleFiles.EventChecks,
-      BundleFiles.Corrections,
-      BundleFiles.SiteTypes
+      BundleFiles.EventCorrections,
+      BundleFiles.PlaceSiteTypes
     )
     val m = manifestOf(bundle)
     val out = java.io.ByteArrayOutputStream()
@@ -560,8 +560,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       BundleFiles.EventCatalogue -> 1,
       BundleFiles.EventCandidates -> 2,
       BundleFiles.EventChecks -> 1,
-      BundleFiles.Corrections -> 2,
-      BundleFiles.SiteTypes -> 1
+      BundleFiles.EventCorrections -> 2,
+      BundleFiles.PlaceSiteTypes -> 1
     ).foreach((f, n) => assertEquals(manifestOf(first).files.find(_.path == f).map(_.lines), Some(n), f))
     assert(text(es, BundleKind.Event.file).contains("\"catalogue\":\"gvp\""), text(es, BundleKind.Event.file))
     val r1 = importInto(b, first, sb)

@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.ingest
 
+import com.histmersion.api.library.sources.SourceWrite
+
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{AcquireMatch, Caller}
@@ -195,7 +197,7 @@ final class IngestQueue(
         if sources.load(citekey).isDefined then
           sources.patch(citekey, SourcePatch(body = Some(body)), Caller.Local).map(_ => ()).left.map(_.message)
         else
-          Write
+          SourceWrite
             .applyPut(citekey, skeleton(job.params, body))
             .map(s =>
               val _ = sources.put(s, Caller.Local)

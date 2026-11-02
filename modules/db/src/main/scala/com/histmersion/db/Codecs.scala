@@ -1,6 +1,5 @@
 package com.histmersion.db
 
-import com.histmersion.api.{PlaceDating, PlaceTimeBasis}
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
 import com.histmersion.values.{Confidence, EdgeKind, LocationPrecision, SourceStatus}
@@ -19,14 +18,6 @@ given DbCodec[SourceStatus] =
 
 /** An unknown edge kind is a plain `references` — the kind that claims no agreement or disagreement. */
 given DbCodec[EdgeKind] = Vocab.codec(EdgeKind.fromWire, EdgeKind.wireOf, EdgeKind.References)
-
-/** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */
-given DbCodec[PlaceDating] = Vocab.codec(PlaceDating.parse, _.wire, PlaceDating.Unknown)
-
-/** The basis is computed in SQL ([[PlaceRepo]]), so every value is known; `dated` is the basis that claims nothing
-  * beyond the place's own period.
-  */
-given DbCodec[PlaceTimeBasis] = Vocab.codec(PlaceTimeBasis.parse, _.wire, PlaceTimeBasis.Dated)
 
 /** `places.location_precision` (V077): NULL is a point as stated; an unknown value is the LESS precise grid cell — a
   * point no nearness may be read from — not "as stated".

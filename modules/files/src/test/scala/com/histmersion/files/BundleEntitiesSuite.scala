@@ -227,8 +227,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
       BundleFiles.EventCatalogue,
       BundleFiles.EventCandidates,
       BundleFiles.EventChecks,
-      BundleFiles.Corrections,
-      BundleFiles.SiteTypes
+      BundleFiles.EventCorrections,
+      BundleFiles.PlaceSiteTypes
     ).foreach(f => assertEquals(BundleFormat.lines(payloads(f)), 1, f))
     val (back, problems) = BundleEntities.decode(payloads)
     assertEquals(problems, Nil)
@@ -241,8 +241,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
         BundleFiles.EventCatalogue,
         BundleFiles.EventCandidates,
         BundleFiles.EventChecks,
-        BundleFiles.Corrections,
-        BundleFiles.SiteTypes
+        BundleFiles.EventCorrections,
+        BundleFiles.PlaceSiteTypes
       )
     )
     assertEquals(oldProblems, Nil)

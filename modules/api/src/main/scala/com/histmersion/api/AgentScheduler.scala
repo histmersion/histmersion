@@ -109,3 +109,20 @@ object AgentScheduler:
     val Running = "running"
     val Settled = "settled"
     val Paused = "paused"
+
+  /** What a scheduler's wait code means, as the managers' view says it. */
+  val waitCodes: Map[String, String] = Map(
+    "capacity" -> "No free place",
+    "pool" -> "Plan is full",
+    "manager-cap" -> "Manager is full",
+    "blocked" -> "Blocked",
+    "busy" -> "Busy",
+    "budget" -> "Spending cap reached",
+    "drain" -> "Finishing current work, then pausing",
+    Code.Person -> "Needs your decision",
+    Code.Held -> "Held by a person",
+    Code.NotDue -> "Not due yet",
+    Code.Running -> "Running",
+    Code.Settled -> "Settled",
+    Code.Paused -> "Paused"
+  )

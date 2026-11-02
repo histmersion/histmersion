@@ -44,7 +44,7 @@ object EventsCarried:
 
   val corrections: CarriedKind = CarriedKind.owned[BundleCorrection](
     Catalogue,
-    BundleEntry(BundleFiles.Corrections),
+    BundleEntry(BundleFiles.EventCorrections),
     List(rows(63)(EventBundleRepo.correctionsIn))
   )(scope => EventBundleRepo.corrections(scope).toList)(
     c => Some(c.updatedAt),

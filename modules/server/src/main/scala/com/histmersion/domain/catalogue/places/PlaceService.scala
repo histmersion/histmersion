@@ -22,7 +22,7 @@ import com.histmersion.api.{
   PlaceTreeRow,
   Write
 }
-import com.histmersion.api.Tree.RegionNode
+import com.histmersion.api.catalogue.places.RegionNode
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom
 import com.histmersion.util.database.Transactor

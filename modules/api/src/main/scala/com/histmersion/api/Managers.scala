@@ -14,7 +14,9 @@ object Managers:
     case Person extends ItemOrigin("person")
     case Chain extends ItemOrigin("chain")
     case Hint extends ItemOrigin("hint")
-    case Ingest extends ItemOrigin("ingest")
+
+    /** An item an ingest added, by a name no other type takes. */
+    case FromIngest extends ItemOrigin("ingest")
 
     case Cron extends ItemOrigin("cron")
 

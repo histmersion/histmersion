@@ -33,7 +33,7 @@ object GoalPage:
 
   /** A step's name: what kind of work it is, on what. */
   def stepName(i: ManagerItem): String =
-    val what = Wording.label(i.kind)
+    val what = UiLabels.label(i.kind)
     if i.target.isEmpty || i.target == i.managerId then what else s"$what — ${Wording.value(i.target)}"
 
   /** The steps the plan shows: going now first, then still to do, then done, newest first in each. */

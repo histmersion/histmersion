@@ -33,7 +33,16 @@ object UiNotices:
 
   final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema:
+
+    /** The agents at a glance, as the top bar says it. */
+    def wording: String =
+      def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
+      if !on || (draining && running == 0) then "Agents paused"
+      else if draining then s"Agents finishing current work · ${runs(running)}"
+      else if running > 0 then s"Agents working · ${runs(running)}"
+      else if queued > 0 then s"Agents working · $queued waiting"
+      else "Agents on · nothing to do"
   object AgentsGlance:
     given Schema[AgentsGlance] = summon[KindlingsSchema[AgentsGlance]].schema
 

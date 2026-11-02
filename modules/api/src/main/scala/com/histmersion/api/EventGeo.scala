@@ -27,11 +27,6 @@ final case class EventGeo(
 object EventGeo:
   given Schema[EventGeo] = summon[KindlingsSchema[EventGeo]].schema
 
-  def outer(ts: TimeSpan): Option[(Long, Long)] =
-    val start = ts.notBefore.orElse(ts.beginBy).orElse(ts.endFrom).orElse(ts.notAfter)
-    val end = ts.notAfter.orElse(ts.endFrom).orElse(ts.beginBy).orElse(ts.notBefore)
-    for a <- start; b <- end yield (a.min(b), a.max(b))
-
   def missingEnd(ts: TimeSpan): Option[String] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined

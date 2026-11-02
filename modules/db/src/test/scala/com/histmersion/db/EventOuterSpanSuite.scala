@@ -12,7 +12,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 
 /** V089 (#1768) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the generated `events.outer_span`
-  * is core.EventGeo.outer — an open-ended event covers the end it states, not every year after it — and the map's feed
+  * is TimeSpan.outer — an open-ended event covers the end it states, not every year after it — and the map's feed
   * (`/api/events/geo`) and the list follow it. Ids start `zqos`.
   */
 class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
@@ -44,7 +44,7 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
                              CASE WHEN upper_inf(outer_span) THEN NULL ELSE upper(outer_span) - 1 END
                       FROM events WHERE id = $id""".query[(Option[Long], Option[Long])].run().head)
 
-  test("V089: the generated outer_span is core.EventGeo.outer (an undated event stays unbounded)"):
+  test("V089: the generated outer_span is TimeSpan.outer (an undated event stays unbounded)"):
     val spans = List(
       TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250)),
       TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260)),
@@ -58,7 +58,7 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
     )
     spans.zipWithIndex.foreach { (ts, i) =>
       put(s"zqos_s$i", ts)
-      val expected = EventGeo.outer(ts).fold((None, None))((a, b) => (Some(a), Some(b)))
+      val expected = ts.outer.fold((None, None))((a, b) => (Some(a), Some(b)))
       assertEquals(span(s"zqos_s$i"), expected, ts.toString)
     }
 

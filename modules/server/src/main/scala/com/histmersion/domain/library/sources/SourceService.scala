@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.library.sources.SourceWrite
+
 import com.histmersion.api.*
 import com.histmersion.domain.{Caller, Licence}
 import com.histmersion.values.LicenceId
@@ -402,10 +404,10 @@ object SourceService:
         loadIn(st, citekey) match
           case None           => { answer = Left(Write.notFound(citekey)); st }
           case Some(existing) =>
-            Write.precondition(existing, patch) match
+            SourceWrite.precondition(existing, patch) match
               case Left(msg) => { answer = Left(ApiError(msg, Some(Write.CodePrecondition))); st }
               case Right(_)  =>
-                Write.applyPatch(existing, Write.srcAliased(patch, requested, citekey)) match
+                SourceWrite.applyPatch(existing, SourceWrite.srcAliased(patch, requested, citekey)) match
                   case Left(msg)      => { answer = Left(ApiError(msg, Some(Write.CodeInvalid))); st }
                   case Right(updated) => { answer = Right(token(at)); written(st, updated, at) }
       }

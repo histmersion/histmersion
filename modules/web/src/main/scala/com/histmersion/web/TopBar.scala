@@ -138,9 +138,9 @@ object TopBar:
         cls := "pill agent-pill",
         cls("is-working") := g.on && g.running > 0,
         cls("is-paused") := !g.on || (g.draining && g.running == 0),
-        title := Wording.agentsGlance(g),
+        title := g.wording,
         span(cls := "pill-dot", aria.hidden := true),
-        span(cls := "pill-text", Wording.agentsGlance(g))
+        span(cls := "pill-text", g.wording)
       )
     })
 
