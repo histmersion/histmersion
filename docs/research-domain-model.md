@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -3684,3 +3684,160 @@ chimneyIronTests 10, db 520 (523 at part 1: the seed's three tests moved to the 
 acquisition contract suites and `JobRecordsContract` on both twins, the sources' contract's four new tests,
 `SeedImportSuite`). Every commit was formatted after a `scalafmtAll` without the cache (the cached one had replayed) and
 passes `fmt-check` as it is.
+
+### Part 3 as built (the library's workflows and kinds, its settings, its data contribution, 2026-11-02)
+
+Branch `refactor-s10c` from master f75777dd (slice 10 parts 1 and 2 deployed). Seven commits: the oracle's new part on
+the unchanged code, the data contribution, the settings (with `MinHash`), the workflows' move, the library's contribution
+builder, a fix the clean run found (the reindex task's owner); then this section. The part is **not complete**: the sources' merge rules inside the planner and the
+automation's view of the library did not fit beside the rest and are left (below, "Left after part 3"); slice 10 is
+therefore not marked complete. Endpoints, MCP tools, CLI commands, agent definitions, bundle entries, merge plans and lint
+output are unchanged: `ContractSnapshotSuite` (`toolbox.json` and `mcp-tools.json` included), `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `CatalogueOracleSuite`, `MediaOracleSuite`, `LibraryOracleSuite`, `AcquisitionOracleSuite`,
+`SearchSqlSnapshotSuite`, the Calibre transcript, `ArchiveTrafficSuite` and the gated agent transcripts held byte for byte;
+no oracle or snapshot was re-recorded after the first commit, and no migration was added.
+
+**The oracle, extended first** (`LibraryOracleSuite`, two new files, recorded on the unchanged code and stable three runs
+in a row): `exchange.txt` — a collection's whole bundle and the part since a shared history, imported into an empty
+collection and into one that holds the history, and merged into one that went on too (findings, a body and edges changed
+on both sides, a citekey renamed on one side and edited under its old name on the other, one work under two citekeys
+matched by DOI and one by its fingerprint, a citekey taken by two works, a source deleted): every round of the plan, the
+resolution file and how it reads back, the apply, the merges, the merge, the ledger and the library's rows of each
+collection; `lint.txt` — a collection on which every library rule finds something (the three place rules over a
+placeholder point, a grid square's centre and a name the gazetteer resolves), the report, the safe fixes, each place
+rule's repair named and its report after, and the rows. Issue ids hash random uids, so they are written as
+`<letter>-issue:<kind>:<label>` and the arrays they order sorted by their normalised text; dump names and short ids are
+masked. The library's workflows are recorded by the gated transcripts already (`SchedulerDbSuite`, `ManagerPhase3Suite`,
+`IngestBacklogDbSuite`, `AcquireRecheckDbSuite`, `AutoEnrichRunSuite`, `ManagerAutopilotSuite`, `GoalAgentsRunSuite`: the
+seeding, both sweeps, the backlog, the re-check, enrich and auto-enrich, the watcher's cron and work lists, every row each
+writes), so no workflow oracle was added.
+
+**The library's data contribution** (`domain.library.LibraryData`, registered in `Deps.data` beside `CatalogueData` and
+`MediaData`): its 14 tables, its stores (`IngestOriginals`, `Spool`, `CorpusFolder`), the sources a restore must not drop
+unasked, its carried kinds and merge rules (`LibraryExchange`), the sources' notes in the mirror (rendered by the notes the
+composition hands it, as before), the rebuild of the chunks, its counts and its checks. The adapters' library branches are
+gone (`TablesAdapter`, `MaintenanceAdapter`, `BackupAdapter`, `FiguresAdapter`, `MirrorAdapter`, `CheckRulesAdapter`,
+`CarriedKindsAdapter`, `MergeRulesAdapter`; `SourcesMaintenanceAdapter` deleted).
+
+- **Carried kinds** (`SourcesCarried`, db module, over `SourceBundleRepo`, `private[sources]`): the sources (each line
+  stamped, its body and stored original blobs; the lines without blobs what a merge compares), findings, edges, parked
+  edges, assessments and old citekeys — the readers and rows (`BSourceRow`, `BFindingRow`, `BAssessmentRow`, one a file)
+  that left `BundleRepo`, the steps that left `BundleImport.Writer`, at the same stages and ranks. The Writer gives every
+  kind what they share: `inserts`, `skipsAlias`, `opts`, `insertSource`/`insertedSources` (research's link step reads
+  them), `touchedSources`; a changed body is the library's own per-import state (`BundleImport.Once`); a source's body
+  and original are no longer the Writer's to sink.
+- **Merge rules**: `SourceMergeRules` and `FindingMergeRules` (the ledger labels, referable) out of `MergeRulesAdapter`.
+  The planner's source and finding rules stay in `MergePlanner` and `MergeFold` (left, below). `MinHash` is
+  `util.text.MinHash` (a text mechanism over `Fingerprint`'s tokens), so `MergeState` names no library type.
+- **Checks** (`SourcesData` in server over `SourceCheckRepo` in db, `private[sources]`): the library's 23 rules with their
+  safe fixes, out of `LintRepo`, in the report's order; the three place rules reach the geocoder through the catalogue's
+  `FindingPlacement` (`legacyPointsSql`, `unplacedSql`, `movesIn`, `placementsIn`, `move`, `place`), so `Geocoder` is
+  `private[places]` and its knobs `GeocodeSettings`. `LintRepo` keeps research's rules (slice 11).
+- **`SourceRepo` is `private[sources]`**: research's `ArticleRepo` and `CritiqueRepo` resolve citekeys through
+  `CitekeyResolver` (an interface the library owns and implements); the db and server suites reach the repository
+  through `SourceFixtures`, the lint through `SourceCheckFixtures`, the geocoder through `PlaceFixtures`.
+
+**The library's settings.** `config.LibraryAgentsConfig` (`enrich`, `verify`, `seed`, `managers.watch` —
+`LibraryManagersConfig`) is read from the same `agents` block as the engine's `AgentsConfig` (`AppConfig.libraryAgents`,
+`@configKey("agents")`); the engine's records no longer name the library's: a watcher's run limit is read as any kind's
+(`SimpleManagerConfig`, `ManagerDefaults.watch: ManagerRunDefaults`), the goal stages' source threshold through
+`EngineSite.sourcesToPlan`, a new watcher's cron from its kind (`ManagerKindDefinition.cron`). A seeding and a watching
+manager's defaults and the watcher's ingest allowance left `ManagerPolicy` for `SeedPlanDefaults.managerDefaults` and
+`WatchManagerDefaults` (`managerDefaults`, `ingestAllowance`). Every key, default and environment variable is unchanged
+(`ConfigSuite`, `AgentsSettingsSuite`, `ManagerDefaultsViewsSuite`).
+
+**`domain.library.workflows`** (server): the enrich-source, currency-check and acquisition-sweep pipelines, `GoalSweep`,
+`OaBacklog`, `AcquireRecheckService`, `SeedService`, `AgentUpstream`, `AcquisitionWork`, `SourceProposals`,
+`LibraryAnswers`, the agent tools' inputs and the enrich and watch kinds left `server/agents`; `LibraryAgentTools` holds the
+library's seven agent tools (out of `TransitionTools`, which keeps research's three and lists all ten in the toolbox's
+order); `LibraryWorkflow` registers a pipeline with its step agents; `LibraryWorkflows` is what the library contributes
+(the three workflows, the two kinds, the acquisition work, the proposals research's review shares), registered by
+`TransitionWorkflows` in the engine's order beside research's adapters. The workflows reach the composition through
+`LibrarySite` (the work lists, the write gate, the library's controllers, the jobs, the catalogue's geocoder and
+research's articles — implemented by `server/LibraryWorkflowSite`) and the engine through its services, which gained what
+they read of the manager tables directly before: `ManagerService.backlogPending`, `backlogOpen`, `backlogOpenFor`,
+`backlogRetry`, `countEventsBy`, `setItemState`, `sweepAcquireItems` (`SweepAcquireItem` a type of its own),
+`GoalService.refs`; and `SourceService.citekeyOfDoi`, `JobListing.newest`. `Pipeline.Fallback` names the pipeline an item
+that starts no run is counted under (the review's), which the kinds named by a word research's types share.
+
+**Services and their twins.** The new operations are on both implementations: the in-memory manager service answers the
+backlog from its items and events, and `sweepAcquireItems` with none (the acquisition items are the work lists', which its
+state does not hold — as a database holding only the engine's rows would answer); contract tests:
+`ManagerServiceContract` +2 (the ingest backlog; events counted by manager), `GoalServiceContract` +1 (a kind's refs),
+`SourceServiceContract` +1 (a DOI's holder), each on both twins. The carried kinds, the checks and the workflows are
+mechanisms over SQL, the engine and the upstreams; their answers are in the oracles, the transcripts and the db suites.
+
+**Equivalence.** The oracles and snapshots above identical after every commit. `DataOracleSuite`'s `storage.txt` differs
+on this machine from 02:21 UTC on, on the unchanged code as on the branch: a docling-models cache directory appeared in the
+user's home that About lists (15 added lines, nothing else); every other file of it is identical and it was not
+re-recorded. The gated transcripts (`HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, a new test database,
+`server/testOnly com.histmersion.server.agents.*`): 351 tests identical on the unchanged code at 02:05 UTC and on the
+branch after the settings (02:45), the move (03:02) and the contribution builder (03:08) — before 07:00 UTC, which part 2
+found unsafe and part 3 of slice 7 made safe; it held here. No read path that `catalogue_live.py` or `library_live.py`
+covers changed (the search, facets, map feed, histogram and a source's reads run the same services and SQL), so no
+live-volume run was made.
+
+**Architecture.** `exceptions.tsv` 283 → 251 rows, deletions only: direction 208 → 189 (`AgentsConfig` naming
+`AgentEnrichConfig`, `AgentSeedConfig`, `AgentVerifyConfig`; `AgentManagersConfig` naming `WatchManagerConfig`;
+`ManagerDefaults` naming `WatchManagerDefaults`; `ManagerPolicy` naming `SeedPlanDefaults`; `BundleImport` naming `Edge`,
+`SourceRepo`; `LintRepo` naming `Edge`, `SourceRepo`, `Geocoder`; `MergeState` naming `MergeText`; the six library
+workflows and `GoalSweep` naming `Handlers`), repository 39 → 26 (`SourceRepo` named by `ArticleRepo`, `BundleImport`,
+`CritiqueRepo`, `LintRepo`; `AcquireRecheckService` naming `JobRepo`, `ManagerRepo`; `AcquisitionSweepPipeline` and
+`OaBacklog` naming `GoalLinkRepo`, `ManagerRepo`; `EnrichSourcePipeline` naming `AgentRepo`; `SeedService` naming
+`FocusRepo`, `ManagerRepo`), filesystem (32) and process (4) unchanged. `places.tsv`: the 17 moved files' rows gone;
+`config/LibraryAgentsConfig` and `LibraryManagersConfig` placed in `library.workflows`, `server/LibraryWorkflowSite` in
+`server`.
+
+**Left after part 3** (the library rows that remain, by what removes them):
+
+| rows | removed by | what moves |
+|---|---|---|
+| direction: `core/MergePlanner` naming `Citekeys`, `FindingMatch`, `MergeText`, `SourceMatch`, `SourceMatcher`; `core/MergeFold` naming `FindingMatch`, `MergeText` | slice 10, a part 4 | the sources' and findings' rules of the plan (matching, evidence, folds, the finding matches, a citekey's validity) as the library's `PlanRules` — the planner's one pass interleaves them with every kind's stages, so they need hooks of their own (§21 part 4's `PlanRun`), and `MatchWeights` with them |
+| direction: `core/CompareRuns` naming `AgentVerify`, `EnrichSource`, `Finding`; `core/PlanGoal` naming `Acquire`, `WorkRef`; `core/Scheduling` naming `Acquire`, `AgentProposals`, `Edge`, `FollowupRow`, `WorkRef`; `db/AgentRepo` naming `AgentProposals` | slice 10, a part 4 | the automation's view of the library: `Scheduling`'s sweep rules (candidates, the ranking, the picks, the currency actions) into the library — the ranking's answer schema with them, out of the engine's `AnswerSchemas` —, `CompareRuns`' enrich comparison and the approvals' source proposals behind the interfaces §3.8 gives |
+| direction: `api/MergeMarkdown` naming `LabelRenamed`, `SourceMatch`; `api/MergePlan` naming `SourceMatch`; `api/Lint` naming `Edge`; `api/Agents`, `api/Managers` naming `Ingest`; `api/AgentsMarkdown` naming `Edge`, `Query`; `api/GoalsExport` naming `Query`; `api/Autopilot`, `api/ManagersApi`, `api/Queue`, `api/JobDetail` naming the acquisition's records | slice 12 | wire records (`api.library.*`): the plan's and the lint's records, the managers' and autopilot's wire |
+| direction: `db/LintRepo` naming `Hit` | slice 11 (research) | a name collision: research's `CritiquePairing.Hit` in the article rules that stay in `LintRepo` |
+| direction: `files/BundleEntities` naming `Finding`; `api/Markdown` (16), `api/Write` (11), `api/Wording`, `api/Tree`, `api/ResolvedId`, `api/AssetLinkTarget`, `api/AttestationTarget`, `db/Db`, `config/BasemapBathymetryConfig` | slice 12 | as listed under part 1 |
+
+**Deviations.**
+
+- The part stops short of its brief (the planner's source rules and the automation's view of the library, above): both
+  are large and their oracles (`DataOracleSuite`'s and `LibraryOracleSuite`'s exchange, the transcripts) are the gate
+  for a part of their own. The library's three workflows, two kinds, tools and settings and its data contribution are
+  complete and deployable.
+- The library's settings are a second record over the same `agents` block (`@configKey`), not a block of their own: the
+  keys are unchanged.
+- `Pipeline.Fallback` (values) is a name for an existing value, as slice 7 renamed `GoalLinkKind.SearchQuery`: the kinds'
+  fallback named a word research's top-level `ReviewArticle` also names.
+- The library's carried kinds all live in `domain.library.sources` (the assessments' reader with them): their steps write
+  through `SourceRepo`, which is private to that feature.
+- `MirrorAdapter.SourceNotes` stays for `Handlers.exportSource` and the mirror's suite; `LibraryData.SourceNotes` is the
+  same value.
+- `TransitionTools` keeps exporting the library's tool names (the definitions' generator and its suites name them there).
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled classes:
+renamed `db.BSourceRow$`, `BFindingRow$`, `BAssessmentRow$` → `domain.library.sources.*$` (`derived$DbCodec$lzy1`);
+the rows left in `BundleRepo.scala` renumbered (`BArticleRow$` lzy1, `BVersionRow$` lzy2, `BGoalRow$` lzy3,
+`BGoalLinkRow$` lzy4, `BGoalScheduleRow$` lzy5, `BQueueRow$` lzy6, `BTombstoneRow$` lzy7; `BundleRepo$package$` keeps
+`given_DbCodec_InstanceInfo$lzy1` only); renamed `server.agents.AcquisitionSweepPipeline$Found$`, `Picked$`, `Ingested$`,
+`Failed$`, `Tried$`, `Parked$`, `CurrencyCheckPipeline$Target$`, `Assessed$`, `Followed$`, `AgentFacetsInput$`,
+`AgentGetSourceInput$`, `AgentSearchInput$`, `FollowupsInput$` → `domain.library.workflows.*$` (their codec and schema
+fields as `javap -p` reads them); added `domain.library.workflows.LibraryAgentTools$package$` (`given_Configuration$lzy1`),
+`config.LibraryAgentsConfig$` and `LibraryManagersConfig$` (`derived$ConfigReader$lzy1`), `server.Handlers`'s
+`librarySite$lzy1`. The new data contribution, carried kinds, checks, site and workflows hold eager values and anonymous
+classes only. No tracing-agent run, no native build. To check at the bundle: `--self-check`; `smoke.sh`; `bundle
+export|verify|import` (whole and `--since`), `merge plan|apply` with sources matched by DOI and fingerprint and a renamed
+citekey; `lint` (every rule) and `lint --fix` with `--rule finding-geocode|finding-unplaced|finding-placeholder`;
+`config get agents.enrich.window-chars` and `agents.managers.watch.cron` (a setting written and read back); an
+enrich-source run, a watcher's sweeps (`agent manager enqueue`, its cron), the ingest backlog's drain and repair
+(`agent autopilot repair-acquire`), `queue acquire recheck`, the seeding on an autopilot tick; an agent run's tools on a
+CLI runtime (`/mcp/agent/<agent>` `tools/list`, the seven library tools); About's counts.
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, the format check and every
+module's suites with the DB suites on a throwaway database: 5 234 tests — values 21, valuesJS 21, api 825, apiJS 88,
+config 67, files 73, core 769, pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped),
+pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45,
+pluginResolver 23, chimneyIronTests 10, db 520, cli 232, web 639, server 1 543 (1 skipped, 1 ignored; the oracle's new
+test, the contracts' four). Two server tests failed in that run: `DataOracleSuite`'s `storage.txt` (the home directory's
+new cache, above) and `MaintenanceRegistrySuite` — the reindex task registered with no owner (a parameter shadowed by the
+member it set), fixed in its own commit; the maintenance suites passed again after it. A cached format check had passed
+over a file a clean one reformats; it was formatted into its commit before the run.
