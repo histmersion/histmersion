@@ -1,10 +1,10 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.{EventLinkCandidate, EventPassage}
-import com.histmersion.db.Jsonb
+import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.

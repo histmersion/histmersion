@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor

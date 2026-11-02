@@ -11,14 +11,15 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, PlaceKind}
-import com.histmersion.db.{Db, Migrate}
-import com.histmersion.db.given
+import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.given
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.db.*
 
 /** The keyless portals (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * Pleiades ids and gazetteer ids places carry, the places on the map an id names, the Pleiades import's targets

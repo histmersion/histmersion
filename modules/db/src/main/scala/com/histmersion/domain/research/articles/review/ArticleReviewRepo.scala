@@ -4,7 +4,7 @@ import com.histmersion.api.{ReviewApproval, ReviewGoal}
 import com.histmersion.domain.ArticleReviewStatus.{Facts, ItemFacts, LedgerFacts}
 import com.histmersion.values.ItemStatus
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

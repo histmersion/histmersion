@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.db.Jsonb
+import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.ReviewLedger.Ledger
 
 import com.augustnagro.magnum.*

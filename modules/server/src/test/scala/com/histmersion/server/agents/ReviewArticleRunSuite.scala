@@ -11,7 +11,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, Db, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
@@ -21,6 +22,7 @@ import io.circe.syntax.*
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.EdgeKind
+import com.histmersion.db.*
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an

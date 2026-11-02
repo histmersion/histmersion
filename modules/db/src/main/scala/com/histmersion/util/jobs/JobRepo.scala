@@ -1,13 +1,13 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no

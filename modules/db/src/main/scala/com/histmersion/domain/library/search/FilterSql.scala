@@ -1,7 +1,6 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -12,6 +11,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, SourceStatus}
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.{Param, Sql}
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.

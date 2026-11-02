@@ -18,7 +18,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.ManagerRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}

@@ -1,6 +1,6 @@
 package com.histmersion.util.identity
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid, RecordState}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.values.Title

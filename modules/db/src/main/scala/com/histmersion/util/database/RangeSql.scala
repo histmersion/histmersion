@@ -1,7 +1,7 @@
 package com.histmersion.util.database
 
 import com.histmersion.api.*
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how

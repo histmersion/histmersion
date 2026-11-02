@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.Gazetteer
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 import com.histmersion.values.PlaceKind
 

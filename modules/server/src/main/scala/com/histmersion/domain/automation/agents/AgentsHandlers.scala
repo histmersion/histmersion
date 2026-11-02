@@ -20,7 +20,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
-import com.histmersion.db.ModelSettingsRepo
+import com.histmersion.domain.automation.agents.ModelSettingsRepo
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -270,7 +270,9 @@ final class AgentsHandlers(
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
   def setFallthrough(role: String, in: PlanQuota.FallthroughSet): Either[ApiError, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
-      Transactor(ds).transact(com.histmersion.db.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough))
+      Transactor(ds).transact(
+        com.histmersion.domain.automation.agents.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough)
+      )
       quota
     }
 

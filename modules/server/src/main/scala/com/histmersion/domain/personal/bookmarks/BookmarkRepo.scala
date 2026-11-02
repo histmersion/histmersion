@@ -1,7 +1,7 @@
 package com.histmersion.domain.personal.bookmarks
 
 import com.histmersion.api.personal.{BookmarkId, BookmarkLabel, ItemKind as MarkKind}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given

@@ -1,11 +1,12 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.goals
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.

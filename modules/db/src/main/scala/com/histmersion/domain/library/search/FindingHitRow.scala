@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.search
 
 import com.histmersion.api.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

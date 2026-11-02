@@ -10,10 +10,10 @@ import com.histmersion.api.{
   EventTaxonomy,
   TimeSpan
 }
-import com.histmersion.db.Jsonb
+import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.

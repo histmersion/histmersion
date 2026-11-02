@@ -2,7 +2,7 @@ package com.histmersion.domain.media.links
 
 import com.histmersion.api.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where

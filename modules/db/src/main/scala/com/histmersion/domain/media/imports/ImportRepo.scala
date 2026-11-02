@@ -1,9 +1,9 @@
 package com.histmersion.domain.media.imports
 
 import com.histmersion.domain.catalogue.places.{ExternalIds, Wikidata}
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** What the media imports ask about and what they recorded asking (#1446, V082): the places on the map and the events

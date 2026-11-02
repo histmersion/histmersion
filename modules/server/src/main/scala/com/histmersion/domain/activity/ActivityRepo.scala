@@ -2,7 +2,7 @@ package com.histmersion.domain.activity
 
 import com.histmersion.api.Activity
 import com.histmersion.api.Activity.{Entry, Show}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 

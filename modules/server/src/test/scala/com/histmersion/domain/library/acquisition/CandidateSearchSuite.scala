@@ -10,7 +10,9 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.db.{GoalLinkRepo, GoalRepo, Migrate, QueueRows}
+import com.histmersion.db.QueueRows
+import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
+import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.workflows.WatchManagerKind
 
 import java.time.LocalDate

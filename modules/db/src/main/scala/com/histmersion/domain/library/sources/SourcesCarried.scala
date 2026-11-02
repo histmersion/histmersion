@@ -2,7 +2,8 @@ package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
 import com.histmersion.api.given
-import com.histmersion.db.{BundleImport, Param, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}

@@ -22,7 +22,8 @@ import com.histmersion.api.{
   Write
 }
 import com.histmersion.config.AppConfig
-import com.histmersion.db.{BundleRepo, Migrate}
+import com.histmersion.util.data.exchange.BundleRepo
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.settings.MergeSettingsViews
 import com.histmersion.util.storage.{ByteSource, HandedFile, Location, Storage, Store, StoreContents, StoreKey}
 

@@ -2,8 +2,7 @@ package com.histmersion.domain.library.search
 
 import com.histmersion.api.library.search.Tree
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -14,6 +13,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Sql
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.Aggregate]].
   *

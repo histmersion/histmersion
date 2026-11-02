@@ -3,7 +3,7 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.*
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceKeys, SourceReferrers}
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

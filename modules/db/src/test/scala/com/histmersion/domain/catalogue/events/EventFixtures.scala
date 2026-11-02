@@ -15,7 +15,7 @@ import com.histmersion.api.{
   EventPut,
   Filter
 }
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 import com.histmersion.domain.library.search.FilterEventSources
 
 import com.augustnagro.magnum.{connect, transact}

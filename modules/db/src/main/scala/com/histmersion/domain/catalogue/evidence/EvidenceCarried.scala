@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.{BundleAttestation, BundleEventCandidate, BundleEventCheck, BundleFiles}
 import com.histmersion.api.given
-import com.histmersion.db.BundleImport
+import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 import com.histmersion.values.BundleKind

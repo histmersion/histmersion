@@ -7,6 +7,8 @@ package com.histmersion.db
   * `make dev-up` publishes on :5432) is refused with an error instead of silently seeding test polygons into the web
   * UI, which is exactly what happened once.
   */
+
+import com.histmersion.util.database.Migrate
 object TestDb:
   val Env = "HISTMERSION_TEST_DB_URL"
 

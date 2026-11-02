@@ -14,6 +14,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.Migrate
 
 /** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events lists are the
   * items RELATED to the sources the global filter selects: an article that cites a matching source is listed, one

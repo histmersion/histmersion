@@ -1,7 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
 /** The counts and sizes the diagnostics read: rows of a table, the database's size and its tables'. Plain `count(*)`s
   * over whole tables — the About panel is opened by hand, not polled.

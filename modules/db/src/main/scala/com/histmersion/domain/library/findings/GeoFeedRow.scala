@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.findings
 
 import com.histmersion.api.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.histmersion.values.Confidence
 
 import com.augustnagro.magnum.*

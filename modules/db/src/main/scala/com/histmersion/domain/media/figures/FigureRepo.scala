@@ -1,9 +1,9 @@
 package com.histmersion.domain.media.figures
 
 import com.histmersion.api.{FigureLicenceFill, MediaCount}
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** A source's figures take the source's licence (#1446): the figures with no licence whose source records one. Runs on

@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{BBox, EventPrecision, EventTaxonomy, EventTier, Filter}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list

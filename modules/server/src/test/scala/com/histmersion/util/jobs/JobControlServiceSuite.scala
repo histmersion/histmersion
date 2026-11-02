@@ -7,7 +7,7 @@ import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.api.{ApiError, JobInfo}
 import com.histmersion.values.JobKind
 import com.histmersion.config.AppConfig
-import com.histmersion.db.Migrate
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}

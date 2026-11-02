@@ -5,7 +5,8 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.{SourceFixtures, SourceService, SourceSettings}
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
-import com.histmersion.db.{Migrate, TestDb}
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.Migrate
 import com.histmersion.files.Export
 import com.histmersion.server.SeedNoteFiles
 import com.histmersion.util.database.Transactor

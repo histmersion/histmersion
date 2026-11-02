@@ -2,8 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -12,6 +11,8 @@ import com.histmersion.api.Geocode.KindHint
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.util.database.Migrate
+import com.histmersion.db.*
 
 /** The external gazetteer sources in the store (#1064), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): joining by identifier only, provenance per row, idempotent re-runs, the sweep, the dry run, and the

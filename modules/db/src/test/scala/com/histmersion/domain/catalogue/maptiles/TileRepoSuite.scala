@@ -12,9 +12,10 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.db.*
 
 /** The map's tiles (`TileRepo`, V105) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): which sites,
   * events and pictures a tile holds for a span (a RANGE: every item whose dates overlap it), the grouping that keeps a

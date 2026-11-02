@@ -10,7 +10,8 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, TestDb}
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 

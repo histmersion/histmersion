@@ -13,13 +13,17 @@ import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.domain.automation.goals.GoalLinkRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.values.SourceStatus
+import com.histmersion.db.*
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the

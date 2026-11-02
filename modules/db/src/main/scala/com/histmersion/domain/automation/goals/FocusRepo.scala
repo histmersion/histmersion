@@ -1,6 +1,7 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.goals
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Sql
+import com.histmersion.util.database.given
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a

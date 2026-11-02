@@ -1,25 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-bucket	db:db/AgentRepo.scala	package com.histmersion.db	1
-bucket	db:db/AutopilotRepo.scala	package com.histmersion.db	1
-bucket	db:db/BundleImport.scala	package com.histmersion.db	1
-bucket	db:db/BundleRepo.scala	package com.histmersion.db	1
-bucket	db:db/Codecs.scala	package com.histmersion.db	1
-bucket	db:db/Db.scala	package com.histmersion.db	1
-bucket	db:db/FocusRepo.scala	package com.histmersion.db	1
-bucket	db:db/GoalLinkRepo.scala	package com.histmersion.db	1
-bucket	db:db/GoalRepo.scala	package com.histmersion.db	1
-bucket	db:db/GoalRow.scala	package com.histmersion.db	1
-bucket	db:db/Jsonb.scala	package com.histmersion.db	1
-bucket	db:db/Keyset.scala	package com.histmersion.db	1
-bucket	db:db/ListSql.scala	package com.histmersion.db	1
-bucket	db:db/ManagerRepo.scala	package com.histmersion.db	1
-bucket	db:db/MergeState.scala	package com.histmersion.db	1
-bucket	db:db/Migrate.scala	package com.histmersion.db	1
-bucket	db:db/ModelSettingsRepo.scala	package com.histmersion.db	1
-bucket	db:db/Param.scala	package com.histmersion.db	1
-bucket	db:db/PlanQuotaRepo.scala	package com.histmersion.db	1
-bucket	db:db/Sql.scala	package com.histmersion.db	1
-bucket	db:db/Vocab.scala	package com.histmersion.db	1
 bucket	files:files/ArticleNote.scala	package com.histmersion.files	1
 bucket	files:files/BundleEntities.scala	package com.histmersion.files	1
 bucket	files:files/Export.scala	package com.histmersion.files	1
@@ -197,8 +176,7 @@ copy	core:domain/library/findings/FindingPlan.scala	.copy(	1
 copy	core:domain/library/sources/SourcePlan.scala	.copy(	1
 copy	core:domain/media/figures/FigurePick.scala	.copy(	2
 copy	core:domain/research/workflows/ReviewManagerPolicy.scala	.copy(	3
-copy	db:db/AgentRepo.scala	.copy(	4
-copy	db:db/MergeState.scala	.copy(	4
+copy	db:domain/automation/agents/AgentRepo.scala	.copy(	4
 copy	db:domain/catalogue/events/EventRepo.scala	.copy(	1
 copy	db:domain/catalogue/places/GazetteerRepo.scala	.copy(	1
 copy	db:domain/catalogue/places/Geocoder.scala	.copy(	1
@@ -209,6 +187,7 @@ copy	db:domain/library/sources/SourceRepo.scala	.copy(	1
 copy	db:domain/research/articles/ArticleRepo.scala	.copy(	1
 copy	db:util/data/exchange/BundleImporter.scala	.copy(	4
 copy	db:util/data/exchange/MergePlans.scala	.copy(	1
+copy	db:util/data/exchange/MergeState.scala	.copy(	4
 copy	files:files/Frontmatter.scala	.copy(	2
 copy	files:files/PluginKit.scala	.copy(	1
 copy	files:util/data/exchange/BundleFormat.scala	.copy(	1
@@ -745,12 +724,10 @@ derives	core:domain/PlanGoal.scala	codec given written by hand	6
 derives	core:domain/ReviewArticle.scala	codec given written by hand	39
 derives	core:domain/ReviewLedger.scala	codec given written by hand	4
 derives	core:domain/library/workflows/AcquisitionSweepRules.scala	codec given written by hand	2
-derives	db:db/AgentRepo.scala	codec given written by hand	1
-derives	db:db/BundleRepo.scala	codec given written by hand	2
-derives	db:db/Codecs.scala	codec given written by hand	5
-derives	db:db/ManagerRepo.scala	codec given written by hand	1
+derives	db:domain/automation/agents/AgentRepo.scala	codec given written by hand	1
 derives	db:domain/automation/agents/AgentStateRepo.scala	codec given written by hand	1
 derives	db:domain/automation/managers/ManagerLight.scala	codec given written by hand	2
+derives	db:domain/automation/managers/ManagerRepo.scala	codec given written by hand	1
 derives	db:domain/automation/worklists/QueueRepo.scala	codec given written by hand	1
 derives	db:domain/catalogue/events/EventBundleRepo.scala	codec given written by hand	2
 derives	db:domain/catalogue/events/EventRepo.scala	codec given written by hand	2
@@ -769,6 +746,8 @@ derives	db:domain/library/sources/SourceRepo.scala	codec given written by hand	4
 derives	db:domain/media/links/AssetLinkRepo.scala	codec given written by hand	2
 derives	db:domain/research/articles/ArticleRepo.scala	codec given written by hand	12
 derives	db:domain/research/articles/CoverageRepo.scala	codec given written by hand	2
+derives	db:util/data/exchange/BundleRepo.scala	codec given written by hand	2
+derives	db:util/database/Codecs.scala	codec given written by hand	5
 derives	plugin-api:plugin/Plugin.scala	codec given written by hand	1
 derives	plugin-api:plugin/PluginConfig.scala	codec given written by hand	4
 derives	plugin-api:plugin/Secret.scala	codec given written by hand	1
@@ -1072,12 +1051,19 @@ layer	core:domain/media/figures/Figures.scala	a domain file names the api outsid
 layer	core:domain/media/imports/MediaMatch.scala	a domain file names the api outside a boundary	1
 layer	core:domain/research/ResearchPlan.scala	a domain file names the api outside a boundary	1
 layer	core:domain/research/workflows/ReviewManagerPolicy.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/agents/AgentRepo.scala	a domain file names the api outside a boundary	4
 layer	db:domain/automation/agents/AgentStateRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/agents/ModelSettingsRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/agents/PlanQuotaRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/approvals/ApprovalQuery.scala	a domain file names the api outside a boundary	2
 layer	db:domain/automation/goals/GoalBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/goals/GoalLinkRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/goals/GoalRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/goals/GoalRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalSourceReferrer.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalsCarried.scala	a domain file names the api outside a boundary	2
 layer	db:domain/automation/managers/ManagerLight.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/managers/ManagerRepo.scala	a domain file names the api outside a boundary	2
 layer	db:domain/automation/worklists/QueueBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/QueueCarried.scala	a domain file names the api outside a boundary	2
 layer	db:domain/automation/worklists/QueueRepo.scala	a domain file names the api outside a boundary	1
@@ -1744,12 +1730,12 @@ prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1
 prefix	values:values/LocationPrecision.scala	LocationPrecision → Location.Precision	1
 prefix	values:values/PeriodError.scala	PeriodError → Period.Error	1
 prefix	values:values/WikidataId.scala	WikidataId → Wikidata.Id	1
-primitive	db:db/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
-primitive	db:db/FocusRepo.scala	String/Int/Long for a concept with a newtype	4
-primitive	db:db/GoalRepo.scala	String/Int/Long for a concept with a newtype	8
-primitive	db:db/ManagerRepo.scala	String/Int/Long for a concept with a newtype	9
-primitive	db:db/ModelSettingsRepo.scala	String/Int/Long for a concept with a newtype	1
+primitive	db:domain/automation/agents/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:domain/automation/agents/LeaseRepo.scala	String/Int/Long for a concept with a newtype	1
+primitive	db:domain/automation/agents/ModelSettingsRepo.scala	String/Int/Long for a concept with a newtype	1
+primitive	db:domain/automation/goals/FocusRepo.scala	String/Int/Long for a concept with a newtype	4
+primitive	db:domain/automation/goals/GoalRepo.scala	String/Int/Long for a concept with a newtype	8
+primitive	db:domain/automation/managers/ManagerRepo.scala	String/Int/Long for a concept with a newtype	9
 primitive	db:domain/automation/worklists/QueueRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/catalogue/events/CorrectionRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/catalogue/events/EventRepo.scala	String/Int/Long for a concept with a newtype	1

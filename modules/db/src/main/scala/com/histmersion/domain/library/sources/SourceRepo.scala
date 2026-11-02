@@ -10,8 +10,7 @@ import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.WikiLinks
 
 import com.histmersion.api.*
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus

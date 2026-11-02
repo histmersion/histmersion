@@ -12,7 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
@@ -20,6 +20,7 @@ import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.db.*
 
 /** A collection import (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * places on the map and their name keys and periods as the match reads them (V094), a dry run's matches with their

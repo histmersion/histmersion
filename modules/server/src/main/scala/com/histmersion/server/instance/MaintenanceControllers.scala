@@ -1,7 +1,7 @@
 package com.histmersion.server.instance
 
 import com.histmersion.api.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
 import com.histmersion.util.data.backup.{BackupJobs, BackupService}

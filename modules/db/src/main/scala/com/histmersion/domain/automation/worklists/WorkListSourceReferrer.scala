@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.worklists
 import com.histmersion.api.Queue
 import com.histmersion.domain.library.sources.referrers.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal.reading
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given

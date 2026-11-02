@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 

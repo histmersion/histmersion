@@ -27,6 +27,10 @@ import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader}
 import com.histmersion.util.data.exchange.{BundleExport, MergeRepo}
+import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
+import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.util.data.exchange.{BundleImport, MergeState}
+import com.histmersion.util.database.Sql
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),

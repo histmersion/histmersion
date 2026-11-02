@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the

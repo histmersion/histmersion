@@ -15,11 +15,14 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
-import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, GoalRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.db.*
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:

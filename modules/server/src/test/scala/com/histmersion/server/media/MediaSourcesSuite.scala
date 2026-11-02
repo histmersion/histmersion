@@ -20,7 +20,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Composition, Deps}
 import com.histmersion.util.ocr.ConverterClient
@@ -28,6 +28,7 @@ import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.db.*
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the

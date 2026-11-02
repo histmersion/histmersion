@@ -7,11 +7,13 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.{AgentRepo, Db, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.util.ocr.ConverterClient
 
 import java.nio.file.{Files, Path}
+import com.histmersion.db.*
 
 /** #986 `agents.auto-enrich` against a `*_test` database, the converter stubbed: an ingest job that stores a source
   * queues exactly one `enrich-source` run for it and says so in its progress line; nothing is queued with the switch
@@ -123,7 +125,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assertEquals(runs, Nil, "the manager starts it, not the ingest")
       val item = com.augustnagro.magnum
         .connect(ds)(
-          com.histmersion.db.ManagerRepo
+          com.histmersion.domain.automation.managers.ManagerRepo
             .itemFor(com.histmersion.api.Managers.EnrichId, com.histmersion.api.Managers.SourceEnrich, Ck)
         )
         .getOrElse(fail("no item"))

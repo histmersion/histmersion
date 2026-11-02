@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.{EventFindingRef, EventSourceRef, EventTier, TimeSpan}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.events.{EventSelection, EventSourceFilter}
 import com.histmersion.util.database.Transactor

@@ -14,7 +14,7 @@ import com.histmersion.api.Autopilot.*
 import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.FocusRepo
+import com.histmersion.domain.automation.goals.FocusRepo
 
 import java.time.Instant
 import javax.sql.DataSource

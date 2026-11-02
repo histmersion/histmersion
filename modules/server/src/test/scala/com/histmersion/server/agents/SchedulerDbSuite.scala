@@ -11,12 +11,16 @@ import com.histmersion.api.Autopilot.{AutopilotSet, FocusSet}
 import com.histmersion.api.Autopilot
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.goals.{FocusRepo, GoalLinkRepo}
+import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.util.database.Migrate
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.syntax.*
 
 import java.time.Instant
+import com.histmersion.db.*
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,

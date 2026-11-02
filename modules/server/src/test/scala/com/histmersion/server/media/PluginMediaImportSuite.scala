@@ -16,7 +16,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.Migrate
+import com.histmersion.util.database.Migrate
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode

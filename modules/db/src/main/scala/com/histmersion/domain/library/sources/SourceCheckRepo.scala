@@ -7,10 +7,10 @@ import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSetting
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.Lint.*
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the

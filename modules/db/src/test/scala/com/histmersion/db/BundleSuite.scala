@@ -31,6 +31,9 @@ import com.histmersion.values.{BundleKind, Confidence, IssueKind, SourceStatus}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleExport
+import com.histmersion.domain.automation.goals.GoalRepo
+import com.histmersion.util.data.exchange.{BundleImport, BundleRepo}
+import com.histmersion.util.database.Sql
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —

@@ -8,7 +8,8 @@ import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, QueueRows}
+import com.histmersion.db.QueueRows
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.acquisition.*
 

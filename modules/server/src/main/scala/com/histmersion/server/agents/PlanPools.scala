@@ -9,7 +9,7 @@ import com.histmersion.domain.{PlanReadSchedule, ScheduledRead}
 import com.histmersion.api.PlanQuota
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.PlanQuota.*
-import com.histmersion.db.PlanQuotaRepo
+import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import io.circe.{parser, Json}
 
 import java.nio.charset.StandardCharsets

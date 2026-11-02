@@ -5,13 +5,14 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
+import com.histmersion.db.*
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle

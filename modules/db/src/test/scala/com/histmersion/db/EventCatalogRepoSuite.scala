@@ -18,6 +18,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, EventLinkStatus, PlaceKind, SourceStatus}
+import com.histmersion.util.database.{Migrate, Param, Sql}
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /

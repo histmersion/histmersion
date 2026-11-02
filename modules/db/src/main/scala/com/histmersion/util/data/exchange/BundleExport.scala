@@ -1,7 +1,7 @@
 package com.histmersion.util.data.exchange
 
 import com.histmersion.api.*
-import com.histmersion.db.BundleRepo
+import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.*

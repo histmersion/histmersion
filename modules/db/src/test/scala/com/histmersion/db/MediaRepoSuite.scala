@@ -23,6 +23,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.util.database.Migrate
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no

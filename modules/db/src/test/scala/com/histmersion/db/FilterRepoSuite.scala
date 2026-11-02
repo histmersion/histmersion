@@ -9,6 +9,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.util.database.Migrate
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own

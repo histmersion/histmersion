@@ -29,7 +29,7 @@ object CorpusSnapshot:
   def of(ds: DataSource): Map[String, String] =
     connect(ds):
       Tables.map { t =>
-        t -> com.histmersion.db.Sql
+        t -> com.histmersion.util.database.Sql
           .raw(s"SELECT coalesce(md5(string_agg(x::text, '|' ORDER BY x::text)), '') || ':' || count(*) FROM $t x")
           .frag
           .query[String]

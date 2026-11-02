@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.data.exchange
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
@@ -13,6 +12,8 @@ import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
+import com.histmersion.util.database.Sql
+import com.histmersion.util.database.given
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 

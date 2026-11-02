@@ -2,7 +2,8 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.api.Agents.*
 import com.histmersion.api.{ListFilters, Paging}
-import com.histmersion.db.{AgentRepo, Jsonb}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{JobRuns, JobRunState, RunRow}

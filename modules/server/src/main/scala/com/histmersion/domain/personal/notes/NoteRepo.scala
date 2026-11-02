@@ -1,7 +1,7 @@
 package com.histmersion.domain.personal.notes
 
 import com.histmersion.api.personal.{ItemKind as MarkKind, NoteId, NoteText}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.values.{PageSize, UserId}

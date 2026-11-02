@@ -15,12 +15,16 @@ import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.api.RepairAcquire.RepairRequest
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.goals.GoalLinkRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.util.database.Migrate
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.histmersion.db.*
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition

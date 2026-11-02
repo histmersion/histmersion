@@ -9,7 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.ModelChains.*
-import com.histmersion.db.{ModelSettingsRepo, PlanQuotaRepo}
+import com.histmersion.domain.automation.agents.{ModelSettingsRepo, PlanQuotaRepo}
 
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap

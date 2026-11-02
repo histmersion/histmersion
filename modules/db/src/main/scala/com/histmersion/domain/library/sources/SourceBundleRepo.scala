@@ -1,13 +1,14 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
-import com.histmersion.db.{BundleImport, Jsonb, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Jsonb, Sql}
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.{BlobSink, BundleFormat, BundleScope, ImportAbort}
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID

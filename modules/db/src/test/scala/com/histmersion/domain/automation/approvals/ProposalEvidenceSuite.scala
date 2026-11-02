@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.approvals
 
-import com.histmersion.db.Jsonb
+import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.values.{ApprovalKind, EdgeKind, SourceStatus}
 import io.circe.syntax.*

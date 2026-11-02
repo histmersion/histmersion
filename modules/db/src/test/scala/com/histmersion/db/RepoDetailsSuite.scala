@@ -14,6 +14,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.{Migrate, Param}
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the `findings_flat` upper
   * bound.

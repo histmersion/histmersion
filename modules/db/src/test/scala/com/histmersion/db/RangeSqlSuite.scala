@@ -9,6 +9,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.automation.goals.GoalRepo
+import com.histmersion.util.database.{Migrate, Param}
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].

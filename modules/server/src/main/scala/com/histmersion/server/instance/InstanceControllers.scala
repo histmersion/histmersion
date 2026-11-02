@@ -72,7 +72,7 @@ final class InstanceControllers(
 
   def health: Health =
     val conv = converter()
-    Try(com.histmersion.db.Migrate.current(deps.ds)) match
+    Try(com.histmersion.util.database.Migrate.current(deps.ds)) match
       case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
       case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
 

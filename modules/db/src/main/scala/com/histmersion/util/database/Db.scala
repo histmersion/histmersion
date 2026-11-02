@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.database
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -58,7 +57,7 @@ object Db:
     ds
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
-  private[db] def databaseOf(url: String): String =
+  private[histmersion] def databaseOf(url: String): String =
     url.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse
 
   /** Connections the pool behind `ds` has lent out now (0 for a pool that has not started, or no pool at all). A
@@ -85,7 +84,7 @@ object Db:
     * went from 17 ms to 1.5 s on the sixth hover (2026-10-09), and a place-name search from 0.1 s to minutes. Every
     * statement here is small next to its planning, so each is planned for its own values.
     */
-  private[db] val databaseSettings: List[(String, String)] =
+  private[histmersion] val databaseSettings: List[(String, String)] =
     List("random_page_cost" -> "1.1", "plan_cache_mode" -> "force_custom_plan")
 
   def ensureDatabaseSettings(ds: DataSource): Unit =
@@ -103,7 +102,7 @@ object Db:
     * (e.g. a full disk), after which autovacuum has no row counts to act on and would leave these tables unanalyzed
     * until enough new writes accumulate.
     */
-  private[db] val staleStatsSql: String =
+  private[histmersion] val staleStatsSql: String =
     "SELECT relname FROM pg_stat_user_tables" +
       " WHERE last_analyze IS NULL AND last_autoanalyze IS NULL AND schemaname = 'public'" +
       " ORDER BY relname"

@@ -15,7 +15,8 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AutopilotRepo, Migrate}
+import com.histmersion.domain.automation.autopilot.AutopilotRepo
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
@@ -23,6 +24,7 @@ import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.domain.library.acquisition.*
 
 import java.time.Instant
+import com.histmersion.db.*
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched

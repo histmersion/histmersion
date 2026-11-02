@@ -1,11 +1,12 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.managers
 import com.histmersion.api.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.Managers.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.managers.ManagerLight
+import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.given
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up

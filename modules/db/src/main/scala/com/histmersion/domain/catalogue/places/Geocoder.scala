@@ -1,7 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
@@ -12,6 +11,7 @@ import com.histmersion.api.Geocode.{Attempt, Candidate, KindHint, Move, Placemen
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.util.database.Sql
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the

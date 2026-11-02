@@ -2,7 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.domain.AcquireRecheck
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.time.Instant
 

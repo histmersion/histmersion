@@ -4,7 +4,6 @@ import com.histmersion.domain.catalogue.places.Geocoding
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.*
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.server.media.FakeMediaHttp
 import com.augustnagro.magnum.*
@@ -18,6 +17,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
+import com.histmersion.util.database.Sql
+import com.histmersion.db.*
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's

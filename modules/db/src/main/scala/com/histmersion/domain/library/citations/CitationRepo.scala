@@ -1,8 +1,8 @@
 package com.histmersion.domain.library.citations
 
 import com.histmersion.api.*
-import com.histmersion.db.Vocab
-import com.histmersion.db.given
+import com.histmersion.util.database.Vocab
+import com.histmersion.util.database.given
 import com.histmersion.domain.library.sources.EdgeRow
 import com.histmersion.values.SourceStatus
 

@@ -11,6 +11,7 @@ import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.Migrate
 
 /** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance lines
   * of plan §5.2 stream 2.7 that need a database: put/patch, the link graph maintained from the body, backlinks in both

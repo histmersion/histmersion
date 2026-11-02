@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.db.{Param, Sql}
-import com.histmersion.db.given
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor

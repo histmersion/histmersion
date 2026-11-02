@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
@@ -19,6 +19,7 @@ import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import com.histmersion.db.*
 
 /** #1491: a media import over a few hundred places/events is a JOB, through the real server — the request answers at
   * once with the job, the job reports `n/total` as it goes, a picture that cannot be fetched is a line in its summary

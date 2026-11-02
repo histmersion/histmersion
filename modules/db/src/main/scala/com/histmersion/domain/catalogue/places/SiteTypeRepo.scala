@@ -1,9 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 /** The refined site types of the Wikidata sites (`places.site_type`, `site_type_checked_at`). Every method runs on the
   * connection it is given.

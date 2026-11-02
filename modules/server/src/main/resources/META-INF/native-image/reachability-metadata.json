@@ -13191,7 +13191,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AgentRepo$",
+      "type": "com.histmersion.domain.automation.agents.AgentRepo$",
       "fields": [
         {
           "name": "given_DbCodec_ApprovalRow$lzy1"
@@ -13211,7 +13211,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AgentRepo$ApprovalRow$",
+      "type": "com.histmersion.domain.automation.agents.AgentRepo$ApprovalRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy3"
@@ -13227,7 +13227,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AgentRepo$RunRow$",
+      "type": "com.histmersion.domain.automation.agents.AgentRepo$RunRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13235,7 +13235,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AgentRepo$StepRow$",
+      "type": "com.histmersion.domain.automation.agents.AgentRepo$StepRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
@@ -13298,7 +13298,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AutopilotRepo$",
+      "type": "com.histmersion.domain.automation.autopilot.AutopilotRepo$",
       "fields": [
         {
           "name": "given_DbCodec_Row$lzy1"
@@ -13306,7 +13306,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AutopilotRepo$Row$",
+      "type": "com.histmersion.domain.automation.autopilot.AutopilotRepo$Row$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13480,7 +13480,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BundleRepo$package$",
+      "type": "com.histmersion.util.data.exchange.BundleRepo$package$",
       "fields": [
         {
           "name": "given_DbCodec_InstanceInfo$lzy1"
@@ -13600,7 +13600,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.FocusRepo$",
+      "type": "com.histmersion.domain.automation.goals.FocusRepo$",
       "fields": [
         {
           "name": "given_DbCodec_GoalRow$lzy1"
@@ -13611,7 +13611,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.FocusRepo$GoalRow$",
+      "type": "com.histmersion.domain.automation.goals.FocusRepo$GoalRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13619,7 +13619,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.FocusRepo$WorkRow$",
+      "type": "com.histmersion.domain.automation.goals.FocusRepo$WorkRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
@@ -13683,7 +13683,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.GoalLinkRepo$",
+      "type": "com.histmersion.domain.automation.goals.GoalLinkRepo$",
       "fields": [
         {
           "name": "given_DbCodec_LinkRow$lzy1"
@@ -13694,7 +13694,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.GoalLinkRepo$LinkRow$",
+      "type": "com.histmersion.domain.automation.goals.GoalLinkRepo$LinkRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13702,7 +13702,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.GoalLinkRepo$ScheduleRow$",
+      "type": "com.histmersion.domain.automation.goals.GoalLinkRepo$ScheduleRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
@@ -13710,7 +13710,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.GoalRepo$package$",
+      "type": "com.histmersion.domain.automation.goals.GoalRepo$package$",
       "fields": [
         {
           "name": "given_DbCodec_GoalRow$lzy1"
@@ -13718,7 +13718,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.GoalRow$",
+      "type": "com.histmersion.domain.automation.goals.GoalRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13726,7 +13726,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.JobRepo$package$",
+      "type": "com.histmersion.util.jobs.JobRepo$package$",
       "fields": [
         {
           "name": "given_DbCodec_JobRow$lzy1"
@@ -14280,7 +14280,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.ManagerRepo$",
+      "type": "com.histmersion.domain.automation.managers.ManagerRepo$",
       "fields": [
         {
           "name": "configCodec$lzy1"
@@ -14312,7 +14312,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.ManagerRepo$HintRow$",
+      "type": "com.histmersion.domain.automation.managers.ManagerRepo$HintRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy4"
@@ -14320,7 +14320,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.ManagerRepo$ItemRow$",
+      "type": "com.histmersion.domain.automation.managers.ManagerRepo$ItemRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
@@ -14328,7 +14328,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.ManagerRepo$ManagerRow$",
+      "type": "com.histmersion.domain.automation.managers.ManagerRepo$ManagerRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -14336,7 +14336,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.ManagerRepo$SweepAcquireItem$",
+      "type": "com.histmersion.domain.automation.managers.ManagerRepo$SweepAcquireItem$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy3"

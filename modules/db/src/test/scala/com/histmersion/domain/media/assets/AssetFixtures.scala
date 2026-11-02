@@ -1,7 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.*
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

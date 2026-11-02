@@ -1,7 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.{MediaGeoHit, TileProps as P, TilesApi}
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TileFeatures as F, TilePoint}
 import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
 

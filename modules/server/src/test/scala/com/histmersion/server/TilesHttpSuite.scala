@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.TilesApi
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.maptiles.{TileCoord, VectorTileReader}
-import com.histmersion.db.Migrate
+import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*
 import ox.supervised
@@ -32,7 +32,7 @@ class TilesHttpSuite extends munit.FunSuite:
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
-    val ds = com.histmersion.db.Db.pool(cfg.db)
+    val ds = com.histmersion.util.database.Db.pool(cfg.db)
     try
       Migrate.run(ds)
       connect(ds):

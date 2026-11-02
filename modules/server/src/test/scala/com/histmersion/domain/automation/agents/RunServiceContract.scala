@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
 import com.histmersion.api.Agents.*
-import com.histmersion.db.AgentRepo
+import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant

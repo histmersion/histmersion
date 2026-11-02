@@ -37,7 +37,15 @@ object SearchFixtures:
   ): Either[String, QueryResult] =
     connect(ds)(QueryRepo.run(statement, timeoutMs, maxRows, maxCellChars))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)
-  def periodsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.db.Sql =
+  def periodsQuery(
+      unit: String,
+      filter: Filter,
+      scope: PlaceScope = PlaceScope.empty
+  ): com.histmersion.util.database.Sql =
     AggregateRepo.periodsQuery(unit, filter, scope)
-  def treeRowsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.db.Sql =
+  def treeRowsQuery(
+      unit: String,
+      filter: Filter,
+      scope: PlaceScope = PlaceScope.empty
+  ): com.histmersion.util.database.Sql =
     AggregateRepo.treeRowsQuery(unit, filter, scope)

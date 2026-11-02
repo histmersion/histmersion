@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.data.exchange
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -22,6 +21,8 @@ import com.histmersion.util.data.exchange.{
 }
 import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and

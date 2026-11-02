@@ -13,12 +13,13 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.PlaceKind
+import com.histmersion.db.*
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,

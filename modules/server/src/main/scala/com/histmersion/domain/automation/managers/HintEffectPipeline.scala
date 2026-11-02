@@ -13,7 +13,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
 import com.histmersion.api.Managers.*
-import com.histmersion.db.ManagerRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

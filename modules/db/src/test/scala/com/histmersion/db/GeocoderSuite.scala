@@ -12,6 +12,7 @@ import com.histmersion.api.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.util.database.Migrate
 
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
   * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test

@@ -5,7 +5,7 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.Db
+import com.histmersion.util.database.Db
 import ox.supervised
 
 import com.augustnagro.magnum.*
@@ -62,7 +62,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)
-    com.histmersion.db.Migrate.run(ds)
+    com.histmersion.util.database.Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM queue_items WHERE text LIKE 'zzauto%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzauto%'".update.run()

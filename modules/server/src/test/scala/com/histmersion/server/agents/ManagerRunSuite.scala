@@ -15,7 +15,10 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRows}
+import com.histmersion.db.QueueRows
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*

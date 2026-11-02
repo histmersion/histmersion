@@ -10,7 +10,7 @@ import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, ConfigReload}
 import com.histmersion.api.ReloadReport
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
 import ox.{forkDiscard, useInScope}
 

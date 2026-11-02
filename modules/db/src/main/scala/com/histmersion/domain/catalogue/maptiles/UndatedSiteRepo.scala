@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.maptiles
 
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 import com.histmersion.values.PlaceKind
 

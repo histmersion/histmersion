@@ -1,8 +1,9 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.histmersion.api.BundleQueueItem
-import com.histmersion.db.{BundleImport, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 

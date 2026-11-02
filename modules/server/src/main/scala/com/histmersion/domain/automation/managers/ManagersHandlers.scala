@@ -13,7 +13,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.{LinkKind, Removed}
 import com.histmersion.api.Managers.*
-import com.histmersion.db.ManagerRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 
 import javax.sql.DataSource
 

@@ -1,7 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.util.database.{LikePattern, RangeSql}
 import com.histmersion.api.catalogue.places.PlaceEntry
@@ -12,6 +11,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{LocationPrecision, PlaceKind}
+import com.histmersion.util.database.{Param, Sql}
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.

@@ -4,7 +4,6 @@ import com.histmersion.domain.media.imports.BuiltinMedia
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.*
 import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
 import com.histmersion.values.LicenceId
 import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
@@ -24,6 +23,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.imageio.ImageIO
 import javax.sql.DataSource
+import com.histmersion.util.database.Sql
+import com.histmersion.db.*
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *
