@@ -12,6 +12,7 @@ import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
+import com.histmersion.domain.research.workflows.CompileArticlePipeline
 import com.histmersion.server.Handlers
 
 import java.time.Instant
@@ -82,7 +83,7 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
       out: Builder[String, List[String]]
   ): Unit =
     item.kind match
-      case ArticleCompile if h.getArticle(item.target).isRight =>
+      case ArticleCompile if h.research.articles.get(item.target).isRight =>
         m.goal.foreach(g => c.linkGoal(g, GoalPlans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
         val _ = c.ensure(Kind.Review, ReviewId, None)
         c.chainReview(ReviewId, item.target, s"compiled by ${m.id}", out)
@@ -143,8 +144,8 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
                   .orElse(run.flatMap(_.params.minSources))
                   .getOrElse(lib.seed.minSources)
               val facts = plan.articles.map { p =>
-                val free = !c.slugExists(p.slug) && h.getArticle(p.slug).isLeft
-                PlannedFacts(p.slug, free, h.filterReach(p.filter, Nil, 0)._1)
+                val free = !c.slugExists(p.slug) && h.research.articles.get(p.slug).isLeft
+                PlannedFacts(p.slug, free, h.research.articles.filterReach(p.filter, Nil, 0)._1)
               }
               val today = c
                 .autoApprovedSince(ApprovalKind.ArticlePlan, day)

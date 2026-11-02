@@ -5,7 +5,7 @@ final case class ManagerDefaults(
     backoffMinutes: Int,
     maxBackoffMinutes: Int,
     dailyUsd: Double,
-    review: ReviewManagerDefaults,
+    review: ManagerRunDefaults,
     enrich: ManagerRunDefaults,
     seed: ManagerRunDefaults,
     watch: ManagerRunDefaults

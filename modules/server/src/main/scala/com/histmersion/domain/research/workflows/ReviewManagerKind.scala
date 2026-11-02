@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition, ManagerSupervisor}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
@@ -8,25 +8,32 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.domain.*
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewFacts, ReviewSettings, StepFacts}
-import com.histmersion.config.AgentsConfig
-import com.histmersion.domain.ManagerDefaults
-import com.histmersion.server.Handlers
+import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
+import com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts
+import com.histmersion.config.{AgentsConfig, ResearchAgentsConfig, ReviewManagerConfig}
+import com.histmersion.domain.{ManagerDefaults, ReviewManagerDefaults}
+import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import scala.collection.mutable.Builder
 
-/** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), registered by this
-  * transition adapter until research contributes it: the review's own evaluation over the article's review ledger, the
-  * selection that refills the queue (open MAJORs, never-reviewed, then stale articles, an infer-filter item before the
-  * review of an article that records no filter, the prioritise hints), the articles new sources reach, and the runs its
-  * items start.
+/** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
+  * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
+  * never-reviewed, then stale articles, an infer-filter item before the review of an article that records no filter,
+  * the prioritise hints), the articles new sources reach, and the runs its items start.
   */
-final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
+final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerService, cfg: => ResearchAgentsConfig)
+    extends ManagerKindDefinition:
   val kind: Kind = Kind.Review
 
-  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m)
+  /** Research's defaults of a review manager (`agents.managers.review`). */
+  private def reviewDefaults: ReviewManagerDefaults = ReviewManagerKind.defaultsOf(cfg.managers.review)
+
+  def defaults(agents: AgentsConfig, m: ManagerDefaults): ManagerConfig =
+    ReviewManagerPolicy.defaults(reviewDefaults, m)
+
+  override def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
+    ReviewManagerPolicy.settings(c, reviewDefaults, m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case InferFilter   => Pipeline.InferFilter
@@ -67,13 +74,13 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
       out: Builder[String, List[String]]
   ): Unit =
     val run = item.runId.get
-    val ledger = h.reviewLedger(item.target)
+    val ledger = ledgers.get(item.target).toOption.flatten
     val facts = Option.when(st == RunState.Done) {
-      val pairs = h.openCritiques(item.target)
+      val pairs = site.articles.openCritiques(item.target)
       ledger.map(ReviewFacts.of(_, pairs)).getOrElse(ReviewFacts(0, 0, 0, onlyMissingCritiques = false, pairs))
     }
     val task = ledger.flatMap(ReviewLedger.taskText(_, run))
-    ManagerPolicy.evaluateReview(
+    ReviewManagerPolicy.evaluateReview(
       s,
       item.target,
       item.attempts,
@@ -88,7 +95,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
     ) match
       case Next.Done(outcome, state) =>
         // what its filter returns now: more later makes it stale (phase 2)
-        val withHits = state.copy(filterHits = h.articleFilterTotal(item.target))
+        val withHits = state.copy(filterHits = site.articles.filterTotal(item.target))
         if c.evaluated(item.id, Some(run), ItemStatus.Done, None, None, withHits, Some(outcome)) then
           c.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $outcome")
           out += s"${item.target}: done"
@@ -114,20 +121,20 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
   private def fileTask(slug: String, ledger: Option[ReviewLedger.Ledger], text: String): Option[Int] =
     val open = ledger
       .flatMap(_.task)
-      .flatMap(i => h.queues.get(QueueItemId(i)))
+      .flatMap(i => site.queues.get(QueueItemId(i)))
       .filter(i => i.list == Queue.Kind.Tasks.label && i.status == Queue.Open)
       // the article's collapsed item the ledger lost track of (#934)
       .orElse(
-        h.queues
+        site.queues
           .list(Queue.Kind.Tasks, QueueScope.Open)
           .filter(i => ReviewLedger.articleTask(slug, i.text))
           .sortBy(_.id)
           .headOption
       )
     open match
-      case Some(item) => h.ops.queuePatch(item.id, QueuePatch(text = Some(text))).toOption.map(_.id)
+      case Some(item) => site.workLists.patch(item.id, QueuePatch(text = Some(text))).toOption.map(_.id)
       case None       =>
-        h.ops.queueAdd(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some("agent review"))).toOption.map(_.id)
+        site.workLists.add(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some("agent review"))).toOption.map(_.id)
 
   def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
     lazy val progress = c.progress(run)
@@ -174,13 +181,13 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
       else c.unreviewedArticles(m.id, tags, goal, s.refillBatch - majors.size)
       val room = s.refillBatch - majors.size - fresh.size
       val stale = if room > 0 then staleArticles(c, m, s, tags, goal, room, now) else Nil
-      val picks = ManagerPolicy.select(
+      val picks = ReviewManagerPolicy.select(
         majors,
         fresh,
         stale.map((slug, why, _) => (slug, why)),
         s.refillBatch,
         s.inferFilter,
-        slug => h.recordedFilter(slug).isDefined,
+        slug => site.articles.recordedFilter(slug).isDefined,
         slug => c.hasItem(m.id, InferFilter, slug)
       )
       val hints = c.hints(m.id).filter(_.effect.exists(_.action == HintEffect.Prioritise))
@@ -214,7 +221,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
     * item. `extendMinNew` 0 = never.
     */
   private def extensions(c: ManagerContext, m: ManagerInfo, now: Instant, out: Builder[String, List[String]]): Unit =
-    val mcfg = c.cfg.managers
+    val mcfg = cfg.managers
     val min = m.config.extendMinNew.getOrElse(mcfg.review.extendMinNew)
     val last = Option(lastExtend.get(m.id)).map(_.longValue)
     val every = math.max(1, mcfg.review.staleScanMinutes).toLong * 60000L
@@ -227,7 +234,8 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
         .extendCandidates(m.id, tags, goal, math.max(1, s.refillBatch) * ManagerSupervisor.StaleLookahead)
         .filter((slug, _) => c.unsettledOn(slug).isEmpty)
         .flatMap { (slug, at) =>
-          h.newFilterSources(slug)
+          site.articles
+            .newFilterSources(slug)
             .flatMap(n =>
               AutopilotPolicy
                 .extendDue(n, min, at.flatMap(ManagerPolicy.parseInstant), mcfg.review.extendCooldownDays, now)
@@ -257,7 +265,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
       now: Instant
   ): List[(String, String, Option[Long])] =
     val last = Option(lastStale.get(m.id)).map(_.longValue).getOrElse(Long.MinValue)
-    val every = math.max(1, c.cfg.managers.review.staleScanMinutes).toLong * 60000L
+    val every = math.max(1, cfg.managers.review.staleScanMinutes).toLong * 60000L
     if s.staleAfterDays <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil
     else
       lastStale.put(m.id, now.toEpochMilli)
@@ -266,7 +274,8 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
           ManagerPolicy
             .parseInstant(at)
             .flatMap(t =>
-              ManagerPolicy.staleWhy(t, now, s.staleAfterDays, hits, hits.flatMap(_ => h.articleFilterTotal(slug)))
+              ReviewManagerPolicy
+                .staleWhy(t, now, s.staleAfterDays, hits, hits.flatMap(_ => site.articles.filterTotal(slug)))
             )
             .map(why => (slug, why, item))
         }
@@ -287,7 +296,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
 
   def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
     itemKind match
-      case ArticleReview | InferFilter | ArticleExtend => h.getArticle(raw.trim).map(_.article.slug)
+      case ArticleReview | InferFilter | ArticleExtend => site.articles.get(raw.trim).map(_.article.slug)
       case other                                       => Left(ApiError(s"unknown item kind '$other'"))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
@@ -295,8 +304,8 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
     */
   override def added(c: ManagerContext, m: ManagerInfo, itemKind: String, slug: String, priority: Int): Unit =
     if itemKind == ArticleReview then
-      val on = m.config.inferFilter.getOrElse(c.cfg.managers.review.inferFilter)
-      val has = h.recordedFilter(slug).isDefined
+      val on = m.config.inferFilter.getOrElse(cfg.managers.review.inferFilter)
+      val has = site.articles.recordedFilter(slug).isDefined
       if on && !has && !c.hasItem(m.id, InferFilter, slug) then
         val (fid, _) = c.upsert(m.id, InferFilter, slug, ItemOrigin.Chain, priority, reopen = false)
         c.event(
@@ -321,12 +330,12 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
       case ArticleReview =>
         if ManagerPolicy.waitsFor(item.kind, item.target, c.openKeys(m.id)) then None
         else
-          h.getArticle(item.target) match
+          site.articles.get(item.target) match
             case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
             case Right(_) =>
-              val before = h.reviewLedger(item.target).map(_.openMajors.size).getOrElse(0)
-              val pairs = h.openCritiques(item.target)
-              val rounds = math.min(s.rounds, c.cfg.review.roundsCap)
+              val before = ledgers.get(item.target).toOption.flatten.map(_.openMajors.size).getOrElse(0)
+              val pairs = site.articles.openCritiques(item.target)
+              val rounds = math.min(s.rounds, cfg.review.roundsCap)
               c.start(
                 m,
                 item,
@@ -344,9 +353,9 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
                 out
               )
       case InferFilter =>
-        h.getArticle(item.target) match
+        site.articles.get(item.target) match
           case Left(_) => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
-          case Right(v) if h.recordedFilter(v.article.slug).isDefined =>
+          case Right(v) if site.articles.recordedFilter(v.article.slug).isDefined =>
             c.settleNow(m, item, ItemStatus.Done, "the article records a filter already")
           case Right(_) =>
             c.start(
@@ -359,7 +368,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
               out
             )
       case ArticleExtend =>
-        h.getArticle(item.target) match
+        site.articles.get(item.target) match
           case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
           case Right(_) =>
             c.start(
@@ -373,3 +382,8 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
             )
       case other =>
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
+
+object ReviewManagerKind:
+
+  /** A review manager's defaults as research's policy reads them; the scan timings stay with the kind. */
+  def defaultsOf(c: ReviewManagerConfig): ReviewManagerDefaults = c.transformInto[ReviewManagerDefaults]

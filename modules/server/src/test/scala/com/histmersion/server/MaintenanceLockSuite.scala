@@ -60,10 +60,10 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     refused("delete_source")(h.library.sources.delete("zzlock_src", SourceDeleteRequest(apply = true)))
 
   test("every ARTICLE write is refused too — these had no guard at all"):
-    refused("put_article")(h.putArticle("zzlock-art", ArticlePut(title = "T", kind = "concept", body = "b")))
-    refused("patch_article")(h.patchArticle("zzlock-art", ArticlePatch(body = Some("x"))))
-    refused("delete_article")(h.deleteArticle("zzlock-art"))
-    refused("import_article")(h.importArticle(ArticleImport(text = "---\nslug: zzlock-art\n---\n")))
+    refused("put_article")(h.research.articles.put("zzlock-art", ArticlePut(title = "T", kind = "concept", body = "b")))
+    refused("patch_article")(h.research.articles.patch("zzlock-art", ArticlePatch(body = Some("x"))))
+    refused("delete_article")(h.research.articles.delete("zzlock-art"))
+    refused("import_article")(h.research.articles.importNote(ArticleImport(text = "---\nslug: zzlock-art\n---\n")))
 
   test("the gazetteer writes are refused"):
     refused("places/import")(

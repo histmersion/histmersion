@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -9,12 +9,10 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
 import com.histmersion.api.ArticlePlans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
-import com.histmersion.server.Handlers
+import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-
-import javax.sql.DataSource
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -28,7 +26,8 @@ import javax.sql.DataSource
   *
   * A DRY run records the approval (or the write) it would make on its step and makes neither.
   */
-final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
+final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, research: => ResearchAgentsConfig)
+    extends PipelineDef:
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
@@ -57,14 +56,16 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: String): Either[String, Loaded] =
-    h.getArticle(slug).left.map(_.message).map { v =>
+    site.articles.get(slug).left.map(_.message).map { v =>
       val a = v.article
-      val stored = h.research.articleStore.load(a.slug)
-      val cited = h.citedSources(a.body)
+      val stored = site.articleStore.load(a.slug)
+      val cited = site.articles.citedSources(a.body)
       val refs =
-        h.sourceRefs(cited.take(CitedShown)).map(r => s"[[${r.citekey}]] — ${r.title}${r.year.fold("")(y => s" ($y)")}")
+        site.sourceStore
+          .refs(cited.take(CitedShown))
+          .map(r => s"[[${r.citekey}]] — ${r.title}${r.year.fold("")(y => s" ($y)")}")
       val vocab = (field: String) =>
-        h.library.labels
+        site.labels
           .facets(field, None, Filter())
           .toOption
           .toList
@@ -88,7 +89,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
     }
 
   private def input(l: Loaded): String =
-    val lim = cfg.inferFilter.limits
+    val lim = limits(research.inferFilter)
     val cited = if l.citedLines.isEmpty then "none"
     else
       l.citedLines.map(x => s"- $x").mkString("\n", "\n", "") +
@@ -106,9 +107,9 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
     FilterInference.filterOf(a) match
       case Left(ps) => if last then Right(Inferred(None, ps)) else Left(ps)
       case Right(f) =>
-        val (total, in, rows) = h.filterReach(f, l.cited, cfg.inferFilter.sample + l.cited.size)
-        val sample = rows.filterNot(l.cited.contains).take(math.max(0, cfg.inferFilter.sample))
-        FilterInference.judge(slug, f, a.rationale, total, l.cited, in, sample, cfg.inferFilter.limits, last)
+        val (total, in, rows) = site.articles.filterReach(f, l.cited, research.inferFilter.sample + l.cited.size)
+        val sample = rows.filterNot(l.cited.contains).take(math.max(0, research.inferFilter.sample))
+        FilterInference.judge(slug, f, a.rationale, total, l.cited, in, sample, limits(research.inferFilter), last)
 
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
@@ -123,7 +124,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
         cfg.approvals.filterMode match
           case ApprovalMode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
-              h.patchArticle(slug, ArticlePatch(filter = Some(p.filter))).left.map(_.message).map { _ =>
+              site.articles.patch(slug, ArticlePatch(filter = Some(p.filter))).left.map(_.message).map { _ =>
                 val a = ctx.approvalStore.openSubject(
                   Some(ctx.run.id),
                   ApprovalKind.ArticleFilter,
@@ -141,7 +142,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
             )(Right(Recorded(None, applied = false, s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(site.workLists, ctx, line)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
@@ -150,6 +151,13 @@ object InferFilterPipeline:
   val VocabularySize = 40
   val CitedShown = 40
   val ExcerptChars = 4000
+
+  /** The checks a proposed filter is held to (`agents.infer-filter`), each within its range. */
+  def limits(c: AgentInferFilterConfig): FilterInference.Limits = FilterInference.Limits(
+    math.max(1, c.minHits),
+    math.max(c.minHits, c.maxHits),
+    math.min(1.0, math.max(0.0, c.minCitedShare))
+  )
 
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
@@ -174,13 +182,14 @@ object InferFilterPipeline:
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.
     */
-  def applyProposal(h: Handlers, ds: DataSource, p: FilterProposal): Either[String, String] =
-    h.getArticle(p.slug).left.map(_.message).flatMap { v =>
-      val has = h.research.articleStore.load(v.article.slug).flatMap(_.filter)
+  def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[String, String] =
+    articles.get(p.slug).left.map(_.message).flatMap { v =>
+      val has = store.load(v.article.slug).flatMap(_.filter)
       if has.isDefined then
         Left(s"[[${v.article.slug}]] records a filter already (${has.get.line}); the proposal was not applied")
       else
-        h.patchArticle(v.article.slug, ArticlePatch(filter = Some(p.filter)))
+        articles
+          .patch(v.article.slug, ArticlePatch(filter = Some(p.filter)))
           .left
           .map(_.message)
           .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")

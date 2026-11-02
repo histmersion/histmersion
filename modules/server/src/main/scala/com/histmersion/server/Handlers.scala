@@ -30,7 +30,7 @@ import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AgentStateRepo, GoalRepo, Migrate, ReviewLedgerRepo}
+import com.histmersion.db.{AgentStateRepo, GoalRepo, Migrate}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -68,6 +68,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** What the library's workflows are given. */
   lazy val librarySite: com.histmersion.domain.library.workflows.LibrarySite = LibraryWorkflowSite(this, deps)
+
+  /** What research's workflows are given. */
+  lazy val researchSite: com.histmersion.domain.research.workflows.ResearchSite = ResearchWorkflowSite(this, deps)
 
   /** Stream 2.8 — lint, the bookkeeping queues and the read-only query. Its own object (one file per stream), wired
     * into REST and MCP through this same `Handlers` value.
@@ -453,17 +456,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     else (in.text, Nil)
     val issues = in.field match
       case FormatField.Body    => research.articles.formatting(text, None)
-      case FormatField.Summary => MarkdownLint.ofSource(Some(text), None, pageLinks(MarkdownLint.lookups(List(text))))
-      case FormatField.Notes   => library.sources.formatIssues(None, Some(text))
+      case FormatField.Summary =>
+        MarkdownLint.ofSource(Some(text), None, research.articles.pageLinks(MarkdownLint.lookups(List(text))))
+      case FormatField.Notes => library.sources.formatIssues(None, Some(text))
     FormatReport("text", issues, done, Option.when(in.fix)(text))
-
-  /** What the review's checks need from the corpus: research's. */
-  def bodyCorpus(texts: List[String], generated: Boolean = false): ReviewArticle.BodyCorpus =
-    research.articles.bodyCorpus(texts, generated)
-
-  /** `POST /api/articles/{slug}/check`: research's. */
-  def checkArticle(slug: String, in: ArticleEdits.ArticleCheckRequest): Either[ApiError, ArticleEdits.ArticleCheck] =
-    research.articles.check(slug, in)
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
@@ -814,65 +810,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val held: Map[CacheName, () => Unit] = Map(CacheName("map-tiles") -> (() => tiles.cache.clear()))
     Deps.data.caches.filter(_.staleAfter.contains(CacheEvent.Restored)).foreach(c => held.get(c.name).foreach(_()))
 
-  // ── articles: research's, forwarded for the callers that move with research's later part ─────────
+  // ── research ─────────────────────────────────────────────────────────────────────────────────
 
-  /** Research's articles: their services, controllers and page. */
+  /** Research's articles: their services, controllers and page, and its review ledgers. */
   lazy val research: ResearchWiring =
     ResearchWiring(
       deps,
       library,
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
-      slug => ReviewLedgerRepo.get(ds, slug),
       slug => mirror.note(MirrorAdapter.ArticleNotes, slug)(using transitionNotes)
     )
-
-  def listArticles(q: Api.ArticleQuery): ArticleList = research.articles.list(q)
-  def articleReview(slug: String): Either[ApiError, ArticleReviewView] = research.articles.review(slug)
-  def reviewOf(slug: String): Either[ApiError, ArticleReviewView] = research.articles.reviewOf(slug)
-  def getArticle(slug: String, brief: Boolean = false): Either[ApiError, ArticleView] =
-    research.articles.get(slug, brief)
-  def articleCoverage(slug: String): Either[ApiError, Coverage] = research.articles.coverage(slug)
-  def coverageOf(a: Article): Option[Coverage] = research.articles.coverageOf(a)
-  def citedSources(body: String): List[String] = research.articles.citedSources(body)
-  def critiques(slug: String, body: String, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
-    research.articles.critiques(slug, body, extra)
-  def pairing(body: String): (List[CritiquePairing.Hit], String => Option[String]) = research.articles.pairing(body)
-  def repairPairing(body: String): (String, List[CritiquePairing.Hit]) = research.articles.repairPairing(body)
-  def filterReach(af: ArticleFilter, citekeys: List[String], cap: Int): (Int, Set[String], List[String]) =
-    research.articles.filterReach(af, citekeys, cap)
-
-  /** Whether an article with this slug exists (as stored, no alias followed). */
-  def articleExists(slug: String): Boolean = research.articles.store.exists(slug)
-
-  /** Every goal's linked articles that exist: goal → slugs (research's measure of a goal's progress). */
-  def articlesByGoal(): Map[String, List[String]] = research.articles.store.articlesByGoal
-
-  /** The articles that passed their review (no open MAJOR, no open item of review manager `reviewId`). */
-  def passedReview(reviewId: String): Set[String] = ReviewLedgerRepo.passedReview(ds, reviewId)
-
-  /** An article's review ledger (none: never reviewed, or one that no longer decodes) — the review manager kind's. */
-  def reviewLedger(slug: String): Option[ReviewLedger.Ledger] = ReviewLedgerRepo.get(ds, slug).toOption.flatten
-
-  /** The coverage filter an article records, as stored (no alias followed) — the review manager kind's. */
-  def recordedFilter(slug: String): Option[ArticleFilter] = research.articles.recordedFilter(slug)
-  def articleFilterTotal(slug: String): Option[Int] = research.articles.filterTotal(slug)
-  def newFilterSources(slug: String): Option[Int] = research.articles.newFilterSources(slug)
-  def openCritiques(slug: String): Option[Int] = research.articles.openCritiques(slug)
-  def pageLinks(targets: List[String]): String => Option[LinkTarget] = research.articles.pageLinks(targets)
-
-  /** The citation-link view of stored sources (DOI, byline, status), for the HTML pages. */
-  def sourceRefs(citekeys: List[String]): List[SourceRef] = library.sourceStore.refs(citekeys)
-
-  def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[ApiError, ArticleView] =
-    research.articles.put(slug, in, strict)
-  def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[ApiError, ArticleView] =
-    research.articles.patch(slug, p, strict)
-  def deleteArticle(slug: String): Either[ApiError, ArticleDeleted] = research.articles.delete(slug)
-  def exportArticle(slug: String): Either[ApiError, String] = research.articles.exportNote(slug)
-  def articleVersions(slug: String): Either[ApiError, List[ArticleVersion]] = research.articles.versions(slug)
-  def articleVersion(slug: String, versionId: Long): Either[ApiError, ArticleVersionFull] =
-    research.articles.version(slug, versionId)
-  def importArticle(req: ArticleImport): Either[ApiError, SeedResult] = research.articles.importNote(req)
 
 object Handlers:
   /** The `jobs.kind` of a `places fetch` (a gazetteer, or the land) and of a hierarchy build (#1946). */

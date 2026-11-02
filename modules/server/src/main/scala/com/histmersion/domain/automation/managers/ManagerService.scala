@@ -25,6 +25,11 @@ trait ManagerService:
   /** A manager's pending items, the most urgent first. */
   def pending(managerId: String): List[ManagerItem]
 
+  /** A manager's first `limit` items, the most urgent first: active, pending, held, then the rest; by priority, the
+    * earliest not-before (none first), the latest change, the id.
+    */
+  def items(managerId: String, limit: Int): List[ManagerItem]
+
   /** Every manager without its counts, by id. */
   def light(): List[ManagerLight]
 
@@ -161,6 +166,8 @@ object ManagerService:
     def get(id: String): Option[ManagerInfo] = db.read(ManagerRepo.get(id))
     def list(): List[ManagerInfo] = db.read(ManagerRepo.list())
     def pending(managerId: String): List[ManagerItem] = db.read(ManagerRepo.pending(managerId))
+    def items(managerId: String, limit: Int): List[ManagerItem] =
+      db.read(ManagerRepo.itemPage(managerId, None, 0, limit))._1
     def light(): List[ManagerLight] = db.read(ManagerRepo.light())
     def create(
         id: String,
@@ -305,6 +312,26 @@ object ManagerService:
       items
         .filter(i => i.managerId == managerId && i.status == "pending")
         .sortBy(i => (-i.priority, i.id))
+        .toList
+        .map(view)
+    private def urgency(status: String): Int = status match
+      case "active"  => 0
+      case "pending" => 1
+      case "held"    => 2
+      case _         => 3
+    def items(managerId: String, limit: Int): List[ManagerItem] =
+      items
+        .filter(_.managerId == managerId)
+        .sortBy(i =>
+          (
+            urgency(i.status),
+            -i.priority,
+            i.notBefore.fold(Long.MinValue)(_.toEpochMilli),
+            -i.updatedAt.toEpochMilli,
+            i.id
+          )
+        )
+        .take(math.max(1, limit))
         .toList
         .map(view)
     def light(): List[ManagerLight] =

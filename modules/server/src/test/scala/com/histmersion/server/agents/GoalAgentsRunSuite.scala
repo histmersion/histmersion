@@ -321,7 +321,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin"), goal = Some(Goal))
     )
     assertEquals(run.status, "waiting", why(run))
-    assert(h.getArticle(Slug).isLeft, "nothing is written before approval")
+    assert(h.research.articles.get(Slug).isLeft, "nothing is written before approval")
     val steps = connect(ds)(AgentRepo.steps(run.id, 4000))
     assertEquals(
       steps.map(s => (s.name, s.status)),
@@ -350,7 +350,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assert(a.decide(appr.id, "approve", DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, newBody.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, newBody.trim)
     // the chained review: a review-article run with fix, started by this one, for the same goal
     val child = connect(ds)(AgentRepo.list(None, 50)).find(r => r.parent.contains(run.id)).get
     assertEquals(
@@ -365,7 +365,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(ArticleFilter(topics = List("zzagent_tin")))
     )
-    val cov = h.articleCoverage(Slug).fold(e => fail(e.message), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message), identity)
     assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
 
   test(
@@ -381,11 +381,9 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     c.scripts += Seq(
       text(draftJson(onlyCk, reasons = s"""{"citekey":"$Ck2","reason":"Its isotope study dates a later trade."}"""))
     )
-    val auto = baseCfg.copy(agents =
-      baseCfg.agents.copy(
-        approvals = baseCfg.agents.approvals.copy(articlePublish = "auto"),
-        compile = baseCfg.agents.compile.copy(review = false)
-      )
+    val auto = baseCfg.copy(
+      agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articlePublish = "auto")),
+      researchAgents = baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
@@ -398,8 +396,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       first.contains("a Not used section: code generates it") && first.contains("a _Method_ note: code generates it"),
       first
     )
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, onlyCk.trim)
-    val cov = h.articleCoverage(Slug).fold(e => fail(e.message), identity)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, onlyCk.trim)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message), identity)
     assertEquals(
       cov.notUsed.map(e => (e.source.citekey, e.reason)),
       List((Ck2, Some("Its isotope study dates a later trade.")))
@@ -407,7 +405,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(cov.drift, Nil)
     assert(
       ArticleMarkdown
-        .article(h.getArticle(Slug).toOption.get)
+        .article(h.research.articles.get(Slug).toOption.get)
         .contains(s"- [[$Ck2]] (contested) — Its isotope study dates a later trade.")
     )
 
@@ -418,7 +416,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val current =
       s"Tin reached the Aegean [[$Ck]].\n\n## Disagreements\n\nNone recorded [[$Ck]].\n\n## Open questions\n\nOpen [[$Ck]]."
     val (a, h, _) = handlers(c); seed(h)
-    assert(h.putArticle(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
+    assert(h.research.articles.put(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
       Seq(
@@ -436,12 +434,12 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(connect(ds)(AgentRepo.steps(run.id, 10)).map(_.name).count(_.startsWith("extract")), 1)
     // someone edits the article while the draft waits
     val theirs = current.replace("None recorded", "Nothing recorded")
-    assert(h.patchArticle(Slug, ArticlePatch(body = Some(theirs))).isRight)
+    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(theirs))).isRight)
     val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get.id
     assert(a.decide(id, "approve", DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
-    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, theirs.trim, "their text stands")
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, theirs.trim, "their text stands")
     assert(done.warnings.exists(_.contains("NOT appended")), done.warnings)
     assert(h.ops.queueList("tasks", all = false).toOption.get.items.exists(_.text.contains(s"[[$Slug]]")))
     assert(
@@ -454,9 +452,14 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val current =
       s"Tin reached the Aegean [[$Ck]].\n\n## Disagreements\n\nNone recorded [[$Ck]].\n\n## Open questions\n\nOpen [[$Ck]]."
     val (a, h, _) =
-      handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(compile = baseCfg.agents.compile.copy(review = false))))
+      handlers(
+        c,
+        baseCfg.copy(researchAgents =
+          baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
+        )
+      )
     seed(h)
-    assert(h.putArticle(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
+    assert(h.research.articles.put(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
     val added = s"A newer study is contested: [[$Ck2]] (contested) places the tin in Central Asia."
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
@@ -466,12 +469,12 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get.id
     assert(a.decide(id, "approve", DecisionRequest()).isRight)
     assertEquals(runAgain(a, run.id).status, "done")
-    val body = h.getArticle(Slug).toOption.get.article.body
+    val body = h.research.articles.get(Slug).toOption.get.article.body
     assert(
       body.indexOf(added) > body.indexOf("## Disagreements") && body.indexOf(added) < body.indexOf("## Open questions"),
       body
     )
-    assert(h.articleVersions(Slug).toOption.get.nonEmpty, "the previous text is kept")
+    assert(h.research.articles.versions(Slug).toOption.get.nonEmpty, "the previous text is kept")
     // #958: an article that recorded no filter records the run's
     assertEquals(
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
@@ -481,16 +484,14 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   test("compile-article: with article-publish = auto the run does not wait (still never overwrites a slug)"):
     val c = ScriptedClient(Model)
     compileScripts(c, draftJson(newBody))
-    val auto = baseCfg.copy(agents =
-      baseCfg.agents.copy(
-        approvals = baseCfg.agents.approvals.copy(articlePublish = "auto"),
-        compile = baseCfg.agents.compile.copy(review = false)
-      )
+    val auto = baseCfg.copy(
+      agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articlePublish = "auto")),
+      researchAgents = baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
     assertEquals(run.status, "done", why(run))
-    assert(h.getArticle(Slug).isRight)
+    assert(h.research.articles.get(Slug).isRight)
     val appr = a.approvalsList(Some("all"), None).toOption.get.find(_.subject.contains(Slug)).get
     assertEquals(appr.state, "approved")
 
@@ -558,7 +559,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assertEquals(run.status, "done", why(run))
     assertEquals(CorpusSnapshot.of(ds), before, "no article, no approval, no goal link, no log line")
-    assert(h.getArticle(Slug).isLeft)
+    assert(h.research.articles.get(Slug).isLeft)
     val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     assertEquals(
       steps.filter(_.status == "done").map(_.name),

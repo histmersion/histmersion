@@ -1,12 +1,11 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, ReviewArticle}
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 
 /** The typed answers of research's LLM steps (compile, review, infer-filter, propose), one value each, beside its
-  * pipelines until research contributes its workflows (the engine's own are `AnswerSchemas`, the library's
-  * `LibraryAnswers`).
+  * pipelines (the engine's own are `AnswerSchemas`, the library's `LibraryAnswers`).
   */
 object ResearchAnswers:
   val extract: ResponseSchema[CompileArticle.ExtractAnswer] = ResponseSchema.derived[CompileArticle.ExtractAnswer]()

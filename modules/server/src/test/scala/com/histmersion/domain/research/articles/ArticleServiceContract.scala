@@ -90,6 +90,8 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       assertEquals(oldest.body, "## Overview\n\nThe walls.\n")
       assertEquals(s.articles.version(Walls, versions.last.id + 1000), None)
       assertEquals(s.articles.version(Harbour, versions.last.id), None)
+      assertEquals(s.articles.latestVersion(Walls), Some(versions.map(_.id).max))
+      assertEquals(s.articles.latestVersion(Harbour), None)
   }
 
   stest("a critique reason names two sources by citekey: with none stored it is refused and nothing is written") { s =>

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.workflows.*
+
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.CompileArticle.SourceFact
 import com.histmersion.values.{DraftMode, GoalLinkKind, ScheduleKind, SourceStatus}

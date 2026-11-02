@@ -54,6 +54,9 @@ trait ArticleService:
 
   def version(slug: String, id: Long): Option[ArticleVersionFull]
 
+  /** The newest saved version of an article: after a write, the one holding the text it replaced. */
+  def latestVersion(slug: String): Option[Long]
+
   /** The article's stored critique reasons, by pair. */
   def critiqueReasons(slug: String): List[CritiqueReason]
 
@@ -89,6 +92,7 @@ object ArticleService:
     def sourcesCited(slug: String): List[CitedSource] = db.read(ArticleRepo.sourcesCited(slug))
     def versions(slug: String): List[ArticleVersion] = db.read(ArticleRepo.listVersions(slug))
     def version(slug: String, id: Long): Option[ArticleVersionFull] = db.read(ArticleRepo.getVersion(slug, id))
+    def latestVersion(slug: String): Option[Long] = db.read(ArticleRepo.latestVersion(slug))
     def critiqueReasons(slug: String): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
     def articlesByGoal: Map[String, List[String]] = db.read(ArticleRepo.articlesByGoal)
     def put(article: Article, caller: Caller): String = db.transact(ArticleRepo.put(article))
@@ -184,6 +188,8 @@ object ArticleService:
         .find(v => v.slug == slug && v.id == id)
         .map(v => ArticleVersionFull(v.id, v.slug, v.body, v.summary, token(v.updatedAt), token(v.createdAt)))
 
+    def latestVersion(slug: String): Option[Long] = state.get.versions.filter(_.slug == slug).map(_.id).maxOption
+
     def critiqueReasons(slug: String): List[CritiqueReason] = state.get.critiques.getOrElse(slug, Nil)
     def articlesByGoal: Map[String, List[String]] = Map.empty
 
@@ -258,6 +264,8 @@ object ArticleService:
             .using(_.filterNot(_._2 == slug))
             .modify(_.critiques)
             .using(_ - slug)
+            .modify(_.ledgers)
+            .using(_ - slug)
       }
       before.articles.contains(slug)
 
@@ -307,6 +315,8 @@ object ArticleService:
         .using(_.map(v => if v.slug == oldSlug then v.modify(_.slug).setTo(newSlug) else v))
         .modify(_.critiques)
         .using(cs => cs.get(oldSlug).fold(cs)(rs => (cs - oldSlug).updated(newSlug, rs)))
+        .modify(_.ledgers)
+        .using(ls => ls.get(oldSlug).fold(ls)(l => (ls - oldSlug).updated(newSlug, l)))
       val to: String => Option[String] = t => Option.when(t == oldSlug)(newSlug)
       val needle = oldSlug.toLowerCase
       val rewritten = moved.articles.keys.toList.sorted.filter { s =>

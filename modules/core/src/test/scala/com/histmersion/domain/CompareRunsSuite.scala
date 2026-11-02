@@ -11,6 +11,7 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.domain.library.workflows.EnrichComparison
+import com.histmersion.domain.research.workflows.ReviewComparison
 import io.circe.syntax.*
 import com.histmersion.values.SourceStatus
 
@@ -57,7 +58,10 @@ class CompareRunsSuite extends munit.FunSuite:
     CompareRuns.compare(
       runs,
       billing,
-      if runs.headOption.exists(_.run.pipeline == "enrich-source") then EnrichComparison else OutputComparison.none
+      runs.headOption.map(_.run.pipeline) match
+        case Some("enrich-source")  => EnrichComparison
+        case Some("review-article") => ReviewComparison
+        case _                      => OutputComparison.none
     )
 
   test("refused: fewer than two runs, a run twice, two pipelines, two targets"):
@@ -267,32 +271,32 @@ class CompareRunsSuite extends munit.FunSuite:
 
   test("same major: the same where and a similar problem, or the same quoted passage"):
     assert(
-      CompareRuns.sameMajor(
+      ReviewComparison.sameMajor(
         f("R1", Severity.Major, "Intro", "tin is not defined"),
         f("R2", Severity.Major, "intro", "Tin is not defined at all")
       )
     )
     assert(
-      !CompareRuns.sameMajor(
+      !ReviewComparison.sameMajor(
         f("R1", Severity.Major, "Intro", "tin is not defined"),
         f("R2", Severity.Major, "Dates", "tin is not defined")
       )
     )
     assert(
-      !CompareRuns.sameMajor(
+      !ReviewComparison.sameMajor(
         f("R1", Severity.Major, "Intro", "tin is not defined"),
         f("R2", Severity.Major, "Intro", "the date is wrong")
       )
     )
     assert(
-      CompareRuns.sameMajor(
+      ReviewComparison.sameMajor(
         f("S1", Severity.Major, "A", "x", "Its cargo dates to 1320"),
         f("R4", Severity.Major, "B", "y", "its cargo dates to 1320")
       )
     )
     assertEquals(CompareRuns.similarity("", ""), 0.0)
     // one-to-one: a finding is matched once
-    val pairs = CompareRuns.overlap(
+    val pairs = ReviewComparison.overlap(
       List(f("R1", Severity.Major, "I", "tin undefined here"), f("R2", Severity.Major, "I", "tin undefined here")),
       List(f("R9", Severity.Major, "I", "tin undefined here"))
     )

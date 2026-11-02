@@ -194,7 +194,11 @@ final class ManagerSupervisor(
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
-  def settings(m: ManagerInfo): ReviewSettings = ReviewSettings.forKind(kindOf(m), m.config, managerDefaults)
+  def settings(m: ManagerInfo): ReviewSettings =
+    val k = kindOf(m)
+    kinds
+      .find(_.kind == k)
+      .fold(ReviewSettings.forKind(k, m.config, managerDefaults))(_.settings(m.config, managerDefaults))
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 

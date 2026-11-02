@@ -63,21 +63,23 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     )
     val body =
       s"The dying god [[$Frazer]] is a type; [[$Smith]] refutes it.\n\n## Disagreements\n\nRites differ [[$Frazer]]."
-    assert(h.putArticle(Slug, ArticlePut("The golden bough", "concept", body)).isRight)
+    assert(h.research.articles.put(Slug, ArticlePut("The golden bough", "concept", body)).isRight)
 
-  private def patch(rs: CritiqueReason*) = h.patchArticle(Slug, ArticlePatch(critiqueReasons = rs.toList))
+  private def patch(rs: CritiqueReason*) = h.research.articles.patch(Slug, ArticlePatch(critiqueReasons = rs.toList))
   private def stored = ArticleFixtures.critiques(ds, Slug).map(r => (r.src, r.dst, r.reason, r.by))
 
   test("set, read, refuse, normalise the direction, remove; the article's row is not touched"):
     seed()
     assertEquals(
-      h.critiques(Slug, h.getArticle(Slug).toOption.get.article.body).map(p => (p.ref.wire, p.kinds, p.state.wire)),
+      h.research.articles
+        .critiques(Slug, h.research.articles.get(Slug).toOption.get.article.body)
+        .map(p => (p.ref.wire, p.kinds, p.state.wire)),
       List(
         (s"$Smith>$Frazer", List("refutes"), "addressed"),
         (s"$Brown>$Frazer", List("challenges", "updates"), "open")
       )
     )
-    val token = h.getArticle(Slug).toOption.get.article.updatedAt
+    val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
     // the pair named the other way round is kept under the edge's direction; an explicit setter is kept
     assert(patch(CritiqueReason(Frazer, Brown, " Cited for the\nrites only. ")).isRight)
     assert(patch(CritiqueReason(Smith, Frazer, "x", Some("skeptic (agent run abcd1234)"))).isRight)
@@ -88,9 +90,9 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
         (Brown, Frazer, "Cited for the rites only.", Some("person"))
       )
     )
-    assertEquals(h.getArticle(Slug).toOption.get.article.updatedAt, token)
-    assertEquals(h.articleVersions(Slug).toOption.get, Nil, "no version for a reason alone")
-    assertEquals(h.openCritiques(Slug), Some(0))
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.updatedAt, token)
+    assertEquals(h.research.articles.versions(Slug).toOption.get, Nil, "no version for a reason alone")
+    assertEquals(h.research.articles.openCritiques(Slug), Some(0))
     // refused, nothing written: no edge, an unknown citekey, a reason too long — and the whole patch with them
     assert(
       patch(CritiqueReason(Lone, Frazer, "y")).left
@@ -99,21 +101,25 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     assert(patch(CritiqueReason("zzcrit0000_ghost", Frazer, "y")).left.exists(_.message.contains("is not a citekey")))
     assert(patch(CritiqueReason(Brown, Frazer, "z" * 501)).isLeft)
     assert(
-      h.patchArticle(
-        Slug,
-        ArticlePatch(title = Some("Changed"), critiqueReasons = List(CritiqueReason(Lone, Frazer, "y")))
-      ).isLeft
+      h.research.articles
+        .patch(
+          Slug,
+          ArticlePatch(title = Some("Changed"), critiqueReasons = List(CritiqueReason(Lone, Frazer, "y")))
+        )
+        .isLeft
     )
-    assertEquals(h.getArticle(Slug).toOption.get.article.title, "The golden bough")
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.title, "The golden bough")
     // a reason with a body edit: both in one transaction (the body is a new version)
     assert(
-      h.patchArticle(
-        Slug,
-        ArticlePatch(append = Some(s"More [[$Frazer]]."), critiqueReasons = List(CritiqueReason(Smith, Frazer, "")))
-      ).isRight
+      h.research.articles
+        .patch(
+          Slug,
+          ArticlePatch(append = Some(s"More [[$Frazer]]."), critiqueReasons = List(CritiqueReason(Smith, Frazer, "")))
+        )
+        .isRight
     )
     assertEquals(stored.map(_._1), List(Brown))
-    assertEquals(h.articleVersions(Slug).toOption.get.size, 1)
+    assertEquals(h.research.articles.versions(Slug).toOption.get.size, 1)
 
   test("the reasons follow the article (rename, delete) and both sources (citekey rename, delete)"):
     seed()
@@ -126,15 +132,17 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     // the article's rename carries it
     assert(h.renameArticle(Slug, LabelRename("zzcrit_bough2")).isRight)
     assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2").size, 1)
-    assertEquals(h.openCritiques("zzcrit_bough2"), Some(0))
+    assertEquals(h.research.articles.openCritiques("zzcrit_bough2"), Some(0))
     // the source's delete drops it
     assert(h.library.sources.delete("zzcrit1999_ritesb", SourceDeleteRequest(apply = true)).isRight)
     assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2"), Nil)
     // and the article's delete drops the rest
     assert(
-      h.patchArticle("zzcrit_bough2", ArticlePatch(critiqueReasons = List(CritiqueReason(Smith, Frazer, "x")))).isRight
+      h.research.articles
+        .patch("zzcrit_bough2", ArticlePatch(critiqueReasons = List(CritiqueReason(Smith, Frazer, "x"))))
+        .isRight
     )
-    assert(h.deleteArticle("zzcrit_bough2").isRight)
+    assert(h.research.articles.delete("zzcrit_bough2").isRight)
     assertEquals(
       connect(ds)(
         sql"SELECT count(*)::int FROM article_critique_reasons WHERE slug LIKE 'zzcrit%'".query[Int].run().head
@@ -148,6 +156,6 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     // the body still says [[zzcrit1987_dying]] (an alias now) and the short form [[zzcrit1922]]
     val body = s"The type [[zzcrit1922]] and its critic [[$Smith]].\n\nRites [[$Brown]]."
     assertEquals(
-      h.critiques(Slug, body).map(p => (p.ref.wire, p.state.wire, p.src.cited, p.dst.cited)),
+      h.research.articles.critiques(Slug, body).map(p => (p.ref.wire, p.state.wire, p.src.cited, p.dst.cited)),
       List((s"zzcrit1987_dyingb>$Frazer", "addressed", true, true), (s"$Brown>$Frazer", "open", true, true))
     )

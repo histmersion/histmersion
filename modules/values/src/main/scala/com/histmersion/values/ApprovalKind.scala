@@ -26,6 +26,12 @@ enum ApprovalKind(val wire: String, val blocking: Boolean):
   /** About a goal or an article (`subject`), not a source. */
   def aboutSubject: Boolean = this != StatusChange && this != Edge
 
+  /** Its proposal is an article's coverage filter. */
+  def proposesFilter: Boolean = this == ArticleFilter
+
+  /** Its proposal is a plan of articles. */
+  def proposesArticles: Boolean = this == ArticlePlan
+
 object ApprovalKind:
   def parse(s: String): Option[ApprovalKind] = values.find(_.wire == s.trim.toLowerCase)
 

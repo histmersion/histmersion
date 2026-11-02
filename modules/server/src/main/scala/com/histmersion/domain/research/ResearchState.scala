@@ -1,19 +1,22 @@
 package com.histmersion.domain.research
 
 import com.histmersion.api.{Article, CritiqueReason}
+import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.Instant
 import java.util.UUID
 
 /** Research's records the in-memory services share: the articles (each with its uid, its last write and the targets its
-  * body links), the old slugs, the recorded versions and the critique reasons beside each article.
+  * body links), the old slugs, the recorded versions, the critique reasons beside each article and each article's
+  * review ledger.
   */
 final case class ResearchState(
     articles: Map[String, ResearchState.Stored],
     aliases: Map[String, String],
     versions: Vector[ResearchState.Replaced],
     nextVersion: Long,
-    critiques: Map[String, List[CritiqueReason]]
+    critiques: Map[String, List[CritiqueReason]],
+    ledgers: Map[String, Ledger] = Map.empty
 )
 
 object ResearchState:

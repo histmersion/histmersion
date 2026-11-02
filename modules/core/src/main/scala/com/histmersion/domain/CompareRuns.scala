@@ -5,7 +5,7 @@ import io.circe.Decoder
 import io.circe.parser.decode
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
-import com.histmersion.values.{Pipeline, RunState, StepStatus}
+import com.histmersion.values.{RunState, StepStatus}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
   * side by side; `billing` names how a configured model is paid for (a plan pool or a price — the server knows, from
@@ -134,11 +134,6 @@ object CompareRuns:
 
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 
-  /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
-    * of their words (Jaccard over the normalised words), or quote the same passage.
-    */
-  val ProblemSimilarity = 0.5
-
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
   def compare(
       runs: List[Run],
@@ -162,7 +157,6 @@ object CompareRuns:
         )
         .toLeft(())
     yield
-      val pipeline = Pipeline.parse(first.pipeline)
       val names = unionInOrder(runs.map(_.steps.map(_.name).distinct))
       val rows = names.map(n =>
         StepRow(n, runs.map(d => Option(d.steps.filter(_.name == n)).filter(_.nonEmpty).map(stepSide(_, billing))))
@@ -172,8 +166,8 @@ object CompareRuns:
           s"run ${d.run.id.take(8)} is ${d.run.status}, not done: its outputs are what it had so far"
       }
       val enrich = outputs.enrich(runs)
-      val review = if pipeline.contains(Pipeline.ReviewArticle) then runs.map(reviewSide) else Nil
-      val overlaps = if pipeline.contains(Pipeline.ReviewArticle) then majorOverlaps(runs) else Nil
+      val review = outputs.review(runs)
+      val overlaps = outputs.overlaps(runs)
       Comparison(first.pipeline, first.target, runs.map(runSide), rows, enrich, review, overlaps, notes)
 
   // ── steps and totals ───────────────────────────────────────────────────────────────────────────
@@ -242,38 +236,6 @@ object CompareRuns:
       .flatMap(_.output)
       .flatMap(decode[O](_).toOption)
 
-  // ── review-article ─────────────────────────────────────────────────────────────────────────────
-
-  import ReviewArticle.{Finding, Merged, Report}
-
-  private def round(name: String, prefix: String): Option[Int] =
-    Option.when(name.startsWith(prefix))(name.stripPrefix(prefix).toIntOption).flatten
-
-  private def reviewSide(d: Run): ReviewSide =
-    val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
-    val last = merges.lastOption.flatMap((_, n) => output[Merged](d, n))
-    val first = output[Merged](d, "merge-1")
-    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => output[Report](d, n))
-    val mech = output[List[Finding]](d, "mechanical-1")
-    val reviewers = reports.map(r =>
-      ReviewerSide(r.reviewer.wire, Some(r.verdict.wire), r.findings.count(_.major), r.findings.count(!_.major))
-    ) ++ mech.toList.map(fs =>
-      ReviewerSide(ReviewArticle.Reviewer.Mechanical.wire, None, fs.count(_.major), fs.count(!_.major))
-    )
-    val kinds = first.toList
-      .flatMap(_.findings)
-      .groupMapReduce(f => Option(f.kind).map(_.trim).filter(_.nonEmpty).getOrElse("other"))(_ => 1)(_ + _)
-      .toList
-      .sortBy((k, n) => (-n, k))
-      .map(KindCount(_, _))
-    ReviewSide(
-      last.map(_.verdict.wire),
-      merges.lastOption.fold(0)(_._1),
-      reviewers,
-      kinds,
-      first.toList.flatMap(_.majors.map(_.line))
-    )
-
   private def words(s: String): Set[String] =
     ComparedText.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
@@ -281,38 +243,3 @@ object CompareRuns:
   def similarity(a: String, b: String): Double =
     val (x, y) = (words(a), words(b))
     if x.isEmpty && y.isEmpty then 0.0 else (x intersect y).size.toDouble / (x union y).size
-
-  /** The same major finding, as two runs' reviewers worded it: the same `where` (normalised) and a similar problem, or
-    * the same quoted passage.
-    */
-  def sameMajor(a: Finding, b: Finding): Boolean =
-    val (qa, qb) =
-      (ComparedText.normalise(Option(a.quote).getOrElse("")), ComparedText.normalise(Option(b.quote).getOrElse("")))
-    val sameWhere =
-      ComparedText.normalise(Option(a.where).getOrElse("")) == ComparedText.normalise(Option(b.where).getOrElse(""))
-    (qa.nonEmpty && qa == qb) || (sameWhere && similarity(a.problem, b.problem) >= ProblemSimilarity)
-
-  /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */
-  def overlap(a: List[Finding], b: List[Finding]): List[(Finding, Finding)] =
-    @tailrec def loop(
-        rest: List[Finding],
-        acc: List[(Finding, Finding)],
-        left: List[Finding]
-    ): List[(Finding, Finding)] =
-      rest match
-        case Nil       => acc.reverse
-        case f :: tail =>
-          left.find(sameMajor(f, _)) match
-            case Some(g) => loop(tail, (f -> g) :: acc, left.filterNot(_ eq g))
-            case None    => loop(tail, acc, left)
-    loop(a, Nil, b)
-
-  private def majorOverlaps(runs: List[Run]): List[MajorOverlap] =
-    val majors = runs.map(d => d.run.id -> output[Merged](d, "merge-1").toList.flatMap(_.majors))
-    for
-      (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
-      (ra, ma) = majors(i)
-      (rb, mb) = majors(j)
-    yield
-      val pairs = overlap(ma, mb)
-      MajorOverlap(ra, rb, ma.size, mb.size, pairs.size, pairs.map((x, y) => s"${x.id} ↔ ${y.id}"))

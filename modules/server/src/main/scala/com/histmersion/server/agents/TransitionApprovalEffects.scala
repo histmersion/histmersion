@@ -3,15 +3,14 @@ package com.histmersion.server.agents
 import com.histmersion.api.Agents.ApprovalInfo
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ApprovalEffects
+import com.histmersion.domain.research.workflows.InferFilterPipeline
 import com.histmersion.server.Handlers
 import com.histmersion.values.ApprovalKind
-
-import javax.sql.DataSource
 
 /** What approving a source's proposal (the library's) and an article's inferred filter (research's) does, registered by
   * this transition adapter until those domains contribute their own.
   */
-final class TransitionApprovalEffects(h: Handlers, ds: DataSource) extends ApprovalEffects:
+final class TransitionApprovalEffects(h: Handlers) extends ApprovalEffects:
   def proposal(payload: String): Option[() => Either[String, String]] =
     com.histmersion.db.Jsonb
       .read[Proposal](payload)
@@ -22,4 +21,4 @@ final class TransitionApprovalEffects(h: Handlers, ds: DataSource) extends Appro
   def applySubject(a: ApprovalInfo): Either[String, String] =
     a.filter
       .toRight("the approval carries no readable filter")
-      .flatMap(InferFilterPipeline.applyProposal(h, ds, _))
+      .flatMap(InferFilterPipeline.applyProposal(h.research.articles, h.research.articleStore, _))

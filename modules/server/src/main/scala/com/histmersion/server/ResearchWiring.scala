@@ -1,7 +1,6 @@
 package com.histmersion.server
 
 import com.histmersion.api.{ApiError, ArticleEventLead, Period}
-import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.research.articles.{
   ArticlesControllers,
   ArticleSearch,
@@ -10,21 +9,23 @@ import com.histmersion.domain.research.articles.{
   PageBuilder
 }
 import com.histmersion.domain.research.articles.review.ReviewStateService
+import com.histmersion.domain.research.workflows.ReviewLedgerService
 
 /** Research's services and controllers, built over one server's `deps`: the sources, their filters and citations are
-  * the library's, an article's event leads the catalogue's; its review ledger and its note as the mirror renders it are
-  * handed in until research's workflows and data contribution register their own.
+  * the library's, an article's event leads the catalogue's; its note as the mirror renders it is handed in.
   */
 final class ResearchWiring(
     deps: Deps,
     library: LibraryWiring,
     articleLeads: (String, List[String], Option[Period]) => List[ArticleEventLead],
-    ledgers: String => Either[String, Option[ReviewLedger.Ledger]],
     note: String => Either[ApiError, String]
 ):
 
   /** The articles as research stores them. */
   val articleStore: ArticleService = ArticleService(deps.transactor)
+
+  /** The articles' review ledgers. */
+  val ledgers: ReviewLedgerService = ReviewLedgerService(deps.transactor)
 
   val articles: ArticlesControllers = ArticlesControllers(
     articleStore,
@@ -34,7 +35,7 @@ final class ResearchWiring(
     library.sources,
     library.sourceStore,
     library.filters,
-    ledgers,
+    ledgers.get,
     articleLeads,
     note,
     (k, id) => Deps.aliasTables.current(deps.ds, k, id),

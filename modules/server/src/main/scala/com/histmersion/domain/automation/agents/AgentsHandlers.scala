@@ -58,6 +58,9 @@ final class AgentsHandlers(
 
   /** How many sources a goal gathers before its articles are planned (the site's, read at each use). */
   def sourcesToPlan: Int = site.sourcesToPlan
+
+  /** The most panel rounds a run or a manager may ask a review for ([[EngineSite.roundsCap]]). */
+  def roundsCap: Int = site.roundsCap
   private val ds = site.ds
 
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
@@ -564,7 +567,7 @@ final class AgentsHandlers(
       _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[ApiError, Unit]](Right(())) {
         case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(ApiError(_)))
       }
-      _ <- host.runOptions(p, req, target, cfg.review.roundsCap)
+      _ <- host.runOptions(p, req, target, roundsCap)
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
       usd <- positive(req.budgetUsd.orElse(goal.flatMap(goalBudget)).getOrElse(cfg.budgets.runUsd), "budget-usd")
       tok <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokensFor(p.wire)).toDouble, "budget-tokens")

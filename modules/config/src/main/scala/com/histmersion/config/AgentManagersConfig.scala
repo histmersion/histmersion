@@ -10,7 +10,8 @@ final case class AgentManagersConfig(
     backoffMinutes: Int,
     maxBackoffMinutes: Int,
     maxFailures: Int,
-    review: ReviewManagerConfig,
+    /** The review manager's run limit; research reads the rest of `agents.managers.review`. */
+    review: SimpleManagerConfig,
     enrich: SimpleManagerConfig,
     seed: SimpleManagerConfig,
     /** A watcher's run limit; the library reads the rest of `agents.managers.watch`. */

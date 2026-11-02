@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
+import com.histmersion.domain.research.workflows.ReviewManagerKind
 
 import com.histmersion.config.{
   AgentManagersConfig,
@@ -28,21 +29,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     backoffMinutes = 15,
     maxBackoffMinutes = 360,
     maxFailures = 3,
-    review = ReviewManagerConfig(
-      maxRuns = 2,
-      rounds = 3,
-      maxRunsPerArticle = 4,
-      noProgressRuns = 5,
-      reopenLimit = 6,
-      cooldownMinutes = 30,
-      lowWater = 7,
-      refillBatch = 10,
-      staleAfterDays = 90,
-      inferFilter = false,
-      staleScanMinutes = 45,
-      extendMinNew = 8,
-      extendCooldownDays = 9
-    ),
+    review = SimpleManagerConfig(2),
     enrich = SimpleManagerConfig(11),
     seed = SimpleManagerConfig(12),
     watch = SimpleManagerConfig(13),
@@ -59,7 +46,17 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
         backoffMinutes = 15,
         maxBackoffMinutes = 360,
         dailyUsd = 2.5,
-        review = ReviewManagerDefaults(
+        review = ManagerRunDefaults(2),
+        enrich = ManagerRunDefaults(11),
+        seed = ManagerRunDefaults(12),
+        watch = ManagerRunDefaults(13)
+      )
+    )
+
+  test("a review manager's configured defaults reach research's policy field by field; the scan timings stay behind"):
+    assertEquals(
+      ReviewManagerKind.defaultsOf(
+        ReviewManagerConfig(
           maxRuns = 2,
           rounds = 3,
           maxRunsPerArticle = 4,
@@ -70,11 +67,23 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
           refillBatch = 10,
           staleAfterDays = 90,
           inferFilter = false,
-          extendMinNew = 8
-        ),
-        enrich = ManagerRunDefaults(11),
-        seed = ManagerRunDefaults(12),
-        watch = ManagerRunDefaults(13)
+          staleScanMinutes = 45,
+          extendMinNew = 8,
+          extendCooldownDays = 9
+        )
+      ),
+      ReviewManagerDefaults(
+        maxRuns = 2,
+        rounds = 3,
+        maxRunsPerArticle = 4,
+        noProgressRuns = 5,
+        reopenLimit = 6,
+        cooldownMinutes = 30,
+        lowWater = 7,
+        refillBatch = 10,
+        staleAfterDays = 90,
+        inferFilter = false,
+        extendMinNew = 8
       )
     )
 

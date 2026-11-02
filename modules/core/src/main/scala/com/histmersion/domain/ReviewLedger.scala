@@ -11,6 +11,7 @@ import io.circe.{Decoder, Encoder}
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.values.WireEnumValues
+import com.histmersion.domain.research.workflows.ReviewComparison
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -145,7 +146,7 @@ object ReviewLedger:
         val quoted = qa.nonEmpty && qb.nonEmpty &&
           (qa == qb || (math.min(qa.length, qb.length) >= 20 && (qa.contains(qb) || qb.contains(qa))))
         quoted || (AgentVerify.normalise(a.where) == AgentVerify.normalise(b.where) &&
-          CompareRuns.similarity(a.problem, b.problem) >= CompareRuns.ProblemSimilarity)
+          CompareRuns.similarity(a.problem, b.problem) >= ReviewComparison.ProblemSimilarity)
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */

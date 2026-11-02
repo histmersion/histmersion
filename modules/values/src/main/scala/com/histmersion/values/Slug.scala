@@ -7,4 +7,10 @@ import io.github.iltotore.iron.constraint.string.Match
   */
 type Slug = Slug.T
 
-object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]
+object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
+
+  /** The slug a person or a model wrote, trimmed and lower-cased; why it is none, when it is none. */
+  def parse(raw: String): Either[String, Slug] =
+    either(raw.trim.toLowerCase).left.map(_ =>
+      s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
+    )

@@ -49,7 +49,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
     assertEquals(cfg.agents.approvals.statusMode, ApprovalMode.Manual)
     assertEquals(cfg.agents.approvals.edgeMode, ApprovalMode.Manual)
-    assertEquals(cfg.agents.review.maxRounds, 3)
+    assertEquals(cfg.researchAgents.review.maxRounds, 3)
     assertEquals(cfg.agents.trace.keepMessagesDays, 30)
     assertEquals(cfg.agents.promptsDir, "")
     assert(cfg.libraryAgents.enrich.upstream)
@@ -68,7 +68,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assertEquals(on.agents.approvals.edgeMode, ApprovalMode.Auto)
-    assertEquals(on.agents.review.maxRounds, 2)
+    assertEquals(on.researchAgents.review.maxRounds, 2)
     assertEquals(on.agents.promptsDir, "/tmp/p")
     assertEquals(on.agents.trace.keepMessagesDays, 0)
 
@@ -77,7 +77,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assertEquals(cfg.agents.approvals.publishMode, ApprovalMode.Manual)
     assertEquals(cfg.agents.roles.planner, "")
     assertEquals(cfg.agents.roles.writer, "")
-    assert(cfg.agents.scheduler.enabled && cfg.agents.compile.review)
+    assert(cfg.agents.scheduler.enabled && cfg.researchAgents.compile.review)
     assertEquals(cfg.agents.plan.caps.works, 15)
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
@@ -96,7 +96,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assertEquals(on.agents.approvals.publishMode, ApprovalMode.Auto)
     assertEquals(on.agents.role(Role.Writer), "local:w")
     assert(!on.agents.scheduler.enabled)
-    assertEquals(on.agents.compile.maxSources, 5)
+    assertEquals(on.researchAgents.compile.maxSources, 5)
 
   test("config: claude-code is guarded by default (no API key, loopback only); chains and allowances load from env"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))

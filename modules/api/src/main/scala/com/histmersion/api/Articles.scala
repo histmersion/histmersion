@@ -46,16 +46,11 @@ object Articles:
 
   val Kinds = List("concept", "myth", "culture", "region", "timeline", "report", "index")
 
-  // A slug is a URL segment and a file name; existing slugs use '.' and '-'.
-  private val Slug = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: String): ApiError = ApiError(s"No article '$slug'", Some(Write.CodeNotFound))
 
-  def slugOf(raw: String): Either[String, String] =
-    val s = raw.trim.toLowerCase
-    if Slug.matches(s) then Right(s)
-    else Left(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
+  def slugOf(raw: String): Either[String, String] = com.histmersion.values.Slug.parse(raw).map(_.value)
 
   def kindOf(raw: String): Either[String, String] =
     val k = raw.trim.toLowerCase

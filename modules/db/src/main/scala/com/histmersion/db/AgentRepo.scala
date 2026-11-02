@@ -2,7 +2,7 @@ package com.histmersion.db
 
 import com.histmersion.api.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.api.{ArticlePlans, GoalPlans, ListFilters}
+import com.histmersion.api.{GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.ApprovalDigest
@@ -464,12 +464,6 @@ object AgentRepo:
       case Some(ApprovalKind.ArticlePublish) =>
         val d = Jsonb.read[GoalPlans.ArticleDraft](r.proposal)
         base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
-      case Some(ApprovalKind.ArticleFilter) =>
-        val f = Jsonb.read[ArticlePlans.FilterProposal](r.proposal)
-        base.copy(filter = f, evidence = f.map(_.rationale).getOrElse(""))
-      case Some(ApprovalKind.ArticlePlan) =>
-        val p = Jsonb.read[ArticlePlans.ArticlePlan](r.proposal)
-        base.copy(articles = p, evidence = p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
         val p = Jsonb.read[com.histmersion.api.Managers.HintProposal](r.proposal)
         base.copy(
@@ -477,8 +471,10 @@ object AgentRepo:
           evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")
         )
       case _ =>
-        val p = Jsonb.read[ProposalEvidence](r.proposal)
-        base.copy(evidence = p.flatMap(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
+        base.withArticleProposal(Jsonb.read[io.circe.Json](r.proposal)).getOrElse {
+          val p = Jsonb.read[ProposalEvidence](r.proposal)
+          base.copy(evidence = p.flatMap(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
+        }
 
   /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */
   def record(
@@ -729,13 +725,3 @@ object AgentRepo:
   def settle(id: Long, to: ApprovalState, result: String)(using DbCon): Unit =
     val _ =
       sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run()
-
-  // ── corpus facts the verifiers need ────────────────────────────────────────────────────────────
-
-  def slugExists(slug: String)(using DbCon): Boolean =
-    sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
-
-  /** The newest saved version of an article: after a patch, the row holding the text it replaced. */
-  def latestArticleVersion(slug: String)(using DbCon): Option[Long] =
-
-    sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
