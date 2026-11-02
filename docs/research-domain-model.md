@@ -4576,7 +4576,7 @@ vocabulary (decided; no case renamed). `util.database.ListSql`'s facet cap is a 
 
 **`ArchitectureSuite`.** `exceptions.tsv` 72 → 56 rows, deletions only: direction 27 → 21 (`db/BundleImport` 3,
 `db/ListSql` 1, `api/personal/ItemKind` 2), filesystem 32 → 31 (`db/BundleImport`), process 4, repository 9 → 0
-(`Handlers` 3, `OpsHandlers` 2, `ListQueries`, `Bootstrap`, `BundleImport` 2). `places.tsv` 907 → 900 rows: the
+(`Handlers` 3, `OpsHandlers` 2, `ListQueries`, `Bootstrap`, `BundleImport` 2). `places.tsv` 907 → 899 rows: the
 deleted and moved files' rows gone, the composition's new files (`ServerWiring`, `server/agents/EngineContributions`,
 `ServerAutomationHost`, `ServerEngineSite`, `ToolboxOrder`) placed `server`, `api/RegisteredJobKinds` `api`, `api/personal/ItemKind` `kernel`.
 
@@ -4615,8 +4615,14 @@ generate`; an approval of an article filter and of a source proposal; `places`/`
 
 **Part 3** is as part 1 listed it, with the above where part 2 left it.
 
-**Tests.** After the last commit, every module named (`just test-quick` with every module): see the report of the run
-(the counts are in the slice's report). The gated transcripts (`HISTMERSION_ORACLE_RUNS=1
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside, the format check and every module's suites with the
+DB suites on a throwaway database (`just test-quick` with every module named): 5 290 tests, 0 failed — values 25,
+valuesJS 25, api 826, apiJS 88, config 67, files 73, core 773, pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit
+19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58,
+pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 516 (`UiRepoSuite` moved to server),
+cli 232, web 639, server 1 588 (1 skipped, 1 ignored; `RegistrySnapshotSuite`, the goals' and the agent state's
+contract suites added). The clean run found `ItemKind`'s old `personal` row in `places.tsv` shadowing its new place;
+it was removed and `ArchitectureSuite` re-run. The gated transcripts (`HISTMERSION_ORACLE_RUNS=1
 HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`): 352 tests on the unchanged code
 and after the last commit. No read path a `scripts/perf/*_live.py` driver covers changed (the same controllers and SQL
 behind the same routes), so no live-volume run was made.
