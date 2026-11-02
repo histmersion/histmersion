@@ -358,7 +358,7 @@ for n in pool migrations query-pool leases; do echo "$out" | grep -q -- "- $n" |
 "$b/bin/histmersion" places search Anatolia | grep -q "anatolia" && fail "still on the first database after the swap"
 # the read-only hatch answers from the new database, and only once its migrations are recorded there
 "$b/bin/histmersion" query --json \
-  "select current_database() as db from flyway_schema_history group by 1 having count(*) > 50" \
+  "select current_database() as db from flyway_schema_history where version = '109' and success group by 1" \
   | grep -q "histmersion_smoke_b" || fail "the new database was not migrated (or /api/query is not on it)"
 conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n'
 out="$(reload)" || fail "config reload (back): $out"
