@@ -16,3 +16,14 @@ object Attribution:
 
   def publicDomain(author: Option[String], credit: String, url: Option[String] = Some(PdmUrl)): Attribution =
     Attribution(Licence(LicenceId("public-domain"), LicenceFamily.PublicDomain), url, author, credit)
+
+  /** A dataset's credit as the reuse it allows (Q26): its stated licence classified as it is read — a Creative Commons
+    * URL read as one, else its licence URL when the statement names no known licence — and the credit line it asks for.
+    * What the credits show (`DataCredit`) stays as stated.
+    */
+  def ofDataset(credit: com.histmersion.api.DataCredit): Attribution =
+    val stated = Licence.ofStatement(credit.licence)
+    val licence =
+      if stated.family != LicenceFamily.Unknown then stated
+      else credit.licenceUrl.map(Licence.ofUrl).filter(_.family != LicenceFamily.Unknown).getOrElse(stated)
+    Attribution(licence, credit.licenceUrl, None, credit.credit)
