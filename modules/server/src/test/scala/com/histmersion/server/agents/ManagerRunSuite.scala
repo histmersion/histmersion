@@ -24,10 +24,10 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
-import com.histmersion.values.EdgeKind
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
 import com.histmersion.api.research.{ArticlePatch, ArticlePut}
+import com.histmersion.domain.library.Edge
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without
@@ -239,7 +239,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       assert(
         h.library.sources
-          .patch(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+          .patch(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
           .isRight
       )
     }

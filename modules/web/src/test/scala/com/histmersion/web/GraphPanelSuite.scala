@@ -1,7 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.library.{GraphLink, GraphNode, SourceGraph}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 class GraphPanelSuite extends munit.FunSuite:
 
@@ -9,8 +10,8 @@ class GraphPanelSuite extends munit.FunSuite:
     "a2020_x",
     2,
     List(
-      GraphNode("a2020_x", Some("A"), Some(2020), Some(SourceStatus.Current), 0),
-      GraphNode("b2021_y", Some("B"), Some(2021), Some(SourceStatus.Contested), 1),
+      GraphNode("a2020_x", Some("A"), Some(2020), Some(Source.Status.Current), 0),
+      GraphNode("b2021_y", Some("B"), Some(2021), Some(Source.Status.Contested), 1),
       GraphNode("c2019_z", Some("C"), None, None, 1)
     ),
     List(GraphLink("a2020_x", "b2021_y", "references"), GraphLink("c2019_z", "a2020_x", "superseded_by"))
@@ -27,8 +28,8 @@ class GraphPanelSuite extends munit.FunSuite:
 
   test("the legend comes from the enums: only what the graph uses, in enum order") {
     val (statuses, kinds) = GraphPanel.legend(g)
-    assertEquals(statuses, List(SourceStatus.Current, SourceStatus.Contested, SourceStatus.Unassessed))
-    assertEquals(kinds, List(EdgeKind.References, EdgeKind.SupersededBy))
+    assertEquals(statuses, List(Source.Status.Current, Source.Status.Contested, Source.Status.Unassessed))
+    assertEquals(kinds, List(Edge.Kind.References, Edge.Kind.SupersededBy))
   }
 
   test("a graph window key names its citekey") {

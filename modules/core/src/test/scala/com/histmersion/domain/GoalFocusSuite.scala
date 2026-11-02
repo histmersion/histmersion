@@ -7,8 +7,8 @@ import com.histmersion.config.given
 import com.histmersion.api.automation.Autopilot.{FocusGoal, FocusInfo, FocusWaiting}
 import com.histmersion.domain.GoalFocus.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.values.GoalStatus
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
+import com.histmersion.domain.automation.Goal
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection order (closest
   * to done, depth-first, pins, a person's priority, ties), the sticky active set and what frees a slot (reviewed,
@@ -30,7 +30,7 @@ class GoalFocusSuite extends munit.FunSuite:
       active: Boolean = false,
       pinned: Boolean = false,
       priority: Int = 0,
-      status: String = GoalStatus.Seeding,
+      status: String = Goal.Status.Seeding,
       stop: Option[String] = None
   ) =
     Facts(slug, parent, status, created, sources, articles, unreviewed, compile, work, stop, pinned, priority, active)
@@ -68,7 +68,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("a1x", Some("a1"), created = "2026-10-03T00:00:00Z"),
       g("b2", Some("root-b"), created = "2026-10-04T00:00:00Z")
     )
-      .map(f => if f.slug.startsWith("root") then f.copy(work = Nil, status = GoalStatus.Compiled) else f)
+      .map(f => if f.slug.startsWith("root") then f.copy(work = Nil, status = Goal.Status.Compiled) else f)
     // a1 has an unfinished sub-goal: it is not a candidate (its own articles wait); a1x is the oldest leaf
     val p = select(goals, s3)
     assertEquals(active(p), List("b1", "b2", "a1x"), p.active.map(_.why))
@@ -154,7 +154,7 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("reviewed frees the slot and the next takes it at once"):
     val goals = List(
-      g("done", status = GoalStatus.Reviewed, active = true, work = Nil),
+      g("done", status = Goal.Status.Reviewed, active = true, work = Nil),
       g("a", active = true),
       g("next", sources = 4)
     )
@@ -192,7 +192,7 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(held.waiting.map(_._2), List(Code.Held))
 
   test("a parent with unfinished sub-goals takes a slot only for its plan"):
-    val kids = List(g("k1", Some("p")), g("k2", Some("p"), status = GoalStatus.Reviewed, work = Nil))
+    val kids = List(g("k1", Some("p")), g("k2", Some("p"), status = Goal.Status.Reviewed, work = Nil))
     val planning = select(g("p", work = List(w(1, PlanGoalItem), w(2, ProposeArticles))) :: kids, s3)
     assertEquals(active(planning).toSet, Set("p", "k1"))
     val waiting = select(g("p", work = List(w(2, ProposeArticles))) :: kids, s3)
@@ -204,7 +204,7 @@ class GoalFocusSuite extends munit.FunSuite:
     // its sub-goals finished: it compiles its own synthesis
     val synth = select(
       g("p", sources = 4, work = List(w(2, ProposeArticles))) :: kids.map(
-        _.copy(status = GoalStatus.Reviewed, work = Nil)
+        _.copy(status = Goal.Status.Reviewed, work = Nil)
       ),
       s3
     )
@@ -255,7 +255,7 @@ class GoalFocusSuite extends munit.FunSuite:
   test(
     "holds: a finished goal's items and library work are released; a person's item runs; an active parent holds all but its plan"
   ):
-    val goals = List(g("fin", status = GoalStatus.Reviewed), g("p", active = true), g("k", Some("p")))
+    val goals = List(g("fin", status = Goal.Status.Reviewed), g("p", active = true), g("k", Some("p")))
     val plan = Plan(active = List(Pick("p", Stage.Gathering, "")))
     val items = List(
       Item(1, AcquisitionSweep, "held", List("fin"), focusHeld = true),

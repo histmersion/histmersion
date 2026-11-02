@@ -19,11 +19,11 @@ import com.histmersion.util.data.exchange.{
   RowsIn
 }
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.{BundleAlias, BundleAssessment, BundleEdge, BundleFinding, BundleUnresolvedEdge}
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.
@@ -52,8 +52,8 @@ object SourcesCarried:
     */
   val sources: CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
-    val entry: BundleEntry = BundleEntry(BundleKind.Source.file)
-    override val record: Option[BundleKind] = Some(BundleKind.Source)
+    val entry: BundleEntry = BundleEntry(Bundle.Kind.Source.file)
+    override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Source)
     override val table: Option[TableName] = Some(TableName("sources"))
 
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
@@ -99,7 +99,7 @@ object SourcesCarried:
 
   val findings: CarriedKind = CarriedKind.records[BundleFinding](
     Library,
-    BundleKind.Finding,
+    Bundle.Kind.Finding,
     TableName("findings"),
     List(rows(23)(SourceBundleRepo.findingsIn))
   )(scope => SourceBundleRepo.findings(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.findings).setTo(ls))

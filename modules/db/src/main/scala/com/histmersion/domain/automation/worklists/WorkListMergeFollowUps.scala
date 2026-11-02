@@ -5,10 +5,10 @@ import com.histmersion.api.exchange.{BundleKindCounts, BundleManifest}
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.MergeFollowUps
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a merge leaves on the work lists: a `/review-article` task per merged article (a merged text is not reviewed),
   * and a worklog line.
@@ -39,7 +39,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
       Queue.Kind.Log,
       Queue.QueueAdd(
         s"Merged the bundle of $from (${m.bundleId.toString.take(8)}…) as merge $short: " +
-          s"${Plural.count(t.sourcesMerged, "source")} merged, ${counts.find(_.kind == BundleKind.Source).fold(0)(_.inserted)} new, " +
+          s"${Plural.count(t.sourcesMerged, "source")} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted)} new, " +
           s"${Plural.count(reviews.size, "article")} to review; backup $dump",
         topic = Some("merge")
       )

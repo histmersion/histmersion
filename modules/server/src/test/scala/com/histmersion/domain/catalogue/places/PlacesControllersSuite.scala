@@ -1,7 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.{Api, SpatialHierarchyResult}
-import com.histmersion.values.PlaceKind
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
@@ -20,6 +19,7 @@ import com.histmersion.api.catalogue.{
   PlaceRebuildResult,
   PlaceRemoveIn
 }
+import com.histmersion.domain.catalogue.Place
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
   * kind or document refused whole), an old id answering as its place, the tree's configured depth, a person's names and
@@ -98,7 +98,7 @@ class PlacesControllersSuite extends munit.FunSuite:
           c.setOverride(Caller.Local, "zzcl_hill", PlaceOverrideSet(reset = true)).isLeft,
           c.merge(Caller.Local, "zzcl_hill", PlaceMergeIn("zzcl_land")).isLeft,
           c.remove(Caller.Local, "zzcl_hill", PlaceRemoveIn()).isLeft,
-          c.add(Caller.Local, PlaceAdd("Zzcl", PlaceKind.Site, 0, 0, "fixture")).isLeft,
+          c.add(Caller.Local, PlaceAdd("Zzcl", Place.Kind.Site, 0, 0, "fixture")).isLeft,
           c.rename(Caller.Local, "zzcl_hill", _ => Right("x")).isLeft,
           c.rebuild(Caller.Local).isLeft
         )

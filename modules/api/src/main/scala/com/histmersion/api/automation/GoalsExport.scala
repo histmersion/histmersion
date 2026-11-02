@@ -1,6 +1,5 @@
 package com.histmersion.api.automation
 import com.histmersion.api.automation.GoalPlans.{GoalLink, GoalSchedule, GoalView}
-import com.histmersion.values.{GoalLinkKind, GoalStatus}
 import com.histmersion.api.YearFmt
 import com.histmersion.api.given
 
@@ -27,7 +26,9 @@ object GoalsExport:
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
-    val order = GoalStatus.all.filter(counts.contains) ++ counts.keys.toList.filterNot(GoalStatus.all.contains).sorted
+    val order = com.histmersion.domain.automation.Goal.Status.all.filter(counts.contains) ++ counts.keys.toList
+      .filterNot(com.histmersion.domain.automation.Goal.Status.all.contains)
+      .sorted
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
     s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
 
@@ -67,17 +68,42 @@ object GoalsExport:
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
   private def linkSections(links: List[GoalLink], itemStatus: Map[Int, String]): List[String] =
-    def section(kind: GoalLinkKind, label: String, line: GoalLink => String, key: GoalLink => (Long, String)) =
+    def section(
+        kind: com.histmersion.domain.automation.Goal.LinkKind,
+        label: String,
+        line: GoalLink => String,
+        key: GoalLink => (Long, String)
+    ) =
       links.filter(_.kind == kind).sortBy(key) match
         case Nil => None
         case ls  => Some(s"**$label**\n" + ls.map(l => s"- ${line(l)}").mkString("\n"))
     val byRef = (l: GoalLink) => (0L, l.ref)
     val byId = (l: GoalLink) => (l.ref.toLongOption.getOrElse(Long.MaxValue), l.ref)
     List(
-      section(GoalLinkKind.Article, "Articles", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
-      section(GoalLinkKind.Source, "Sources", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
-      section(GoalLinkKind.Query, "Searches", l => s"\"${oneLine(l.ref)}\"${noted(l)}", byRef),
-      section(GoalLinkKind.QueueItem, "Queue items", l => queueLine(l, itemStatus), byId)
+      section(
+        com.histmersion.domain.automation.Goal.LinkKind.Article,
+        "Articles",
+        l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
+        byRef
+      ),
+      section(
+        com.histmersion.domain.automation.Goal.LinkKind.Source,
+        "Sources",
+        l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
+        byRef
+      ),
+      section(
+        com.histmersion.domain.automation.Goal.LinkKind.Query,
+        "Searches",
+        l => s"\"${oneLine(l.ref)}\"${noted(l)}",
+        byRef
+      ),
+      section(
+        com.histmersion.domain.automation.Goal.LinkKind.QueueItem,
+        "Queue items",
+        l => queueLine(l, itemStatus),
+        byId
+      )
     ).flatten
 
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")

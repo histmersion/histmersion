@@ -11,12 +11,12 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.domain.catalogue.Place
 
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
   * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test
@@ -48,34 +48,34 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     (
       "zzgeo_site_alb",
       "[Zzhulwan]/Zzchala/Zzalbania",
-      PlaceKind.Site,
+      Place.Kind.Site,
       "POINT(45.85589 34.46511)",
       Some("[-750,1600)"),
       List("Zzhulwan", "Zzchala", "Zzalbania")
     ),
-    ("zzgeo_ne_alb", "Zzalbania", PlaceKind.Region, box(19.3, 39.7, 21.0, 42.6), None, Nil),
-    ("zzgeo_cauc_alb", "Zzalbania", PlaceKind.Region, "POINT(48.16 41.38)", Some("[-330,2101)"), Nil),
-    ("zzgeo_alb_1920", "Zzalbania", PlaceKind.Polity, box(19.4, 39.8, 20.9, 42.5), Some("[1920,1936)"), Nil),
+    ("zzgeo_ne_alb", "Zzalbania", Place.Kind.Region, box(19.3, 39.7, 21.0, 42.6), None, Nil),
+    ("zzgeo_cauc_alb", "Zzalbania", Place.Kind.Region, "POINT(48.16 41.38)", Some("[-330,2101)"), Nil),
+    ("zzgeo_alb_1920", "Zzalbania", Place.Kind.Polity, box(19.4, 39.8, 20.9, 42.5), Some("[1920,1936)"), Nil),
     // Mesopotamia: Pleiades placeholders sharing ONE point with other provinces, and the curated region
-    ("zzgeo_ph_1", "Zzmesopotamia", PlaceKind.Region, "POINT(37.5 37.5)", None, Nil),
-    ("zzgeo_ph_2", "Zzmesopotamia", PlaceKind.Region, "POINT(37.5 37.5)", None, Nil),
-    ("zzgeo_ph_3", "Zzosroene", PlaceKind.Region, "POINT(37.5 37.5)", None, Nil),
-    ("zzgeo_ph_4", "Zzsyria Coele", PlaceKind.Region, "POINT(37.5 37.5)", None, Nil),
-    ("zzgeo_mesopotamia", "Zzmesopotamia", PlaceKind.Region, box(40.0, 30.0, 47.0, 37.0), None, Nil),
+    ("zzgeo_ph_1", "Zzmesopotamia", Place.Kind.Region, "POINT(37.5 37.5)", None, Nil),
+    ("zzgeo_ph_2", "Zzmesopotamia", Place.Kind.Region, "POINT(37.5 37.5)", None, Nil),
+    ("zzgeo_ph_3", "Zzosroene", Place.Kind.Region, "POINT(37.5 37.5)", None, Nil),
+    ("zzgeo_ph_4", "Zzsyria Coele", Place.Kind.Region, "POINT(37.5 37.5)", None, Nil),
+    ("zzgeo_mesopotamia", "Zzmesopotamia", Place.Kind.Region, box(40.0, 30.0, 47.0, 37.0), None, Nil),
     // Kievan Rus': two dated snapshots, far apart
-    ("zzgeo_kr_990_1017", "Zzkievan Rus'", PlaceKind.Polity, box(28.0, 50.0, 36.0, 57.0), Some("[990,1018)"), Nil),
-    ("zzgeo_kr_1236_1240", "Zzkievan Rus'", PlaceKind.Polity, box(36.5, 44.9, 37.5, 45.5), Some("[1236,1241)"), Nil),
+    ("zzgeo_kr_990_1017", "Zzkievan Rus'", Place.Kind.Polity, box(28.0, 50.0, 36.0, 57.0), Some("[990,1018)"), Nil),
+    ("zzgeo_kr_1236_1240", "Zzkievan Rus'", Place.Kind.Polity, box(36.5, 44.9, 37.5, 45.5), Some("[1236,1241)"), Nil),
     // Ur: the city (Pleiades writes "Ur(i)") and a polity of the same name
-    ("zzgeo_ur_city", "Zzur(i)", PlaceKind.Site, "POINT(46.103 30.963)", Some("[-6200,2101)"), Nil),
-    ("zzgeo_ur_polity", "Zzur", PlaceKind.Polity, box(45.0, 30.0, 47.5, 32.0), Some("[-2112,-2003)"), Nil),
+    ("zzgeo_ur_city", "Zzur(i)", Place.Kind.Site, "POINT(46.103 30.963)", Some("[-6200,2101)"), Nil),
+    ("zzgeo_ur_polity", "Zzur", Place.Kind.Polity, box(45.0, 30.0, 47.5, 32.0), Some("[-2112,-2003)"), Nil),
     // a diacritic
-    ("zzgeo_krakow", "Zzkraków", PlaceKind.Site, "POINT(19.94 50.06)", None, Nil),
+    ("zzgeo_krakow", "Zzkraków", Place.Kind.Site, "POINT(19.94 50.06)", None, Nil),
     // "X, Country": two places named Zzkormadin, one inside Zzserbia
-    ("zzgeo_serbia", "Zzserbia", PlaceKind.Region, box(19.0, 42.0, 23.0, 46.0), None, Nil),
-    ("zzgeo_kormadin", "Zzkormadin", PlaceKind.Site, "POINT(20.2 44.8)", None, Nil),
-    ("zzgeo_kormadin_far", "Zzkormadin", PlaceKind.Site, "POINT(10.0 50.0)", None, Nil),
+    ("zzgeo_serbia", "Zzserbia", Place.Kind.Region, box(19.0, 42.0, 23.0, 46.0), None, Nil),
+    ("zzgeo_kormadin", "Zzkormadin", Place.Kind.Site, "POINT(20.2 44.8)", None, Nil),
+    ("zzgeo_kormadin_far", "Zzkormadin", Place.Kind.Site, "POINT(10.0 50.0)", None, Nil),
     // a qualifier
-    ("zzgeo_levant", "Zzlevant", PlaceKind.Region, box(34.0, 31.0, 37.0, 37.0), None, List("Zzsyria-Palestine"))
+    ("zzgeo_levant", "Zzlevant", Place.Kind.Region, box(34.0, 31.0, 37.0, 37.0), None, List("Zzsyria-Palestine"))
   )
 
   private def clean(): Unit = connect(ds):
@@ -223,7 +223,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2025),
       venue = None,
-      status = SourceStatus.Current,
+      status = com.histmersion.domain.library.Source.Status.Current,
       topics = Nil,
       regions = Nil,
       tags = Nil,

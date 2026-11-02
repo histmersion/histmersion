@@ -1,23 +1,23 @@
 package com.histmersion.api.research
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.{Plural, StatusCount}
 import com.histmersion.api.catalogue.ArticleEventLead
 import com.histmersion.api.given
+import com.histmersion.domain.library.Source
 
 object ArticleCoverage:
 
   val DisagreementKinds: List[String] = List("challenges", "refutes", "updates", "superseded_by")
 
-  private val Stated: Set[SourceStatus] = Set(
-    SourceStatus.Contested,
-    SourceStatus.Superseded,
-    SourceStatus.Debunked,
-    SourceStatus.Retracted,
-    SourceStatus.Unassessed
+  private val Stated: Set[Source.Status] = Set(
+    Source.Status.Contested,
+    Source.Status.Superseded,
+    Source.Status.Debunked,
+    Source.Status.Retracted,
+    Source.Status.Unassessed
   )
 
-  private val Disputed: List[SourceStatus] =
-    List(SourceStatus.Contested, SourceStatus.Superseded, SourceStatus.Debunked, SourceStatus.Retracted)
+  private val Disputed: List[Source.Status] =
+    List(Source.Status.Contested, Source.Status.Superseded, Source.Status.Debunked, Source.Status.Retracted)
 
   def compute(
       slug: String,
@@ -37,7 +37,9 @@ object ArticleCoverage:
     val capped = read.size < total
     val outside = cited.distinct.filterNot(ck => citedInFilter(ck) || readSet(ck))
     val statuses =
-      SourceStatus.values.toList.flatMap(st => Option(read.count(_.status == st)).filter(_ > 0).map(StatusCount(st, _)))
+      Source.Status.values.toList.flatMap(st =>
+        Option(read.count(_.status == st)).filter(_ > 0).map(StatusCount(st, _))
+      )
     val keptEdges = edges
       .filter(e => DisagreementKinds.contains(e.kind) && (citedSet(e.from) || citedSet(e.to)))
       .distinct
@@ -106,7 +108,7 @@ object ArticleCoverage:
     }
     s"## $NotUsedHeading\n\n$lead" + (if lines.isEmpty then "" else "\n\n" + lines.mkString("\n"))
 
-  private def statusNote(s: SourceStatus): String = if Stated(s) then s" (${s.wire})" else ""
+  private def statusNote(s: Source.Status): String = if Stated(s) then s" (${s.wire})" else ""
 
   private def endSentence(s: String): String =
     if s.endsWith(".") || s.endsWith("?") || s.endsWith("!") then s else s"$s."

@@ -8,14 +8,15 @@ import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.RunRequest
 import com.histmersion.api.automation.GoalPlans.*
-import com.histmersion.values.{BundleKind, GoalStatus}
 import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown, GoalPatch}
+import com.histmersion.domain.automation.Goal
+import com.histmersion.util.data.exchange.Bundle
 
 object GoalsCmd:
 
   private val list = Opts.subcommand("list", "List research goals") {
     (
-      Opts.option[String]("status", s"Filter: ${GoalStatus.all.mkString("|")}").orNone,
+      Opts.option[String]("status", s"Filter: ${Goal.Status.all.mkString("|")}").orNone,
       Opts.option[Int]("limit", "Max results").orNone,
       Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone,
       Output.jsonFlag
@@ -36,7 +37,7 @@ object GoalsCmd:
     (
       Opts.argument[String]("slug"),
       Opts.option[String]("title", "New title").orNone,
-      Opts.option[String]("status", s"New status: ${GoalStatus.all.mkString("|")}").orNone,
+      Opts.option[String]("status", s"New status: ${Goal.Status.all.mkString("|")}").orNone,
       Opts.option[String]("notes", "Progress notes").orNone,
       Opts.option[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)").orNone,
       Opts
@@ -143,5 +144,5 @@ object GoalsCmd:
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename") {
       list orElse get orElse update orElse plan orElse link orElse unlink orElse schedule orElse schedules orElse
-        LabelRenameCmd(BundleKind.Goal)
+        LabelRenameCmd(Bundle.Kind.Goal)
     }

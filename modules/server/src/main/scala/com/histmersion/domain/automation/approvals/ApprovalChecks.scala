@@ -2,9 +2,9 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.config.AgentsConfig
-import com.histmersion.values.ApprovalKind
 
 import java.time.Instant
+import com.histmersion.domain.automation.Approval
 
 /** What a manager kind's checks of an approval its items wait for are given ([[AutoApprovals]] is one): what was
   * approved by code since a moment, the output a run's step recorded, the caps.
@@ -16,7 +16,7 @@ trait ApprovalChecks:
   def slugExists(slug: String): Boolean
 
   /** The approvals of `kind` decided by code since `since`. */
-  def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo]
+  def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo]
 
   /** The output the last finished `step` of `run` recorded. */
   def checkpoint(run: String, step: String): Option[String]

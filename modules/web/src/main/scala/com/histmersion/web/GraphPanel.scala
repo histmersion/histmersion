@@ -7,8 +7,9 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.library.{GraphNode, Label, SourceGraph}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].
@@ -29,10 +30,10 @@ object GraphPanel:
   /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order — typed, so a new kind is
     * a compile-time decision, not a stray string.
     */
-  def legend(g: SourceGraph): (List[SourceStatus], List[EdgeKind]) =
-    val statuses = g.nodes.map(_.status.getOrElse(SourceStatus.Unassessed)).toSet
-    val kinds = g.links.flatMap(l => EdgeKind.fromWire(l.kind)).toSet
-    (SourceStatus.values.toList.filter(statuses), EdgeKind.values.toList.filter(kinds))
+  def legend(g: SourceGraph): (List[Source.Status], List[Edge.Kind]) =
+    val statuses = g.nodes.map(_.status.getOrElse(Source.Status.Unassessed)).toSet
+    val kinds = g.links.flatMap(l => Edge.Kind.fromWire(l.kind)).toSet
+    (Source.Status.values.toList.filter(statuses), Edge.Kind.values.toList.filter(kinds))
 
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
@@ -81,8 +82,8 @@ object GraphPanel:
       kinds.map(k =>
         span(
           cls := "graph-legend-item",
-          span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
-          Wording.capitalize(Label.display(EdgeKind.wireOf(k)))
+          span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(Edge.Kind.wireOf(k))})"),
+          Wording.capitalize(Label.display(Edge.Kind.wireOf(k)))
         )
       )
     )
@@ -108,7 +109,7 @@ object GraphPanel:
       id: String,
       title: String,
       year: Option[Int],
-      status: Option[SourceStatus],
+      status: Option[Source.Status],
       depth: Int,
       var x: Double,
       var y: Double,
@@ -360,7 +361,7 @@ object GraphPanel:
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)
-        ctx.fillStyle = ThemeTokens(Palette.status(n.status.getOrElse(SourceStatus.Unassessed).wire))
+        ctx.fillStyle = ThemeTokens(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire))
         ctx.fill()
         if on then
           ctx.strokeStyle = ThemeTokens("--graph-hover")

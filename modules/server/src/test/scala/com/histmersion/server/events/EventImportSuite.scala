@@ -16,7 +16,6 @@ import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.{
   EventCount,
   EventImportReport,
@@ -153,7 +152,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       None,
       Some(2020),
       None,
-      SourceStatus.Current,
+      com.histmersion.domain.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,
@@ -210,7 +209,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
         None,
         Some(2020),
         None,
-        SourceStatus.Current,
+        com.histmersion.domain.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,

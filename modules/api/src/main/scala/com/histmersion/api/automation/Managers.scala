@@ -8,7 +8,8 @@ import com.histmersion.api.given
 
 object Managers:
 
-  export com.histmersion.values.{ManagerKind as Kind, ManagerState as State}
+  export com.histmersion.domain.automation.Manager.Kind as Kind
+  export com.histmersion.domain.automation.Manager.State as State
   export com.histmersion.domain.automation.ItemStatus
 
   enum ItemOrigin(val wire: String):

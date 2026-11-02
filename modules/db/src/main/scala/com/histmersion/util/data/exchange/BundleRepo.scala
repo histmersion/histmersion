@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.values.{BundleKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
@@ -15,6 +14,8 @@ import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.exchange.BundleReference
+import com.histmersion.domain.library.Source
+import com.histmersion.util.data.exchange.Bundle
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 

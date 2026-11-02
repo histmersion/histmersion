@@ -1,10 +1,10 @@
 package com.histmersion.files
 
 import com.histmersion.api.given
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.{Article, ArticleCoverage, ArticleFilter, Articles, CoverageSource}
+import com.histmersion.domain.library.Source
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
   * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.
@@ -126,7 +126,7 @@ class ArticleNoteSuite extends munit.FunSuite:
       a.slug,
       a.filter.get,
       1,
-      List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017), SourceStatus.Current)),
+      List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017), Source.Status.Current)),
       Set.empty,
       List("walker1995_theseus"),
       a.reasons,

@@ -11,7 +11,6 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.parser.parse
-import com.histmersion.values.EventLinkStatus
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
   EventLead,
@@ -26,6 +25,7 @@ import com.histmersion.api.catalogue.{
   LeadFacts,
   SiteTypes
 }
+import com.histmersion.domain.catalogue.Event
 
 /** #1449: the deterministic matcher (time/space overlap, name matches, no attestation without a passage), the leads, an
   * article's catalogue leads, and the site types from each gazetteer.
@@ -65,7 +65,7 @@ class EventLinksSuite extends munit.FunSuite:
       Map("named2020" -> List(EventPassage(120, 125, "Thera", "Thera"), EventPassage(900, 905, "Thera", "Thera")))
     val cs = EventMatcher.candidates("thera", near, named, w)
     assertEquals(cs.map(_.citekey), List("named2020", "near2020"))
-    assertEquals(cs.head.status, EventLinkStatus.Proposed)
+    assertEquals(cs.head.status, Event.LinkStatus.Proposed)
     assert(cs.head.reasons.exists(_.contains("names it 2 times")), cs.head.reasons.toString)
     assert(cs(1).score <= w.finding, "findings alone never pass a name")
     assertEquals(cs(1).findings, List("a#1", "a#2"))

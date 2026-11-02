@@ -25,8 +25,10 @@ import com.histmersion.domain.EnrichSource.{
   VerifiedFindings
 }
 import com.histmersion.domain.ReviewArticle.{Check, Evidence, Merged, Report, Reviewer, Severity, SpotCheck, Verdict}
-import com.histmersion.values.{ApprovalKind, EdgeKind, SourceStatus}
 import io.circe.{Decoder, Encoder}
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it
   * writes), every case and optional field among them. Their encodings are the golden files under `golden/checkpoints/`,
@@ -59,12 +61,12 @@ object CheckpointGolden:
       Some(1987),
       Some("Antiquity"),
       Some("10.1/x"),
-      Some(SourceStatus.Contested),
+      Some(Source.Status.Contested),
       Some("oa"),
       Some("42"),
       MetadataField.values.toList
     ),
-    MetadataPatch(status = Some(SourceStatus.Current)),
+    MetadataPatch(status = Some(Source.Status.Current)),
     MetadataPatch()
   )
 
@@ -83,8 +85,8 @@ object CheckpointGolden:
         findings = Some(FindingsPatch(findingInputs, List("smith1987_tin#3"), Some(findingInputs.take(1)))),
         edges = Some(
           EdgesPatch(
-            List(EdgeInput("doe2001_tin", EdgeKind.Challenges, Some("smith1987_tin"))),
-            List(EdgeInput("roe1990_tin", EdgeKind.Refutes))
+            List(EdgeInput("doe2001_tin", Edge.Kind.Challenges, Some("smith1987_tin"))),
+            List(EdgeInput("roe1990_tin", Edge.Kind.Refutes))
           )
         ),
         ifUpdatedAt = Some("2026-10-25T10:00:00Z")
@@ -103,15 +105,15 @@ object CheckpointGolden:
   val proposals: Golden[Proposal] = Golden(
     "proposal.ndjson",
     Proposal(
-      ApprovalKind.StatusChange,
+      Approval.Kind.StatusChange,
       "smith1987_tin",
-      status = Some(SourceStatus.Superseded),
+      status = Some(Source.Status.Superseded),
       evidence = "Doe shows the route is later.",
       quote = Some("the route is later")
     ) ::
       AgentProposals.EdgeKinds.map(k =>
         Proposal(
-          ApprovalKind.Edge,
+          Approval.Kind.Edge,
           "doe2001_tin",
           edgeKind = Some(k),
           target = Some("smith1987_tin"),
@@ -119,7 +121,7 @@ object CheckpointGolden:
           quote = Some("we disagree")
         )
       ) ++
-      ApprovalKind.values.toList.map(k => Proposal(k, "smith1987_tin"))
+      Approval.Kind.values.toList.map(k => Proposal(k, "smith1987_tin"))
   )
 
   /** What [[AgentProposals.Proposal.patch]] writes for each proposal. */
@@ -134,10 +136,10 @@ object CheckpointGolden:
       List("tin"),
       Some(Period(-2500, -2000)),
       Some("Early Bronze Age"),
-      SourceStatus.Current,
+      Source.Status.Current,
       "It is cited as current."
     ) ::
-      SourceStatus.values.toList.map(s => Classified("A summary.", Nil, Nil, Nil, None, None, s, ""))
+      Source.Status.values.toList.map(s => Classified("A summary.", Nil, Nil, Nil, None, None, s, ""))
   )
 
   val findings: Golden[Findings] = Golden(
@@ -328,7 +330,7 @@ private object EnrichSourceSamples:
     List("tin", "trade"),
     Some(Period(-2500, -2000)),
     None,
-    SourceStatus.Current,
+    Source.Status.Current,
     "cited as current"
   )
 
@@ -347,7 +349,7 @@ private object EnrichSourceSamples:
           regions = List("Aegean"),
           tags = List("tin", "trade")
         ),
-        classified.copy(status = SourceStatus.Contested),
+        classified.copy(status = Source.Status.Contested),
         Nil,
         None
       )

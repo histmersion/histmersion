@@ -6,7 +6,6 @@ import com.histmersion.config.given
 import com.histmersion.domain.given
 
 import io.circe.parser.parse
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{
   GazDescription,
   Gazetteer,
@@ -25,6 +24,7 @@ import com.histmersion.api.catalogue.{
   PlaceShape
 }
 import com.histmersion.api.library.ExternalId
+import com.histmersion.domain.catalogue.Place
 
 /** The external gazetteer sources' pure half (#1064), on the JVM (Lpf's year parser uses a look-behind Scala.js cannot
   * compile): identifiers, open time spans, the LPF and LP-TSV readers, name merging, and which place a record joins.
@@ -106,7 +106,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(r.own, Some(ExternalId(LinkScheme.Whg, "99")))
     assertEquals(r.ref, "whg:99")
     assertEquals(r.placeId, "whg_99")
-    assertEquals(r.kind, PlaceKind.Site)
+    assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(-1650), Some(-1180)))
     assertEquals(
       r.links,
@@ -139,7 +139,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
     val r = Gazetteer.fromTsvRow(header, row, "kultepe", 2).fold(e => fail(e), identity)
     assertEquals(r.placeId, "lpf_kultepe_p1")
-    assertEquals(r.kind, PlaceKind.Site)
+    assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(-2000), Some(-1700)))
     assertEquals(r.links.map(_.id.key), List("wikidata:Q1192387", "tgn:7016542"))
     assertEquals(
@@ -276,7 +276,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(AppConfig.load().places.sources.openStartWindowYears, Gazetteer.DefaultOpenStartWindowYears)
 
   test("inDataset: an LPF feature with no `when` takes its dataset's; a dated one keeps its own"):
-    val r = GazRecord("x", None, "lpf_d_x", "X", PlaceKind.Site, None, Span.always, Nil, Nil, None, None)
+    val r = GazRecord("x", None, "lpf_d_x", "X", Place.Kind.Site, None, Span.always, Nil, Nil, None, None)
     val ds = LpfDataset(None, None, None, Span(Some(-800L), Some(-300L)))
     assertEquals(Gazetteer.inDataset(r, ds).span, Span(Some(-800L), Some(-300L)))
     assertEquals(Gazetteer.inDataset(r.copy(span = Span(Some(-500L), None)), ds).span, Span(Some(-500L), None))
@@ -321,10 +321,10 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(PlaceDating.values.toList.flatMap(d => PlaceDating.parse(d.wire)), PlaceDating.values.toList)
 
   test("PlaceShape: a region or polity is a shape; a point-only one has no boundary yet; a site is a point by nature"):
-    assert(PlaceShape.pointOnlyArea(PlaceKind.Region, hasBoundary = false))
-    assert(PlaceShape.pointOnlyArea(PlaceKind.Polity, hasBoundary = false))
-    assert(!PlaceShape.pointOnlyArea(PlaceKind.Region, hasBoundary = true))
-    assert(!PlaceShape.pointOnlyArea(PlaceKind.Site, hasBoundary = false))
+    assert(PlaceShape.pointOnlyArea(Place.Kind.Region, hasBoundary = false))
+    assert(PlaceShape.pointOnlyArea(Place.Kind.Polity, hasBoundary = false))
+    assert(!PlaceShape.pointOnlyArea(Place.Kind.Region, hasBoundary = true))
+    assert(!PlaceShape.pointOnlyArea(Place.Kind.Site, hasBoundary = false))
     assert(!PlaceShape.NoBoundaryNote.contains("_"))
 
   test("PlaceLink.url: the authority's own page"):
@@ -374,15 +374,15 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         None,
         None
       )
-    for k <- List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People); src <- List("wikidata", "geonames") do
+    for k <- List(Place.Kind.Region, Place.Kind.Polity, Place.Kind.People); src <- List("wikidata", "geonames") do
       assert(Gazetteer.dropsPointArea(src, r(k, Pt), kinds), s"$src $k")
-    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Poly), kinds), "a shape is a region")
-    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Site, Pt), kinds), "a site is a point by nature")
-    assert(!Gazetteer.dropsPointArea("geonames", r(PlaceKind.Feature, Pt), kinds))
-    assert(!Gazetteer.dropsPointArea("lpf:whg", r(PlaceKind.Region, Pt), kinds), "an LPF dataset keeps its points")
-    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Pt), Set.empty), "\"\" keeps every record")
-    assert(Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Polity, Pt), Set(PlaceKind.Polity)))
-    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Pt), Set(PlaceKind.Polity)))
+    assert(!Gazetteer.dropsPointArea("wikidata", r(Place.Kind.Region, Poly), kinds), "a shape is a region")
+    assert(!Gazetteer.dropsPointArea("wikidata", r(Place.Kind.Site, Pt), kinds), "a site is a point by nature")
+    assert(!Gazetteer.dropsPointArea("geonames", r(Place.Kind.Feature, Pt), kinds))
+    assert(!Gazetteer.dropsPointArea("lpf:whg", r(Place.Kind.Region, Pt), kinds), "an LPF dataset keeps its points")
+    assert(!Gazetteer.dropsPointArea("wikidata", r(Place.Kind.Region, Pt), Set.empty), "\"\" keeps every record")
+    assert(Gazetteer.dropsPointArea("wikidata", r(Place.Kind.Polity, Pt), Set(Place.Kind.Polity)))
+    assert(!Gazetteer.dropsPointArea("wikidata", r(Place.Kind.Region, Pt), Set(Place.Kind.Polity)))
 
   test("the point-area kinds' default is the configured one"):
     assertEquals(AppConfig.load().places.sources.pointAreaKindSet, Gazetteer.DefaultPointAreaKinds.toSet)

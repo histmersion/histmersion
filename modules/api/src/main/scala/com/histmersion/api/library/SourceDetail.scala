@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 final case class SourceDetail(
@@ -11,7 +10,7 @@ final case class SourceDetail(
     authors: List[String],
     year: Option[Int],
     venue: Option[String],
-    status: SourceStatus,
+    status: com.histmersion.domain.library.Source.Status,
     topics: List[String],
     regions: List[String],
     tags: List[String],

@@ -5,10 +5,10 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.EnrichSource.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{FindingInput, WorkRef}
+import com.histmersion.domain.library.Source
 
 class EnrichSourceSuite extends munit.FunSuite:
 
@@ -61,7 +61,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     )
     val (v, ws) = checkClassification(c, 3000000, last = false).toOption.get
     assertEquals(v.period, Some(Period(-1600, -1200)))
-    assertEquals(v.status, SourceStatus.Current)
+    assertEquals(v.status, Source.Status.Current)
     assertEquals(v.tags, List("bronze_age", "tin_trade"))
     assertEquals(ws, Nil)
 
@@ -185,7 +185,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     List("tin"),
     Some(Period(-1600, -1200)),
     None,
-    SourceStatus.Current,
+    Source.Status.Current,
     "cited"
   )
 
@@ -195,7 +195,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(p.notes, None) // the source already has notes
     assertEquals(p.topics, Some(List("trade", "metallurgy")))
     assertEquals(p.period, Some(PeriodInput(-1600, -1200)))
-    assertEquals(p.metadata.flatMap(_.status), Some(SourceStatus.Current))
+    assertEquals(p.metadata.flatMap(_.status), Some(Source.Status.Current))
     assertEquals(p.ifUpdatedAt, loaded.updatedAt)
     assertEquals(proposal, None)
     assert(fields.contains("1 finding(s)") && !fields.contains("notes"), fields)
@@ -206,7 +206,7 @@ class EnrichSourceSuite extends munit.FunSuite:
 
   test("patch: a status other than current/foundational is proposed to a person, not written"):
     val (p, _, proposal) =
-      patch(loaded, classified.copy(status = SourceStatus.Debunked, statusEvidence = "refuted by X"), Nil, None)
+      patch(loaded, classified.copy(status = Source.Status.Debunked, statusEvidence = "refuted by X"), Nil, None)
     assertEquals(p.metadata, None)
     assertEquals(proposal, Some("debunked: refuted by X"))
     val (p2, _, prop2) = patch(loaded.copy(status = "contested"), classified, Nil, None)
@@ -239,7 +239,7 @@ class EnrichSourceSuite extends munit.FunSuite:
 
   test("close lint: no findings, no period, still unassessed"):
     assertEquals(
-      closeLint(0, hasPeriod = false, SourceStatus.Unassessed).map(_.takeWhile(_ != ':')),
+      closeLint(0, hasPeriod = false, Source.Status.Unassessed).map(_.takeWhile(_ != ':')),
       List(Lint.NoFindings, Lint.NoPeriod, Lint.UnassessedStatus)
     )
-    assertEquals(closeLint(3, hasPeriod = true, SourceStatus.Current), Nil)
+    assertEquals(closeLint(3, hasPeriod = true, Source.Status.Current), Nil)

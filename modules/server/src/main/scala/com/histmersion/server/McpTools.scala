@@ -13,7 +13,6 @@ import io.circe.Codec
 import com.histmersion.api.{Api, ApiError, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
@@ -23,6 +22,7 @@ import com.histmersion.api.exchange.{MergeMarkdown, MergePlanRequest, MergePolic
 import com.histmersion.api.library.{IngestMarkdown, RepairAcquire}
 import com.histmersion.api.maintenance.VacuumRequest
 import com.histmersion.api.settings.{ConfigEditMarkdown, ReloadMarkdown}
+import com.histmersion.domain.catalogue.Place
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(

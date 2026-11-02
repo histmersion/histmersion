@@ -6,20 +6,20 @@ import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.values.JobKind
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.jobs.Job
 
 /** Pause, resume and cancel: the in-memory service, then a long background job on a test database (gated on
   * HISTMERSION_TEST_DB_URL) that stops at a part boundary and, resumed, does only the parts it had not done.
   */
 class JobControlServiceSuite extends com.histmersion.db.DbSuite:
 
-  private def job(id: String, kind: JobKind, status: String) =
+  private def job(id: String, kind: Job.Kind, status: String) =
     JobInfo(id, kind.value, status, None, progress = Some("2/6"))
 
   test("in memory: a pause is asked of a running job, which stops at its next part and resumes later"):

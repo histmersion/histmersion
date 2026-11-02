@@ -4,7 +4,6 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.config.*
 import com.histmersion.server.{Composition, OfflineConverter}
-import com.histmersion.values.SourceStatus
 import com.histmersion.plugins.calibre.CalibreFixture
 import ox.supervised
 
@@ -42,7 +41,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
       None,
       year,
       None,
-      SourceStatus.Current,
+      com.histmersion.domain.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,

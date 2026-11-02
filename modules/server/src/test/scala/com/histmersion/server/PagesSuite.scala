@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.{FindingRow, SourceRef}
 import com.histmersion.api.research.{
@@ -16,6 +15,7 @@ import com.histmersion.api.research.{
   ReviewRound,
   ReviewState
 }
+import com.histmersion.domain.library.Source
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.
@@ -28,7 +28,7 @@ class PagesSuite extends munit.FunSuite:
     List("Eric H. Cline"),
     Some(2014),
     "1177 BC: The Year Civilization Collapsed",
-    SourceStatus.Current
+    Source.Status.Current
   )
   private val drews = SourceRef(
     "drews1993_end",
@@ -36,7 +36,7 @@ class PagesSuite extends munit.FunSuite:
     List("Robert Drews"),
     Some(1993),
     "The End of the Bronze Age",
-    SourceStatus.Contested
+    Source.Status.Contested
   )
   private val topic = ArticleRef("bronze_age_collapse", "The Bronze Age Collapse", Some("Around 1200 BCE."))
   private val links: String => Option[LinkTarget] =
@@ -162,11 +162,11 @@ class PagesSuite extends munit.FunSuite:
             "cline2014_year",
             Some(cline.title),
             Some(2014),
-            Some(SourceStatus.Current),
+            Some(Source.Status.Current),
             cline.authors,
             cline.doi
           ),
-          CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(SourceStatus.Contested), drews.authors)
+          CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(Source.Status.Contested), drews.authors)
         )
       ),
       links
@@ -208,7 +208,7 @@ class PagesSuite extends munit.FunSuite:
     val html = Pages.article(
       articlePage(
         "# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n",
-        List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(SourceStatus.Contested), drews.authors))
+        List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(Source.Status.Contested), drews.authors))
       ),
       links
     )

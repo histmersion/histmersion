@@ -1,6 +1,5 @@
 package com.histmersion.api.catalogue
 import io.circe.{Json, JsonObject}
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
@@ -53,7 +52,11 @@ object Gazetteer:
       Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = true)
     case Span(from, to) => Validity(from, to, startUnknown = false)
 
-  val DefaultPointAreaKinds: List[String] = List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People)
+  val DefaultPointAreaKinds: List[String] = List(
+    com.histmersion.domain.catalogue.Place.Kind.Region,
+    com.histmersion.domain.catalogue.Place.Kind.Polity,
+    com.histmersion.domain.catalogue.Place.Kind.People
+  )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
   val PointAreaSources: List[String] = ImportedSources
@@ -173,7 +176,7 @@ object Gazetteer:
       ordinal: Int,
       defaultSource: Option[String] = None
   ): Either[String, GazRecord] =
-    Lpf.readFeature(j, PlaceKind.Site, ordinal).flatMap { in =>
+    Lpf.readFeature(j, com.histmersion.domain.catalogue.Place.Kind.Site, ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(s"feature #$ordinal has no @id").map { ref =>
@@ -245,7 +248,9 @@ object Gazetteer:
           lat <- get("lat").flatMap(_.toDoubleOption)
         yield GazGeometry.GeoJson(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
         val kind =
-          get("types").flatMap(t => t.split(";").toList.flatMap(PlaceKind.parse).headOption).getOrElse(PlaceKind.Site)
+          get("types")
+            .flatMap(t => t.split(";").toList.flatMap(com.histmersion.domain.catalogue.Place.Kind.parse).headOption)
+            .getOrElse(com.histmersion.domain.catalogue.Place.Kind.Site)
         val sp = Span(get("start").flatMap(Lpf.parseYear), get("end").flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get("ccodes")

@@ -4,7 +4,6 @@ import io.circe.Json
 import io.circe.syntax.*
 
 import java.util.UUID
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.automation.GoalPlans
 import com.histmersion.api.exchange.{
   BundleEvent,
@@ -18,6 +17,7 @@ import com.histmersion.api.exchange.{
   IssueSpan,
   MergeIssueDetail
 }
+import com.histmersion.domain.library.Source
 
 class MergeIssueDetailSuite extends munit.FunSuite:
 
@@ -35,7 +35,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
       doi,
       Some(2001),
       None,
-      SourceStatus.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       List("b", "a"),

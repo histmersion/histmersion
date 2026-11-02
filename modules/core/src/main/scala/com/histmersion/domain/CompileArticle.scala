@@ -8,9 +8,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.GoalPlans.ArticleDraft
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.research.DraftMode
+import com.histmersion.domain.library.Source
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -120,7 +120,7 @@ object CompileArticle:
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
 
   /** What the database says about one source the filter returned. */
-  final case class SourceFact(citekey: String, title: String, year: Option[Int], status: SourceStatus)
+  final case class SourceFact(citekey: String, title: String, year: Option[Int], status: Source.Status)
       derives KindlingsCodecAsObject
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
@@ -145,12 +145,12 @@ object CompileArticle:
     def used: List[String] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
 
   /** The statuses a first citation must state (writing guide rule 2). */
-  val StatedStatuses: Set[SourceStatus] = Set(
-    SourceStatus.Contested,
-    SourceStatus.Superseded,
-    SourceStatus.Debunked,
-    SourceStatus.Retracted,
-    SourceStatus.Unassessed
+  val StatedStatuses: Set[Source.Status] = Set(
+    Source.Status.Contested,
+    Source.Status.Superseded,
+    Source.Status.Debunked,
+    Source.Status.Retracted,
+    Source.Status.Unassessed
   )
 
   val DisagreementKinds: Set[String] = ArticleCoverage.DisagreementKinds.toSet
@@ -166,13 +166,13 @@ object CompileArticle:
     val counts = extracted.map(e => e.citekey -> e.claims.size).toMap
     val kept = edges.filter(e => DisagreementKinds.contains(e.kind) && in(e.from) && in(e.to)).distinct
     val disputed = facts
-      .filter(f => f.status != SourceStatus.Current && f.status != SourceStatus.Foundational)
+      .filter(f => f.status != Source.Status.Current && f.status != Source.Status.Foundational)
       .map(_.citekey)
     val notUsed = extracted.collect {
       case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse("no claim"))
     } ++
       facts.collect {
-        case f if f.status == SourceStatus.Retracted && counts.getOrElse(f.citekey, 0) > 0 =>
+        case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, 0) > 0 =>
           NotUsed(f.citekey, "retracted: may be cited only to note the retraction")
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
@@ -242,7 +242,7 @@ object CompileArticle:
   /** Writing guide rule 2: the FIRST block citing a source whose status is not current or foundational must state that
     * status (the word itself, e.g. "contested").
     */
-  def statusesSilent(body: String, statusOf: String => Option[SourceStatus]): List[String] =
+  def statusesSilent(body: String, statusOf: String => Option[Source.Status]): List[String] =
     val bs = blocks(body)
     AgentVerify.wikilinks(body).flatMap { ck =>
       statusOf(ck).filter(StatedStatuses.contains).flatMap { st =>
@@ -276,7 +276,7 @@ object CompileArticle:
   final case class Corpus(
       isCitekey: String => Boolean,
       isTarget: String => Boolean,
-      statusOf: String => Option[SourceStatus]
+      statusOf: String => Option[Source.Status]
   )
 
   /** Check a draft. FATAL problems (an empty text, a link to nothing, escaped brackets, a Sources cited heading, an

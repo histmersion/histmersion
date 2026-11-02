@@ -8,8 +8,9 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 
 import javax.sql.DataSource
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.automation.{AgentsApi, ListFilters, Managers}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -30,9 +31,9 @@ final class Approvals(
       runId: Option[String],
       kind: ApprovalKind,
       citekey: String,
-      status: Option[SourceStatus],
-      current: Option[SourceStatus],
-      edgeKind: Option[EdgeKind],
+      status: Option[Source.Status],
+      current: Option[Source.Status],
+      edgeKind: Option[Edge.Kind],
       target: Option[String],
       payload: String,
       state: ApprovalState = ApprovalState.Open,

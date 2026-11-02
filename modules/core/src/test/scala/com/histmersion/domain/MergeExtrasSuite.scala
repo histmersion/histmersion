@@ -15,7 +15,6 @@ import com.histmersion.api.given
 import BundlePlan.Decision
 import MergeFixture.*
 import io.circe.Json
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{
   BundleArticleAlias,
@@ -35,6 +34,8 @@ import com.histmersion.api.exchange.{
   MergeResolutions,
   MergeResolutionsText
 }
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and
@@ -100,14 +101,14 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val ours = same.copy(uid = uid("h-p2"), origin = home, names = List(BundlePlaceName("Kültepe", Some("tr"), None)))
     val r = run(foreign.copy(places = List(fresh, same)), in => in.copy(local = in.local.copy(places = List(ours))))
     assertEquals(r.rows.find(_.foreignUid == fresh.uid).map(_.decision), Some(Decision.Insert))
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Place, same.uid, ours.uid)), r.apply.folds.toString)
+    assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Place, same.uid, ours.uid)), r.apply.folds.toString)
     // the fold carries the bundle's name ours lacked: written as ours, both names
     assertEquals(
       r.localized.places.find(_.uid == ours.uid).map(_.names.map(_.name).toSet),
       Some(Set("Kanesh", "Kültepe"))
     )
     assertEquals(r.apply.tally.placesMerged, 1)
-    assert(!r.plan.issues.exists(_.entity == BundleKind.Place), r.plan.issues.mkString("\n"))
+    assert(!r.plan.issues.exists(_.entity == Bundle.Kind.Place), r.plan.issues.mkString("\n"))
     assert(r.plan.info.exists(_.contains("is the same place")), r.plan.info.mkString("\n"))
 
   test("places: one id, two geometries is a question with both on the map; keep-right takes the bundle's"):
@@ -115,7 +116,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val ours = place("h-p3", "zz_ugarit", "Ugarit", Some(PointA), home)
     val in: MergePlanner.Input => MergePlanner.Input = i => i.copy(local = i.local.copy(places = List(ours)))
     val p = run(foreign.copy(places = List(theirs)), in).plan
-    val q = p.issues.find(_.kind == IssueKind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
+    val q = p.issues.find(_.kind == Issue.Kind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
     assert(q.id.startsWith("P-") && q.open, q.toString)
     assertEquals(
       q.detail.flatMap(_.place).map(x => (x.leftGeometry, x.rightGeometry)),
@@ -138,7 +139,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       foreign.copy(places = List(theirs), events = List(ev)),
       i => i.copy(local = i.local.copy(places = List(ours)), placeMatches = Map(theirs.uid -> "pleiades_550595"))
     )
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Place, theirs.uid, ours.uid)))
+    assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Place, theirs.uid, ours.uid)))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("pleiades_550595"))
     assertEquals(r.plan.problems, Nil)
 
@@ -173,7 +174,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     )
     assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_new_site"))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_new_site"))
-    assert(!r.plan.issues.exists(_.kind == IssueKind.PlaceDiffers), r.plan.issues.mkString("\n"))
+    assert(!r.plan.issues.exists(_.kind == Issue.Kind.PlaceDiffers), r.plan.issues.mkString("\n"))
     assertEquals(r.plan.problems, Nil)
     assert(
       r.plan.info.exists(_.contains("renamed zz_new_site in the bundle — renamed here too")),
@@ -192,7 +193,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_old_site"))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_old_site"))
     // not a place "added on both sides": no question about the other place
-    assert(!r.plan.issues.exists(_.kind == IssueKind.PlaceDiffers), r.plan.issues.mkString("\n"))
+    assert(!r.plan.issues.exists(_.kind == Issue.Kind.PlaceDiffers), r.plan.issues.mkString("\n"))
     assert(
       r.plan.info.exists(_.contains("here zz_new_site is another place — it keeps its id")),
       r.plan.info.mkString("\n")
@@ -211,9 +212,9 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       foreign.copy(periods = List(same, differ, other)),
       i => i.copy(local = i.local.copy(periods = local), periodMatches = Map(other.uid -> "periodo_mba"))
     )
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Period, same.uid, uid("h-n1"))))
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Period, other.uid, uid("h-n3"))))
-    val q = r.plan.issues.find(_.kind == IssueKind.NamedPeriodDiffers).getOrElse(fail(r.plan.issues.mkString("\n")))
+    assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Period, same.uid, uid("h-n1"))))
+    assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Period, other.uid, uid("h-n3"))))
+    val q = r.plan.issues.find(_.kind == Issue.Kind.NamedPeriodDiffers).getOrElse(fail(r.plan.issues.mkString("\n")))
     assert(q.id.startsWith("N-") && q.title.contains("-1200..-550"), q.title)
     assertEquals(r.apply.tally.periodsMerged, 2)
 
@@ -227,7 +228,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val in: MergePlanner.Input => MergePlanner.Input =
       i => i.copy(local = i.local.copy(events = i.local.events :+ ours), places = Set("zz_kadesh", "zz_other"))
     val r = run(foreign.copy(events = List(theirs)), in)
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Event, theirs.uid, ours.uid)), r.apply.folds.toString)
+    assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Event, theirs.uid, ours.uid)), r.apply.folds.toString)
     assertEquals(r.localized.events.find(_.uid == ours.uid).map(_.id), Some("kadesh_1274"))
     assert(r.plan.info.exists(_.contains("same label, dates and place")), r.plan.info.mkString("\n"))
     // another place: two events
@@ -315,7 +316,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val es = foreign.copy(goals = List(theirs))
     val in: MergePlanner.Input => MergePlanner.Input = i => i.copy(local = i.local.copy(goals = List(goalHere, g0)))
     val p = run(es, in).plan
-    val q = p.issues.find(_.kind == IssueKind.GoalPlanDiffers).getOrElse(fail(p.issues.mkString("\n")))
+    val q = p.issues.find(_.kind == Issue.Kind.GoalPlanDiffers).getOrElse(fail(p.issues.mkString("\n")))
     assert(q.id.startsWith("G-") && q.open, q.toString)
     assertEquals(q.detail.map(_.fields.map(_.field)), Some(List("plan", "approved")))
     assert(p.info.exists(_.contains("its currency schedule differs")), p.info.mkString("\n"))
@@ -330,7 +331,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       newer,
       i => i.copy(local = i.local.copy(goals = List(goalHere, g0.copy(planApprovedAt = Some("2026-04-01")))))
     )
-    assert(!auto.plan.issues.exists(_.kind == IssueKind.GoalPlanDiffers))
+    assert(!auto.plan.issues.exists(_.kind == Issue.Kind.GoalPlanDiffers))
     assertEquals(auto.localized.goals.find(_.uid == g0.uid).flatMap(_.plan), Some(planB))
 
   test("goals: a link to a merged source is written under the survivor's citekey"):
@@ -434,14 +435,14 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("detail: a source question carries both records field by field; an article its diff; an event both places"):
     val p = run(foreign).plan
-    val gate = p.issues.find(_.kind == IssueKind.SameWork).get
+    val gate = p.issues.find(_.kind == Issue.Kind.SameWork).get
     val fields = gate.detail.map(_.fields).getOrElse(Nil)
     assertEquals(fields.find(_.field == "year").map(f => (f.left, f.right)), Some((Some("1959"), Some("2024"))))
-    val art = p.issues.find(i => i.kind == IssueKind.ArticleDiverged && i.severity == IssueSeverity.Blocking).get
+    val art = p.issues.find(i => i.kind == Issue.Kind.ArticleDiverged && i.severity == Issue.Severity.Blocking).get
     val text = art.detail.flatMap(_.text).getOrElse(fail(art.toString))
     assertEquals(text.left, "Home's account of the collapse.")
     assert(text.hunks.exists(_.conflict), text.hunks.toString)
-    val ev = p.issues.find(i => i.kind == IssueKind.LabelTaken && i.entity == BundleKind.Event).get
+    val ev = p.issues.find(i => i.kind == Issue.Kind.LabelTaken && i.entity == Bundle.Kind.Event).get
     assertEquals(ev.detail.flatMap(_.place).flatMap(_.rightSpan), Some(IssueSpan(Some(-1200), Some(-1190))))
     // the detail is not part of the plan hash: dropping it changes nothing the apply checks
     assert(p.issues.forall(i => i.id.matches("[A-Z]-[0-9a-f]{8}")))
@@ -460,7 +461,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("the resolution file carries a merged text (texts:) and reads it back exactly — the web screen's download"):
     val p = run(foreign).plan
-    val id = p.issues.find(i => i.kind == IssueKind.ArticleDiverged && i.severity == IssueSeverity.Blocking).get.id
+    val id = p.issues.find(i => i.kind == Issue.Kind.ArticleDiverged && i.severity == Issue.Severity.Blocking).get.id
     List(
       "one line",
       "two\nlines\n",

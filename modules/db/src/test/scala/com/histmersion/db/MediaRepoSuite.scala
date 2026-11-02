@@ -21,7 +21,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place, PlaceInput, PlaceName}
@@ -66,11 +65,23 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         List(
           PlaceInput(
-            Place("zqmd_site", "Zqmd site", PlaceKind.Site, pt(130.0), Some(Period(-1600, -1100))),
+            Place(
+              "zqmd_site",
+              "Zqmd site",
+              com.histmersion.domain.catalogue.Place.Kind.Site,
+              pt(130.0),
+              Some(Period(-1600, -1100))
+            ),
             List(PlaceName("Zqmd site"))
           ),
-          PlaceInput(Place("zqmd_busy", "Zqmd busy", PlaceKind.Site, pt(131.0)), List(PlaceName("Zqmd busy"))),
-          PlaceInput(Place("zqmd_nolink", "Zqmd no link", PlaceKind.Site, pt(132.0)), List(PlaceName("Zqmd no link")))
+          PlaceInput(
+            Place("zqmd_busy", "Zqmd busy", com.histmersion.domain.catalogue.Place.Kind.Site, pt(131.0)),
+            List(PlaceName("Zqmd busy"))
+          ),
+          PlaceInput(
+            Place("zqmd_nolink", "Zqmd no link", com.histmersion.domain.catalogue.Place.Kind.Site, pt(132.0)),
+            List(PlaceName("Zqmd no link"))
+          )
         )
       )
       connect(ds):
@@ -421,21 +432,24 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         PlaceInput(
-          Place("zqmd_eq_a", "Zqmd Gobekli Tepe", PlaceKind.Site, pt(133.0)),
+          Place("zqmd_eq_a", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.0)),
           List(PlaceName("Zqmd Gobekli Tepe"))
         ),
         // another gazetteer's point of the same site: the same name (the key folds ö and case), 850 m away
         PlaceInput(
-          Place("zqmd_eq_b", "Zqmd Göbekli tepe", PlaceKind.Site, pt(133.01)),
+          Place("zqmd_eq_b", "Zqmd Göbekli tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.01)),
           List(PlaceName("Zqmd Göbekli tepe"))
         ),
         // the same name 700 km away is another place
         PlaceInput(
-          Place("zqmd_eq_far", "Zqmd Gobekli Tepe", PlaceKind.Site, pt(141.0)),
+          Place("zqmd_eq_far", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
           List(PlaceName("Zqmd Gobekli Tepe"))
         ),
         // another name, the same Wikidata item (a polity's other time slice, a Wikidata import)
-        PlaceInput(Place("zqmd_eq_wd", "Zqmd Other", PlaceKind.Site, pt(135.0)), List(PlaceName("Zqmd Other")))
+        PlaceInput(
+          Place("zqmd_eq_wd", "Zqmd Other", com.histmersion.domain.catalogue.Place.Kind.Site, pt(135.0)),
+          List(PlaceName("Zqmd Other"))
+        )
       )
     )
     connect(ds):

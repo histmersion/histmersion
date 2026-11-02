@@ -3,9 +3,9 @@ package com.histmersion.util.data.exchange
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
+import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge between two collections treats one kind of record: whether lines of other kinds can point at its records
   * (a plan looks them up as live here), how the ledger names one, and what a plan must know of this collection for the
@@ -13,7 +13,7 @@ import com.augustnagro.magnum.DbCon
   */
 trait MergeRules:
   def owner: DataOwner
-  def kind: BundleKind
+  def kind: Bundle.Kind
 
   /** SQL for the label of the record here whose uid is `l.local_uid`, as `merge ledger` shows it. */
   def ledgerLabel: Option[String] = None

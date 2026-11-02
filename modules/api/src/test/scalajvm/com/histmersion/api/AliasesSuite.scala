@@ -2,8 +2,8 @@ package com.histmersion.api
 
 import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.values.BundleKind
 import com.histmersion.api.aliases.Aliases
+import com.histmersion.util.data.exchange.Bundle
 
 /** The one alias rule's words (#1799): every kind's rename says the same thing, and an answer to a call that named an
   * old identifier says where it went.
@@ -32,7 +32,7 @@ class AliasesSuite extends munit.FunSuite:
 
   test("every label kind of a bundle that can be renamed has an alias kind"):
     assertEquals(
-      List(BundleKind.Article, BundleKind.Event, BundleKind.Goal, BundleKind.Place).map(AliasKinds.of),
+      List(Bundle.Kind.Article, Bundle.Kind.Event, Bundle.Kind.Goal, Bundle.Kind.Place).map(AliasKinds.of),
       List(
         Some(AliasKinds.ArticleRecords),
         Some(AliasKinds.EventRecords),
@@ -40,4 +40,4 @@ class AliasesSuite extends munit.FunSuite:
         Some(AliasKinds.PlaceRecords)
       )
     )
-    assertEquals(AliasKinds.of(BundleKind.Finding), None)
+    assertEquals(AliasKinds.of(Bundle.Kind.Finding), None)

@@ -10,9 +10,9 @@ import CurrencyCheckRules.CurrencyAction
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
-import com.histmersion.values.EdgeKind
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.library.Acquire
+import com.histmersion.domain.library.Edge
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -79,7 +79,7 @@ final class CurrencyCheckPipeline(
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
               site.citations
-                .neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
+                .neighbors(p.citekey, p.edgeKind.map(Edge.Kind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
             !known && (approvals.propose(ctx, p) match
               case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true

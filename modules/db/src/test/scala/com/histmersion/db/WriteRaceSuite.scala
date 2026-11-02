@@ -10,7 +10,6 @@ import com.histmersion.domain.*
 
 import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.{Source, SourcePatch}
 import com.histmersion.api.research.{Article, ArticlePatch}
@@ -55,7 +54,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = None,
         venue = None,
-        status = SourceStatus.Unassessed,
+        status = com.histmersion.domain.library.Source.Status.Unassessed,
         topics = Nil,
         regions = Nil,
         tags = Nil,

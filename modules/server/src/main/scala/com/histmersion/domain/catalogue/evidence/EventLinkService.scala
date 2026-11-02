@@ -3,11 +3,11 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.api.catalogue.EventLinkCandidate
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.EventLinkStatus
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.domain.catalogue.Event
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.
@@ -51,14 +51,14 @@ object EventLinkService:
       extends EventLinkService:
     def candidates(id: String, withRejected: Boolean): List[EventLinkCandidate] =
       state.get.candidates
-        .filter(c => c.eventId == id && (withRejected || c.status != EventLinkStatus.Rejected))
+        .filter(c => c.eventId == id && (withRejected || c.status != Event.LinkStatus.Rejected))
         .flatMap(c => title(c.citekey).map(t => c.modify(_.title).setTo(t)))
-        .sortBy(c => (c.status != EventLinkStatus.Confirmed, -c.score, c.citekey))
+        .sortBy(c => (c.status != Event.LinkStatus.Confirmed, -c.score, c.citekey))
         .toList
 
     def saveCandidates(id: String, cs: List[EventLinkCandidate]): Unit =
       val _ = state.updateAndGet { s =>
-        val kept = s.candidates.filterNot(c => c.eventId == id && c.status == EventLinkStatus.Proposed)
+        val kept = s.candidates.filterNot(c => c.eventId == id && c.status == Event.LinkStatus.Proposed)
         @tailrec def loop(rest: List[EventLinkCandidate], acc: Vector[EventLinkCandidate]): Vector[EventLinkCandidate] =
           rest match
             case c :: tail =>
@@ -77,7 +77,7 @@ object EventLinkService:
                       .modify(_.reasons)
                       .setTo(c.reasons)
                   )
-                else acc :+ c.modify(_.eventId).setTo(id).modify(_.status).setTo(EventLinkStatus.Proposed)
+                else acc :+ c.modify(_.eventId).setTo(id).modify(_.status).setTo(Event.LinkStatus.Proposed)
               loop(tail, next)
             case Nil => acc
         val written = loop(cs, kept)

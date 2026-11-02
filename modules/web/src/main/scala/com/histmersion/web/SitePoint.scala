@@ -4,8 +4,8 @@ import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.domain.catalogue.Place
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(
@@ -39,7 +39,7 @@ object SitePoint:
     SitePoint(
       str(p.id),
       str(p.label).getOrElse(""),
-      str(p.kind).getOrElse(PlaceKind.Site),
+      str(p.kind).getOrElse(Place.Kind.Site),
       str(p.siteType),
       str(p.basis),
       c.selectDynamic("1").asInstanceOf[Double],

@@ -34,10 +34,10 @@ import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.{weights, EventSelection, EventService, EventSql}
 import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.EventLinkStatus
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
+import com.histmersion.domain.catalogue.Event
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -146,7 +146,7 @@ final class EventLinksControllers(
                 case None     => confirm(tail, ok, no :+ s"$raw: no such source")
                 case Some(ck) =>
                   if existing.exists(_.citekey == ck) then
-                    val _ = links.setStatus(eid, ck, EventLinkStatus.Confirmed)
+                    val _ = links.setStatus(eid, ck, Event.LinkStatus.Confirmed)
                     confirm(tail, ok, no :+ s"$ck: already attests it")
                   else
                     EventMatcher.attestationPassage(passagesIn(ck, names)) match
@@ -158,29 +158,29 @@ final class EventLinksControllers(
                         )
                       case Some(p) =>
                         val a = attestations.create(EventMatcher.attestation(eid, ck, p))
-                        if !links.setStatus(eid, ck, EventLinkStatus.Confirmed) then
+                        if !links.setStatus(eid, ck, Event.LinkStatus.Confirmed) then
                           links.saveCandidates(
                             eid,
-                            links.candidates(eid).filter(_.status == EventLinkStatus.Proposed) :+
+                            links.candidates(eid).filter(_.status == Event.LinkStatus.Proposed) :+
                               EventLinkCandidate(
                                 eid,
                                 ck,
                                 0,
-                                EventLinkStatus.Proposed,
+                                Event.LinkStatus.Proposed,
                                 None,
                                 Nil,
                                 List(p),
                                 List("confirmed by hand")
                               )
                           )
-                          val _ = links.setStatus(eid, ck, EventLinkStatus.Confirmed)
+                          val _ = links.setStatus(eid, ck, Event.LinkStatus.Confirmed)
                         confirm(tail, ok :+ a, no)
         val (attested, refused) = confirm(req.confirm.map(_.trim).filter(_.nonEmpty).distinct, Nil, Nil)
         val rejected = req.reject
           .map(_.trim)
           .filter(_.nonEmpty)
           .distinct
-          .filter(ck => links.setStatus(eid, sources.canonical(ck).getOrElse(ck), EventLinkStatus.Rejected))
+          .filter(ck => links.setStatus(eid, sources.canonical(ck).getOrElse(ck), Event.LinkStatus.Rejected))
         EventLinksResult(
           EventLinkList(eid, d.event.label, links.candidates(eid)),
           attested,
@@ -290,7 +290,7 @@ final class EventLinksControllers(
       .modify(_.findings)
       .setTo(leadFacts.nearFindings(id, ec.links.km, ec.links.years, ec.links.nearFindings))
       .modify(_.candidates)
-      .setTo(links.candidates(id).filter(_.status == EventLinkStatus.Proposed))
+      .setTo(links.candidates(id).filter(_.status == Event.LinkStatus.Proposed))
       .modify(_.leads)
       .setTo(lead)
 

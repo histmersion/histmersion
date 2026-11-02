@@ -1,13 +1,12 @@
 package com.histmersion.cli
 
-import com.histmersion.values.AssetLinkTarget
-
 import com.histmersion.api.media.MediaMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.media.{AssetLinkPut, AssetRelation}
+import com.histmersion.domain.media.Asset
 
 object AssetLinksCmd:
 
@@ -15,7 +14,7 @@ object AssetLinksCmd:
     (
       Opts.option[String]("citekey", "Filter by citekey").orNone,
       Opts.option[String]("asset", "Filter by asset name").orNone,
-      Opts.option[String]("target-type", s"Target type: ${AssetLinkTarget.all.mkString("|")}").orNone,
+      Opts.option[String]("target-type", s"Target type: ${Asset.LinkTarget.all.mkString("|")}").orNone,
       Opts.option[String]("target-id", "Filter by target id").orNone
     )
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
@@ -28,7 +27,7 @@ object AssetLinksCmd:
       Opts.option[String]("citekey", "Source citekey"),
       Opts.option[String]("asset", "Asset file name"),
       Opts.option[String]("relation", s"Relation: ${AssetRelation.all.mkString("|")}"),
-      Opts.option[String]("target-type", s"Target type: ${AssetLinkTarget.all.mkString("|")}"),
+      Opts.option[String]("target-type", s"Target type: ${Asset.LinkTarget.all.mkString("|")}"),
       Opts.option[String]("target-id", "Target entity id"),
       Opts.option[String]("xywh", "Region within the asset (x,y,w,h)").orNone,
       Opts.option[String]("notes", "Free-text notes").orNone

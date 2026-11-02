@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage, EventPut}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
-import com.histmersion.values.EventLinkStatus
+import com.histmersion.domain.catalogue.Event
 
 /** The contract the events' proposed links keep: the confirmed first then by score, a source that is gone left out, the
   * rejected only when asked; saving again replaces the proposals and keeps a decided status; the check recorded; the
@@ -31,9 +31,9 @@ abstract class EventLinkServiceContract extends CatalogueStoreSuite:
     assertEquals(l.candidates("zz_ev").map(_.citekey), List("zzl2020_b", "zzl2020_c", "zzl2020_a"))
     assertEquals(l.candidates("zz_ev").head.title, Some("zzl2020_b"))
     assertEquals(l.candidates("zz_ev").head.passages.map(_.quote), List("Zzev"))
-    assert(l.setStatus("zz_ev", "zzl2020_a", EventLinkStatus.Confirmed))
-    assert(l.setStatus("zz_ev", "zzl2020_c", EventLinkStatus.Rejected))
-    assert(!l.setStatus("zz_ev", "zzl2020_none", EventLinkStatus.Confirmed))
+    assert(l.setStatus("zz_ev", "zzl2020_a", Event.LinkStatus.Confirmed))
+    assert(l.setStatus("zz_ev", "zzl2020_c", Event.LinkStatus.Rejected))
+    assert(!l.setStatus("zz_ev", "zzl2020_none", Event.LinkStatus.Confirmed))
     assertEquals(
       l.candidates("zz_ev").map(c => (c.citekey, c.status)),
       List("zzl2020_a" -> "confirmed", "zzl2020_b" -> "proposed")

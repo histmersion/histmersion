@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import scala.annotation.tailrec
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.Write.*
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Period
 
@@ -30,7 +29,7 @@ object SourceWrite:
       doi = blankToNone(p.doi),
       year = p.year,
       venue = blankToNone(p.venue),
-      status = p.status.getOrElse(SourceStatus.Unassessed),
+      status = p.status.getOrElse(com.histmersion.domain.library.Source.Status.Unassessed),
       topics = p.topics,
       regions = p.regions,
       tags = p.tags,
@@ -131,10 +130,10 @@ object SourceWrite:
       case Some(other) if other != citekey && !aliases.contains(other) =>
         Left(
           s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
-            s"source: patch '$other' to record '$other' --${EdgeKind.wireOf(in.kind)}--> '${in.dst}' " +
+            s"source: patch '$other' to record '$other' --${com.histmersion.domain.library.Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
             s"(src may be omitted; it defaults to the $role)"
         )
-      case _ => Right(Edge(citekey, in.dst.trim, EdgeKind.wireOf(in.kind)))
+      case _ => Right(Edge(citekey, in.dst.trim, com.histmersion.domain.library.Edge.Kind.wireOf(in.kind)))
 
   private[api] def metadataCheck(m: MetadataPatch): Either[String, Unit] =
     val both = m.clear.filter {
@@ -214,8 +213,12 @@ object SourceWrite:
     s"$what: $field ($v) is outside the representable range " +
       s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
 
-  private[api] def supersededEdgeCheck(status: SourceStatus, edges: List[Edge]): Either[String, Unit] =
-    if status == SourceStatus.Superseded && !edges.exists(_.kind == "superseded_by") then
+  private[api] def supersededEdgeCheck(
+      status: com.histmersion.domain.library.Source.Status,
+      edges: List[Edge]
+  ): Either[String, Unit] =
+    if status == com.histmersion.domain.library.Source.Status.Superseded && !edges.exists(_.kind == "superseded_by")
+    then
       Left(
         "status=superseded requires a superseded_by edge — add one with edges.add " +
           "(e.g. {\"edges\":{\"add\":[{\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}}, " +

@@ -18,10 +18,10 @@ import io.circe.Json
 import io.circe.syntax.*
 
 import java.nio.file.Path
-import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
 import com.histmersion.api.library.{FindingInput, SourcePut}
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.domain.library.Source
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still
@@ -67,7 +67,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       "How to Kill a Dragon",
       authors = List("Calvert Watkins"),
       year = Some(1995),
-      status = Some(SourceStatus.Foundational),
+      status = Some(Source.Status.Foundational),
       topics = List("dragon_slaying_myth", "pie_religion"),
       summary = Some("The book reconstructs the dragon-slaying formula."),
       body = Some(Body),

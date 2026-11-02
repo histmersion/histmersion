@@ -4,7 +4,8 @@ import com.histmersion.api.library.{Acquire, FollowupRow}
 import com.histmersion.api.given
 
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.values.{ApprovalKind, EdgeKind}
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Edge
 
 /** The pure rules of a currency check (docs/research-embedded-agents.md §14): what it makes of the papers citing a
   * source, and the acquisition item a disagreeing paper outside the corpus becomes.
@@ -36,10 +37,10 @@ object CurrencyCheckRules:
             (if row.intents.nonEmpty then s" (intents: ${row.intents.mkString(", ")})" else "") +
             context.fold("")(c => s"; context: ${c.take(400)}")
           val (from, edge, to) =
-            if kind == Acquire.EdgeKinds.Supersedes then (target, EdgeKind.SupersededBy, citing)
-            else (citing, if kind == Acquire.EdgeKinds.Refutes then EdgeKind.Refutes else EdgeKind.Challenges, target)
+            if kind == Acquire.EdgeKinds.Supersedes then (target, Edge.Kind.SupersededBy, citing)
+            else (citing, if kind == Acquire.EdgeKinds.Refutes then Edge.Kind.Refutes else Edge.Kind.Challenges, target)
           CurrencyAction.Propose(
-            Proposal(ApprovalKind.Edge, from, edgeKind = Some(edge), target = Some(to), evidence = evidence)
+            Proposal(Approval.Kind.Edge, from, edgeKind = Some(edge), target = Some(to), evidence = evidence)
           )
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */

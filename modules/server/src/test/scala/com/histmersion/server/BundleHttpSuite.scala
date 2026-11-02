@@ -8,7 +8,6 @@ import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.db.*
 import com.histmersion.api.aliases.{InstanceInfo, LabelRenamed}
@@ -266,7 +265,10 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(put(s"$url/api/goals/zz-goal-a", """{"title":"A goal"}""", Some(Key)).statusCode, 200)
       val rg = postJson(s"$url/api/goals/zz-goal-a/rename", """{"to":"zz-goal-b"}""")
       assertEquals(rg.statusCode, 200, rg.body)
-      assertEquals(decode[LabelRenamed](rg.body), LabelRenamed(BundleKind.Goal, "zz-goal-a", "zz-goal-b"))
+      assertEquals(
+        decode[LabelRenamed](rg.body),
+        LabelRenamed(com.histmersion.util.data.exchange.Bundle.Kind.Goal, "zz-goal-a", "zz-goal-b")
+      )
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
       val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))
       assertEquals(w.statusCode, 200, w.body)

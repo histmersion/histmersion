@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 final case class ResolvedSource(
@@ -11,7 +10,7 @@ final case class ResolvedSource(
     authors: List[String],
     year: Option[Int],
     title: String,
-    status: SourceStatus
+    status: com.histmersion.domain.library.Source.Status
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
   def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, status)

@@ -1,7 +1,6 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.plugin as spi
-import com.histmersion.values
 
 /** The values the plugin SPI exchanges, converted between plugin-api's newtypes and the model's (`values`). The two
   * sides keep copies of their own, over the same constraints, so a conversion is free (`values.Latitude(l.value)`) and
@@ -98,10 +97,10 @@ object SpiValues:
       .left
       .map(_ => s"DOI '${d.value}' is not a DOI (10.<registrant>/<suffix>)")
 
-  def wikidataOf(q: spi.WikidataId): Either[String, values.WikidataId] =
+  def wikidataOf(q: spi.WikidataId): Either[String, com.histmersion.domain.catalogue.places.Wikidata.Id] =
     spi.WikidataId
       .either(q.value)
-      .map(ok => values.WikidataId(ok.value))
+      .map(ok => com.histmersion.domain.catalogue.places.Wikidata.Id(ok.value))
       .left
       .map(_ => s"Wikidata id '${q.value}' is not a Wikidata item (Q and its number)")
 

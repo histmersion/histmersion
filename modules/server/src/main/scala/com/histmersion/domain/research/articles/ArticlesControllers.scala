@@ -471,9 +471,9 @@ final class ArticlesControllers(
     maintenance.guard("rename_article"):
       val from = current(AliasKinds.ArticleRecords, norm(slug))
       for
-        to <- LabelRenames.validate(com.histmersion.values.BundleKind.Article, from, req.to)
+        to <- LabelRenames.validate(com.histmersion.util.data.exchange.Bundle.Kind.Article, from, req.to)
         rewritten <- store.rename(from, to, Caller.Local)
-      yield LabelRenamed(com.histmersion.values.BundleKind.Article, from, to, rewritten)
+      yield LabelRenamed(com.histmersion.util.data.exchange.Bundle.Kind.Article, from, to, rewritten)
 
   // ── the mirror, the versions, the slugs, a note imported ────────────────────────────────────
 

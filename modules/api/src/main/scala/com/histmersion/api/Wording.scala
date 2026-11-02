@@ -1,9 +1,13 @@
 package com.histmersion.api
 
-import com.histmersion.values.{ApprovalKind, ApprovalState, JobKind, ManagerKind, RunState, SourceStatus}
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.Label
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Manager
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.Source
+import com.histmersion.util.jobs.Job
 
 object Wording:
 
@@ -19,17 +23,17 @@ object Wording:
   def heading(s: String): String =
     if s.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(s) else capitalize(Label.display(s.trim))
 
-  def status(s: SourceStatus): String = s match
-    case SourceStatus.Foundational => "Foundational"
-    case SourceStatus.Current      => "Current"
-    case SourceStatus.Contested    => "Contested"
-    case SourceStatus.Superseded   => "Superseded"
-    case SourceStatus.Debunked     => "Debunked"
-    case SourceStatus.Retracted    => "Retracted"
-    case SourceStatus.Unassessed   => "Not assessed"
+  def status(s: Source.Status): String = s match
+    case Source.Status.Foundational => "Foundational"
+    case Source.Status.Current      => "Current"
+    case Source.Status.Contested    => "Contested"
+    case Source.Status.Superseded   => "Superseded"
+    case Source.Status.Debunked     => "Debunked"
+    case Source.Status.Retracted    => "Retracted"
+    case Source.Status.Unassessed   => "Not assessed"
 
   def statusOf(wire: String): String =
-    SourceStatus.values.find(_.wire == wire.trim.toLowerCase).fold(humanize(wire))(status)
+    Source.Status.values.find(_.wire == wire.trim.toLowerCase).fold(humanize(wire))(status)
 
   def pipeline(p: Pipeline): String = p match
     case Pipeline.EnrichSource     => "Enrich a source"
@@ -42,39 +46,39 @@ object Wording:
     case Pipeline.HintEffect       => "Turn a hint into an action"
     case Pipeline.ProposeArticles  => "Propose articles"
 
-  def approvalKind(k: ApprovalKind): String = k match
-    case ApprovalKind.StatusChange   => "Change a source's status"
-    case ApprovalKind.Edge           => "Link two sources"
-    case ApprovalKind.GoalPlan       => "Plan a goal"
-    case ApprovalKind.ArticlePublish => "Make an article readable"
-    case ApprovalKind.ArticleFilter  => "Set an article's filter"
-    case ApprovalKind.ArticlePlan    => "Plan new articles"
-    case ApprovalKind.HintEffect     => "Act on a hint"
+  def approvalKind(k: Approval.Kind): String = k match
+    case Approval.Kind.StatusChange   => "Change a source's status"
+    case Approval.Kind.Edge           => "Link two sources"
+    case Approval.Kind.GoalPlan       => "Plan a goal"
+    case Approval.Kind.ArticlePublish => "Make an article readable"
+    case Approval.Kind.ArticleFilter  => "Set an article's filter"
+    case Approval.Kind.ArticlePlan    => "Plan new articles"
+    case Approval.Kind.HintEffect     => "Act on a hint"
 
-  def runState(s: RunState): String = s match
-    case RunState.Queued          => "Queued"
-    case RunState.Running         => "Running"
-    case RunState.Paused          => "Paused"
-    case RunState.WaitingApproval => "Waiting for a decision"
-    case RunState.Done            => "Done"
-    case RunState.Failed          => "Failed"
-    case RunState.Cancelled       => "Cancelled"
+  def runState(s: Run.State): String = s match
+    case Run.State.Queued          => "Queued"
+    case Run.State.Running         => "Running"
+    case Run.State.Paused          => "Paused"
+    case Run.State.WaitingApproval => "Waiting for a decision"
+    case Run.State.Done            => "Done"
+    case Run.State.Failed          => "Failed"
+    case Run.State.Cancelled       => "Cancelled"
 
-  def approvalState(s: ApprovalState): String = s match
-    case ApprovalState.Open     => "Needs a decision"
-    case ApprovalState.Approved => "Approved"
-    case ApprovalState.Rejected => "Rejected"
-    case ApprovalState.Failed   => "Failed"
+  def approvalState(s: Approval.State): String = s match
+    case Approval.State.Open     => "Needs a decision"
+    case Approval.State.Approved => "Approved"
+    case Approval.State.Rejected => "Rejected"
+    case Approval.State.Failed   => "Failed"
 
-  def managerKind(k: ManagerKind): String = k match
-    case ManagerKind.Review => "Review manager"
-    case ManagerKind.Seed   => "Seeding manager"
-    case ManagerKind.Watch  => "Watch manager"
-    case ManagerKind.Enrich => "Enrich manager"
+  def managerKind(k: Manager.Kind): String = k match
+    case Manager.Kind.Review => "Review manager"
+    case Manager.Kind.Seed   => "Seeding manager"
+    case Manager.Kind.Watch  => "Watch manager"
+    case Manager.Kind.Enrich => "Enrich manager"
 
   def manager(id: String): String =
     val (kind, rest) = id.span(_ != ':')
-    ManagerKind
+    Manager.Kind
       .parse(kind)
       .fold(humanize(id))(k =>
         managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}")
@@ -134,7 +138,7 @@ object Wording:
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
-  def jobKind(k: JobKind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
+  def jobKind(k: Job.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
 
   def jobKindOf(wire: String): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
 

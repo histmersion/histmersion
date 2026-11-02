@@ -7,7 +7,6 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.ocr.Spool
 
-import com.histmersion.values.LicenceId
 import com.histmersion.domain.library.Citekey
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
@@ -578,7 +577,7 @@ final class AcquisitionControllers(
         steps += IngestStep("store", true, outcome.detail)
         // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
         fetched.toOption.flatMap(_.licence).map(_.value).foreach { l =>
-          if sources.recordLicence(citekey, LicenceId(l), Caller.Local) then
+          if sources.recordLicence(citekey, Licence.Id(l), Caller.Local) then
             steps += IngestStep("licence", true, s"recorded ${l.trim}")
         }
         steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
@@ -746,7 +745,10 @@ final class AcquisitionControllers(
       case Left(e)    => steps += IngestStep("spool", false, e); None
 
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything else. */
-  private def setStatus(citekey: String, status: com.histmersion.values.SourceStatus): Either[ApiError, String] =
+  private def setStatus(
+      citekey: String,
+      status: com.histmersion.domain.library.Source.Status
+  ): Either[ApiError, String] =
     sources.patch(citekey, SourcePatch(metadata = Some(MetadataPatch(status = Some(status)))), Caller.Local)
 
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────

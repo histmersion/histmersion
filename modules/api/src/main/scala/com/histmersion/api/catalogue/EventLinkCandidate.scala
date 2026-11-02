@@ -2,14 +2,14 @@ package com.histmersion.api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.EventLinkStatus
 import com.histmersion.api.given
+import com.histmersion.domain.catalogue.Event
 
 final case class EventLinkCandidate(
     eventId: String,
     citekey: String,
     score: Double,
-    status: String = EventLinkStatus.Proposed,
+    status: String = Event.LinkStatus.Proposed,
     title: Option[String] = None,
     findings: List[String] = Nil,
     passages: List[EventPassage] = Nil,

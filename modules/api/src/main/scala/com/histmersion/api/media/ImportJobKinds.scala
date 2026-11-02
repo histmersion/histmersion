@@ -1,6 +1,6 @@
 package com.histmersion.api.media
 import com.histmersion.api.jobs.{JobDetailField, JobKindEntry}
-import com.histmersion.values.JobKind
+import com.histmersion.util.jobs.Job
 
 /** The media's imports, as it registers them: pictures asked of a provider. */
 object ImportJobKinds:
@@ -9,7 +9,7 @@ object ImportJobKinds:
   val Media: JobDetailField[Option[String]] = JobDetailField("media", None)
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
-    JobKind("media-import"),
+    Job.Kind("media-import"),
     "Fetch pictures",
     "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events.",
     stoppable = true,

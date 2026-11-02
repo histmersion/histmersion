@@ -3,8 +3,8 @@ package com.histmersion.web.library
 import com.histmersion.api.{Wording, YearFmt}
 import com.histmersion.api.research.ArticleSummary
 import com.histmersion.api.library.{Hit, Label}
-import com.histmersion.values.SourceStatus
 import com.histmersion.web.{ArticleLink, SourceLink}
+import com.histmersion.domain.library.Source
 
 /** One row of a Library table, as it reads: the item's key (a citekey or a slug), its title and the line under it (a
   * source's authors, an article's regions), its year, its status (a source) or kind (an article), its period, and its
@@ -15,7 +15,7 @@ final case class TableRow(
     title: String,
     byline: String,
     year: Option[Int],
-    status: Option[SourceStatus],
+    status: Option[Source.Status],
     kind: String,
     period: String,
     page: String

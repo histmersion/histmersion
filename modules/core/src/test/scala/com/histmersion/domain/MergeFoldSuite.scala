@@ -9,12 +9,14 @@ import com.histmersion.config.given
 
 import MergeFixture.{home, src, uid, work}
 import MergeFold.ArticleOutcome
-import com.histmersion.values.{GoalStatus, IssueKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.exchange.{BundleEventDating, BundleQueueItem}
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Source
+import com.histmersion.util.data.exchange.Issue
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
   * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).
@@ -23,10 +25,10 @@ class MergeFoldSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"
   test("goals, queue items and events folded"):
-    val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = GoalStatus.Seeding)
-    val gr = MergeFixture.goal("g2", "zz_g", "Goal", work, Some("work's plan")).copy(status = GoalStatus.Compiled)
+    val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = Goal.Status.Seeding)
+    val gr = MergeFixture.goal("g2", "zz_g", "Goal", work, Some("work's plan")).copy(status = Goal.Status.Compiled)
     val g = MergeFold.foldGoal(gl, gr, "work")
-    assertEquals(g.status, GoalStatus.Compiled)
+    assertEquals(g.status, Goal.Status.Compiled)
     assertEquals(g.notes, Some("home's plan\n\n### From work\n\nwork's plan"))
     assertEquals(MergeFold.foldGoal(gl, gl.copy(uid = gr.uid), "work").notes, gl.notes)
     val q = BundleQueueItem(uid("q1"), home, "tasks", "Find the Kuhrt reprint", None, Queue.Open, None, At, None, At)

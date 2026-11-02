@@ -1,11 +1,11 @@
 package com.histmersion.domain.catalogue.places
-import com.histmersion.values.PlaceKind
 
 /** The committed gazetteer seed set (`db/places`) as a list of files in IMPORT ORDER — shared by the CLI's
   * `histmersion places seed` (which reads the files on the host) and the server's first-run import (#720, which reads
   * the copy shipped in the bundle), so both walk the directory the same way. It only orders what a directory lists;
   * listing and reading are the caller's (a path on the host, a store in the server).
   */
+import com.histmersion.domain.catalogue.Place
 object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
@@ -24,7 +24,7 @@ object PlaceSeed:
       val singular = if name.endsWith("ies") then name.dropRight(3) + "y"
       else if name.endsWith("s") then name.dropRight(1)
       else name
-      PlaceKind.parse(singular)
+      Place.Kind.parse(singular)
     val entries = top.sortBy(_.name)
     entries.filter(isSeed).map(_.at -> None) ++
       entries.filter(_.directory).flatMap { sub =>

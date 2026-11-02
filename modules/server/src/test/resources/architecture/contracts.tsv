@@ -1,40 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-bucket	values:values/ApprovalDecidedBy.scala	package com.histmersion.values	1
-bucket	values:values/ApprovalKind.scala	package com.histmersion.values	1
-bucket	values:values/ApprovalMode.scala	package com.histmersion.values	1
-bucket	values:values/ApprovalState.scala	package com.histmersion.values	1
-bucket	values:values/ArticleUid.scala	package com.histmersion.values	1
-bucket	values:values/AssetLinkTarget.scala	package com.histmersion.values	1
-bucket	values:values/AssetUid.scala	package com.histmersion.values	1
-bucket	values:values/BundleKind.scala	package com.histmersion.values	1
-bucket	values:values/DecidedBy.scala	package com.histmersion.values	1
-bucket	values:values/EdgeKind.scala	package com.histmersion.values	1
-bucket	values:values/EventEdgeKind.scala	package com.histmersion.values	1
-bucket	values:values/EventId.scala	package com.histmersion.values	1
-bucket	values:values/EventLinkStatus.scala	package com.histmersion.values	1
-bucket	values:values/EventUid.scala	package com.histmersion.values	1
-bucket	values:values/GoalLinkKind.scala	package com.histmersion.values	1
-bucket	values:values/GoalSlug.scala	package com.histmersion.values	1
-bucket	values:values/GoalStatus.scala	package com.histmersion.values	1
-bucket	values:values/GoalUid.scala	package com.histmersion.values	1
-bucket	values:values/IssueKind.scala	package com.histmersion.values	1
-bucket	values:values/IssueSeverity.scala	package com.histmersion.values	1
-bucket	values:values/JobId.scala	package com.histmersion.values	1
-bucket	values:values/JobKind.scala	package com.histmersion.values	1
-bucket	values:values/LicenceId.scala	package com.histmersion.values	1
-bucket	values:values/LocationPrecision.scala	package com.histmersion.values	1
-bucket	values:values/ManagerKind.scala	package com.histmersion.values	1
-bucket	values:values/ManagerState.scala	package com.histmersion.values	1
-bucket	values:values/PeriodError.scala	package com.histmersion.values	1
-bucket	values:values/PlaceId.scala	package com.histmersion.values	1
-bucket	values:values/PlaceKind.scala	package com.histmersion.values	1
-bucket	values:values/PluginId.scala	package com.histmersion.values	1
-bucket	values:values/RunId.scala	package com.histmersion.values	1
-bucket	values:values/RunState.scala	package com.histmersion.values	1
-bucket	values:values/SourceStatus.scala	package com.histmersion.values	1
-bucket	values:values/SourceUid.scala	package com.histmersion.values	1
-bucket	values:values/StepStatus.scala	package com.histmersion.values	1
-bucket	values:values/WikidataId.scala	package com.histmersion.values	1
 client-refined	api:api/personal/BookmarkId.scala	a refined constraint in a client	1
 client-refined	api:api/personal/MapZoom.scala	a refined constraint in a client	1
 client-refined	api:api/personal/NoteId.scala	a refined constraint in a client	1
@@ -753,7 +717,6 @@ helper	api:api/research/ArticleLinks.scala	ArticleLinks about ArticleLink	1
 helper	api:api/research/Articles.scala	Articles about Article	1
 helper	cli:cli/Notes.scala	Notes about Note	1
 helper	cli:cli/PluginArtifacts.scala	PluginArtifacts about PluginArtifact	1
-helper	core:domain/ApprovalModes.scala	ApprovalModes about ApprovalMode	1
 helper	core:domain/catalogue/places/ExternalIds.scala	ExternalIds about ExternalId	1
 helper	core:domain/library/sources/Citekeys.scala	Citekeys about Citekey	1
 helper	db:util/data/exchange/MergePlans.scala	MergePlans about MergePlan	1
@@ -800,12 +763,10 @@ layer	api:api/catalogue/GazetteerKind.scala	the client names a package outside a
 layer	api:api/catalogue/Geocode.scala	the client names a package outside api	1
 layer	api:api/catalogue/Lpf.scala	the client names a package outside api	1
 layer	api:api/catalogue/PeriodSkip.scala	the client names a package outside api	1
-layer	api:api/catalogue/PlaceAdd.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceCard.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceDating.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceEdits.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceEntry.scala	the client names a package outside api	1
-layer	api:api/catalogue/PlaceOverrideSet.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceOverrides.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceShape.scala	the client names a package outside api	1
 layer	api:api/catalogue/PlaceTimeBasis.scala	the client names a package outside api	1
@@ -841,7 +802,6 @@ layer	api:api/library/ContradictionRow.scala	the client names a package outside 
 layer	api:api/library/DeleteBlockerKind.scala	the client names a package outside api	1
 layer	api:api/library/DeletePart.scala	the client names a package outside api	1
 layer	api:api/library/EdgeInput.scala	the client names a package outside api	1
-layer	api:api/library/FilterDocs.scala	the client names a package outside api	1
 layer	api:api/library/Finding.scala	the client names a package outside api	1
 layer	api:api/library/FindingRow.scala	the client names a package outside api	1
 layer	api:api/library/GeoHit.scala	the client names a package outside api	1
@@ -1258,11 +1218,6 @@ layer	web:web/marks/PeriodMarks.scala	the client names a package outside api	1
 layer	web:web/settings/DownloadJobs.scala	the client names a package outside api	1
 prefix	api:api/ApiError.scala	ApiError → Api.Error	1
 prefix	api:api/ApiIndex.scala	ApiIndex → Api.Index	1
-prefix	api:api/LpfDataset.scala	LpfDataset → Lpf.Dataset	1
-prefix	api:api/PeriodODataset.scala	PeriodODataset → PeriodO.Dataset	1
-prefix	api:api/aliases/LabelRename.scala	LabelRename → Label.Rename	1
-prefix	api:api/aliases/LabelRenamed.scala	LabelRenamed → Label.Renamed	1
-prefix	api:api/aliases/LabelRenames.scala	LabelRenames → Label.Renames	1
 prefix	api:api/automation/GoalDeleted.scala	GoalDeleted → Goal.Deleted	1
 prefix	api:api/automation/GoalList.scala	GoalList → Goal.List	1
 prefix	api:api/automation/GoalPatch.scala	GoalPatch → Goal.Patch	1
@@ -1273,7 +1228,6 @@ prefix	api:api/backup/BackupInfo.scala	BackupInfo → Backup.Info	1
 prefix	api:api/backup/BackupResult.scala	BackupResult → Backup.Result	1
 prefix	api:api/backup/BackupState.scala	BackupState → Backup.State	1
 prefix	api:api/backup/BackupStatus.scala	BackupStatus → Backup.Status	1
-prefix	api:api/basemap/BaseMapSource.scala	BaseMapSource → BaseMap.Source	1
 prefix	api:api/basemap/BasemapFetchQuery.scala	BasemapFetchQuery → Basemap.FetchQuery	1
 prefix	api:api/basemap/BasemapFocus.scala	BasemapFocus → Basemap.Focus	1
 prefix	api:api/basemap/BasemapLayer.scala	BasemapLayer → Basemap.Layer	1
@@ -1284,7 +1238,6 @@ prefix	api:api/basemap/BasemapRemoveQuery.scala	BasemapRemoveQuery → Basemap.R
 prefix	api:api/basemap/BasemapRemoved.scala	BasemapRemoved → Basemap.Removed	1
 prefix	api:api/basemap/BasemapStatus.scala	BasemapStatus → Basemap.Status	1
 prefix	api:api/basemap/BasemapStyleState.scala	BasemapStyleState → Basemap.StyleState	1
-prefix	api:api/catalogue/ArticleEventLead.scala	ArticleEventLead → Article.EventLead	1
 prefix	api:api/catalogue/AttestationDeleted.scala	AttestationDeleted → Attestation.Deleted	1
 prefix	api:api/catalogue/AttestationList.scala	AttestationList → Attestation.List	1
 prefix	api:api/catalogue/AttestationPatch.scala	AttestationPatch → Attestation.Patch	1
@@ -1395,9 +1348,6 @@ prefix	api:api/exchange/BundleVerifyResult.scala	BundleVerifyResult → Bundle.V
 prefix	api:api/exchange/MergeIssueDetail.scala	MergeIssueDetail → MergeIssue.Detail	1
 prefix	api:api/exchange/MergePlanRequest.scala	MergePlanRequest → MergePlan.Request	1
 prefix	api:api/exchange/MergeResolutionsText.scala	MergeResolutionsText → MergeResolutions.Text	1
-prefix	api:api/instance/DebounceConfig.scala	DebounceConfig → Debounce.Config	1
-prefix	api:api/instance/MapStartConfig.scala	MapStartConfig → MapStart.Config	1
-prefix	api:api/instance/MapStartMode.scala	MapStartMode → MapStart.Mode	1
 prefix	api:api/instance/VersionInfo.scala	VersionInfo → Version.Info	1
 prefix	api:api/jobs/JobDetailField.scala	JobDetailField → JobDetail.Field	1
 prefix	api:api/library/AcquireChecks.scala	AcquireChecks → Acquire.Checks	1
@@ -1420,7 +1370,6 @@ prefix	api:api/library/IngestParams.scala	IngestParams → Ingest.Params	1
 prefix	api:api/library/IngestReport.scala	IngestReport → Ingest.Report	1
 prefix	api:api/library/IngestRequest.scala	IngestRequest → Ingest.Request	1
 prefix	api:api/library/IngestStep.scala	IngestStep → Ingest.Step	1
-prefix	api:api/library/NoteImport.scala	NoteImport → Note.Import	1
 prefix	api:api/library/RenameCount.scala	RenameCount → Rename.Count	1
 prefix	api:api/library/RenameCounts.scala	RenameCounts → Rename.Counts	1
 prefix	api:api/library/RenameRequest.scala	RenameRequest → Rename.Request	1
@@ -1449,7 +1398,6 @@ prefix	api:api/media/AssetLinkDeleted.scala	AssetLinkDeleted → AssetLink.Delet
 prefix	api:api/media/AssetLinkList.scala	AssetLinkList → AssetLink.List	1
 prefix	api:api/media/AssetLinkPut.scala	AssetLinkPut → AssetLink.Put	1
 prefix	api:api/media/MediaProviderInfo.scala	MediaProviderInfo → MediaProvider.Info	1
-prefix	api:api/media/SourceCoverParams.scala	SourceCoverParams → Source.CoverParams	1
 prefix	api:api/personal/BookmarkEdit.scala	BookmarkEdit → Bookmark.Edit	1
 prefix	api:api/personal/BookmarkId.scala	BookmarkId → Bookmark.Id	1
 prefix	api:api/personal/BookmarkLabel.scala	BookmarkLabel → Bookmark.Label	1
@@ -1459,7 +1407,6 @@ prefix	api:api/personal/NoteId.scala	NoteId → Note.Id	1
 prefix	api:api/personal/NoteNew.scala	NoteNew → Note.New	1
 prefix	api:api/personal/NoteText.scala	NoteText → Note.Text	1
 prefix	api:api/personal/ReadMarkSet.scala	ReadMarkSet → ReadMark.Set	1
-prefix	api:api/personal/ViewState.scala	ViewState → View.State	1
 prefix	api:api/research/ArticleCoverage.scala	ArticleCoverage → Article.Coverage	1
 prefix	api:api/research/ArticleDeleted.scala	ArticleDeleted → Article.Deleted	1
 prefix	api:api/research/ArticleEdits.scala	ArticleEdits → Article.Edits	1
@@ -1486,9 +1433,6 @@ prefix	api:api/research/CoverageEdge.scala	CoverageEdge → Coverage.Edge	1
 prefix	api:api/research/CoverageEntry.scala	CoverageEntry → Coverage.Entry	1
 prefix	api:api/research/CoverageReason.scala	CoverageReason → Coverage.Reason	1
 prefix	api:api/research/CoverageSource.scala	CoverageSource → Coverage.Source	1
-prefix	api:api/views/AutopilotStatus.scala	AutopilotStatus → Autopilot.Status	1
-prefix	api:api/views/PlaceDetail.scala	PlaceDetail → Place.Detail	1
-prefix	api:api/views/QueueListing.scala	QueueListing → Queue.Listing	1
 prefix	cli:cli/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
 prefix	cli:cli/CalibreBook.scala	CalibreBook → Calibre.Book	1
 prefix	cli:cli/CalibreChange.scala	CalibreChange → Calibre.Change	1
@@ -1496,22 +1440,16 @@ prefix	cli:cli/CalibreField.scala	CalibreField → Calibre.Field	1
 prefix	cli:cli/CalibreJson.scala	CalibreJson → Calibre.Json	1
 prefix	cli:cli/CalibrePush.scala	CalibrePush → Calibre.Push	1
 prefix	cli:cli/CliError.scala	CliError → Cli.Error	1
-prefix	config:config/AgentVerifyConfig.scala	AgentVerifyConfig → AgentVerify.Config	1
-prefix	config:config/AutoApprovalsConfig.scala	AutoApprovalsConfig → AutoApprovals.Config	1
-prefix	config:config/BasemapLabelsConfig.scala	BasemapLabelsConfig → BasemapLabels.Config	1
-prefix	config:config/CitationCount.scala	CitationCount → Citation.Count	1
-prefix	config:config/ClaudeCodeConfig.scala	ClaudeCodeConfig → ClaudeCode.Config	1
-prefix	config:config/CodexConfig.scala	CodexConfig → Codex.Config	1
 prefix	config:config/ConfigReloadConfig.scala	ConfigReloadConfig → ConfigReload.Config	1
-prefix	config:config/HotNode.scala	HotNode → Hot.Node	1
-prefix	config:config/OpencodeConfig.scala	OpencodeConfig → Opencode.Config	1
-prefix	config:config/PassageLimits.scala	PassageLimits → Passage.Limits	1
-prefix	config:config/RetractionWatchConfig.scala	RetractionWatchConfig → RetractionWatch.Config	1
-prefix	config:config/StorageConfig.scala	StorageConfig → Storage.Config	1
-prefix	core:domain/CodexRetention.scala	CodexRetention → Codex.Retention	1
 prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
-prefix	core:domain/catalogue/events/StoredEvent.scala	StoredEvent → Stored.Event	1
+prefix	core:util/jobs/JobAction.scala	JobAction → Job.Action	1
+prefix	core:util/jobs/JobControlStep.scala	JobControlStep → Job.ControlStep	1
+prefix	core:util/jobs/JobStop.scala	JobStop → Job.Stop	1
+prefix	files:util/data/exchange/BundleEntities.scala	BundleEntities → Bundle.Entities	1
+prefix	files:util/data/exchange/BundleFormat.scala	BundleFormat → Bundle.Format	1
+prefix	files:util/data/exchange/BundleTar.scala	BundleTar → Bundle.Tar	1
 prefix	files:util/data/mirror/MirrorPlacement.scala	MirrorPlacement → Mirror.Placement	1
+prefix	files:util/plugins/PluginKit.scala	PluginKit → Plugin.Kit	1
 prefix	plugin-api:plugin/AiHttpResponse.scala	AiHttpResponse → AiHttp.Response	1
 prefix	plugin-api:plugin/AiToolCall.scala	AiToolCall → AiTool.Call	1
 prefix	plugin-api:plugin/AiTurnRequest.scala	AiTurnRequest → AiTurn.Request	1
@@ -1526,7 +1464,6 @@ prefix	plugin-api:plugin/PluginInfo.scala	PluginInfo → Plugin.Info	1
 prefix	plugin-api:plugin/PluginLog.scala	PluginLog → Plugin.Log	1
 prefix	plugin-api:plugin/SecretRef.scala	SecretRef → Secret.Ref	1
 prefix	plugin-api:plugin/SecretVault.scala	SecretVault → Secret.Vault	1
-prefix	plugin-host:pluginhost/HttpAnswer.scala	HttpAnswer → Http.Answer	1
 prefix	plugins/calibre:plugins/calibre/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
 prefix	plugins/calibre:plugins/calibre/CalibreBook.scala	CalibreBook → Calibre.Book	1
 prefix	plugins/calibre:plugins/calibre/CalibreChange.scala	CalibreChange → Calibre.Change	1
@@ -1541,41 +1478,30 @@ prefix	plugins/media:plugins/media/CommonsFiles.scala	CommonsFiles → Commons.F
 prefix	plugins/media:plugins/media/CommonsSettings.scala	CommonsSettings → Commons.Settings	1
 prefix	plugins/media:plugins/media/KeyedPluginConfig.scala	KeyedPluginConfig → KeyedPlugin.Config	1
 prefix	plugins/media:plugins/media/MediaPluginConfig.scala	MediaPluginConfig → MediaPlugin.Config	1
-prefix	server:domain/automation/managers/ManagerKindDefinition.scala	ManagerKindDefinition → ManagerKind.Definition	1
-prefix	server:domain/automation/workflows/PipelineDef.scala	PipelineDef → Pipeline.Def	1
 prefix	server:domain/catalogue/evidence/passages/PassageSource.scala	PassageSource → Passage.Source	1
-prefix	server:domain/catalogue/periods/PeriodSources.scala	PeriodSources → Period.Sources	1
-prefix	server:domain/catalogue/periods/StoredPeriod.scala	StoredPeriod → Stored.Period	1
-prefix	server:domain/library/acquisition/CitationAlerts.scala	CitationAlerts → Citation.Alerts	1
-prefix	server:domain/library/acquisition/CoreQuotaLend.scala	CoreQuotaLend → CoreQuota.Lend	1
-prefix	server:domain/library/collections/StoredOriginal.scala	StoredOriginal → Stored.Original	1
-prefix	server:domain/library/ingest/StoredOriginals.scala	StoredOriginals → Stored.Originals	1
 prefix	server:domain/personal/bookmarks/BookmarkRow.scala	BookmarkRow → Bookmark.Row	1
 prefix	server:domain/personal/notes/NoteEditRefused.scala	NoteEditRefused → Note.EditRefused	1
 prefix	server:domain/personal/notes/NoteItem.scala	NoteItem → Note.Item	1
 prefix	server:domain/personal/notes/NoteRow.scala	NoteRow → Note.Row	1
-prefix	server:domain/personal/reading/ReadMark.scala	ReadMark → Read.Mark	1
-prefix	server:server/HttpDownload.scala	HttpDownload → Http.Download	1
-prefix	server:server/SeedNoteFiles.scala	SeedNoteFiles → SeedNote.Files	1
-prefix	server:server/StorageLocations.scala	StorageLocations → Storage.Locations	1
 prefix	server:server/agents/ClaudeCodeEnv.scala	ClaudeCodeEnv → ClaudeCode.Env	1
 prefix	server:server/agents/CodexHome.scala	CodexHome → Codex.Home	1
-prefix	server:server/agents/ToolboxOrder.scala	ToolboxOrder → Toolbox.Order	1
 prefix	server:server/hot/HotDataSource.scala	HotDataSource → Hot.DataSource	1
 prefix	server:server/hot/HotGraph.scala	HotGraph → Hot.Graph	1
 prefix	server:server/hot/PinRequests.scala	PinRequests → Pin.Requests	1
 prefix	server:util/basemap/DegreesPerPixel.scala	DegreesPerPixel → Degrees.PerPixel	1
 prefix	server:util/basemap/PmTilesFile.scala	PmTilesFile → PmTiles.File	1
-prefix	server:util/data/diagnostics/StorageCache.scala	StorageCache → Storage.Cache	1
-prefix	server:util/data/diagnostics/StorageFigures.scala	StorageFigures → Storage.Figures	1
-prefix	server:util/data/diagnostics/StorageSpot.scala	StorageSpot → Storage.Spot	1
 prefix	server:util/data/maintenance/MaintenanceTaskName.scala	MaintenanceTaskName → MaintenanceTask.Name	1
-prefix	server:util/data/maintenance/ReadOnlyPool.scala	ReadOnlyPool → Read.OnlyPool	1
 prefix	server:util/data/mirror/MirrorExport.scala	MirrorExport → Mirror.Export	1
 prefix	server:util/data/mirror/MirrorNote.scala	MirrorNote → Mirror.Note	1
 prefix	server:util/data/mirror/MirrorRecords.scala	MirrorRecords → Mirror.Records	1
-prefix	server:util/settings/HotConfig.scala	HotConfig → Hot.Config	1
-prefix	server:util/settings/StoredSettingsFile.scala	StoredSettingsFile → Stored.SettingsFile	1
+prefix	server:util/jobs/JobListing.scala	JobListing → Job.Listing	1
+prefix	server:util/jobs/JobPool.scala	JobPool → Job.Pool	1
+prefix	server:util/jobs/JobRecords.scala	JobRecords → Job.Records	1
+prefix	server:util/jobs/JobRunState.scala	JobRunState → Job.RunState	1
+prefix	server:util/jobs/JobRuns.scala	JobRuns → Job.Runs	1
+prefix	server:util/jobs/JobStopped.scala	JobStopped → Job.Stopped	1
+prefix	server:util/jobs/JobStops.scala	JobStops → Job.Stops	1
+prefix	server:util/plugins/PluginSetResource.scala	PluginSetResource → Plugin.SetResource	1
 prefix	server:util/storage/StoreContents.scala	StoreContents → Store.Contents	1
 prefix	server:util/storage/StoreError.scala	StoreError → Store.Error	1
 prefix	server:util/storage/StoreKey.scala	StoreKey → Store.Key	1
@@ -1583,16 +1509,6 @@ prefix	server:util/storage/StoreKey.scala	StoreKeyRule → Store.KeyRule	1
 prefix	server:util/storage/StoreMeasure.scala	StoreMeasure → Store.Measure	1
 prefix	server:util/storage/StoreVolume.scala	StoreVolume → Store.Volume	1
 prefix	server:util/storage/StoredKind.scala	StoredKind → Stored.Kind	1
-prefix	upstreams:upstreams/wikidata/WikidataClasses.scala	WikidataClasses → Wikidata.Classes	1
-prefix	upstreams:upstreams/wikidata/WikidataEntities.scala	WikidataEntities → Wikidata.Entities	1
-prefix	upstreams:upstreams/wikidata/WikidataItem.scala	WikidataItem → Wikidata.Item	1
-prefix	upstreams:upstreams/wikidata/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
-prefix	values:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
-prefix	values:values/DecidedBy.scala	DecidedBy → Decided.By	1
-prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1
-prefix	values:values/LocationPrecision.scala	LocationPrecision → Location.Precision	1
-prefix	values:values/PeriodError.scala	PeriodError → Period.Error	1
-prefix	values:values/WikidataId.scala	WikidataId → Wikidata.Id	1
 primitive	db:domain/automation/agents/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:domain/automation/agents/LeaseRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/automation/agents/ModelSettingsRepo.scala	String/Int/Long for a concept with a newtype	1

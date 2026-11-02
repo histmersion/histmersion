@@ -43,7 +43,7 @@ object GoalPlans:
   object Plan:
     given Schema[Plan] = summon[KindlingsSchema[Plan]].schema
 
-  export com.histmersion.values.GoalLinkKind as LinkKind
+  export com.histmersion.domain.automation.Goal.LinkKind as LinkKind
   export com.histmersion.domain.research.DraftMode
   export com.histmersion.domain.automation.ScheduleKind
 

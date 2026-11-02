@@ -2,10 +2,10 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.exchange.IssueDetail
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a kind's rules of a plan can ask and add while the plan collects its questions about the rows, before any is
   * decided: besides a pair's questions, the bundle's lines as they came and in this collection's terms, which lines
@@ -36,7 +36,7 @@ trait PlanQuestions extends PairQuestions:
 
   /** The labels of `rows` that a different record has here, as questions (or merges, when `merge` finds them one). */
   def labelTaken[A](
-      kind: BundleKind,
+      kind: Bundle.Kind,
       rows: List[A],
       uid: A => UUID,
       label: A => String,

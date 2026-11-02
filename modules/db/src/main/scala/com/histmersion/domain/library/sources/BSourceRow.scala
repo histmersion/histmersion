@@ -1,9 +1,9 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.util.database.given
-import com.histmersion.values.SourceStatus
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.domain.library.Source
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(
@@ -15,7 +15,7 @@ final private[sources] case class BSourceRow(
     doi: Option[String],
     year: Option[Int],
     venue: Option[String],
-    status: SourceStatus,
+    status: Source.Status,
     topics: List[String],
     regions: List[String],
     tags: List[String],

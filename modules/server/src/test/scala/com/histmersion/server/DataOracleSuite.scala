@@ -15,7 +15,6 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.{Dataset, GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.augustnagro.magnum.*
 import io.circe.{parser, Json}
@@ -144,7 +143,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       edges: List[(String, String)] = Nil,
       body: Option[String] = None,
       summary: Option[String] = None,
-      status: SourceStatus = SourceStatus.Current
+      status: com.histmersion.domain.library.Source.Status = com.histmersion.domain.library.Source.Status.Current
   ): Source =
     Source(
       ck,
@@ -185,7 +184,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       Place(
         id,
         label,
-        PlaceKind.Site,
+        com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
         Some(Period(-1650, -1180))
       ),
@@ -219,7 +218,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         "The Kingdom",
         2005,
         findings = List("a kingdom in central Anatolia"),
-        status = SourceStatus.Contested
+        status = com.histmersion.domain.library.Source.Status.Contested
       ),
       chunk
     )

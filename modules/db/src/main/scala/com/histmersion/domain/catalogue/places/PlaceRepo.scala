@@ -10,7 +10,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{LocationPrecision, PlaceKind}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.{
   Geocode,
@@ -34,6 +33,7 @@ import com.histmersion.api.catalogue.{
   PlaceType,
   SiteTypes
 }
+import com.histmersion.domain.catalogue.Place
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -595,7 +595,7 @@ private[places] object PlaceRepo:
         )(_ =>
           // over a range a layer of areas probes its few sketches and OHM shapes for partners through
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
-          k.filterNot(_ == PlaceKind.Site)
+          k.filterNot(_ == Place.Kind.Site)
             .filter(_ => pairsByIndex)
             .fold(Sql.raw(rangeShadowedSql))(_ =>
               Sql.raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++

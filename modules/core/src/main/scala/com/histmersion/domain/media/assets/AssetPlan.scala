@@ -5,10 +5,10 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{BundlePlan, PlanFolds, PlanRelabels, PlanRules, PlanRun}
 import com.histmersion.api.text.SafeName
-import com.histmersion.values.BundleKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge plan treats the figures of the sources and their links: a figure belongs to its source, a link to its
   * figure's; in a pair of sources that fold, the same bytes are one figure, a name the survivor has gets the other
@@ -26,10 +26,10 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
   private def renamed(source: UUID, from: String, to: String): Unit =
     renames(source) = renames.getOrElse(source, Nil) :+ (from -> to)
 
-  override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] = kind match
-    case BundleKind.Asset     => assetSource.get(foreign)
-    case BundleKind.AssetLink => linkAsset.get(foreign).flatMap(assetSource.get)
-    case _                    => None
+  override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = kind match
+    case Bundle.Kind.Asset     => assetSource.get(foreign)
+    case Bundle.Kind.AssetLink => linkAsset.get(foreign).flatMap(assetSource.get)
+    case _                     => None
 
   override def foldPairFirst(
       right: BundleSource,
@@ -48,7 +48,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
         localAssets.find(x => x.sha256 == a.sha256 && !usedLocal(x.uid)) match
           case Some(x) =>
             usedLocal += x.uid
-            folds.fold(a.uid, x.uid, BundleKind.Asset)
+            folds.fold(a.uid, x.uid, Bundle.Kind.Asset)
             assetLine(x.uid) = _ => x
             folds.count(_.modify(_.assetsMerged).using(_ + 1))
           case None if names(a.name) =>
@@ -68,7 +68,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
               x.targetType == k.targetType && x.targetUid.map(_.toString).getOrElse(x.targetId) == target
           )
           .foreach { x =>
-            folds.fold(k.uid, x.uid, BundleKind.AssetLink)
+            folds.fold(k.uid, x.uid, Bundle.Kind.AssetLink)
             linkLine(x.uid) = _ => x
           }
       }
@@ -78,7 +78,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     val taken = scala.collection.mutable.Set.from(in.local.assets.map(a => (a.sourceUid, a.name)))
     relabels.rows
       .filter(r =>
-        r.decision == BundlePlan.Decision.Insert && r.kind == BundleKind.Asset && !assetLine.contains(r.foreignUid)
+        r.decision == BundlePlan.Decision.Insert && r.kind == Bundle.Kind.Asset && !assetLine.contains(r.foreignUid)
       )
       .foreach { r =>
         val a = relabels.localized.assets.find(_.uid == r.uid).get

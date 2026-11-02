@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.{Period, PeriodInput}
 import com.histmersion.api.research.{
   Article,
@@ -15,6 +14,7 @@ import com.histmersion.api.research.{
   Backlink,
   CitedSource
 }
+import com.histmersion.domain.library.Source
 
 /** The pure write rules for articles (plan §5.2 stream 2.7): validation, full replace, and the selective merge that
   * makes `patch_article` safe to call without re-uploading the prose.
@@ -154,7 +154,7 @@ class ArticlesSuite extends munit.FunSuite:
         "# T\n\nprose",
         backs = List(Backlink("article", "bronze_age_collapse", Some("LBA Collapse"))),
         cited = List(
-          CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some(SourceStatus.Foundational)),
+          CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some(Source.Status.Foundational)),
           CitedSource("zz_ghost", None, None, None)
         )
       )

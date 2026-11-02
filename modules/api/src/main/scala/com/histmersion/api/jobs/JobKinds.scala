@@ -1,6 +1,6 @@
 package com.histmersion.api.jobs
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.values.JobKind
+import com.histmersion.util.jobs.Job
 
 /** Every kind of background job the server runs, as their owners registered them, in the order the jobs window lists
   * them, and the fields their jobs' detail may hold, in the order the detail shows them. A kind nobody registered is
@@ -9,9 +9,9 @@ import com.histmersion.values.JobKind
 final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetailField[?]] = Nil):
   private val byWire: Map[String, JobKindEntry] = entries.map(e => e.kind.value -> e).toMap
 
-  def kinds: List[JobKind] = entries.map(_.kind)
+  def kinds: List[Job.Kind] = entries.map(_.kind)
 
-  def get(kind: JobKind): Option[JobKindEntry] = byWire.get(kind.value)
+  def get(kind: Job.Kind): Option[JobKindEntry] = byWire.get(kind.value)
 
   /** The kind a stored or typed identifier names (case and surrounding space ignored). */
   def parse(wire: String): Option[JobKindEntry] = byWire.get(wire.trim.toLowerCase)

@@ -18,7 +18,6 @@ import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.values.PlaceKind
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
@@ -130,11 +129,17 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           PlaceInput(
-            Place("zqmc_site", "Zqmcenae", PlaceKind.Site, pt(140.0)),
+            Place("zqmc_site", "Zqmcenae", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
             List(PlaceName("Zqmcenae"), PlaceName("Zqmcenai"))
           ),
-          PlaceInput(Place("zqmc_thebai_a", "Zqmc Thebai", PlaceKind.Site, pt(141.0)), List(PlaceName("Zqmc Thebai"))),
-          PlaceInput(Place("zqmc_thebai_b", "Zqmc Thebai", PlaceKind.Site, pt(150.0)), List(PlaceName("Zqmc Thebai")))
+          PlaceInput(
+            Place("zqmc_thebai_a", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+            List(PlaceName("Zqmc Thebai"))
+          ),
+          PlaceInput(
+            Place("zqmc_thebai_b", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
+            List(PlaceName("Zqmc Thebai"))
+          )
         )
       )
       connect(ds):

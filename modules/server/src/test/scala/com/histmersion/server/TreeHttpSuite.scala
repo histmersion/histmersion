@@ -3,7 +3,6 @@ package com.histmersion.server
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName, PlaceRelation}
 
 /** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
@@ -49,9 +48,12 @@ class TreeHttpSuite extends munit.FunSuite:
   /** Two nested regions; the inner one carries the name the fixture's finding is labelled with. */
   private val places = Lpf.render(
     List(
-      PlaceInput(Place("zzg_world", "Zzg World", PlaceKind.Region), List(PlaceName("Zzg World"))),
       PlaceInput(
-        Place("zzg_land", "Zzg Land", PlaceKind.Region),
+        Place("zzg_world", "Zzg World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(PlaceName("Zzg World"))
+      ),
+      PlaceInput(
+        Place("zzg_land", "Zzg Land", com.histmersion.domain.catalogue.Place.Kind.Region),
         List(PlaceName("Zzg Land")),
         List(PlaceRelation("zzg_land", "zzg_world"))
       )

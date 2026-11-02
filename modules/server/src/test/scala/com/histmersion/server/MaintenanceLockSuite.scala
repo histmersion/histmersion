@@ -6,7 +6,6 @@ import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.values.PlaceKind
 import com.histmersion.db.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.backup.Backup
@@ -15,6 +14,7 @@ import com.histmersion.api.library.{IngestParams, NoteImport, SeedRequest, Sourc
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.research.{ArticleImport, ArticlePatch, ArticlePut}
+import com.histmersion.domain.catalogue.Place
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *
@@ -80,7 +80,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     refused("places/rebuild")(h.places.rebuild(Caller.Local))
     refused("places/names/add")(h.places.addName(Caller.Local, "zzlock_place", PlaceNameAdd("X")))
     refused("places/names/remove")(h.places.removeName(Caller.Local, "zzlock_place", PlaceNameRemove("X")))
-    refused("places/add")(h.places.add(Caller.Local, PlaceAdd("Zzlock", PlaceKind.Site, 0, 0, "fixture")))
+    refused("places/add")(h.places.add(Caller.Local, PlaceAdd("Zzlock", Place.Kind.Site, 0, 0, "fixture")))
 
   test("the ingest surface is refused"):
     val f = java.io.File.createTempFile("zzlock", ".pdf")

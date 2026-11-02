@@ -15,11 +15,12 @@ import com.histmersion.domain.MergePlanner.AttestationFix
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PairQuestions, PlanFolds, PlanRun}
 import com.histmersion.util.text.Anchor
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats attestations: they travel with the sources they quote. When a pair of sources that are one
   * keeps one OCR body, the attestations that point into the other are found again in it (re-anchored) — under each
@@ -45,8 +46,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   private def foreignAttsOf(here: UUID => Boolean, toLocal: UUID => UUID): Map[UUID, List[BundleAttestation]] =
     in.foreign.attestations.filterNot(t => here(toLocal(t.uid))).groupBy(_.sourceUid)
 
-  override def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] =
-    if kind == BundleKind.Attestation then attSource.get(foreign) else None
+  override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
+    if kind == Bundle.Kind.Attestation then attSource.get(foreign) else None
 
   override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] =
     val withAtts = (in.foreign.attestations ++ in.local.attestations).filter(anchored).map(_.sourceUid).toSet
@@ -88,8 +89,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
             case None =>
               val tag = alt.fold("")(DecisionKind.wireOf)
               val id = MergePlanner.issueId(
-                IssueKind.AttestationUnanchored,
-                BundleKind.Attestation,
+                Issue.Kind.AttestationUnanchored,
+                Bundle.Kind.Attestation,
                 List(t.uid),
                 List(l.uid),
                 if foreign then q.rightRev(t.uid) else q.localRev(t.uid),
@@ -105,9 +106,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
               q.ask(
                 MergeIssue(
                   id,
-                  IssueKind.AttestationUnanchored,
-                  IssueSeverity.Blocking,
-                  BundleKind.Attestation,
+                  Issue.Kind.AttestationUnanchored,
+                  Issue.Severity.Blocking,
+                  Bundle.Kind.Attestation,
                   s"$whose attestation on ${l.citekey}: its quote is not in the body the merge keeps" +
                     alt.fold("")(k => s" (if the body is ${DecisionKind.wireOf(k)})"),
                   if foreign then Some(MergeIssueDetail.side(l)) else Some(att),
@@ -143,7 +144,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       alt -> tries
     }.toMap
 
-  override def pairIssue(kind: IssueKind): Boolean = kind == IssueKind.AttestationUnanchored
+  override def pairIssue(kind: Issue.Kind): Boolean = kind == Issue.Kind.AttestationUnanchored
 
   // attestations: re-anchored into the body kept, or as decided; one already here is one
   override def foldPair(r: BundleSource, l: BundleSource, alt: Option[DecisionKind], f: PlanFolds): Unit =
@@ -153,7 +154,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       t.targetUid.map(u => f.foldedTo(u).getOrElse(f.toLocal(u)).toString).getOrElse(t.targetId)
     foreignAttsOf(f.here, f.toLocal).getOrElse(r.uid, Nil).foreach { t =>
       localAtts.find(x => x.targetType == t.targetType && targetKey(x) == targetKey(t) && x.quote == t.quote) match
-        case Some(x) => f.fold(t.uid, x.uid, BundleKind.Attestation); attLine(x.uid) = _ => x
+        case Some(x) => f.fold(t.uid, x.uid, Bundle.Kind.Attestation); attLine(x.uid) = _ => x
         case None    =>
           tries.find(a => a.foreign && a.att.uid == t.uid) match
             case None                                  => ()
@@ -189,9 +190,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def fixes: List[AttestationFix] = attFixes.result()
 
-  override def tombstones: List[(UUID, BundleKind, UUID)] =
+  override def tombstones: List[(UUID, Bundle.Kind, UUID)] =
     droppedUids.toList.flatMap(u =>
-      in.foreign.attestations.find(_.uid == u).map(t => (u, BundleKind.Attestation, t.origin))
+      in.foreign.attestations.find(_.uid == u).map(t => (u, Bundle.Kind.Attestation, t.origin))
     )
 
 object AttestationPlan:

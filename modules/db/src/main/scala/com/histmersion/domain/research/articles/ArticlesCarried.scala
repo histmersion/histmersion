@@ -18,11 +18,11 @@ import com.histmersion.util.data.exchange.{
   RowsIn
 }
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.{BundleArticle, BundleArticleAlias}
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
   * and their old slugs.
@@ -37,7 +37,7 @@ object ArticlesCarried:
 
   val articles: CarriedKind = CarriedKind.records[BundleArticle](
     Research,
-    BundleKind.Article,
+    Bundle.Kind.Article,
     TableName("articles"),
     List(
       rows(40)(ArticleBundleRepo.articleRenamesIn),
@@ -50,8 +50,8 @@ object ArticlesCarried:
     */
   val versions: CarriedKind = new CarriedKind:
     val owner: DataOwner = Research
-    val entry: BundleEntry = BundleEntry(BundleKind.ArticleVersion.file)
-    override val record: Option[BundleKind] = Some(BundleKind.ArticleVersion)
+    val entry: BundleEntry = BundleEntry(Bundle.Kind.ArticleVersion.file)
+    override val record: Option[Bundle.Kind] = Some(Bundle.Kind.ArticleVersion)
     override val table: Option[TableName] = Some(TableName("article_versions"))
 
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =

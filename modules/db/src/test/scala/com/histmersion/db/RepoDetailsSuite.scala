@@ -13,7 +13,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Finding, Source}
@@ -42,7 +41,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = Some(2020),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,

@@ -5,10 +5,10 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import io.circe.Encoder
+import com.histmersion.util.data.exchange.Bundle
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
   * they use and where their bytes are read from), the blobs it takes in, and its rows in.
@@ -23,7 +23,7 @@ trait CarriedKind:
   def entry: BundleEntry
 
   /** The kind of record its lines are, each stamped with its rev; `None` for a set its records own, which is not. */
-  def record: Option[BundleKind] = None
+  def record: Option[Bundle.Kind] = None
 
   /** The table its records are kept in: a tombstone of the kind deletes from it, a merge's fold touches it. */
   def table: Option[TableName] = None
@@ -43,7 +43,7 @@ trait CarriedKind:
 object CarriedKind:
 
   /** A kind of record whose lines use no blob: its lines stamped with their revs, `clock` the change each carries. */
-  def records[A: Encoder.AsObject](owner: DataOwner, kind: BundleKind, table: TableName, steps: List[RowsIn])(
+  def records[A: Encoder.AsObject](owner: DataOwner, kind: Bundle.Kind, table: TableName, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => String, set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
     Lines(
@@ -67,7 +67,7 @@ object CarriedKind:
   final private class Lines[A](
       val owner: DataOwner,
       val entry: BundleEntry,
-      override val record: Option[BundleKind],
+      override val record: Option[Bundle.Kind],
       override val table: Option[TableName],
       override val rowsIn: List[RowsIn],
       lines: BundleScope => DbCon ?=> List[A],

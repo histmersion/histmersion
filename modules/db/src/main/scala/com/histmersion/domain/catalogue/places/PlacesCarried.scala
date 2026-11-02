@@ -5,9 +5,9 @@ import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
-import com.histmersion.values.BundleKind
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the places: this collection's own places (renamed first, as the other side renamed them),
   * their old ids, and the site types refined from outside.
@@ -19,7 +19,7 @@ object PlacesCarried:
 
   val places: CarriedKind = CarriedKind.records[BundlePlace](
     Catalogue,
-    BundleKind.Place,
+    Bundle.Kind.Place,
     TableName("places"),
     List(rows(30)(PlaceBundleRepo.placeRenames), rows(31)(PlaceBundleRepo.placesIn))
   )(scope => PlaceBundleRepo.places(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.places).setTo(ls))

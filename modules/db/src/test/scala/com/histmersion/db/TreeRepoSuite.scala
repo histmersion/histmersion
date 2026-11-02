@@ -13,7 +13,6 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Tree.TreeRow
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
@@ -45,9 +44,12 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   // a fixture polygon drawn over Anatolia silently changes what `PlaceRepoSuite` (and any seeded
   // gazetteer) materialises. Keep new fixture geometry away from real places.
   private val batch = List(
-    PlaceInput(Place("zzt_world", "Zzt World", PlaceKind.Region), List(PlaceName("Zzt World"))),
     PlaceInput(
-      Place("zzt_land", "Zzt Land", PlaceKind.Region, Some(box(170, -50, 179, -40))),
+      Place("zzt_world", "Zzt World", com.histmersion.domain.catalogue.Place.Kind.Region),
+      List(PlaceName("Zzt World"))
+    ),
+    PlaceInput(
+      Place("zzt_land", "Zzt Land", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(170, -50, 179, -40))),
       List(PlaceName("Zzt Land")),
       List(PlaceRelation("zzt_land", "zzt_world"))
     ),
@@ -55,7 +57,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       Place(
         "zzt_north",
         "Zzt North",
-        PlaceKind.Polity,
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(box(171, -48, 175, -44)),
         Some(Period(-1650, -1180)),
         Some("test fixture")
@@ -67,7 +69,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       Place(
         "zzt_south",
         "Zzt South",
-        PlaceKind.Polity,
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(box(174, -47, 178, -44)),
         Some(Period(-1500, -1300)),
         Some("test fixture")
@@ -86,7 +88,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2021),
     venue = None,
-    status = SourceStatus.Current,
+    status = com.histmersion.domain.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = List(Tag),
@@ -197,7 +199,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     assert(ns.exists(_.id == "zzt_world"), "the ancestor nobody is materialised into is still needed")
     assertEquals(ns.find(_.id == "zzt_north").flatMap(_.period), Some(Period(-1650, -1180)))
     assertEquals(ns.find(_.id == "zzt_world").flatMap(_.period), None)
-    assertEquals(ns.find(_.id == "zzt_land").map(_.kind), Some(PlaceKind.Region))
+    assertEquals(ns.find(_.id == "zzt_land").map(_.kind), Some(com.histmersion.domain.catalogue.Place.Kind.Region))
     assert(rels.exists(r => r.childId == "zzt_north" && r.parentId == "zzt_land"))
     assertEquals(rels.find(_.childId == "zzt_south").flatMap(_.period), Some(Period(-1500, -1300)))
     assert(rels.forall(_.kind == PlaceRelation.PartOf))

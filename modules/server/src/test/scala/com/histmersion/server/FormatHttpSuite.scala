@@ -6,12 +6,12 @@ import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.{BundleKind, PlaceKind}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName}
 import com.histmersion.api.checks.{FormatField, FormatReport, FormatRule, Lint}
 import com.histmersion.api.library.SourceWithFindings
 import com.histmersion.api.research.ArticleView
+import com.histmersion.util.data.exchange.Bundle
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,
@@ -193,14 +193,19 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val geo = Lpf.render(
         List(
           PlaceInput(
-            Place("zz_fmt_place_a", "Fmt A", PlaceKind.Site, Some("""{"type":"Point","coordinates":[30.0,39.0]}""")),
+            Place(
+              "zz_fmt_place_a",
+              "Fmt A",
+              com.histmersion.domain.catalogue.Place.Kind.Site,
+              Some("""{"type":"Point","coordinates":[30.0,39.0]}""")
+            ),
             List(PlaceName("Fmt A"))
           ),
           PlaceInput(
             Place(
               "zz_fmt_place_other",
               "Fmt Other",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[31.0,39.0]}""")
             ),
             List(PlaceName("Fmt Other"))
@@ -211,7 +216,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")
       assertEquals(rs, 200, rb)
-      assertEquals(decode[LabelRenamed](rb), LabelRenamed(BundleKind.Place, "zz_fmt_place_a", "zz_fmt_place_b"))
+      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, "zz_fmt_place_a", "zz_fmt_place_b"))
       val (gs, gb) = get(s"$url/api/places/zz_fmt_place_a")
       assertEquals(gs, 200, gb)
       assert(gb.contains("\"zz_fmt_place_b\""), gb)

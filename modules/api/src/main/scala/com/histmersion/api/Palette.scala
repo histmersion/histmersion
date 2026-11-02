@@ -20,7 +20,7 @@ object Palette:
   val mediaKinds: List[String] = List("figure", "photo", "map", "plan", "scan")
   val confidences: List[String] = List("high", "medium", "low", "contested")
 
-  val goalStages: List[String] = com.histmersion.values.GoalStatus.all
+  val goalStages: List[String] = com.histmersion.domain.automation.Goal.Status.all
 
   val rampStops: Int = 5
 

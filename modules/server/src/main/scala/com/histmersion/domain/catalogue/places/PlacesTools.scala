@@ -6,7 +6,6 @@ import chimp.server.*
 import com.histmersion.api.{ApiError, StrictJson}
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
-import com.histmersion.values.PlaceKind
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
@@ -19,6 +18,7 @@ import com.histmersion.api.catalogue.{
   PlaceOverrideSet,
   PlaceRemoveIn
 }
+import com.histmersion.domain.catalogue.Place
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -61,7 +61,7 @@ object PlacesTools:
       .derived[PlaceOverrideInput]
       .schema
       .modify(_.placeId)(_.description("The place (an id from `places`); required to set or reset"))
-      .modify(_.kind)(_.description(s"The kind it is: one of ${PlaceKind.all.mkString(", ")}"))
+      .modify(_.kind)(_.description(s"The kind it is: one of ${Place.Kind.all.mkString(", ")}"))
       .modify(_.periodStart)(_.description("Signed year it begins (BCE negative)"))
       .modify(_.periodEnd)(_.description("Signed year it ends (BCE negative)"))
       .modify(_.reason)(

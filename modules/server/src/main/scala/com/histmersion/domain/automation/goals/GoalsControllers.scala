@@ -8,7 +8,7 @@ import com.histmersion.api.automation.GoalPlans.{GoalView, LinkKind, Plan}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.values.BundleKind
+import com.histmersion.util.data.exchange.Bundle
 
 /** The goals' operations as REST, MCP and the CLI reach them: list, read, put, patch, delete and rename a goal, and the
   * `meta/GOALS.md` export. An old slug (V053) answers as the goal it was renamed to, and a write to one goes there
@@ -48,9 +48,9 @@ final class GoalsControllers(
     maintenance.guard("rename_goal"):
       val from = current(slug)
       for
-        to <- LabelRenames.validate(BundleKind.Goal, from, req.to)
+        to <- LabelRenames.validate(Bundle.Kind.Goal, from, req.to)
         _ <- goals.rename(from, to)
-      yield LabelRenamed(BundleKind.Goal, from, to)
+      yield LabelRenamed(Bundle.Kind.Goal, from, to)
 
   /** `meta/GOALS.md`: every goal as its view (links, schedules, approved plan, run cap — the same parts
     * `GET /api/goals/{slug}/view` returns), plus the state of each linked work-list item so the file can show it done

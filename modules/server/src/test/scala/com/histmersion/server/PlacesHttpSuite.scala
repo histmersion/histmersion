@@ -3,7 +3,6 @@ package com.histmersion.server
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{Lpf, Period, Place, PlaceInput, PlaceName, PlaceRelation}
 import com.histmersion.api.instance.{About, Version}
 import com.histmersion.api.library.CorrespondingSource
@@ -43,12 +42,15 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     */
   private val doc = Lpf.render(
     List(
-      PlaceInput(Place("zzh_world", "Zzh World", PlaceKind.Region), List(PlaceName("Zzh World"))),
+      PlaceInput(
+        Place("zzh_world", "Zzh World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(PlaceName("Zzh World"))
+      ),
       PlaceInput(
         Place(
           "zzh_land",
           "Zzh Land",
-          PlaceKind.Region,
+          com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(
             """{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""
           ),
@@ -61,7 +63,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         Place(
           "zzh_polity",
           "Zzh Polity",
-          PlaceKind.Polity,
+          com.histmersion.domain.catalogue.Place.Kind.Polity,
           Some("""{"type":"Point","coordinates":[105.0,15.0]}"""),
           Some(Period(-1400, -1200))
         ),
@@ -145,12 +147,15 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     */
   private val countsDoc = Lpf.render(
     List(
-      PlaceInput(Place("zzc_world", "Zzc World", PlaceKind.Region), List(PlaceName("Zzc World"))),
+      PlaceInput(
+        Place("zzc_world", "Zzc World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(PlaceName("Zzc World"))
+      ),
       PlaceInput(
         Place(
           "zzc_land",
           "Zzc Land",
-          PlaceKind.Region,
+          com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(
             """{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}"""
           )
@@ -264,7 +269,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       val lake = Lpf.render(
         List(
           PlaceInput(
-            Place("zzn_lake", "Zzn Sea", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")),
+            Place(
+              "zzn_lake",
+              "Zzn Sea",
+              com.histmersion.domain.catalogue.Place.Kind.Feature,
+              Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")
+            ),
             List(PlaceName("Zzn Sea"))
           )
         )
@@ -354,7 +364,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               "zzo_regio",
               "Zzo Regio XII",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
             ),
             List(PlaceName("Zzo Regio XII"))
@@ -422,7 +432,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               "zzo_dup",
               "Withdrawn: Zzo Regio XII",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
             ),
             List(PlaceName("Withdrawn: Zzo Regio XII"))
@@ -431,7 +441,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               "zzo_road",
               "Withdrawn: Untitled",
-              PlaceKind.Site,
+              com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")
             ),
             List(PlaceName("Withdrawn: Untitled"))

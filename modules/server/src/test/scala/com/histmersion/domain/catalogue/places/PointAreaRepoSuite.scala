@@ -10,7 +10,6 @@ import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PointAreas.Dating
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Gazetteer, Place, PlaceInput, PlaceName}
@@ -60,11 +59,21 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       ds,
       List(
         PlaceInput(
-          Place(Site, "Zzpa Site", PlaceKind.Site, Some("""{"type":"Point","coordinates":[150.0,-60.0]}""")),
+          Place(
+            Site,
+            "Zzpa Site",
+            com.histmersion.domain.catalogue.Place.Kind.Site,
+            Some("""{"type":"Point","coordinates":[150.0,-60.0]}""")
+          ),
           List(PlaceName("Zzpa Site"))
         ),
         PlaceInput(
-          Place(Thracia, "Zzpa Thracia", PlaceKind.Region, Some("""{"type":"Point","coordinates":[150.8,-60.2]}""")),
+          Place(
+            Thracia,
+            "Zzpa Thracia",
+            com.histmersion.domain.catalogue.Place.Kind.Region,
+            Some("""{"type":"Point","coordinates":[150.8,-60.2]}""")
+          ),
           List(PlaceName("Zzpa Thracia"), PlaceName("Zzpa Thrace"))
         )
       )
@@ -75,15 +84,52 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
           sql"""INSERT INTO places (id, label, kind, geom, period, dataset, import_source, import_ref, import_version)
                       VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), $period::int8range, 'seed', $src,
                               $src || ':' || $id, 'v1')""".update.run()
-      imported(Region, "Zzpa Region", PlaceKind.Region, "POINT(150 -60)", "wikidata")
-      imported(Polity, "Zzpa Kingdom", PlaceKind.Polity, "POINT(150.5 -60)", "wikidata", "[-900,-699)")
-      imported(Pinned, "Zzpa Pinned", PlaceKind.Region, "POINT(151 -60)", "wikidata")
-      imported(Shaped, "Zzpa Shaped", PlaceKind.Region, "POLYGON((150 -61,151 -61,151 -60.5,150 -61))", "wikidata")
-      imported(GnArea, "Zzpa Gn Area", PlaceKind.Region, "POINT(151.5 -60)", "geonames")
-      imported(GnSite, "Zzpa Gn Site", PlaceKind.Site, "POINT(152 -60)", "geonames")
-      imported(Thrace, "Zzpa Thrace", PlaceKind.Region, "POINT(151.2 -60.2)", "wikidata")
-      imported(Eastern, "Eastern Zzpa Thracia", PlaceKind.Region, "POINT(151.4 -60.2)", "geonames")
-      imported(Curated, "Zzpa Curated", PlaceKind.Region, "POINT(152.5 -60)", "wikidata")
+      imported(Region, "Zzpa Region", com.histmersion.domain.catalogue.Place.Kind.Region, "POINT(150 -60)", "wikidata")
+      imported(
+        Polity,
+        "Zzpa Kingdom",
+        com.histmersion.domain.catalogue.Place.Kind.Polity,
+        "POINT(150.5 -60)",
+        "wikidata",
+        "[-900,-699)"
+      )
+      imported(Pinned, "Zzpa Pinned", com.histmersion.domain.catalogue.Place.Kind.Region, "POINT(151 -60)", "wikidata")
+      imported(
+        Shaped,
+        "Zzpa Shaped",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        "POLYGON((150 -61,151 -61,151 -60.5,150 -61))",
+        "wikidata"
+      )
+      imported(
+        GnArea,
+        "Zzpa Gn Area",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        "POINT(151.5 -60)",
+        "geonames"
+      )
+      imported(GnSite, "Zzpa Gn Site", com.histmersion.domain.catalogue.Place.Kind.Site, "POINT(152 -60)", "geonames")
+      imported(
+        Thrace,
+        "Zzpa Thrace",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        "POINT(151.2 -60.2)",
+        "wikidata"
+      )
+      imported(
+        Eastern,
+        "Eastern Zzpa Thracia",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        "POINT(151.4 -60.2)",
+        "geonames"
+      )
+      imported(
+        Curated,
+        "Zzpa Curated",
+        com.histmersion.domain.catalogue.Place.Kind.Region,
+        "POINT(152.5 -60)",
+        "wikidata"
+      )
       val _ = sql"""INSERT INTO place_overrides (place_id, kind, reason, source_kind, source_period)
                     VALUES ($Curated, 'region', 'a person decided', 'region', '(,)'::int8range)""".update.run()
       val _ = sql"""INSERT INTO place_names (place_id, name, lang, import_source, import_ref, import_version)
@@ -107,7 +153,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         doi = None,
         year = Some(2026),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,

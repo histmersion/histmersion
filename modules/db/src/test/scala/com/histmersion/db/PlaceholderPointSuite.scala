@@ -9,7 +9,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.{Migrate, Sql}
 import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName}
 import com.histmersion.api.library.{Finding, Source}
@@ -70,18 +69,42 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(Hellas, "Zzph Hellas", PlaceKind.Region, box(150, -44, 154, -40))),
-        in(Place(Balkans, "Zzph Balkans", PlaceKind.Region, box(149, -46, 156, -39))),
-        in(Place(Pelop, "Zzph Peloponnesos", PlaceKind.Polity, box(151.0, -43.5, 152.8, -42.2))),
-        in(Place(Mykenai, "Zzph Mykenai Realm", PlaceKind.Polity, box(150, -44, 152, -41), Some(Period(-1600, -1100)))),
-        in(Place(Tegea, "Zzph Tegea", PlaceKind.Site, pt(152.52, -42.53))),
-        in(Place(Mantinea, "Zzph Mantinea", PlaceKind.Site, pt(152.45, -42.45)))
+        in(Place(Hellas, "Zzph Hellas", com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
+        in(Place(Balkans, "Zzph Balkans", com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
+        in(
+          Place(
+            Pelop,
+            "Zzph Peloponnesos",
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
+            box(151.0, -43.5, 152.8, -42.2)
+          )
+        ),
+        in(
+          Place(
+            Mykenai,
+            "Zzph Mykenai Realm",
+            com.histmersion.domain.catalogue.Place.Kind.Polity,
+            box(150, -44, 152, -41),
+            Some(Period(-1600, -1100))
+          )
+        ),
+        in(Place(Tegea, "Zzph Tegea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
+        in(Place(Mantinea, "Zzph Mantinea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
       )
     )
     val r = rep
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(in(Place(NearRep, "Zzph Nearrep", PlaceKind.Site, pt(r.lon + 0.02, r.lat + 0.01))))
+      List(
+        in(
+          Place(
+            NearRep,
+            "Zzph Nearrep",
+            com.histmersion.domain.catalogue.Place.Kind.Site,
+            pt(r.lon + 0.02, r.lat + 0.01)
+          )
+        )
+      )
     )
     def f(n: Int, region: Option[String], at: Option[GeoPoint], period: Option[Period] = None) =
       Finding(s"zzph_src#$n", "zzph_src", s"claim $n", region, at, period, None, Nil, None)
@@ -94,7 +117,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         doi = None,
         year = Some(2026),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -170,7 +193,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         PlaceInput(
-          Place("zzph_tribe", "Zzph Tribe", PlaceKind.People, pt(153.31, -41.17)),
+          Place("zzph_tribe", "Zzph Tribe", com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
           List(PlaceName("Zzph Tribe"))
         )
       )

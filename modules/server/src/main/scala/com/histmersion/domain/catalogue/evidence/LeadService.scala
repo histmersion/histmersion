@@ -107,8 +107,8 @@ object LeadService:
           recs.flatMap(_.vei).maxOption,
           recs.flatMap(_.magnitude).maxOption,
           0,
-          cs.count(_.status == com.histmersion.values.EventLinkStatus.Proposed),
-          cs.count(_.status == com.histmersion.values.EventLinkStatus.Confirmed)
+          cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Proposed),
+          cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Confirmed)
         )
       }
 

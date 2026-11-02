@@ -15,7 +15,6 @@ import io.circe.syntax.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
-import com.histmersion.values.IssueKind
 import com.histmersion.domain.library.{Confidence, EditionsPolicy}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{
@@ -28,6 +27,7 @@ import com.histmersion.api.exchange.{
   MergeResolution,
   MergeResolutions
 }
+import com.histmersion.util.data.exchange.Issue
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the
   * library's rules of the plan left the planner): the crafted fixture under no resolutions, under a set that answers
@@ -88,7 +88,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   private def resolve(pairs: (String, String)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
 
-  private def idOf(p: MergePlan, kind: IssueKind, right: String): String =
+  private def idOf(p: MergePlan, kind: Issue.Kind, right: String): String =
     p.issues
       .find(i => i.kind == kind && i.right.exists(_.label == right))
       .getOrElse(fail(s"no $kind on $right in\n${p.issues.mkString("\n")}"))
@@ -447,28 +447,28 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val fixture = input()
     val first = scenario("the fixture, nothing decided", fixture, sketches)(MergeResolutions()).plan
     val answered = resolve(
-      idOf(first, IssueKind.SameWork, "page2024_history") -> "map:page1959_history",
-      idOf(first, IssueKind.CitekeyCollision, "smith2019_ritual") -> "rename-right:smith2019_ritualkingship",
-      idOf(first, IssueKind.DoiDiffers, "kuhrt1995_near") -> "keep-right",
-      idOf(first, IssueKind.BodyDiffers, "kuhrt1995_near") -> "keep-right",
-      idOf(first, IssueKind.NotesDiffers, "guterbock1997_perspectives") -> "concat",
-      idOf(first, IssueKind.StatusDiffers, "bryce2005_kingdom") -> "keep-right",
-      idOf(first, IssueKind.AliasConflict, "harrison1903_prolegomena") -> "keep-left",
-      idOf(first, IssueKind.BodyDiffers, "olsen2015_penelope") -> "keep-right"
+      idOf(first, Issue.Kind.SameWork, "page2024_history") -> "map:page1959_history",
+      idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual") -> "rename-right:smith2019_ritualkingship",
+      idOf(first, Issue.Kind.DoiDiffers, "kuhrt1995_near") -> "keep-right",
+      idOf(first, Issue.Kind.BodyDiffers, "kuhrt1995_near") -> "keep-right",
+      idOf(first, Issue.Kind.NotesDiffers, "guterbock1997_perspectives") -> "concat",
+      idOf(first, Issue.Kind.StatusDiffers, "bryce2005_kingdom") -> "keep-right",
+      idOf(first, Issue.Kind.AliasConflict, "harrison1903_prolegomena") -> "keep-left",
+      idOf(first, Issue.Kind.BodyDiffers, "olsen2015_penelope") -> "keep-right"
     )
     val mapped = scenario("the fixture, every question answered", fixture, sketches)(answered).plan
-    val year = mapped.issues.find(_.kind == IssueKind.YearDiffers).map(_.id).toList
+    val year = mapped.issues.find(_.kind == Issue.Kind.YearDiffers).map(_.id).toList
     scenario("the fixture, every question answered and the year kept right", fixture, sketches)(
       MergeResolutions(answered.resolve ++ year.map(MergeResolution(_, "keep-right")))
     )
     scenario("the fixture, the gate answered both, the collision renamed left", fixture, sketches)(
       resolve(
-        idOf(first, IssueKind.SameWork, "page2024_history") -> "both",
-        idOf(first, IssueKind.CitekeyCollision, "smith2019_ritual") -> "rename-left:smith2019_ritual_aegean"
+        idOf(first, Issue.Kind.SameWork, "page2024_history") -> "both",
+        idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual") -> "rename-left:smith2019_ritual_aegean"
       )
     )
-    val collision = idOf(first, IssueKind.CitekeyCollision, "smith2019_ritual")
-    val gate = idOf(first, IssueKind.SameWork, "page2024_history")
+    val collision = idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual")
+    val gate = idOf(first, Issue.Kind.SameWork, "page2024_history")
     scenario("the fixture, an invalid citekey, a bad map and a stale id", fixture, sketches)(
       resolve(collision -> "rename-right:Smith-2019", gate -> "map:nonsense", "S-00000000" -> "keep-left")
     )
@@ -488,13 +488,13 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     // findings
     val fs = withFindings
     val f0 = scenario("findings, nothing decided", fs, sketches)(MergeResolutions()).plan
-    val near = f0.issues.filter(_.kind == IssueKind.FindingNearDuplicate).map(_.id)
+    val near = f0.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the near duplicates merged, the gate mapped, the collision renamed", fs, sketches)(
       MergeResolutions(
         near.map(MergeResolution(_, "merge")) ++ List(
-          MergeResolution(idOf(f0, IssueKind.SameWork, "page2024_history"), "map:page1959_history"),
+          MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "map:page1959_history"),
           MergeResolution(
-            idOf(f0, IssueKind.CitekeyCollision, "smith2019_ritual"),
+            idOf(f0, Issue.Kind.CitekeyCollision, "smith2019_ritual"),
             "rename-right:smith2019_ritualkingship"
           )
         )
@@ -503,18 +503,18 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val f1 = plan(
       fs,
       sketches,
-      resolve(idOf(f0, IssueKind.SameWork, "page2024_history") -> "map:page1959_history")
+      resolve(idOf(f0, Issue.Kind.SameWork, "page2024_history") -> "map:page1959_history")
     ).plan
-    val nearMapped = f1.issues.filter(_.kind == IssueKind.FindingNearDuplicate).map(_.id)
+    val nearMapped = f1.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the gate mapped, every near duplicate merged", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, IssueKind.SameWork, "page2024_history"), "map:page1959_history") ::
+        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "map:page1959_history") ::
           nearMapped.map(MergeResolution(_, "merge"))
       )
     )
     scenario("findings, the gate both, the near duplicates kept both", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, IssueKind.SameWork, "page2024_history"), "both") ::
+        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "both") ::
           near.map(MergeResolution(_, "both"))
       )
     )
@@ -525,13 +525,13 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     scenario("the score's edge cases, every gate mapped to ours", e, edgeSketches)(
       MergeResolutions(
         e0.issues
-          .filter(_.kind == IssueKind.SameWork)
+          .filter(_.kind == Issue.Kind.SameWork)
           .flatMap(i => i.left.map(l => MergeResolution(i.id, s"map:${l.label}")))
       )
     )
     scenario("the score's edge cases, every gate both, editions separate", e, edgeSketches)(
       MergeResolutions(
-        e0.issues.filter(_.kind == IssueKind.SameWork).map(i => MergeResolution(i.id, "both")),
+        e0.issues.filter(_.kind == Issue.Kind.SameWork).map(i => MergeResolution(i.id, "both")),
         MergePolicy(Some(EditionsPolicy.Separate))
       )
     )

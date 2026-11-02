@@ -1,6 +1,5 @@
 package com.histmersion.api.catalogue
 import io.circe.Json
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.{ApiError, Write}
 import com.histmersion.api.given
 
@@ -37,9 +36,9 @@ object PlaceEdits:
     for
       _ <- Either.cond(label.nonEmpty, (), invalid("the label is empty"))
       _ <- Either.cond(
-        PlaceKind.all.contains(kind),
+        com.histmersion.domain.catalogue.Place.Kind.all.contains(kind),
         (),
-        invalid(s"kind '$kind' is not one of ${PlaceKind.all.mkString(", ")}")
+        invalid(s"kind '$kind' is not one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}")
       )
       _ <- Either.cond(id != LocalPrefix, (), invalid(s"'$label' gives no id — pass one (`id`)"))
       _ <- Either.cond(

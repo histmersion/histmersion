@@ -4,11 +4,12 @@ import com.histmersion.api.exchange.{BundleSource, IssueCondition, IssueDetail, 
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
-import com.histmersion.values.{BundleKind, IssueKind}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.EditionsPolicy
 
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** One plan's run of a kind's rules ([[PlanRules]]): what the planner asks of the kind at each stage, in the planner's
   * order. A run may keep what it learns between the stages; every member defaults to "nothing of that kind".
@@ -72,7 +73,7 @@ trait PlanRun:
   def renamed(source: UUID, citekey: String): Unit = ()
 
   /** The bundle's source that a line of this kind belongs to (its fate decides whether the line is held). */
-  def ownerSource(foreign: UUID, kind: BundleKind): Option[UUID] = None
+  def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = None
 
   /** The bodies of the sources here (by sha256) the plan reads for this kind: of the pairs whose bodies differ. */
   def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] = Set.empty
@@ -89,7 +90,7 @@ trait PlanRun:
   ): Unit = ()
 
   /** The two records of a row question side by side, for a kind whose screen shows more than labels. */
-  def rowDetail(kind: BundleKind, u: UUID, localized: BundleEntities): Option[IssueDetail] = None
+  def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] = None
 
   /** A row changed on both sides that the kind merges by itself; `localized` is the bundle's lines in this collection's
     * terms.
@@ -106,7 +107,7 @@ trait PlanRun:
   def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] = None
 
   /** An issue of a pair: its decision is carried out with the pair's fold. */
-  def pairIssue(kind: IssueKind): Boolean = false
+  def pairIssue(kind: Issue.Kind): Boolean = false
 
   /** What a pair that folds does with the kind's lines before every kind's [[foldPair]]: `keepsBundleBody` is whether
     * the folded source takes the bundle's body.
@@ -140,7 +141,7 @@ trait PlanRun:
   def fixes: List[MergePlanner.AttestationFix] = Nil
 
   /** The tombstones of the records left out: uid, kind, origin. */
-  def tombstones: List[(UUID, BundleKind, UUID)] = Nil
+  def tombstones: List[(UUID, Bundle.Kind, UUID)] = Nil
 
   /** What the merge renames in a body it takes from the bundle: source uid → (old name, new name) of its files. */
   def bodyRenames: Map[UUID, List[(String, String)]] = Map.empty

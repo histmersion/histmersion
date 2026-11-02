@@ -1,6 +1,5 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.catalogue.Period
-import com.histmersion.values.PlaceKind
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
 final case class RegionNode(
@@ -15,7 +14,11 @@ final case class RegionNode(
 
 object RegionNode:
 
-  val RootKinds: Set[String] = Set(PlaceKind.Region, PlaceKind.Polity, "continent")
+  val RootKinds: Set[String] = Set(
+    com.histmersion.domain.catalogue.Place.Kind.Region,
+    com.histmersion.domain.catalogue.Place.Kind.Polity,
+    "continent"
+  )
 
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").

@@ -20,12 +20,12 @@ import io.circe.syntax.*
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.values.EdgeKind
 import com.histmersion.db.*
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
 import com.histmersion.api.research.{ArticleEdits, ArticleFilter, ArticlePatch, ArticlePut}
+import com.histmersion.domain.library.Edge
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an
@@ -1508,12 +1508,12 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
         .isRight
     )
     assert(
       h.library.sources
-        .patch(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Challenges))))))
+        .patch(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Challenges))))))
         .isRight
     )
 
@@ -1710,7 +1710,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def refuted(h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
         .isRight
     )
 

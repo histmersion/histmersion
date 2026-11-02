@@ -1,11 +1,11 @@
 package com.histmersion.util.jobs
 
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.values.JobKind
+import com.histmersion.util.jobs.Job
 
 class JobControlRulesSuite extends munit.FunSuite:
 
-  private def job(kind: JobKind, status: String) = JobInfo("j1", kind.value, status, None)
+  private def job(kind: Job.Kind, status: String) = JobInfo("j1", kind.value, status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>

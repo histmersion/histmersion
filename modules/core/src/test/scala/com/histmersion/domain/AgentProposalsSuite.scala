@@ -6,8 +6,9 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.AgentProposals.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode}
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.api.library.{EdgeInput, MetadataPatch, SourcePatch}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 class AgentProposalsSuite extends munit.FunSuite:
 
@@ -30,8 +31,8 @@ class AgentProposalsSuite extends munit.FunSuite:
         "carried ten tons of copper and one ton of tin"
       )
     ).toOption.get
-    assertEquals((p.kind, p.status), (ApprovalKind.StatusChange, Some(SourceStatus.Contested)))
-    assertEquals(p.patch, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
+    assertEquals((p.kind, p.status), (ApprovalKind.StatusChange, Some(Source.Status.Contested)))
+    assertEquals(p.patch, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
 
   test("an edge: the quote may come from either end; references and self-edges are refused"):
     val p = check(
@@ -45,7 +46,7 @@ class AgentProposalsSuite extends munit.FunSuite:
         "the tin of the Uluburun cargo came from Central Asia"
       )
     ).toOption.get
-    assertEquals(p.patch.edges.map(_.add), Some(List(EdgeInput("jones2021_tin", EdgeKind.SupersededBy))))
+    assertEquals(p.patch.edges.map(_.add), Some(List(EdgeInput("jones2021_tin", Edge.Kind.SupersededBy))))
     assert(p.describe.contains("superseded_by"))
     assert(
       check(
@@ -89,15 +90,15 @@ class AgentProposalsSuite extends munit.FunSuite:
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):
-    val current = Proposal(ApprovalKind.StatusChange, "a", status = Some(SourceStatus.Current))
-    val debunk = Proposal(ApprovalKind.StatusChange, "a", status = Some(SourceStatus.Debunked))
-    val edge = Proposal(ApprovalKind.Edge, "a", edgeKind = Some(EdgeKind.Refutes), target = Some("b"))
+    val current = Proposal(ApprovalKind.StatusChange, "a", status = Some(Source.Status.Current))
+    val debunk = Proposal(ApprovalKind.StatusChange, "a", status = Some(Source.Status.Debunked))
+    val edge = Proposal(ApprovalKind.Edge, "a", edgeKind = Some(Edge.Kind.Refutes), target = Some("b"))
     import ApprovalMode.*
-    assertEquals(route(current, Some(SourceStatus.Unassessed), Manual, Manual), Route.Apply)
-    assertEquals(route(current, Some(SourceStatus.Contested), Manual, Manual), Route.Ask)
-    assertEquals(route(debunk, Some(SourceStatus.Unassessed), Manual, Manual), Route.Ask)
-    assertEquals(route(debunk, Some(SourceStatus.Unassessed), Auto, Manual), Route.Apply)
-    assert(route(debunk, Some(SourceStatus.Debunked), Manual, Manual).isInstanceOf[Route.Skip])
+    assertEquals(route(current, Some(Source.Status.Unassessed), Manual, Manual), Route.Apply)
+    assertEquals(route(current, Some(Source.Status.Contested), Manual, Manual), Route.Ask)
+    assertEquals(route(debunk, Some(Source.Status.Unassessed), Manual, Manual), Route.Ask)
+    assertEquals(route(debunk, Some(Source.Status.Unassessed), Auto, Manual), Route.Apply)
+    assert(route(debunk, Some(Source.Status.Debunked), Manual, Manual).isInstanceOf[Route.Skip])
     assertEquals(route(edge, None, Auto, Manual), Route.Ask)
     assertEquals(route(edge, None, Manual, Auto), Route.Apply)
 

@@ -60,5 +60,5 @@ class DataContributionsSuite extends DbSuite:
     assertEquals(carried.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.BundleFiles.all)
     assertEquals(
       Deps.data.mergeRules.map(_.kind).sortBy(_.ordinal),
-      com.histmersion.values.BundleKind.values.toList
+      com.histmersion.util.data.exchange.Bundle.Kind.values.toList
     )

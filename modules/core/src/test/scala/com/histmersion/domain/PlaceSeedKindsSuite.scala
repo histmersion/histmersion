@@ -5,7 +5,7 @@ import com.histmersion.domain.catalogue.places.PlaceReview
 import com.histmersion.api.catalogue.{Lpf, PlaceInput}
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.PlaceKind
+import com.histmersion.domain.catalogue.Place
 
 /** The committed Pleiades seed and `lint --rule place-kind` agree (2026-10-09): `db/places/build.py` derives every kind
   * with the same type rules as [[PlaceReview]], so the lint proposes no change to a freshly seeded place — a re-seed
@@ -20,7 +20,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .find(d => Files.isDirectory(d.resolve("db/places")))
       .getOrElse(fail("no db/places above the working directory"))
     Lpf
-      .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), PlaceKind.Region)
+      .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), Place.Kind.Region)
       .fold(e => fail(e), identity)
 
   private def prop(in: PlaceInput, key: String): List[String] =
@@ -49,9 +49,9 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
 
   test("the seed carries the reclassified kinds and none of Pleiades' withdrawn duplicates"):
     val byId = pleiades.map(in => in.place.id -> in.place).toMap
-    assertEquals(byId.get("pleiades_330976685").map(_.kind), Some(PlaceKind.People), "Aiantis")
-    assertEquals(byId.get("pleiades_992074").map(_.kind), Some(PlaceKind.Polity), "Viennensis (diocese)")
-    assertEquals(byId.get("pleiades_580062").map(_.kind), Some(PlaceKind.Site), "Peiraieus")
-    assertEquals(byId.get("pleiades_307963010").map(_.kind), Some(PlaceKind.Region), "Regio I (Porta Capena)")
+    assertEquals(byId.get("pleiades_330976685").map(_.kind), Some(Place.Kind.People), "Aiantis")
+    assertEquals(byId.get("pleiades_992074").map(_.kind), Some(Place.Kind.Polity), "Viennensis (diocese)")
+    assertEquals(byId.get("pleiades_580062").map(_.kind), Some(Place.Kind.Site), "Peiraieus")
+    assertEquals(byId.get("pleiades_307963010").map(_.kind), Some(Place.Kind.Region), "Regio I (Porta Capena)")
     assert(!byId.contains("pleiades_981515"), "Withdrawn (duplicate): Creta et Cyrene")
     assert(pleiades.forall(in => PlaceReview.duplicateOf(in.place.label).isEmpty))

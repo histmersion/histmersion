@@ -13,13 +13,14 @@ import com.histmersion.api.{Api, Markdown}
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.api.backup.{Backup, RestoreRequest}
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.instance.{AboutMarkdown, Version}
 import com.histmersion.api.library.{FacetField, PassagesMarkdown, SeedRequest, SeedResult, SourceSection}
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
@@ -228,11 +229,11 @@ object Cli:
       Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
       Opts.option[String]("summary", "New summary").orNone,
       Opts
-        .option[String]("status", SourceStatus.values.map(_.wire).mkString("|"))
+        .option[String]("status", Source.Status.values.map(_.wire).mkString("|"))
         .mapValidated(v =>
-          SourceStatus.values
+          Source.Status.values
             .find(_.wire == v.trim.toLowerCase)
-            .toValidNel(s"unknown status '$v' (one of: ${SourceStatus.values.map(_.wire).mkString(", ")})")
+            .toValidNel(s"unknown status '$v' (one of: ${Source.Status.values.map(_.wire).mkString(", ")})")
         )
         .orNone,
       Opts.option[String]("title", "New title").orNone,
@@ -249,7 +250,7 @@ object Cli:
       Opts
         .options[String](
           "add-edge",
-          s"A typed edge FROM this source, <kind>:<citekey>, e.g. challenges:lord1968_oralpoet (repeatable; kinds: ${EdgeKind.allWire.mkString(", ")})"
+          s"A typed edge FROM this source, <kind>:<citekey>, e.g. challenges:lord1968_oralpoet (repeatable; kinds: ${Edge.Kind.allWire.mkString(", ")})"
         )
         .orEmpty,
       Opts.options[String]("remove-edge", "An edge FROM this source to drop, <kind>:<citekey> (repeatable)").orEmpty,

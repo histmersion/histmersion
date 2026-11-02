@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 
@@ -10,7 +9,7 @@ final case class Source(
     doi: Option[String],
     year: Option[Int],
     venue: Option[String],
-    status: SourceStatus,
+    status: com.histmersion.domain.library.Source.Status,
     topics: List[String],
     regions: List[String],
     tags: List[String],

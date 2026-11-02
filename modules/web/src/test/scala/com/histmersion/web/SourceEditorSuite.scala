@@ -2,9 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.api.ListPatch
 import SourceEditor.{Draft, Field}
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.catalogue.PeriodInput
 import com.histmersion.api.library.{MetadataPatch, SourceDetail}
+import com.histmersion.domain.library.Source
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
   * and where a server refusal is shown.
@@ -17,7 +17,7 @@ class SourceEditorSuite extends munit.FunSuite:
     authors = List("David W. Anthony"),
     year = Some(2007),
     venue = Some("Princeton UP"),
-    status = SourceStatus.Current,
+    status = Source.Status.Current,
     topics = List("pie_origins"),
     regions = List("pontic_caspian_steppe"),
     tags = List("steppe", "horses"),
@@ -34,7 +34,7 @@ class SourceEditorSuite extends munit.FunSuite:
   test("the form shows the stored values, periods as BCE/CE") {
     assertEquals(d0.periodStart, "4500 BCE")
     assertEquals(d0.periodEnd, "2500 BCE")
-    assertEquals(d0.status, SourceStatus.Current)
+    assertEquals(d0.status, Source.Status.Current)
     assertEquals(d0.year, "2007")
   }
 
@@ -47,13 +47,13 @@ class SourceEditorSuite extends munit.FunSuite:
   test("only the changed parts are sent, with the loaded updatedAt as the precondition") {
     val d = d0.copy(
       title = "The Horse",
-      status = SourceStatus.Contested,
+      status = Source.Status.Contested,
       tags = List("horses", "wheel"),
       periodStart = "4200 BCE",
       periodEnd = "3000 BC"
     )
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some(SourceStatus.Contested))))
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some(Source.Status.Contested))))
     assertEquals(p.tags, Some(ListPatch(add = List("wheel"), remove = List("steppe"))))
     assertEquals(p.period, Some(PeriodInput(-4200, -3000)))
     assertEquals(p.topics, None)

@@ -9,7 +9,6 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.MatchOutcome
 import com.histmersion.api.exchange.{
@@ -34,6 +33,8 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.library.SourceMatch
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,
@@ -62,9 +63,9 @@ object MergeView:
     if i.condition.isDefined then Group.Conditional
     else
       i.severity match
-        case IssueSeverity.Blocking => if i.decision.isEmpty then Group.Open else Group.Decided
-        case IssueSeverity.Default  => Group.Defaults
-        case IssueSeverity.Info     => Group.Info
+        case Issue.Severity.Blocking => if i.decision.isEmpty then Group.Open else Group.Decided
+        case Issue.Severity.Default  => Group.Defaults
+        case Issue.Severity.Info     => Group.Info
 
   /** The issues by group, empty groups left out, the plan's order kept within a group. */
   def grouped(issues: List[MergeIssue]): List[(Group, List[MergeIssue])] =
@@ -75,7 +76,7 @@ object MergeView:
   def matched(p: MergePlan): List[SourceMatch] = RegisteredPlanMatches.kind.all(p.sources)
 
   def counter(p: MergePlan): (Int, Int) =
-    val blocking = p.issues.filter(i => i.severity == IssueSeverity.Blocking && i.condition.isEmpty)
+    val blocking = p.issues.filter(i => i.severity == Issue.Severity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
 
   /** The issues a filter text keeps: it matches the id, the kind, the title or either side's label. */
@@ -84,7 +85,7 @@ object MergeView:
     if t.isEmpty then issues
     else
       issues.filter(i =>
-        (List(i.id, IssueKind.wireOf(i.kind), i.title, i.entity.wire) ++
+        (List(i.id, Issue.Kind.wireOf(i.kind), i.title, i.entity.wire) ++
           i.left.map(_.label).toList ++ i.right.map(_.label).toList).exists(_.toLowerCase.contains(t))
       )
 
@@ -123,25 +124,25 @@ object MergeView:
     case DecisionKind.KeepUnanchored => "keep it without a place in the text"
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
-  def kindText(k: IssueKind): String = IssueKind.wireOf(k).replace('-', ' ')
+  def kindText(k: Issue.Kind): String = Issue.Kind.wireOf(k).replace('-', ' ')
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
     */
-  def fieldOf(k: IssueKind): Option[String] = k match
-    case IssueKind.StatusDiffers                         => Some("status")
-    case IssueKind.TitleDiffers                          => Some("title")
-    case IssueKind.AuthorsDiffers                        => Some("authors")
-    case IssueKind.YearDiffers                           => Some("year")
-    case IssueKind.DoiDiffers                            => Some("DOI")
-    case IssueKind.SummaryDiffers                        => Some("summary")
-    case IssueKind.NotesDiffers                          => Some("notes")
-    case IssueKind.PeriodDiffers                         => Some("period")
-    case IssueKind.BodyDiffers                           => Some("OCR body")
-    case IssueKind.SameWork | IssueKind.CitekeyCollision => Some("citekey")
-    case IssueKind.NamedPeriodDiffers                    => Some("span")
-    case IssueKind.GoalPlanDiffers                       => Some("plan")
-    case _                                               => None
+  def fieldOf(k: Issue.Kind): Option[String] = k match
+    case Issue.Kind.StatusDiffers                          => Some("status")
+    case Issue.Kind.TitleDiffers                           => Some("title")
+    case Issue.Kind.AuthorsDiffers                         => Some("authors")
+    case Issue.Kind.YearDiffers                            => Some("year")
+    case Issue.Kind.DoiDiffers                             => Some("DOI")
+    case Issue.Kind.SummaryDiffers                         => Some("summary")
+    case Issue.Kind.NotesDiffers                           => Some("notes")
+    case Issue.Kind.PeriodDiffers                          => Some("period")
+    case Issue.Kind.BodyDiffers                            => Some("OCR body")
+    case Issue.Kind.SameWork | Issue.Kind.CitekeyCollision => Some("citekey")
+    case Issue.Kind.NamedPeriodDiffers                     => Some("span")
+    case Issue.Kind.GoalPlanDiffers                        => Some("plan")
+    case _                                                 => None
 
   /** The result column of a field table: for the row the issue is about, what the merge writes as decided now (`Left` =
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
@@ -605,13 +606,13 @@ object MergeView:
       decisions(i)
     )
 
-  private def side(who: String, s: Option[IssueSide], entity: BundleKind): HtmlElement =
+  private def side(who: String, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
     div(
       cls := s"merge-side merge-$who",
       h5(who),
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
-          if who == "here" && entity == BundleKind.Source then SourceLink(x.label) else code(x.label),
+          if who == "here" && entity == Bundle.Kind.Source then SourceLink(x.label) else code(x.label),
           x.lines.map(l => div(cls := "muted", l))
         )
       }
@@ -808,7 +809,7 @@ object MergeView:
           typ := "text",
           cls := "field",
           aria.label := describe(k),
-          placeholder := (if i.entity == BundleKind.Event then "a new event id" else "a new citekey"),
+          placeholder := (if i.entity == Bundle.Kind.Event then "a new event id" else "a new citekey"),
           controlled(value <-- arg.signal, onInput.mapToValue --> arg.writer)
         ),
         button(

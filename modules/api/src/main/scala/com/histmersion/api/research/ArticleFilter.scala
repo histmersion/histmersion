@@ -3,10 +3,10 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.StrictJson
 import com.histmersion.api.library.Filter
 import com.histmersion.api.given
+import com.histmersion.domain.library.Source
 
 final case class ArticleFilter(
     query: Option[String] = None,
@@ -72,7 +72,7 @@ object ArticleFilter:
   def normalise(f: ArticleFilter): Either[String, Option[ArticleFilter]] =
     def clean(xs: List[String]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty).distinct
     val status = clean(f.status).map(_.toLowerCase(java.util.Locale.ROOT))
-    val unknown = status.filterNot(s => SourceStatus.values.exists(_.wire == s))
+    val unknown = status.filterNot(s => Source.Status.values.exists(_.wire == s))
     val tidy = ArticleFilter(
       f.query.map(_.trim).filter(_.nonEmpty),
       clean(f.topics),
@@ -86,7 +86,7 @@ object ArticleFilter:
     )
     if unknown.nonEmpty then
       Left(
-        s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${SourceStatus.values.map(_.wire).mkString(", ")}"
+        s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}"
       )
     else if tidy.from.zip(tidy.to).exists(_ > _) then
       Left(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})")

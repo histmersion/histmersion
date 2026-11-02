@@ -6,11 +6,11 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{JobRuns, JobRunState}
-import com.histmersion.values.GoalLinkKind
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.automation.Goal
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
@@ -585,7 +585,7 @@ object ManagerService:
       val fromEvents = events
         .filter(e => kinds(e.kind))
         .flatMap(e => manager(e.managerId).flatMap(_.goal).map(_ -> e.at))
-      val fromLinks = state.get.links.filter(_.kind == GoalLinkKind.Source).map(l => l.goal -> l.createdAt)
+      val fromLinks = state.get.links.filter(_.kind == Goal.LinkKind.Source).map(l => l.goal -> l.createdAt)
       (fromEvents ++ fromLinks).groupBy(_._1).view.mapValues(ts => text(ts.map(_._2).max)).toMap
     def occupyingRuns(): List[(String, Option[String])] =
       runs.filter(occupying).map(r => (r.row.pipeline, r.row.managerId.flatMap(manager).flatMap(_.goal)))

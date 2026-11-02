@@ -10,7 +10,6 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{
   Corrections,
@@ -60,7 +59,7 @@ object Preview:
       title: String,
       byline: String,
       identifier: String,
-      status: Option[SourceStatus],
+      status: Option[com.histmersion.domain.library.Source.Status],
       chips: List[(String, String)],
       where: String,
       summary: Option[String],

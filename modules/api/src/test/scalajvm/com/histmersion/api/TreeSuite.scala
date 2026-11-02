@@ -6,9 +6,9 @@ import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.catalogue.RegionNode
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{Period, PlaceRelation}
 import com.histmersion.api.library.{Bucket, TimeHistogram}
+import com.histmersion.domain.catalogue.Place
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
   * `overlap`, the `unlocated` leaf, samples and the depth clamp. No database.
@@ -19,13 +19,14 @@ class TreeSuite extends munit.FunSuite:
   //   asia ─┬─ anatolia ─┬─ hatti    (-1650…-1180) ─┬─ hattusa   (edge -1650…-1180)
   //         │            └─ phrygia  (-1200… -700) ─┘           (edge -1200… -700)
   //         └─ near_east ── mitanni  (-1500…-1300)
-  private val asia = RegionNode("asia", "Asia", PlaceKind.Region)
-  private val anatolia = RegionNode("anatolia", "Anatolia", PlaceKind.Region)
-  private val nearEast = RegionNode("near_east", "Near East", PlaceKind.Region)
-  private val hatti = RegionNode("hatti", "Hittite Empire", PlaceKind.Polity, Some(Period(-1650, -1180)))
-  private val phrygia = RegionNode("phrygia", "Phrygia", PlaceKind.Polity, Some(Period(-1200, -700)))
-  private val mitanni = RegionNode("mitanni", "Mitanni", PlaceKind.Polity, Some(Period(-1500, -1300)), contested = true)
-  private val hattusa = RegionNode("hattusa", "Hattusa", PlaceKind.Site)
+  private val asia = RegionNode("asia", "Asia", Place.Kind.Region)
+  private val anatolia = RegionNode("anatolia", "Anatolia", Place.Kind.Region)
+  private val nearEast = RegionNode("near_east", "Near East", Place.Kind.Region)
+  private val hatti = RegionNode("hatti", "Hittite Empire", Place.Kind.Polity, Some(Period(-1650, -1180)))
+  private val phrygia = RegionNode("phrygia", "Phrygia", Place.Kind.Polity, Some(Period(-1200, -700)))
+  private val mitanni =
+    RegionNode("mitanni", "Mitanni", Place.Kind.Polity, Some(Period(-1500, -1300)), contested = true)
+  private val hattusa = RegionNode("hattusa", "Hattusa", Place.Kind.Site)
 
   private val nodes = List(asia, anatolia, nearEast, hatti, phrygia, mitanni, hattusa)
 
@@ -209,7 +210,7 @@ class TreeSuite extends munit.FunSuite:
     val t = Tree.regionTree(List(dig), nodes, relations, Some(-1700), 3)
     assertEquals(t.map(_.key), List(Tree.KeyUnlocated))
     // a parentless REGION or POLITY still shows: it is a gazetteer top level, not a gap
-    val loose = RegionNode("loose", "Loose Region", PlaceKind.Region)
+    val loose = RegionNode("loose", "Loose Region", Place.Kind.Region)
     val t2 = Tree.regionTree(List(row("x", -1400, -1400, "loose")), List(loose), Nil, Some(-1400), 2)
     assertEquals(t2.map(b => (b.key, b.count)), List(("loose", 1)))
 

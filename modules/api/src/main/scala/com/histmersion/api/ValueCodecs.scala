@@ -1,10 +1,10 @@
 package com.histmersion.api
 
-import com.histmersion.values.WikidataId
 import com.histmersion.domain.library.{Citekey, Doi}
 import com.histmersion.{Latitude, Longitude, Year}
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.domain.catalogue.places.Wikidata
 
 object ValueCodecs:
   given Encoder[Citekey] = Encoder.encodeString.contramap(_.value)
@@ -19,9 +19,9 @@ object ValueCodecs:
   given Decoder[Doi] = Decoder.decodeString.emap(Doi.either)
   given Schema[Doi] = Schema.string[Doi]
 
-  given Encoder[WikidataId] = Encoder.encodeString.contramap(_.value)
-  given Decoder[WikidataId] = Decoder.decodeString.emap(WikidataId.either)
-  given Schema[WikidataId] = Schema.string[WikidataId]
+  given given_Encoder_WikidataId: Encoder[Wikidata.Id] = Encoder.encodeString.contramap(_.value)
+  given given_Decoder_WikidataId: Decoder[Wikidata.Id] = Decoder.decodeString.emap(Wikidata.Id.either)
+  given given_Schema_WikidataId: Schema[Wikidata.Id] = Schema.string[Wikidata.Id]
 
   given Encoder[Latitude] = Encoder.encodeDouble.contramap(_.value)
   given Decoder[Latitude] = Decoder.decodeDouble.emap(Latitude.either)

@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
 
 final case class Assessment(
@@ -20,7 +19,7 @@ final case class Assessment(
     recommendation: String,
     applied: Option[String] = None,
     checkedAt: Option[String] = None,
-    kept: Option[SourceStatus] = None
+    kept: Option[com.histmersion.domain.library.Source.Status] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 object Assessment:

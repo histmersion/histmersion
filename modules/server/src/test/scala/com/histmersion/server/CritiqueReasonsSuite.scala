@@ -6,11 +6,11 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.values.EdgeKind
 import com.histmersion.db.*
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.library.{EdgeInput, EdgesPatch, RenameRequest, SourceDeleteRequest, SourcePatch, SourcePut}
 import com.histmersion.api.research.{ArticlePatch, ArticlePut, CritiqueReason}
+import com.histmersion.domain.library.Edge
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a `*_test`
   * database: written and read through `patch_article`'s one path, refused without a disagreement edge, kept under the
@@ -51,7 +51,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     }
     assert(
       h.library.sources
-        .patch(Smith, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Frazer, EdgeKind.Refutes))))))
+        .patch(Smith, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Frazer, Edge.Kind.Refutes))))))
         .isRight
     )
     assert(
@@ -59,7 +59,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
         .patch(
           Brown,
           SourcePatch(edges =
-            Some(EdgesPatch(add = List(EdgeInput(Frazer, EdgeKind.Challenges), EdgeInput(Frazer, EdgeKind.Updates))))
+            Some(EdgesPatch(add = List(EdgeInput(Frazer, Edge.Kind.Challenges), EdgeInput(Frazer, Edge.Kind.Updates))))
           )
         )
         .isRight

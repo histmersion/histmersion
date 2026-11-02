@@ -5,7 +5,6 @@ import com.histmersion.api.library.SourceWrite
 import com.histmersion.api.{ApiError, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Licence
-import com.histmersion.values.LicenceId
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceReferrers}
 import com.histmersion.util.database.Transactor
@@ -130,7 +129,7 @@ trait SourceService:
   def licence(citekey: String): Option[Licence]
 
   /** `licence` recorded as the source's when it has none; `true` when it was written. */
-  def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean
+  def recordLicence(citekey: String, licence: Licence.Id, caller: Caller): Boolean
 
   /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
   def calibreGaps(limit: Option[Int]): List[CalibreGap]
@@ -204,7 +203,7 @@ object SourceService:
       db.transact(SourceRepo.setSha256(citekey, sha256))
     def licence(citekey: String): Option[Licence] =
       db.read(SourceRepo.licenceOf(citekey)).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
-    def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean =
+    def recordLicence(citekey: String, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, v))
     def calibreGaps(limit: Option[Int]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
@@ -666,7 +665,7 @@ object SourceService:
     def licence(citekey: String): Option[Licence] =
       stored(citekey).flatMap(_.licence).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
 
-    def recordLicence(citekey: String, licence: LicenceId, caller: Caller): Boolean =
+    def recordLicence(citekey: String, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       val open = stored(citekey).exists(_.licence.forall(_.trim.isEmpty))
       v.nonEmpty && open && updated(citekey)(

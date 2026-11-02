@@ -4,8 +4,8 @@ import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
 
 import com.histmersion.util.text.ComparedText
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
+import com.histmersion.domain.library.Source
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of
@@ -109,10 +109,10 @@ object AgentVerify:
   /** A model-proposed status, against the enum. Statuses the DB does not know are rejected, never coerced
     * (`SourceStatus.fromString` would quietly turn a typo into `unassessed`).
     */
-  def status(s: String): Either[String, SourceStatus] =
-    SourceStatus.values
+  def status(s: String): Either[String, Source.Status] =
+    Source.Status.values
       .find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
-      .toRight(s"'$s' is not a status (one of: ${SourceStatus.values.map(_.wire).mkString(", ")})")
+      .toRight(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})")
 
   def confidence(s: String): Either[String, Confidence] =
     Confidence.fromString(s.trim).toRight(s"'$s' is not a confidence (one of: high, medium, low, contested)")

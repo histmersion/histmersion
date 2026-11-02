@@ -20,7 +20,6 @@ import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
-import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsApi, Goal, GoalPut}
 import com.histmersion.api.library.{
@@ -37,6 +36,7 @@ import com.histmersion.api.library.{
   WorkRef
 }
 import com.histmersion.api.research.{ArticleFilter, ArticleMarkdown, ArticlePatch, ArticlePut}
+import com.histmersion.domain.library.Source
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:
@@ -155,7 +155,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
             title = "Bronze Age tin",
             year = Some(2019),
             topics = List("zzagent_tin"),
-            status = Some(SourceStatus.Current),
+            status = Some(Source.Status.Current),
             summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
             body = Some(
               "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
@@ -179,7 +179,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
+        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
         .isRight
     )
     assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)

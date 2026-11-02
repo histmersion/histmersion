@@ -1,6 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{PlaceSummary, SiteTypes}
@@ -8,6 +7,8 @@ import com.histmersion.api.library.{GeoHit, SourceDetail, SourceKinds, SourceWit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.research.{ArticleRow, ArticleView}
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Source
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
   * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a
@@ -29,7 +30,7 @@ class CardIconsSuite extends munit.FunSuite:
       Nil,
       Some(2020),
       venue,
-      SourceStatus.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       tags,
@@ -43,8 +44,8 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("every icon a card or a marker can name is in the registry"):
     val names = SourceKinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
-      PlaceKind.all.map(CardIcons.place(_, None)) ++ SiteTypes.all.map(t =>
-        CardIcons.place(PlaceKind.Site, Some(t.id))
+      Place.Kind.all.map(CardIcons.place(_, None)) ++ SiteTypes.all.map(t =>
+        CardIcons.place(Place.Kind.Site, Some(t.id))
       ) ++
       List(CardIcons.Article, CardIcons.Media, CardIcons.Unknown, CardIcons.siteMarker(None))
     assertEquals(names.filterNot(Glyphs.inner.contains), Nil)
@@ -76,12 +77,12 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(CardIcons.sourceKind(SourceKinds.Unknown, marker = true), CardIcons.Unknown)
 
   test("place icons: a site its type's (a pin untyped), a region or polity a map, a people a group"):
-    assertEquals(CardIcons.place(PlaceKind.Site, Some("fortification")), "castle")
-    assertEquals(CardIcons.place(PlaceKind.Site, None), CardIcons.GenericPlace)
-    assertEquals(CardIcons.place(PlaceKind.Region, None), CardIcons.Area)
-    assertEquals(CardIcons.place(PlaceKind.Polity, None), CardIcons.Area)
-    assertEquals(CardIcons.place(PlaceKind.People, None), CardIcons.People)
-    assertEquals(CardIcons.place(PlaceKind.Feature, Some("cave")), "door-open")
+    assertEquals(CardIcons.place(Place.Kind.Site, Some("fortification")), "castle")
+    assertEquals(CardIcons.place(Place.Kind.Site, None), CardIcons.GenericPlace)
+    assertEquals(CardIcons.place(Place.Kind.Region, None), CardIcons.Area)
+    assertEquals(CardIcons.place(Place.Kind.Polity, None), CardIcons.Area)
+    assertEquals(CardIcons.place(Place.Kind.People, None), CardIcons.People)
+    assertEquals(CardIcons.place(Place.Kind.Feature, Some("cave")), "door-open")
     assertEquals(CardIcons.siteMarker(None), CardIcons.Unknown)
 
   test("every card kind carries its icon"):
@@ -90,7 +91,7 @@ class CardIconsSuite extends munit.FunSuite:
     val cover = MediaThumb("u", MediaRole.Cover, "/m/u/thumb", "c")
     assertEquals(Preview.card(SourceWithFindings(src(), Nil, illustration = Some(cover))).icon, Some("book"))
     val fort = PlaceDetail(
-      PlaceSummary("zz_f", "Zz fort", PlaceKind.Site, None, None, None, "Zz fort"),
+      PlaceSummary("zz_f", "Zz fort", Place.Kind.Site, None, None, None, "Zz fort"),
       None,
       Nil,
       Nil,
@@ -100,7 +101,7 @@ class CardIconsSuite extends munit.FunSuite:
     )
     assertEquals(Preview.card(fort).icon, Some("castle"))
     assertEquals(
-      Preview.card(fort.copy(place = fort.place.copy(kind = PlaceKind.Polity), siteType = None)).icon,
+      Preview.card(fort.copy(place = fort.place.copy(kind = Place.Kind.Polity), siteType = None)).icon,
       Some("map")
     )
     val art = ArticleView(ArticleRow("zz", "Zz", "concept", "", None, Nil, Nil, None, None), Nil, Nil)

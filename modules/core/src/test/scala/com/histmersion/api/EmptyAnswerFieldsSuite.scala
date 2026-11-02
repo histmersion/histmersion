@@ -7,9 +7,9 @@ import com.histmersion.domain.given
 
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.automation.GoalPlans.DraftMode
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.research.ArticleEdits
+import com.histmersion.domain.library.Source
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null` decodes like an
   * absent field. An answer whose NEEDED field is empty or null must fail its step's check with a problem that says
@@ -65,7 +65,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(checkClassification(classification(status = "unassessed", evidence = ""), 50000, last = false).isRight)
     // the last attempt keeps the classification, with a warning
     val (c, ws) = checkClassification(classification(evidence = ""), 50000, last = true).toOption.get
-    assertEquals(c.status, SourceStatus.Current)
+    assertEquals(c.status, Source.Status.Current)
     assert(ws.exists(_.contains("status evidence is empty")), ws)
 
   private val window = Window(1, None, "The Uluburun ship carried ten tons of copper and one ton of tin.")
@@ -104,7 +104,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Some(List("say why the record is not used"))
     )
 
-  private val facts = List(SourceFact("a2019_tin", "Tin", Some(2019), SourceStatus.Current))
+  private val facts = List(SourceFact("a2019_tin", "Tin", Some(2019), Source.Status.Current))
   private val ev = evidence(
     "f",
     1,
@@ -112,7 +112,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     List(Extracted("a2019_tin", List(Claim("a2019_tin", "c", "q", None, None, Confidence.High, 1.0)), None)),
     Nil
   )
-  private val corpus = Corpus(Set("a2019_tin"), _ == "a2019_tin", _ => Some(SourceStatus.Current))
+  private val corpus = Corpus(Set("a2019_tin"), _ == "a2019_tin", _ => Some(Source.Status.Current))
   private val body =
     """Tin reached the Aegean by sea [[a2019_tin]].
       |

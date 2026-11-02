@@ -4,10 +4,11 @@ import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
 import MergeFixture.{home, src, uid, work}
-import com.histmersion.values.{IssueKind, SourceStatus}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.exchange.{BundleRange, MergeDecision}
+import com.histmersion.domain.library.Source
+import com.histmersion.util.data.exchange.Issue
 
 /** A source folded field by field out of a pair that is one (docs/research-merge-import.md §5.3). */
 class SourcePlanSuite extends munit.FunSuite:
@@ -36,12 +37,12 @@ class SourcePlanSuite extends munit.FunSuite:
       .copy(
         tags = List("storm_god", "religion"),
         topics = List("anatolia", "Religion"),
-        status = SourceStatus.Contested
+        status = Source.Status.Contested
       )
     val f = SourcePlan.fold(
       l,
       r,
-      Map(IssueKind.NotesDiffers -> MergeDecision.of(DecisionKind.Concat)),
+      Map(Issue.Kind.NotesDiffers -> MergeDecision.of(DecisionKind.Concat)),
       "guterbock1997_hittite"
     )
     assertEquals(f.uid, l.uid)
@@ -55,13 +56,13 @@ class SourcePlanSuite extends munit.FunSuite:
     assertEquals(f.notes, Some("home's\n\nwork's"))
     assertEquals(f.status, l.status) // two verdicts: ours until decided…
     val taken =
-      SourcePlan.fold(l, r, Map(IssueKind.StatusDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
-    assertEquals(taken.status, SourceStatus.Contested) // …keep-right takes theirs
+      SourcePlan.fold(l, r, Map(Issue.Kind.StatusDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
+    assertEquals(taken.status, Source.Status.Contested) // …keep-right takes theirs
     assertEquals(taken.notes, Some("home's")) // no decision on the notes: ours
     // an unassessed side never wins over a verdict
     assertEquals(
-      SourcePlan.fold(l.copy(status = SourceStatus.Unassessed), r, Map.empty, l.citekey).status,
-      SourceStatus.Contested
+      SourcePlan.fold(l.copy(status = Source.Status.Unassessed), r, Map.empty, l.citekey).status,
+      Source.Status.Contested
     )
 
   test("a source folded: the period by hull, the body and original from the side decided"):
@@ -70,11 +71,11 @@ class SourcePlanSuite extends munit.FunSuite:
     val r = src("w", "a2000_y", "X", Nil, Some(2000), body = Some("theirs"), sha = Some("2" * 64))
       .copy(period = Some(BundleRange(Some(-1400), Some(-1100))))
     val hull =
-      SourcePlan.fold(l, r, Map(IssueKind.PeriodDiffers -> MergeDecision.of(DecisionKind.Hull)), l.citekey)
+      SourcePlan.fold(l, r, Map(Issue.Kind.PeriodDiffers -> MergeDecision.of(DecisionKind.Hull)), l.citekey)
     assertEquals(hull.period, Some(BundleRange(Some(-1500), Some(-1100))))
     assertEquals(hull.bodySha256, l.bodySha256)
     val right =
-      SourcePlan.fold(l, r, Map(IssueKind.BodyDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
+      SourcePlan.fold(l, r, Map(Issue.Kind.BodyDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)
     assertEquals(right.bodySha256, r.bodySha256)
     assertEquals(right.originalSha256, r.originalSha256)
     // one side without a body: the other's

@@ -8,11 +8,12 @@ import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRuns
-import com.histmersion.values.{EdgeKind, SourceStatus}
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
@@ -24,9 +25,9 @@ trait ApprovalService:
       jobId: Option[String],
       kind: ApprovalKind,
       citekey: String,
-      status: Option[SourceStatus],
-      current: Option[SourceStatus],
-      edgeKind: Option[EdgeKind],
+      status: Option[Source.Status],
+      current: Option[Source.Status],
+      edgeKind: Option[Edge.Kind],
       target: Option[String],
       payload: String,
       state: ApprovalState,
@@ -38,8 +39,8 @@ trait ApprovalService:
   def proposedBefore(
       kind: ApprovalKind,
       citekey: String,
-      status: Option[SourceStatus],
-      edgeKind: Option[EdgeKind],
+      status: Option[Source.Status],
+      edgeKind: Option[Edge.Kind],
       target: Option[String]
   ): Boolean
   def approval(id: Long): Option[ApprovalInfo]
@@ -127,9 +128,9 @@ object ApprovalService:
         jobId: Option[String],
         kind: ApprovalKind,
         citekey: String,
-        status: Option[SourceStatus],
-        current: Option[SourceStatus],
-        edgeKind: Option[EdgeKind],
+        status: Option[Source.Status],
+        current: Option[Source.Status],
+        edgeKind: Option[Edge.Kind],
         target: Option[String],
         payload: String,
         state: ApprovalState,
@@ -142,8 +143,8 @@ object ApprovalService:
     def proposedBefore(
         kind: ApprovalKind,
         citekey: String,
-        status: Option[SourceStatus],
-        edgeKind: Option[EdgeKind],
+        status: Option[Source.Status],
+        edgeKind: Option[Edge.Kind],
         target: Option[String]
     ): Boolean = db.read(AgentRepo.proposedBefore(kind, citekey, status, edgeKind, target))
     def approval(id: Long): Option[ApprovalInfo] = db.read(AgentRepo.approval(id))
@@ -245,15 +246,15 @@ object ApprovalService:
         jobId: Option[String],
         kind: ApprovalKind,
         citekey: String,
-        status: Option[SourceStatus],
-        current: Option[SourceStatus],
-        edgeKind: Option[EdgeKind],
+        status: Option[Source.Status],
+        current: Option[Source.Status],
+        edgeKind: Option[Edge.Kind],
         target: Option[String],
         payload: String,
         state: ApprovalState,
         result: Option[String]
     ): Option[ApprovalInfo] =
-      val (st, ek) = (status.map(_.wire), edgeKind.map(EdgeKind.wireOf))
+      val (st, ek) = (status.map(_.wire), edgeKind.map(Edge.Kind.wireOf))
       def same(r: ApprovalRecord) =
         state == ApprovalState.Open && r.state == Open && r.kind == kind.wire && r.citekey.contains(citekey) &&
           r.status.getOrElse("") == st.getOrElse("") && r.edgeKind.getOrElse("") == ek.getOrElse("") &&
@@ -283,13 +284,13 @@ object ApprovalService:
     def proposedBefore(
         kind: ApprovalKind,
         citekey: String,
-        status: Option[SourceStatus],
-        edgeKind: Option[EdgeKind],
+        status: Option[Source.Status],
+        edgeKind: Option[Edge.Kind],
         target: Option[String]
     ): Boolean =
       rows.exists(r =>
         r.kind == kind.wire && r.citekey.contains(citekey) && r.status.getOrElse("") == status.fold("")(_.wire) &&
-          r.edgeKind.getOrElse("") == edgeKind.fold("")(EdgeKind.wireOf) && r.target.getOrElse("") == target
+          r.edgeKind.getOrElse("") == edgeKind.fold("")(Edge.Kind.wireOf) && r.target.getOrElse("") == target
             .getOrElse("")
       )
     def approval(id: Long): Option[ApprovalInfo] = rows.find(_.id == id).map(info)

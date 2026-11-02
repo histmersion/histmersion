@@ -10,8 +10,8 @@ import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
-import com.histmersion.values.GoalStatus
 import com.histmersion.api.automation.ManagersMarkdown
+import com.histmersion.domain.automation.Goal
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked auto approvals
   * and their caps, the goal-status advance, the managers every goal has, the spread crons, the extend threshold, the
@@ -94,42 +94,42 @@ class AutopilotPolicySuite extends munit.FunSuite:
   // ── goal status ────────────────────────────────────────────────────────────────────────────────
 
   private val g =
-    GoalFacts("g", GoalStatus.Planned, managed = false, articles = 0, compileOpen = false, reviewed = false, Nil)
+    GoalFacts("g", Goal.Status.Planned, managed = false, articles = 0, compileOpen = false, reviewed = false, Nil)
 
   test(
     "advance: planned → seeding once managed; → compiled with an article and nothing left; → reviewed when it passed"
   ):
     assertEquals(advance(g), None)
-    assertEquals(advance(g.copy(managed = true)).map(_._1), Some(GoalStatus.Seeding))
-    assertEquals(advance(g.copy(managed = true, articles = 2, compileOpen = true)).map(_._1), Some(GoalStatus.Seeding))
-    assertEquals(advance(g.copy(managed = true, articles = 2)).map(_._1), Some(GoalStatus.Compiled))
+    assertEquals(advance(g.copy(managed = true)).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.copy(managed = true, articles = 2, compileOpen = true)).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.copy(managed = true, articles = 2)).map(_._1), Some(Goal.Status.Compiled))
     assertEquals(
-      advance(g.copy(status = GoalStatus.Compiled, managed = true, articles = 2, reviewed = true)),
-      Some((GoalStatus.Reviewed, "its 2 articles passed review"))
+      advance(g.copy(status = Goal.Status.Compiled, managed = true, articles = 2, reviewed = true)),
+      Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 
   test("advance: never back, never past done, an unknown status is left"):
-    assertEquals(advance(g.copy(status = GoalStatus.Reviewed, managed = true)), None)
-    assertEquals(advance(g.copy(status = GoalStatus.Done, managed = true, articles = 3, reviewed = true)), None)
+    assertEquals(advance(g.copy(status = Goal.Status.Reviewed, managed = true)), None)
+    assertEquals(advance(g.copy(status = Goal.Status.Done, managed = true, articles = 3, reviewed = true)), None)
     assertEquals(advance(g.copy(status = "frozen", managed = true)), None)
-    assertEquals(advance(g.copy(status = GoalStatus.Compiled, managed = true, articles = 1, compileOpen = true)), None)
+    assertEquals(advance(g.copy(status = Goal.Status.Compiled, managed = true, articles = 1, compileOpen = true)), None)
 
   test("advance: a parent follows its sub-goals"):
     val p =
-      g.copy(status = GoalStatus.Seeding, managed = true, children = List(GoalStatus.Compiled, GoalStatus.Seeding))
+      g.copy(status = Goal.Status.Seeding, managed = true, children = List(Goal.Status.Compiled, Goal.Status.Seeding))
     assertEquals(advance(p), None)
     assertEquals(
-      advance(p.copy(children = List(GoalStatus.Compiled, GoalStatus.Reviewed))).map(_._1),
-      Some(GoalStatus.Compiled)
+      advance(p.copy(children = List(Goal.Status.Compiled, Goal.Status.Reviewed))).map(_._1),
+      Some(Goal.Status.Compiled)
     )
     assertEquals(
-      advance(p.copy(children = List(GoalStatus.Reviewed, GoalStatus.Done))).map(_._1),
-      Some(GoalStatus.Reviewed),
+      advance(p.copy(children = List(Goal.Status.Reviewed, Goal.Status.Done))).map(_._1),
+      Some(Goal.Status.Reviewed),
       "no own article: reviewed when its sub-goals are"
     )
     assertEquals(
-      advance(p.copy(articles = 1, children = List(GoalStatus.Reviewed))).map(_._1),
-      Some(GoalStatus.Compiled),
+      advance(p.copy(articles = 1, children = List(Goal.Status.Reviewed))).map(_._1),
+      Some(Goal.Status.Compiled),
       "its own article not reviewed yet"
     )
 
@@ -141,7 +141,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     "ensure: an unfinished goal gets an active seeding manager (plan first) and a watcher; a finished one a watcher"
   ):
     val steps = ensure(
-      List(GoalRow("a", GoalStatus.Planned, needsPlan = true), GoalRow("r", GoalStatus.Reviewed, needsPlan = false)),
+      List(GoalRow("a", Goal.Status.Planned, needsPlan = true), GoalRow("r", Goal.Status.Reviewed, needsPlan = false)),
       Nil,
       Set.empty,
       st
@@ -160,7 +160,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       ManagerRow(watchId("b"), "watch", Some("b"), "active", Some("@weekly"), None)
     )
     val steps = ensure(
-      List(GoalRow("a", GoalStatus.Seeding, needsPlan = true), GoalRow("b", GoalStatus.Planned, needsPlan = true)),
+      List(GoalRow("a", Goal.Status.Seeding, needsPlan = true), GoalRow("b", Goal.Status.Planned, needsPlan = true)),
       ms,
       Set(seedId("a")),
       st
@@ -187,7 +187,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      ensure(List(GoalRow("a", GoalStatus.Seeding, true), GoalRow("b", GoalStatus.Planned, true)), done, Set.empty, st),
+      ensure(
+        List(GoalRow("a", Goal.Status.Seeding, true), GoalRow("b", Goal.Status.Planned, true)),
+        done,
+        Set.empty,
+        st
+      ),
       Nil
     )
 
@@ -309,7 +314,7 @@ class NextArticleSuite extends munit.FunSuite:
   private val now = java.time.Instant.parse("2026-10-24T12:00:00Z")
   private val done = NextFacts(
     "g",
-    GoalStatus.Reviewed,
+    Goal.Status.Reviewed,
     articles = 2,
     unreviewed = 0,
     compileOpen = 0,
@@ -339,18 +344,18 @@ class NextArticleSuite extends munit.FunSuite:
     )
     assertEquals(nextArticle(done.copy(proposeSettled = Some(now.minusSeconds(3600))), now, 24), None, "the cooldown")
     assertEquals(nextArticle(done.copy(seedState = Some(State.Paused.wire)), now, 24), None, "a paused manager")
-    assertEquals(nextArticle(done.copy(status = GoalStatus.Done), now, 24), None, "a person's done")
+    assertEquals(nextArticle(done.copy(status = Goal.Status.Done), now, 24), None, "a person's done")
     assertEquals(nextArticle(done, now, 0), None, "off")
     assert(nextArticle(done.copy(proposeStatus = None, proposeSettled = None), now, 24).isDefined, "never proposed")
 
   test("unfinished goals: the planned goals neither reviewed nor done"):
     val goals = List(
-      "a" -> GoalStatus.Planned,
-      "b" -> GoalStatus.Seeding,
-      "c" -> GoalStatus.Compiled,
-      "d" -> GoalStatus.Reviewed,
-      "e" -> GoalStatus.Done,
-      "f" -> GoalStatus.Seeding
+      "a" -> Goal.Status.Planned,
+      "b" -> Goal.Status.Seeding,
+      "c" -> Goal.Status.Compiled,
+      "d" -> Goal.Status.Reviewed,
+      "e" -> Goal.Status.Done,
+      "f" -> Goal.Status.Seeding
     )
     assertEquals(unfinishedPlanned(goals, Set("a", "b", "c", "d", "e")), 3)
     assertEquals(unfinishedPlanned(goals, Set.empty), 0, "a goal without an approved plan is not counted")

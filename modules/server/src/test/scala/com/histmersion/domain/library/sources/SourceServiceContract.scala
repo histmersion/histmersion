@@ -3,7 +3,6 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.{LibraryStores, LibraryStoreSuite}
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{
@@ -49,7 +48,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       None,
       Some(1990),
       Some("Zq Review"),
-      SourceStatus.Current,
+      com.histmersion.domain.library.Source.Status.Current,
       List("bronze age"),
       List("Zqland"),
       List("zq-oracle"),
@@ -279,11 +278,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
   stest("a source's licence: recorded when it has none, classified as it is read") { s =>
     val _ = s.sources.put(source(A, "Walls"), Me)
     assertEquals(s.sources.licence(A), None)
-    assert(!s.sources.recordLicence(A, com.histmersion.values.LicenceId("  "), Me), "a blank licence is never written")
-    assert(s.sources.recordLicence(A, com.histmersion.values.LicenceId(" CC BY 4.0 "), Me))
-    assert(!s.sources.recordLicence(A, com.histmersion.values.LicenceId("CC0-1.0"), Me), "the first one is kept")
+    assert(!s.sources.recordLicence(A, com.histmersion.domain.Licence.Id("  "), Me), "a blank licence is never written")
+    assert(s.sources.recordLicence(A, com.histmersion.domain.Licence.Id(" CC BY 4.0 "), Me))
+    assert(!s.sources.recordLicence(A, com.histmersion.domain.Licence.Id("CC0-1.0"), Me), "the first one is kept")
     assertEquals(s.sources.licence(A), Some(com.histmersion.domain.Licence.classify("CC BY 4.0")))
-    assert(!s.sources.recordLicence("zqnone", com.histmersion.values.LicenceId("CC0-1.0"), Me))
+    assert(!s.sources.recordLicence("zqnone", com.histmersion.domain.Licence.Id("CC0-1.0"), Me))
   }
 
   stest("the sources not in Calibre yet, a push's metadata, the Calibre id written back") { s =>

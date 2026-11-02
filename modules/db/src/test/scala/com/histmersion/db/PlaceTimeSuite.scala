@@ -12,7 +12,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName, PlaceRelation, PlaceTimeBasis}
 import com.histmersion.api.library.{Finding, Source}
@@ -48,16 +47,19 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   private val fixtures = List(
-    PlaceInput(Place("zqtv_root", "Zqtv root", PlaceKind.Region), List(PlaceName("Zqtv root"))),
-    place("zqtv_dated", PlaceKind.Site, 0, Some(Period(-2600, -2400))),
-    place("zqtv_late", PlaceKind.Site, 1, Some(Period(1100, 1300))),
-    place("zqtv_bare", PlaceKind.Site, 2, None),
-    place("zqtv_evid", PlaceKind.Site, 3, None),
-    place("zqtv_undfind", PlaceKind.Site, 4, None),
-    place("zqtv_evt", PlaceKind.Site, 5, None),
-    place("zqtv_river", PlaceKind.Feature, 6, Some(Period(-30, 2100))),
-    place("zqtv_city", PlaceKind.Site, 7, None, Some("""{"modern":true}""")),
-    place("zqtv_su", PlaceKind.Site, 8, Some(Period(1469, 1769)))
+    PlaceInput(
+      Place("zqtv_root", "Zqtv root", com.histmersion.domain.catalogue.Place.Kind.Region),
+      List(PlaceName("Zqtv root"))
+    ),
+    place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(-2600, -2400))),
+    place("zqtv_late", com.histmersion.domain.catalogue.Place.Kind.Site, 1, Some(Period(1100, 1300))),
+    place("zqtv_bare", com.histmersion.domain.catalogue.Place.Kind.Site, 2, None),
+    place("zqtv_evid", com.histmersion.domain.catalogue.Place.Kind.Site, 3, None),
+    place("zqtv_undfind", com.histmersion.domain.catalogue.Place.Kind.Site, 4, None),
+    place("zqtv_evt", com.histmersion.domain.catalogue.Place.Kind.Site, 5, None),
+    place("zqtv_river", com.histmersion.domain.catalogue.Place.Kind.Feature, 6, Some(Period(-30, 2100))),
+    place("zqtv_city", com.histmersion.domain.catalogue.Place.Kind.Site, 7, None, Some("""{"modern":true}""")),
+    place("zqtv_su", com.histmersion.domain.catalogue.Place.Kind.Site, 8, Some(Period(1469, 1769)))
   )
 
   private def clean(): Unit = connect(ds):
@@ -82,7 +84,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
           doi = None,
           year = Some(2026),
           venue = None,
-          status = SourceStatus.Current,
+          status = com.histmersion.domain.library.Source.Status.Current,
           topics = Nil,
           regions = Nil,
           tags = Nil,

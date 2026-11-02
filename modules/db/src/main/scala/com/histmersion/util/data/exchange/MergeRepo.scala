@@ -21,10 +21,10 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
 import com.histmersion.util.data.exchange.BundlePlan.Ledger
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
@@ -262,7 +262,7 @@ object MergeRepo:
       Some(id)
 
   /** The records a merge dropped, as tombstones. */
-  def tombstone(dropped: List[(UUID, BundleKind, UUID)])(using DbCon): Unit =
+  def tombstone(dropped: List[(UUID, Bundle.Kind, UUID)])(using DbCon): Unit =
     dropped.foreach { (u, k, origin) =>
       sql"""INSERT INTO tombstones (uid, kind, origin) VALUES ($u, ${k.wire}, $origin)
             ON CONFLICT (uid) DO NOTHING""".update.run()

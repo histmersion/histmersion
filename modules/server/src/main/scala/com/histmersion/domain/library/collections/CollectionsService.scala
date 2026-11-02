@@ -20,7 +20,6 @@ import com.histmersion.plugin.{
 }
 import com.histmersion.pluginhost.HostCollection
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.SourceStatus
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
@@ -282,7 +281,7 @@ object CollectionsService:
               doi = doi,
               year = item.year.map(_.value),
               venue = item.publisher,
-              status = Some(SourceStatus.Unassessed),
+              status = Some(com.histmersion.domain.library.Source.Status.Unassessed),
               tags = item.tags,
               summary = summary,
               provenance = Some("calibre"),

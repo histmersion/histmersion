@@ -6,7 +6,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.research.{
   ArticleCoverage,
   ArticleMarkdown,
@@ -17,6 +16,7 @@ import com.histmersion.api.research.{
   CritiqueState,
   DriftKind
 }
+import com.histmersion.domain.library.Source
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),
@@ -138,7 +138,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy(_._1)
         )
         assertEquals(c.citedOutside, List(Outside))
-        assertEquals(c.statuses, List(StatusCount(SourceStatus.Current, 4), StatusCount(SourceStatus.Contested, 1)))
+        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, 4), StatusCount(Source.Status.Contested, 1)))
         assertEquals(c.edges, List(CoverageEdge(Critic, "challenges", Cited2)))
         assertEquals(c.searches.map(s => (s.query, s.cited)), List(("synoikism", List(Outside))))
         assertEquals(

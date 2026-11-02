@@ -8,7 +8,6 @@ import com.histmersion.api.Dataset
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.{BundleKind, PlaceKind}
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{
   EventsApi,
@@ -25,6 +24,8 @@ import com.histmersion.api.catalogue.{
   PlaceRemoveIn,
   SiteTypesRequest
 }
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.data.exchange.Bundle
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.
@@ -89,7 +90,7 @@ object PlacesCmd:
   ): Either[CliError, PlaceImportResult] =
     if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
     else
-      Lpf.parse(Files.readString(file), kind.getOrElse(PlaceKind.Region)) match
+      Lpf.parse(Files.readString(file), kind.getOrElse(Place.Kind.Region)) match
         case Left(e)      => Left(CliError(s"$file: $e", exitCode = ExitCode.Usage))
         case Right(items) =>
           val groups = items.grouped(batch.max(1)).toList
@@ -130,7 +131,7 @@ object PlacesCmd:
     (
       Opts.argument[String]("file.json"),
       Opts
-        .option[String]("kind", s"Fallback kind for features that declare none: ${PlaceKind.all.mkString("|")}")
+        .option[String]("kind", s"Fallback kind for features that declare none: ${Place.Kind.all.mkString("|")}")
         .orNone,
       Opts.option[Int]("batch", "Features per request").orNone,
       datasetOpt
@@ -350,7 +351,7 @@ object PlacesCmd:
   ) {
     (
       Opts.argument[String]("label"),
-      Opts.option[String]("kind", s"One of ${PlaceKind.all.mkString(", ")}").withDefault(PlaceKind.Site),
+      Opts.option[String]("kind", s"One of ${Place.Kind.all.mkString(", ")}").withDefault(Place.Kind.Site),
       Opts.option[Double]("lon", "Longitude, decimal degrees (east positive)"),
       Opts.option[Double]("lat", "Latitude, decimal degrees (north positive)"),
       Opts.option[String](
@@ -378,7 +379,7 @@ object PlacesCmd:
   ) {
     (
       Opts.argument[String]("place-id"),
-      Opts.option[String]("kind", s"The kind it is: ${PlaceKind.all.mkString("|")}").orNone,
+      Opts.option[String]("kind", s"The kind it is: ${Place.Kind.all.mkString("|")}").orNone,
       Opts
         .option[Long]("from", "Signed year it begins (BCE negative); the end stays as set (open the first time)")
         .orNone,
@@ -457,6 +458,6 @@ object PlacesCmd:
       "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places"
     ) {
       search orElse showCmd orElse children orElse siteTypes orElse LabelRenameCmd(
-        BundleKind.Place
+        Bundle.Kind.Place
       ) orElse name orElse set orElse overrides orElse merge orElse rm orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
     }

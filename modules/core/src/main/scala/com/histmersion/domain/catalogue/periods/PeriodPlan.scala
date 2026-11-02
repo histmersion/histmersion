@@ -13,11 +13,12 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats named periods of this collection's own: one id added on both sides is one period when its
   * span and label agree, else a question; one under another id here is one when its label and span are (the database
@@ -35,7 +36,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
   /** The same period: this collection's is kept. */
   private val SamePeriod: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit =
-      folds.fold(f, o, BundleKind.Period)
+      folds.fold(f, o, Bundle.Kind.Period)
       periodLine(o) = _ => localPeriod(o)
       folds.count(_.modify(_.periodsMerged).using(_ + 1))
     def info(label: String, bundleLabel: String): String =
@@ -54,8 +55,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         case Some(o) if samePeriod(o, p) => q.merge(f, o.uid, SamePeriod)
         case Some(o)                     =>
           val id = MergePlanner.issueId(
-            IssueKind.NamedPeriodDiffers,
-            BundleKind.Period,
+            Issue.Kind.NamedPeriodDiffers,
+            Bundle.Kind.Period,
             List(f),
             List(o.uid),
             q.rightRev(f),
@@ -64,9 +65,9 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
           q.ask(
             MergeIssue(
               id,
-              IssueKind.NamedPeriodDiffers,
-              IssueSeverity.Blocking,
-              BundleKind.Period,
+              Issue.Kind.NamedPeriodDiffers,
+              Issue.Severity.Blocking,
+              Bundle.Kind.Period,
               s"named period ${p.id} was added on both sides and says something else: " +
                 s"${o.label} ${MergeIssueDetail.rangeText(o.period)} here, ${p.label} ${MergeIssueDetail.rangeText(p.period)} in the bundle",
               Some(IssueSide(o.id, o.uid, List(o.label))),
@@ -105,8 +106,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
   // a named period added on both sides under one id: ours stays, or theirs wins
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
-      case (IssueKind.NamedPeriodDiffers, BundleKind.Period, Some(d), Some(f), Some(o)) =>
-        folds.fold(f, o, BundleKind.Period)
+      case (Issue.Kind.NamedPeriodDiffers, Bundle.Kind.Period, Some(d), Some(f), Some(o)) =>
+        folds.fold(f, o, Bundle.Kind.Period)
         folds.count(_.modify(_.periodsMerged).using(_ + 1))
         if d.kind == km.KeepRight then
           periodLine(o) = es => periodIn(es, o).copy(origin = localPeriod(o).origin, rev = "")

@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
-import com.histmersion.values.PlaceKind
+import com.histmersion.domain.catalogue.Place
 
 /** The places' SQL other queries embed, over a `places` row by its alias: what an import brought in, how a place is
   * dated, its time basis and the time rule of a view at a year or over a window, the base layers' predicates, the
@@ -158,7 +158,7 @@ object PlaceSql:
       val undated = undatedSql(alias)
       val timeless = timelessSql(alias)
       val overlap = RangeSql.overlaps(s"$alias.period", s"$lo::bigint", s"$hi::bigint")
-      val physicalKind = kind.forall(k => k == PlaceKind.Feature || k == PlaceKind.Region)
+      val physicalKind = kind.forall(k => k == Place.Kind.Feature || k == Place.Kind.Region)
       val lead = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
         s" OR ($modern AND $modernOn)" +

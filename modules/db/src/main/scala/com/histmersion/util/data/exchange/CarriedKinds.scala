@@ -6,9 +6,9 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
+import com.histmersion.util.data.exchange.Bundle
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an
@@ -17,7 +17,7 @@ import com.augustnagro.magnum.DbCon
 final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
 
   /** The table of a kind of record. */
-  def tableOf(kind: BundleKind): TableName =
+  def tableOf(kind: Bundle.Kind): TableName =
     inBundleOrder
       .collectFirst { case k if k.record.contains(kind) && k.table.isDefined => k.table.get }
       .getOrElse(throw IllegalStateException(s"no carried kind keeps ${kind.wire} records"))

@@ -1,7 +1,6 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.values.PlaceKind
 import com.histmersion.api.catalogue.{
   Correction,
   CorrectionStatus,
@@ -18,6 +17,7 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.library.SourceKinds
 import com.histmersion.api.views.EventDetail
+import com.histmersion.domain.catalogue.Place
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus
@@ -90,7 +90,7 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.rampAt(battle, (-1274L, -1274L)), 0.5)
 
   test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
-    val fort = SitePoint(Some("zz_f"), "Zz fort", PlaceKind.Site, Some("fortification"), None, 37, 32, None)
+    val fort = SitePoint(Some("zz_f"), "Zz fort", Place.Kind.Site, Some("fortification"), None, 37, 32, None)
     val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
     assert(
       h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(

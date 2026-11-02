@@ -1,8 +1,10 @@
 package com.histmersion.util.database
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
-import com.histmersion.values.{EdgeKind, LocationPrecision, SourceStatus}
 import com.histmersion.domain.library.Confidence
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.Source
 
 /** `findings.confidence`: NULL and an unknown word are both "not stated". There is deliberately no
   * `DbCodec[Confidence]` — a column read as a bare confidence would need a default, and every default claims something.
@@ -13,18 +15,19 @@ given DbCodec[Option[Confidence]] = DbCodec[Option[String]].biMap(
 )
 
 /** An unknown status is `unassessed` — nobody has judged it. */
-given DbCodec[SourceStatus] =
-  Vocab.codec(s => SourceStatus.values.find(_.wire.equalsIgnoreCase(s)), _.wire, SourceStatus.Unassessed)
+given given_DbCodec_SourceStatus: DbCodec[Source.Status] =
+  Vocab.codec(s => Source.Status.values.find(_.wire.equalsIgnoreCase(s)), _.wire, Source.Status.Unassessed)
 
 /** An unknown edge kind is a plain `references` — the kind that claims no agreement or disagreement. */
-given DbCodec[EdgeKind] = Vocab.codec(EdgeKind.fromWire, EdgeKind.wireOf, EdgeKind.References)
+given given_DbCodec_EdgeKind: DbCodec[Edge.Kind] =
+  Vocab.codec(Edge.Kind.fromWire, Edge.Kind.wireOf, Edge.Kind.References)
 
 /** `places.location_precision` (V077): NULL is a point as stated; an unknown value is the LESS precise grid cell — a
   * point no nearness may be read from — not "as stated".
   */
-given DbCodec[LocationPrecision] = DbCodec[Option[String]].biMap(
-  s => s.fold(LocationPrecision.Stated)(v => LocationPrecision.parse(v.trim).getOrElse(LocationPrecision.GridCell)),
-  p => Option.when(p != LocationPrecision.Stated)(p.wire)
+given given_DbCodec_PlacePrecision: DbCodec[Place.Precision] = DbCodec[Option[String]].biMap(
+  s => s.fold(Place.Precision.Stated)(v => Place.Precision.parse(v.trim).getOrElse(Place.Precision.GridCell)),
+  p => Option.when(p != Place.Precision.Stated)(p.wire)
 )
 
 /** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary. Reads via

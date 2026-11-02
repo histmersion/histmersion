@@ -3,7 +3,6 @@ package com.histmersion.domain.automation.goals
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.GoalLinkKind
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
@@ -99,7 +98,12 @@ object FocusService:
         .collect { case (g, i) if i.status == "stopped" || i.status == "failed" => g -> i.outcome.getOrElse(i.status) }
         .toMap
     def sourceCounts(): Map[String, Int] =
-      state.get.links.filter(_.kind == GoalLinkKind.Source).groupBy(_.goal).view.mapValues(_.size).toMap
+      state.get.links
+        .filter(_.kind == com.histmersion.domain.automation.Goal.LinkKind.Source)
+        .groupBy(_.goal)
+        .view
+        .mapValues(_.size)
+        .toMap
     private def changeFocus(slug: String, mustExist: Boolean)(f: FocusRecord => FocusRecord): Boolean =
       state
         .getAndUpdate(s =>

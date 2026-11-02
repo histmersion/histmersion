@@ -2,9 +2,9 @@ package com.histmersion.domain.catalogue.maptiles
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
-import com.histmersion.values.PlaceKind
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.catalogue.Place
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
   * both sides, in a tile's box ([[candidates]], over the partial index `places_site_undated`), and their counts by the
@@ -21,7 +21,7 @@ private[maptiles] object UndatedSiteRepo:
     * the predicate of `places_site_undated`, then the label rule.
     */
   private val UndatedSiteSql =
-    s"p.kind = '${PlaceKind.Site}' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
+    s"p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
 
   private def typed(siteType: Option[String]): Sql =
     siteType

@@ -9,7 +9,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
 import com.histmersion.api.library.{Finding, Source}
@@ -53,32 +52,68 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val Peir = "pleiades_999100009"
 
   protected val places = List(
-    Place(City, "Zzrc City", PlaceKind.Site, pt(140.0, -50.0)),
-    Place(Regio1, "Zzrc Regio I (Porta Capena)", PlaceKind.Region, pt(140.02, -50.01), properties = types("region")),
-    Place(Regio2, "Zzrc Regio II (Caelimontium)", PlaceKind.Region, pt(140.03, -49.99), properties = types("region")),
-    Place(Aiantis, "Zzrc Aiantis", PlaceKind.Region, pt(140.2, -50.0), properties = types("people")),
-    Place(Athens, "Zzrc Athens", PlaceKind.Site, pt(140.21, -50.02)),
-    Place(Thess, "Zzrc Thessalia", PlaceKind.Region, pt(142.5, -47.5), properties = types("province")),
-    Place(Achaia, "Zzrc Achaia", PlaceKind.Region, pt(141.25, -47.75), properties = types("region")),
-    Place(Grid, "Zzrc Gridsite", PlaceKind.Site, pt(143.5, -46.5), properties = types("settlement")),
+    Place(City, "Zzrc City", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0, -50.0)),
+    Place(
+      Regio1,
+      "Zzrc Regio I (Porta Capena)",
+      com.histmersion.domain.catalogue.Place.Kind.Region,
+      pt(140.02, -50.01),
+      properties = types("region")
+    ),
+    Place(
+      Regio2,
+      "Zzrc Regio II (Caelimontium)",
+      com.histmersion.domain.catalogue.Place.Kind.Region,
+      pt(140.03, -49.99),
+      properties = types("region")
+    ),
+    Place(
+      Aiantis,
+      "Zzrc Aiantis",
+      com.histmersion.domain.catalogue.Place.Kind.Region,
+      pt(140.2, -50.0),
+      properties = types("people")
+    ),
+    Place(Athens, "Zzrc Athens", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.21, -50.02)),
+    Place(
+      Thess,
+      "Zzrc Thessalia",
+      com.histmersion.domain.catalogue.Place.Kind.Region,
+      pt(142.5, -47.5),
+      properties = types("province")
+    ),
+    Place(
+      Achaia,
+      "Zzrc Achaia",
+      com.histmersion.domain.catalogue.Place.Kind.Region,
+      pt(141.25, -47.75),
+      properties = types("region")
+    ),
+    Place(
+      Grid,
+      "Zzrc Gridsite",
+      com.histmersion.domain.catalogue.Place.Kind.Site,
+      pt(143.5, -46.5),
+      properties = types("settlement")
+    ),
     Place(
       Dup,
       "Withdrawn (duplicate): Zzrc Creta et Cyrene",
-      PlaceKind.Region,
+      com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(144.0, -45.0),
       properties = types("province")
     ),
     Place(
       Into,
       "Zzrc Creta et Cyrene (Roman province)",
-      PlaceKind.Site,
+      com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(144.3, -45.2),
       properties = types("province-2")
     ),
     Place(
       Peir,
       "Zzrc Peiraieus",
-      PlaceKind.Region,
+      com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(140.25, -50.05),
       properties = types("region,settlement,deme-attic")
     )
@@ -108,7 +143,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
         doi = None,
         year = Some(2026),
         venue = None,
-        status = SourceStatus.Current,
+        status = com.histmersion.domain.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,

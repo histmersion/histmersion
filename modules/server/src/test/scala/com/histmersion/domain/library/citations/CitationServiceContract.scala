@@ -2,7 +2,6 @@ package com.histmersion.domain.library.citations
 
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.LibraryStoreSuite
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.library.{Edge, GraphLink, NeighborTarget, Source}
 
 /** What the citation graph answers, the same on the database and in memory: a source's edges both ways by kind, the
@@ -10,7 +9,12 @@ import com.histmersion.api.library.{Edge, GraphLink, NeighborTarget, Source}
   */
 abstract class CitationServiceContract extends LibraryStoreSuite:
 
-  private def source(ck: String, year: Int, status: SourceStatus, edges: List[Edge] = Nil): Source =
+  private def source(
+      ck: String,
+      year: Int,
+      status: com.histmersion.domain.library.Source.Status,
+      edges: List[Edge] = Nil
+  ): Source =
     Source(
       ck,
       s"Title of $ck",
@@ -41,11 +45,21 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
 
   private def corpus(s: com.histmersion.domain.library.LibraryStores): Unit =
     List(
-      source(E, 1950, SourceStatus.Contested),
-      source(D, 2010, SourceStatus.Current),
-      source(C, 1975, SourceStatus.Superseded, List(Edge(C, A, "superseded_by"))),
-      source(B, 2001, SourceStatus.Current, List(Edge(B, A, "refutes"), Edge(B, D, "references"))),
-      source(A, 1990, SourceStatus.Current, List(Edge(A, B, "references"), Edge(A, "zq_topic", "references")))
+      source(E, 1950, com.histmersion.domain.library.Source.Status.Contested),
+      source(D, 2010, com.histmersion.domain.library.Source.Status.Current),
+      source(C, 1975, com.histmersion.domain.library.Source.Status.Superseded, List(Edge(C, A, "superseded_by"))),
+      source(
+        B,
+        2001,
+        com.histmersion.domain.library.Source.Status.Current,
+        List(Edge(B, A, "refutes"), Edge(B, D, "references"))
+      ),
+      source(
+        A,
+        1990,
+        com.histmersion.domain.library.Source.Status.Current,
+        List(Edge(A, B, "references"), Edge(A, "zq_topic", "references"))
+      )
     ).foreach(x => s.sources.put(x, Caller.Local): Unit)
 
   stest("neighbors: both ways, narrowed by kind, a parked target unresolved, an unknown source none") { s =>
@@ -53,10 +67,16 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     assertEquals(
       s.citations.neighbors(A, Nil).map(r => (r.direction, r.kind, r.citekey, r.status, r.target)),
       List(
-        ("in", "refutes", B, Some(SourceStatus.Current), NeighborTarget.Source),
-        ("in", "superseded_by", C, Some(SourceStatus.Superseded), NeighborTarget.Source),
+        ("in", "refutes", B, Some(com.histmersion.domain.library.Source.Status.Current), NeighborTarget.Source),
+        (
+          "in",
+          "superseded_by",
+          C,
+          Some(com.histmersion.domain.library.Source.Status.Superseded),
+          NeighborTarget.Source
+        ),
         ("out", "references", "zq_topic", None, NeighborTarget.Unresolved),
-        ("out", "references", B, Some(SourceStatus.Current), NeighborTarget.Source)
+        ("out", "references", B, Some(com.histmersion.domain.library.Source.Status.Current), NeighborTarget.Source)
       )
     )
     assertEquals(s.citations.neighbors(A, List("refutes")).map(_.citekey), List(B))

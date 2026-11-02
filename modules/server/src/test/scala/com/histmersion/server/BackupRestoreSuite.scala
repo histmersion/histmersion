@@ -8,10 +8,10 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
-import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
 import com.histmersion.api.backup.{Backup, BackupState, RestoreRequest}
 import com.histmersion.api.library.{Filter, FindingInput, SourcePut}
+import com.histmersion.domain.library.Source
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -137,7 +137,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       title = title,
       authors = List("Tester"),
       year = Some(2026),
-      status = Some(SourceStatus.Current),
+      status = Some(Source.Status.Current),
       topics = List("backup"),
       regions = List("Anatolia"),
       tags = List("zz-backup-test"),

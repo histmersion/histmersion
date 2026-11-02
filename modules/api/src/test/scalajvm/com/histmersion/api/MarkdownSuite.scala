@@ -4,7 +4,6 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.research.BacklinksMarkdown
 
-import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.{
   FindingRow,
@@ -17,6 +16,7 @@ import com.histmersion.api.library.{
   TimeBucket
 }
 import com.histmersion.api.research.{ArticleMarkdown, Backlink}
+import com.histmersion.domain.library.Source
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:
@@ -27,7 +27,7 @@ class MarkdownSuite extends munit.FunSuite:
     authors = List("Eric H. Cline"),
     year = Some(2014),
     venue = Some("PUP"),
-    status = SourceStatus.Current,
+    status = Source.Status.Current,
     topics = List("collapse"),
     regions = List("Levant"),
     tags = List("sea-peoples"),
@@ -80,7 +80,7 @@ class MarkdownSuite extends munit.FunSuite:
       "k1_a",
       "T",
       Some(2020),
-      SourceStatus.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       None,
@@ -110,7 +110,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) includes paging footer when total > hits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(50, hits))
@@ -119,7 +119,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults: the footer follows the page's own offset — every page, not just the first (#1798)"):
     val hits = (1 to 3).map { i =>
-      Hit(SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None), Nil, Nil)
+      Hit(SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None), Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult.of(50, hits, 20))
     assert(md.startsWith("### 3 of 50 source(s)"), md)
@@ -129,7 +129,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(3, hits))
@@ -166,7 +166,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
     authors = List("A"),
     year = Some(2020),
     venue = None,
-    status = SourceStatus.Current,
+    status = Source.Status.Current,
     topics = List("steppe", "migration"),
     regions = List("anatolia"),
     tags = List("sea_peoples"),
@@ -200,7 +200,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
 
   test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
-      NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some(SourceStatus.Current)),
+      NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some(Source.Status.Current)),
       NeighborRow("in", "references", "drews1993_end", Some("The End of the Bronze Age")),
       NeighborRow(
         "out",

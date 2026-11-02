@@ -5,9 +5,9 @@ import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
-import com.histmersion.values.BundleKind
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the goals: the goals (with their links and schedules) and their old slugs.
   *
@@ -21,7 +21,7 @@ object GoalsCarried:
 
   val goals: CarriedKind = CarriedKind.records[BundleGoal](
     Automation,
-    BundleKind.Goal,
+    Bundle.Kind.Goal,
     TableName("goals"),
     List(rows(42)(GoalBundleRepo.goalRenamesIn), rows(48)(GoalBundleRepo.goalsIn))
   )(scope => GoalBundleRepo.goals(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.goals).setTo(ls))

@@ -6,7 +6,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient
-import com.histmersion.values.PlaceKind
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
@@ -160,15 +159,71 @@ object MediaWire:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        place("pleiades_570491", "Mycenae", PlaceKind.Site, 22.756, 37.73, Some((-1600L, -1100L))),
-        place("geonames_390903", "Greece", PlaceKind.Region, 22.0, 39.0, Some((-3000L, -100L))),
-        place("geonames_146669", "Cyprus", PlaceKind.Region, 33.0, 35.0, Some((-1200L, -300L))),
-        place("pleiades_697725", "Petra", PlaceKind.Site, 35.44, 30.33, Some((-300L, 100L))),
-        place("geonames_248816", "Jordan", PlaceKind.Region, 36.0, 31.0, Some((-3000L, 2000L))),
-        place("geonames_357994", "Egypt", PlaceKind.Region, 30.0, 26.0, Some((-3100L, -30L))),
-        place("geonames_163843", "Syria", PlaceKind.Region, 38.0, 35.0, Some((-3000L, 1500L))),
-        place("pleiades_757208100", "Zygouries", PlaceKind.Site, 22.85, 37.8, Some((-3000L, -1100L))),
-        place("x_site", "X", PlaceKind.Site, 10.0, 10.0, None)
+        place(
+          "pleiades_570491",
+          "Mycenae",
+          com.histmersion.domain.catalogue.Place.Kind.Site,
+          22.756,
+          37.73,
+          Some((-1600L, -1100L))
+        ),
+        place(
+          "geonames_390903",
+          "Greece",
+          com.histmersion.domain.catalogue.Place.Kind.Region,
+          22.0,
+          39.0,
+          Some((-3000L, -100L))
+        ),
+        place(
+          "geonames_146669",
+          "Cyprus",
+          com.histmersion.domain.catalogue.Place.Kind.Region,
+          33.0,
+          35.0,
+          Some((-1200L, -300L))
+        ),
+        place(
+          "pleiades_697725",
+          "Petra",
+          com.histmersion.domain.catalogue.Place.Kind.Site,
+          35.44,
+          30.33,
+          Some((-300L, 100L))
+        ),
+        place(
+          "geonames_248816",
+          "Jordan",
+          com.histmersion.domain.catalogue.Place.Kind.Region,
+          36.0,
+          31.0,
+          Some((-3000L, 2000L))
+        ),
+        place(
+          "geonames_357994",
+          "Egypt",
+          com.histmersion.domain.catalogue.Place.Kind.Region,
+          30.0,
+          26.0,
+          Some((-3100L, -30L))
+        ),
+        place(
+          "geonames_163843",
+          "Syria",
+          com.histmersion.domain.catalogue.Place.Kind.Region,
+          38.0,
+          35.0,
+          Some((-3000L, 1500L))
+        ),
+        place(
+          "pleiades_757208100",
+          "Zygouries",
+          com.histmersion.domain.catalogue.Place.Kind.Site,
+          22.85,
+          37.8,
+          Some((-3000L, -1100L))
+        ),
+        place("x_site", "X", com.histmersion.domain.catalogue.Place.Kind.Site, 10.0, 10.0, None)
       )
     )
     connect(ds):

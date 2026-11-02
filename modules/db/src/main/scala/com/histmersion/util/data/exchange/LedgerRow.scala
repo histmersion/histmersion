@@ -21,10 +21,10 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
 import com.histmersion.util.data.exchange.BundlePlan.Ledger
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.util.data.exchange.Bundle
 
 final private[exchange] case class LedgerRow(
     foreignUid: UUID,

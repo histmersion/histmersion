@@ -16,7 +16,6 @@ import com.histmersion.domain.library.workflows.WatchManagerKind
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.automation.{Goal, GoalPut, Queue}
 import com.histmersion.api.library.{Source, WorkRef}
 
@@ -87,7 +86,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
         Some("10.5555/zzcand.have"),
         Some(2020),
         None,
-        SourceStatus.Current,
+        com.histmersion.domain.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,
@@ -181,7 +180,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
         Some("10.5555/zzcand.src"),
         Some(2010),
         None,
-        SourceStatus.Current,
+        com.histmersion.domain.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,

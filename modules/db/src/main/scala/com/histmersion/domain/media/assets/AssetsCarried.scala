@@ -18,18 +18,18 @@ import com.histmersion.util.data.exchange.{
   RowsIn
 }
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the figures: each asset's line stamped with its rev, its bytes a blob; an import writes the
   * metadata of an asset whose bytes are here already among the rows, the rest as their bytes arrive.
   */
 object AssetsCarried extends CarriedKind:
   val owner: DataOwner = DataOwner("media")
-  val entry: BundleEntry = BundleEntry(BundleKind.Asset.file)
-  override val record: Option[BundleKind] = Some(BundleKind.Asset)
+  val entry: BundleEntry = BundleEntry(Bundle.Kind.Asset.file)
+  override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Asset)
   override val table: Option[TableName] = Some(TableName("assets"))
 
   def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =

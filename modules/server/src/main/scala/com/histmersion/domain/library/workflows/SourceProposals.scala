@@ -7,8 +7,9 @@ import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.AgentProposals.{Proposal, Route}
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Approvals
-import com.histmersion.values.{ApprovalKind, SourceStatus}
 import io.circe.syntax.*
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Source
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
@@ -17,7 +18,7 @@ import io.circe.syntax.*
 final class SourceProposals(
     approvals: Approvals,
     cfg: => AgentsConfig,
-    status: String => Option[SourceStatus],
+    status: String => Option[Source.Status],
     apply: Proposal => Either[String, String]
 ):
   import SourceProposals.Outcome
@@ -33,7 +34,7 @@ final class SourceProposals(
   private def record(
       runId: Option[String],
       p: Proposal,
-      now: Option[SourceStatus],
+      now: Option[Source.Status],
       state: ApprovalState,
       result: Option[String]
   ) =
@@ -53,7 +54,7 @@ final class SourceProposals(
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
   def propose(runId: Option[String], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
-    val now = if p.kind == ApprovalKind.StatusChange then status(p.citekey) else None
+    val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
     AgentProposals.route(p, now, cfg.approvals.statusMode, cfg.approvals.edgeMode) match
       case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
       case Route.Apply     =>

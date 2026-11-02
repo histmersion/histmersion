@@ -2,8 +2,8 @@ package com.histmersion.api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 import java.util.UUID
-import com.histmersion.values.SourceStatus
 import com.histmersion.api.given
+import com.histmersion.domain.library.Source
 
 final case class BundleSource(
     uid: UUID,
@@ -14,7 +14,7 @@ final case class BundleSource(
     doi: Option[String],
     year: Option[Int],
     venue: Option[String],
-    status: SourceStatus,
+    status: Source.Status,
     topics: List[String],
     regions: List[String],
     tags: List[String],

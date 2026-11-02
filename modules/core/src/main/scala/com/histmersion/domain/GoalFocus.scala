@@ -3,8 +3,8 @@ package com.histmersion.domain
 import com.histmersion.api.Plural
 
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.values.GoalStatus
 import com.histmersion.domain.automation.ItemStatus
+import com.histmersion.domain.automation.Goal
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are
   * ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are held, and in which
@@ -43,7 +43,7 @@ object GoalFocus:
   def usesModel(kind: String): Boolean = kind != CurrencyCheck && kind != OaIngest
 
   /** Reviewed or done: the focus has nothing more to do for it. */
-  def finished(status: String): Boolean = status == GoalStatus.Reviewed || status == GoalStatus.Done
+  def finished(status: String): Boolean = status == Goal.Status.Reviewed || status == Goal.Status.Done
 
   /** One open (pending, held, active) model-using item of a goal: its seeding manager's, its watcher's sweep, or the
     * review manager's on one of its articles. `focusHeld` = held by the focus; `personHeld` = held by a person (not for
@@ -74,7 +74,7 @@ object GoalFocus:
   final case class Facts(
       slug: String,
       parent: Option[String] = None,
-      status: String = GoalStatus.Seeding,
+      status: String = Goal.Status.Seeding,
       createdAt: String = "",
       sources: Int = 0,
       articles: Int = 0,

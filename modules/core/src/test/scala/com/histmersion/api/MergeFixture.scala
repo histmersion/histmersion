@@ -9,7 +9,6 @@ import io.scalaland.chimney.dsl.*
 import MergePlanner.{Input, Labels, LedgerEntry}
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.BundleEntities
@@ -27,6 +26,8 @@ import com.histmersion.api.exchange.{
   BundleTombstone,
   MergePlan
 }
+import com.histmersion.domain.library.Source
+import com.histmersion.util.data.exchange.Issue
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is
@@ -52,7 +53,7 @@ object MergeFixture:
       doi: Option[String] = None,
       sha: Option[String] = None,
       body: Option[String] = None,
-      status: SourceStatus = SourceStatus.Current,
+      status: Source.Status = Source.Status.Current,
       summary: Option[String] = None,
       notes: Option[String] = None,
       venue: Option[String] = None,
@@ -186,7 +187,7 @@ object MergeFixture:
         List("Trevor Bryce"),
         Some(2006),
         doi = Some("10.1093/acprof:oso/9780199279081.001.0001"),
-        status = SourceStatus.Contested
+        status = Source.Status.Contested
       ),
       // a reprint, 65 years later
       src(
@@ -236,7 +237,8 @@ object MergeFixture:
     ),
     events = List(event("w-siege", "zz_siege", "Siege of Troy (work)")),
     goals = List(goal("w-goal", "zz_goal_both", "Goal created at work")),
-    tombstones = List(BundleTombstone(uid("goal-shared"), BundleKind.Goal, work, At))
+    tombstones =
+      List(BundleTombstone(uid("goal-shared"), com.histmersion.util.data.exchange.Bundle.Kind.Goal, work, At))
   )
 
   /** Home's sources. */
@@ -381,11 +383,11 @@ object MergeFixture:
 
   /** An issue as the expected list names it: kind, letter, the two labels, severity, conditional on. */
   final case class Expect(
-      kind: IssueKind,
+      kind: Issue.Kind,
       letter: String,
       left: Option[String],
       right: Option[String],
-      severity: IssueSeverity,
+      severity: Issue.Severity,
       when: Option[DecisionKind] = None
   )
 
@@ -403,7 +405,8 @@ object MergeFixture:
       )
       .toSet
 
-  import IssueKind.*, IssueSeverity.*
+  import com.histmersion.util.data.exchange.Issue.Kind.*
+  import com.histmersion.util.data.exchange.Issue.Severity.*
   val expected: Set[Expect] = Set(
     Expect(NotesDiffers, "S", Some("guterbock1997_hittite"), Some("guterbock1997_perspectives"), Blocking),
     Expect(DoiDiffers, "S", Some("kuhrt1995_ancient"), Some("kuhrt1995_near"), Blocking),
