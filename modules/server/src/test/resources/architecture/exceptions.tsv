@@ -18,8 +18,6 @@ direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
 direction	api:api/PlaceDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/Queue.scala	automation -> library: Acquire	1
 direction	api:api/Queue.scala	automation -> library: AcquireChecks	1
-direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
-direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1

@@ -577,6 +577,7 @@ api:api/personal/BookmarkId.scala	personal
 api:api/personal/BookmarkLabel.scala	personal
 api:api/personal/BookmarkNew.scala	personal
 api:api/personal/ItemKey.scala	personal
+api:api/personal/ItemKind.scala	kernel
 api:api/personal/ItemKind.scala	personal
 api:api/personal/MapZoom.scala	personal
 api:api/personal/Note.scala	personal
