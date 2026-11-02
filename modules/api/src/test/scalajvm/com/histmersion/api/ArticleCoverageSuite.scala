@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.research.articles.ArticleLint
+
 import com.histmersion.values.SourceStatus
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the uncited remainder, the
@@ -201,8 +203,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     variants.foreach { c =>
       val md = ArticleCoverage.sections(c)
-      assertEquals(Lint.articleUncitedParagraphs(List("a" -> md)), Nil, md)
-      assertEquals(Lint.articleFiller(List("a" -> md)), Nil, md)
+      assertEquals(ArticleLint.articleUncitedParagraphs(List("a" -> md)), Nil, md)
+      assertEquals(ArticleLint.articleFiller(List("a" -> md)), Nil, md)
       assertEquals(Lint.extractParagraphs(md), Nil, md)
     }
     // the Method note is ONE line (a metadata line), whatever the filter's text holds

@@ -5,8 +5,8 @@ import com.histmersion.api.*
 import com.histmersion.api.Write.*
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
 
-/** A source's put and patch checked and applied to the stored record: the findings numbered, the edges and the
-  * metadata checked, an old citekey in a patch followed to the current one.
+/** A source's put and patch checked and applied to the stored record: the findings numbered, the edges and the metadata
+  * checked, an old citekey in a patch followed to the current one.
   */
 object SourceWrite:
 

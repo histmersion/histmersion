@@ -376,17 +376,9 @@ final class ArticlesControllers(
   def mentionedIn(citekey: String): String =
     BacklinksMarkdown.sourceArticles(store.backlinksForSource(citekey).toVector)
 
-  /** `GET /api/resolve/{id}`: a stored source, else an article, else nothing — never an error. */
-  def resolveId(id: String): Either[ApiError, ResolvedId] =
-    val src = sources
-      .get(id, body = false)
-      .toOption
-      .map(s =>
-        ResolvedSource(s.source.citekey, s.source.doi, s.source.authors, s.source.year, s.source.title, s.source.status)
-      )
-    val art = if src.isDefined then None
-    else get(id, brief = true).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
-    Right(ResolvedId(id, src, art))
+  /** The article an identifier names, as `GET /api/resolve/{id}` shows it. */
+  def resolved(id: String): Option[ResolvedArticle] =
+    get(id, brief = true).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
 

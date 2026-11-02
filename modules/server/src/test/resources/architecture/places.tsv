@@ -336,7 +336,7 @@ api:api/JobKindsAdapter.scala	api
 api:api/JobState.scala	util.jobs
 api:api/Label.scala	library.search
 api:api/LabelRename.scala	library.search
-api:api/LabelRenamed.scala	library.search
+api:api/LabelRenamed.scala	util.identity
 api:api/LabelRenames.scala	library.search
 api:api/LatinFold.scala	util.common
 api:api/LeadFacts.scala	catalogue.evidence
@@ -485,7 +485,7 @@ api:api/RenameCounts.scala	library.sources
 api:api/RenameRequest.scala	library.sources
 api:api/RepairAcquire.scala	library.acquisition
 api:api/ResolvedArticle.scala	research.articles
-api:api/ResolvedId.scala	util.identity
+api:api/ResolvedId.scala	server.views
 api:api/ResolvedSource.scala	library.sources
 api:api/RestoreRequest.scala	util.data.backup
 api:api/RestoreResult.scala	util.data.backup
@@ -905,6 +905,4 @@ server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
 server:server/hot/PinRequests.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins
-server:server/views/EventCardView.scala	server
-server:server/views/PlaceCardView.scala	server
 api:api/UiLabels.scala	api.ui

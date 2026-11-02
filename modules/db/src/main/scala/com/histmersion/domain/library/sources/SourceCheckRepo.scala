@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.library.citations.CitationLint
+
 import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSettings}
 
 import com.histmersion.api.*
@@ -18,8 +20,9 @@ import javax.sql.DataSource
   * Every rule is either
   *   - a **projection**: one SQL statement yielding `(citekey, detail)` — the statement is a plain `String` in
   *     [[projections]], so a test can read it, and the classifier is the WHERE clause; or
-  *   - a **fetch + pure classifier**: the graph and duplicate rules pull raw rows and hand them to `Lint.danglingEdges`
-  *     / `Lint.unresolvedShortCitekeys` / `Lint.duplicates`, which are pure and unit-tested without a database.
+  *   - a **fetch + pure classifier**: the graph and duplicate rules pull raw rows and hand them to
+  *     `CitationLint.danglingEdges` / `CitationLint.unresolvedShortCitekeys` / `Lint.duplicates`, which are pure and
+  *     unit-tested without a database.
   *
   * No rule takes a parameter, so nothing here can be an injection vector; the statements are constants, spliced through
   * [[Sql.raw]].
@@ -166,14 +169,15 @@ private[sources] object SourceCheckRepo:
   /** One rule's report, on the run's connection. */
   def report(r: Rule, c: Context, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name match
-      case DanglingEdges           => Lint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
-      case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
-      case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
-      case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
-      case NonCanonicalTag         => Lint.nonCanonicalTags(run(TagRows))
-      case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(run(YearRows))
-      case AuthorPipe              => Lint.authorPipe(run(AuthorRows))
-      case NoteFormat              =>
+      case DanglingEdges           => CitationLint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+      case UnresolvedShortCitekeys =>
+        CitationLint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+      case DuplicateDoi        => Lint.duplicates(pairs(doiSql), "doi")
+      case DuplicateSha256     => Lint.duplicates(pairs(sha256Sql), "sha256")
+      case NonCanonicalTag     => Lint.nonCanonicalTags(run(TagRows))
+      case YearCitekeyMismatch => Lint.yearCitekeyMismatch(run(YearRows))
+      case AuthorPipe          => Lint.authorPipe(run(AuthorRows))
+      case NoteFormat          =>
         Lint.formatItems(
           triples(noteTextsSql).flatMap((ck, summary, notes) =>
             List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
