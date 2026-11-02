@@ -277,6 +277,7 @@ api:api/FormatField.scala	util.data.checks
 api:api/FormatIssue.scala	util.data.checks
 api:api/FormatMarkdown.scala	util.data.checks
 api:api/FormatReport.scala	util.data.checks
+api:api/FormatRule.scala	util.data.checks
 api:api/FormatSeverity.scala	util.data.checks
 api:api/GazDescription.scala	catalogue.places
 api:api/GazGeometry.scala	catalogue.places
@@ -645,6 +646,7 @@ config:config/CliPluginsConfig.scala	config
 config:config/CodexConfig.scala	automation.agents
 config:config/CommaList.scala	values
 config:config/Config.scala	config
+config:config/ConfigLayers.scala	config
 config:config/ConfigReload.scala	util.settings
 config:config/ConfigReloadConfig.scala	util.settings
 config:config/ConverterConfig.scala	library.ingest
@@ -803,6 +805,7 @@ db:db/Db.scala	util.common
 db:db/FocusRepo.scala	automation.goals
 db:db/GoalLinkRepo.scala	automation.goals
 db:db/GoalRepo.scala	automation.goals
+db:db/GoalRow.scala	automation.goals
 db:db/Jsonb.scala	util.common
 db:db/Keyset.scala	util.database
 db:db/ListSql.scala	util.database
@@ -823,8 +826,10 @@ files:files/PluginKit.scala	util.plugins
 files:files/SafePath.scala	util.files
 server:domain/activity/ActivityControllers.scala	automation.activity
 server:domain/activity/ActivityRepo.scala	automation.activity
+server:domain/activity/ActivityRow.scala	automation.activity
 server:domain/activity/ActivityService.scala	automation.activity
 server:server/AcquisitionWiring.scala	server
+server:server/Article.scala	server
 server:server/ArticlePage.scala	research.articles
 server:server/AuthHandler.scala	server
 server:server/BackupWiring.scala	server
@@ -845,6 +850,7 @@ server:server/HttpDownload.scala	server
 server:server/IngestWiring.scala	server
 server:server/LibraryWiring.scala	server
 server:server/LibraryWorkflowSite.scala	server
+server:server/LinkTarget.scala	research.articles
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
 server:server/MarkdownFlavor.scala	util.common
@@ -897,8 +903,10 @@ server:server/agents/Refreshed.scala	automation.agents
 server:server/agents/ServerAutomationHost.scala	server
 server:server/agents/ServerEngineSite.scala	server
 server:server/agents/ToolboxOrder.scala	server
+server:server/hot/BuildCtx.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
+server:server/hot/Pin.scala	server
 server:server/hot/PinRequests.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins

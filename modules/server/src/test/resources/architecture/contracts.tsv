@@ -335,7 +335,8 @@ derives	api:api/FormatCheck.scala	codec given written by hand	1
 derives	api:api/FormatField.scala	codec given written by hand	3
 derives	api:api/FormatIssue.scala	codec given written by hand	1
 derives	api:api/FormatReport.scala	codec given written by hand	1
-derives	api:api/FormatSeverity.scala	codec given written by hand	6
+derives	api:api/FormatRule.scala	codec given written by hand	3
+derives	api:api/FormatSeverity.scala	codec given written by hand	3
 derives	api:api/GazetteerExtract.scala	codec given written by hand	1
 derives	api:api/GazetteerKind.scala	codec given written by hand	3
 derives	api:api/GazetteerLoadCounts.scala	codec given written by hand	1
@@ -720,23 +721,6 @@ helper	web:web/BaseMaps.scala	BaseMaps about BaseMap	1
 helper	web:web/PointKinds.scala	PointKinds about PointKind	1
 helper	web:web/map/Engines.scala	Engines about Engine	1
 helper	web:web/map/ShapeHits.scala	ShapeHits about ShapeHit	1
-one-type	api:api/FormatSeverity.scala	FormatSeverity FormatRule	2
-one-type	config:config/EnvOverrides.scala	EnvOverrides ConfigLayers	2
-one-type	db:db/GoalRepo.scala	GoalRow GoalRepo	2
-one-type	db:util/data/exchange/MergeRepo.scala	MergeRow LedgerRow MergeRepo	3
-one-type	db:util/jobs/JobRepo.scala	JobRow JobRepo	2
-one-type	server:domain/activity/ActivityRepo.scala	ActivityRow ActivityRepo	2
-one-type	server:domain/automation/agents/Engine.scala	RunBudget Engine	2
-one-type	server:domain/automation/agents/PluginAiClient.scala	PluginModel PluginAiClient	2
-one-type	server:domain/automation/agents/RunCtx.scala	RunCtx AllowanceGuard LatencyInterceptor	3
-one-type	server:domain/automation/managers/ManagerSupervisor.scala	ManagerSupervisor Zero	2
-one-type	server:server/HtmlRender.scala	LinkTarget HtmlRender	2
-one-type	server:server/HttpApi.scala	HttpApi Article	2
-one-type	server:server/hot/HotGraph.scala	BuildCtx Pin HotGraph	3
-one-type	values:values/AgentRole.scala	AgentRole Pipeline TargetKind	3
-one-type	web:web/Icon.scala	Icon MapLayer	2
-one-type	web:web/map/maplibre/MapLibre.scala	MapLibre LngLat LngLatBounds ScreenPoint GlEvent RenderedFeature GeoJsonSource GlMap GlPopup NavigationControl	10
-one-type	web:web/map/maplibre/MapLibreSurface.scala	MapLibreSurface GlShapes GlPointTiles	3
 primitive	db:db/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:db/FocusRepo.scala	String/Int/Long for a concept with a newtype	4
 primitive	db:db/GoalRepo.scala	String/Int/Long for a concept with a newtype	8

@@ -27,31 +27,6 @@ import com.histmersion.values.BundleKind
 import com.augustnagro.magnum.*
 import java.util.UUID
 
-final private[exchange] case class MergeRow(
-    id: UUID,
-    bundleId: UUID,
-    bundleSha256: String,
-    fromInstance: UUID,
-    fromLabel: Option[String],
-    appliedAt: String,
-    planHash: Option[String],
-    backup: Option[String],
-    ledgerRows: Int,
-    redirects: Int
-) derives DbCodec
-
-final private[exchange] case class LedgerRow(
-    foreignUid: UUID,
-    kind: String,
-    mergeId: UUID,
-    foreignRev: String,
-    localUid: UUID,
-    label: Option[String],
-    localRevAfter: Option[String],
-    decision: String,
-    recordedAt: String
-) derives DbCodec
-
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
   * screen's draft is `merge_sessions` (V051). Stateless, like every repo.

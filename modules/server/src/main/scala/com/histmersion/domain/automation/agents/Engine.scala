@@ -18,29 +18,6 @@ import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 
-/** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend recorded before this
-  * step plus this step's own calls reaches the run's cap (cost or tokens), the loop is told to finish, and the engine
-  * pauses the run. Our [[Agents.Billing]] prices the calls (an unpriced metered model never gets this far); a plan
-  * model costs 0 USD, so only its tokens count.
-  */
-final private[automation] class RunBudget(
-    spentUsd: BigDecimal,
-    spentTokens: Long,
-    capUsd: BigDecimal,
-    capTokens: Long,
-    billing: Billing,
-    cacheReadWeight: Double = 1.0
-) extends AgentInterceptor[Identity]:
-  override def decide(state: AgentRunState): LoopDecision =
-    val use = LlmClient.usage(state.usage)
-    val cost = billing.cost(use)
-    if spentUsd + cost >= capUsd || spentTokens + use.budgeted(cacheReadWeight) >= capTokens then
-      LoopDecision.FinishNow(
-        FinishReason.BudgetExceeded,
-        sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction
-      )
-    else LoopDecision.Continue
-
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
   * so the in-memory queue is rebuilt at [[start]].

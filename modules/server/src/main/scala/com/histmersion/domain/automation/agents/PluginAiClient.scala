@@ -11,12 +11,6 @@ import sttp.apispec.circe.*
 import sttp.client4.Backend
 import sttp.shared.Identity
 
-/** The model type a plugin provider's calls are built with: every capability, as the provider (not sttp-ai) decides
-  * what it can do.
-  */
-private[automation] object PluginModel extends AIModel with Capability.All:
-  def value: String = "plugin"
-
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
   * process under the step's allowlist), the interceptors (trace, budget, LLM slots, the first-call probe, the allowance
