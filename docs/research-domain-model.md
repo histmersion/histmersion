@@ -4713,3 +4713,71 @@ The built-in plugins (calibre, events, fetchers, gazetteers, media, ai-http, vau
    `Seconds`), `derives`, `copy`, `global`, `service` (InMemory twins for FindingService, LabelService, QueryService,
    SearchService, CoverageService, ReviewStateService, BundleService), `helper`.
 4. The server suites that start a database without testing SQL, onto `InMemory`.
+
+## 27. Layers and namespaces as built (contracts step 1, 2026-11-02)
+
+The first step of the contracts work that remained after §26: every type in its layer and its owner's package, once
+(#8861 item 2, #8862–#8868). Four new `ContractsSuite` rules came first, with today's violations in
+`architecture/contracts.tsv` (exact both ways, as the other rules):
+
+| rule | check | before → after |
+|---|---|---|
+| `bucket` (10) | a type in `com.histmersion.db`, `.files`, `.values` or the flat `.upstreams` | 134 → **0** |
+| `prefix` (5) | a type `<Entity><Property>` beside `<Entity>` in the same layer and package; components (`…Service`, `…Routes`, `…Markdown`, `…Html`, …), a newtype's `<Name>Rule` and the web page's own components excluded | 285 → 16 |
+| `client-refined` (2) | a refined (not `Pure`) constraint in api, web, cli or plugin-api | 10 → 7 |
+| `layer` (3) | the client (api, web) naming a package outside `com.histmersion.api`; a `domain…` file naming the api outside a boundary file (routes, endpoints, tools, transformers, controllers); counted in files | 530 → 464 |
+
+The older rules did not grow: `primitive` 313, `unwrap` 390, `derives` 1042, `copy` 479, `global` 82, `service` 7 stay;
+`concept` 3 → 2 rows (the two `Frontmatter`s are one), `helper` 26 → 23.
+
+The `prefix` rule compares within one package, not a whole layer: across a layer every component of a short entity
+name became a "property" (`PluginHost` → `Plugin.Host`, `JobPool` → `Job.Pool`), and a namespace object cannot be
+split across modules (the JVM class `util.jobs.Job$` exists once). A nested newtype keeps its concept for `primitive`
+(`Run.Id` is `RunId`).
+
+### What moved where
+
+| from | to |
+|---|---|
+| `db`: AgentRepo, ModelSettingsRepo, PlanQuotaRepo | `domain.automation.agents` |
+| `db`: AutopilotRepo / FocusRepo, GoalRepo, GoalLinkRepo, GoalRow / ManagerRepo | `domain.automation.autopilot` / `.goals` / `.managers` |
+| `db`: BundleImport, BundleRepo, MergeState | `util.data.exchange` |
+| `db`: Db, Sql, Param, Keyset, ListSql, Jsonb, Codecs, Vocab, Migrate | `util.database` |
+| `files`: Frontmatter (parser) + Export (renderer) | one object, `domain.library.sources.SourceNote`; the mirror's `Frontmatter` is the only one |
+| `files`: ArticleNote, PlaceSeed, BundleEntities, PluginKit, SafePath | `domain.research.articles`, `domain.catalogue.places`, `util.data.exchange`, `util.plugins`, `util.storage` |
+| `upstreams`: WorkRef, RefRow, FollowupRow, UpdateNotice, WorkLookup, Endpoint, CoreEndpoint, SearchDefaults, LandingSettings | `domain.library.acquisition` (still in the upstreams module) |
+| `upstreams`: the clients and parsers | `upstreams.openalex`, `.archiveorg`, `.core`, `.europepmc`, `.pmc`, `.wikidata`, `.jats`, `.landing`, `.dating`, `.media`, `.unpaywall`; shared: `.parse` (AcquireParse), `.http`, `.identifiers`, `.settings` |
+| `values`: Year, Period (+ `Period.Error`), Latitude, Longitude, LatLon, UserId, Sha256, ByteCount, ByteOffset, Offset, PageSize, Ascii, WireEnumValues | kernel `com.histmersion` |
+| `values`: Citekey, Doi, Isbn, ArxivId, Pmid, Pmcid, ArchiveId, AuthorName, Title, EditionsPolicy, Confidence, MatchMethod, MatchOutcome; `Source.{Status, Uid}`, `Edge.Kind` | `domain.library` |
+| `values`: Slug, DraftMode; `Article.Uid` | `domain.research` |
+| `values`: Historicity, AttestationTarget; `Place.{Id, Kind, Precision}`, `Event.{Id, Uid, EdgeKind, LinkStatus}`; `Wikidata.Id` | `domain.catalogue` (`.places` for Wikidata) |
+| `values`: MediaRole; `Asset.{Uid, LinkTarget}` | `domain.media` |
+| `values`: AgentRole, ProviderKind, Pipeline, ItemStatus, ScheduleKind, TargetKind; `Approval.{Kind, Mode, State, DecidedBy}`, `Goal.{Slug, Uid, Status, LinkKind}`, `Manager.{Kind, State}`, `Run.{Id, State}`, `Step.Status` | `domain.automation` |
+| `values`: `Job.{Id, Kind}` / `Bundle.Kind`, `Issue.{Kind, Severity, DecidedBy}`, DecisionKind / `Plugin.Id` | `util.jobs` / `util.data.exchange` / `util.plugins` |
+| core: Licence (+ `Licence.Id`, `Licence.Family`), catalogue.places.Wikidata | the values module, same packages |
+| `api` (576 flat files) and the api module's `util.*` | `api.<domain>` and `api.<area>` (by places.tsv); `api.<domain>.<feature>` folded into `api.<domain>`; 217 prefixed records onto their entity's companion in 42 objects (`Source.Patch`, `Bundle.Source`, `Api.Error`, …) |
+| plugin-api | `Plugin.{Context, Info, Http, HttpResponse, Log, Config}`, `Secret.{Ref, Vault}`, `Fetch.Context`, `AiTurn.Request`, `AiTool.Call`, `AiHttp.Response`, `Licence.Read`, `MediaTarget.Id` |
+| cli, plugins, server (58 more) | `Calibre.*`, `Commons.*`, `Cli.Error`, `ConfigReload.Config`, `Note.*`, `Bookmark.Row`, `Mirror.*`, `Store.*`, `Hot.*`, …; `server.Article` is `ArticleHtml`, core's `Read` is `JsonRead` |
+
+The api's personal ids and zoom (`Bookmark.Id`, `Note.Id`, `MapZoom`) are `Pure`; the server checks them
+(`Bookmark.idOf`, `Note.idOf`, `MarkTarget.zoomChecked`). The wire is unchanged but for schema names (the members'
+short names, `Patch1` where two collide; the snapshots' structure is identical). Native metadata names the moved and
+nested classes and the fields of their givens as compiled (checked with `javap`).
+
+### What is left, in order
+
+1. `layer` (464 files): the api's own unrefined copies of the values types, then domain records beside the api records
+   (`domain.<domain>.<feature>.<Entity>`) with Chimney conversions at the boundaries, so the domain stops working on
+   api records; then the values module is JVM-only (or gone) and the web sees only `api.*`. This is the bulk of the
+   remaining contracts work.
+2. `client-refined` (7): plugin-api's Doi, Latitude, Longitude, WikidataId (#8868 allows plugin copies no stricter
+   than the host's; the first-party plugins drop invalid values with `.option`, and making them `Pure` moves that to
+   the host's refusal of the whole record — a decision for the user); the CLI's PluginId, PluginRepository,
+   ScalaPackage, whose only judge is the CLI itself (local plugin management, no server).
+3. `prefix` (16): util.jobs' JobAction, JobControlStep, JobStop, JobListing, JobPool, JobRecords, JobRunState, JobRuns,
+   JobStopped, JobStops; BundleEntities, BundleFormat, BundleTar; MirrorPlacement; PluginKit, PluginSetResource. Their
+   entity's namespace is in the values module (`Job`, `Bundle`, `Plugin`) or another module (`Mirror`); they nest once
+   the domain copies live with the jobs engine, the exchange and the plugins (after item 1).
+4. The automation repositories are public: the server.agents DB suites call them; `private[feature]` when those suites
+   go through the services (step 3). AcquireParse still parses for several services (split when upstreams dissolves
+   into the plugins).
