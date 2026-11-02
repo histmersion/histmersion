@@ -23,7 +23,8 @@ import org.ekrich.config.ConfigFactory
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
 import com.histmersion.api.media.{MediaImportRequest, MediaProviderInfo}

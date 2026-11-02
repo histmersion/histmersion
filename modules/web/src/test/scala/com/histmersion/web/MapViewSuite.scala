@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.library.GeoHit
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 
 class MapViewSuite extends munit.FunSuite:
 

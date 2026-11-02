@@ -3,6 +3,8 @@ package com.histmersion.values
 /** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a URL segment.
   * Nothing validated one before, which is how `../../../../tmp/x` became a directory.
   */
+
+import com.histmersion.domain.library.Citekey
 class CitekeySuite extends munit.FunSuite:
 
   test("the shapes the corpus actually uses are accepted"):

@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.histmersion.util.storage.{RandomReader, Store, StoreKey}
-import com.histmersion.values.ByteOffset
+import com.histmersion.ByteOffset
 import io.circe.Json
 import io.circe.syntax.*
 

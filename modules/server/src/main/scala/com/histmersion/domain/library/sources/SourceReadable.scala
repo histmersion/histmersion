@@ -5,7 +5,9 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{AuthorName, Offset, PageSize, SourceStatus, Title, WireEnumValues, Year}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.{AuthorName, Title}
+import com.histmersion.{Offset, PageSize, WireEnumValues, Year}
 
 import com.augustnagro.magnum.*
 

@@ -4,7 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.{Plural, WireEnum}
 import com.histmersion.api.given
 

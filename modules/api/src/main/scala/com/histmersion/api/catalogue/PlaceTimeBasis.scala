@@ -1,6 +1,7 @@
 package com.histmersion.api.catalogue
 import sttp.tapir.Schema
-import com.histmersion.values.{PlaceKind, WireEnumValues}
+import com.histmersion.values.PlaceKind
+import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 

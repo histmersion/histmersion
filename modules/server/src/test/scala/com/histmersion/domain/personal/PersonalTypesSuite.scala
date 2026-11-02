@@ -3,7 +3,8 @@ package com.histmersion.domain.personal
 import com.histmersion.api.personal.{BookmarkLabel, MapZoom, NoteText, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemRef, ItemUid, RecordState}
-import com.histmersion.values.{Latitude, Longitude, Title, Year}
+import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.domain.library.Title
 
 import java.time.Instant
 import java.util.UUID

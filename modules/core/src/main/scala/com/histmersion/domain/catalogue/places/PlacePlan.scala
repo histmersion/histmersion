@@ -4,7 +4,8 @@ import com.histmersion.api.exchange.{BundlePlace, IssueDetail, IssueSide, MergeI
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID

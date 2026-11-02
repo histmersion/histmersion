@@ -26,7 +26,8 @@ import com.histmersion.util.ocr.ConverterClient
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
 import com.histmersion.api.jobs.JobInfo

@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.library.GeoHit
 
 /** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey, dashed, its own

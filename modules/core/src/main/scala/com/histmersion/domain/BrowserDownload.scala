@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.library.WorkRef
 
-import com.histmersion.values.{Citekey, Doi}
+import com.histmersion.domain.library.{Citekey, Doi}
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Not

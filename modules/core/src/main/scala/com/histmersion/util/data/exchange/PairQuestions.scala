@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.domain.MergePlanner
-import com.histmersion.values.DecisionKind
+import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
 

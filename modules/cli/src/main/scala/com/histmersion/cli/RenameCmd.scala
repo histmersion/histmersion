@@ -4,7 +4,7 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*

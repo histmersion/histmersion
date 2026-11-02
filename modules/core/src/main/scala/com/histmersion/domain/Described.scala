@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.values.Title
+import com.histmersion.domain.library.Title
 
 /** How a referenced record shows wherever it is referenced: the key it goes by now and its title (none once it is
   * deleted), and what became of it.

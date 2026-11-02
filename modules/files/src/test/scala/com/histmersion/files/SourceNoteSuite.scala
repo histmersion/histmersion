@@ -2,7 +2,8 @@ package com.histmersion.files
 
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Edge, Finding, Source}

@@ -1,6 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.values.{Citekey, Doi, Latitude, Longitude, WikidataId, Year}
+import com.histmersion.values.WikidataId
+import com.histmersion.domain.library.{Citekey, Doi}
+import com.histmersion.{Latitude, Longitude, Year}
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 

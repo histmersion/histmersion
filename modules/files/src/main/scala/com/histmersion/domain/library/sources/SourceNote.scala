@@ -7,7 +7,8 @@ import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 import com.histmersion.util.data.mirror.Frontmatter
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.storage.SafePath
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint

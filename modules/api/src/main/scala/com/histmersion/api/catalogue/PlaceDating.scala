@@ -1,6 +1,6 @@
 package com.histmersion.api.catalogue
 import sttp.tapir.Schema
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.{WireEnum, YearFmt}
 import com.histmersion.api.given
 

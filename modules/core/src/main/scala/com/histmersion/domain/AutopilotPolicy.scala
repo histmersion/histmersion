@@ -5,7 +5,8 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
-import com.histmersion.values.{ApprovalDecidedBy, GoalStatus, ItemStatus, ManagerKind, ManagerState}
+import com.histmersion.values.{ApprovalDecidedBy, GoalStatus, ManagerKind, ManagerState}
+import com.histmersion.domain.automation.ItemStatus
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers

@@ -3,7 +3,8 @@ package com.histmersion.domain.personal
 import com.histmersion.api.personal.{ItemKey as WireKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid}
-import com.histmersion.values.{Latitude, Longitude, Title, Year}
+import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.domain.library.Title
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.

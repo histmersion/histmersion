@@ -1,7 +1,8 @@
 package com.histmersion.api.catalogue
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.values.{PlaceKind, WireEnumValues}
+import com.histmersion.values.PlaceKind
+import com.histmersion.WireEnumValues
 import com.histmersion.api.{LatinFold, WireEnum}
 import com.histmersion.api.given
 

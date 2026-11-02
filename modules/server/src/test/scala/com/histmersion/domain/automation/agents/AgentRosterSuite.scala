@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
 import com.histmersion.server.agents.EngineContributions
-import com.histmersion.values.AgentRole
+import com.histmersion.domain.automation.AgentRole
 
 /** The definitions take only the roles the contributed workflows run, as they list only the contributed tools. */
 class AgentRosterSuite extends munit.FunSuite:

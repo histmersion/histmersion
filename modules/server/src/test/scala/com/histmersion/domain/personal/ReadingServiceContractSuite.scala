@@ -3,7 +3,7 @@ package com.histmersion.domain.personal
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemKey
 import com.histmersion.domain.personal.reading.ReadingShow
-import com.histmersion.values.{Offset, PageSize, UserId}
+import com.histmersion.{Offset, PageSize, UserId}
 
 /** A person's read marks and what is not read yet, in memory and in the database. */
 class ReadingServiceContractSuite extends PersonalServiceContract("reading"):

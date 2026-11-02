@@ -13,7 +13,8 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Tree.TreeRow
-import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.values.{PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
 import com.histmersion.api.library.{Bucket, Filter, Finding, Source}

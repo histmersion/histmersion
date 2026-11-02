@@ -1,5 +1,7 @@
 package com.histmersion.values
 
+import com.histmersion.{Latitude, LatLon, Longitude, Period, Year}
+import com.histmersion.domain.library.Doi
 class ValuesSuite extends munit.FunSuite:
 
   test("a period may not end before it starts; a point is one year"):

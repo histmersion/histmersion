@@ -3,7 +3,7 @@ package com.histmersion.domain
 import com.histmersion.api.Plural
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
-import com.histmersion.values.ItemStatus
+import com.histmersion.domain.automation.ItemStatus
 
 /** Where an article stands with the review panel, derived from what the review manager and the review ledger record
   * about it — pure; the server reads the facts (one cheap query for a whole list page, the ledger itself for one

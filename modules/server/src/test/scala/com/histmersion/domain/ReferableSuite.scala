@@ -7,7 +7,7 @@ import com.histmersion.domain.library.sources.SourceReferable
 import com.histmersion.domain.media.assets.PictureReferable
 import com.histmersion.domain.research.articles.ArticleReferable
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.Title
+import com.histmersion.domain.library.Title
 
 import com.augustnagro.magnum.*
 

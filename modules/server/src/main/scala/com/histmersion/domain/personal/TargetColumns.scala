@@ -2,7 +2,7 @@ package com.histmersion.domain.personal
 
 import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.{ItemKey, ItemUid}
-import com.histmersion.values.{Latitude, Longitude, Year}
+import com.histmersion.{Latitude, Longitude, Year}
 
 /** A target as the tables' columns hold it. */
 final private[personal] case class TargetColumns(

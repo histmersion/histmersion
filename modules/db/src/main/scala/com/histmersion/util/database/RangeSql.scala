@@ -61,7 +61,7 @@ object RangeSql:
   def literal(p: Option[Period]): Option[String] = p.flatMap(x => literal(Some(x.start), Some(x.end)))
 
   /** The model's period (`values.Period`) as the same literal. */
-  def literalOf(p: Option[com.histmersion.values.Period]): Option[String] =
+  def literalOf(p: Option[com.histmersion.Period]): Option[String] =
     p.flatMap(x => literal(Some(x.start.value.toLong), Some(x.end.value.toLong)))
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */

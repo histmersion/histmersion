@@ -1,6 +1,6 @@
 package com.histmersion.api
 import com.histmersion.api.WireEnum
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 

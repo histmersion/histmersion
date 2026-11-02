@@ -7,7 +7,8 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.ocr.Spool
 
-import com.histmersion.values.{Citekey, LicenceId}
+import com.histmersion.values.LicenceId
+import com.histmersion.domain.library.Citekey
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 import com.histmersion.domain.library.acquisition.WorkLookup

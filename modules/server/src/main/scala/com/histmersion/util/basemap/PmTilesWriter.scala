@@ -1,7 +1,7 @@
 package com.histmersion.util.basemap
 
 import com.histmersion.util.storage.{Reservation, Store, StoreKey}
-import com.histmersion.values.ByteOffset
+import com.histmersion.ByteOffset
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
 

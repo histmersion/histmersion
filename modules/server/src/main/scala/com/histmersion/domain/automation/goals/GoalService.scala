@@ -6,7 +6,8 @@ import com.histmersion.api.automation.GoalPlans.{GoalLink, GoalSchedule}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{GoalLinkKind, ScheduleKind}
+import com.histmersion.values.GoalLinkKind
+import com.histmersion.domain.automation.ScheduleKind
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 

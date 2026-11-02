@@ -3,6 +3,8 @@ package com.histmersion.values
 /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
   * kebab-case (`article-version`), as the V031 trigger writes them.
   */
+
+import com.histmersion.{Period, WireEnumValues}
 enum BundleKind:
   case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
 

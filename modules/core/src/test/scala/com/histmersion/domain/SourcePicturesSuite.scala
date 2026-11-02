@@ -9,7 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.parser.parse
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportReport, MediaProvider, MediaSourceLine}
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) — on the fixture the

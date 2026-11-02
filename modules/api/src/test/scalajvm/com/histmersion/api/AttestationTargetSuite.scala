@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.values.AttestationTarget
+import com.histmersion.domain.catalogue.AttestationTarget
 
 class AttestationTargetSuite extends munit.FunSuite:
 

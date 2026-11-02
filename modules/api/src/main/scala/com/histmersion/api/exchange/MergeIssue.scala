@@ -3,7 +3,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, DecidedBy, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.given
 
 final case class MergeIssue(

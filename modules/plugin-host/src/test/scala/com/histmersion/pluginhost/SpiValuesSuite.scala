@@ -12,7 +12,7 @@ import com.histmersion.values
 class SpiValuesSuite extends munit.FunSuite:
 
   test("towards a plugin: the host's values as the SPI's, a plain value that does not parse left out"):
-    assertEquals(SpiValues.year(values.Year(-1600)), Year(-1600))
+    assertEquals(SpiValues.year(com.histmersion.Year(-1600)), Year(-1600))
     assertEquals(SpiValues.year(-1600L), Some(Year(-1600)))
     assertEquals(SpiValues.year(5_000_000_000L), None)
     assertEquals(
@@ -20,7 +20,7 @@ class SpiValuesSuite extends munit.FunSuite:
       List(Year(Int.MinValue), Year(2026))
     )
     assertEquals(SpiValues.period(-1600L, -1700L), Period.from(Year(-1700), Year(-1600)).toOption)
-    assertEquals(SpiValues.period(values.Period.point(values.Year(7))), Some(Period.point(Year(7))))
+    assertEquals(SpiValues.period(com.histmersion.Period.point(com.histmersion.Year(7))), Some(Period.point(Year(7))))
     assertEquals((SpiValues.latitude(91.0), SpiValues.longitude(-181.0)), (None, None))
     assertEquals(SpiValues.doi(" 10.1234/abc "), Some(Doi("10.1234/abc")))
     assertEquals(SpiValues.doi("abc"), None)
@@ -29,12 +29,15 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.area(-10, 30, 400, 50), None)
 
   test("from a plugin: a valid value converts unchanged"):
-    assertEquals(SpiValues.yearOf(Year(-1600)), Right(values.Year(-1600)))
+    assertEquals(SpiValues.yearOf(Year(-1600)), Right(com.histmersion.Year(-1600)))
     assertEquals(SpiValues.latitudeOf(Latitude(36.4)).map(l => l.value: Double), Right(36.4))
     assertEquals(SpiValues.longitudeOf(Longitude(25.4)).map(l => l.value: Double), Right(25.4))
     assertEquals(SpiValues.doiOf(Doi("10.1/x")).map(d => d.value: String), Right("10.1/x"))
     assertEquals(SpiValues.wikidataOf(WikidataId("Q1")).map(q => q.value: String), Right("Q1"))
-    assertEquals(SpiValues.periodOf(Period.point(Year(3))), Right(values.Period.point(values.Year(3))))
+    assertEquals(
+      SpiValues.periodOf(Period.point(Year(3))),
+      Right(com.histmersion.Period.point(com.histmersion.Year(3)))
+    )
     assertEquals(SpiValues.licenceOf(Licence("CC0-1.0")), "CC0-1.0")
 
   test("from a plugin: a value its type refuses is a Left naming it, never an exception"):
@@ -102,7 +105,10 @@ class SpiValuesSuite extends munit.FunSuite:
       period = Period.from(Year(-500), Year(-400)).toOption
     )
     val rec = PluginMedia.record(item)
-    assertEquals(rec.period, Some(values.Period.from(values.Year(-500), values.Year(-400)).toOption.get))
+    assertEquals(
+      rec.period,
+      Some(com.histmersion.Period.from(com.histmersion.Year(-500), com.histmersion.Year(-400)).toOption.get)
+    )
     assert(rec.rights.isRight)
     val broken = PluginMedia.record(item.copy(period = Some("1999").asInstanceOf[Option[Period]]))
     assertEquals(broken.period, None)

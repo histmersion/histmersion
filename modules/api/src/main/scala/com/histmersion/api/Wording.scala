@@ -1,6 +1,7 @@
 package com.histmersion.api
 
-import com.histmersion.values.{ApprovalKind, ApprovalState, JobKind, ManagerKind, Pipeline, RunState, SourceStatus}
+import com.histmersion.values.{ApprovalKind, ApprovalState, JobKind, ManagerKind, RunState, SourceStatus}
+import com.histmersion.domain.automation.Pipeline
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.Label
 

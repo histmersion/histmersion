@@ -1,7 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.media.AssetKind
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 
 /** A provider's picture to store. `bytes` are the capped rendition, `thumb` the card's thumbnail. */
 final case class ProviderAsset(

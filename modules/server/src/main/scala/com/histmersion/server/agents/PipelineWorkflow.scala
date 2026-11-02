@@ -4,7 +4,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.domain.automation.workflows.{ToolName, WorkflowDefinition, WorkflowId}
-import com.histmersion.values.{AgentRole, Pipeline, TargetKind}
+import com.histmersion.domain.automation.{AgentRole, Pipeline, TargetKind}
 
 /** One of research's and the engine's pipelines registered as a workflow, through this transition adapter until
   * research defines its own (the library registers its own, `LibraryWorkflow`): its identifier, version, target, roles

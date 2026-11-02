@@ -1,7 +1,7 @@
 package com.histmersion.domain.personal.marks
 
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
-import com.histmersion.values.{Offset, PageSize}
+import com.histmersion.{Offset, PageSize}
 
 import java.util.concurrent.atomic.AtomicReference
 

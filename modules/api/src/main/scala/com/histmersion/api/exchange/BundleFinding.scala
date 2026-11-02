@@ -2,7 +2,7 @@ package com.histmersion.api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 import java.util.UUID
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.given
 
 final case class BundleFinding(

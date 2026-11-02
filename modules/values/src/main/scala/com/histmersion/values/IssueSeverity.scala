@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** How much an issue holds the merge up. */
+
+import com.histmersion.{Ascii, WireEnumValues}
 enum IssueSeverity:
   /** Nothing is merged until it has a decision. */
   case Blocking

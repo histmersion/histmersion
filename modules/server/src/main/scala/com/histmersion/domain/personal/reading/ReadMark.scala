@@ -4,7 +4,7 @@ import com.histmersion.api.personal.{ItemKey as WireKey, ReadMark as WireReadMar
 import com.histmersion.domain.personal.PersonalState.StoredMark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime}
 import com.histmersion.domain.{Described, ItemRef}
-import com.histmersion.values.Title
+import com.histmersion.domain.library.Title
 
 /** Whether the person has read a record, and when they last opened it, as they see it: the record's key and title now.
   */

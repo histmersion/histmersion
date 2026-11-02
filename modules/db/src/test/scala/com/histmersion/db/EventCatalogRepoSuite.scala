@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.values.AttestationTarget
+import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -17,7 +17,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{Confidence, EventLinkStatus, PlaceKind, SourceStatus}
+import com.histmersion.values.{EventLinkStatus, PlaceKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{
   AttestationPut,

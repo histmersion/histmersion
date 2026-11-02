@@ -7,7 +7,7 @@ import com.histmersion.util.database.{Param, Sql}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{
   MediaCount,
   MediaFacets,

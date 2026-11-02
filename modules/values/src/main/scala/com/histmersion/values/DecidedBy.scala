@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** Who decided an issue. */
+
+import com.histmersion.{Ascii, WireEnumValues}
 enum DecidedBy:
   /** A resolution (the file or `--resolve`). */
   case Resolution

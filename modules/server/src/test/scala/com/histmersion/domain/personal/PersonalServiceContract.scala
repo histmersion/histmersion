@@ -11,7 +11,8 @@ import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.domain.personal.seen.SeenService
 import com.histmersion.domain.{ItemKey, ItemRef, ItemUid, Referable, Referables}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{Latitude, Longitude, PageSize, Title, UserId, Year}
+import com.histmersion.{Latitude, Longitude, PageSize, UserId, Year}
+import com.histmersion.domain.library.Title
 
 import com.augustnagro.magnum.*
 

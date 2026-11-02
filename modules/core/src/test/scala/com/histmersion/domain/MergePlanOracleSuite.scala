@@ -15,7 +15,8 @@ import io.circe.syntax.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
-import com.histmersion.values.{Confidence, EditionsPolicy, IssueKind}
+import com.histmersion.values.IssueKind
+import com.histmersion.domain.library.{Confidence, EditionsPolicy}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{
   BundleAlias,

@@ -10,7 +10,8 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
-import com.histmersion.values.{MediaRole, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{
   Corrections,
   EventGeo,

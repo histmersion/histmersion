@@ -5,7 +5,8 @@ import com.histmersion.api.media.MediaMarkdown
 import com.histmersion.domain.catalogue.places.Wikidata
 
 import com.histmersion.config.*
-import com.histmersion.values.{LicenceId, MediaRole}
+import com.histmersion.values.LicenceId
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaImportReport, MediaProvider}
 
 /** The host's half of the media providers (#1446): how a stated licence is read and judged, the card's role order, the

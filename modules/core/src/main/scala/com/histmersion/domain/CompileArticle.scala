@@ -8,7 +8,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.GoalPlans.ArticleDraft
-import com.histmersion.values.{Confidence, DraftMode, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
+import com.histmersion.domain.research.DraftMode
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code

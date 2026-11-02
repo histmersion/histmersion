@@ -21,7 +21,9 @@ import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.values.{BundleKind, Confidence, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.domain.library.Confidence
+import com.histmersion.util.data.exchange.DecisionKind
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.{BundleExport, BundleScope}

@@ -11,7 +11,7 @@ import io.circe.{Decoder, Encoder}
 
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.domain.research.workflows.ReviewComparison
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel

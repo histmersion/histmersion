@@ -3,7 +3,8 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.library.SourceWrite
 
 import com.histmersion.api.{ApiError, Write}
-import com.histmersion.domain.{Caller, Licence}
+import com.histmersion.domain.Caller
+import com.histmersion.domain.Licence
 import com.histmersion.values.LicenceId
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceReferrers}

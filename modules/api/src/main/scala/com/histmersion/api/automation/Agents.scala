@@ -2,24 +2,15 @@ package com.histmersion.api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.research.ArticlePlans
 import com.histmersion.api.given
 
 object Agents:
 
-  export com.histmersion.values.{
-    AgentRole as Role,
-    ApprovalKind,
-    ApprovalMode,
-    ApprovalState,
-    Pipeline,
-    ProviderKind,
-    RunState,
-    StepStatus,
-    TargetKind
-  }
+  export com.histmersion.values.{ApprovalKind, ApprovalMode, ApprovalState, RunState, StepStatus}
+  export com.histmersion.domain.automation.{AgentRole as Role, Pipeline, ProviderKind, TargetKind}
 
   /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
     * provider.

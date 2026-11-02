@@ -4,7 +4,7 @@ import com.histmersion.api.research.{ReviewApproval, ReviewState}
 import com.histmersion.domain.ArticleReviewStatus.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}
-import com.histmersion.values.ItemStatus
+import com.histmersion.domain.automation.ItemStatus
 
 class ArticleReviewStatusSuite extends munit.FunSuite:
 

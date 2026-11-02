@@ -4,7 +4,7 @@ import com.histmersion.api.{Api, ApiError, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.media.{
   AssetDetail,
   AssetInfo,

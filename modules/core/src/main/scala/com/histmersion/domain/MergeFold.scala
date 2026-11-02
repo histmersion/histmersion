@@ -14,7 +14,8 @@ import com.histmersion.api.checks.Lint
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
-import com.histmersion.values.{DecisionKind, GoalStatus, IssueKind}
+import com.histmersion.values.{GoalStatus, IssueKind}
+import com.histmersion.util.data.exchange.DecisionKind
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's

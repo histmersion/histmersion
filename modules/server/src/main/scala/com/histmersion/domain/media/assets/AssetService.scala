@@ -3,7 +3,7 @@ package com.histmersion.domain.media.assets
 import com.histmersion.api.{Api, ApiError, Write}
 import com.histmersion.domain.media.MediaState
 import com.histmersion.util.database.{RangeSql, Transactor}
-import com.histmersion.values.MediaRole
+import com.histmersion.domain.media.MediaRole
 
 import hearth.kindlings.optics.syntax.*
 

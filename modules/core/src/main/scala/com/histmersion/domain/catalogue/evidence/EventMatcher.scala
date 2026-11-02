@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.values.AttestationTarget
+import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.{AttestationPut, EventLinkCandidate, EventPassage, EventTaxonomy}

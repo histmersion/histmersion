@@ -9,7 +9,9 @@ import com.histmersion.config.given
 
 import MergeFixture.{home, src, uid, work}
 import MergeFold.ArticleOutcome
-import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
+import com.histmersion.values.{GoalStatus, IssueKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.exchange.{BundleEventDating, BundleQueueItem}

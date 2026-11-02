@@ -4,7 +4,7 @@ import com.histmersion.api.personal.{Bookmark as WireBookmark, BookmarkId, Bookm
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
-import com.histmersion.values.Title
+import com.histmersion.domain.library.Title
 
 /** A bookmark as the person sees it: its target as it shows now and what that is called. */
 final case class Bookmark(

@@ -1,6 +1,6 @@
 package com.histmersion.config
 
-import com.histmersion.values.Year
+import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 final case class AcquireDefaults(

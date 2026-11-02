@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.values.{RunId, UserId}
+import com.histmersion.values.RunId
+import com.histmersion.UserId
 
 /** Who asks for an operation: a person, or an automated workflow run acting through the same service methods. */
 enum Caller:

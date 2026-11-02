@@ -3,7 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.StrictJson
 import com.histmersion.api.research.CoverageReason
 import com.histmersion.api.given
@@ -43,7 +43,9 @@ object GoalPlans:
   object Plan:
     given Schema[Plan] = summon[KindlingsSchema[Plan]].schema
 
-  export com.histmersion.values.{DraftMode, GoalLinkKind as LinkKind, ScheduleKind}
+  export com.histmersion.values.GoalLinkKind as LinkKind
+  export com.histmersion.domain.research.DraftMode
+  export com.histmersion.domain.automation.ScheduleKind
 
   final case class ArticleDraft(
       slug: String,

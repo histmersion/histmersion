@@ -1,5 +1,7 @@
 package com.histmersion.api.exchange
-import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, IssueSeverity, MatchOutcome}
+import com.histmersion.values.{BundleKind, DecidedBy, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.given

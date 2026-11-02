@@ -4,7 +4,8 @@ import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{Offset, PageSize, Title, Year}
+import com.histmersion.{Offset, PageSize, Year}
+import com.histmersion.domain.library.Title
 
 import com.augustnagro.magnum.*
 

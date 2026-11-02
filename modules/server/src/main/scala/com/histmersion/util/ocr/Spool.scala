@@ -2,7 +2,7 @@ package com.histmersion.util.ocr
 
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{Store, StoreKey}
-import com.histmersion.values.Citekey
+import com.histmersion.domain.library.Citekey
 
 /** Where a fetched file waits for the converter (`acquire.spool-dir`; empty is the JVM temp directory's
   * `histmersion-acquire`, which is what a container gets): `<citekey>/paper.<ext>`.

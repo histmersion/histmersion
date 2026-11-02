@@ -3,7 +3,8 @@ package com.histmersion.web
 import com.histmersion.api.YearFmt
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.exchange.{
   BundleInstance,
   IssueCondition,

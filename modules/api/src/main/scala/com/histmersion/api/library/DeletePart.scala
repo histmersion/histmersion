@@ -1,7 +1,7 @@
 package com.histmersion.api.library
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.values.WireEnumValues
+import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.media.AssetLinks

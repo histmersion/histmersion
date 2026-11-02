@@ -4,7 +4,7 @@ import com.histmersion.api.{ConfidenceStyle, YearFmt, Years}
 import com.histmersion.api.library.Label
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 
 object Fmt:
 

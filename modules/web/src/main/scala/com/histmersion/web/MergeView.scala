@@ -9,7 +9,9 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, MatchOutcome}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.domain.library.MatchOutcome
 import com.histmersion.api.exchange.{
   BundleUpload,
   IssueField,

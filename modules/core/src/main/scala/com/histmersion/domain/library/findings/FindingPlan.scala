@@ -14,7 +14,9 @@ import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
 import com.histmersion.domain.library.sources.{MergeText, SourceMatcher}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{BundlePlan, PairQuestions, PlanFolds, PlanRelabels, PlanRun, SourceFate}
-import com.histmersion.values.{BundleKind, Confidence, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.domain.library.Confidence
+import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID

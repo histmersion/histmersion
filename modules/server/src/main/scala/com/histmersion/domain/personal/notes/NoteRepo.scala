@@ -5,7 +5,7 @@ import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.values.{PageSize, UserId}
+import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
 

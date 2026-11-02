@@ -18,7 +18,8 @@ import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.values.PlaceKind
+import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
 import com.histmersion.api.jobs.JobInfo

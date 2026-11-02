@@ -6,7 +6,8 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
+import com.histmersion.values.{BundleKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore

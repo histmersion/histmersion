@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.findings
 
 import com.histmersion.util.database.given
-import com.histmersion.values.Confidence
+import com.histmersion.domain.library.Confidence
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{GeoHit, SourceKinds}

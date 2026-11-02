@@ -7,7 +7,8 @@ import com.histmersion.domain.given
 
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.automation.GoalPlans.DraftMode
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.api.research.ArticleEdits
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null` decodes like an

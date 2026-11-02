@@ -11,7 +11,8 @@ import com.histmersion.config.{
   ScheduledRefresh
 }
 import com.histmersion.domain.{ApprovalModes, PlanGoal, ReadSchedule}
-import com.histmersion.values.{AgentRole, ApprovalKind, ApprovalMode, ProviderKind}
+import com.histmersion.values.{ApprovalKind, ApprovalMode}
+import com.histmersion.domain.automation.{AgentRole, ProviderKind}
 
 import java.time.Duration
 

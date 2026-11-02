@@ -26,7 +26,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.values.{BundleKind, Confidence, IssueKind, SourceStatus}
+import com.histmersion.values.{BundleKind, IssueKind, SourceStatus}
+import com.histmersion.domain.library.Confidence
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleExport

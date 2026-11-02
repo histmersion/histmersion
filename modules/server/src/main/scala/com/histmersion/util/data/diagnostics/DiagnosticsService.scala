@@ -3,7 +3,7 @@ package com.histmersion.util.data.diagnostics
 import com.histmersion.api.TableSize
 import com.histmersion.util.data.{DataContributions, DataOwner, TableName}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.ByteCount
+import com.histmersion.ByteCount
 
 /** The figures of the 360° view, read from the registry: each owner's counts, the database's size, its largest
   * registered tables and how much each owner's tables hold.

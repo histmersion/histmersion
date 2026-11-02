@@ -53,7 +53,7 @@ object Articles:
 
   def notFound(slug: String): ApiError = ApiError(s"No article '$slug'", Some(Write.CodeNotFound))
 
-  def slugOf(raw: String): Either[String, String] = com.histmersion.values.Slug.parse(raw).map(_.value)
+  def slugOf(raw: String): Either[String, String] = com.histmersion.domain.research.Slug.parse(raw).map(_.value)
 
   def kindOf(raw: String): Either[String, String] =
     val k = raw.trim.toLowerCase

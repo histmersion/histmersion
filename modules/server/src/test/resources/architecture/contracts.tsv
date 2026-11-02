@@ -1,28 +1,14 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-bucket	values:values/AgentRole.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalDecidedBy.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalKind.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalMode.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalState.scala	package com.histmersion.values	1
-bucket	values:values/ArchiveId.scala	package com.histmersion.values	1
 bucket	values:values/ArticleUid.scala	package com.histmersion.values	1
-bucket	values:values/ArxivId.scala	package com.histmersion.values	1
-bucket	values:values/Ascii.scala	package com.histmersion.values	1
 bucket	values:values/AssetLinkTarget.scala	package com.histmersion.values	1
 bucket	values:values/AssetUid.scala	package com.histmersion.values	1
-bucket	values:values/AttestationTarget.scala	package com.histmersion.values	1
-bucket	values:values/AuthorName.scala	package com.histmersion.values	1
 bucket	values:values/BundleKind.scala	package com.histmersion.values	1
-bucket	values:values/ByteCount.scala	package com.histmersion.values	1
-bucket	values:values/ByteOffset.scala	package com.histmersion.values	1
-bucket	values:values/Citekey.scala	package com.histmersion.values	1
-bucket	values:values/Confidence.scala	package com.histmersion.values	1
 bucket	values:values/DecidedBy.scala	package com.histmersion.values	1
-bucket	values:values/DecisionKind.scala	package com.histmersion.values	1
-bucket	values:values/Doi.scala	package com.histmersion.values	1
-bucket	values:values/DraftMode.scala	package com.histmersion.values	1
 bucket	values:values/EdgeKind.scala	package com.histmersion.values	1
-bucket	values:values/EditionsPolicy.scala	package com.histmersion.values	1
 bucket	values:values/EventEdgeKind.scala	package com.histmersion.values	1
 bucket	values:values/EventId.scala	package com.histmersion.values	1
 bucket	values:values/EventLinkStatus.scala	package com.histmersion.values	1
@@ -31,48 +17,24 @@ bucket	values:values/GoalLinkKind.scala	package com.histmersion.values	1
 bucket	values:values/GoalSlug.scala	package com.histmersion.values	1
 bucket	values:values/GoalStatus.scala	package com.histmersion.values	1
 bucket	values:values/GoalUid.scala	package com.histmersion.values	1
-bucket	values:values/Historicity.scala	package com.histmersion.values	1
-bucket	values:values/Isbn.scala	package com.histmersion.values	1
 bucket	values:values/IssueKind.scala	package com.histmersion.values	1
 bucket	values:values/IssueSeverity.scala	package com.histmersion.values	1
-bucket	values:values/ItemStatus.scala	package com.histmersion.values	1
 bucket	values:values/JobId.scala	package com.histmersion.values	1
 bucket	values:values/JobKind.scala	package com.histmersion.values	1
-bucket	values:values/LatLon.scala	package com.histmersion.values	1
-bucket	values:values/Latitude.scala	package com.histmersion.values	1
 bucket	values:values/LicenceId.scala	package com.histmersion.values	1
 bucket	values:values/LocationPrecision.scala	package com.histmersion.values	1
-bucket	values:values/Longitude.scala	package com.histmersion.values	1
 bucket	values:values/ManagerKind.scala	package com.histmersion.values	1
 bucket	values:values/ManagerState.scala	package com.histmersion.values	1
-bucket	values:values/MatchMethod.scala	package com.histmersion.values	1
-bucket	values:values/MatchOutcome.scala	package com.histmersion.values	1
-bucket	values:values/MediaRole.scala	package com.histmersion.values	1
-bucket	values:values/Offset.scala	package com.histmersion.values	1
-bucket	values:values/PageSize.scala	package com.histmersion.values	1
-bucket	values:values/Period.scala	package com.histmersion.values	1
 bucket	values:values/PeriodError.scala	package com.histmersion.values	1
-bucket	values:values/Pipeline.scala	package com.histmersion.values	1
 bucket	values:values/PlaceId.scala	package com.histmersion.values	1
 bucket	values:values/PlaceKind.scala	package com.histmersion.values	1
 bucket	values:values/PluginId.scala	package com.histmersion.values	1
-bucket	values:values/Pmcid.scala	package com.histmersion.values	1
-bucket	values:values/Pmid.scala	package com.histmersion.values	1
-bucket	values:values/ProviderKind.scala	package com.histmersion.values	1
 bucket	values:values/RunId.scala	package com.histmersion.values	1
 bucket	values:values/RunState.scala	package com.histmersion.values	1
-bucket	values:values/ScheduleKind.scala	package com.histmersion.values	1
-bucket	values:values/Sha256.scala	package com.histmersion.values	1
-bucket	values:values/Slug.scala	package com.histmersion.values	1
 bucket	values:values/SourceStatus.scala	package com.histmersion.values	1
 bucket	values:values/SourceUid.scala	package com.histmersion.values	1
 bucket	values:values/StepStatus.scala	package com.histmersion.values	1
-bucket	values:values/TargetKind.scala	package com.histmersion.values	1
-bucket	values:values/Title.scala	package com.histmersion.values	1
-bucket	values:values/UserId.scala	package com.histmersion.values	1
 bucket	values:values/WikidataId.scala	package com.histmersion.values	1
-bucket	values:values/WireEnumValues.scala	package com.histmersion.values	1
-bucket	values:values/Year.scala	package com.histmersion.values	1
 client-refined	api:api/personal/BookmarkId.scala	a refined constraint in a client	1
 client-refined	api:api/personal/MapZoom.scala	a refined constraint in a client	1
 client-refined	api:api/personal/NoteId.scala	a refined constraint in a client	1
@@ -901,7 +863,6 @@ layer	api:api/library/SourceWrite.scala	the client names a package outside api	1
 layer	api:api/maintenance/MaintenanceJobKinds.scala	the client names a package outside api	1
 layer	api:api/media/CoversJobKinds.scala	the client names a package outside api	1
 layer	api:api/media/ImportJobKinds.scala	the client names a package outside api	1
-layer	api:api/personal/Target.scala	the client names a package outside api	1
 layer	api:api/research/ArticleCoverage.scala	the client names a package outside api	1
 layer	api:api/research/ArticleEdits.scala	the client names a package outside api	1
 layer	api:api/research/ArticleFilter.scala	the client names a package outside api	1
@@ -1293,9 +1254,7 @@ layer	web:web/TileDecode.scala	the client names a package outside api	1
 layer	web:web/UploadView.scala	the client names a package outside api	1
 layer	web:web/library/ReadingHead.scala	the client names a package outside api	1
 layer	web:web/library/TableRow.scala	the client names a package outside api	1
-layer	web:web/marks/MapMenu.scala	the client names a package outside api	1
 layer	web:web/marks/PeriodMarks.scala	the client names a package outside api	1
-layer	web:web/marks/SavedViews.scala	the client names a package outside api	1
 layer	web:web/settings/DownloadJobs.scala	the client names a package outside api	1
 prefix	api:api/ApiError.scala	ApiError → Api.Error	1
 prefix	api:api/ApiIndex.scala	ApiIndex → Api.Index	1
@@ -1552,7 +1511,6 @@ prefix	config:config/RetractionWatchConfig.scala	RetractionWatchConfig → Retra
 prefix	config:config/StorageConfig.scala	StorageConfig → Storage.Config	1
 prefix	core:domain/ArticleReviewStatus.scala	ArticleReviewStatus → Article.ReviewStatus	1
 prefix	core:domain/CodexRetention.scala	CodexRetention → Codex.Retention	1
-prefix	core:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
 prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
 prefix	core:domain/catalogue/events/StoredEvent.scala	StoredEvent → Stored.Event	1
 prefix	files:domain/research/articles/ArticleNote.scala	ArticleNote → Article.Note	1
@@ -1640,6 +1598,7 @@ prefix	upstreams:upstreams/wikidata/WikidataClasses.scala	WikidataClasses → Wi
 prefix	upstreams:upstreams/wikidata/WikidataEntities.scala	WikidataEntities → Wikidata.Entities	1
 prefix	upstreams:upstreams/wikidata/WikidataItem.scala	WikidataItem → Wikidata.Item	1
 prefix	upstreams:upstreams/wikidata/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
+prefix	values:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
 prefix	values:values/ArticleUid.scala	ArticleUid → Article.Uid	1
 prefix	values:values/DecidedBy.scala	DecidedBy → Decided.By	1
 prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1
@@ -1843,4 +1802,4 @@ unwrap	server:util/storage/Blob.scala	.value outside a boundary	1
 unwrap	server:util/storage/DiskStore.scala	.value outside a boundary	11
 unwrap	server:util/storage/MemoryStore.scala	.value outside a boundary	12
 unwrap	server:util/storage/PruneReport.scala	.value outside a boundary	1
-unwrap	values:values/Period.scala	.value outside a boundary	4
+unwrap	values:Period.scala	.value outside a boundary	4

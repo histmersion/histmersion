@@ -6,7 +6,7 @@ import com.histmersion.domain.{ItemKey, Referables}
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalState, SearchWords, TargetColumns, TargetLabel}
 import com.histmersion.util.database.Transactor
-import com.histmersion.values.{PageSize, UserId}
+import com.histmersion.{PageSize, UserId}
 
 import hearth.kindlings.optics.syntax.*
 

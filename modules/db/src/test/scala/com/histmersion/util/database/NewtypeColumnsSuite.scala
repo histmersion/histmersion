@@ -4,7 +4,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.AppConfig
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.values.{JobId, Slug, SourceUid, Year}
+import com.histmersion.values.{JobId, SourceUid}
+import com.histmersion.domain.research.Slug
+import com.histmersion.Year
 
 import java.util.UUID
 

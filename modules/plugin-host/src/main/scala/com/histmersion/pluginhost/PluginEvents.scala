@@ -7,7 +7,7 @@ import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
-import com.histmersion.values.Historicity
+import com.histmersion.domain.catalogue.Historicity
 
 /** A plugin's catalogue as the host reads it: the query it is asked, its polite HTTP, and its records checked and
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
@@ -189,7 +189,7 @@ object PluginEvents:
         _ <- Either.cond(!points.zip(points.drop(1)).exists((a, b) => a > b), (), s"$id: its dating runs backwards")
         _ <- Either.cond(lat.isDefined == lon.isDefined, (), s"$id: a position needs both latitude and longitude")
       yield
-        def long(y: Option[com.histmersion.values.Year]) = y.map(_.value.toLong)
+        def long(y: Option[com.histmersion.Year]) = y.map(_.value.toLong)
         CatalogRecord(
           provider,
           id,

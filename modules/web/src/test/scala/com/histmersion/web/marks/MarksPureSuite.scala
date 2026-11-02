@@ -1,7 +1,7 @@
 package com.histmersion.web.marks
 
 import com.histmersion.api.personal.*
-import com.histmersion.values.{Latitude, Longitude, Year}
+import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.web.Store
 import com.histmersion.web.map.LatLon
 import com.histmersion.api.ItemKind

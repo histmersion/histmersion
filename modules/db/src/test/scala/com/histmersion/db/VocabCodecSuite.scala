@@ -6,7 +6,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Jsonb, Migrate}
 import com.histmersion.api.library.{Finding, Source}
 

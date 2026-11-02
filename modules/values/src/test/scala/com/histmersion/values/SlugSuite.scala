@@ -1,6 +1,8 @@
 package com.histmersion.values
 
 /** An article's slug as a person or a model writes it: trimmed and lower-cased, or why it is none. */
+
+import com.histmersion.domain.research.Slug
 class SlugSuite extends munit.FunSuite:
 
   test("a slug is trimmed and lower-cased; '.', '-' and '_' are kept"):

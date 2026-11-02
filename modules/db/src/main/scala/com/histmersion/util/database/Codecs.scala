@@ -1,7 +1,8 @@
 package com.histmersion.util.database
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
-import com.histmersion.values.{Confidence, EdgeKind, LocationPrecision, SourceStatus}
+import com.histmersion.values.{EdgeKind, LocationPrecision, SourceStatus}
+import com.histmersion.domain.library.Confidence
 
 /** `findings.confidence`: NULL and an unknown word are both "not stated". There is deliberately no
   * `DbCodec[Confidence]` — a column read as a bare confidence would need a default, and every default claims something.

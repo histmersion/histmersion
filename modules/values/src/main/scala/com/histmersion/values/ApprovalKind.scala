@@ -5,6 +5,8 @@ package com.histmersion.values
   * the decision (`waiting_approval`) and applies it itself when it resumes; the other kinds are applied by the decision
   * and the run never waits.
   */
+
+import com.histmersion.WireEnumValues
 enum ApprovalKind(val wire: String, val blocking: Boolean):
   case StatusChange extends ApprovalKind("status-change", false)
   case Edge extends ApprovalKind("edge", false)
