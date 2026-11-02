@@ -21,7 +21,7 @@ object HostProvided:
   val Ids: List[String] = List("ai-claude-code", "ai-codex", "ai-opencode")
 
   /** The version every host-supplied plugin reports. */
-  val Release = "1.0.0"
+  val Release = "0.1.0"
 
   /** A host-supplied plugin with no settings of its own beyond the host's `enabled`. */
   def apply(id: String, contribute: PluginContext => Either[String, Unit]): HostProvided[NoSettings] =
