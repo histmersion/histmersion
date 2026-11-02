@@ -1,12 +1,12 @@
 package com.histmersion.util.data.backup
 
-import com.histmersion.api.ApiError
-import com.histmersion.api.backup.{BackupResult, BackupStatus}
 import com.histmersion.util.jobs.WorkCarrier
 
 import java.time.Instant
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.Api
+import com.histmersion.api.backup.Backup
 
 /** Backups run as a JOB, not inside the HTTP request. A dump of the corpus takes minutes, and the request that started
   * it used to be cut at 60 s (by the server and by any proxy in between): the handler thread was interrupted and the
@@ -22,24 +22,24 @@ final class BackupJobs(
     pins: WorkCarrier = WorkCarrier.none
 ):
 
-  final private case class Job(file: String, started: Long, result: CompletableFuture[Either[ApiError, BackupResult]])
+  final private case class Job(file: String, started: Long, result: CompletableFuture[Either[Api.Error, Backup.Result]])
   private val current = AtomicReference[Option[Job]](None)
 
   def running: Boolean = current.get().exists(!_.result.isDone)
 
   /** Start a dump (or join the running one) and wait up to `waitSeconds` for it. */
-  def start(now: Instant): Either[ApiError, BackupStatus] =
+  def start(now: Instant): Either[Api.Error, Backup.Status] =
     val job = current.get() match
       case Some(j) if !j.result.isDone => Right(j)
       case _                           =>
         service.prepare(now).map { p =>
-          val f = CompletableFuture[Either[ApiError, BackupResult]]()
+          val f = CompletableFuture[Either[Api.Error, Backup.Result]]()
           val j = Job(p.file, System.nanoTime(), f)
           current.set(Some(j))
           // the dump runs on the generation (database) the request was pinned to
           val work = pins.carryWork { () =>
             val _ = f.complete(
-              scala.util.Try(p.run()).toEither.left.map(e => ApiError(s"backup crashed: ${e.getMessage}")).flatten
+              scala.util.Try(p.run()).toEither.left.map(e => Api.Error(s"backup crashed: ${e.getMessage}")).flatten
             )
           }
           val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => work())
@@ -52,12 +52,12 @@ final class BackupJobs(
     }
 
   /** The running job, or the last one this server ran (`None` before the first). */
-  def status: Option[BackupStatus] = current.get().map(statusOf)
+  def status: Option[Backup.Status] = current.get().map(statusOf)
 
-  private def statusOf(j: Job): BackupStatus =
+  private def statusOf(j: Job): Backup.Status =
     val elapsed = (System.nanoTime() - j.started) / 1000000L
-    if !j.result.isDone then BackupStatus.running(j.file, elapsed)
+    if !j.result.isDone then Backup.Status.running(j.file, elapsed)
     else
       j.result.get() match
-        case Right(r) => BackupStatus.done(r)
-        case Left(e)  => BackupStatus.failed(j.file, elapsed, e.message)
+        case Right(r) => Backup.Status.done(r)
+        case Left(e)  => Backup.Status.failed(j.file, elapsed, e.message)

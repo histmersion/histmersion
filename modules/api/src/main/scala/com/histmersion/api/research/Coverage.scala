@@ -5,21 +5,22 @@ import sttp.tapir.Schema
 import com.histmersion.api.StatusCount
 import com.histmersion.api.catalogue.ArticleEventLead
 import com.histmersion.api.given
+import com.histmersion.domain.library.Source
 
 final case class Coverage(
     slug: String,
-    filter: ArticleFilter,
+    filter: Article.Filter,
     filterLine: String,
     total: Int,
     checked: Int,
-    cited: List[CoverageSource],
-    notUsed: List[CoverageEntry],
+    cited: List[Coverage.Source],
+    notUsed: List[Coverage.Entry],
     citedOutside: List[String],
     statuses: List[StatusCount],
-    edges: List[CoverageEdge],
+    edges: List[Coverage.Edge],
     searches: List[CoverageSearch],
-    reasons: List[CoverageReason],
-    drift: List[CoverageDrift],
+    reasons: List[Coverage.Reason],
+    drift: List[Coverage.Drift],
     eventLeads: List[ArticleEventLead] = Nil,
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
@@ -28,3 +29,56 @@ final case class Coverage(
   def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
   given Schema[Coverage] = summon[KindlingsSchema[Coverage]].schema
+
+  final case class Drift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
+  object Drift:
+    given Schema[Drift] = summon[KindlingsSchema[Drift]].schema
+
+  final case class Edge(from: String, kind: String, to: String) derives KindlingsCodecAsObject, KindlingsSchema
+  object Edge:
+    given Schema[Edge] = summon[KindlingsSchema[Edge]].schema
+
+  final case class Entry(source: Source, reason: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema
+  object Entry:
+    given Schema[Entry] = summon[KindlingsSchema[Entry]].schema
+
+  final case class Reason(citekey: String, reason: String) derives KindlingsCodecAsObject
+  object Reason:
+    given Schema[Reason] = KindlingsSchema
+      .derived[Reason]
+      .schema
+      .description("Why the article does not cite one source its filter returns")
+      .modify(_.citekey)(_.description("The source's citekey"))
+      .modify(_.reason)(
+        _.description(
+          "One plain sentence: why it is left out (wrong region, period or sub-problem; no finding on the question). Empty removes it"
+        )
+      )
+
+    val MaxChars = 500
+
+    def merge(current: Map[String, String], stated: List[Reason]): Either[String, Map[String, String]] =
+      stated.foldLeft[Either[String, Map[String, String]]](Right(current)) { (acc, r) =>
+        acc.flatMap { m =>
+          val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
+          val text = Option(r.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
+          if !Article.Links.isCitekeyShaped(ck) then Left(s"reason for '${r.citekey}': not a citekey")
+          else if text.length > MaxChars then
+            Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
+          else if text.isEmpty then Right(m - ck)
+          else Right(m.updated(ck, text))
+        }
+      }
+
+    def list(m: Map[String, String]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _))
+
+  final case class Source(
+      citekey: String,
+      title: String,
+      year: Option[Int],
+      status: com.histmersion.domain.library.Source.Status,
+      authors: List[String] = Nil
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object Source:
+    given Schema[Source] = summon[KindlingsSchema[Source]].schema

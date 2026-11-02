@@ -1,7 +1,6 @@
 package com.histmersion.util.identity
 
 import com.histmersion.util.database.given
-import com.histmersion.api.exchange.BundleTombstone
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
@@ -14,8 +13,8 @@ import com.histmersion.util.data.exchange.Bundle
   */
 object TombstoneBundleRepo:
 
-  def tombstones(scope: BundleScope)(using DbCon): Vector[BundleTombstone] =
+  def tombstones(scope: BundleScope)(using DbCon): Vector[com.histmersion.api.exchange.Bundle.Tombstone] =
     (Sql.raw(s"SELECT uid, kind, origin, ${ts("deleted_at")} FROM tombstones WHERE ") ++
       where(scope, "uid", "deleted_at") ++ " ORDER BY uid").frag.query[BTombstoneRow].run().flatMap { r =>
-      Bundle.Kind.fromWire(r.kind).map(BundleTombstone(r.uid, _, r.origin, r.deletedAt))
+      Bundle.Kind.fromWire(r.kind).map(com.histmersion.api.exchange.Bundle.Tombstone(r.uid, _, r.origin, r.deletedAt))
     }

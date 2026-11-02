@@ -14,7 +14,6 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{
   Gazetteer,
-  GazetteerLoadCounts,
   GazGeometry,
   GazLink,
   GazName,
@@ -22,9 +21,7 @@ import com.histmersion.api.catalogue.{
   LinkMatch,
   LinkScheme,
   Period,
-  Place,
-  PlaceInput,
-  PlaceName
+  Place
 }
 import com.histmersion.api.library.{ExternalId, Source}
 
@@ -103,19 +100,19 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       batch: Int = 100,
       kinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet,
       sweep: Boolean = true
-  ): GazetteerLoadCounts =
+  ): Gazetteer.LoadCounts =
     connect(ds):
       val s = GazetteerRepo.session(source, version, apply, pointAreaKinds = kinds)
       val pruned = s.prune(batch)
       val c =
-        rs.grouped(batch).map(s.batch).foldLeft(GazetteerLoadCounts(source, version, placesRemoved = pruned))(_ + _)
+        rs.grouped(batch).map(s.batch).foldLeft(Gazetteer.LoadCounts(source, version, placesRemoved = pruned))(_ + _)
       if sweep then c + s.sweep() else c
 
   private def seedPlace(): Unit =
     val r = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place(
             Seed,
             "Zzgazhattusa",
@@ -125,7 +122,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
             Some("Pleiades"),
             Some("""{"pleiades_uri":"https://pleiades.stoa.org/places/999000001"}""")
           ),
-          List(PlaceName("Zzgazhattusa"))
+          List(Place.Name("Zzgazhattusa"))
         )
       )
     )

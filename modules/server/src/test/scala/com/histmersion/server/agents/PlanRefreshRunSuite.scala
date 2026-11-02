@@ -24,7 +24,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsMarkdown, PlanQuota}
-import com.histmersion.api.library.SourcePut
+import com.histmersion.api.library.Source
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool
@@ -144,7 +144,9 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(h: ServerWiring): Unit =
-    assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
+    assert(
+      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+    )
 
   /** 30% left of the 5-hour window (floor 25%), read an hour ago: stale, so it needs 35% — paused ONLY on its age.
     */

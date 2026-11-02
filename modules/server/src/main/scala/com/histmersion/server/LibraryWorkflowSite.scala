@@ -1,6 +1,5 @@
 package com.histmersion.server
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
@@ -13,6 +12,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.JobListing
 
 import java.time.Instant
+import com.histmersion.api.Api
 
 /** The library's workflows' site over the composition: its own wiring, the work lists, the write gate, the jobs, the
   * catalogue's geocoder and research's articles as the composition wires them.
@@ -32,7 +32,7 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
   def geocode(name: String, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     h.geocode(name, hint, at)
 
-  def articleSources(slug: String): Either[ApiError, List[String]] =
+  def articleSources(slug: String): Either[Api.Error, List[String]] =
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
   def citedSources(slug: String): List[String] =

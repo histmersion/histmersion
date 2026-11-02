@@ -1,16 +1,16 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.library.Query.*
 import com.histmersion.config.AppConfig
 import com.histmersion.api.library.Query
+import com.histmersion.api.Api
 
 /** `POST /api/query` and `GET /api/schema/tables` (MCP `query`, `schema`). */
 final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
 
-  def run(req: QueryRequest): Either[ApiError, QueryResult] =
+  def run(req: QueryRequest): Either[Api.Error, QueryResult] =
     val q = cfg().query
-    queries.run(req.sql, q.timeoutMs, q.maxRows, q.maxCellChars).left.map(m => ApiError(m))
+    queries.run(req.sql, q.timeoutMs, q.maxRows, q.maxCellChars).left.map(m => Api.Error(m))
 
   def schemaTables: SchemaTables = SchemaTables(queries.tables)
 

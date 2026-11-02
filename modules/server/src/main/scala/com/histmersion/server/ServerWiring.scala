@@ -11,13 +11,14 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.data.mirror.Mirror
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.*
 import java.time.Instant
 import com.histmersion.api.automation.AgentLeaseInfo
-import com.histmersion.api.catalogue.{Geocode, Period, PlaceCounts}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Filter, ResolvedSource, UpstreamQuota}
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Place
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
@@ -145,7 +146,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: String, a: JobAction): Either[ApiError, Unit] = (a match
+    def run(id: String, a: JobAction): Either[Api.Error, Unit] = (a match
       case JobAction.Pause  => agents.engine.pause(id)
       case JobAction.Resume => agents.engine.resume(id, None, None)
       case JobAction.Cancel => agents.engine.cancel(id)
@@ -384,7 +385,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
     */
-  private def placeCounts(id: String): PlaceCounts =
+  private def placeCounts(id: String): Place.Counts =
     val f = Filter(places = List(id))
     library.search.selectionCounts(f)
 

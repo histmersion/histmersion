@@ -6,7 +6,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.automation.GoalPlans.{Plan, PlannedGoal, PlannedWork}
+import com.histmersion.api.automation.Goal.Plans.{Plan, PlannedGoal, PlannedWork}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
 

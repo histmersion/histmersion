@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.automation.approvals.ApprovalChecks
@@ -13,6 +12,7 @@ import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.api.Api
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what
@@ -98,13 +98,13 @@ trait ManagerKindDefinition:
   /** The target an item of `itemKind` names when a person adds one to manager `m` (an article's slug, a source's
     * citekey, the manager's goal), checked; or why it cannot be added.
     */
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String]
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String]
 
   /** A person added (or brought back) an item: what goes with it (the review kind: an infer-filter item first). */
   def added(c: ManagerContext, m: ManagerInfo, itemKind: String, target: String, priority: Int): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
-  def expand(c: ManagerContext, raw: String): Either[ApiError, (List[String], List[String])] = Right((List(raw), Nil))
+  def expand(c: ManagerContext, raw: String): Either[Api.Error, (List[String], List[String])] = Right((List(raw), Nil))
 
   /** Per manager of this kind: what waits in its backlog and the days it takes to drain (a watcher's ingest backlog).
     */

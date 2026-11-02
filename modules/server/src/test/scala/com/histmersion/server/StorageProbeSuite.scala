@@ -9,7 +9,7 @@ import java.nio.file.{Files, Path}
 import java.util.Comparator
 import java.util.concurrent.atomic.AtomicInteger
 import com.histmersion.api.backup.BackupsUsage
-import com.histmersion.api.maintenance.{Storage, StorageAdvice, StorageReport}
+import com.histmersion.api.maintenance.Storage
 
 /** The Storage part of About: the locations come from the config (the same resolvers the writers use), are measured
   * within the caps, and the cache measures once per TTL, in the background. All of it in a temp directory: no live data
@@ -116,7 +116,7 @@ class StorageProbeSuite extends munit.FunSuite:
         figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message), MeasureBudget.unlimited)
       def entry(k: String) = r.entries.find(_.key == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
       assertEquals(entry("backups").bytes, Some(7000L))
-      assertEquals(entry("backups").shrink, StorageAdvice.shrink("backups", 3))
+      assertEquals(entry("backups").shrink, Storage.Advice.shrink("backups", 3))
       assertEquals(r.backups, Some(BackupsUsage(2, 7000L, Some("histmersion-20261002T100000Z.dump"), 3)))
       assertEquals(entry("database-cluster").bytes, Some(7000L))
       assertEquals(entry("install").bytes, Some(2000L))
@@ -149,7 +149,7 @@ class StorageProbeSuite extends munit.FunSuite:
 
   // ── the cache ────────────────────────────────────────────────────────────────────────────────
 
-  private def report(n: Int) = StorageReport(measuredAt = Some(s"m$n"))
+  private def report(n: Int) = Storage.Report(measuredAt = Some(s"m$n"))
 
   test("the cache: the first request waits for the first measurement; then it is reused until the TTL"):
     val runs = AtomicInteger(0)
@@ -169,8 +169,8 @@ class StorageProbeSuite extends munit.FunSuite:
     val runs = AtomicInteger(0)
     val pending = scala.collection.mutable.ListBuffer.empty[() => Unit]
     val c = StorageCache(() => () => report(runs.incrementAndGet()), () => 60000L, () => 0L, r => pending += r)
-    assertEquals(c.get(0), StorageReport(measuring = true))
-    assertEquals(c.get(5), StorageReport(measuring = true))
+    assertEquals(c.get(0), Storage.Report(measuring = true))
+    assertEquals(c.get(5), Storage.Report(measuring = true))
     assertEquals(pending.size, 1)
     pending.head()
     assertEquals(c.get(0).measuredAt, Some("m1"))

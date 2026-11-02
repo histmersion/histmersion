@@ -4,7 +4,7 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{Api, ApiError, TimeSpan, Write}
+import com.histmersion.api.{Api, TimeSpan, Write}
 import com.histmersion.api.catalogue.{EventPatch, EventPut}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -35,7 +35,7 @@ class EventsControllersSuite extends munit.FunSuite:
       gate
     )
 
-  private def code(r: Either[ApiError, ?]) = r.left.toOption.flatMap(_.code)
+  private def code(r: Either[Api.Error, ?]) = r.left.toOption.flatMap(_.code)
 
   test("an old id reads and writes the event it was renamed to; the card is added"):
     val c = controllers()
@@ -81,7 +81,7 @@ class EventsControllersSuite extends munit.FunSuite:
   test("a rename checks the new id against the current one; a held lock refuses every write"):
     val c = controllers()
     val _ = c.put(Caller.Local, "zz_ev", EventPut("Zz event", "battle", span))
-    def bad(from: String) = Left(ApiError(s"'$from' is already that event id", Some(Write.CodeInvalid)))
+    def bad(from: String) = Left(Api.Error(s"'$from' is already that event id", Some(Write.CodeInvalid)))
     assertEquals(code(c.rename(Caller.Local, "zz_old", bad)), Some(Write.CodeInvalid))
     assertEquals(c.rename(Caller.Local, "zz_old", _ => Right("zz_new")), Right(("zz_ev", "zz_new")))
     val gate = WriteGate()

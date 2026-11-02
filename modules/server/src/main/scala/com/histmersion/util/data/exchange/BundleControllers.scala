@@ -1,12 +1,8 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
   Bundle,
-  BundleImportResult,
-  BundleManifest,
-  BundleUpload,
-  BundleVerifyResult,
   MergeApplyJob,
   MergeApplyRequest,
   MergeDetail,
@@ -14,7 +10,6 @@ import com.histmersion.api.exchange.{
   MergeInfo,
   MergeLedger,
   MergePlan,
-  MergePlanRequest,
   MergeResolutions,
   MergeSession
 }
@@ -23,6 +18,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.{ByteSource, HandedFile}
 
 import java.time.OffsetDateTime
+import com.histmersion.api.Api
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
   * the raw inputs parsed, the maintenance guard of every write, the [[BundleService]] call. An upload is the file the
@@ -33,33 +29,33 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   def instance: InstanceInfo = bundles.instance
 
   /** Name this instance; a blank label clears it. */
-  def setInstance(label: Option[String]): Either[ApiError, InstanceInfo] =
+  def setInstance(label: Option[String]): Either[Api.Error, InstanceInfo] =
     maintenance.guard("instance")(Right(bundles.setLabel(label)))
 
   /** `GET /api/bundle?since=` — the bundle file and its download name. */
-  def exportBundle(since: Option[String]): Either[ApiError, (HandedFile, String)] =
+  def exportBundle(since: Option[String]): Either[Api.Error, (HandedFile, String)] =
     BundleControllers.since(since).flatMap(bundles.exportBundle).map((f, m) => f -> BundleControllers.disposition(m))
 
   /** `POST /api/bundle/verify`. */
-  def verify(upload: HandedFile): Either[ApiError, BundleVerifyResult] = readable(upload).map(bundles.verify)
+  def verify(upload: HandedFile): Either[Api.Error, Bundle.VerifyResult] = readable(upload).map(bundles.verify)
 
   /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. Planned with no resolutions:
     * any open issue refuses it (decide them, then `POST /api/merge/import`).
     */
-  def importBundle(dryRun: Boolean, upload: HandedFile): Either[ApiError, BundleImportResult] =
+  def importBundle(dryRun: Boolean, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard("bundle/import")(readable(upload).flatMap(bundles.importBundle(_, dryRun)))
 
   /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported by name. The
     * manifest is read back, and what reading the file found wrong is reported.
     */
-  def upload(upload: HandedFile): Either[ApiError, BundleUpload] = readable(upload).flatMap(bundles.keep)
+  def upload(upload: HandedFile): Either[Api.Error, Bundle.Upload] = readable(upload).flatMap(bundles.keep)
 
   /** `POST /api/merge/plan` (and MCP `merge_plan`) — pure: reads, never writes. */
-  def plan(req: MergePlanRequest): Either[ApiError, MergePlan] =
+  def plan(req: MergePlan.Request): Either[Api.Error, MergePlan] =
     BundleControllers.sha256(req.bundle).flatMap(bundles.plan(_, req.resolutions))
 
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
-  def importUploaded(req: MergeImportRequest): Either[ApiError, BundleImportResult] =
+  def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard("merge/import"):
       BundleControllers.sha256(req.bundle).flatMap(bundles.importKept(_, req.resolutions, req.dryRun))
 
@@ -69,16 +65,16 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     * collection's backup does not time the request out. A successful apply drops the review screen's draft of the
     * bundle (its decisions are remembered by issue id).
     */
-  def applyUploaded(req: MergeApplyRequest): Either[ApiError, MergeApplyJob] =
+  def applyUploaded(req: MergeApplyRequest): Either[Api.Error, MergeApplyJob] =
     maintenance.guard("merge/apply"):
       BundleControllers.sha256(req.bundle).flatMap(bundles.applyKept(_, req.planHash, req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
-  def applyStatus(job: String): Either[ApiError, MergeApplyJob] =
+  def applyStatus(job: String): Either[Api.Error, MergeApplyJob] =
     bundles
       .applyStatus(job)
       .toRight(
-        ApiError(
+        Api.Error(
           s"no merge apply '$job' on this server " +
             "(`histmersion merge list` shows what was merged)",
           Some(Write.CodeNotFound)
@@ -86,28 +82,28 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       )
 
   /** `GET /api/merge/sessions/{bundle}`. */
-  def session(bundle: String): Either[ApiError, MergeSession] = BundleControllers.sha256(bundle).map(bundles.session)
+  def session(bundle: String): Either[Api.Error, MergeSession] = BundleControllers.sha256(bundle).map(bundles.session)
 
   /** `PUT /api/merge/sessions/{bundle}`. */
-  def putSession(bundle: String, r: MergeResolutions): Either[ApiError, MergeSession] =
+  def putSession(bundle: String, r: MergeResolutions): Either[Api.Error, MergeSession] =
     maintenance.guard("merge/session"):
       BundleControllers.sha256(bundle).map(bundles.putSession(_, r))
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
-  def parseResolutions(text: String): Either[ApiError, MergeResolutions] =
-    MergeResolutionsFile.parse(text).left.map(es => ApiError(es.mkString("; "), Some(Write.CodeInvalid)))
+  def parseResolutions(text: String): Either[Api.Error, MergeResolutions] =
+    MergeResolutionsFile.parse(text).left.map(es => Api.Error(es.mkString("; "), Some(Write.CodeInvalid)))
 
   def merges(limit: Option[Int]): List[MergeInfo] =
     bundles.merges(limit.filter(_ > 0).getOrElse(BundleControllers.ListLimit))
 
-  def mergeDetail(id: String): Either[ApiError, MergeDetail] = bundles.mergeDetail(id)
+  def mergeDetail(id: String): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
 
-  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[ApiError, MergeLedger] =
+  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[Api.Error, MergeLedger] =
     bundles.mergeLedger(uid, merge, limit.filter(_ > 0).getOrElse(BundleControllers.LedgerLimit))
 
-  private def readable(f: HandedFile): Either[ApiError, ByteSource] =
+  private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
     val source = HandedFile.source(f)
-    if source.size <= 0 then Left(ApiError("the upload is empty — send a .hmx bundle as the body"))
+    if source.size <= 0 then Left(Api.Error("the upload is empty — send a .hmx bundle as the body"))
     else Right(source)
 
 object BundleControllers:
@@ -116,13 +112,13 @@ object BundleControllers:
   val LedgerLimit = 200
 
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
-  def sha256(raw: String): Either[ApiError, String] =
+  def sha256(raw: String): Either[Api.Error, String] =
     val s = raw.trim.toLowerCase(java.util.Locale.ROOT)
     if s.length == 64 && s.forall(c => c.isDigit || (c >= 'a' && c <= 'f')) then Right(s)
-    else Left(ApiError(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
+    else Left(Api.Error(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
-  def since(raw: Option[String]): Either[ApiError, Option[String]] =
+  def since(raw: Option[String]): Either[Api.Error, Option[String]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -131,14 +127,14 @@ object BundleControllers:
           .toOption
           .map(_ => Some(s))
           .toRight(
-            ApiError(
+            Api.Error(
               s"since '$s' is not a moment — give an ISO-8601 time with its offset, " +
                 "e.g. 2026-10-03T09:12:00Z (a bundle's manifest asOf)"
             )
           )
 
   /** `attachment; filename="histmersion-<label or id>-<asOf>.hmx"`. Pure. */
-  def disposition(m: BundleManifest): String =
+  def disposition(m: Bundle.Manifest): String =
     val who = m.instance.label.map(_.trim).filter(_.nonEmpty).getOrElse(m.instance.id.toString.take(8))
     val stamp = m.asOf.map(_.filter(_.isDigit).take(14)).filter(_.nonEmpty).getOrElse("empty")
     val name = s"histmersion-$who-$stamp${Bundle.Extension}".map(c =>

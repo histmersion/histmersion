@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.places.PlaceReview
 
-import com.histmersion.api.catalogue.{Lpf, PlaceInput}
+import com.histmersion.api.catalogue.Lpf
 
 import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.Place
@@ -13,7 +13,7 @@ import com.histmersion.domain.catalogue.Place
   */
 class PlaceSeedKindsSuite extends munit.FunSuite:
 
-  private lazy val pleiades: List[PlaceInput] =
+  private lazy val pleiades: List[com.histmersion.api.catalogue.Place.Input] =
     val root = Iterator
       .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
       .takeWhile(_ != null)
@@ -23,7 +23,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), Place.Kind.Region)
       .fold(e => fail(e), identity)
 
-  private def prop(in: PlaceInput, key: String): List[String] =
+  private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties
       .flatMap(p => io.circe.parser.parse(p).toOption)
       .flatMap(_.hcursor.get[String](key).toOption)

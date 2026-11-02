@@ -10,9 +10,9 @@ import com.histmersion.api.library.{
   CandidatesMarkdown,
   CandidateSweep,
   CandidateWatch,
-  SourceCandidate,
   WorkRef
 }
+import com.histmersion.api.library.Source
 
 /** The deterministic new-source search's pure half (#3761): keys, watermarks, deduplication, the indexes' answers, the
   * Markdown.
@@ -123,7 +123,7 @@ class CandidatesSuite extends munit.FunSuite:
     assertEquals(Candidates.openalexAuthorIds(j), List("A1", "A22"))
 
   test("the list and the sweep as Markdown"):
-    val c = SourceCandidate(
+    val c = Source.Candidate(
       7,
       "g",
       "10.1234/a",

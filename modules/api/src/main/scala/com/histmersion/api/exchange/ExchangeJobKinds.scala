@@ -1,7 +1,8 @@
 package com.histmersion.api.exchange
 import com.histmersion.api.exchange.InitPlan
-import com.histmersion.api.jobs.{JobDetailField, JobKindEntry}
+import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.util.jobs.Job
+import com.histmersion.api.jobs.JobDetail
 
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */
@@ -22,4 +23,4 @@ object ExchangeJobKinds:
   )
 
   /** The plan a merge apply carries out, by its hash, in the job's detail. */
-  val PlanHash: JobDetailField[Option[String]] = JobDetailField("planHash", None)
+  val PlanHash: JobDetail.Field[Option[String]] = JobDetail.Field("planHash", None)

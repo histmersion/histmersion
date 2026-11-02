@@ -13,7 +13,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName, PlaceRelation, PlaceTimeBasis}
+import com.histmersion.api.catalogue.{EventPut, Period, Place}
 import com.histmersion.api.library.{Finding, Source}
 
 /** The time rule of the place views (2026-10-09, [[PlaceTimeBasis]]) against a real PostGIS (HISTMERSION_TEST_DB_URL;
@@ -40,16 +40,16 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   private def pt(i: Int) = Some(s"""{"type":"Point","coordinates":[${100 + i}.0,$Lat]}""")
 
   private def place(id: String, kind: String, i: Int, period: Option[Period], props: Option[String] = None) =
-    PlaceInput(
+    Place.Input(
       Place(id, s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some("fixture"), props),
-      List(PlaceName(s"Zqtv ${id.stripPrefix("zqtv_")}")),
-      List(PlaceRelation(id, "zqtv_root"))
+      List(Place.Name(s"Zqtv ${id.stripPrefix("zqtv_")}")),
+      List(Place.Relation(id, "zqtv_root"))
     )
 
   private val fixtures = List(
-    PlaceInput(
+    Place.Input(
       Place("zqtv_root", "Zqtv root", com.histmersion.domain.catalogue.Place.Kind.Region),
-      List(PlaceName("Zqtv root"))
+      List(Place.Name("Zqtv root"))
     ),
     place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(-2600, -2400))),
     place("zqtv_late", com.histmersion.domain.catalogue.Place.Kind.Site, 1, Some(Period(1100, 1300))),
@@ -188,7 +188,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     for id <- All do
       val (kind, modern, undated, geom) = attrs(id)
       val d = PlaceFixtures.get(ds, id, Some(-2500L)).get
-      assertEquals(d.timeBasis, PlaceTimeBasis.of(kind, modern, imported = false, undated, geom), id)
+      assertEquals(d.timeBasis, Place.TimeBasis.of(kind, modern, imported = false, undated, geom), id)
     assert(PlaceFixtures.get(ds, "zqtv_evid", Some(-2500L)).get.datedByFindings)
     assert(!PlaceFixtures.get(ds, "zqtv_evid", None).get.datedByFindings)
     assertEquals(

@@ -1,6 +1,5 @@
 package com.histmersion.domain.personal.bookmarks
 
-import com.histmersion.api.personal.{BookmarkId, BookmarkLabel}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.ItemRef
@@ -27,7 +26,7 @@ private[bookmarks] object BookmarkRepo:
       Sql.raw(" ORDER BY b.created_at DESC, b.id DESC") ++
       size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[BookmarkRow].run().toList
 
-  def live(user: UserId, id: BookmarkId)(using DbCon): Option[BookmarkRow] =
+  def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[BookmarkRow] =
     Sql
       .of(
         s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL AND b.id = ?::uuid",
@@ -40,33 +39,38 @@ private[bookmarks] object BookmarkRepo:
       .headOption
 
   /** The live bookmark of an item, by the key it was bookmarked under. */
-  def ofItem(user: UserId, ref: ItemRef)(using DbCon): Option[BookmarkId] =
+  def ofItem(user: UserId, ref: ItemRef)(using DbCon): Option[com.histmersion.api.personal.Bookmark.Id] =
     sql"""SELECT id::text FROM bookmarks WHERE user_id = ${user.value} AND target_kind = ${ref.kind.value: String}
             AND target_id = ${ref.key} AND deleted_at IS NULL"""
-      .query[BookmarkId]
+      .query[com.histmersion.api.personal.Bookmark.Id]
       .run()
       .headOption
 
   def insert(
       user: UserId,
       c: TargetColumns,
-      label: Option[BookmarkLabel],
+      label: Option[com.histmersion.api.personal.Bookmark.Label],
       targetLabel: Option[TargetLabel],
       at: MarkTime
-  )(using DbCon): BookmarkId =
+  )(using DbCon): com.histmersion.api.personal.Bookmark.Id =
     val stamp = at.iso
     sql"""INSERT INTO bookmarks (user_id, target_kind, target_id, target_uid, target_label, lat, lon, zoom,
                                  period_start, period_end, view, label, created_at, updated_at)
           VALUES (${user.value}, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.zoom},
                   ${c.from}, ${c.to}, ${c.view}, $label, $stamp::timestamptz, $stamp::timestamptz)
-          RETURNING id::text""".query[BookmarkId].run().head
+          RETURNING id::text""".query[com.histmersion.api.personal.Bookmark.Id].run().head
 
-  def relabel(user: UserId, id: BookmarkId, label: Option[BookmarkLabel], at: MarkTime)(using DbCon): Int =
+  def relabel(
+      user: UserId,
+      id: com.histmersion.api.personal.Bookmark.Id,
+      label: Option[com.histmersion.api.personal.Bookmark.Label],
+      at: MarkTime
+  )(using DbCon): Int =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET label = $label, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()
 
-  def tombstone(user: UserId, id: BookmarkId, at: MarkTime)(using DbCon): Int =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): Int =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()

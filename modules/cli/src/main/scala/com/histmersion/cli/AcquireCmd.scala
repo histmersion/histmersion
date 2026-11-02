@@ -10,10 +10,10 @@ import com.histmersion.api.library.{
   ArchiveImportRequest,
   AssessRequest,
   FollowupsRequest,
-  IngestRequest,
   RefsRequest,
   RetractionsUpdate
 }
+import com.histmersion.api.library.Ingest
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with
@@ -224,7 +224,7 @@ object AcquireCmd:
             )
           else
             AcquireClient(c)
-              .ingest(IngestRequest(id, citekey, arxiv, refetch, legalOnly))
+              .ingest(Ingest.Request(id, citekey, arxiv, refetch, legalOnly))
               .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
     }
   }

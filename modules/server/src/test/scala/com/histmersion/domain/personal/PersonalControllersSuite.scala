@@ -44,59 +44,59 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("a bookmark's target is checked: an item names its id, a point its position, a period its years in order"):
     val c = fixture()
-    assert(c.addBookmark(me, BookmarkNew(Target(ItemKind.Source))).left.exists(_.message.contains("its id")))
+    assert(c.addBookmark(me, Bookmark.New(Target(ItemKind.Source))).left.exists(_.message.contains("its id")))
     assert(
-      c.addBookmark(me, BookmarkNew(Target(ItemKind.Point, lat = Some(Latitude(1)))))
+      c.addBookmark(me, Bookmark.New(Target(ItemKind.Point, lat = Some(Latitude(1)))))
         .left
         .exists(_.message.contains("lat and lon"))
     )
     assert(
-      c.addBookmark(me, BookmarkNew(Target(ItemKind.Period, from = Some(Year(-1000)), to = Some(Year(-1200)))))
+      c.addBookmark(me, Bookmark.New(Target(ItemKind.Period, from = Some(Year(-1000)), to = Some(Year(-1200)))))
         .left
         .exists(_.message.contains("before it starts"))
     )
     val p = c.addBookmark(
       me,
-      BookmarkNew(
+      Bookmark.New(
         Target(ItemKind.Period, id = Some(ItemKey("dropped")), from = Some(Year(-1200)), to = Some(Year(-1150))),
-        Some(BookmarkLabel("  the crisis   years "))
+        Some(Bookmark.Label("  the crisis   years "))
       )
     )
     assertEquals(p.map(b => (b.name, b.target.id)), Right(("the crisis years", None)))
-    assert(c.addBookmark(me, BookmarkNew(Target.item(ItemKind.Source, "x"), Some(BookmarkLabel("x" * 201)))).isLeft)
+    assert(c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, "x"), Some(Bookmark.Label("x" * 201)))).isLeft)
 
   test("a note goes on an item or a point, never a view; it needs text"):
     val c = fixture()
     assert(
-      c.addNote(me, NoteNew(Target(ItemKind.View, view = Some(ViewState("a=b"))), NoteText("x")))
+      c.addNote(me, Note.New(Target(ItemKind.View, view = Some(ViewState("a=b"))), Note.Text("x")))
         .left
         .exists(_.message.contains("cannot"))
     )
     assert(
-      c.addNote(me, NoteNew(Target.item(ItemKind.Source, "zz"), NoteText("   ")))
+      c.addNote(me, Note.New(Target.item(ItemKind.Source, "zz"), Note.Text("   ")))
         .left
         .exists(_.message.contains("some text"))
     )
     val n = c.addNote(
       me,
-      NoteNew(Target(ItemKind.Point, lat = Some(Latitude(37)), lon = Some(Longitude(22))), NoteText("here\r\n"))
+      Note.New(Target(ItemKind.Point, lat = Some(Latitude(37)), lon = Some(Longitude(22))), Note.Text("here\r\n"))
     )
     assertEquals(n.map(_.text.value.toString), Right("here"))
 
   test("not found is 404, a stale edit 412, a bad id 400; an edit seen at no time at all is a stale one"):
     val clock = Ticking()
     val c = fixture(clock = clock)
-    val n = c.addNote(me, NoteNew(Target.item(ItemKind.Source, "zz"), NoteText("one"))).toOption.get
+    val n = c.addNote(me, Note.New(Target.item(ItemKind.Source, "zz"), Note.Text("one"))).toOption.get
     clock.tick()
     assertEquals(
-      c.editNote(me, n.id.value, NoteEdit(NoteText("two"), Some(n.updatedAt))).map(_.text.value.toString),
+      c.editNote(me, n.id.value, Note.Edit(Note.Text("two"), Some(n.updatedAt))).map(_.text.value.toString),
       Right("two")
     )
-    val stale = c.editNote(me, n.id.value, NoteEdit(NoteText("three"), Some(n.updatedAt)))
+    val stale = c.editNote(me, n.id.value, Note.Edit(Note.Text("three"), Some(n.updatedAt)))
     assertEquals(stale.left.map(_.code), Left(Some(Write.CodePrecondition)))
     assert(stale.left.exists(_.message.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
     assertEquals(
-      c.editNote(me, n.id.value, NoteEdit(NoteText("four"), Some("yesterday"))).left.map(_.code),
+      c.editNote(me, n.id.value, Note.Edit(Note.Text("four"), Some("yesterday"))).left.map(_.code),
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(c.note(me, "not-an-id").left.map(_.code), Left(None))
@@ -111,7 +111,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     val clock = Ticking()
     val c = fixture(clock = clock)
     List("a", "b", "c").foreach { k =>
-      c.addBookmark(me, BookmarkNew(Target.item(ItemKind.Source, s"zz_$k"), title = Some(s"Zz $k"))); clock.tick()
+      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, s"zz_$k"), title = Some(s"Zz $k"))); clock.tick()
     }
     assertEquals(c.listBookmarks(me, Some("sources"), None, Some(2)).map(_.map(_.title)), Right(List("Zz c", "Zz b")))
     assertEquals(c.listBookmarks(me, None, Some("zz B"), None).map(_.map(_.title)), Right(List("Zz b")))
@@ -120,9 +120,9 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("only sources and articles are marked read; show is read, opened or all"):
     val c = fixture()
-    assert(c.setRead(me, ReadMarkSet(ItemKind.Place, ItemKey("p"), read = true)).isLeft)
+    assert(c.setRead(me, ReadMark.Set(ItemKind.Place, ItemKey("p"), read = true)).isLeft)
     assertEquals(
-      c.setRead(me, ReadMarkSet(ItemKind.Source, ItemKey("zz"), read = true, Some("Zz"))).map(m => (m.read, m.title)),
+      c.setRead(me, ReadMark.Set(ItemKind.Source, ItemKey("zz"), read = true, Some("Zz"))).map(m => (m.read, m.title)),
       Right((true, "Zz"))
     )
     assertEquals(c.readMarks(me, None, Some("opened"), None).map(_.size), Right(0))
@@ -135,15 +135,15 @@ class PersonalControllersSuite extends munit.FunSuite:
     val c = fixture()
     val run = Caller.Automation(Run.Id("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b"))
     assert(c.listBookmarks(run, None, None, None).isLeft)
-    assert(c.addBookmark(run, BookmarkNew(Target.item(ItemKind.Source, "zz"))).isLeft)
+    assert(c.addBookmark(run, Bookmark.New(Target.item(ItemKind.Source, "zz"))).isLeft)
     val someone = Caller.Person(com.histmersion.UserId("someone"), Caller.Role.Reader)
-    c.addBookmark(someone, BookmarkNew(Target.item(ItemKind.Source, "zz")))
+    c.addBookmark(someone, Bookmark.New(Target.item(ItemKind.Source, "zz")))
     assertEquals(c.listBookmarks(me, None, None, None).map(_.size), Right(0))
     assertEquals(c.listBookmarks(someone, None, None, None).map(_.size), Right(1))
 
   test("writes wait while a restore holds the maintenance lock"):
     val m = WriteGate()
     val c = fixture(m)
-    val refused = m.exclusively("restore")(Right(c.addBookmark(me, BookmarkNew(Target.item(ItemKind.Source, "zz")))))
+    val refused = m.exclusively("restore")(Right(c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, "zz")))))
     assert(refused.toOption.get.isLeft)
     assertEquals(c.listBookmarks(me, None, None, None).map(_.size), Right(0))

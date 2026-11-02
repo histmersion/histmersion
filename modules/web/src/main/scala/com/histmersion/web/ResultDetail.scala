@@ -4,7 +4,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.catalogue.PlaceRecord
+import com.histmersion.api.catalogue.Place
 
 /** An item chosen in the results or on the map, shown in place of the results: "← Results" back to them, its card, "Pin
   * as window" (it floats over whatever is shown next) and "Open in a new tab"; for a place, what its record holds
@@ -35,7 +35,7 @@ object ResultDetail:
 
   def element(t: Preview.Target): HtmlElement =
     val card = Var(Option.empty[Either[String, Preview.Card]])
-    val record = Var(Option.empty[PlaceRecord])
+    val record = Var(Option.empty[Place.Record])
     div(
       cls := "result-detail",
       dataAttr("kind") := kindOf(t),
@@ -95,11 +95,11 @@ object ResultDetail:
     )
 
   /** What a place's record holds beyond its card. */
-  def recordView(r: PlaceRecord): HtmlElement =
+  def recordView(r: Place.Record): HtmlElement =
     div(
       cls := "place-record",
       r.dateSource.map(s =>
-        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), PlaceRecord.dateSourceText(s))
+        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), Place.Record.dateSourceText(s))
       ),
       Option.when(r.periods.nonEmpty)(
         p(cls := "place-record-line", span(cls := "muted", "Time periods: "), r.periods.mkString(", "))

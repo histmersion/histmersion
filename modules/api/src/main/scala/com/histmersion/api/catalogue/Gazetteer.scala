@@ -3,12 +3,19 @@ import io.circe.{Json, JsonObject}
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
+import com.histmersion.WireEnumValues
+import com.histmersion.api.Plural
+import com.histmersion.api.WireEnum
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import io.circe.{Decoder, Encoder}
+import sttp.tapir.Schema
 
 object Gazetteer:
 
-  def sourceKey(kind: GazetteerKind, dataset: Option[String] = None): String = kind match
-    case GazetteerKind.Lpf => s"lpf:${dataset.getOrElse("")}"
-    case k                 => k.wire
+  def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[String] = None): String = kind match
+    case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => s"lpf:${dataset.getOrElse("")}"
+    case k                                                => k.wire
 
   def datasetSlug(fileName: String): String =
     val base = fileName
@@ -19,17 +26,21 @@ object Gazetteer:
   private def slug(s: String): String =
     s.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "")
 
-  def rank(m: PlaceMatch): Int = m.importSource.flatMap(GazetteerKind.ofKey) match
-    case None                         => if m.importSource.isEmpty then 0 else 5
-    case Some(GazetteerKind.Lpf)      => 1
-    case Some(GazetteerKind.Wikidata) => 2
-    case Some(GazetteerKind.Tgn)      => 3
-    case Some(GazetteerKind.Geonames) => 4
+  def rank(m: Place.Match): Int = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
+    case None                                                        => if m.importSource.isEmpty then 0 else 5
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => 1
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => 2
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Tgn)      => 3
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Geonames) => 4
 
   val ImportedSources: List[String] =
-    List(GazetteerKind.Wikidata, GazetteerKind.Geonames, GazetteerKind.Tgn).map(k => sourceKey(k))
+    List(
+      com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata,
+      com.histmersion.api.catalogue.Gazetteer.Kind.Geonames,
+      com.histmersion.api.catalogue.Gazetteer.Kind.Tgn
+    ).map(k => sourceKey(k))
 
-  def canonical(byOwn: List[PlaceMatch], byLinks: List[PlaceMatch] = Nil): Option[String] =
+  def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[String] =
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
       .values
@@ -45,7 +56,9 @@ object Gazetteer:
     * was not there since forever.
     */
   def unknownWhenSilent(sourceKey: String): Boolean =
-    GazetteerKind.ofKey(sourceKey).exists(k => k != GazetteerKind.Lpf)
+    com.histmersion.api.catalogue.Gazetteer.Kind
+      .ofKey(sourceKey)
+      .exists(k => k != com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)
 
   def validity(sourceKey: String, span: Span, windowYears: Int): Validity = span match
     case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
@@ -277,3 +290,124 @@ object Gazetteer:
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
   def tsvCells(line: String): List[String] = line.split("\t", -1).toList
+
+  final case class Extract(
+      name: String,
+      file: String,
+      sha256: String,
+      bytes: Long,
+      features: Long,
+      version: String,
+      title: String,
+      licence: String,
+      attribution: Option[String] = None,
+      url: Option[String] = None,
+      built: Option[String] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object Extract:
+    given Schema[Extract] = summon[KindlingsSchema[Extract]].schema
+
+  /** `Tgn`: the Getty Thesaurus of Geographic Names. */
+  enum Kind:
+    case Geonames, Wikidata, Lpf, Tgn
+
+    def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+
+  object Kind:
+    def parse(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+    def ofKey(key: String): Option[Kind] = parse(key.takeWhile(_ != ':'))
+
+    given WireEnumValues[Kind]:
+      def all: Array[Kind] = Kind.values
+      def wire(e: Kind): String = e.wire
+      def fromWire(s: String): Option[Kind] = parse(s)
+    given Encoder[Kind] = WireEnum.encoder
+    given Decoder[Kind] = WireEnum.decoder
+    given Schema[Kind] = WireEnum.schema
+
+  final case class LoadCounts(
+      source: String,
+      version: String,
+      records: Long = 0,
+      created: Long = 0,
+      joined: Long = 0,
+      placesChanged: Long = 0,
+      namesAdded: Long = 0,
+      namesRemoved: Long = 0,
+      namesChanged: Long = 0,
+      linksAdded: Long = 0,
+      linksRemoved: Long = 0,
+      placesRemoved: Long = 0,
+      skipped: List[String] = Nil,
+      descriptionsAdded: Long = 0,
+      descriptionsRemoved: Long = 0,
+      descriptionsChanged: Long = 0,
+      linksChanged: Long = 0,
+      pointAreasSkipped: Long = 0
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
+    def +(o: LoadCounts): LoadCounts =
+      copy(
+        records = records + o.records,
+        created = created + o.created,
+        joined = joined + o.joined,
+        placesChanged = placesChanged + o.placesChanged,
+        namesAdded = namesAdded + o.namesAdded,
+        namesRemoved = namesRemoved + o.namesRemoved,
+        namesChanged = namesChanged + o.namesChanged,
+        linksAdded = linksAdded + o.linksAdded,
+        linksRemoved = linksRemoved + o.linksRemoved,
+        placesRemoved = placesRemoved + o.placesRemoved,
+        skipped = (skipped ++ o.skipped).take(20),
+        descriptionsAdded = descriptionsAdded + o.descriptionsAdded,
+        descriptionsRemoved = descriptionsRemoved + o.descriptionsRemoved,
+        descriptionsChanged = descriptionsChanged + o.descriptionsChanged,
+        linksChanged = linksChanged + o.linksChanged,
+        pointAreasSkipped = pointAreasSkipped + o.pointAreasSkipped
+      )
+
+    def unchanged: Boolean =
+      created == 0 && placesChanged == 0 && namesAdded == 0 && namesRemoved == 0 && namesChanged == 0 &&
+        linksAdded == 0 && linksRemoved == 0 && linksChanged == 0 && placesRemoved == 0 &&
+        descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
+
+    def describe: String =
+      s"$source $version: ${Plural.count(records, "record")}, $created new place(s), $joined joined an existing place, " +
+        s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
+        (if linksChanged > 0 then s" ~$linksChanged" else "") +
+        (if descriptionsAdded + descriptionsRemoved + descriptionsChanged > 0 then
+           s", descriptions +$descriptionsAdded −$descriptionsRemoved ~$descriptionsChanged"
+         else "") +
+        (if placesRemoved > 0 then s", $placesRemoved place(s) removed" else "") +
+        (if pointAreasSkipped > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places"
+         else "") +
+        (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
+  object LoadCounts:
+    given Schema[LoadCounts] = summon[KindlingsSchema[LoadCounts]].schema
+
+  final case class Manifest(extracts: List[Extract]) derives KindlingsCodecAsObject, KindlingsSchema
+  object Manifest:
+    given Schema[Manifest] = summon[KindlingsSchema[Manifest]].schema
+
+  final case class SourceInfo(
+      key: String,
+      kind: Kind,
+      title: String,
+      file: Option[String],
+      present: Boolean,
+      pinnedVersion: Option[String],
+      importedVersion: Option[String] = None,
+      importedAt: Option[String] = None,
+      places: Option[Int] = None,
+      names: Option[Int] = None,
+      links: Option[Int] = None,
+      licence: Option[String] = None,
+      citation: Option[String] = None,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object SourceInfo:
+    given Schema[SourceInfo] = summon[KindlingsSchema[SourceInfo]].schema

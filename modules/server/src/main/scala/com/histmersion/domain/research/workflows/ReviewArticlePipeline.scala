@@ -28,7 +28,6 @@ import com.histmersion.domain.ReviewLedger.Ledger
 import io.circe.syntax.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.research.{
-  ArticlePatch,
   CritiquePair,
   CritiquePairing,
   CritiqueReason,
@@ -36,6 +35,7 @@ import com.histmersion.api.research.{
   Critiques,
   CritiqueState
 }
+import com.histmersion.api.research.Article
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -351,7 +351,7 @@ final class ReviewArticlePipeline(
     */
   private def storeReasons(ctx: RunCtx, slug: String, rs: List[CritiqueReason]): Unit =
     if rs.nonEmpty then
-      val p = ArticlePatch(critiqueReasons = rs)
+      val p = Article.Patch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
         site.articles.patch(slug, p).left.map(_.message).map(_ => ())
       )(Right(())) match
@@ -781,7 +781,7 @@ final class ReviewArticlePipeline(
       persist(ctx, after)
       Right(ReviewArticle.Patched(written = false, None, conflict = false))
     else
-      val p = ArticlePatch(
+      val p = Article.Patch(
         body = Option.when(bodyChanged)(f.body),
         reasons = f.reasons,
         ifUpdatedAt = s.updatedAt,

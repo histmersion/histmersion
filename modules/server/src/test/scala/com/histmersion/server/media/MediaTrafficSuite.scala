@@ -6,7 +6,6 @@ import com.histmersion.server.MediaWiring
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.LoadedConfig
 import com.histmersion.db.TestDb
 import com.histmersion.util.jobs.JobRepo
@@ -16,6 +15,7 @@ import io.circe.syntax.*
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
+import com.histmersion.api.Api
 
 /** The recorded traffic of the media imports: every request each of the ten first-party collections sends through
   * `media import` (dry runs over every place and event the map holds, single-target imports, a refresh, a job), on the
@@ -49,7 +49,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     val plugins = ServerPlugins.load(loaded, transport = _ => wire)
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
-    def report(r: Either[ApiError, MediaImportReport]): String =
+    def report(r: Either[Api.Error, MediaImportReport]): String =
       r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.noSpaces}\n")
 
     def run(name: String, req: MediaImportRequest): Unit =

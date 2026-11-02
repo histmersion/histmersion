@@ -10,7 +10,7 @@ final case class MergeInfo(
     id: UUID,
     bundleId: UUID,
     bundleSha256: String,
-    from: BundleInstance,
+    from: Bundle.Instance,
     appliedAt: String,
     planHash: Option[String] = None,
     backup: Option[String] = None,

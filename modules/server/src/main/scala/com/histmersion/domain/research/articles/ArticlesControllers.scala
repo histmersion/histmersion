@@ -4,7 +4,7 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.research.BacklinksMarkdown
 
-import com.histmersion.api.{Api, ApiError, Write}
+import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{ArticleReviewStatus, Caller, ReviewArticle, ReviewLedger}
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -19,27 +19,12 @@ import com.histmersion.api.aliases.AliasKind
 import com.histmersion.api.aliases.{LabelRename, LabelRenamed, LabelRenames}
 import com.histmersion.api.catalogue.{ArticleEventLead, Period}
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport, FormatSeverity}
-import com.histmersion.api.library.{Filter, SeedResult, SourceRef}
+import com.histmersion.api.library.{Filter, SeedResult}
 import com.histmersion.api.research.{
   Article,
-  ArticleCoverage,
-  ArticleDeleted,
-  ArticleEdits,
-  ArticleFilter,
-  ArticleImport,
-  ArticleLinks,
-  ArticleList,
-  ArticlePatch,
-  ArticlePut,
-  ArticleReviewView,
   Articles,
-  ArticleVersion,
-  ArticleVersionFull,
-  ArticleView,
   Backlink,
   Coverage,
-  CoverageEdge,
-  CoverageReason,
   CoverageSearch,
   CritiquePair,
   CritiquePairing,
@@ -47,6 +32,7 @@ import com.histmersion.api.research.{
   Critiques,
   ResolvedArticle
 }
+import com.histmersion.api.library.Source
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -67,7 +53,7 @@ final class ArticlesControllers(
     filters: SearchFilters,
     ledgers: String => Either[String, Option[ReviewLedger.Ledger]],
     articleLeads: (String, List[String], Option[Period]) => List[ArticleEventLead],
-    note: String => Either[ApiError, String],
+    note: String => Either[Api.Error, String],
     current: (AliasKind, String) => String,
     cfg: () => AppConfig,
     maintenance: WriteGate
@@ -88,18 +74,18 @@ final class ArticlesControllers(
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
     * the write goes through.
     */
-  private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[ApiError, Unit] =
+  private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
     if !strict then Right(())
-    else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(ApiError(m, Some(Write.CodeInvalid))))
+    else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(Api.Error(m, Some(Write.CodeInvalid))))
 
   /** `GET /api/articles/{slug}/lint`. */
-  def lint(slug: String): Either[ApiError, FormatReport] =
+  def lint(slug: String): Either[Api.Error, FormatReport] =
     get(slug).map(v => FormatReport(v.article.slug, v.formatting))
 
   /** `POST /api/articles/{slug}/lint/fix`: the safe repairs of the body and summary, written guarded by the article's
     * token, then the lint again.
     */
-  def fix(slug: String): Either[ApiError, FormatReport] =
+  def fix(slug: String): Either[Api.Error, FormatReport] =
     maintenance.guard("fix_article_format"):
       store.load(store.canonical(norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
         val (body, fb) = MarkdownLint.fix(a.body, FormatField.Body, MarkdownLint.Context(article = true))
@@ -112,7 +98,7 @@ final class ArticlesControllers(
             store
               .patch(
                 a.slug,
-                ArticlePatch(
+                Article.Patch(
                   body = Some(body).filter(_ => fb.nonEmpty),
                   summary = summary.filter(_ => fs.nonEmpty),
                   ifUpdatedAt = a.updatedAt
@@ -127,7 +113,7 @@ final class ArticlesControllers(
     * was written.
     */
   def writeRepairedBody(slug: String, body: String, token: Option[String]): Boolean =
-    store.patch(slug, ArticlePatch(body = Some(body), ifUpdatedAt = token), Caller.Local).isRight
+    store.patch(slug, Article.Patch(body = Some(body), ifUpdatedAt = token), Caller.Local).isRight
 
   // ── a draft of an article, checked as review-article's fixer validation checks it ──────────────
 
@@ -139,7 +125,7 @@ final class ArticlesControllers(
   def bodyCorpus(texts: List[String], generated: Boolean = false): ReviewArticle.BodyCorpus =
     val links = pageLinks(MarkdownLint.lookups(texts))
     ReviewArticle.BodyCorpus(
-      t => links(t).exists(_.isInstanceOf[SourceRef]),
+      t => links(t).exists(_.isInstanceOf[Source.Ref]),
       t => links(t).isDefined,
       text =>
         MarkdownLint
@@ -157,17 +143,17 @@ final class ArticlesControllers(
     * body; a whole `body` is checked as it stands (the article need not exist yet: a compile writer's draft). The same
     * function the review pipeline validates its fixer with.
     */
-  def check(slug: String, in: ArticleEdits.ArticleCheckRequest): Either[ApiError, ArticleEdits.ArticleCheck] =
-    in.draft.left.map(m => ApiError(m, Some(Write.CodeInvalid))).flatMap { draft =>
+  def check(slug: String, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
+    in.draft.left.map(m => Api.Error(m, Some(Write.CodeInvalid))).flatMap { draft =>
       val stored = store.load(store.canonical(norm(slug)))
       (draft, stored) match
-        case (ArticleEdits.Draft.Edits(_), None) => Left(Articles.notFound(slug))
-        case _                                   =>
+        case (Article.Edits.Draft.Edits(_), None) => Left(Articles.notFound(slug))
+        case _                                    =>
           val before = stored.fold("")(_.body)
           val kind = in.kind.map(_.trim).filter(_.nonEmpty).orElse(stored.map(_.kind)).getOrElse("concept")
           val texts = draft match
-            case ArticleEdits.Draft.Edits(es) => before :: es.flatMap(_.text)
-            case ArticleEdits.Draft.Body(t)   => List(before, t)
+            case Article.Edits.Draft.Edits(es) => before :: es.flatMap(_.text)
+            case Article.Edits.Draft.Body(t)   => List(before, t)
           // a new article is compiled with a filter: its coverage sections will be generated
           val generated = stored.forall(_.filter.isDefined)
           Right(
@@ -180,7 +166,7 @@ final class ArticlesControllers(
   /** `GET /api/articles` — the compiled articles citing the filter's sources, narrowed by kind and searched with
     * `text`, each with its review badge.
     */
-  def list(q: Api.ArticleQuery): ArticleList =
+  def list(q: Api.ArticleQuery): Article.List =
     val f = resolve(q.filter)
     val list = search.list(f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
     val facts = reviewState.facts(list.articles.map(_.slug))
@@ -193,20 +179,20 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/review`: the article's review state, its review history from the ledger (the only read
     * that decodes one), the goals linking it and the approvals about it that wait for a person.
     */
-  def review(slug: String): Either[ApiError, ArticleReviewView] =
+  def review(slug: String): Either[Api.Error, Article.ReviewView] =
     val canon = store.canonical(norm(slug))
     store.load(canon).toRight(Articles.notFound(slug)).flatMap(_ => reviewOf(canon))
 
   /** The review view of an article known to exist (its canonical slug); a ledger that no longer decodes is an error
     * rather than an empty history.
     */
-  def reviewOf(slug: String): Either[ApiError, ArticleReviewView] =
-    ledgers(slug).left.map(e => ApiError(e)).map { ledger =>
+  def reviewOf(slug: String): Either[Api.Error, Article.ReviewView] =
+    ledgers(slug).left.map(e => Api.Error(e)).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
       val starts =
         ledger.fold(Map.empty[String, String])(l => reviewState.runStarts(ArticleReviewStatus.runOrder(l, Map.empty)))
-      ArticleReviewView(
+      Article.ReviewView(
         slug,
         ArticleReviewStatus.badge(facts),
         facts.item.flatMap(_.outcome),
@@ -220,7 +206,7 @@ final class ArticlesControllers(
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its coverage, from which
     * every surface renders the generated Not used list and Method note.
     */
-  def get(slug: String, brief: Boolean = false): Either[ApiError, ArticleView] =
+  def get(slug: String, brief: Boolean = false): Either[Api.Error, Article.View] =
     val view = store.view(norm(slug)).toRight(Articles.notFound(slug))
     // `brief`: the row and its links only — the lint and the coverage are most of a read's cost
     // (a hover card waited ~20 ms on the lint alone) and a preview shows neither
@@ -238,10 +224,10 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/coverage`. An article that records no filter has no coverage: 404 saying so and how to
     * set one.
     */
-  def coverage(slug: String): Either[ApiError, Coverage] =
+  def coverage(slug: String): Either[Api.Error, Coverage] =
     store.load(store.canonical(norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
-        ApiError(
+        Api.Error(
           s"article '${a.slug}' records no filter, so it has no generated coverage — " +
             s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
             "or patch_article with `filter`",
@@ -263,12 +249,12 @@ final class ArticlesControllers(
       val links = bodyLinks(a.body)
       val cited = citedOf(a.body, links)
       val inFilter = coverageReads.members(f, scope, cited)._2
-      val edges = coverageReads.edgesTouching(cited, ArticleCoverage.DisagreementKinds)
+      val edges = coverageReads.edgesTouching(cited, Article.Coverage.DisagreementKinds)
       val searches = af.extraQueries.map { q =>
         val (n, in) = coverageReads.members(Filter(q = Some(q)), PlaceScope.empty, cited)
         CoverageSearch(q, n, cited.filter(in))
       }
-      ArticleCoverage
+      Article.Coverage
         .compute(a.slug, af, total, hits, inFilter, cited, a.reasons, edges, searches)
         .copy(
           eventLeads = articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period),
@@ -283,12 +269,12 @@ final class ArticlesControllers(
 
   /** How the links of a body (outside a hand-written Not used section) resolve. */
   private def bodyLinks(body: String): String => Option[LinkTarget] =
-    pageLinks(ArticleLinks.targets(ArticleCoverage.withoutNotUsed(body)))
+    pageLinks(Article.Links.targets(Article.Coverage.withoutNotUsed(body)))
 
   private def citedOf(body: String, links: String => Option[LinkTarget]): List[String] =
-    ArticleLinks
-      .targets(ArticleCoverage.withoutNotUsed(body))
-      .flatMap(t => links(t).collect { case r: SourceRef => r.citekey })
+    Article.Links
+      .targets(Article.Coverage.withoutNotUsed(body))
+      .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
       .distinct
 
   /** THE CRITIQUE CHECKLIST of an article: every challenges/refutes/updates/superseded_by edge with an end cited by
@@ -299,7 +285,7 @@ final class ArticlesControllers(
   def critiques(slug: String, body: String, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
-    val edges = coverageReads.edgesTouching(cited, ArticleCoverage.DisagreementKinds)
+    val edges = coverageReads.edgesTouching(cited, Article.Coverage.DisagreementKinds)
     val stored = store.critiqueReasons(store.canonical(norm(slug)))
     critiquesOf(body, links, edges, extra ++ stored.filterNot(s => extra.exists(_.ref.same(s.ref))))
 
@@ -309,12 +295,12 @@ final class ArticlesControllers(
   def pairing(body: String): (List[CritiquePairing.Hit], String => Option[String]) =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
-    val edges = coverageReads.edgesTouching(cited, ArticleCoverage.DisagreementKinds)
+    val edges = coverageReads.edgesTouching(cited, Article.Coverage.DisagreementKinds)
     val works = sourceStore
       .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
       .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
-    val resolve: String => Option[String] = t => links(t).collect { case r: SourceRef => r.citekey }
+    val resolve: String => Option[String] = t => links(t).collect { case r: Source.Ref => r.citekey }
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
@@ -324,7 +310,7 @@ final class ArticlesControllers(
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns, and up to `cap`
     * of its sources (by citekey) — what the managers' code checks measure (infer-filter, propose-articles).
     */
-  def filterReach(af: ArticleFilter, citekeys: List[String], cap: Int): (Int, Set[String], List[String]) =
+  def filterReach(af: Article.Filter, citekeys: List[String], cap: Int): (Int, Set[String], List[String]) =
     val f = af.toFilter
     val scope = scopeOf(f)
     val (total, rows) = coverageReads.sourceSet(f, scope, math.max(0, cap))
@@ -332,7 +318,7 @@ final class ArticlesControllers(
     (total, in, rows.map(_.citekey))
 
   /** The coverage filter an article records, as stored (no alias followed) — the review manager kind's. */
-  def recordedFilter(slug: String): Option[ArticleFilter] = store.load(slug).flatMap(_.filter)
+  def recordedFilter(slug: String): Option[Article.Filter] = store.load(slug).flatMap(_.filter)
 
   /** How many sources the filter of the article `slug` names returns now (none: no article, or no filter). */
   def filterTotal(slug: String): Option[Int] =
@@ -365,7 +351,7 @@ final class ArticlesControllers(
   private def critiquesOf(
       body: String,
       links: String => Option[LinkTarget],
-      edges: List[CoverageEdge],
+      edges: List[Coverage.Edge],
       reasons: List[CritiqueReason]
   ): List[CritiquePair] =
     if edges.isEmpty then Nil
@@ -374,10 +360,10 @@ final class ArticlesControllers(
         .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
         .map(r => r.citekey -> (r.title, r.year))
         .toMap
-      Critiques.build(body, t => links(t).collect { case r: SourceRef => r.citekey }, edges, reasons, refs.get)
+      Critiques.build(body, t => links(t).collect { case r: Source.Ref => r.citekey }, edges, reasons, refs.get)
 
   /** Reasons are stored under the citekey a source has NOW (an old one resolves). */
-  private def canonicalReasons(rs: List[CoverageReason]): List[CoverageReason] =
+  private def canonicalReasons(rs: List[Coverage.Reason]): List[Coverage.Reason] =
     rs.map(r =>
       r.copy(citekey =
         sources
@@ -402,7 +388,7 @@ final class ArticlesControllers(
   /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source. 404 when the citekey itself is
     * unknown, so "no articles yet" and "no such source" are different answers.
     */
-  def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
+  def sourceArticles(citekey: String): Either[Api.Error, List[Backlink]] =
     sources.get(citekey).map(s => store.backlinksForSource(s.source.citekey))
 
   /** "Mentioned in articles", the part a source's default and full views carry. */
@@ -418,7 +404,7 @@ final class ArticlesControllers(
   /** Create or REPLACE one article. The response carries its formatting problems; `strict` refuses the write when one
     * of them is an error.
     */
-  def put(slug: String, in: ArticlePut, strict: Boolean = false): Either[ApiError, ArticleView] =
+  def put(slug: String, in: Article.Put, strict: Boolean = false): Either[Api.Error, Article.View] =
     maintenance.guard("put_article"):
       // an OLD slug follows the alias: the put replaces the renamed article
       Articles
@@ -427,7 +413,7 @@ final class ArticlesControllers(
           in.copy(reasons = canonicalReasons(in.reasons))
         )
         .left
-        .map(m => ApiError(m, Some(Write.CodeInvalid)))
+        .map(m => Api.Error(m, Some(Write.CodeInvalid)))
         .flatMap(a => strictGate(strict, formatting(a.body, a.summary)).map(_ => a))
         .flatMap { a =>
           val _ = store.put(a, Caller.Local); get(a.slug)
@@ -436,12 +422,12 @@ final class ArticlesControllers(
   /** Merge only the parts present in the patch (read + merge + write in one transaction). With `strict`, the merged
     * result is checked first — an append is judged in the article it lands in.
     */
-  def patch(slug: String, p: ArticlePatch, strict: Boolean = false): Either[ApiError, ArticleView] =
+  def patch(slug: String, p: Article.Patch, strict: Boolean = false): Either[Api.Error, Article.View] =
     maintenance.guard("patch_article"):
       Articles
         .slugOf(slug)
         .left
-        .map(m => ApiError(m, Some(Write.CodeInvalid)))
+        .map(m => Api.Error(m, Some(Write.CodeInvalid)))
         .map(current(AliasKinds.ArticleRecords, _))
         .flatMap { s =>
           val gate =
@@ -458,16 +444,16 @@ final class ArticlesControllers(
         }
         .flatMap(_ => get(slug))
 
-  def delete(slug: String): Either[ApiError, ArticleDeleted] =
+  def delete(slug: String): Either[Api.Error, Article.Deleted] =
     maintenance.guard("delete_article"):
       val now = current(AliasKinds.ArticleRecords, norm(slug))
-      if store.delete(now, Caller.Local) then Right(ArticleDeleted(now, true))
+      if store.delete(now, Caller.Local) then Right(Article.Deleted(now, true))
       else Left(Articles.notFound(slug))
 
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving and every `[[old]]` in other articles
     * is rewritten (each a new version).
     */
-  def rename(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+  def rename(slug: String, req: LabelRename): Either[Api.Error, LabelRenamed] =
     maintenance.guard("rename_article"):
       val from = current(AliasKinds.ArticleRecords, norm(slug))
       for
@@ -480,27 +466,27 @@ final class ArticlesControllers(
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage sections after the
     * body (between markers an import drops) and its filter and reasons in the frontmatter.
     */
-  def exportNote(slug: String): Either[ApiError, String] = note(slug)
+  def exportNote(slug: String): Either[Api.Error, String] = note(slug)
 
   /** The note of the article an old slug or its own names, as the mirror writes it. */
-  def articleNote(slug: String): Either[ApiError, String] =
+  def articleNote(slug: String): Either[Api.Error, String] =
     store
       .load(current(AliasKinds.ArticleRecords, norm(slug)))
-      .map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
+      .map(a => ArticleNote.render(a, coverageOf(a).map(Article.Coverage.exported)))
       .toRight(Articles.notFound(slug))
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).
     */
-  def versions(slug: String): Either[ApiError, List[ArticleVersion]] =
+  def versions(slug: String): Either[Api.Error, List[Article.Version]] =
     get(norm(slug)).map(v => store.versions(v.article.slug))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
-  def version(slug: String, versionId: Long): Either[ApiError, ArticleVersionFull] =
+  def version(slug: String, versionId: Long): Either[Api.Error, Article.VersionFull] =
     get(norm(slug)).flatMap(v =>
       store
         .version(v.article.slug, versionId)
-        .toRight(ApiError(s"No version $versionId for article '$slug'", Some(Write.CodeNotFound)))
+        .toRight(Api.Error(s"No version $versionId for article '$slug'", Some(Write.CodeNotFound)))
     )
 
   def slugs: List[String] = store.slugs
@@ -509,19 +495,19 @@ final class ArticlesControllers(
     * newer than the file" guard as the source seed whenever the client sends the file's mtime, so a reseed cannot wipe
     * an agent's compiled prose.
     */
-  def importNote(req: ArticleImport): Either[ApiError, SeedResult] =
+  def importNote(req: Article.Import): Either[Api.Error, SeedResult] =
     maintenance.guard("import_article")(importNow(req))
 
-  private def importNow(req: ArticleImport): Either[ApiError, SeedResult] =
+  private def importNow(req: Article.Import): Either[Api.Error, SeedResult] =
     val fallbackSlug = req.slug.map(_.trim).filter(_.nonEmpty).getOrElse("")
     val fallbackKind = req.kind.map(_.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head)
     ArticleNote.parse(req.text, fallbackSlug, fallbackKind) match
-      case None         => Left(ApiError("no YAML frontmatter in the article note"))
+      case None         => Left(Api.Error("no YAML frontmatter in the article note"))
       case Some(parsed) =>
         Articles
           .slugOf(parsed.slug)
           .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
+          .map(m => Api.Error(m, Some(Write.CodeInvalid)))
           .flatMap { s =>
             // as for a source note: a note filed under an OLD slug is a stale mirror file — it would
             // otherwise create a second article that shadows the alias
@@ -529,7 +515,7 @@ final class ArticlesControllers(
               .filter(_ != s)
               .fold(Right(s))(now =>
                 Left(
-                  ApiError(
+                  Api.Error(
                     s"'$s' was renamed to '$now' — import the note under '$now' instead",
                     Some(Write.CodeInvalid)
                   )
@@ -543,7 +529,7 @@ final class ArticlesControllers(
               Articles
                 .kindOf(parsed.kind)
                 .left
-                .map(m => ApiError(m, Some(Write.CodeInvalid)))
+                .map(m => Api.Error(m, Some(Write.CodeInvalid)))
                 .flatMap(k => strictGate(req.strict, formatting(parsed.body, parsed.summary)).map(_ => k))
                 .map { k =>
                   val _ = store.put(parsed.copy(slug = s, kind = k), Caller.Local)

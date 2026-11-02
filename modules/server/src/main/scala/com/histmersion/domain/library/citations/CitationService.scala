@@ -11,8 +11,7 @@ import com.histmersion.api.library.{
   GraphLink,
   GraphNode,
   NeighborRow,
-  NeighborTarget,
-  SourceGraph
+  NeighborTarget
 }
 import com.histmersion.domain.library.Source
 
@@ -23,7 +22,7 @@ trait CitationService:
   def neighbors(citekey: String, kinds: List[String]): List[NeighborRow]
 
   /** Breadth-first to `depth` (0–4) both ways; a link is kept only when both ends are nodes. */
-  def graph(citekey: String, depth: Int): SourceGraph
+  def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph
 
   def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult
 
@@ -40,7 +39,8 @@ object CitationService:
   final private class Implementation(db: Transactor) extends CitationService:
     def neighbors(citekey: String, kinds: List[String]): List[NeighborRow] =
       db.read(CitationRepo.neighbors(citekey, kinds)).toList
-    def graph(citekey: String, depth: Int): SourceGraph = db.read(CitationRepo.graph(citekey, depth))
+    def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph =
+      db.read(CitationRepo.graph(citekey, depth))
     def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
       db.read(CitationRepo.contradictions(citekey, since))
 
@@ -64,7 +64,7 @@ object CitationService:
       }
       (out ++ parked ++ in).sortBy(r => (r.direction, r.kind, r.citekey))
 
-    def graph(citekey: String, depth: Int): SourceGraph =
+    def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph =
       val st = state.get
       val maxDepth = depth.max(0).min(4)
       @tailrec def walk(
@@ -89,7 +89,7 @@ object CitationService:
             walk(d + 1, next, grown, links ++ touching)
       val (nodes, links) = walk(0, List(citekey), Vector.empty, Set.empty)
       val ids = nodes.iterator.map(_.id).toSet
-      SourceGraph(
+      com.histmersion.api.library.Source.Graph(
         citekey,
         maxDepth,
         nodes.toList,

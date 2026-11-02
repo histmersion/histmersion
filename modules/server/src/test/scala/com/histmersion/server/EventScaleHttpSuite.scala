@@ -3,10 +3,10 @@ package com.histmersion.server
 import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.api.views.EventDetail
-import com.histmersion.api.catalogue.EventGeoList
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.api.catalogue.EventGeo
 
 /** An event's scale (#1440) over real HTTP and MCP: PUT and PATCH take it and refuse a value that is none, `auto`
   * forgets it, `GET /api/events/geo` answers (and is not read as the event `geo`), and the `patch_event` tool writes
@@ -69,7 +69,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         // the map feed — before `events/{id}`, so `geo` is not an event id
         val (gs, gb) = get(s"$url/api/events/geo?text=Zqes%20HTTP")
         assertEquals(gs, 200, gb)
-        val geo = decode[EventGeoList](gb).fold(e => fail(s"${e.getMessage}: $gb"), identity)
+        val geo = decode[EventGeo.List](gb).fold(e => fail(s"${e.getMessage}: $gb"), identity)
         val ours = geo.events.find(_.id == Id).getOrElse(fail(gb))
         assertEquals((ours.lat, ours.lon, ours.anchor, ours.scale), (34.55, 36.5, "event", "regional"))
         assertEquals(ours.outline, None, "a point has no outline to draw")

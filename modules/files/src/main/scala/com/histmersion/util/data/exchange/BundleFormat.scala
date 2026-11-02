@@ -8,7 +8,7 @@ import io.circe.parser
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.util.UUID
-import com.histmersion.api.exchange.{Bundle, BundleFileInfo, BundleManifest}
+import com.histmersion.api.exchange.Bundle
 
 /** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record revisions, the
   * deterministic bundle id, and the checks a manifest must pass. The tar stream is [[BundleTar]]; reading the database
@@ -88,7 +88,7 @@ object BundleFormat:
     val bb = java.nio.ByteBuffer.wrap(d, 0, 16)
     UUID(bb.getLong, bb.getLong)
 
-  def bundleId(instance: UUID, since: Option[String], files: List[BundleFileInfo], blobs: Seq[String]): UUID =
+  def bundleId(instance: UUID, since: Option[String], files: List[Bundle.FileInfo], blobs: Seq[String]): UUID =
     contentUuid(
       Seq(Bundle.Format, instance.toString, since.getOrElse("")) ++
         files.map(f => s"${f.path} ${f.sha256}") ++ blobs
@@ -96,16 +96,16 @@ object BundleFormat:
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────
 
-  def manifestBytes(m: BundleManifest): Array[Byte] =
-    (printer.print(Encoder.AsObject[BundleManifest].apply(m)) + "\n").getBytes(UTF_8)
+  def manifestBytes(m: Bundle.Manifest): Array[Byte] =
+    (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
 
-  def parseManifest(bytes: Array[Byte]): Either[String, BundleManifest] =
-    parser.decode[BundleManifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
+  def parseManifest(bytes: Array[Byte]): Either[String, Bundle.Manifest] =
+    parser.decode[Bundle.Manifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
     */
-  def compatible(m: BundleManifest, serverSchema: Option[String]): List[String] =
+  def compatible(m: Bundle.Manifest, serverSchema: Option[String]): List[String] =
     def num(v: String) = v.trim.toIntOption
     List(
       Option.when(m.format != Bundle.Format)(s"not a Histmersion bundle (format '${m.format}')"),
@@ -120,7 +120,7 @@ object BundleFormat:
     ).flatten
 
   /** The manifest's file list against what the tar holds: missing, unexpected and mismatching files. */
-  def checkFiles(m: BundleManifest, seen: Map[String, BundleFileInfo]): List[String] =
+  def checkFiles(m: Bundle.Manifest, seen: Map[String, Bundle.FileInfo]): List[String] =
     val listed = m.files.map(f => f.path -> f).toMap
     val missing = m.files
       .filterNot(f => seen.contains(f.path))
@@ -143,8 +143,8 @@ object BundleFormat:
     if lines.isEmpty then Array.emptyByteArray
     else lines.mkString("", "\n", "\n").getBytes(UTF_8)
 
-  def fileInfo(path: String, payload: Array[Byte]): BundleFileInfo =
-    BundleFileInfo(path, lines(payload), payload.length.toLong, sha256Hex(payload))
+  def fileInfo(path: String, payload: Array[Byte]): Bundle.FileInfo =
+    Bundle.FileInfo(path, lines(payload), payload.length.toLong, sha256Hex(payload))
 
   def lines(payload: Array[Byte]): Int = payload.count(_ == '\n'.toByte)
 

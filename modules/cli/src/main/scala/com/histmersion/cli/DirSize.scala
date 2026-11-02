@@ -7,7 +7,7 @@ import java.nio.file.{Files, FileVisitOption, FileVisitResult, Path, SimpleFileV
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.atomic.AtomicLong
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.maintenance.StorageVolume
+import com.histmersion.api.maintenance.Storage
 
 /** How much a directory holds, measured by a BOUNDED walk — the Storage part of About ([[StorageReport]]) on the
   * server, and the CLI's own locations. Reads the file system and nothing else; writes nothing.
@@ -83,11 +83,11 @@ object DirSize:
     Iterator.iterate(p.toAbsolutePath)(_.getParent).takeWhile(_ != null).find(Files.exists(_))
 
   /** The volume `p` is (or would be) on, with its size and the space this process may still use. */
-  def volume(p: Path): Option[StorageVolume] =
+  def volume(p: Path): Option[Storage.Volume] =
     existing(p).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        StorageVolume(s.toString, s.getTotalSpace, s.getUsableSpace)
+        Storage.Volume(s.toString, s.getTotalSpace, s.getUsableSpace)
       }.toOption
     }
 

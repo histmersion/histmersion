@@ -1,6 +1,5 @@
 package com.histmersion.domain.research
 
-import com.histmersion.api.research.ArticleLinks
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.{PlanRules, PlanRun}
 
@@ -9,7 +8,7 @@ import com.histmersion.util.data.exchange.{PlanRules, PlanRun}
   */
 final class ResearchPlan extends PlanRun:
   override def relinked(text: String, citekeys: Map[String, String]): String =
-    ArticleLinks.retarget(text, citekeys.get)._1
+    com.histmersion.api.research.Article.Links.retarget(text, citekeys.get)._1
 
 object ResearchPlan extends PlanRules:
   def start(in: MergePlanner.Input): PlanRun = ResearchPlan()

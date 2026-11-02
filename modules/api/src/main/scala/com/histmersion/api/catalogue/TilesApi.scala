@@ -2,7 +2,7 @@ package com.histmersion.api.catalogue
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.{HeaderNames, StatusCode}
-import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.given
 
@@ -38,7 +38,7 @@ object TilesApi:
 
   val ContentType = "application/vnd.mapbox-vector-tile"
 
-  lazy val tile: PublicEndpoint[TileQuery, ApiError, TileAnswer, Any] =
+  lazy val tile: PublicEndpoint[TileQuery, Api.Error, TileAnswer, Any] =
     endpoint.get
       .in("api" / "tiles" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))
       .in(Api.filterQuery)
@@ -55,7 +55,7 @@ object TilesApi:
       .in(header[Option[String]](HeaderNames.IfNoneMatch))
       .mapInTo[TileQuery]
       .errorOut(statusCode(StatusCode.BadRequest))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[Api.Error])
       .out(
         byteArrayBody
           .and(header[String](HeaderNames.ContentType))

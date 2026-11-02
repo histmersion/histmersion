@@ -18,3 +18,10 @@ final case class ReadMark(
 
 object ReadMark:
   given Schema[ReadMark] = summon[KindlingsSchema[ReadMark]].schema
+
+  final case class Set(kind: ItemKind, id: ItemKey, read: Boolean, title: Option[String] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
+
+  object Set:
+    given Schema[Set] = summon[KindlingsSchema[Set]].schema

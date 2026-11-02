@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source, SourceKinds}
+import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source}
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class RepoSuite extends com.histmersion.db.DbSuite:
@@ -74,11 +74,11 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(ds, src.copy(doi = Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
     val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), period = Some(Period(-1750, -1750)), limit = 10)
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey == "zz_test_source").flatMap(_.sourceKind)
-    assertEquals(kind, Some(SourceKinds.Chapter))
+    assertEquals(kind, Some(Source.Kinds.Chapter))
     SourceFixtures.upsert(ds, src.copy(doi = None, provenance = Some("calibre")), AppConfig.load().limits.chunkChars)
-    assertEquals(kind, Some(SourceKinds.Book))
+    assertEquals(kind, Some(Source.Kinds.Book))
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    assertEquals(kind, Some(SourceKinds.Unknown))
+    assertEquals(kind, Some(Source.Kinds.Unknown))
 
   test("neighbors lists an outgoing edge to an unknown target, classified as unresolved"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)

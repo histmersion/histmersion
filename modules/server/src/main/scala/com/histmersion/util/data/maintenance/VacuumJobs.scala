@@ -1,15 +1,15 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{BackgroundJob, WorkCarrier}
 
 import javax.sql.DataSource
 import scala.annotation.tailrec
+import com.histmersion.api.Api
 
 /** `POST /api/maintenance/vacuum`: VACUUM of registered tables as a [[BackgroundJob]] (kind `vacuum`) — a vacuum of
   * `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion
@@ -36,7 +36,7 @@ final class VacuumJobs(
   private def vacuumable: Set[String] =
     transactor.read(VacuumRepo.tables).intersect(registry.tables.map(t => t._2.name.value: String).toSet)
 
-  def start(in: VacuumRequest): Either[ApiError, JobInfo] =
+  def start(in: Vacuum.Request): Either[Api.Error, JobInfo] =
     gate.guard("maintenance/vacuum"):
       Vacuum.plan(in, defaults(), vacuumable).flatMap { plan =>
         BackgroundJob.start(

@@ -6,7 +6,7 @@ import sttp.tapir.files.*
 import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import sttp.tapir.json.circe.*
-import com.histmersion.api.{Api, ApiError, OpsApi, WebPaths}
+import com.histmersion.api.{Api, OpsApi, WebPaths}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.ArticleHtml
@@ -204,8 +204,8 @@ final class HttpApi(
     endpoint
       .in("api" / paths)
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
-      .serverLogic[Identity](p => Left(ApiError(s"no such endpoint: /api/${p.mkString("/")}")))
+      .errorOut(jsonBody[Api.Error])
+      .serverLogic[Identity](p => Left(Api.Error(s"no such endpoint: /api/${p.mkString("/")}")))
 
   /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
     * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page.

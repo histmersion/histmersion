@@ -1,7 +1,7 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.research.ArticleCoverage
 import com.histmersion.api.library.NeighborRow
+import com.histmersion.api.research.Article
 
 /** What the reading pane counts of a source's place in the citation graph: what it cites (as its page's "Cites" lists
   * it), the sources that answer it — challenge, refute, update or supersede it — and the articles that cite it. Pure.
@@ -14,7 +14,7 @@ object CitationCounts:
     * on the older source (`superseded_by` points from this one to the newer).
     */
   def answering(r: NeighborRow): Boolean =
-    (r.direction == "in" && ArticleCoverage.DisagreementKinds.contains(r.kind) && r.kind != "superseded_by") ||
+    (r.direction == "in" && Article.Coverage.DisagreementKinds.contains(r.kind) && r.kind != "superseded_by") ||
       (r.direction == "in" && r.kind == "supersedes") ||
       (r.direction == "out" && r.kind == "superseded_by")
 

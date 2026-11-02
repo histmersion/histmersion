@@ -4,9 +4,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.{
   HistoricalPeriod,
   Period,
-  PeriodImportResult,
   PeriodO,
-  PeriodSkip,
   PeriodsMarkdown,
   PresetMenu,
   PresetRegion,
@@ -85,8 +83,8 @@ class PeriodsSuite extends munit.FunSuite:
     val ds = parsed
     assert(!ds.authorities.flatMap(_.periods).exists(p => Set("p0aaa04", "p0aaa05")(p.id)))
     assertEquals(ds.skipped.size, 2, ds.skipped)
-    assert(ds.skipped.exists(s => s.label == "Backwards" && s.reason == PeriodSkip.EndsBeforeStart), ds.skipped)
-    assertEquals(ds.skipped.find(_.id == "p0aaa04").map(_.reason), Some(PeriodSkip.NoSpan))
+    assert(ds.skipped.exists(s => s.label == "Backwards" && s.reason == Period.Skip.EndsBeforeStart), ds.skipped)
+    assertEquals(ds.skipped.find(_.id == "p0aaa04").map(_.reason), Some(Period.Skip.NoSpan))
 
   test("the authority citation names the PeriodO id, the source and its year"):
     val rows = byId(PeriodO.toPeriods(parsed))
@@ -176,7 +174,7 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(ds.authorities.flatMap(_.periods).map(_.id), List("p0eam03"))
     assertEquals(
       ds.skipped.map(s => s.id -> s.reason),
-      List("p0eam01" -> PeriodSkip.OutOfRange, "p0eam02" -> PeriodSkip.OutOfRange)
+      List("p0eam01" -> Period.Skip.OutOfRange, "p0eam02" -> Period.Skip.OutOfRange)
     )
     assert(ds.skipped.head.detail.contains("2150"), ds.skipped.head.detail)
 
@@ -184,7 +182,7 @@ class PeriodsSuite extends munit.FunSuite:
     val phases = (1 to 4).map(i => defn(s"p0eam1$i", s"Phase $i", s"${-3000 + i * 300}", s"${-2800 + i * 300}"))
     val ds =
       PeriodO.parse(authorityOf((phases :+ defn("p0eam20", "Old Kingdom", "-2700", "1950")).mkString(","))).toOption.get
-    assertEquals(ds.skipped.map(s => s.id -> s.reason), List("p0eam20" -> PeriodSkip.ImplausibleSpan))
+    assertEquals(ds.skipped.map(s => s.id -> s.reason), List("p0eam20" -> Period.Skip.ImplausibleSpan))
     assertEquals(ds.authorities.flatMap(_.periods).size, 4)
 
   test("an umbrella (another definition's broader) and a sparse region are never judged implausible"):
@@ -205,11 +203,11 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(sparse.skipped, Nil)
 
   test("an import result counts every skipped definition and names them"):
-    val r = PeriodImportResult(
+    val r = Period.ImportResult(
       3,
       0,
       5,
-      List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside -3000000..2100")),
+      List(SkippedPeriod("p0x1", "Old Kingdom", Period.Skip.OutOfRange, "-2701 → 2150 lies outside -3000000..2100")),
       skippedCount = 2
     )
     val md = PeriodsMarkdown.imported(r)
@@ -217,7 +215,7 @@ class PeriodsSuite extends munit.FunSuite:
     assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150 lies outside"), md)
     assert(md.contains("…and 1 more"), md)
     assert(
-      PeriodsMarkdown.imported(PeriodImportResult(1, presets = 1)).startsWith("imported 1 period — 1 timeline preset")
+      PeriodsMarkdown.imported(Period.ImportResult(1, presets = 1)).startsWith("imported 1 period — 1 timeline preset")
     )
 
   test("what is not a PeriodO dataset is refused"):
@@ -234,7 +232,7 @@ class PeriodsSuite extends munit.FunSuite:
     // from 14,000,000 BC — a data error the import reports rather than "fixes"
     assertEquals(
       seed.skipped.map(s => s.id -> s.reason),
-      List("p0m64tdgpvd" -> PeriodSkip.OutOfRange, "p0m64tdp282" -> PeriodSkip.OutOfRange)
+      List("p0m64tdgpvd" -> Period.Skip.OutOfRange, "p0m64tdp282" -> Period.Skip.OutOfRange)
     )
     val ids = seed.authorities.flatMap(_.periods).map(_.id).toSet
     assert(ids.size > 150, ids.size.toString)

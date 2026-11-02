@@ -33,7 +33,20 @@ object Event:
     val allen: Set[String] = Set(Before, Meets, Overlaps, During, Starts, Finishes, Equals)
     val causal: Set[String] = Set(Causes, Enables, Triggers, RespondsTo, FallsWithin)
     val all: List[String] =
-      List(Before, Meets, Overlaps, During, Starts, Finishes, Equals, Causes, Enables, Triggers, RespondsTo, FallsWithin)
+      List(
+        Before,
+        Meets,
+        Overlaps,
+        During,
+        Starts,
+        Finishes,
+        Equals,
+        Causes,
+        Enables,
+        Triggers,
+        RespondsTo,
+        FallsWithin
+      )
 
   /** Where a candidate link between an event and a source stands. */
   object LinkStatus:

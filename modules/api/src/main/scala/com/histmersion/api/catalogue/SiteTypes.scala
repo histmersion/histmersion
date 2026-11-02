@@ -1,5 +1,6 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
   * variant of `temple`), the GeoNames feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb),
@@ -336,3 +337,34 @@ object SiteTypes:
         .orElse(fcode.flatMap(geonames))
         .orElse(wikidataOwn(p31))
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))
+
+  final case class Report(
+      dryRun: Boolean,
+      pending: Int = 0,
+      asked: Int = 0,
+      typed: List[EventCount] = Nil,
+      untyped: Int = 0,
+      requests: Int = 0,
+      failed: List[String] = Nil
+  ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+        KindlingsSchema
+  object Report:
+    given sttp.tapir.Schema[Report] = summon[KindlingsSchema[Report]].schema
+    def summary(r: Report): String =
+      if r.dryRun then s"${r.pending} Wikidata site(s) on the map would be asked about"
+      else
+        (List(
+          s"${r.asked} site(s) asked",
+          s"typed: ${if r.typed.isEmpty then "none" else r.typed.map(c => s"${c.key} ${c.n}").mkString(", ")}",
+          s"${r.untyped} kept the import's class",
+          s"${r.pending} left",
+          s"${r.requests} request(s)"
+        ) ++
+          Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"))
+          .mkString(" · ")
+
+  final case class Request(dryRun: Boolean = false, limit: Option[Int] = None, refresh: Boolean = false)
+      derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+        KindlingsSchema
+  object Request:
+    given sttp.tapir.Schema[Request] = summon[KindlingsSchema[Request]].schema

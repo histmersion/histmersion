@@ -3,7 +3,8 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.library.{CandidateCount, CandidateWatch, SourceCandidate}
+import com.histmersion.api.library.{CandidateCount, CandidateWatch}
+import com.histmersion.api.library.Source
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.
@@ -51,7 +52,7 @@ private[acquisition] object CandidateRepo:
 
   /** Store a candidate: a new one (`true`), or one found again — every watch that found it kept, its state as it was.
     */
-  def upsert(c: SourceCandidate)(using DbCon): Boolean =
+  def upsert(c: Source.Candidate)(using DbCon): Boolean =
     val existed =
       sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
     val _ =
@@ -86,7 +87,7 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[String], state: String, limit: Int, offset: Int)(using DbCon): List[SourceCandidate] =
+  def list(goal: Option[String], state: String, limit: Int, offset: Int)(using DbCon): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
                    to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
         ts
@@ -97,7 +98,7 @@ private[acquisition] object CandidateRepo:
       .run()
       .toList
       .map(r =>
-        SourceCandidate(
+        Source.Candidate(
           r.id,
           r.goal,
           r.doi,

@@ -1,8 +1,9 @@
 package com.histmersion.api.research
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
+import com.histmersion.api.Api
 object Articles:
 
   def heading(body: String): Option[String] =
@@ -51,7 +52,7 @@ object Articles:
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
-  def notFound(slug: String): ApiError = ApiError(s"No article '$slug'", Some(Write.CodeNotFound))
+  def notFound(slug: String): Api.Error = Api.Error(s"No article '$slug'", Some(Write.CodeNotFound))
 
   def slugOf(raw: String): Either[String, String] = com.histmersion.domain.research.Slug.parse(raw).map(_.value)
 
@@ -66,20 +67,20 @@ object Articles:
 
   def dirOfKind(kind: String): String = kind.trim.toLowerCase
 
-  def applyPut(slug: String, p: ArticlePut): Either[String, Article] =
+  def applyPut(slug: String, p: Article.Put): Either[String, Article] =
     for
       s <- slugOf(slug)
       k <- kindOf(p.kind)
       _ <- if p.title.trim.nonEmpty then Right(()) else Left("title must not be empty")
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
-      filter <- p.filter.fold[Either[String, Option[ArticleFilter]]](Right(None))(ArticleFilter.normalise)
-      reasons <- CoverageReason.merge(Map.empty, p.reasons)
+      filter <- p.filter.fold[Either[String, Option[Article.Filter]]](Right(None))(Article.Filter.normalise)
+      reasons <- Coverage.Reason.merge(Map.empty, p.reasons)
     yield Article(
       slug = s,
       title = p.title.trim,
       kind = k,
-      body = ArticleCoverage.stripGenerated(p.body),
+      body = Article.Coverage.stripGenerated(p.body),
       summary = summary.orElse(lede(p.body)),
       tags = p.tags.map(_.trim).filter(_.nonEmpty).distinct,
       regions = p.regions.map(_.trim).filter(_.nonEmpty).distinct,
@@ -88,7 +89,7 @@ object Articles:
       reasons = reasons
     )
 
-  def precondition(existing: Article, patch: ArticlePatch): Either[String, Unit] =
+  def precondition(existing: Article, patch: Article.Patch): Either[String, Unit] =
     patch.ifUpdatedAt match
       case None       => Right(())
       case Some(want) =>
@@ -100,7 +101,7 @@ object Articles:
               s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
           )
 
-  def applyPatch(existing: Article, patch: ArticlePatch): Either[String, Article] =
+  def applyPatch(existing: Article, patch: Article.Patch): Either[String, Article] =
     for
       _ <- precondition(existing, patch)
       kind <- patch.kind.fold[Either[String, String]](Right(existing.kind))(kindOf)
@@ -109,10 +110,10 @@ object Articles:
       )
       body <- bodyOf(existing.body, patch)
       summary <- summaryOf(patch.summary)
-      filter <- patch.filter.fold[Either[String, Option[ArticleFilter]]](Right(existing.filter))(
-        ArticleFilter.normalise
+      filter <- patch.filter.fold[Either[String, Option[Article.Filter]]](Right(existing.filter))(
+        Article.Filter.normalise
       )
-      reasons <- CoverageReason.merge(existing.reasons, patch.reasons)
+      reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons)
     yield existing.copy(
       title = patch.title.map(_.trim).filter(_.nonEmpty).getOrElse(existing.title),
       kind = kind,
@@ -125,9 +126,9 @@ object Articles:
       reasons = reasons
     )
 
-  private def bodyOf(current: String, patch: ArticlePatch): Either[String, String] =
-    val base = patch.body.map(ArticleCoverage.stripGenerated).getOrElse(current)
-    patch.append.map(ArticleCoverage.stripGenerated).map(_.trim).filter(_.nonEmpty) match
+  private def bodyOf(current: String, patch: Article.Patch): Either[String, String] =
+    val base = patch.body.map(Article.Coverage.stripGenerated).getOrElse(current)
+    patch.append.map(Article.Coverage.stripGenerated).map(_.trim).filter(_.nonEmpty) match
       case None    => Right(base)
       case Some(a) =>
         patch.section.map(_.trim).filter(_.nonEmpty) match

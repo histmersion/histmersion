@@ -20,19 +20,17 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{
-  AttestationPut,
   CatalogRecord,
   EventLinkCandidate,
   EventPassage,
   EventPut,
   EventTier,
   Period,
-  Place,
-  PlaceInput,
-  PlaceName
+  Place
 }
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.Attestation
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /
@@ -244,7 +242,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   test("an attestation makes a catalogue event attested"):
     val _ = AttestationRows.create(
       ds,
-      AttestationPut(
+      Attestation.Put(
         "zqec_src2020",
         AttestationTarget.Event,
         "zztest_b",
@@ -285,9 +283,9 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place("zqec_site", "Zqec site", com.histmersion.domain.catalogue.Place.Kind.Site, pt),
-          List(PlaceName("Zqec site"))
+          List(Place.Name("Zqec site"))
         )
       )
     )

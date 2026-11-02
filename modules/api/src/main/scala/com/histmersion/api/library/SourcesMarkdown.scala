@@ -5,7 +5,7 @@ import com.histmersion.api.media.AssetLinks
 
 object SourcesMarkdown:
 
-  def sourceFindingsOnly(findings: Vector[FindingRow]): String =
+  def sourceFindingsOnly(findings: Vector[Finding.Row]): String =
     if findings.isEmpty then "_(no findings)_"
     else
       val items = findings.map { f =>
@@ -24,7 +24,7 @@ object SourcesMarkdown:
       }
       s"## Findings (${findings.size})\n${items.mkString("\n")}"
 
-  def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
+  def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
     val authorLinks = if s.authors.nonEmpty then chipLinks(s.authors, "author") else ""
     val meta = List(authorLinks, year(s.year), s.venue.getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
@@ -84,7 +84,7 @@ object SourcesMarkdown:
         ) +
         block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
 
-  def graph(g: SourceGraph): String =
+  def graph(g: Source.Graph): String =
     if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"
     else
       val header =
@@ -132,7 +132,7 @@ object SourcesMarkdown:
         "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
         "An empty result is not evidence of agreement._"
 
-  def sourceRenamed(r: SourceRenamed): String =
+  def sourceRenamed(r: Source.Renamed): String =
     val c = r.counts
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
     val columns =

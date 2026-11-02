@@ -12,10 +12,10 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.basemap.BasemapFetchQuery
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.basemap.Basemap
 
 /** The first-run setup (`/setup`): seven steps with safe defaults — finding open papers, the maps, the background data,
   * research agents and Calibre (both optional) — then Ready. Nothing is written or downloaded until it is finished;
@@ -221,7 +221,7 @@ object SetupPage:
     )
 
   private def startDownload(d: SetupDownload): Future[String] = d match
-    case SetupDownload.Map(area)  => ApiClient.basemapFetch(BasemapFetchQuery(bbox = Some(area))).map(_ => "started")
+    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(area))).map(_ => "started")
     case SetupDownload.Boundaries => ApiClient.initData(fetch = true).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient

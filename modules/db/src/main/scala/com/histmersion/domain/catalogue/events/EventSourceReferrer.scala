@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.library.{DeleteBlocker, DeleteBlockerKind, DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteBlocker, DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Rename
 
 /** The events a source is the primary source of, the relations and participants sourced to it (they refuse a delete),
   * and the datings it gives (they go with it).
@@ -25,7 +26,7 @@ final class EventSourceReferrer extends SourceReferrer:
         "event_edges.citekey" -> sql"UPDATE event_edges SET citekey = $to WHERE citekey = $from".update.run(),
         "event_participants.citekey" ->
           sql"UPDATE event_participants SET citekey = $to WHERE citekey = $from".update.run()
-      ).collect { case (t, n) if n > 0 => RenameCount(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
@@ -34,19 +35,19 @@ final class EventSourceReferrer extends SourceReferrer:
       .query[(String, String)]
       .run()
       .toList
-      .map((id, l) => DeleteBlocker(DeleteBlockerKind.Event, id, Some(l)))
+      .map((id, l) => DeleteBlocker(DeleteBlocker.Kind.Event, id, Some(l)))
     val relations = sql"""SELECT src_id, kind, dst_id FROM event_edges WHERE citekey = ANY($keys::text[])
                           ORDER BY src_id, kind, dst_id"""
       .query[(String, String, String)]
       .run()
       .toList
-      .map((s, k, d) => DeleteBlocker(DeleteBlockerKind.EventEdge, s"$s $k $d"))
+      .map((s, k, d) => DeleteBlocker(DeleteBlocker.Kind.EventEdge, s"$s $k $d"))
     val participants = sql"""SELECT event_id, actor FROM event_participants WHERE citekey = ANY($keys::text[])
                              ORDER BY event_id, actor"""
       .query[(String, String)]
       .run()
       .toList
-      .map((e, a) => DeleteBlocker(DeleteBlockerKind.EventParticipant, e, Some(a)))
+      .map((e, a) => DeleteBlocker(DeleteBlocker.Kind.EventParticipant, e, Some(a)))
     val datings = sql"SELECT count(*)::int FROM event_datings WHERE citekey = ANY($keys::text[])"
       .query[Int]
       .run()

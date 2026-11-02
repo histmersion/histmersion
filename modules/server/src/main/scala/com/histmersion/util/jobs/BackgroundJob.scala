@@ -2,7 +2,6 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.jobs.JobRepo
@@ -10,6 +9,7 @@ import com.histmersion.util.jobs.JobRepo
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
+import com.histmersion.api.Api
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -49,8 +49,8 @@ object BackgroundJob:
     private[BackgroundJob] def free(): Unit = held.set(None)
 
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
-  def busy(what: String, current: Option[String], code: Option[String] = None): ApiError =
-    ApiError(s"$what is already running (${current.getOrElse("?")}) — see `histmersion jobs`", code)
+  def busy(what: String, current: Option[String], code: Option[String] = None): Api.Error =
+    Api.Error(s"$what is already running (${current.getOrElse("?")}) — see `histmersion jobs`", code)
 
   /** What a thrown exception tells a job's error line. Pure. */
   def describe(e: Throwable): String = e match
@@ -93,7 +93,7 @@ object BackgroundJob:
         */
       pins: WorkCarrier = WorkCarrier.none,
       stops: Option[JobStops] = None
-  )(body: (JobInfo, String => Unit) => Outcome): Either[ApiError, JobInfo] =
+  )(body: (JobInfo, String => Unit) => Outcome): Either[Api.Error, JobInfo] =
     if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
     else
       val job =

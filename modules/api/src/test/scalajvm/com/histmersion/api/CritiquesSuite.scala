@@ -6,11 +6,7 @@ package com.histmersion.api
   */
 
 import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleFilter,
-  ArticlePatch,
   Coverage,
-  CoverageEdge,
   CritiquePair,
   CritiqueReason,
   CritiqueRef,
@@ -18,6 +14,7 @@ import com.histmersion.api.research.{
   CritiqueSide,
   CritiqueState
 }
+import com.histmersion.api.research.Article
 class CritiquesSuite extends munit.FunSuite:
 
   /** `[[x]]` → its canonical citekey: two aliases, one article slug, the rest themselves. */
@@ -27,7 +24,7 @@ class CritiquesSuite extends munit.FunSuite:
     case "dying_gods"       => None // an article
     case t                  => Some(t)
   }
-  private def edge(a: String, k: String, b: String) = CoverageEdge(a, k, b)
+  private def edge(a: String, k: String, b: String) = Coverage.Edge(a, k, b)
   private val refs: String => Option[(String, Option[Int])] = Map(
     "smith1987_dying" -> ("Dying and rising gods", Some(1987)),
     "frazer1922_golden" -> ("The golden bough", Some(1922))
@@ -197,7 +194,7 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(Critiques.methodPart(Nil), None)
     val c = Coverage(
       "s",
-      ArticleFilter(topics = List("t")),
+      Article.Filter(topics = List("t")),
       "search {topics: [\"t\"]}",
       1,
       1,
@@ -212,11 +209,11 @@ class CritiquesSuite extends munit.FunSuite:
       critiques = ps
     )
     assert(
-      ArticleCoverage.method(c).endsWith("; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._"),
-      ArticleCoverage.method(c)
+      Article.Coverage.method(c).endsWith("; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._"),
+      Article.Coverage.method(c)
     )
-    assert(!ArticleCoverage.method(c.copy(critiques = Nil)).contains("disagreements checked"))
-    val md = ArticleCoverage.markdown(c)
+    assert(!Article.Coverage.method(c.copy(critiques = Nil)).contains("disagreements checked"))
+    val md = Article.Coverage.markdown(c)
     assert(md.contains("### Disagreements checked\n\n3 pairs — 1 addressed, 1 reasoned, 1 open"), md)
     assert(
       md.contains("- d>b: [[d]] (not cited) updates [[b]] (cited)") && md.contains(
@@ -244,9 +241,9 @@ class CritiquesSuite extends munit.FunSuite:
       CritiqueReason.tidy(CritiqueReason(" A ", "b", " one\n line ")).map(r => (r.src, r.reason)),
       Right(("a", "one line"))
     )
-    assert(ArticlePatch(critiqueReasons = List(CritiqueReason("a", "b", "x")), ifUpdatedAt = Some("t")).onlyCritiques)
-    assert(!ArticlePatch(body = Some("b"), critiqueReasons = List(CritiqueReason("a", "b", "x"))).onlyCritiques)
-    assert(!ArticlePatch().onlyCritiques)
+    assert(Article.Patch(critiqueReasons = List(CritiqueReason("a", "b", "x")), ifUpdatedAt = Some("t")).onlyCritiques)
+    assert(!Article.Patch(body = Some("b"), critiqueReasons = List(CritiqueReason("a", "b", "x"))).onlyCritiques)
+    assert(!Article.Patch().onlyCritiques)
 
   // ── §6.9: blocks with their lines, the criticised side, bearing pairs ─────────────────────────────
 

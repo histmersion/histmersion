@@ -2,11 +2,9 @@ package com.histmersion.domain.library.sources
 
 import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.library.SourceWrite
-
 import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.api.{Api, ApiError, Markdown, Write}
+import com.histmersion.api.{Api, Markdown, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.Caller
@@ -21,24 +19,11 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, LocalDate, ZoneOffset}
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport}
-import com.histmersion.api.library.{
-  NoteImport,
-  PassageResult,
-  RenameRequest,
-  SeedResult,
-  SourceAlias,
-  SourceDelete,
-  SourceDeleteRequest,
-  SourceDeletion,
-  SourcePatch,
-  SourcePut,
-  SourceRenamed,
-  SourceSection,
-  SourceWithFindings,
-  TocEntry
-}
+import com.histmersion.api.library.{NoteImport, PassageResult, SeedResult, TocEntry}
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.library.of
+import com.histmersion.api.library.Rename
+import com.histmersion.api.library.Source
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -64,25 +49,25 @@ final class SourcesControllers(
     */
   def canonical(id: String): String = sources.current(id).getOrElse(id)
 
-  def get(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
+  def get(citekey: String, body: Boolean = true): Either[Api.Error, Source.WithFindings] =
     sources
       .get(canonical(citekey))
       .map((s, fs) =>
-        SourceWithFindings(
+        Source.WithFindings(
           if body then s else s.modify(_.ocrMarkdown).setTo(None),
           fs,
           illustration = figures.sourceThumb(s.citekey)
         )
       )
-      .toRight(ApiError(s"No source '$citekey'"))
+      .toRight(Api.Error(s"No source '$citekey'"))
 
   def citekeys: List[String] = sources.citekeys
 
   /** Every old citekey and the source it names now. */
-  def aliases: List[SourceAlias] = sources.aliases
+  def aliases: List[Source.Alias] = sources.aliases
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
-  def note(citekey: String): Either[ApiError, String] =
+  def note(citekey: String): Either[Api.Error, String] =
     sources.load(canonical(citekey)).map(SourceNote.note).toRight(Write.notFound(citekey))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
@@ -90,13 +75,13 @@ final class SourcesControllers(
   /** Create or REPLACE everything under one citekey. An OLD citekey follows the alias (#1799): the put replaces the
     * source it was renamed to — it never creates a second source under the old name, which the alias would then shadow.
     */
-  def put(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
+  def put(citekey: String, in: Source.Put, strict: Boolean = false): Either[Api.Error, Source.WithFindings] =
     maintenance.guard("put_source"):
       Citekey.of(citekey).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
-        SourceWrite
+        Source.Write
           .applyPut(ck, in, sources.aliasesOf(ck))
           .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
+          .map(m => Api.Error(m, Some(Write.CodeInvalid)))
           .flatMap(s => strictGate(strict, formatting.issues(s.summary, s.notes)).map(_ => s))
           .flatMap { s =>
             val _ = sources.put(s, Caller.Local); get(ck).map(withFormatting)
@@ -104,7 +89,7 @@ final class SourcesControllers(
       }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patch(citekey: String, p: SourcePatch, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
+  def patch(citekey: String, p: Source.Patch, strict: Boolean = false): Either[Api.Error, Source.WithFindings] =
     maintenance.guard("patch_source"):
       Citekey
         .of(citekey)
@@ -115,19 +100,19 @@ final class SourcesControllers(
         .map(withFormatting)
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
-  def rename(citekey: String, req: RenameRequest): Either[ApiError, SourceRenamed] =
+  def rename(citekey: String, req: Rename.Request): Either[Api.Error, Source.Renamed] =
     maintenance.guard("rename_source"):
       val from = current(AliasKinds.SourceRecords, citekey)
       sources.rename(from, req.newCitekey, Caller.Local).flatMap { counts =>
         val now = req.newCitekey.trim
-        get(now, body = false).map(sw => SourceRenamed(from, now, sw.source, counts, sources.calibreId(now)))
+        get(now, body = false).map(sw => Source.Renamed(from, now, sw.source, counts, sources.calibreId(now)))
       }
 
   /** `POST /api/sources/{ck}/delete` (#969) — a dry run unless `apply`. Applied, the database half is one transaction
     * (refused while anything cites the source), and the stored originals are removed after the commit, best effort. Not
     * an MCP tool, like deleting an article: a person's decision.
     */
-  def delete(citekey: String, req: SourceDeleteRequest): Either[ApiError, SourceDeletion] =
+  def delete(citekey: String, req: Source.DeleteRequest): Either[Api.Error, Source.Deletion] =
     val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply then sources.deletion(ck).map(p => p.deletion.modify(_.files).setTo(originals.find(p)))
     else
@@ -137,7 +122,7 @@ final class SourcesControllers(
         sources
           .delete(ck, today, originals.find, Caller.Local)
           .map { p =>
-            scribe.info(SourceDelete.logText(p.deletion))
+            scribe.info(Source.Delete.logText(p.deletion))
             p.deletion.modify(_.filesFailed).setTo(originals.remove(p.deletion.files))
           }
 
@@ -145,21 +130,21 @@ final class SourcesControllers(
     * an old citekey is a stale mirror file the export leaves behind (and prunes), and its findings are numbered under
     * the old name.
     */
-  private def notAnAlias(ck: String): Either[ApiError, String] =
+  private def notAnAlias(ck: String): Either[Api.Error, String] =
     sources.aliasOf(ck) match
       case Some(now) =>
-        Left(ApiError(s"'$ck' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"'$ck' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid)))
       case None => Right(ck)
 
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
-  def importNote(req: NoteImport): Either[ApiError, SeedResult] = maintenance.guard("import"):
+  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard("import"):
     SourceNote.parseNote(req.text, req.citekey.getOrElse("")) match
-      case None         => Left(ApiError("no YAML frontmatter in the note"))
+      case None         => Left(Api.Error("no YAML frontmatter in the note"))
       case Some(parsed) =>
         val ck = parsed.citekey
-        if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
+        if ck.isEmpty then Left(Api.Error("note has no citekey (none in the frontmatter, none supplied)"))
         else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if !req.force && req.mtime.exists(m => SeedImport.isStale(sources.updatedAtMillis, ck, m))
@@ -185,18 +170,18 @@ final class SourcesControllers(
   def formatIssues(summary: Option[String], notes: Option[String]): List[FormatIssue] =
     formatting.issues(summary, notes)
 
-  private def withFormatting(sw: SourceWithFindings): SourceWithFindings =
+  private def withFormatting(sw: Source.WithFindings): Source.WithFindings =
     sw.modify(_.formatting).setTo(formatting.issues(sw.source.summary, sw.source.notes))
 
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
     * the write goes through.
     */
-  private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[ApiError, Unit] =
+  private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
     if !strict then Right(())
-    else formatting.refusal(issues).fold(Right(()))(m => Left(ApiError(m, Some(Write.CodeInvalid))))
+    else formatting.refusal(issues).fold(Right(()))(m => Left(Api.Error(m, Some(Write.CodeInvalid))))
 
   /** `GET /api/sources/{citekey}/lint`. */
-  def lint(citekey: String): Either[ApiError, FormatReport] =
+  def lint(citekey: String): Either[Api.Error, FormatReport] =
     get(citekey, body = false).map(sw =>
       FormatReport(sw.source.citekey, formatIssues(sw.source.summary, sw.source.notes))
     )
@@ -204,7 +189,7 @@ final class SourcesControllers(
   /** `POST /api/sources/{citekey}/lint/fix` — the wording-safe repairs to summary and notes, written as one patch
     * guarded by the `updatedAt` just read, then the report of what is left.
     */
-  def fix(citekey: String): Either[ApiError, FormatReport] =
+  def fix(citekey: String): Either[Api.Error, FormatReport] =
     maintenance.guard("fix_source_format"):
       sources.load(canonical(citekey)).toRight(Write.notFound(citekey)).flatMap { s =>
         val (summary, fs) =
@@ -218,7 +203,7 @@ final class SourcesControllers(
             sources
               .patch(
                 s.citekey,
-                SourcePatch(
+                Source.Patch(
                   summary = summary.filter(_ => fs.nonEmpty),
                   notes = notes.filter(_ => fn.nonEmpty),
                   ifUpdatedAt = s.updatedAt
@@ -244,24 +229,24 @@ final class SourcesControllers(
       heading: Option[String] = None,
       offset: Option[Int] = None,
       chars: Option[Int] = None
-  ): Either[ApiError, String] =
+  ): Either[Api.Error, String] =
     val publicUrl = cfg().server.publicUrl
-    val sec = section.flatMap(SourceSection.parse)
+    val sec = section.flatMap(Source.Section.parse)
     val badSection = section.filter(_.nonEmpty).exists(_ => sec.isEmpty)
     if badSection then
-      Left(ApiError(s"unknown section '${section.getOrElse("")}' — one of: ${SourceSection.all.mkString(", ")}"))
+      Left(Api.Error(s"unknown section '${section.getOrElse("")}' — one of: ${Source.Section.all.mkString(", ")}"))
     else
       get(requested).map { sw =>
         val citekey = sw.source.citekey
         sec match
-          case Some(SourceSection.Toc) =>
+          case Some(Source.Section.Toc) =>
             TocEntry.markdown(sources.toc(citekey))
 
-          case Some(SourceSection.Body) =>
+          case Some(Source.Section.Body) =>
             val bodyText = bodySlice(citekey, heading, offset, chars)
             AssetLinks.toAbsolute(bodyText, citekey, publicUrl)
 
-          case Some(SourceSection.Summary) =>
+          case Some(Source.Section.Summary) =>
             val s = sw.source
             val authStr = Markdown.chipLinks(s.authors, "author")
             val meta = List(authStr, Markdown.periodLabel(s.periodStart, s.periodEnd))
@@ -270,17 +255,17 @@ final class SourcesControllers(
             s"# ${s.title}\n\n_${meta}_" +
               s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
 
-          case Some(SourceSection.Findings) =>
+          case Some(Source.Section.Findings) =>
             SourcesMarkdown.sourceFindingsOnly(sw.findings.toVector)
 
-          case Some(SourceSection.Notes) =>
+          case Some(Source.Section.Notes) =>
             sw.source.notes
               .map(_.trim)
               .filter(_.nonEmpty)
               .map(n => s"## Notes\n\n$n")
               .getOrElse("_(no notes)_")
 
-          case Some(SourceSection.All) =>
+          case Some(Source.Section.All) =>
             val ft = fullText || offset.isDefined || heading.isDefined
             val md = if ft && (offset.isDefined || chars.isDefined) then
               val bodyText = bodySlice(citekey, heading, offset, chars)
@@ -305,11 +290,11 @@ final class SourcesControllers(
     * are those [[bodySlice]] uses. An old citekey resolves like every read; an unknown one is a 404, an empty query or
     * a bad regex a 400.
     */
-  def passages(q: Api.PassagesQuery): Either[ApiError, PassageResult] =
+  def passages(q: Api.PassagesQuery): Either[Api.Error, PassageResult] =
     val lim = cfg().limits.passages
     sources
       .current(q.citekey)
-      .toRight(ApiError(s"No source '${q.citekey}'", Some(Write.CodeNotFound)))
+      .toRight(Api.Error(s"No source '${q.citekey}'", Some(Write.CodeNotFound)))
       .flatMap { ck =>
         PassageFinder
           .find(
@@ -323,7 +308,7 @@ final class SourcesControllers(
             lim.regexTimeoutMs.toLong
           )
           .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
+          .map(m => Api.Error(m, Some(Write.CodeInvalid)))
       }
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */

@@ -14,8 +14,9 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{EventGeoList, EventPatch, EventPut, EventSummary, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{EventPatch, EventPut, EventSummary, Place}
 import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.EventGeo
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the
@@ -41,17 +42,17 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   )
 
   private val places = List(
-    PlaceInput(
+    Place.Input(
       Place("zqes_site", "Zqes site", com.histmersion.domain.catalogue.Place.Kind.Site, pt(124.0)),
-      List(PlaceName("Zqes site"))
+      List(Place.Name("Zqes site"))
     ),
-    PlaceInput(
+    Place.Input(
       Place("zqes_area", "Zqes area", com.histmersion.domain.catalogue.Place.Kind.Region, Square),
-      List(PlaceName("Zqes area"))
+      List(Place.Name("Zqes area"))
     ),
-    PlaceInput(
+    Place.Input(
       Place("zqes_ptregion", "Zqes point region", com.histmersion.domain.catalogue.Place.Kind.Region, pt(125.0)),
-      List(PlaceName("Zqes point region"))
+      List(Place.Name("Zqes point region"))
     )
   )
 
@@ -100,7 +101,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def summary(id: String): EventSummary = EventFixtures.get(ds, id).getOrElse(fail(s"no $id")).event
 
-  private def geo(): EventGeoList =
+  private def geo(): EventGeo.List =
     val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 1000, 0.01)
     all.copy(events = all.events.filter(_.id.startsWith("zqes")))
 

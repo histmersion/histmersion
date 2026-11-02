@@ -11,8 +11,8 @@ import com.histmersion.util.database.{Db, Migrate}
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.library.IngestParams
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.api.library.Ingest
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
   * acquisition bookkeeping failed. Uses only the disposable *_test database.
@@ -61,7 +61,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.queue.start()
       val accepted = handler.controllers
         .ingest(
-          IngestParams(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
+          Ingest.Params(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
           com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile)
         )
         .toOption

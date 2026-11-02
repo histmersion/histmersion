@@ -1,10 +1,10 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.SpatialHierarchyResult
-import com.histmersion.api.catalogue.PlaceRebuildResult
 import com.histmersion.util.database.Transactor
 
 import scala.annotation.tailrec
+import com.histmersion.api.catalogue.Place
 
 /** The gazetteer's geometry operations, a mechanism over PostGIS with no in-memory twin (as the map's tiles): which
   * places each finding belongs to rebuilt from scratch, the hierarchy built from spatial containment, the land the
@@ -14,7 +14,7 @@ import scala.annotation.tailrec
 trait PlaceGeometry:
 
   /** `finding_places` from scratch: the findings' points, areas and names matched to every place again. */
-  def rebuildFindingPlaces(toleranceKm: Double): PlaceRebuildResult
+  def rebuildFindingPlaces(toleranceKm: Double): Place.RebuildResult
 
   /** A `part_of` edge from every point place to each polygon place that contains it. */
   def buildHierarchy(): SpatialHierarchyResult
@@ -44,7 +44,7 @@ object PlaceGeometry:
   def apply(db: Transactor): PlaceGeometry = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceGeometry:
-    def rebuildFindingPlaces(toleranceKm: Double): PlaceRebuildResult =
+    def rebuildFindingPlaces(toleranceKm: Double): Place.RebuildResult =
       db.transact(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy(): SpatialHierarchyResult = db.transact(PlaceRepo.buildSpatialHierarchy())
     def replaceLand(geometries: List[String]): Int =

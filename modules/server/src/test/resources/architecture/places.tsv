@@ -1,7 +1,5 @@
 # file (module:path under com/histmersion)	place — where the domain-model design moves each file that is not in its feature package yet
 api:api/Api.scala	api
-api:api/ApiError.scala	util.common
-api:api/ApiIndex.scala	api
 api:api/BBox.scala	kernel
 api:api/ConfidenceStyle.scala	api.ui
 api:api/Csv.scala	util.common

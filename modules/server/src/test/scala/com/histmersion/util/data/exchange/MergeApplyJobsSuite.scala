@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{BundleInstance, MergeApplyResult, MergeJobState}
+import com.histmersion.api.exchange.{MergeApplyResult, MergeJobState}
 import com.histmersion.util.jobs.MergeApplyRuns
 
 import java.util.UUID
@@ -12,7 +12,12 @@ import java.util.concurrent.CountDownLatch
 class MergeApplyJobsSuite extends munit.FunSuite:
 
   private val result =
-    MergeApplyResult(UUID.randomUUID(), BundleInstance(UUID.randomUUID(), None), applied = true, "abc")
+    MergeApplyResult(
+      UUID.randomUUID(),
+      com.histmersion.api.exchange.Bundle.Instance(UUID.randomUUID(), None),
+      applied = true,
+      "abc"
+    )
 
   test("done within the wait: the answer is its report"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)

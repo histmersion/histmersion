@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal.notes
 
-import com.histmersion.api.personal.{Note as WireNote, NoteId, NoteText}
+import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
@@ -8,9 +8,9 @@ import com.histmersion.domain.library.Title
 
 /** A note as the person sees it: what it is left on as that shows now, and what that is called. */
 final case class Note(
-    id: NoteId,
+    id: com.histmersion.api.personal.Note.Id,
     target: MarkTarget,
-    text: NoteText,
+    text: com.histmersion.api.personal.Note.Text,
     title: Title,
     createdAt: MarkTime,
     updatedAt: MarkTime

@@ -34,12 +34,12 @@ object NotesCmd:
     }
   }
 
-  private def text(inline: Option[String], file: Option[String]): Either[CliError, NoteText] =
+  private def text(inline: Option[String], file: Option[String]): Either[CliError, Note.Text] =
     (inline, file) match
-      case (Some(t), None) => Right(NoteText(t))
+      case (Some(t), None) => Right(Note.Text(t))
       case (None, Some(f)) =>
         val p = Path.of(f)
-        if Files.isRegularFile(p) then Right(NoteText(Files.readString(p)))
+        if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
         else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
       case _ => Left(CliError("give the note's text with --text or --file (one of them)", exitCode = ExitCode.Usage))
 
@@ -63,7 +63,7 @@ object NotesCmd:
       for
         t <- TargetFlags.target(raw)
         x <- text(inline, file)
-        n <- c.call(PersonalApi.addNote)(NoteNew(t, x, title))
+        n <- c.call(PersonalApi.addNote)(Note.New(t, x, title))
       yield Output.emit(json, n)(n => s"Noted on ${n.title} (id `${n.id.value}`).")
     }
   }
@@ -72,7 +72,7 @@ object NotesCmd:
     (Opts.argument[String]("id"), textOpts._1, textOpts._2, Output.jsonFlag).mapN {
       (id, inline, file, json) => (c: Client) =>
         text(inline, file)
-          .flatMap(x => c.call(PersonalApi.editNote)((id, NoteEdit(x))))
+          .flatMap(x => c.call(PersonalApi.editNote)((id, Note.Edit(x))))
           .map(n => Output.emit(json, n)(n => s"Changed the note on ${n.title}."))
     }
   }

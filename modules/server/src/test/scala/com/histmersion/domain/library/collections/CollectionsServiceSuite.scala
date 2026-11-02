@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.plugin.*
@@ -16,6 +15,7 @@ import com.histmersion.api.library.{
   CollectionsApi,
   CollectionsMarkdown
 }
+import com.histmersion.api.Api
 
 /** The collections' rules on the in-memory service (the database one runs the same rules; the calibre commands' suite
   * runs it end to end): what a listing leaves out, what a push sends and records, what an update and an audit are
@@ -73,7 +73,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     override def pushed(req: CalibrePushRequest) =
       pushedIds += req.citekey -> req.calibreId; Right(CalibrePushResult(req.citekey, req.calibreId, ok = true))
     override def original(citekey: String) =
-      if citekey == "zz_none" then Left(ApiError(s"no original stored for '$citekey'"))
+      if citekey == "zz_none" then Left(Api.Error(s"no original stored for '$citekey'"))
       else Right(StoredOriginal(Array[Byte](1, 2, 3), s"""attachment; filename="$citekey.pdf""""))
     override def gaps(limit: Option[Int]) =
       CalibreGaps(

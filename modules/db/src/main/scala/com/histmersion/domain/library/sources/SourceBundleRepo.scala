@@ -11,15 +11,8 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
-import com.histmersion.api.exchange.{
-  BundleAlias,
-  BundleAssessment,
-  BundleEdge,
-  BundleFinding,
-  BundleSource,
-  BundleUnresolvedEdge
-}
 import com.histmersion.api.library.Edge
+import com.histmersion.api.exchange.Bundle
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -43,13 +36,13 @@ private[sources] object SourceBundleRepo:
                 FROM sources s WHERE """
     ) ++ where(scope, "s.uid", "s.updated_at") ++ " ORDER BY s.uid").frag.query[BSourceRow].run()
 
-  def findings(scope: BundleScope)(using DbCon): Vector[BundleFinding] =
+  def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
     (Sql.raw(s"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
                        ${rangeCols("f.period")}, f.period_name, f.tags, f.confidence, f.significance,
                        ${ts("f.updated_at")}
                 FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE """) ++
       where(scope, "f.uid", "f.updated_at") ++ " ORDER BY f.uid").frag.query[BFindingRow].run().map { r =>
-      BundleFinding(
+      Bundle.Finding(
         r.uid,
         r.origin,
         r.sourceUid,
@@ -68,28 +61,28 @@ private[sources] object SourceBundleRepo:
     }
 
   /** The out-edges of the sources in scope — a source carries its whole set. */
-  def edges(scope: BundleScope)(using DbCon): Vector[BundleEdge] =
+  def edges(scope: BundleScope)(using DbCon): Vector[Bundle.Edge] =
     (Sql.raw("""SELECT a.uid, b.uid, e.kind FROM edges e
                 JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE """) ++
       where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, b.uid, e.kind COLLATE "C"""").frag
       .query[(UUID, UUID, String)]
       .run()
-      .map(BundleEdge.apply)
+      .map(Bundle.Edge.apply)
 
-  def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[BundleUnresolvedEdge] =
+  def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[Bundle.UnresolvedEdge] =
     (Sql.raw("""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
                 JOIN sources a ON a.citekey = u.src WHERE """) ++
       where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C"""").frag
       .query[(UUID, String, String)]
       .run()
-      .map(BundleUnresolvedEdge.apply)
+      .map(Bundle.UnresolvedEdge.apply)
 
-  def assessments(scope: BundleScope)(using DbCon): Vector[BundleAssessment] =
+  def assessments(scope: BundleScope)(using DbCon): Vector[Bundle.Assessment] =
     (Sql.raw(s"""SELECT s.uid, ${ts("a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
                        a.influential, a.verdict
                 FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
       where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid").frag.query[BAssessmentRow].run().map { r =>
-      BundleAssessment(
+      Bundle.Assessment(
         r.sourceUid,
         r.checkedAt,
         r.retracted,
@@ -100,17 +93,17 @@ private[sources] object SourceBundleRepo:
       )
     }
 
-  def aliases(scope: BundleScope)(using DbCon): Vector[BundleAlias] =
+  def aliases(scope: BundleScope)(using DbCon): Vector[Bundle.Alias] =
     (Sql.raw(s"""SELECT a.alias, s.uid, ${ts("a.created_at")}
                 FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
       where(scope, "s.uid", "a.created_at") ++ """ ORDER BY a.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(BundleAlias.apply)
+      .map(Bundle.Alias.apply)
 
   /** A source row as its bundle line; `originals` says whether the stored original goes along. */
-  def sourceLine(r: BSourceRow, originals: ContentStore): BundleSource =
-    BundleSource(
+  def sourceLine(r: BSourceRow, originals: ContentStore): Bundle.Source =
+    Bundle.Source(
       r.uid,
       r.origin,
       r.citekey,

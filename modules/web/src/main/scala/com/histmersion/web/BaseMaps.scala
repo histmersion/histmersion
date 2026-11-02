@@ -7,7 +7,7 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.api.basemap.{Basemap, BasemapLayer, BasemapLayerInfo, BaseMapSource, BasemapStatus, BaseStyles}
+import com.histmersion.api.basemap.{Basemap, BaseMapSource, BaseStyles}
 import com.histmersion.api.instance.UiConfig
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
@@ -25,7 +25,7 @@ import com.histmersion.api.instance.UiConfig
 object BaseMaps:
 
   /** What the server reports (`GET /api/basemap`); `None` until asked. */
-  val status: Var[Option[BasemapStatus]] = Var(None)
+  val status: Var[Option[Basemap.Status]] = Var(None)
 
   /** Whether the page has only the local maps (`ui.base-map-source` resolved to `local`). */
   val localOnly: Var[Boolean] = Var(false)
@@ -42,14 +42,14 @@ object BaseMaps:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
-  def defaultLocal(s: Option[BasemapStatus]): BaseMap =
+  def defaultLocal(s: Option[Basemap.Status]): BaseMap =
     if s.exists(st => st.available && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then BaseMap.Readable
     else BaseMap.Physical
 
   /** The base map drawn for the kept choice `b`: on a `local` page an online choice is the default local style, so a
     * browser's earlier choice never reaches another host. Pure.
     */
-  def effective(b: BaseMap, local: Boolean, s: Option[BasemapStatus]): BaseMap =
+  def effective(b: BaseMap, local: Boolean, s: Option[Basemap.Status]): BaseMap =
     if local && b.online then defaultLocal(s) else b
 
   /** The choices the menu offers: the two styles, and the online maps unless the page is `local`. Pure. */
@@ -58,7 +58,7 @@ object BaseMaps:
   /** A choice's label: a vector style says when the data is missing, or when the download left out layers it draws.
     * Pure.
     */
-  def optionLabel(b: BaseMap, s: Option[BasemapStatus]): String =
+  def optionLabel(b: BaseMap, s: Option[Basemap.Status]): String =
     if b.online then b.label
     else if !s.forall(_.available) then s"${b.label} — not downloaded"
     else if s.exists(st => st.missing(b.wire).nonEmpty) then s"${b.label} — needs the full download"
@@ -81,7 +81,7 @@ object BaseMaps:
   val OfflinePage = "how-to/offline.md#the-one-time-download"
 
   /** The notice when the extracts are not on the server: what to run. */
-  def missingNotice(s: Option[BasemapStatus]): String =
+  def missingNotice(s: Option[Basemap.Status]): String =
     val cmd = s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand)
     s"This map is not downloaded on this server. Run `$cmd` on the machine that runs it (a few hundred MB to a few GB), " +
       "then choose it again."
@@ -147,7 +147,7 @@ object BaseMaps:
     */
   def plan(
       b: BaseMap,
-      s: Option[BasemapStatus],
+      s: Option[Basemap.Status],
       prefs: MapPrefs,
       ui: UiConfig,
       local: Boolean,
@@ -448,11 +448,11 @@ object BaseMaps:
   private def setPrefs(f: MapPrefs => MapPrefs): Unit = UiState.set(UiState.mapOptions := f(UiState.mapOptions.now()))()
 
   /** The relief as the server has it, when it can be drawn. */
-  private def relief(s: Option[BasemapStatus]): Option[BasemapLayerInfo] =
-    s.flatMap(_.layers.find(l => l.layer == BasemapLayer.Terrain.wire && l.present && l.error.isEmpty))
+  private def relief(s: Option[Basemap.Status]): Option[Basemap.LayerInfo] =
+    s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present && l.error.isEmpty))
 
   /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
-  def deeperRelief(i: BasemapLayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
+  def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
 
   /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
   val ContoursFromZoom: Double = 11.0
@@ -461,7 +461,7 @@ object BaseMaps:
     * deeper than the extract — a focus region (`basemap fetch --layer terrain --focus`) or the on-demand relief
     * (`basemap.terrain.on-demand`). Pure.
     */
-  def contoursWhy(b: BaseMap, s: Option[BasemapStatus], soft: Boolean): Option[String] =
+  def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b != BaseMap.Physical then Some("Physical draws contours")
     else if soft then Some("not drawn without a GPU")
     else
@@ -482,7 +482,7 @@ object BaseMaps:
     * outside every focus region with the on-demand relief off (the contours there follow the extract's coarse relief).
     * `None`: they are drawn. Pure.
     */
-  def contoursNote(s: Option[BasemapStatus], z: Double, v: GeoBounds): Option[String] =
+  def contoursNote(s: Option[Basemap.Status], z: Double, v: GeoBounds): Option[String] =
     relief(s).flatMap { i =>
       val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
       if z < ContoursFromZoom then Some(f"zoom in to see contours (from zoom ${ContoursFromZoom.toInt}%d)")
@@ -497,10 +497,10 @@ object BaseMaps:
   /** Why the sea cannot be coloured by its depth, if it cannot: with a GPU, from the sea floor (`basemap fetch --layer
     * bathymetry`). Pure.
     */
-  def seaDepthWhy(b: BaseMap, s: Option[BasemapStatus], soft: Boolean): Option[String] =
+  def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
     else if soft then Some("not drawn without a GPU")
-    else if !s.exists(_.layers.exists(l => l.layer == BasemapLayer.Bathymetry.wire && l.present && l.error.isEmpty))
+    else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present && l.error.isEmpty))
     then Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
     else None
 

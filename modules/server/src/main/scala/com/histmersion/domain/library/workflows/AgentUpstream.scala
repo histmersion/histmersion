@@ -8,17 +8,15 @@ import com.histmersion.api.library.{
   AssessRequest,
   CandidateMark,
   CandidateSweep,
-  CandidateSweepRequest,
   DiscoverResult,
   FollowupsRequest,
   FollowupsResult,
-  IngestReport,
-  IngestRequest,
   RefsRequest,
   RefsResult,
-  SourceCandidate,
   WorkRef
 }
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
@@ -49,12 +47,12 @@ trait AgentUpstream:
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: String): Either[String, IngestReport] = Left("the acquisition toolset is not connected")
+  def ingestLegal(doi: String): Either[String, Ingest.Report] = Left("the acquisition toolset is not connected")
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
     */
-  def ingestLegalInto(doi: String, into: Option[String]): Either[String, IngestReport] = ingestLegal(doi)
+  def ingestLegalInto(doi: String, into: Option[String]): Either[String, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
   def fetcherGeneration: String = ""
@@ -71,7 +69,7 @@ trait AgentUpstream:
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
-  def candidates(goal: String, state: String, limit: Int): Either[String, List[SourceCandidate]] = Left(
+  def candidates(goal: String, state: String, limit: Int): Either[String, List[Source.Candidate]] = Left(
     "the candidate search is not connected"
   )
 
@@ -104,12 +102,12 @@ object AgentUpstream:
       a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
     def discover(query: String, limit: Int) =
       a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
-    override def ingestLegal(doi: String) = a.ingestLegal(IngestRequest(doi)).left.map(_.message)
+    override def ingestLegal(doi: String) = a.ingestLegal(Ingest.Request(doi)).left.map(_.message)
     override def ingestLegalInto(doi: String, into: Option[String]) =
-      a.ingestLegal(IngestRequest(doi, citekey = into)).left.map(_.message)
+      a.ingestLegal(Ingest.Request(doi, citekey = into)).left.map(_.message)
     override def fetcherGeneration = a.fetcherGeneration
     override def sweepCandidates(goal: String, dryRun: Boolean) =
-      a.sweepCandidates(CandidateSweepRequest(goal, dryRun)).left.map(_.message)
+      a.sweepCandidates(CandidateSweep.Request(goal, dryRun)).left.map(_.message)
     override def candidates(goal: String, state: String, limit: Int) =
       a.candidates(Some(goal), Some(state), Some(limit), None).map(_.candidates).left.map(_.message)
     override def markCandidates(ids: List[Long], state: String) =

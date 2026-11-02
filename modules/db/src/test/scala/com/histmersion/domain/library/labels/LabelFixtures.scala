@@ -4,13 +4,13 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
-import com.histmersion.api.library.{Facet, FacetField, Filter}
+import com.histmersion.api.library.{Facet, Filter}
 
 /** The db suites' reads of the labels' vocabulary on a database of their own. */
 object LabelFixtures:
   def facets(
       ds: DataSource,
-      field: FacetField,
+      field: Facet.Field,
       prefix: Option[String],
       filter: Filter,
       limit: Int,

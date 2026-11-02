@@ -3,8 +3,8 @@ import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.research.ArticleFilter
 import com.histmersion.api.given
+import com.histmersion.api.research.Article
 
 object Managers:
 
@@ -123,7 +123,7 @@ object Managers:
       case ProposeArticles | "propose" | "plan" => Some(Seed)
       case other                                => values.find(_.wire == other)
 
-  final case class ArticleSpec(title: String, kind: String, filter: ArticleFilter, why: String = "")
+  final case class ArticleSpec(title: String, kind: String, filter: Article.Filter, why: String = "")
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object ArticleSpec:

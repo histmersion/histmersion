@@ -9,5 +9,5 @@ object BaseStyles:
 
   val all: List[Style] = List(Readable, Physical)
 
-  def states(dropped: Option[List[String]]): List[BasemapStyleState] =
-    all.map(s => BasemapStyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))
+  def states(dropped: Option[List[String]]): List[Basemap.StyleState] =
+    all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))

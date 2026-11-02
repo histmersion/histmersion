@@ -602,8 +602,8 @@
               }
             }
           },
-          "CoverageReason" : {
-            "title" : "CoverageReason",
+          "Reason" : {
+            "title" : "Reason",
             "description" : "Why the article does not cite one source its filter returns",
             "type" : "object",
             "required" : [
@@ -707,7 +707,7 @@
             "description" : "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); an empty reason removes one. Only for sources of the filter the article does not cite",
             "type" : "array",
             "items" : {
-              "$ref" : "#/$defs/CoverageReason"
+              "$ref" : "#/$defs/Reason"
             }
           },
           "wontFix" : {
@@ -1240,8 +1240,8 @@
       ],
       "answer" : {
         "$defs" : {
-          "CoverageReason" : {
-            "title" : "CoverageReason",
+          "Reason" : {
+            "title" : "Reason",
             "description" : "Why the article does not cite one source its filter returns",
             "type" : "object",
             "required" : [
@@ -1291,7 +1291,7 @@
             "description" : "For each source of the claim table you do NOT cite: one plain sentence saying why it is left out (code lists it under the generated Not used section)",
             "type" : "array",
             "items" : {
-              "$ref" : "#/$defs/CoverageReason"
+              "$ref" : "#/$defs/Reason"
             }
           }
         }

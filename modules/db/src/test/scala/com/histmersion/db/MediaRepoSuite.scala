@@ -23,8 +23,9 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place, PlaceInput, PlaceName}
-import com.histmersion.api.media.{AssetKind, AssetLinkPut, MediaProvider, MediaTarget, MediaThumb}
+import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place}
+import com.histmersion.api.media.{AssetKind, MediaProvider, MediaTarget, MediaThumb}
+import com.histmersion.api.media.AssetLink
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no
@@ -64,7 +65,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               "zqmd_site",
               "Zqmd site",
@@ -72,15 +73,15 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
               pt(130.0),
               Some(Period(-1600, -1100))
             ),
-            List(PlaceName("Zqmd site"))
+            List(Place.Name("Zqmd site"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("zqmd_busy", "Zqmd busy", com.histmersion.domain.catalogue.Place.Kind.Site, pt(131.0)),
-            List(PlaceName("Zqmd busy"))
+            List(Place.Name("Zqmd busy"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("zqmd_nolink", "Zqmd no link", com.histmersion.domain.catalogue.Place.Kind.Site, pt(132.0)),
-            List(PlaceName("Zqmd no link"))
+            List(Place.Name("Zqmd no link"))
           )
         )
       )
@@ -169,7 +170,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(neither.getMessage.contains("assets_one_owner"), neither.getMessage)
 
   test("V082: a source's figures keep their (citekey, name) key, their links and the re-conversion path"):
-    val link = AssetLinkFixtures.create(ds, AssetLinkPut("zqmd2020_figs", "fig1.png", "depicts", "place", "zqmd_site"))
+    val link = AssetLinkFixtures.create(ds, AssetLink.Put("zqmd2020_figs", "fig1.png", "depicts", "place", "zqmd_site"))
     assert(link.isRight, link.toString)
     val n = AssetFixtures.replace(
       ds,
@@ -431,24 +432,24 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place("zqmd_eq_a", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.0)),
-          List(PlaceName("Zqmd Gobekli Tepe"))
+          List(Place.Name("Zqmd Gobekli Tepe"))
         ),
         // another gazetteer's point of the same site: the same name (the key folds ö and case), 850 m away
-        PlaceInput(
+        Place.Input(
           Place("zqmd_eq_b", "Zqmd Göbekli tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.01)),
-          List(PlaceName("Zqmd Göbekli tepe"))
+          List(Place.Name("Zqmd Göbekli tepe"))
         ),
         // the same name 700 km away is another place
-        PlaceInput(
+        Place.Input(
           Place("zqmd_eq_far", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
-          List(PlaceName("Zqmd Gobekli Tepe"))
+          List(Place.Name("Zqmd Gobekli Tepe"))
         ),
         // another name, the same Wikidata item (a polity's other time slice, a Wikidata import)
-        PlaceInput(
+        Place.Input(
           Place("zqmd_eq_wd", "Zqmd Other", com.histmersion.domain.catalogue.Place.Kind.Site, pt(135.0)),
-          List(PlaceName("Zqmd Other"))
+          List(Place.Name("Zqmd Other"))
         )
       )
     )

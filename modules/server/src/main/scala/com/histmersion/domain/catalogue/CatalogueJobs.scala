@@ -1,11 +1,11 @@
 package com.histmersion.domain.catalogue
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, JobStops, WorkCarrier}
 
 import javax.sql.DataSource
+import com.histmersion.api.Api
 
 /** The catalogue's background runs — an event catalogue's import, a re-derivation, the event links' candidates, the
   * refinement of site types — one at a time (a run's pace is per run; two would ask twice as fast). A run that writes
@@ -23,8 +23,8 @@ final class CatalogueJobs(
   /** Start `body` as a job of `kind`; `body` answers the summary, or why the run failed. */
   def start(kind: String, describe: String, write: Boolean)(
       body: (JobInfo, String => Unit) => Either[String, String]
-  ): Either[ApiError, JobInfo] =
-    def go: Either[ApiError, JobInfo] =
+  ): Either[Api.Error, JobInfo] =
+    def go: Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         ds,
         kind,

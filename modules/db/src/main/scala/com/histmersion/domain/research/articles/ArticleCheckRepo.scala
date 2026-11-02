@@ -1,7 +1,5 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.research.ArticleLint
-
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.database.Sql
 
@@ -10,7 +8,9 @@ import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.checks.{FormatField, Lint}
-import com.histmersion.api.research.{CoverageEdge, CritiquePairing}
+import com.histmersion.api.research.CritiquePairing
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
@@ -74,12 +74,12 @@ private[articles] object ArticleCheckRepo:
   /** One rule's report, on the run's connection; `format` is the formatting check. */
   def report(r: Rule, format: FormatChecker, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name match
-      case ArticleFiller           => ArticleLint.articleFiller(run(ArticleRows))
-      case ArticleUncitedParagraph => ArticleLint.articleUncitedParagraphs(run(ArticleRows))
+      case ArticleFiller           => Article.Lint.articleFiller(run(ArticleRows))
+      case ArticleUncitedParagraph => Article.Lint.articleUncitedParagraphs(run(ArticleRows))
       case ArticleCritiquePairing  =>
         val p = pairingCorpusIn()
-        ArticleLint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
-      case ArticleThinSummary => ArticleLint.articleThinSummary(pairs(articleSummariesSql))
+        Article.Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
+      case ArticleThinSummary => Article.Lint.articleThinSummary(pairs(articleSummariesSql))
       case ArticleFormat      =>
         Lint.formatItems(
           triples(articleTextsSql).flatMap((slug, body, summary) =>
@@ -97,7 +97,7 @@ private[articles] object ArticleCheckRepo:
     */
   final case class PairingCorpus(
       resolve: String => Option[String],
-      edges: List[CoverageEdge],
+      edges: List[Coverage.Edge],
       work: String => Option[CritiquePairing.Work]
   )
 
@@ -117,7 +117,7 @@ private[articles] object ArticleCheckRepo:
       .frag
       .query[(String, String, String)]
       .run()
-      .map((src, kind, dst) => CoverageEdge(src, kind, dst))
+      .map((src, kind, dst) => Coverage.Edge(src, kind, dst))
       .toList
     PairingCorpus(CritiquePairing.resolver(names.keySet, aliases), edges, names.get)
 

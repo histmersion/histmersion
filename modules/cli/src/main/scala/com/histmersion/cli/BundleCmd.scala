@@ -6,7 +6,7 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
-import com.histmersion.api.exchange.{Bundle, BundleImportResult, BundleManifest, BundleMarkdown, MergeImportRequest}
+import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import
@@ -20,7 +20,7 @@ object BundleCmd:
     else Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
-  private[cli] def manifestOf(p: Path): Either[String, BundleManifest] =
+  private[cli] def manifestOf(p: Path): Either[String, Bundle.Manifest] =
     val in = Files.newInputStream(p)
     try
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))
@@ -78,7 +78,7 @@ object BundleCmd:
       MergeCmd.resolutionOpts,
       Output.jsonFlag
     ).mapN { (file, dryRun, res, json) => (c: Client) =>
-      val run: Either[CliError, BundleImportResult] =
+      val run: Either[CliError, Bundle.ImportResult] =
         if res.isEmpty then existing(file).flatMap(c.importBundle(dryRun, _))
         else
           for

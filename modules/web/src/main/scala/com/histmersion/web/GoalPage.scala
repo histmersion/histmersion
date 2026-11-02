@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.{Plural, UiLabels, Wording}
-import com.histmersion.api.automation.GoalPlans.{GoalView, LinkKind, ScheduleKind}
+import com.histmersion.api.automation.Goal.Plans.{GoalView, LinkKind, ScheduleKind}
 import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.raquo.laminar.api.L.*
 

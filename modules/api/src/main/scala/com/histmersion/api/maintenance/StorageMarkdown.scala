@@ -5,7 +5,7 @@ import com.histmersion.api.instance.AboutMarkdown
 import com.histmersion.api.given
 object StorageMarkdown:
 
-  def render(r: StorageReport): List[String] =
+  def render(r: Storage.Report): List[String] =
     if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
@@ -23,7 +23,7 @@ object StorageMarkdown:
       List("", head, "") ++ (if r.entries.isEmpty && r.measuring then List("- measuring…") else entries) ++
         vols ++ (if hints.isEmpty then Nil else "" :: hints) ++ problems
 
-  private def entry(r: StorageReport, e: StorageEntry, depth: Int): String =
+  private def entry(r: Storage.Report, e: Storage.Entry, depth: Int): String =
     val indent = "  " * depth
     val host = if e.host == "server" then "" else " [on this machine]"
     s"$indent- ${e.label}$host: ${(Storage.size(e) :: Storage.details(r, e) ++ e.path.toList).mkString(" · ")}"

@@ -1,8 +1,9 @@
 package com.histmersion.api
 
 import java.util.UUID
-import com.histmersion.api.exchange.{BundleInstance, MergeApplyJob, MergeApplyResult, MergeJobState, MergeMarkdown}
+import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState, MergeMarkdown}
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
+import com.histmersion.api.exchange.Bundle
 
 /** #888: a merge apply is a `jobs` row, so `GET /api/merge/apply/{job}` answers across a restart. How a stored row
   * reads back ([[MergeApplyJob.of]]) — above all, an apply a restart cut short is `interrupted`, never `running`
@@ -12,7 +13,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
-    BundleInstance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some("work")),
+    Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some("work")),
     applied = true,
     "abc123"
   )

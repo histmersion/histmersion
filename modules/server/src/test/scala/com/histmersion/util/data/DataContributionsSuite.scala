@@ -57,7 +57,7 @@ class DataContributionsSuite extends DbSuite:
 
   test("today's registry carries every entry of the bundle format once, and a merge rule for every kind of record"):
     val carried = exchange.CarriedKinds(Deps.data.carried)
-    assertEquals(carried.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.BundleFiles.all)
+    assertEquals(carried.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.Bundle.Files.all)
     assertEquals(
       Deps.data.mergeRules.map(_.kind).sortBy(_.ordinal),
       com.histmersion.util.data.exchange.Bundle.Kind.values.toList

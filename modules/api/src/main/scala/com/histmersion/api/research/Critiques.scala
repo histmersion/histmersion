@@ -4,7 +4,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object Critiques:
 
-  val Kinds: List[String] = ArticleCoverage.DisagreementKinds
+  val Kinds: List[String] = Article.Coverage.DisagreementKinds
 
   def olderFirst(kinds: List[String]): Boolean = kinds.nonEmpty && kinds.forall(_ == "superseded_by")
 
@@ -58,11 +58,11 @@ object Critiques:
   def build(
       body: String,
       resolve: String => Option[String],
-      edges: List[CoverageEdge],
+      edges: List[Coverage.Edge],
       reasons: List[CritiqueReason],
       refs: String => Option[(String, Option[Int])] = _ => None
   ): List[CritiquePair] =
-    val units = paragraphs(body).map(p => ArticleLinks.targets(p).flatMap(resolve).toSet)
+    val units = paragraphs(body).map(p => Article.Links.targets(p).flatMap(resolve).toSet)
     val cited = units.flatten.toSet
     val mentions = units.flatMap(_.toList).groupBy(identity).view.mapValues(_.size).toMap
     def side(ck: String) =
@@ -97,7 +97,7 @@ object Critiques:
 
   def together(body: String, r: CritiqueRef, resolve: String => Option[String]): Boolean =
     units(body).exists { u =>
-      val cks = ArticleLinks.targets(u.text).flatMap(resolve).toSet
+      val cks = Article.Links.targets(u.text).flatMap(resolve).toSet
       cks(r.src) && cks(r.dst)
     }
 

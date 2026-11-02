@@ -2,19 +2,20 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.db.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.catalogue.{PlaceAdd, PlaceNameAdd, PlaceNameRemove}
-import com.histmersion.api.library.{IngestParams, NoteImport, SeedRequest, SourceDeleteRequest, SourcePatch, SourcePut}
+import com.histmersion.api.library.{NoteImport, SeedRequest}
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
-import com.histmersion.api.research.{ArticleImport, ArticlePatch, ArticlePut}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.Api
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *
@@ -45,12 +46,12 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */
-  private def underLock[A](f: => Either[ApiError, A]): Either[ApiError, A] =
-    var out: Either[ApiError, A] = Left(ApiError("never ran"))
+  private def underLock[A](f: => Either[Api.Error, A]): Either[Api.Error, A] =
+    var out: Either[Api.Error, A] = Left(Api.Error("never ran"))
     val _ = h.maintenance.exclusively("test-restore") { out = f; Right(()) }
     out
 
-  private def refused(name: String)(f: => Either[ApiError, ?]): Unit =
+  private def refused(name: String)(f: => Either[Api.Error, ?]): Unit =
     val r = underLock(f)
     val e = r.swap.toOption.getOrElse(fail(s"$name was NOT refused while a restore held the lock"))
     assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message}")
@@ -59,28 +60,36 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     AssetInput("f.png", "image/png", java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
 
   test("every source write is refused while a restore holds the lock"):
-    refused("put_source")(h.library.sources.put("zzlock_src", SourcePut(title = "T")))
-    refused("patch_source")(h.library.sources.patch("zzlock_src", SourcePatch(summary = Some("x"))))
+    refused("put_source")(h.library.sources.put("zzlock_src", Source.Put(title = "T")))
+    refused("patch_source")(h.library.sources.patch("zzlock_src", Source.Patch(summary = Some("x"))))
     refused("import")(h.library.sources.importNote(NoteImport(text = "---\ncitekey: zzlock_src\n---\n")))
     refused("seed")(h.seeding.seed(SeedRequest(dir = "/tmp")))
     refused("reindex")(h.upkeep.reindex(None, None))
     refused("edges/resolve")(h.library.citations.resolveEdges)
-    refused("delete_source")(h.library.sources.delete("zzlock_src", SourceDeleteRequest(apply = true)))
+    refused("delete_source")(h.library.sources.delete("zzlock_src", Source.DeleteRequest(apply = true)))
 
   test("every ARTICLE write is refused too — these had no guard at all"):
-    refused("put_article")(h.research.articles.put("zzlock-art", ArticlePut(title = "T", kind = "concept", body = "b")))
-    refused("patch_article")(h.research.articles.patch("zzlock-art", ArticlePatch(body = Some("x"))))
+    refused("put_article")(
+      h.research.articles.put("zzlock-art", Article.Put(title = "T", kind = "concept", body = "b"))
+    )
+    refused("patch_article")(h.research.articles.patch("zzlock-art", Article.Patch(body = Some("x"))))
     refused("delete_article")(h.research.articles.delete("zzlock-art"))
-    refused("import_article")(h.research.articles.importNote(ArticleImport(text = "---\nslug: zzlock-art\n---\n")))
+    refused("import_article")(h.research.articles.importNote(Article.Import(text = "---\nslug: zzlock-art\n---\n")))
 
   test("the gazetteer writes are refused"):
     refused("places/import")(
       h.places.importPlaces(Caller.Local, None, None, """{"type":"FeatureCollection","features":[]}""")
     )
     refused("places/rebuild")(h.places.rebuild(Caller.Local))
-    refused("places/names/add")(h.places.addName(Caller.Local, "zzlock_place", PlaceNameAdd("X")))
-    refused("places/names/remove")(h.places.removeName(Caller.Local, "zzlock_place", PlaceNameRemove("X")))
-    refused("places/add")(h.places.add(Caller.Local, PlaceAdd("Zzlock", Place.Kind.Site, 0, 0, "fixture")))
+    refused("places/names/add")(
+      h.places.addName(Caller.Local, "zzlock_place", com.histmersion.api.catalogue.Place.NameAdd("X"))
+    )
+    refused("places/names/remove")(
+      h.places.removeName(Caller.Local, "zzlock_place", com.histmersion.api.catalogue.Place.NameRemove("X"))
+    )
+    refused("places/add")(
+      h.places.add(Caller.Local, com.histmersion.api.catalogue.Place.Add("Zzlock", Place.Kind.Site, 0, 0, "fixture"))
+    )
 
   test("the ingest surface is refused"):
     val f = java.io.File.createTempFile("zzlock", ".pdf")
@@ -88,7 +97,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     try
       refused("ingest")(
         h.ingest.controllers
-          .ingest(IngestParams("zzlock_src", Some("a.pdf")), com.histmersion.domain.library.ingest.Upload.handed(f))
+          .ingest(Ingest.Params("zzlock_src", Some("a.pdf")), com.histmersion.domain.library.ingest.Upload.handed(f))
       )
       refused("reocr")(h.ingest.controllers.reocr("zzlock_src", false))
       refused("put_assets")(h.media.assets.putFigures("zzlock_src", List(png)))
@@ -117,5 +126,5 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     assert(!h.ingest.queue.paused, "…and it must come back, whatever the restore did")
 
   test("once the lock is released, the same writes go through"):
-    assert(h.library.sources.put("zzlock_src", SourcePut(title = "T")).isRight)
+    assert(h.library.sources.put("zzlock_src", Source.Put(title = "T")).isRight)
     assert(h.places.rebuild(Caller.Local).isRight)

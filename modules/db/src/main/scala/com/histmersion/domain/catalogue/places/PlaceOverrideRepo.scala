@@ -4,12 +4,13 @@ import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.catalogue.{PlaceGone, PlaceOverride, PlaceOverrideChanged, PlaceOverrideEdit, PlaceOverrides}
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Place
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -30,7 +31,7 @@ private[places] object PlaceOverrideRepo:
       lon: Option[Double],
       hasShape: Boolean
   ) derives DbCodec
-  private given DbCodec[PlaceOverride] = DbCodec.derived
+  private given DbCodec[Place.Override] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`
     * when its geometry is a line or an area).
@@ -51,13 +52,13 @@ private[places] object PlaceOverrideRepo:
     */
   def set(
       id: String,
-      edit: PlaceOverrideEdit,
+      edit: Place.OverrideEdit,
       toleranceKm: Double
-  )(using DbCon): Either[ApiError, PlaceOverrideChanged] =
-    rowOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { before =>
+  )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
+    rowOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { before =>
       val had = linked(id)
-      val done: Either[ApiError, Unit] = edit match
-        case PlaceOverrideEdit.Reset =>
+      val done: Either[Api.Error, Unit] = edit match
+        case Place.OverrideEdit.Reset =>
           // the override goes first: while it exists the trigger would put it back
           // (a point override's source geometry is put back as it was; `point IS NULL` = the geometry stays)
           val gone = sql"""DELETE FROM place_overrides WHERE place_id = $id
@@ -69,7 +70,7 @@ private[places] object PlaceOverrideRepo:
           gone match
             case None =>
               Left(
-                ApiError(
+                Api.Error(
                   s"'${before.label}' [$id] has no kind, period or point set by hand",
                   Some(Write.CodeNotFound)
                 )
@@ -79,15 +80,15 @@ private[places] object PlaceOverrideRepo:
                               geom = CASE WHEN $hadPoint THEN ST_GeomFromText($srcGeom::text, 4326) ELSE geom END
                             WHERE id = $id""".update.run()
               Right(())
-        case PlaceOverrideEdit.Put(_, _, _, Some(_)) if before.hasShape =>
+        case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape =>
           Left(
-            ApiError(
+            Api.Error(
               s"'${before.label}' [$id] has a shape, not a point — a point set by hand moves only a place " +
                 "known by a point",
               Some(Write.CodeInvalid)
             )
           )
-        case PlaceOverrideEdit.Put(kind, period, reason, point) =>
+        case Place.OverrideEdit.Put(kind, period, reason, point) =>
           // a side not given keeps what the override had (open, the first time)
           val hasPeriod = period.isDefined
           val range = period.map((lo, hi) => RangeSql.bounds(lo, hi))
@@ -133,14 +134,14 @@ private[places] object PlaceOverrideRepo:
           .query[Int]
           .run()
           .head
-        PlaceOverrideChanged(
+        Place.OverrideChanged(
           id,
           before.label,
-          edit == PlaceOverrideEdit.Reset,
+          edit == Place.OverrideEdit.Reset,
           before.kind,
           after.kind,
-          PlaceOverrides.periodText(before.start, before.end),
-          PlaceOverrides.periodText(after.start, after.end),
+          Place.Overrides.periodText(before.start, before.end),
+          Place.Overrides.periodText(after.start, after.end),
           had.size,
           now.size,
           lost,
@@ -163,23 +164,23 @@ private[places] object PlaceOverrideRepo:
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
     * `into`'s findings again.
     */
-  def merge(from: String, into: String, toleranceKm: Double)(using DbCon): Either[ApiError, PlaceGone] =
+  def merge(from: String, into: String, toleranceKm: Double)(using DbCon): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
-      case (None, _)            => Left(ApiError(s"No place '$from'", Some(Write.CodeNotFound)))
-      case (_, None)            => Left(ApiError(s"No place '$into'", Some(Write.CodeNotFound)))
-      case _ if from == into    => Left(ApiError("a place cannot be merged into itself", Some(Write.CodeInvalid)))
+      case (None, _)            => Left(Api.Error(s"No place '$from'", Some(Write.CodeNotFound)))
+      case (_, None)            => Left(Api.Error(s"No place '$into'", Some(Write.CodeNotFound)))
+      case _ if from == into    => Left(Api.Error("a place cannot be merged into itself", Some(Write.CodeInvalid)))
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
         val _ = PlaceReviewRepo.mergeIn(from, into)
         val _ = FindingPlaceRepo.materialisePlaces(List(into), toleranceKm)
-        Right(PlaceGone(from, fl, Some(into), Some(il), had.size, linked(into).size, stillLocated(had)))
+        Right(Place.Gone(from, fl, Some(into), Some(il), had.size, linked(into).size, stillLocated(had)))
 
   /** Remove place `id` when nothing refers to it — no event, attestation, asset link, child place, name added by hand,
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
-  def remove(id: String, reason: Option[String])(using DbCon): Either[ApiError, PlaceGone] =
-    labelOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
+  def remove(id: String, reason: Option[String])(using DbCon): Either[Api.Error, Place.Gone] =
+    labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
       def n(q: Frag) = q.query[Int].run().head
       val refs = List(
         "event(s)" -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
@@ -198,7 +199,7 @@ private[places] object PlaceOverrideRepo:
       ).filter(_._2 > 0)
       if refs.nonEmpty then
         Left(
-          ApiError(
+          Api.Error(
             s"'$label' [$id] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
               "merge it into the place it is the same as instead, or move those first",
             Some(Write.CodeInvalid)
@@ -210,11 +211,11 @@ private[places] object PlaceOverrideRepo:
                       ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
                         removed_at = now()""".update.run()
         val _ = sql"DELETE FROM places WHERE id = $id".update.run()
-        Right(PlaceGone(id, label, None, None, had.size, 0, stillLocated(had)))
+        Right(Place.Gone(id, label, None, None, had.size, 0, stillLocated(had)))
     }
 
   /** The overrides, by place id; `id` narrows to one place. */
-  def list(id: Option[String])(using DbCon): List[PlaceOverride] =
+  def list(id: Option[String])(using DbCon): List[Place.Override] =
     sql"""SELECT o.place_id, p.label, o.kind,
                  ${SqlLiteral(RangeSql.cols("o.period"))},
                  o.period IS NOT NULL, o.reason, o.source_kind,
@@ -228,4 +229,4 @@ private[places] object PlaceOverrideRepo:
                  CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_X(o.source_geom) END
           FROM place_overrides o JOIN places p ON p.id = o.place_id
           WHERE $id::text IS NULL OR o.place_id = $id::text
-          ORDER BY o.place_id""".query[PlaceOverride].run().toList
+          ORDER BY o.place_id""".query[Place.Override].run().toList

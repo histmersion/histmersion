@@ -5,10 +5,11 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.EnrichSource.*
-import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.library.{FindingInput, WorkRef}
+import com.histmersion.api.library.WorkRef
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 class EnrichSourceSuite extends munit.FunSuite:
 
@@ -190,11 +191,11 @@ class EnrichSourceSuite extends munit.FunSuite:
   )
 
   test("patch: fills only what is empty, merges lists, carries the read's updatedAt"):
-    val (p, fields, proposal) = patch(loaded, classified, List(FindingInput("c")), Some("Notes [[zz2020_x]]."))
+    val (p, fields, proposal) = patch(loaded, classified, List(Finding.Input("c")), Some("Notes [[zz2020_x]]."))
     assertEquals(p.summary, Some("Summary."))
     assertEquals(p.notes, None) // the source already has notes
     assertEquals(p.topics, Some(List("trade", "metallurgy")))
-    assertEquals(p.period, Some(PeriodInput(-1600, -1200)))
+    assertEquals(p.period, Some(Period.Input(-1600, -1200)))
     assertEquals(p.metadata.flatMap(_.status), Some(Source.Status.Current))
     assertEquals(p.ifUpdatedAt, loaded.updatedAt)
     assertEquals(proposal, None)

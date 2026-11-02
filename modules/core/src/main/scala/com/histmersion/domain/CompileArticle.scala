@@ -1,16 +1,18 @@
 package com.histmersion.domain
 
-import com.histmersion.api.research.{ArticleCoverage, ArticleFilter, Articles, CoverageReason}
+import com.histmersion.api.research.Articles
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.automation.GoalPlans.ArticleDraft
+import com.histmersion.api.automation.Goal.Plans.ArticleDraft
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.research.DraftMode
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -153,7 +155,7 @@ object CompileArticle:
     Source.Status.Unassessed
   )
 
-  val DisagreementKinds: Set[String] = ArticleCoverage.DisagreementKinds.toSet
+  val DisagreementKinds: Set[String] = Article.Coverage.DisagreementKinds.toSet
 
   def evidence(
       filter: String,
@@ -213,7 +215,7 @@ object CompileArticle:
       summary: String,
       body: String,
       section: Option[String] = None,
-      reasons: List[CoverageReason] = Nil
+      reasons: List[Coverage.Reason] = Nil
   ) derives KindlingsCodecAsObject
   object DraftAnswer:
     given Schema[DraftAnswer] = KindlingsSchema
@@ -259,7 +261,7 @@ object CompileArticle:
     AgentVerify.wikilinks(withoutNotUsed(text)).filter(isCitekey)
 
   /** `text` without its "Not used" section (heading to the next heading of the same or higher level). */
-  def withoutNotUsed(text: String): String = ArticleCoverage.withoutNotUsed(text)
+  def withoutNotUsed(text: String): String = Article.Coverage.withoutNotUsed(text)
 
   /** What the article would read after the draft is applied: the whole body (create), or the current body with the text
     * appended (under `section`, else at the end).
@@ -348,11 +350,11 @@ object CompileArticle:
       else if citesAll(r.citekey) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
       else if r.reason.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
-      else CoverageReason.merge(Map.empty, List(r)).left.toOption
+      else Coverage.Reason.merge(Map.empty, List(r)).left.toOption
     }
     val writerReasons = stated
       .filter(r => inFilter(r.citekey) && !citesAll(r.citekey) && r.reason.nonEmpty)
-      .map(r => r.citekey -> r.reason.replaceAll("\\s+", " ").take(CoverageReason.MaxChars))
+      .map(r => r.citekey -> r.reason.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
@@ -363,7 +365,7 @@ object CompileArticle:
         "a Not used section: code generates it from the filter — give each left-out source's reason in `reasons`"
       )
       .toList ++
-      Option.when(ArticleCoverage.hasMethodLine(text))("a _Method_ note: code generates it from the filter").toList
+      Option.when(Article.Coverage.hasMethodLine(text))("a _Method_ note: code generates it from the filter").toList
     val soft =
       mech
         .filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]"))
@@ -399,7 +401,7 @@ object CompileArticle:
             notUsed,
             soft,
             filter,
-            CoverageReason.list(reasons)
+            Coverage.Reason.list(reasons)
           ),
           soft.map(p => s"self-check: $p")
         )
@@ -413,16 +415,16 @@ object CompileArticle:
       query: Option[String],
       topics: List[String],
       tags: List[String],
-      stored: Option[ArticleFilter],
+      stored: Option[Article.Filter],
       existingTitle: Option[String]
-  ): Option[ArticleFilter] =
-    val stated = ArticleFilter(query = query, topics = topics, tags = tags)
-    ArticleFilter
+  ): Option[Article.Filter] =
+    val stated = Article.Filter(query = query, topics = topics, tags = tags)
+    Article.Filter
       .normalise(stated)
       .toOption
       .flatten
       .orElse(stored)
-      .orElse(existingTitle.flatMap(t => ArticleFilter.normalise(ArticleFilter(query = Some(t))).toOption.flatten))
+      .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(t))).toOption.flatten))
 
   /** The log line of a compile run. */
   def logLine(d: ArticleDraft, written: Boolean, why: String, review: Option[String], runId: String): String =

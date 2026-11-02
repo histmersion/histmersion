@@ -1,8 +1,8 @@
 package com.histmersion.cli
 
 import com.histmersion.config.*
-import com.histmersion.api.backup.BackupStatus
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.backup.Backup
 
 /** [[JobFollow]] (#1798 item 14): a followed job or backup that ends badly exits 2 (the server said no), never 0 or 1;
   * one that succeeds is `Right`. No server, no clock: the fetch and sleep are fakes.
@@ -49,7 +49,7 @@ class JobFollowSuite extends munit.FunSuite:
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Unreachable))
 
   private def backup(state: String, error: Option[String] = None, sha: Option[String] = None) =
-    BackupStatus("histmersion-1.dump", state, 1000, bytes = sha.map(_ => 10L), sha256 = sha, error = error)
+    Backup.Status("histmersion-1.dump", state, 1000, bytes = sha.map(_ => 10L), sha256 = sha, error = error)
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
     val next = server(backup("failed", Some("pg_dump: permission denied")))

@@ -1,6 +1,5 @@
 package com.histmersion.domain.personal.notes
 
-import com.histmersion.api.personal.{NoteId, NoteText}
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemUid}
@@ -11,7 +10,7 @@ import com.augustnagro.magnum.DbCodec
 
 /** A live note as the table answers it. */
 final private[notes] case class NoteRow(
-    id: NoteId,
+    id: com.histmersion.api.personal.Note.Id,
     kind: String,
     key: Option[ItemKey],
     uid: Option[ItemUid],
@@ -19,7 +18,7 @@ final private[notes] case class NoteRow(
     lon: Option[Longitude],
     from: Option[Year],
     to: Option[Year],
-    body: NoteText,
+    body: com.histmersion.api.personal.Note.Text,
     targetLabel: Option[TargetLabel],
     createdAt: String,
     updatedAt: String

@@ -1,15 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  CorrectionCounts,
-  CorrectionStatus,
-  CorrectionTarget,
-  EventPatch,
-  EventPut
-}
+import com.histmersion.api.catalogue.{CatalogRecord, EventPatch, EventPut}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
+import com.histmersion.api.catalogue.Correction
 
 /** The contract an event catalogue's import keeps: a new event made from the record it is named after, refreshed when
   * its record is written again, an event made by hand only filled; the records kept by key with their kinds; the parts
@@ -75,19 +69,19 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       val _ = im.save(List(placeNew(record("7", "Zz Vesuvius"))))
       assertEquals(s.events.patch("gvp_7", EventPatch(label = Some("Zz Vesuvius (by hand)"))), Right(()))
       def listed(status: Option[String]) =
-        s.corrections.list(CorrectionTarget.Event, Some("gvp_7"), status, 50, 0).corrections
+        s.corrections.list(Correction.Target.Event, Some("gvp_7"), status, 50, 0).corrections
       assertEquals(
         listed(None).map(c => (c.field, c.status, c.label)),
-        List(("label", CorrectionStatus.Active, Some("Zz Vesuvius (by hand)")))
+        List(("label", Correction.Status.Active, Some("Zz Vesuvius (by hand)")))
       )
       val kept = im.save(List(placeNew(record("7", "Zz Vesuvius"))))
-      assertEquals(kept.corrections, CorrectionCounts(kept = 1))
+      assertEquals(kept.corrections, Correction.Counts(kept = 1))
       assertEquals(s.events.get("gvp_7").map(_.event.label), Some("Zz Vesuvius (by hand)"), "the person's value")
       val conflict = im.save(List(placeNew(record("7", "Zz Somma"))))
-      assertEquals(conflict.corrections, CorrectionCounts(conflicts = 1))
+      assertEquals(conflict.corrections, Correction.Counts(conflicts = 1))
       assertEquals(listed(Some("conflict")).map(_.field), List("label"))
       val agreed = im.save(List(placeNew(record("7", "Zz Vesuvius (by hand)"))))
-      assertEquals(agreed.corrections, CorrectionCounts(retired = 1))
+      assertEquals(agreed.corrections, Correction.Counts(retired = 1))
       assertEquals(listed(None), Nil, "a retired correction is not listed by default")
       assertEquals(listed(Some("agreed")).map(_.field), List("label"))
   }

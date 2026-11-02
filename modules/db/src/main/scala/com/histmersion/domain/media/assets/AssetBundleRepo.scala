@@ -1,6 +1,5 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.exchange.BundleAsset
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
@@ -9,6 +8,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.Bundle
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
@@ -25,8 +25,8 @@ private[assets] object AssetBundleRepo:
                 FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE """) ++
       where(scope, "x.uid", "x.updated_at") ++ " ORDER BY x.uid").frag.query[AssetBundleRow].run()
 
-  def line(r: AssetBundleRow): BundleAsset =
-    BundleAsset(
+  def line(r: AssetBundleRow): Bundle.Asset =
+    Bundle.Asset(
       r.uid,
       r.origin,
       r.sourceUid,
@@ -53,7 +53,7 @@ private[assets] object AssetBundleRepo:
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The bundle's assets by uid, computed once per import. */
-  val byUid: BundleImport.Once[Map[UUID, BundleAsset]] = BundleImport.Once(w => w.es.assets.map(a => a.uid -> a).toMap)
+  val byUid: BundleImport.Once[Map[UUID, Bundle.Asset]] = BundleImport.Once(w => w.es.assets.map(a => a.uid -> a).toMap)
 
   /** Asset metadata whose bytes are already here (same sha): no blob needed. */
   def metadataIn(w: BundleImport.Writer): Unit =
@@ -61,7 +61,7 @@ private[assets] object AssetBundleRepo:
     w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
-  def write(w: BundleImport.Writer, a: BundleAsset, bytes: Option[Array[Byte]]): Unit =
+  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[Array[Byte]]): Unit =
     given DbCon = w.transaction
     w.touchSource(a.sourceUid)
     val ck = w.citekeyOf(a.sourceUid)

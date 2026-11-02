@@ -13,6 +13,6 @@ final case class ResolvedSource(
     status: com.histmersion.domain.library.Source.Status
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
-  def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, status)
+  def ref: Source.Ref = Source.Ref(citekey, doi, authors, year, title, status)
 object ResolvedSource:
   given Schema[ResolvedSource] = summon[KindlingsSchema[ResolvedSource]].schema

@@ -1,6 +1,5 @@
 package com.histmersion.web.map.maplibre
 
-import com.histmersion.api.basemap.{BasemapLayerInfo, BasemapStatus}
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.ThemeTokens
 import org.scalajs.dom
@@ -10,6 +9,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.api.basemap.Basemap
 
 /** The library's styles for the app's base maps ([[BaseMapSpec]]): the two vector styles are MapLibre style documents
   * in the web resources (`web/styles/<style>.json`, every value with the rule it follows, docs/research-map-styles.md),
@@ -127,13 +127,13 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
-  private def info(s: BasemapStatus, layer: String): Option[BasemapLayerInfo] =
+  private def info(s: Basemap.Status, layer: String): Option[Basemap.LayerInfo] =
     s.layers.find(i => i.layer == layer && i.present && i.error.isEmpty)
 
   /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the contours
     * are traced from (the extract's relief alone is too coarse for them).
     */
-  private def deeperRelief(s: BasemapStatus): Option[BasemapLayerInfo] =
+  private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
     info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
@@ -152,7 +152,7 @@ object MapLibreStyles:
     */
   def resolve(
       s: js.Dynamic,
-      status: BasemapStatus,
+      status: Basemap.Status,
       lang: String,
       names: Boolean,
       reduced: Boolean,
@@ -241,7 +241,7 @@ object MapLibreStyles:
   // one contour source per relief version and depth (the library registers a page protocol for it)
   private val demSources = mutable.HashMap.empty[String, js.Dynamic]
 
-  private def contours(s: js.Dynamic, status: BasemapStatus, origin: String): Future[Unit] =
+  private def contours(s: js.Dynamic, status: Basemap.Status, origin: String): Future[Unit] =
     contourLib.map { lib =>
       val t = deeperRelief(status).get
       val deepest = t.deepest.getOrElse(t.maxZoom.getOrElse(8))

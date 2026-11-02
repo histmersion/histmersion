@@ -1,10 +1,10 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.GazetteerKind
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.domain.catalogue.periods.PeriodOFetch
 
 import scala.collection.immutable.ListMap
+import com.histmersion.api.catalogue.Gazetteer
 
 /** Histmersion's own network gazetteers — first-party plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
   * `gazetteer-chronontology`), each enabled by default and switched off by
@@ -31,7 +31,7 @@ object BuiltinGazetteers:
     * coastline, PeriodO, the bundled extracts).
     */
   val reserved: Set[String] =
-    names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerKind.values.map(_.wire)
+    names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name) ++ Gazetteer.Kind.values.map(_.wire)
 
   /** Pure: the registered sources that are not first-party, in registration order. */
   def thirdParty(registered: ListMap[String, GazetteerSource]): List[String] =

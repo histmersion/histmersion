@@ -7,7 +7,7 @@ import com.histmersion.domain.given
 
 import java.time.Instant
 import java.util.Locale
-import com.histmersion.api.backup.{Backup, BackupInfo, BackupResult, RestoreResult}
+import com.histmersion.api.backup.{Backup, RestoreResult}
 
 /** Pure half of backup/restore (plan §1.10): the file naming, the path-traversal gate and the JDBC-URL → `pg_dump`
   * argument translation. No database, no `pg_dump`, runs in CI in milliseconds.
@@ -37,7 +37,7 @@ class BackupSuite extends munit.FunSuite:
     val keep = "keep-before-schema-024-20260925T085045Z.dump"
     assertEquals(Backup.takenAt(keep, mtime), Instant.parse("2026-09-25T08:50:45Z"))
     assertEquals(Backup.takenAt("my-own.dump", mtime), mtime) // no stamp in the name: its mtime
-    def info(n: String, at: String) = BackupInfo(n, 1, at)
+    def info(n: String, at: String) = Backup.Info(n, 1, at)
     val rows = List(
       info(keep, "2026-09-25T08:50:45Z"),
       info("histmersion-20261001T080000Z.dump", "2026-10-01T08:00:00Z"),
@@ -197,7 +197,7 @@ class BackupSuite extends munit.FunSuite:
     finally Locale.setDefault(saved)
 
   test("Markdown.backup names the file, the size and the checksum"):
-    val md = Markdown.backup(BackupResult("histmersion-20260825T145112Z.dump", 2500000, "abc123", 812))
+    val md = Markdown.backup(Backup.Result("histmersion-20260825T145112Z.dump", 2500000, "abc123", 812))
     assert(md.contains("histmersion-20260825T145112Z.dump"), md)
     assert(md.contains("2.5 MB"), md)
     assert(md.contains("abc123"), md)
@@ -207,8 +207,8 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(Markdown.backups(Vector.empty), "_No backups on the server yet._")
     val md = Markdown.backups(
       Vector(
-        BackupInfo("histmersion-20260825T145112Z.dump", 1000, "2026-08-25T14:51:12Z"),
-        BackupInfo("histmersion-20260824T145112Z.dump", 2000, "2026-08-24T14:51:12Z")
+        Backup.Info("histmersion-20260825T145112Z.dump", 1000, "2026-08-25T14:51:12Z"),
+        Backup.Info("histmersion-20260824T145112Z.dump", 2000, "2026-08-24T14:51:12Z")
       )
     )
     assert(md.startsWith("### 2 backup(s)"), md)

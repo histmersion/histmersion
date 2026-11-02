@@ -20,7 +20,7 @@ object PeriodsMarkdown:
         "|---|---|---|---|---|---|"
       ) ++ rows).mkString("\n")
 
-  def detail(d: PeriodDetail): String =
+  def detail(d: Period.Detail): String =
     val p = d.period
     val head = List(
       Some(s"### ${p.label} `${p.id}`"),
@@ -38,7 +38,7 @@ object PeriodsMarkdown:
           d.children.map(c => s"- ${c.label} `${c.id}` — ${years(c.period)}${c.region.fold("")(r => s" · $r")}")
     (head ++ kids).mkString("\n")
 
-  def imported(r: PeriodImportResult): String =
+  def imported(r: Period.ImportResult): String =
     val head = s"imported ${Plural.count(r.periods, "period")}" +
       (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
       s" — ${Plural.count(r.presets, "timeline preset")} in the store" +

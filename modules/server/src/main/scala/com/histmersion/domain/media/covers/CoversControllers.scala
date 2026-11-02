@@ -1,11 +1,12 @@
 package com.histmersion.domain.media.covers
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.domain.media.MediaJobs
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{MediaCoversReport, MediaCoversRequest, MediaItem, SourceCoverParams}
+import com.histmersion.api.Api
 
 /** The sources' pictures (#1446): their covers and illustrations as one run (a dry run from the database alone, or one
   * source at once) or as a job over every source; a cover the CLI read from the local Calibre library; the picture a
@@ -16,13 +17,13 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   /** The sources' pictures, one run: a dry run (from the database alone), or — for one `citekey` — done at once. A run
     * over every source is [[coversJob]].
     */
-  def covers(req: MediaCoversRequest): Either[ApiError, MediaCoversReport] =
+  def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
     if req.dryRun then Right(pictures.run(req))
     else if req.citekey.forall(_.trim.isEmpty) then
-      Left(ApiError("a run over every source is a job: POST /api/media/covers/job", Some(Write.CodeInvalid)))
+      Left(Api.Error("a run over every source is a job: POST /api/media/covers/job", Some(Write.CodeInvalid)))
     else jobs.guarded("media_covers")(jobs.exclusive("media covers")(Right(pictures.run(req))))
 
-  def coversJob(req: MediaCoversRequest): Either[ApiError, JobInfo] =
+  def coversJob(req: MediaCoversRequest): Either[Api.Error, JobInfo] =
     val what =
       List(Option.when(req.covers)("Open Library covers"), Option.when(req.illustrations)("illustrations")).flatten
         .mkString(" and ") + req.citekey.fold(" of every source")(c => s" of $c") +
@@ -36,7 +37,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     }
 
   /** A cover the CLI read from the local Calibre library. */
-  def putCover(p: SourceCoverParams, bytes: Array[Byte]): Either[ApiError, MediaItem] =
+  def putCover(p: SourceCoverParams, bytes: Array[Byte]): Either[Api.Error, MediaItem] =
     jobs.guarded("media_cover")(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */

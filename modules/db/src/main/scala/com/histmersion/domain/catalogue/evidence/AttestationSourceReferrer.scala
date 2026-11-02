@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.library.{DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Rename
 
 /** The attestations that name a source: those it makes (they go with it), and those of other sources whose target is
   * one of its findings, an edge from it or a dating it gives (they lose their target).
@@ -33,7 +34,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
       List(
         "attestations.target_id (finding)" -> findings,
         "attestations.target_id (edge, event_dating)" -> embedding
-      ).collect { case (t, n) if n > 0 => RenameCount(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =

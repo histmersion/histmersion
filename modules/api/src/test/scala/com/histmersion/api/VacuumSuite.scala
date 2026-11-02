@@ -3,7 +3,7 @@ package com.histmersion.api
 import io.circe.parser.parse
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.library.IngestMarkdown
-import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 
 /** `histmersion maintenance vacuum` (#1445): which tables a request names, the statement for each, and how a job says
   * what it does.
@@ -14,15 +14,15 @@ class VacuumSuite extends munit.FunSuite:
   private val existing = Set("places", "place_names", "finding_places", "findings", "events")
 
   test("no table named: the configured ones; named ones are trimmed, lower-cased, de-duplicated, comma lists split"):
-    assertEquals(Vacuum.plan(VacuumRequest(), defaults, existing), Right(VacuumPlan(false, defaults)))
+    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(VacuumPlan(false, defaults)))
     assertEquals(
-      Vacuum.plan(VacuumRequest(analyze = true, tables = List(" Findings ", "events,findings")), defaults, existing),
+      Vacuum.plan(Vacuum.Request(analyze = true, tables = List(" Findings ", "events,findings")), defaults, existing),
       Right(VacuumPlan(true, List("findings", "events")))
     )
 
   test("a name that is no identifier, or no table of the store, is refused — and so is an empty list"):
     def refused(tables: List[String], d: List[String] = defaults) =
-      Vacuum.plan(VacuumRequest(tables = tables), d, existing).left.map(e => (e.code, e.message))
+      Vacuum.plan(Vacuum.Request(tables = tables), d, existing).left.map(e => (e.code, e.message))
     assertEquals(refused(List("places; DROP TABLE x")).left.map(_._1), Left(Some(Write.CodeInvalid)))
     assertEquals(refused(List("pg_catalog.pg_class")).left.map(_._1), Left(Some(Write.CodeInvalid)))
     assertEquals(refused(List("nope")), Left((Some(Write.CodeInvalid), "no such table: nope")))
@@ -58,9 +58,9 @@ class VacuumSuite extends munit.FunSuite:
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))
 
   test("a request body: unknown keys refused, absent ones defaulted"):
-    assertEquals(parse("""{}""").flatMap(_.as[VacuumRequest]), Right(VacuumRequest()))
+    assertEquals(parse("""{}""").flatMap(_.as[Vacuum.Request]), Right(Vacuum.Request()))
     assertEquals(
-      parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[VacuumRequest]),
-      Right(VacuumRequest(true, List("places")))
+      parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[Vacuum.Request]),
+      Right(Vacuum.Request(true, List("places")))
     )
-    assert(parse("""{"full":true}""").flatMap(_.as[VacuumRequest]).isLeft)
+    assert(parse("""{"full":true}""").flatMap(_.as[Vacuum.Request]).isLeft)

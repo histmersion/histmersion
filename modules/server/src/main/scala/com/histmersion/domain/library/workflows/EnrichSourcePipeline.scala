@@ -14,8 +14,8 @@ import io.circe.syntax.*
 
 import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
-import com.histmersion.api.library.FindingInput
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -157,7 +157,7 @@ final class EnrichSourcePipeline(
           case Some(r) if r.isApproximate => ctx.warn(s"geocode: ${r.describe}")
           case Some(_)                    => ()
       }
-      val input = FindingInput(
+      val input = Finding.Input(
         claim = f.claim,
         region = f.place,
         lon = hit.map(_.lon),
@@ -195,7 +195,7 @@ final class EnrichSourcePipeline(
       ck: String,
       l: Loaded,
       c: Classified,
-      fs: List[FindingInput],
+      fs: List[Finding.Input],
       notes: String
   ): Either[String, Patched] =
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))

@@ -1,9 +1,9 @@
 package com.histmersion.web
 
 import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
-import com.histmersion.api.library.{SourceDetail, SourceKinds}
 import com.histmersion.api.research.Article
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.library.Source
 
 /** The icon at the head of every card ([[Preview.cardView]]) and of every row a map cluster lists — one per KIND of
   * thing, from the one registry ([[Glyphs]]), so a reader sees what a card is about before reading it, whichever layer
@@ -37,18 +37,18 @@ object CardIcons:
     * the map (`marker = true`).
     */
   def sourceKind(kind: String, marker: Boolean = false): String = kind match
-    case SourceKinds.Book    => "book"
-    case SourceKinds.Chapter => "book-open"
-    case SourceKinds.Paper   => "file-text"
-    case SourceKinds.Thesis  => "graduation-cap"
-    case SourceKinds.Dataset => "database"
-    case _                   => if marker then Unknown else GenericSource
+    case Source.Kinds.Book    => "book"
+    case Source.Kinds.Chapter => "book-open"
+    case Source.Kinds.Paper   => "file-text"
+    case Source.Kinds.Thesis  => "graduation-cap"
+    case Source.Kinds.Dataset => "database"
+    case _                    => if marker then Unknown else GenericSource
 
   /** Pure: what a source is, from its record ([[SourceKinds.of]]). */
-  def kindOf(s: SourceDetail, hasCover: Boolean = false): String =
-    SourceKinds.of(s.doi, s.venue, s.provenance, s.tags, s.topics, hasCover)
+  def kindOf(s: Source.Detail, hasCover: Boolean = false): String =
+    Source.Kinds.of(s.doi, s.venue, s.provenance, s.tags, s.topics, hasCover)
 
-  def source(s: SourceDetail, hasCover: Boolean = false): String = sourceKind(kindOf(s, hasCover))
+  def source(s: Source.Detail, hasCover: Boolean = false): String = sourceKind(kindOf(s, hasCover))
 
   /** Pure: a place's icon — a site its type's (the one its marker draws, else a pin), a natural feature its type's when
     * it has one (a cave) else a mountain, a region or polity a map, a people a group.

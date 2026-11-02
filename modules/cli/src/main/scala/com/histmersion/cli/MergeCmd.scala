@@ -10,17 +10,17 @@ import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.util.data.exchange.MergeResolutionsFile
 import com.histmersion.api.exchange.{
-  BundleUpload,
   MergeApplyJob,
   MergeApplyRequest,
   MergeApplyResult,
   MergeDecision,
   MergeJobState,
   MergeMarkdown,
-  MergePlanRequest,
   MergePolicy,
   MergeResolutions
 }
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.MergePlan
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
@@ -96,7 +96,7 @@ object MergeCmd:
     else Right(r.copy(resolve = read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
-  def upload(c: Client, f: java.io.File): Either[CliError, BundleUpload] =
+  def upload(c: Client, f: java.io.File): Either[CliError, Bundle.Upload] =
     c.uploadBundle(f).flatMap { u =>
       if u.manifest.isEmpty then
         Left(
@@ -126,7 +126,7 @@ object MergeCmd:
         _ <- Either.cond(Files.isRegularFile(p), (), CliError(s"no such file: $file", exitCode = ExitCode.Usage))
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
-        plan <- c.mergePlan(MergePlanRequest(u.sha256, res))
+        plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
         _ <- template.fold[Either[CliError, Unit]](Right(())) { t =>
           scala.util
             .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res)))
@@ -167,7 +167,7 @@ object MergeCmd:
         res0 <- resolutions(flags)
         res <- withTexts(res0)
         u <- upload(c, p.toFile)
-        plan <- c.mergePlan(MergePlanRequest(u.sha256, res))
+        plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
           (), {

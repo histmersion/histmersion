@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.catalogue.{CorrectionList, Corrections, CorrectionStatus}
+import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import io.circe.Json
 import com.histmersion.util.database.given_DbCodec_List
+import com.histmersion.api.catalogue.Correction
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
@@ -48,7 +49,7 @@ private[events] object CorrectionRepo:
   def reconcile(kind: String, id: String, now: Map[String, Json])(using
       DbCon
   ): (Map[String, Json], List[Corrections.Outcome]) =
-    val applied = of(kind, id).filter(c => CorrectionStatus.applied(c.status))
+    val applied = of(kind, id).filter(c => Correction.Status.applied(c.status))
     val results = applied.flatMap { c =>
       now.get(c.field).map { up =>
         val o = Corrections.reconcile(c.json(c.value), c.json(c.upstreamValue), up)
@@ -66,7 +67,7 @@ private[events] object CorrectionRepo:
     */
   def list(kind: String, id: Option[String], status: Option[String], limit: Int, offset: Int)(using
       DbCon
-  ): CorrectionList =
+  ): Correction.List =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = Sql.of("c.target_kind = ?", Param.S(kind)) ++
       id.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(i => Sql.of(" AND c.target_id = ?", Param.S(i))) ++
@@ -81,7 +82,7 @@ private[events] object CorrectionRepo:
       .query[(CorrectionRow, Option[String])]
       .run()
       .toList
-    CorrectionList(count, rows.map((r, label) => r.toDto(label)))
+    Correction.List(count, rows.map((r, label) => r.toDto(label)))
 
   /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
     * with what the person kept, what the catalogue said and what it says now.

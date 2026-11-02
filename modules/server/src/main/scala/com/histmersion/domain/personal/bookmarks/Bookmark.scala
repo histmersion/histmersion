@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal.bookmarks
 
-import com.histmersion.api.personal.{Bookmark as WireBookmark, BookmarkId, BookmarkLabel}
+import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
@@ -8,10 +8,10 @@ import com.histmersion.domain.library.Title
 
 /** A bookmark as the person sees it: its target as it shows now and what that is called. */
 final case class Bookmark(
-    id: BookmarkId,
+    id: com.histmersion.api.personal.Bookmark.Id,
     target: MarkTarget,
     title: Title,
-    label: Option[BookmarkLabel],
+    label: Option[com.histmersion.api.personal.Bookmark.Label],
     createdAt: MarkTime,
     updatedAt: MarkTime
 ):

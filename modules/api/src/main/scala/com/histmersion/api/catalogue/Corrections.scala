@@ -18,12 +18,12 @@ object Corrections:
     else Outcome.Conflict
 
   def status(o: Outcome): String = o match
-    case Outcome.Keep     => CorrectionStatus.Active
-    case Outcome.Retire   => CorrectionStatus.Agreed
-    case Outcome.Conflict => CorrectionStatus.Conflict
+    case Outcome.Keep     => Correction.Status.Active
+    case Outcome.Retire   => Correction.Status.Agreed
+    case Outcome.Conflict => Correction.Status.Conflict
 
-  def counts(os: Iterable[Outcome]): CorrectionCounts =
-    CorrectionCounts(os.count(_ == Outcome.Keep), os.count(_ == Outcome.Retire), os.count(_ == Outcome.Conflict))
+  def counts(os: Iterable[Outcome]): Correction.Counts =
+    Correction.Counts(os.count(_ == Outcome.Keep), os.count(_ == Outcome.Retire), os.count(_ == Outcome.Conflict))
 
   def show(json: String): String =
     io.circe.parser.parse(json).toOption match
@@ -35,15 +35,15 @@ object Corrections:
     val base = s"${c.field}: “${Fmt.clip(show(c.value))}” (was “${Fmt.clip(show(c.upstreamValue))}”" +
       c.upstream.fold("")(u => s" in $u") + ")"
     c.status match
-      case CorrectionStatus.Conflict =>
+      case Correction.Status.Conflict =>
         s"$base — CONFLICT: the catalogue now says “${Fmt.clip(c.upstreamNow.map(show).getOrElse("?"))}”"
-      case CorrectionStatus.Agreed => s"$base — retired: the catalogue now agrees"
-      case _                       => base
+      case Correction.Status.Agreed => s"$base — retired: the catalogue now agrees"
+      case _                        => base
 
   private object Fmt:
     def clip(s: String): String = if s.length > 80 then s.take(79) + "…" else s
 
-  def markdown(l: CorrectionList): String =
+  def markdown(l: Correction.List): String =
     if l.corrections.isEmpty then "_No corrections by hand._"
     else
       val lines =

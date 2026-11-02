@@ -6,9 +6,10 @@ import com.histmersion.api.given
 import MergeFixture.{home, src, uid, work}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.api.exchange.{BundleRange, MergeDecision}
+import com.histmersion.api.exchange.MergeDecision
 import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** A source folded field by field out of a pair that is one (docs/research-merge-import.md §5.3). */
 class SourcePlanSuite extends munit.FunSuite:
@@ -67,12 +68,12 @@ class SourcePlanSuite extends munit.FunSuite:
 
   test("a source folded: the period by hull, the body and original from the side decided"):
     val l = src("h", "a2000_x", "X", Nil, Some(2000), body = Some("ours"), sha = Some("1" * 64), origin = home)
-      .copy(period = Some(BundleRange(Some(-1500), Some(-1300))))
+      .copy(period = Some(Bundle.Range(Some(-1500), Some(-1300))))
     val r = src("w", "a2000_y", "X", Nil, Some(2000), body = Some("theirs"), sha = Some("2" * 64))
-      .copy(period = Some(BundleRange(Some(-1400), Some(-1100))))
+      .copy(period = Some(Bundle.Range(Some(-1400), Some(-1100))))
     val hull =
       SourcePlan.fold(l, r, Map(Issue.Kind.PeriodDiffers -> MergeDecision.of(DecisionKind.Hull)), l.citekey)
-    assertEquals(hull.period, Some(BundleRange(Some(-1500), Some(-1100))))
+    assertEquals(hull.period, Some(Bundle.Range(Some(-1500), Some(-1100))))
     assertEquals(hull.bodySha256, l.bodySha256)
     val right =
       SourcePlan.fold(l, r, Map(Issue.Kind.BodyDiffers -> MergeDecision.of(DecisionKind.KeepRight)), l.citekey)

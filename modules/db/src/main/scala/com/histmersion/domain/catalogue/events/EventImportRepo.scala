@@ -1,19 +1,12 @@
 package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  CorrectionCounts,
-  Corrections,
-  CorrectionTarget,
-  EventCatalogueRef,
-  EventFields,
-  EventTaxonomy
-}
+import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventCatalogueRef, EventFields, EventTaxonomy}
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given_DbCodec_List
+import com.histmersion.api.catalogue.Correction
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
@@ -60,7 +53,7 @@ private[events] object EventImportRepo:
   def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using DbCon): EventSaved =
     // `var`s: the counts of this write
     var created, updated = 0
-    var counts = CorrectionCounts()
+    var counts = Correction.Counts()
     placed.groupBy(_._2.eventId).toList.sortBy(_._1).foreach { (eventId, group) =>
       val recs = group.map(_._1).sortBy(_.key)
       val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
@@ -97,8 +90,8 @@ private[events] object EventImportRepo:
     */
   private def refresh(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using
       DbCon
-  ): CorrectionCounts =
-    val (keep, outcomes) = CorrectionRepo.reconcile(CorrectionTarget.Event, id, EventFields.upstream(r))
+  ): Correction.Counts =
+    val (keep, outcomes) = CorrectionRepo.reconcile(Correction.Target.Event, id, EventFields.upstream(r))
     def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
     val label = text(EventFields.Label).flatten.getOrElse(r.label)
     val kind = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))

@@ -1,10 +1,10 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{Api, ApiError}
-import com.histmersion.api.automation.{Goal, GoalDeleted, GoalList, GoalPatch, GoalPut, GoalsExport}
+import com.histmersion.api.Api
+import com.histmersion.api.automation.{Goal, GoalsExport}
 import com.histmersion.api.Write
 import com.histmersion.api.aliases.{LabelRename, LabelRenames}
-import com.histmersion.api.automation.GoalPlans.{GoalView, LinkKind, Plan}
+import com.histmersion.api.automation.Goal.Plans.{GoalView, LinkKind, Plan}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.LabelRenamed
@@ -21,30 +21,30 @@ final class GoalsControllers(
     pageSize: Option[Int] => Int,
     maintenance: WriteGate
 ):
-  private def notFound(slug: String) = ApiError(s"No goal '$slug'", Some(Write.CodeNotFound))
+  private def notFound(slug: String) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
 
-  def list(q: Api.GoalQuery): GoalList = goals.page(q.status, pageSize(q.limit), q.offset.getOrElse(0))
+  def list(q: Api.GoalQuery): Goal.List = goals.page(q.status, pageSize(q.limit), q.offset.getOrElse(0))
 
-  def get(slug: String): Either[ApiError, Goal] = goals.get(current(slug)).toRight(notFound(slug))
+  def get(slug: String): Either[Api.Error, Goal] = goals.get(current(slug)).toRight(notFound(slug))
 
   /** A put replaces the goal. */
-  def put(slug: String, in: GoalPut): Either[ApiError, Goal] =
+  def put(slug: String, in: Goal.Put): Either[Api.Error, Goal] =
     maintenance.guard("put_goal"):
       val now = current(slug)
       goals.put(now, in).flatMap(_ => get(now))
 
-  def patch(slug: String, p: GoalPatch): Either[ApiError, Goal] =
+  def patch(slug: String, p: Goal.Patch): Either[Api.Error, Goal] =
     maintenance.guard("patch_goal"):
       val now = current(slug)
       goals.patch(now, p).flatMap(_ => get(now))
 
-  def delete(slug: String): Either[ApiError, GoalDeleted] =
+  def delete(slug: String): Either[Api.Error, Goal.Deleted] =
     maintenance.guard("delete_goal"):
       val now = current(slug)
-      if goals.delete(now) then Right(GoalDeleted(now, true)) else Left(notFound(slug))
+      if goals.delete(now) then Right(Goal.Deleted(now, true)) else Left(notFound(slug))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
-  def rename(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+  def rename(slug: String, req: LabelRename): Either[Api.Error, LabelRenamed] =
     maintenance.guard("rename_goal"):
       val from = current(slug)
       for

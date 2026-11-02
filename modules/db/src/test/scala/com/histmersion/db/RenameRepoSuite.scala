@@ -13,7 +13,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
-import com.histmersion.api.library.{Edge, Finding, NeighborTarget, Source, SourceAlias, SourcePatch}
+import com.histmersion.api.library.{Edge, Finding, NeighborTarget, Source}
 import com.histmersion.api.research.Article
 
 /** Renaming a citekey (V027): the foreign keys cascade, every column without one is rewritten, finding ids move,
@@ -280,7 +280,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(counts.links, 10)
 
     // the alias
-    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)), List(SourceAlias(Old, New)))
+    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)), List(Source.Alias(Old, New)))
     assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
     assertEquals(SourceFixtures.canonical(ds, New), Some(New))
     assertEquals(SourceFixtures.canonical(ds, "zzrn_nothing"), None)
@@ -299,7 +299,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
       Vector(("in", Other, NeighborTarget.Source))
     )
     // a patch by the old key patches the renamed source
-    assert(SourceFixtures.patch(ds, Old, SourcePatch(summary = Some("patched")), cfg.limits.chunkChars).isRight)
+    assert(SourceFixtures.patch(ds, Old, Source.Patch(summary = Some("patched")), cfg.limits.chunkChars).isRight)
     assertEquals(SourceFixtures.load(ds, New).flatMap(_.summary), Some("patched"))
     // …but creating a source under the old key is refused rather than shadowing the alias
     val e = intercept[IllegalStateException](put(source(Old)))
@@ -312,7 +312,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(SourceFixtures.canonical(ds, Old), Some(Old))
     assertEquals(
       SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)).toSet,
-      Set(SourceAlias(New, Old), SourceAlias(third, Old))
+      Set(Source.Alias(New, Old), Source.Alias(third, Old))
     )
 
   test("renaming back leaves a tombstone for the dropped alias; renaming away again clears it (#827)"):

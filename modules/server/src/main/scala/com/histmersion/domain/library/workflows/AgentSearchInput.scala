@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.library.{Filter, FilterDocs}
+import com.histmersion.api.library.Filter
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -41,4 +41,4 @@ final case class AgentSearchInput(
     )
 object AgentSearchInput:
   // the agent's few words per filter field are FilterDocs' `brief` (the MCP tool and the CLI read its `doc`)
-  given Schema[AgentSearchInput] = FilterDocs.describeBrief(KindlingsSchema.derived[AgentSearchInput].schema)
+  given Schema[AgentSearchInput] = Filter.Docs.describeBrief(KindlingsSchema.derived[AgentSearchInput].schema)

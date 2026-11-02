@@ -17,10 +17,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{
   CatalogRecord,
-  CorrectionCounts,
   Corrections,
-  CorrectionStatus,
-  CorrectionTarget,
   EventFields,
   EventPatch,
   EventPrecision,
@@ -28,6 +25,7 @@ import com.histmersion.api.catalogue.{
   Period
 }
 import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Correction
 
 /** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V088's
   * generated uncertainty agrees with core.EventPrecision; the map's feed leaves the imprecise events out (and counts
@@ -158,9 +156,9 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     EventFixtures.save(ds, CatalogMerge.place(List(r), EventFixtures.stored(ds), CatalogMerge.Tolerance(60, 30)))
   private def event = EventFixtures.get(ds, Id).get
   private def corrections =
-    EventFixtures.corrections(ds, CorrectionTarget.Event, Some(Id), Some("active"), 50, 0).corrections ++
-      EventFixtures.corrections(ds, CorrectionTarget.Event, Some(Id), Some("conflict"), 50, 0).corrections ++
-      EventFixtures.corrections(ds, CorrectionTarget.Event, Some(Id), Some("agreed"), 50, 0).corrections
+    EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("active"), 50, 0).corrections ++
+      EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("conflict"), 50, 0).corrections ++
+      EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("agreed"), 50, 0).corrections
 
   test("corrections: a patch on a catalogue event is kept by a re-import while the catalogue is unchanged"):
     val first = reimport(upstream0)
@@ -187,14 +185,14 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     // historicity equals the catalogue's: no correction for it
     assertEquals(
       corrections.map(c => c.field -> c.status).toSet,
-      Set(EventFields.Label -> CorrectionStatus.Active, EventFields.Description -> CorrectionStatus.Active)
+      Set(EventFields.Label -> Correction.Status.Active, EventFields.Description -> Correction.Status.Active)
     )
     assertEquals(
       corrections.find(_.field == EventFields.Label).map(c => Corrections.show(c.upstreamValue)),
       Some("Eruption of Zqcr")
     )
     val again = reimport(upstream0)
-    assertEquals((again.created, again.updated, again.corrections), (0, 1, CorrectionCounts(kept = 2)))
+    assertEquals((again.created, again.updated, again.corrections), (0, 1, Correction.Counts(kept = 2)))
     assertEquals(
       (event.event.label, event.event.description),
       ("Hekla 3 (Zqcr)", Some("my note")),
@@ -204,17 +202,17 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("corrections: retired once the catalogue agrees; flagged when it changes to something else"):
     val agrees = reimport(upstream0.copy(label = "Hekla 3 (Zqcr)"))
-    assertEquals(agrees.corrections, CorrectionCounts(kept = 1, retired = 1))
-    assertEquals(corrections.find(_.field == EventFields.Label).map(_.status), Some(CorrectionStatus.Agreed))
+    assertEquals(agrees.corrections, Correction.Counts(kept = 1, retired = 1))
+    assertEquals(corrections.find(_.field == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
     val changed =
       upstream0.copy(label = "Hekla 3 (Zqcr)", description = Some("Confirmed Eruption at Zqcr; area: SW flank"))
     val c = reimport(changed)
-    assertEquals(c.corrections, CorrectionCounts(conflicts = 1))
+    assertEquals(c.corrections, Correction.Counts(conflicts = 1))
     assertEquals(event.event.description, Some("my note"))
     val conflict = EventFixtures
-      .corrections(ds, CorrectionTarget.Event, None, Some("conflict"), 50, 0)
+      .corrections(ds, Correction.Target.Event, None, Some("conflict"), 50, 0)
       .corrections
       .filter(_.targetId == Id)
     assertEquals(
@@ -225,8 +223,8 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     val lint = connect(ds)(CorrectionRepo.conflictsIn())
     assert(lint.exists((id, detail) => id == Id && detail.startsWith("description:")), lint.toString)
     // still a conflict on the next import (the catalogue unchanged since), and back to active if it reverts
-    assertEquals(reimport(changed).corrections, CorrectionCounts(conflicts = 1))
-    assertEquals(reimport(upstream0.copy(label = "Hekla 3 (Zqcr)")).corrections, CorrectionCounts(kept = 1))
+    assertEquals(reimport(changed).corrections, Correction.Counts(conflicts = 1))
+    assertEquals(reimport(upstream0.copy(label = "Hekla 3 (Zqcr)")).corrections, Correction.Counts(kept = 1))
     // setting the field to the catalogue's value takes the catalogue's: the correction goes
     assert(EventFixtures.patch(ds, Id, EventPatch(description = Some("Confirmed Eruption at Zqcr"))).isRight)
     assertEquals(corrections.filter(_.field == EventFields.Description), Nil)
@@ -247,15 +245,18 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     // an event compiled from sources records nothing: no import rewrites it
     put("zqcr_compiled", TimeSpan(Some(1), Some(1), Some(1), Some(1)))
     assert(EventFixtures.patch(ds, "zqcr_compiled", EventPatch(label = Some("x"))).isRight)
-    assertEquals(EventFixtures.corrections(ds, CorrectionTarget.Event, Some("zqcr_compiled"), None, 10, 0).total, 0)
+    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some("zqcr_compiled"), None, 10, 0).total, 0)
     // rename: the corrections follow the event
     assert(EventFixtures.rename(ds, Id, "zzcr_renamed").isRight)
     assertEquals(
-      EventFixtures.corrections(ds, CorrectionTarget.Event, Some("zzcr_renamed"), None, 10, 0).corrections.map(_.field),
+      EventFixtures
+        .corrections(ds, Correction.Target.Event, Some("zzcr_renamed"), None, 10, 0)
+        .corrections
+        .map(_.field),
       List(EventFields.Span)
     )
     // the renamed event is still refreshed from its owner record, the correction applied
     val _ = reimport(upstream0)
     assertEquals(EventFixtures.get(ds, "zzcr_renamed").map(_.event.timeSpan), Some(mine))
     assert(EventFixtures.delete(ds, "zzcr_renamed"))
-    assertEquals(EventFixtures.corrections(ds, CorrectionTarget.Event, Some("zzcr_renamed"), None, 10, 0).total, 0)
+    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some("zzcr_renamed"), None, 10, 0).total, 0)

@@ -17,10 +17,11 @@ import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.api.backup.{Backup, RestoreRequest}
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.instance.{AboutMarkdown, Version}
-import com.histmersion.api.library.{FacetField, PassagesMarkdown, SeedRequest, SeedResult, SourceSection}
-import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.api.library.{PassagesMarkdown, SeedRequest, SeedResult}
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Facet
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
@@ -356,7 +357,7 @@ object Cli:
   /** The `--group` vocabulary, spelled once (the server parses the same set through `Tree.parseBy`). */
   private val facets = Opts.subcommand(
     "facets",
-    s"Vocabulary of a dimension (${FacetField.all.mkString("|")}) with distinct-source counts"
+    s"Vocabulary of a dimension (${Facet.Field.all.mkString("|")}) with distinct-source counts"
   ) {
     (
       Opts.argument[String]("field"),
@@ -399,7 +400,7 @@ object Cli:
         Opts
           .option[String](
             "section",
-            s"Section to return: ${SourceSection.all.mkString("|")} (default: summary+findings+notes)"
+            s"Section to return: ${com.histmersion.api.library.Source.Section.all.mkString("|")} (default: summary+findings+notes)"
           )
           .orNone,
         Opts.option[String]("heading", "Return body chunks under this heading (case-insensitive prefix)").orNone,
@@ -589,7 +590,7 @@ object Cli:
         Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
       )
         .mapN { (analyze, tables, noWait) => (c: Client) =>
-          c.vacuum(VacuumRequest(analyze, tables)).flatMap { j =>
+          c.vacuum(Vacuum.Request(analyze, tables)).flatMap { j =>
             println(
               s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                 "(`histmersion jobs` lists it)"

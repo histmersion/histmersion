@@ -16,7 +16,7 @@ object Write:
   val CodePrecondition = "precondition_failed"
   val CodeInvalid = "invalid"
 
-  def notFound(citekey: String): ApiError = ApiError(s"No source '$citekey'", Some(CodeNotFound))
+  def notFound(citekey: String): Api.Error = Api.Error(s"No source '$citekey'", Some(CodeNotFound))
 
   def applyList(current: List[String], p: ListPatch): List[String] =
     val base = p.replace.getOrElse(current)

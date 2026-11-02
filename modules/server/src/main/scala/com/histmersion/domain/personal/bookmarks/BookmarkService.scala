@@ -1,6 +1,5 @@
 package com.histmersion.domain.personal.bookmarks
 
-import com.histmersion.api.personal.{BookmarkId, BookmarkLabel}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.Referables
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
@@ -23,14 +22,19 @@ trait BookmarkService:
   def add(
       user: UserId,
       target: MarkTarget,
-      label: Option[BookmarkLabel],
+      label: Option[com.histmersion.api.personal.Bookmark.Label],
       title: Option[TargetLabel],
       at: MarkTime
   ): Bookmark
-  def rename(user: UserId, id: BookmarkId, label: Option[BookmarkLabel], at: MarkTime): Option[Bookmark]
+  def rename(
+      user: UserId,
+      id: com.histmersion.api.personal.Bookmark.Id,
+      label: Option[com.histmersion.api.personal.Bookmark.Label],
+      at: MarkTime
+  ): Option[Bookmark]
 
   /** The bookmark as it was before it was removed. */
-  def remove(user: UserId, id: BookmarkId, at: MarkTime): Option[Bookmark]
+  def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark]
 
 object BookmarkService:
 
@@ -56,7 +60,7 @@ object BookmarkService:
     def add(
         user: UserId,
         target: MarkTarget,
-        label: Option[BookmarkLabel],
+        label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
     ): Bookmark =
@@ -73,13 +77,18 @@ object BookmarkService:
           .getOrElse(throw IllegalStateException(s"bookmark ${id.value} not read back"))
       shown(List(stored), items).head
 
-    def rename(user: UserId, id: BookmarkId, label: Option[BookmarkLabel], at: MarkTime): Option[Bookmark] =
+    def rename(
+        user: UserId,
+        id: com.histmersion.api.personal.Bookmark.Id,
+        label: Option[com.histmersion.api.personal.Bookmark.Label],
+        at: MarkTime
+    ): Option[Bookmark] =
       db.transact(
         if BookmarkRepo.relabel(user, id, label, at) == 0 then None
         else BookmarkRepo.live(user, id).flatMap(_.stored(user))
       ).map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: BookmarkId, at: MarkTime): Option[Bookmark] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark] =
       db.transact {
         val before = BookmarkRepo.live(user, id).flatMap(_.stored(user))
         before.foreach(_ => BookmarkRepo.tombstone(user, id, at))
@@ -97,7 +106,9 @@ object BookmarkService:
     private def live(s: PersonalState, user: UserId): Vector[StoredBookmark] =
       s.bookmarks.filter(b => b.user == user && b.deletedAt.isEmpty)
 
-    private def changed(id: BookmarkId, user: UserId)(change: StoredBookmark => StoredBookmark): PersonalState =
+    private def changed(id: com.histmersion.api.personal.Bookmark.Id, user: UserId)(
+        change: StoredBookmark => StoredBookmark
+    ): PersonalState =
       state.updateAndGet(
         _.modify(_.bookmarks)
           .using(_.map(b => if b.id == id && b.user == user && b.deletedAt.isEmpty then change(b) else b))
@@ -110,12 +121,14 @@ object BookmarkService:
     def add(
         user: UserId,
         target: MarkTarget,
-        label: Option[BookmarkLabel],
+        label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
     ): Bookmark =
       val t = resolved(target, items)
-      val id = BookmarkId.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
+      val id = com.histmersion.api.personal.Bookmark.Id
+        .parse(newId().toString)
+        .fold(e => throw IllegalStateException(e), identity)
       val after = state.updateAndGet { s =>
         live(s, user).find(b =>
           t.itemRef.isDefined && b.target.itemRef.map(r => (r.kind, r.key)) == t.itemRef.map(r => (r.kind, r.key))
@@ -131,11 +144,16 @@ object BookmarkService:
         .getOrElse(throw IllegalStateException("bookmark not kept"))
       shown(List(kept), items).head
 
-    def rename(user: UserId, id: BookmarkId, label: Option[BookmarkLabel], at: MarkTime): Option[Bookmark] =
+    def rename(
+        user: UserId,
+        id: com.histmersion.api.personal.Bookmark.Id,
+        label: Option[com.histmersion.api.personal.Bookmark.Label],
+        at: MarkTime
+    ): Option[Bookmark] =
       val after = changed(id, user)(_.copy(label = label, updatedAt = at))
       live(after, user).find(_.id == id).map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: BookmarkId, at: MarkTime): Option[Bookmark] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark] =
       val found = live(state.get, user).find(_.id == id)
       found.foreach(_ => changed(id, user)(_.copy(deletedAt = Some(at), updatedAt = at)): Unit)
       found.map(s => shown(List(s), items).head)

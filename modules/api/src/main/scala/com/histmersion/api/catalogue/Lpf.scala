@@ -160,15 +160,15 @@ object Lpf:
         )
       )
 
-  private def readNames(f: JsonObject, props: JsonObject, label: String): List[PlaceName] =
+  private def readNames(f: JsonObject, props: JsonObject, label: String): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
-        .map(s => PlaceName(s.trim))
+        .map(s => Place.Name(s.trim))
         .orElse(n.asObject.flatMap { o =>
           str(o, "toponym", "name", "title", "label").map { t =>
             val (period, open) =
               OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
-            PlaceName(t, str(o, "lang", "language").getOrElse(""), period, open)
+            Place.Name(t, str(o, "lang", "language").getOrElse(""), period, open)
           }
         })
     }
@@ -176,44 +176,44 @@ object Lpf:
       .flatMap(_.split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(PlaceName(_))
+      .map(Place.Name(_))
     val given_ = (declared ++ alts)
       .filter(_.name.nonEmpty)
       .distinctBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
     val spelled = given_.map(_.name.toLowerCase).toSet
-    val all = given_ ++ Option(PlaceName(label))
+    val all = given_ ++ Option(Place.Name(label))
       .filter(n => n.name.nonEmpty && !spelled.contains(n.name.toLowerCase))
     all.sortBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
 
   /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain
     * `part_of: [{parent_id, period_start, period_end}]` of hand-traced polygons.
     */
-  private def readRelations(id: String, f: JsonObject, props: JsonObject): List[PlaceRelation] =
+  private def readRelations(id: String, f: JsonObject, props: JsonObject): List[Place.Relation] =
     val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
       .flatMap(_.asArray)
       .flatMap(_.toList)
     val declared = arrays.flatMap { j =>
       j.asString
-        .map(p => PlaceRelation(id, p.trim, PlaceRelation.PartOf, None))
+        .map(p => Place.Relation(id, p.trim, Place.Relation.PartOf, None))
         .orElse(j.asObject.flatMap { o =>
           val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
-          val kind = if PartOfPredicates.contains(pred.toLowerCase) then PlaceRelation.PartOf else pred
+          val kind = if PartOfPredicates.contains(pred.toLowerCase) then Place.Relation.PartOf else pred
           str(o, "relationTo", "relation_to", "parent", "parentId", "parent_id", "target")
             .map { p =>
               val (period, open) =
                 OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
-              PlaceRelation(id, p, kind, period, open)
+              Place.Relation(id, p, kind, period, open)
             }
         })
     }
     val flat = str(props, "parent", "part_of", "partOf", "parentId")
-      .map(p => PlaceRelation(id, p, PlaceRelation.PartOf, None))
+      .map(p => Place.Relation(id, p, Place.Relation.PartOf, None))
     (declared ++ flat)
       .filter(_.parentId.nonEmpty)
       .distinctBy(r => (r.parentId, r.kind))
       .sortBy(r => (r.parentId, r.kind))
 
-  def readFeature(j: Json, defaultKind: String, ordinal: Int): Either[String, PlaceInput] =
+  def readFeature(j: Json, defaultKind: String, ordinal: Int): Either[String, Place.Input] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
@@ -255,7 +255,7 @@ object Lpf:
         )
         val leftover = props.filterKeys(k => !OwnKeys.contains(k))
         Right(
-          PlaceInput(
+          Place.Input(
             Place(
               id = id,
               label = if label.nonEmpty then label else id,
@@ -275,7 +275,7 @@ object Lpf:
   def parse(
       json: String,
       defaultKind: String = com.histmersion.domain.catalogue.Place.Kind.Region
-  ): Either[String, List[PlaceInput]] =
+  ): Either[String, List[Place.Input]] =
     io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
@@ -296,7 +296,7 @@ object Lpf:
       }
     }
 
-  private def renderFeature(in: PlaceInput): Json =
+  private def renderFeature(in: Place.Input): Json =
     val leftover = in.place.properties
       .flatMap(io.circe.parser.parse(_).toOption)
       .flatMap(_.asObject)
@@ -324,7 +324,7 @@ object Lpf:
       fields += "relations" -> Json.arr(in.relations.map { r =>
         Json.fromFields(
           List(
-            "relationType" -> Json.fromString(if r.kind == PlaceRelation.PartOf then "gvp:broaderPartitive"
+            "relationType" -> Json.fromString(if r.kind == Place.Relation.PartOf then "gvp:broaderPartitive"
             else r.kind),
             "relationTo" -> Json.fromString(r.parentId)
           ) ++
@@ -336,7 +336,7 @@ object Lpf:
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 
-  def render(items: List[PlaceInput]): String =
+  def render(items: List[Place.Input]): String =
     Json
       .obj(
         "type" -> Json.fromString("FeatureCollection"),

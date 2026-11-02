@@ -4,7 +4,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.automation.GoalPlans.{GoalSchedule, ScheduleKind}
+import com.histmersion.api.automation.Goal.Plans.{GoalSchedule, ScheduleKind}
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.WatchSchedules.*
 

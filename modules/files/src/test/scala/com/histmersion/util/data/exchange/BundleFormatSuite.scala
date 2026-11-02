@@ -5,20 +5,7 @@ import com.histmersion.api.given
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
-import com.histmersion.api.exchange.{
-  Bundle,
-  BundleBlobs,
-  BundleFileInfo,
-  BundleFiles,
-  BundleGoal,
-  BundleImportResult,
-  BundleInstance,
-  BundleKindCounts,
-  BundleManifest,
-  BundleMarkdown,
-  BundleRange,
-  BundleReference
-}
+import com.histmersion.api.exchange.{Bundle, BundleMarkdown}
 import com.histmersion.domain.library.Source
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
@@ -32,7 +19,7 @@ class BundleFormatSuite extends munit.FunSuite:
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
   private def goal(slug: String, updated: String = "2026-10-03T09:00:00.000000Z", notes: Option[String] = None) =
-    BundleGoal(
+    Bundle.Goal(
       U1,
       I,
       slug,
@@ -41,7 +28,7 @@ class BundleFormatSuite extends munit.FunSuite:
       notes,
       List("b", "a"),
       Nil,
-      Some(BundleRange(Some(-1650), None)),
+      Some(Bundle.Range(Some(-1650), None)),
       None,
       "2026-10-01T00:00:00.000000Z",
       updated
@@ -121,10 +108,10 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("decoding a line checks its rev; a tampered line is reported"):
     val line = BundleFormat.stamp(goal("g")).line
-    assertEquals(BundleFormat.decodeLine[BundleGoal](line, stamped = true).map(_.slug), Right("g"))
+    assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
     val tampered = line.replace("\"Title\"", "\"Other\"")
-    assert(BundleFormat.decodeLine[BundleGoal](tampered, stamped = true).left.exists(_.contains("does not match")))
-    assert(BundleFormat.decodeLine[BundleGoal]("{not json", stamped = true).isLeft)
+    assert(BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.contains("does not match")))
+    assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
 
   test("content uuids: deterministic, version 8, RFC variant"):
     val u = BundleFormat.contentUuid(Seq("a", "b"))
@@ -134,17 +121,17 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(u.variant, 2)
 
   test("compatibility: a newer format or schema is refused, an older one accepted, each reason given"):
-    val m = BundleManifest(
+    val m = Bundle.Manifest(
       Bundle.Format,
       Bundle.FormatVersion,
       "33",
       U1,
-      BundleInstance(I),
+      Bundle.Instance(I),
       None,
       None,
       Nil,
-      BundleBlobs(0, 0),
-      BundleReference(0, "", 0, "")
+      Bundle.Blobs(0, 0),
+      Bundle.Reference(0, "", 0, "")
     )
     assertEquals(BundleFormat.compatible(m, Some("33")), Nil)
     assertEquals(BundleFormat.compatible(m, Some("40")), Nil)
@@ -152,18 +139,18 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(BundleFormat.compatible(m.copy(format = "x", formatVersion = 99), Some("33")).size, 2)
 
   test("file checks list every missing, unexpected and differing file"):
-    val f = BundleFileInfo("entities/goals.ndjson", 1, 10, "a")
-    val m = BundleManifest(
+    val f = Bundle.FileInfo("entities/goals.ndjson", 1, 10, "a")
+    val m = Bundle.Manifest(
       Bundle.Format,
       1,
       "33",
       U1,
-      BundleInstance(I),
+      Bundle.Instance(I),
       None,
       None,
-      List(f, BundleFileInfo("entities/queue.ndjson", 0, 0, "e")),
-      BundleBlobs(0, 0),
-      BundleReference(0, "", 0, "")
+      List(f, Bundle.FileInfo("entities/queue.ndjson", 0, 0, "e")),
+      Bundle.Blobs(0, 0),
+      Bundle.Reference(0, "", 0, "")
     )
     val ps = BundleFormat.checkFiles(m, Map(f.path -> f.copy(sha256 = "b"), "entities/x.ndjson" -> f))
     assertEquals(ps.size, 3, ps.mkString("\n"))
@@ -188,18 +175,18 @@ class BundleFormatSuite extends munit.FunSuite:
         "period"
       )
     )
-    assertEquals(BundleFiles.all.distinct.size, BundleFiles.all.size)
+    assertEquals(Bundle.Files.all.distinct.size, Bundle.Files.all.size)
     com.histmersion.util.data.exchange.Bundle.Kind.values.foreach(k =>
       assertEquals(com.histmersion.util.data.exchange.Bundle.Kind.fromWire(k.wire), Some(k))
     )
 
   test("markdown: an import report says what it did, and lists every problem"):
-    val r = BundleImportResult(
+    val r = Bundle.ImportResult(
       U1,
-      BundleInstance(I, Some("work")),
+      Bundle.Instance(I, Some("work")),
       dryRun = false,
       applied = false,
-      List(BundleKindCounts(com.histmersion.util.data.exchange.Bundle.Kind.Source, inserted = 2)),
+      List(Bundle.KindCounts(com.histmersion.util.data.exchange.Bundle.Kind.Source, inserted = 2)),
       0,
       List("source x: clash"),
       Nil,

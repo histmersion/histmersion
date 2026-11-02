@@ -1,14 +1,14 @@
 package com.histmersion.domain
 
 import com.histmersion.api.Plural
-import com.histmersion.api.research.ArticleFilter
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.research.ArticlePlans.FilterProposal
+import com.histmersion.api.research.Article.Plans.FilterProposal
+import com.histmersion.api.research.Article
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the
@@ -48,9 +48,9 @@ object FilterInference:
       derives KindlingsCodecAsObject
 
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
-  def filterOf(a: FilterAnswer): Either[List[String], ArticleFilter] =
-    val raw = ArticleFilter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
-    ArticleFilter.normalise(raw) match
+  def filterOf(a: FilterAnswer): Either[List[String], Article.Filter] =
+    val raw = Article.Filter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
+    Article.Filter.normalise(raw) match
       case Left(m)        => Left(List(m))
       case Right(None)    => Left(List("the filter selects nothing: give a query, topics or tags"))
       case Right(Some(f)) =>
@@ -63,7 +63,7 @@ object FilterInference:
     */
   def judge(
       slug: String,
-      f: ArticleFilter,
+      f: Article.Filter,
       rationale: String,
       total: Int,
       cited: List[String],

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{BundleManifest, MergePlan, MergeResolutions}
+import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
 import com.histmersion.util.data.exchange.MergeState
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.storage.{ByteSource, ContentStore}
@@ -43,7 +43,7 @@ object MergePlans:
     */
   def plan(
       bundle: ByteSource,
-      m: BundleManifest,
+      m: com.histmersion.api.exchange.Bundle.Manifest,
       loaded: BundleReader.Loaded,
       resolutions: MergeResolutions,
       cfg: MergeSettings,

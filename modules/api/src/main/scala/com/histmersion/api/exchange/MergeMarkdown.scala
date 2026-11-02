@@ -8,7 +8,8 @@ import com.histmersion.util.data.exchange.Issue
 
 object MergeMarkdown:
 
-  def who(i: BundleInstance): String = i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
+  def who(i: Bundle.Instance): String =
+    i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
 
   def plan(p: MergePlan, all: Boolean = false): String =
     val m = p.matches
@@ -61,7 +62,7 @@ object MergeMarkdown:
 
   def applied(r: MergeApplyResult): String =
     val t = r.tally
-    def count(k: com.histmersion.util.data.exchange.Bundle.Kind)(f: BundleKindCounts => Int): Int =
+    def count(k: com.histmersion.util.data.exchange.Bundle.Kind)(f: Bundle.KindCounts => Int): Int =
       r.counts.find(_.kind == k).fold(0)(f)
     val head =
       if r.applied && r.mergeId.isEmpty then

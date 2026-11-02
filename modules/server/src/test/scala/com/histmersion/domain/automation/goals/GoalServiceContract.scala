@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.automation.{GoalPatch, GoalPut}
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.domain.automation.ScheduleKind
 
@@ -16,12 +15,18 @@ abstract class GoalServiceContract extends EngineStoreSuite:
 
   stest("a goal is put, replaced and read back; its sub-goals by slug; a period ending before it starts is refused") {
     s =>
-      assert(g(s).put("zz-b", GoalPut("B", periodStart = Some(-1200))).isRight)
+      assert(g(s).put("zz-b", com.histmersion.api.automation.Goal.Put("B", periodStart = Some(-1200))).isRight)
       assert(
-        g(s).put("zz-a", GoalPut("A", "active", Some("n"), List("t"), List("r"), Some(-3000), Some(-2000))).isRight
+        g(s)
+          .put(
+            "zz-a",
+            com.histmersion.api.automation.Goal
+              .Put("A", "active", Some("n"), List("t"), List("r"), Some(-3000), Some(-2000))
+          )
+          .isRight
       )
-      assert(g(s).put("zz-a2", GoalPut("A2", parentSlug = Some("zz-a"))).isRight)
-      assert(g(s).put("zz-a1", GoalPut("A1", parentSlug = Some("zz-a"))).isRight)
+      assert(g(s).put("zz-a2", com.histmersion.api.automation.Goal.Put("A2", parentSlug = Some("zz-a"))).isRight)
+      assert(g(s).put("zz-a1", com.histmersion.api.automation.Goal.Put("A1", parentSlug = Some("zz-a"))).isRight)
       assertEquals(
         bare(s, "zz-a").map(x => (x.title, x.status, x.notes, x.tags, x.regions, x.periodStart, x.periodEnd)),
         Some(("A", "active", Some("n"), List("t"), List("r"), Some(-3000L), Some(-2000L)))
@@ -33,9 +38,10 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       assert(g(s).get("zz-a").flatMap(_.updatedAt).isDefined)
       assertEquals(g(s).all().map(_.slug), List("zz-a", "zz-a1", "zz-a2", "zz-b"))
       assertEquals(g(s).children("zz-a").map(_.slug), List("zz-a1", "zz-a2"))
-      assert(g(s).put("zz-b", GoalPut("B again")).isRight)
+      assert(g(s).put("zz-b", com.histmersion.api.automation.Goal.Put("B again")).isRight)
       assertEquals(bare(s, "zz-b").map(x => (x.title, x.periodStart)), Some(("B again", None)))
-      val bad = g(s).put("zz-c", GoalPut("C", periodStart = Some(100), periodEnd = Some(-100)))
+      val bad =
+        g(s).put("zz-c", com.histmersion.api.automation.Goal.Put("C", periodStart = Some(100), periodEnd = Some(-100)))
       assert(bad.left.exists(_.message.contains("goal 'zz-c'")), bad)
       assertEquals(g(s).get("zz-c"), None)
   }
@@ -43,7 +49,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   stest(
     "links: only to a goal that exists, sources then articles then queries, a note kept unless a new one is given"
   ) { s =>
-    assert(g(s).put("zz-g", GoalPut("G")).isRight)
+    assert(g(s).put("zz-g", com.histmersion.api.automation.Goal.Put("G")).isRight)
     s.source("zz2020_src", "A source")
     assert(!g(s).link("zz-none", Goal.LinkKind.Source, "zz2020_src", None), "no such goal")
     assert(g(s).link("zz-g", Goal.LinkKind.Query, "tin trade", None))
@@ -72,8 +78,8 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("the refs of one kind of a goal's links, oldest first; another kind's and another goal's left out") { s =>
-    assert(s.goals.put("zz-g", GoalPut("A goal")).isRight)
-    assert(s.goals.put("zz-h", GoalPut("Another")).isRight)
+    assert(s.goals.put("zz-g", com.histmersion.api.automation.Goal.Put("A goal")).isRight)
+    assert(s.goals.put("zz-h", com.histmersion.api.automation.Goal.Put("Another")).isRight)
     assert(s.goals.link("zz-g", Goal.LinkKind.SearchQuery, "storm gods", None))
     assert(s.goals.link("zz-g", Goal.LinkKind.SearchQuery, "anatolia", None))
     assert(s.goals.link("zz-g", Goal.LinkKind.QueueItem, "7", Some("10.5555/zz")))
@@ -84,8 +90,8 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("an approved plan and a run cap; the planned goals") { s =>
-    assert(g(s).put("zz-p", GoalPut("P")).isRight)
-    assert(g(s).put("zz-q", GoalPut("Q")).isRight)
+    assert(g(s).put("zz-p", com.histmersion.api.automation.Goal.Put("P")).isRight)
+    assert(g(s).put("zz-q", com.histmersion.api.automation.Goal.Put("Q")).isRight)
     assertEquals(g(s).planAndBudget("zz-none"), None)
     assertEquals(g(s).planAndBudget("zz-p"), Some((None, None)))
     g(s).setPlan("zz-p", """{"goal":"zz-p"}""")
@@ -102,7 +108,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("schedules not moved yet: one per goal and kind, the next due first; removed, or taken out to move") { s =>
-    List("zz-s1", "zz-s2").foreach(x => assert(g(s).put(x, GoalPut(x)).isRight))
+    List("zz-s1", "zz-s2").foreach(x => assert(g(s).put(x, com.histmersion.api.automation.Goal.Put(x)).isRight))
     val t = Instant.parse("2026-11-02T03:00:00Z")
     g(s).setSchedule("zz-s2", ScheduleKind.Currency, "@weekly", enabled = true, None, None)
     g(s).setSchedule("zz-s1", ScheduleKind.Currency, "@daily", enabled = true, Some(BigDecimal(1)), Some(t))
@@ -128,7 +134,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
 
   stest("a page of goals by slug, of one status, with the total and the next offset") { s =>
     List("zz-c" -> "active", "zz-a" -> "planned", "zz-b" -> "active").foreach((slug, st) =>
-      assert(g(s).put(slug, GoalPut(slug.toUpperCase, st)).isRight)
+      assert(g(s).put(slug, com.histmersion.api.automation.Goal.Put(slug.toUpperCase, st)).isRight)
     )
     val first = g(s).page(None, 2, 0)
     assertEquals(
@@ -140,23 +146,39 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("a patch changes what it names, keeps a stored bound given the other alone, clears a cap of 0") { s =>
-    assert(g(s).put("zz-p", GoalPut("P", periodStart = Some(-2000), periodEnd = Some(-1000))).isRight)
-    assert(g(s).patch("zz-p", GoalPatch(title = Some("P2"), tags = Some(List("t")), periodEnd = Some(-1500))).isRight)
+    assert(
+      g(s)
+        .put("zz-p", com.histmersion.api.automation.Goal.Put("P", periodStart = Some(-2000), periodEnd = Some(-1000)))
+        .isRight
+    )
+    assert(
+      g(s)
+        .patch(
+          "zz-p",
+          com.histmersion.api.automation.Goal.Patch(title = Some("P2"), tags = Some(List("t")), periodEnd = Some(-1500))
+        )
+        .isRight
+    )
     assertEquals(
       bare(s, "zz-p").map(x => (x.title, x.tags, x.periodStart, x.periodEnd)),
       Some(("P2", List("t"), Some(-2000L), Some(-1500L)))
     )
-    assert(g(s).patch("zz-p", GoalPatch(budgetUsd = Some(3.5))).isRight)
+    assert(g(s).patch("zz-p", com.histmersion.api.automation.Goal.Patch(budgetUsd = Some(3.5))).isRight)
     assertEquals(g(s).planAndBudget("zz-p").flatMap(_._2), Some(BigDecimal(3.5)))
-    assert(g(s).patch("zz-p", GoalPatch(budgetUsd = Some(0))).isRight)
+    assert(g(s).patch("zz-p", com.histmersion.api.automation.Goal.Patch(budgetUsd = Some(0))).isRight)
     assertEquals(g(s).planAndBudget("zz-p").flatMap(_._2), None)
-    assert(g(s).patch("zz-none", GoalPatch(title = Some("x"))).left.exists(_.message.contains("zz-none")))
+    assert(
+      g(s)
+        .patch("zz-none", com.histmersion.api.automation.Goal.Patch(title = Some("x")))
+        .left
+        .exists(_.message.contains("zz-none"))
+    )
   }
 
   stest("a goal is deleted once; a rename moves its slug, keeps the old one, refuses a taken slug") { s =>
-    assert(g(s).put("zz-old", GoalPut("Old")).isRight)
-    assert(g(s).put("zz-other", GoalPut("Other")).isRight)
-    assert(g(s).put("zz-kid", GoalPut("Kid", parentSlug = Some("zz-old"))).isRight)
+    assert(g(s).put("zz-old", com.histmersion.api.automation.Goal.Put("Old")).isRight)
+    assert(g(s).put("zz-other", com.histmersion.api.automation.Goal.Put("Other")).isRight)
+    assert(g(s).put("zz-kid", com.histmersion.api.automation.Goal.Put("Kid", parentSlug = Some("zz-old"))).isRight)
     assert(g(s).link("zz-old", Goal.LinkKind.Query, "tin", None))
     assert(g(s).rename("zz-old", "zz-other").isLeft)
     assert(g(s).rename("zz-none", "zz-x").isLeft)
@@ -165,15 +187,15 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assertEquals(bare(s, "zz-new").map(_.title), Some("Old"))
     assertEquals(bare(s, "zz-kid").flatMap(_.parentSlug), Some("zz-new"))
     assertEquals(g(s).refs("zz-new", Goal.LinkKind.Query), List("tin"))
-    assert(g(s).put("zz-third", GoalPut("Third")).isRight)
+    assert(g(s).put("zz-third", com.histmersion.api.automation.Goal.Put("Third")).isRight)
     assert(g(s).rename("zz-third", "zz-old").left.exists(_.message.contains("old slug of 'zz-new'")))
     assert(g(s).delete("zz-other"))
     assert(!g(s).delete("zz-other"))
   }
 
   stest("the goals linking work-list items, an item's goals by title") { s =>
-    assert(g(s).put("zz-g1", GoalPut("Beta")).isRight)
-    assert(g(s).put("zz-g2", GoalPut("Alpha")).isRight)
+    assert(g(s).put("zz-g1", com.histmersion.api.automation.Goal.Put("Beta")).isRight)
+    assert(g(s).put("zz-g2", com.histmersion.api.automation.Goal.Put("Alpha")).isRight)
     assert(g(s).link("zz-g1", Goal.LinkKind.QueueItem, "7", None))
     assert(g(s).link("zz-g2", Goal.LinkKind.QueueItem, "7", None))
     assert(g(s).link("zz-g2", Goal.LinkKind.QueueItem, "8", None))

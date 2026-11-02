@@ -7,10 +7,10 @@ object PlacesMarkdown:
     val p = period(ps, pe)
     if p.isEmpty then kind else s"$kind · $p"
 
-  private[api] def kindWhen(s: PlaceSummary): String =
-    if s.dating == PlaceDating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else s"${s.kind} · ${s.when}"
+  private[api] def kindWhen(s: Place.Summary): String =
+    if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else s"${s.kind} · ${s.when}"
 
-  def places(rows: Vector[PlaceHit], asOf: Option[Long] = None): String =
+  def places(rows: Vector[Place.Hit], asOf: Option[Long] = None): String =
     if rows.isEmpty then "_No matching places._"
     else
       val items = rows.map { h =>
@@ -21,7 +21,7 @@ object PlacesMarkdown:
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
-  def placeTree(rows: Vector[PlaceTreeRow]): String =
+  def placeTree(rows: Vector[Place.TreeRow]): String =
     if rows.isEmpty then "_No hierarchy._"
     else
       rows
@@ -31,14 +31,14 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeImport(r: PlaceImportResult): String =
+  def placeImport(r: Place.ImportResult): String =
     val head = r.job.fold(s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)")(id =>
       s"job `$id` started (`histmersion jobs $id` follows it)"
     )
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
-  def gazetteerSources(rows: List[GazetteerSourceInfo]): String =
+  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
     if rows.isEmpty then "_No external gazetteer sources: no pinned extracts and no LPF files._"
     else
       val head =
@@ -52,7 +52,7 @@ object PlacesMarkdown:
       }
       (head :: body).mkString("\n")
 
-  def placeNameChanged(r: PlaceNameChanged): String =
+  def placeNameChanged(r: Place.NameChanged): String =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
     val what =
       if !r.added then s"removed the name **${r.name}**$lang from"
@@ -70,15 +70,15 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeOverrideChanged(r: PlaceOverrideChanged): String =
+  def placeOverrideChanged(r: Place.OverrideChanged): String =
     val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}"
     else s"period ${r.periodBefore} → ${r.periodAfter}"
     val point = (r.latBefore, r.lonBefore, r.latAfter, r.lonAfter) match
       case (Some(a), Some(b), Some(c), Some(d)) if a != c || b != d =>
-        s", point ${PlaceOverrides.pointText(a, b)} → ${PlaceOverrides.pointText(c, d)} (" +
+        s", point ${Place.Overrides.pointText(a, b)} → ${Place.Overrides.pointText(c, d)} (" +
           String.format(java.util.Locale.ROOT, "%.0f km", Geocode.distanceKm(b, a, d, c)) + ")"
-      case (_, _, Some(c), Some(d)) => s", point ${PlaceOverrides.pointText(c, d)}"
+      case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}"
       case _                        => ""
     val head =
       if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
@@ -86,7 +86,7 @@ object PlacesMarkdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  def placeGone(r: PlaceGone): String =
+  def placeGone(r: Place.Gone): String =
     val head = r.into match
       case Some(into) =>
         s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
@@ -94,37 +94,37 @@ object PlacesMarkdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  def placeOverrides(rows: List[PlaceOverride]): String =
+  def placeOverrides(rows: List[Place.Override]): String =
     if rows.isEmpty then "_No place has a kind, period or point set by hand._"
     else
       s"${rows.size} place(s) with a kind, period or point set by hand:\n\n" + rows
         .map { r =>
-          val pt = for la <- r.lat; lo <- r.lon yield s"point ${PlaceOverrides.pointText(la, lo)}"
+          val pt = for la <- r.lat; lo <- r.lon yield s"point ${Place.Overrides.pointText(la, lo)}"
           val set =
-            r.kind.toList ++ Option.when(r.periodSet)(PlaceOverrides.periodText(r.periodStart, r.periodEnd)).toList ++
+            r.kind.toList ++ Option.when(r.periodSet)(Place.Overrides.periodText(r.periodStart, r.periodEnd)).toList ++
               pt.toList
           val srcPt = if pt.isEmpty then ""
           else
             (for la <- r.sourceLat; lo <- r.sourceLon
-            yield s", point ${PlaceOverrides.pointText(la, lo)}").getOrElse(", no point")
-          val src = s"${r.sourceKind}, ${PlaceOverrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt"
+            yield s", point ${Place.Overrides.pointText(la, lo)}").getOrElse(", no point")
+          val src = s"${r.sourceKind}, ${Place.Overrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt"
           s"- **${r.label}** `${r.placeId}`: ${set.mkString(", ")} _(the source says: $src)_" +
             r.reason.fold("")(w => s" — $w")
         }
         .mkString("\n")
 
-  def placeAdded(p: PlaceSummary): String =
+  def placeAdded(p: Place.Summary): String =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
       p.source.fold("")(src => s" — source: $src") +
       "\n\nIt is this collection's own place (carried in a bundle, never touched by a re-seed). " +
       "Run `histmersion places rebuild` to match findings to it."
 
-  def placeRebuild(r: PlaceRebuildResult): String =
+  def placeRebuild(r: Place.RebuildResult): String =
     s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated"
 
-  def place(d: PlaceCard, tree: Vector[PlaceTreeRow] = Vector.empty): String =
+  def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
     val header = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
@@ -134,12 +134,12 @@ object PlacesMarkdown:
       d.siteType.flatMap(SiteTypes.get).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
-    val dating = if d.datedByFindings then s"  \n**Dating:** ${PlaceTimeBasis.FindingsNote}" else ""
+    val dating = if d.datedByFindings then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
     val names = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
-    def list(title: String, xs: List[PlaceSummary]) =
+    def list(title: String, xs: List[Place.Summary]) =
       if xs.isEmpty then ""
       else
         s"\n\n**$title**\n" +
@@ -161,7 +161,7 @@ object PlacesMarkdown:
       "\n\n**External links**\n" +
         d.links
           .map { l =>
-            val id = PlaceLink.url(l.scheme, l.externalId).fold(s"`${l.externalId}`")(u => s"[${l.externalId}]($u)")
+            val id = Place.Link.url(l.scheme, l.externalId).fold(s"`${l.externalId}`")(u => s"[${l.externalId}]($u)")
             s"- ${l.scheme}: $id (${l.relation})"
           }
           .mkString("\n")
@@ -177,7 +177,7 @@ object PlacesMarkdown:
     val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
     val rec = d.record
     val record =
-      rec.dateSource.map(s => s"  \n**Dates from:** ${PlaceRecord.dateSourceText(s)}").getOrElse("") +
+      rec.dateSource.map(s => s"  \n**Dates from:** ${Place.Record.dateSourceText(s)}").getOrElse("") +
         (if rec.periods.isEmpty then "" else s"  \n**Time periods:** ${rec.periods.mkString(", ")}") +
         (if rec.designations.isEmpty then ""
          else

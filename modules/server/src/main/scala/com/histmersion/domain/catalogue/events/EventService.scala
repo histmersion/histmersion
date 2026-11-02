@@ -2,13 +2,11 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.catalogue.EventEntry
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{
-  CorrectionTarget,
   EventCatalogueRef,
   EventFields,
   EventGeo,
-  EventGeoList,
   EventLeads,
   EventList,
   EventPatch,
@@ -26,6 +24,8 @@ import hearth.kindlings.optics.syntax.*
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Correction
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -37,7 +37,7 @@ trait EventService:
   /** The events `selection` selects that the map draws (placed, dated well enough), at most `limit`, with the regional
     * ones' outlines simplified to `tolerance` degrees; the unplaced and the imprecisely dated counted.
     */
-  def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeoList
+  def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeo.List
 
   /** The events of `ids` the map draws, by id. */
   def geoOf(ids: List[String]): Map[String, EventGeo]
@@ -60,10 +60,10 @@ trait EventService:
   def put(id: String, in: EventPut): Unit
 
   /** Change the fields `p` sets; on one an import created, each changed field is recorded as a correction. */
-  def patch(id: String, p: EventPatch): Either[ApiError, Unit]
+  def patch(id: String, p: EventPatch): Either[Api.Error, Unit]
 
   /** A new id; the old one stays an alias, what names the event follows. */
-  def rename(from: String, to: String): Either[ApiError, Unit]
+  def rename(from: String, to: String): Either[Api.Error, Unit]
 
   /** The id an old id was renamed to; `None` for a live id, or nothing. */
   def renamedTo(id: String): Option[String]
@@ -73,12 +73,12 @@ trait EventService:
 object EventService:
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
-  private def missing(id: String) = ApiError(s"No event '$id'", Some(Write.CodeNotFound))
+  private def missing(id: String) = Api.Error(s"No event '$id'", Some(Write.CodeNotFound))
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
     def list(selection: EventSelection, limit: Int, offset: Int): EventList =
       db.read(EventRepo.list(selection.sql(related), limit, offset))
-    def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeoList =
+    def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
     def geoOf(ids: List[String]): Map[String, EventGeo] = db.read(EventRepo.geoOf(ids))
     def get(id: String): Option[EventEntry] = db.read(EventRepo.get(id))
@@ -86,8 +86,8 @@ object EventService:
     def catalogueRefs(id: String): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: String): Option[String] = db.read(EventRepo.geometryError(geojson))
     def put(id: String, in: EventPut): Unit = db.transact(EventRepo.put(id, in))
-    def patch(id: String, p: EventPatch): Either[ApiError, Unit] = db.transact(EventRepo.patch(id, p))
-    def rename(from: String, to: String): Either[ApiError, Unit] = db.transact(EventRepo.rename(from.trim, to.trim))
+    def patch(id: String, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(id, p))
+    def rename(from: String, to: String): Either[Api.Error, Unit] = db.transact(EventRepo.rename(from.trim, to.trim))
     def renamedTo(id: String): Option[String] = db.read(EventRepo.renamedTo(id))
     def delete(id: String): Boolean = db.transact(EventRepo.delete(id))
 
@@ -176,12 +176,12 @@ object EventService:
 
     private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_ <= EventPrecision.ApproximateUpTo)
 
-    def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeoList =
+    def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeo.List =
       val s = state.get
       val listed = ordered(s.events.filter(selects(s, selection)))
       val placed = listed.filter(_.geometry.isDefined)
       val items = placed.filter(preciseEnough).flatMap(drawn(s, _)).take(limit.max(1)).toList
-      EventGeoList(
+      EventGeo.List(
         items,
         listed.count(e => e.geometry.isEmpty && preciseEnough(e)),
         placed.count(e => e.uncertainty.exists(_ > EventPrecision.ApproximateUpTo))
@@ -210,7 +210,7 @@ object EventService:
           e.participants.sortBy(p => (p.role, p.actor)),
           e.wikidata,
           corrections = s.corrections
-            .filter(c => c.targetKind == CorrectionTarget.Event && c.targetId == id)
+            .filter(c => c.targetKind == Correction.Target.Event && c.targetId == id)
             .sortBy(_.field)
             .toList
         )
@@ -279,18 +279,18 @@ object EventService:
         upstream: io.circe.Json
     ): CatalogueState =
       val others =
-        s.corrections.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id && c.field == field)
+        s.corrections.filterNot(c => c.targetKind == Correction.Target.Event && c.targetId == id && c.field == field)
       if value == upstream then s.modify(_.corrections).setTo(others)
       else
         val n = s.lastCorrectionId + 1
         val c = com.histmersion.api.catalogue.Correction(
           n,
-          CorrectionTarget.Event,
+          Correction.Target.Event,
           id,
           field,
           value.noSpaces,
           upstream.noSpaces,
-          com.histmersion.api.catalogue.CorrectionStatus.Active,
+          com.histmersion.api.catalogue.Correction.Status.Active,
           Some(provider)
         )
         s.modify(_.corrections).setTo(others :+ c).modify(_.lastCorrectionId).setTo(n)
@@ -326,7 +326,7 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
-    def patch(id: String, p: EventPatch): Either[ApiError, Unit] =
+    def patch(id: String, p: EventPatch): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
         val _ = state.updateAndGet { s =>
@@ -375,16 +375,17 @@ object EventService:
         }
         Right(())
 
-    def rename(from: String, to: String): Either[ApiError, Unit] =
+    def rename(from: String, to: String): Either[Api.Error, Unit] =
       val (oldId, newId) = (from.trim, to.trim)
       val s = state.get
       def exists(i: String) = s.events.exists(_.id == i)
       val aliasOf = s.eventAliases.get(newId)
       if !exists(oldId) then Left(missing(oldId))
-      else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
+      else if exists(newId) then
+        Left(Api.Error(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
       else if aliasOf.exists(_ != oldId) then
         Left(
-          ApiError(
+          Api.Error(
             s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
             Some(Write.CodeInvalid)
           )
@@ -412,7 +413,7 @@ object EventService:
               )
             )
             .modify(_.corrections)
-            .using(_.map(c => if c.targetKind == CorrectionTarget.Event then c.modify(_.targetId).using(ren) else c))
+            .using(_.map(c => if c.targetKind == Correction.Target.Event then c.modify(_.targetId).using(ren) else c))
             .modify(_.catalogueRecords)
             .using(_.map((e, r) => (ren(e), r)))
             .modify(_.eventAliases)
@@ -432,6 +433,6 @@ object EventService:
             _.filterNot(_.id == id).map(e => e.modify(_.edges).using(_.filterNot(g => g.srcId == id || g.dstId == id)))
           )
           .modify(_.corrections)
-          .using(_.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id))
+          .using(_.filterNot(c => c.targetKind == Correction.Target.Event && c.targetId == id))
       )
       had

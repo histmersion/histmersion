@@ -1,6 +1,5 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.exchange.{BundleAsset, BundleAssetLink, BundleSource}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{BundlePlan, PlanFolds, PlanRelabels, PlanRules, PlanRun}
@@ -19,8 +18,10 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
 
   private val assetSource = in.foreign.assets.map(a => a.uid -> a.sourceUid).toMap
   private val linkAsset = in.foreign.assetLinks.map(l => l.uid -> l.assetUid).toMap
-  private val assetLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundleAsset]
-  private val linkLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundleAssetLink]
+  private val assetLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Asset]
+  private val linkLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.AssetLink]
   private val renames = scala.collection.mutable.Map.empty[UUID, List[(String, String)]]
   private def assetIn(es: BundleEntities, u: UUID) = es.assets.find(_.uid == u).get
   private def renamed(source: UUID, from: String, to: String): Unit =
@@ -32,8 +33,8 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     case _                     => None
 
   override def foldPairFirst(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       keepsBundleBody: Boolean,
       folds: PlanFolds
   ): Unit =
@@ -95,9 +96,14 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.assets)
-      .setTo(MergePlanner.replaced(es0.assets, _.uid, assetLine, es0, (_: BundleAsset) => true))
+      .setTo(
+        MergePlanner.replaced(es0.assets, _.uid, assetLine, es0, (_: com.histmersion.api.exchange.Bundle.Asset) => true)
+      )
       .modify(_.assetLinks)
-      .setTo(MergePlanner.replaced(es0.assetLinks, _.uid, linkLine, es0, (_: BundleAssetLink) => true))
+      .setTo(
+        MergePlanner
+          .replaced(es0.assetLinks, _.uid, linkLine, es0, (_: com.histmersion.api.exchange.Bundle.AssetLink) => true)
+      )
 
   override def bodyRenames: Map[UUID, List[(String, String)]] = renames.toMap
 

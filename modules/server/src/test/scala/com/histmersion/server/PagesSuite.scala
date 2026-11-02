@@ -3,26 +3,17 @@ package com.histmersion.server
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.library.{FindingRow, SourceRef}
-import com.histmersion.api.research.{
-  ArticleRef,
-  ArticleReviewView,
-  ArticleRow,
-  CitedSource,
-  ReviewBadge,
-  ReviewFinding,
-  ReviewGoal,
-  ReviewRound,
-  ReviewState
-}
+import com.histmersion.api.research.{CitedSource, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
+import com.histmersion.api.research.Article
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.
   */
 class PagesSuite extends munit.FunSuite:
 
-  private val cline = SourceRef(
+  private val cline = com.histmersion.api.library.Source.Ref(
     "cline2014_year",
     Some("10.1515/9781400849987"),
     List("Eric H. Cline"),
@@ -30,7 +21,7 @@ class PagesSuite extends munit.FunSuite:
     "1177 BC: The Year Civilization Collapsed",
     Source.Status.Current
   )
-  private val drews = SourceRef(
+  private val drews = com.histmersion.api.library.Source.Ref(
     "drews1993_end",
     None,
     List("Robert Drews"),
@@ -38,7 +29,7 @@ class PagesSuite extends munit.FunSuite:
     "The End of the Bronze Age",
     Source.Status.Contested
   )
-  private val topic = ArticleRef("bronze_age_collapse", "The Bronze Age Collapse", Some("Around 1200 BCE."))
+  private val topic = Article.Ref("bronze_age_collapse", "The Bronze Age Collapse", Some("Around 1200 BCE."))
   private val links: String => Option[LinkTarget] =
     Map[String, LinkTarget](
       "cline2014_year" -> cline,
@@ -96,7 +87,7 @@ class PagesSuite extends munit.FunSuite:
     }
 
   test("a finding shows its badge, place and period"):
-    val f = FindingRow(
+    val f = Finding.Row(
       "Ugarit destroyed",
       Some("Ugarit"),
       Some(35.78),
@@ -128,7 +119,7 @@ class PagesSuite extends munit.FunSuite:
 
   private def articlePage(body: String, cited: List[CitedSource] = Nil) =
     ArticlePage(
-      ArticleRow(
+      Article.Row(
         "sea_peoples",
         "The Sea Peoples",
         "concept",
@@ -242,7 +233,7 @@ class PagesSuite extends munit.FunSuite:
 
   // found in the browser: a finding's region printed raw ("south_caucasus (41.00, 45.00)")
   test("a finding's region, tags and significance reach the reader without underscores"):
-    val f = FindingRow(
+    val f = Finding.Row(
       "Proto-Indo-European split early",
       Some("south_caucasus"),
       Some(45.0),
@@ -281,7 +272,7 @@ class PagesSuite extends munit.FunSuite:
 
   // ── review ────────────────────────────────────────────────────────────────────────────────────
 
-  private val review = ArticleReviewView(
+  private val review = Article.ReviewView(
     "sea_peoples",
     ReviewBadge(
       ReviewState.MajorsOpen,

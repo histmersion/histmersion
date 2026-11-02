@@ -2,17 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.ApiError
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  CorrectionList,
-  EventCatalogueRef,
-  EventGeo,
-  EventGeoList,
-  EventList,
-  EventPatch,
-  EventPut
-}
+import com.histmersion.api.catalogue.{CatalogRecord, EventCatalogueRef, EventGeo, EventList, EventPatch, EventPut}
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
@@ -20,6 +10,8 @@ import com.histmersion.domain.library.search.FilterEventSources
 
 import com.augustnagro.magnum.{connect, transact}
 import javax.sql.DataSource
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Correction
 
 /** The events' store as a db suite writes and reads it: each call on a connection, or in a transaction, of its own. */
 object EventFixtures:
@@ -60,17 +52,17 @@ object EventFixtures:
       limit: Int,
       tolerance: Double,
       more: EventSql.Narrow = EventSql.Narrow()
-  ): EventGeoList =
+  ): EventGeo.List =
     connect(ds)(EventRepo.geo(listWhere(filter, scope, text, kind, historicity, placeId, more), limit, tolerance))
 
   def geoOf(ds: DataSource, ids: List[String]): Map[String, EventGeo] = connect(ds)(EventRepo.geoOf(ids))
   def get(ds: DataSource, id: String): Option[com.histmersion.api.catalogue.EventEntry] =
     connect(ds)(EventRepo.get(id))
   def put(ds: DataSource, id: String, in: EventPut): Unit = transact(ds)(EventRepo.put(id, in))
-  def patch(ds: DataSource, id: String, p: EventPatch): Either[ApiError, Unit] = transact(ds)(EventRepo.patch(id, p))
-  def rename(ds: DataSource, from: String, to: String): Either[ApiError, Unit] =
+  def patch(ds: DataSource, id: String, p: EventPatch): Either[Api.Error, Unit] = transact(ds)(EventRepo.patch(id, p))
+  def rename(ds: DataSource, from: String, to: String): Either[Api.Error, Unit] =
     transact(ds)(EventRepo.rename(from.trim, to.trim))
-  def renameIn(from: String, to: String)(using com.augustnagro.magnum.DbCon): Either[ApiError, Unit] =
+  def renameIn(from: String, to: String)(using com.augustnagro.magnum.DbCon): Either[Api.Error, Unit] =
     EventRepo.rename(from, to)
   def renamedTo(ds: DataSource, id: String): Option[String] = connect(ds)(EventRepo.renamedTo(id))
   def delete(ds: DataSource, id: String): Boolean = transact(ds)(EventRepo.delete(id))
@@ -94,7 +86,7 @@ object EventFixtures:
       status: Option[String],
       limit: Int,
       offset: Int
-  ): CorrectionList = connect(ds)(CorrectionRepo.list(kind, id, status, limit, offset))
+  ): Correction.List = connect(ds)(CorrectionRepo.list(kind, id, status, limit, offset))
 
   def records(ds: DataSource, provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
     connect(ds)(EventImportRepo.records(provider))

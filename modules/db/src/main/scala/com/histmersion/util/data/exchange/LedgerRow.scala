@@ -1,10 +1,7 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
-  BundleImportResult,
-  BundleInstance,
-  BundleManifest,
   MergeApplyResult,
   MergeDecision,
   MergeDetail,
@@ -25,6 +22,7 @@ import com.histmersion.util.data.exchange.BundlePlan.Ledger
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.Api
 
 final private[exchange] case class LedgerRow(
     foreignUid: UUID,

@@ -25,8 +25,9 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
-import com.histmersion.api.media.{MediaImportRequest, MediaProviderInfo}
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.media.MediaImportRequest
+import com.histmersion.api.media.MediaProvider
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's
@@ -134,14 +135,14 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               PlaceId,
               "Zqplenae",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[142.0,-43]}""")
             ),
-            List(PlaceName("Zqplenae"), PlaceName("Zqplenai"))
+            List(Place.Name("Zqplenae"), Place.Name("Zqplenai"))
           )
         )
       )
@@ -221,7 +222,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(
       ps.last,
-      MediaProviderInfo(
+      MediaProvider.Info(
         Collection,
         "Zq portal objects",
         "places",
@@ -260,7 +261,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
           HttpResponse.BodyHandlers.ofString()
         )
         assertEquals(r.statusCode, 200, r.body)
-        val ps = decode[List[MediaProviderInfo]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
+        val ps = decode[List[MediaProvider.Info]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
         assertEquals(ps.map(_.name).last, Collection)
         assert(ps.find(_.name == "met").exists(p => p.builtin && p.plugin == "media-met"), ps.toString)
         assert(

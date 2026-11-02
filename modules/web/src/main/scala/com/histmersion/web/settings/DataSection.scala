@@ -7,19 +7,14 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.basemap.{
-  BasemapFetchQuery,
-  BasemapLayer,
-  BasemapLayerInfo,
-  BasemapRemoveQuery,
-  BasemapStatus
-}
-import com.histmersion.api.catalogue.{CatalogProviderInfo, GazetteerKind, GazetteerSourceInfo}
+import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.api.instance.{About, UiConfig}
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
-import com.histmersion.api.maintenance.{Storage, StorageReport}
-import com.histmersion.api.media.MediaProviderInfo
+import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.plugins.PluginState
+import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.media.MediaProvider
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under
@@ -36,10 +31,10 @@ object DataSection:
 
   def pane(ui: UiConfig): HtmlElement =
     val about = Var(Option.empty[About])
-    val basemap = Var(Option.empty[BasemapStatus])
-    val sources = Var(List.empty[GazetteerSourceInfo])
+    val basemap = Var(Option.empty[Basemap.Status])
+    val sources = Var(List.empty[Gazetteer.SourceInfo])
     val cats = Var(List.empty[CatalogProviderInfo])
-    val media = Var(List.empty[MediaProviderInfo])
+    val media = Var(List.empty[MediaProvider.Info])
     val starter = Starter()
     def reload(): Unit =
       ApiClient.about().foreach(a => about.set(Some(a)))
@@ -102,7 +97,7 @@ object DataSection:
             )
           ),
           children <-- sources.signal.map(
-            _.filter(_.kind != GazetteerKind.Lpf).map(s =>
+            _.filter(_.kind != Gazetteer.Kind.Lpf).map(s =>
               row(
                 s.title,
                 (s.licence.toList ++ s.places.map(n => Plural.count(n, "place")).toList).mkString(" · "),
@@ -203,14 +198,17 @@ object DataSection:
         }
       }
 
-  private def maps(b: BasemapStatus, starter: Starter): List[HtmlElement] =
+  private def maps(b: Basemap.Status, starter: Starter): List[HtmlElement] =
     def act(text: String, what: String, job: => Future[JobInfo], primary: Boolean) =
       starter.act(text, what, job, primary)
     val main =
-      b.layers.filter(l => Set(BasemapLayer.Vector.wire, BasemapLayer.Terrain.wire, BasemapLayer.Labels.wire)(l.layer))
-    val sea = b.layers.filter(_.layer == BasemapLayer.Bathymetry.wire)
-    def size(ls: List[BasemapLayerInfo]) = Backup.humanBytes(ls.filter(_.present).map(_.bytes).sum)
-    def when(ls: List[BasemapLayerInfo]) = ls.flatMap(_.fetchedAt).maxOption.map(t => s" · ${t.take(10)}").getOrElse("")
+      b.layers.filter(l =>
+        Set(Basemap.Layer.Vector.wire, Basemap.Layer.Terrain.wire, Basemap.Layer.Labels.wire)(l.layer)
+      )
+    val sea = b.layers.filter(_.layer == Basemap.Layer.Bathymetry.wire)
+    def size(ls: List[Basemap.LayerInfo]) = Backup.humanBytes(ls.filter(_.present).map(_.bytes).sum)
+    def when(ls: List[Basemap.LayerInfo]) =
+      ls.flatMap(_.fetchedAt).maxOption.map(t => s" · ${t.take(10)}").getOrElse("")
     val area = if b.bbox.trim.equalsIgnoreCase("world") then "the whole world" else b.bbox
     val removeAll = Var(false)
     List(
@@ -222,11 +220,11 @@ object DataSection:
           cls := (if main.exists(_.present) then "data-state" else "data-state data-state--off"),
           if main.exists(_.present) then s"Installed${when(main)}" else "Not downloaded"
         ),
-        act("Check for update", "basemap-check", ApiClient.basemapFetch(BasemapFetchQuery(dryRun = true)), false),
+        act("Check for update", "basemap-check", ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = true)), false),
         act(
           if main.exists(_.present) then "Update" else "Download",
           "basemap",
-          ApiClient.basemapFetch(BasemapFetchQuery()),
+          ApiClient.basemapFetch(Basemap.FetchQuery()),
           !main.exists(_.present)
         ),
         Option
@@ -238,7 +236,7 @@ object DataSection:
               disabled <-- Auth.writable.map(!_),
               onClick --> (_ =>
                 if removeAll.now() then
-                  ApiClient.basemapRemove(BasemapRemoveQuery("all")).foreach(_ => removeAll.set(false))
+                  ApiClient.basemapRemove(Basemap.RemoveQuery("all")).foreach(_ => removeAll.set(false))
                 else removeAll.set(true)
               )
             )
@@ -256,13 +254,13 @@ object DataSection:
         act(
           if sea.exists(_.present) then "Update" else "Download",
           "bathymetry",
-          ApiClient.basemapFetch(BasemapFetchQuery(layer = BasemapLayer.Bathymetry.wire)),
+          ApiClient.basemapFetch(Basemap.FetchQuery(layer = Basemap.Layer.Bathymetry.wire)),
           false
         )
       )
     )
 
-  private def disk(r: StorageReport): HtmlElement =
+  private def disk(r: Storage.Report): HtmlElement =
     val used = Storage.total(r.entries)
     val free = r.volumes.map(_.freeBytes).minOption.getOrElse(0L)
     val pct = share(used, free)

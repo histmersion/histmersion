@@ -6,7 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.catalogue.{Geocode, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{Geocode, Place}
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a finding only by an
@@ -65,7 +65,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
         pt(141.9, -47.1),
         properties = types("region")
       )
-    val _ = PlaceFixtures.upsertPlaces(ds, List(PlaceInput(precise, List(PlaceName(precise.label)))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(precise.label)))))
     val r =
       connect(ds)(
         PlaceFixtures.resolve("Zzrc Thessalia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)

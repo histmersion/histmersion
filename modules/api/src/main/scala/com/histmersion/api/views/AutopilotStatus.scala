@@ -5,8 +5,9 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.automation.Autopilot.{ApprovalRule, DrainInfo, FocusInfo, GoalProgress, ManagerBrief}
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
-import com.histmersion.api.library.{AcquireChecks, AcquireChecksMarkdown, UpstreamQuota, UpstreamQuotaMarkdown}
+import com.histmersion.api.library.{AcquireChecksMarkdown, UpstreamQuota, UpstreamQuotaMarkdown}
 import com.histmersion.api.given
+import com.histmersion.api.library.Acquire
 
 /** The autopilot as `GET /api/agents/autopilot` shows it: the automation's [[Autopilot.EngineStatus]], then the
   * library's upstreams' quotas and the acquisition list's re-check.
@@ -34,7 +35,7 @@ final case class AutopilotStatus(
     goalPlansWait: Option[String] = None,
     upstreams: List[UpstreamQuota] = Nil,
     /** Absent from an older server. */
-    acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
+    acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
 

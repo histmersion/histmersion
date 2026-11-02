@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
@@ -12,6 +11,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.JobListing
 
 import java.time.Instant
+import com.histmersion.api.Api
 
 /** What the library's workflows are given by the composition: the work lists, the write gate, the library's own
   * controllers, the jobs, and what they ask of the other domains — a place name's point, the stored sources an article
@@ -33,7 +33,7 @@ trait LibrarySite:
   def geocode(name: String, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution]
 
   /** The sources the body of article `slug` cites, as its links resolve (research's article); why not, when none. */
-  def articleSources(slug: String): Either[ApiError, List[String]]
+  def articleSources(slug: String): Either[Api.Error, List[String]]
 
   /** The stored sources article `slug` cites, its record's list (none when there is no such article). */
   def citedSources(slug: String): List[String]

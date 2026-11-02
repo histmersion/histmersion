@@ -4,20 +4,15 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.AttestationTarget
 
-import com.histmersion.api.{ApiError, Write}
-import com.histmersion.api.catalogue.{
-  Attestation,
-  AttestationDeleted,
-  AttestationList,
-  AttestationPatch,
-  AttestationPut
-}
+import com.histmersion.api.Write
+import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
 import java.util.Locale
+import com.histmersion.api.Api
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
   * event, a place, a source, an article) names it by its identifier now — `current` resolves an old one; a finding id
@@ -40,7 +35,7 @@ final class AttestationsControllers(
       targetId: Option[String],
       limit: Option[Int],
       offset: Option[Int]
-  ): AttestationList =
+  ): Attestation.List =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
     attestations.list(
       citekey.map(current(AliasKinds.SourceRecords, _)),
@@ -50,24 +45,24 @@ final class AttestationsControllers(
       offset.getOrElse(0)
     )
 
-  def get(id: Long): Either[ApiError, Attestation] =
-    attestations.get(id).toRight(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
+  def get(id: Long): Either[Api.Error, Attestation] =
+    attestations.get(id).toRight(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
 
   /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints would answer
     * both with a 500.
     */
-  def create(caller: Caller, in: AttestationPut): Either[ApiError, Attestation] =
+  def create(caller: Caller, in: Attestation.Put): Either[Api.Error, Attestation] =
     maintenance.guard("create_attestation"):
       val ck = current(AliasKinds.SourceRecords, in.citekey)
       for
-        t <- AttestationTarget.check(in.targetType).left.map(ApiError(_, Some(Write.CodeInvalid)))
+        t <- AttestationTarget.check(in.targetType).left.map(Api.Error(_, Some(Write.CodeInvalid)))
         _ <- Either.cond(sources.canonical(ck).isDefined, (), Write.notFound(ck))
       yield attestations.create(in.copy(citekey = ck, targetType = t, targetId = refId(t, in.targetId)))
 
-  def patch(caller: Caller, id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
+  def patch(caller: Caller, id: Long, p: Attestation.Patch): Either[Api.Error, Attestation] =
     maintenance.guard("patch_attestation")(attestations.patch(id, p))
 
-  def delete(caller: Caller, id: Long): Either[ApiError, AttestationDeleted] =
+  def delete(caller: Caller, id: Long): Either[Api.Error, Attestation.Deleted] =
     maintenance.guard("delete_attestation"):
-      if attestations.delete(id) then Right(AttestationDeleted(id, true))
-      else Left(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
+      if attestations.delete(id) then Right(Attestation.Deleted(id, true))
+      else Left(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))

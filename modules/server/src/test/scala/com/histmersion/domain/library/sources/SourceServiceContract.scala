@@ -9,14 +9,11 @@ import com.histmersion.api.library.{
   DeletePart,
   Edge,
   Finding,
-  FindingInput,
   FindingsPatch,
   MetadataField,
   MetadataPatch,
   NeighborTarget,
-  Source,
-  SourceAlias,
-  SourcePatch
+  Source
 }
 
 /** What the library's sources answer, the same on the database and in memory: a source written whole and in part, its
@@ -111,10 +108,10 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val token = s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate"), finding(A, 1, "the walls"))), Me)
     val patched = s.sources.patch(
       A,
-      SourcePatch(
+      Source.Patch(
         metadata = Some(MetadataPatch(title = Some("Walls, revised"), clear = List(MetadataField.Venue))),
         tags = Some(ListPatch(add = List("zq-new"), remove = List("zq-oracle"))),
-        findings = Some(FindingsPatch(add = List(FindingInput("a tower")), remove = List(s"$A#0"))),
+        findings = Some(FindingsPatch(add = List(Finding.Input("a tower")), remove = List(s"$A#0"))),
         ifUpdatedAt = Some(token)
       ),
       Me
@@ -128,11 +125,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     )
     assertEquals(rows.size, 2)
     assertEquals(
-      s.sources.patch(A, SourcePatch(summary = Some("x"), ifUpdatedAt = Some(token)), Me).left.map(_.code),
+      s.sources.patch(A, Source.Patch(summary = Some("x"), ifUpdatedAt = Some(token)), Me).left.map(_.code),
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(
-      s.sources.patch("zqnone2000_x", SourcePatch(summary = Some("x")), Me).left.map(_.code),
+      s.sources.patch("zqnone2000_x", Source.Patch(summary = Some("x")), Me).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
   }
@@ -157,7 +154,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       val _ = s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate")), List(Edge(A, B, "refutes"))), Me)
       val _ =
         s.sources.put(source(C, "Kings", edges = List(Edge(C, A, "challenges"), Edge(C, "zqa1991_walls", "cites"))), Me)
-      val _ = s.sources.patch(B, SourcePatch(notes = Some(s"See [[$A|the walls]] and [[zqa1990]].")), Me)
+      val _ = s.sources.patch(B, Source.Patch(notes = Some(s"See [[$A|the walls]] and [[zqa1990]].")), Me)
       assertEquals(s.sources.rename(A, "zqa1990_walls", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       assertEquals(s.sources.rename(A, B, Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       assertEquals(s.sources.rename(A, "zqwalls", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
@@ -172,7 +169,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       )
       assertEquals(s.sources.current(A), Some("zqa1991_walls"))
       assertEquals(s.sources.aliasOf(A), Some("zqa1991_walls"))
-      assertEquals(s.sources.aliases, List(SourceAlias(A, "zqa1991_walls")))
+      assertEquals(s.sources.aliases, List(Source.Alias(A, "zqa1991_walls")))
       assertEquals(s.sources.load("zqa1991_walls").get.findings.map(_.id), List("zqa1991_walls#0"))
       assertEquals(s.sources.load(B).get.notes, Some("See [[zqa1991_walls|the walls]] and [[zqa1991_walls]]."))
       assertEquals(
@@ -182,7 +179,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       assertEquals(s.sources.rename(A, "zqx2000_x", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       // renamed back: the alias goes
       assert(s.sources.rename("zqa1991_walls", A, Me).isRight)
-      assertEquals(s.sources.aliases, List(SourceAlias("zqa1991_walls", A)))
+      assertEquals(s.sources.aliases, List(Source.Alias("zqa1991_walls", A)))
   }
 
   stest("a delete: refused for an old citekey and an unknown source; what goes counted, the edges to it parked") { s =>

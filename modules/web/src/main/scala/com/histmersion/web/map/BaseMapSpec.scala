@@ -1,9 +1,9 @@
 package com.histmersion.web.map
 
-import com.histmersion.api.basemap.BasemapStatus
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.basemap.Basemap
 
 /** A base map, as the app describes it; the adapter makes its library's style of it. */
 enum BaseMapSpec:
@@ -17,7 +17,7 @@ enum BaseMapSpec:
     */
   case Vector(
       style: VectorStyle,
-      status: BasemapStatus,
+      status: Basemap.Status,
       lang: String,
       names: Boolean,
       contours: Boolean,

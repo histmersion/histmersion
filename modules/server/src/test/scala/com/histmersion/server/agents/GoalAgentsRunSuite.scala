@@ -13,7 +13,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
@@ -21,22 +21,20 @@ import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 import com.histmersion.db.*
-import com.histmersion.api.automation.{AgentsApi, Goal, GoalPut}
+import com.histmersion.api.automation.{AgentsApi, Goal}
 import com.histmersion.api.library.{
   Assessment,
   CandidateSweep,
   DiscoverResult,
   FollowupRow,
   FollowupsResult,
-  IngestReport,
   MetadataPatch,
-  SourceCandidate,
-  SourcePatch,
-  SourcePut,
   WorkRef
 }
-import com.histmersion.api.research.{ArticleFilter, ArticleMarkdown, ArticlePatch, ArticlePut}
+import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.research.Article
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:
@@ -59,11 +57,11 @@ final class StubUpstream extends AgentUpstream:
     Right(DiscoverResult(query, ws.size, ws))
 
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
-  @volatile var onIngest: String => Either[String, IngestReport] = _ => Left("not stubbed")
+  @volatile var onIngest: String => Either[String, Ingest.Report] = _ => Left("not stubbed")
   override def ingestLegal(doi: String) = { calls.add(s"ingest $doi"); onIngest(doi) }
 
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
-  @volatile var sweepFinds: Map[String, List[SourceCandidate]] = Map.empty
+  @volatile var sweepFinds: Map[String, List[com.histmersion.api.library.Source.Candidate]] = Map.empty
   private val marked = java.util.concurrent.ConcurrentHashMap[Long, String]()
   override def sweepCandidates(goal: String, dryRun: Boolean) =
     calls.add(s"sweep $goal")
@@ -151,7 +149,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       h.library.sources
         .put(
           Ck,
-          SourcePut(
+          com.histmersion.api.library.Source.Put(
             title = "Bronze Age tin",
             year = Some(2019),
             topics = List("zzagent_tin"),
@@ -168,7 +166,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       h.library.sources
         .put(
           Ck2,
-          SourcePut(
+          com.histmersion.api.library.Source.Put(
             title = "Tin isotopes",
             year = Some(2024),
             topics = List("zzagent_tin"),
@@ -179,10 +177,21 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
+        .patch(
+          Ck2,
+          com.histmersion.api.library.Source
+            .Patch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested))))
+        )
         .isRight
     )
-    assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
+    assert(
+      h.goals
+        .put(
+          Goal,
+          com.histmersion.api.automation.Goal.Put("Zz tin in the Bronze Age", notes = Some("where the tin came from"))
+        )
+        .isRight
+    )
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
@@ -382,7 +391,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     // #958: the article records the run's filter, so its Not used list and Method note are generated
     assertEquals(
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
-      Some(ArticleFilter(topics = List("zzagent_tin")))
+      Some(Article.Filter(topics = List("zzagent_tin")))
     )
     val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message), identity)
     assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
@@ -435,7 +444,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val current =
       s"Tin reached the Aegean [[$Ck]].\n\n## Disagreements\n\nNone recorded [[$Ck]].\n\n## Open questions\n\nOpen [[$Ck]]."
     val (a, h, _) = handlers(c); seed(h)
-    assert(h.research.articles.put(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
+    assert(h.research.articles.put(Slug, Article.Put("Zz tin", "concept", current)).isRight)
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
       Seq(
@@ -453,7 +462,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(connect(ds)(AgentRepo.steps(run.id, 10)).map(_.name).count(_.startsWith("extract")), 1)
     // someone edits the article while the draft waits
     val theirs = current.replace("None recorded", "Nothing recorded")
-    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(theirs))).isRight)
+    assert(h.research.articles.patch(Slug, Article.Patch(body = Some(theirs))).isRight)
     val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get.id
     assert(a.decide(id, "approve", DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
@@ -478,7 +487,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         )
       )
     seed(h)
-    assert(h.research.articles.put(Slug, ArticlePut("Zz tin", "concept", current)).isRight)
+    assert(h.research.articles.put(Slug, Article.Put("Zz tin", "concept", current)).isRight)
     val added = s"A newer study is contested: [[$Ck2]] (contested) places the tin in Central Asia."
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
@@ -497,7 +506,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     // #958: an article that recorded no filter records the run's
     assertEquals(
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
-      Some(ArticleFilter(topics = List("zzagent_tin")))
+      Some(Article.Filter(topics = List("zzagent_tin")))
     )
 
   test("compile-article: with article-publish = auto the run does not wait (still never overwrites a slug)"):

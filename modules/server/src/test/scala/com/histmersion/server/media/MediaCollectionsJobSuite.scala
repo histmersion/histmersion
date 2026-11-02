@@ -20,7 +20,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{AssetKind, MediaImportReport, MediaItem, MediaProvider}
 
@@ -128,17 +128,17 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place("zqmc_site", "Zqmcenae", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
-            List(PlaceName("Zqmcenae"), PlaceName("Zqmcenai"))
+            List(Place.Name("Zqmcenae"), Place.Name("Zqmcenai"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("zqmc_thebai_a", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
-            List(PlaceName("Zqmc Thebai"))
+            List(Place.Name("Zqmc Thebai"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("zqmc_thebai_b", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
-            List(PlaceName("Zqmc Thebai"))
+            List(Place.Name("Zqmc Thebai"))
           )
         )
       )

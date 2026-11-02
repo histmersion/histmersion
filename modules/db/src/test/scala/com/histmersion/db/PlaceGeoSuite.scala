@@ -5,7 +5,7 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Migrate, Param, Sql}
-import com.histmersion.api.catalogue.{GeoTime, Period, Place, PlaceInput}
+import com.histmersion.api.catalogue.{GeoTime, Period, Place}
 
 /** The map layer draws each state ONCE (`PlaceFixtures.geoJson`): pure checks of the query, and — against a disposable
   * Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E, 36–41°S, where no other
@@ -162,7 +162,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   private def box(a: Double, b: Double, c: Double, d: Double) =
     s"""{"type":"Polygon","coordinates":[[[$a,$b],[$c,$b],[$c,$d],[$a,$d],[$a,$b]]]}"""
   private def polity(id: String, label: String, g: String, from: Long, to: Long, method: Option[String]) =
-    PlaceInput(
+    Place.Input(
       Place(
         id,
         label,
@@ -320,7 +320,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   test("V090: the shape columns are generated from the row, follow every write, and the web outline is simplified"):
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     import com.augustnagro.magnum.*
-    val round = PlaceInput(
+    val round = Place.Input(
       Place(
         "zzs_round",
         "The Kingdom of Zzs-Round (East)",
@@ -332,7 +332,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       Nil
     )
     val tiny = polity("zzs_tiny", "Zzs City", box(158.9, -38.05, 158.95, -38.0), 3000, 3100, None)
-    val dot = PlaceInput(
+    val dot = Place.Input(
       Place(
         "zzs_dot",
         "Zzs Dot",
@@ -419,7 +419,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   test("sites whose label names nothing are not drawn; a label that says more is"):
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     def site(id: String, label: String) =
-      PlaceInput(
+      Place.Input(
         Place(
           id,
           label,
@@ -452,7 +452,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     )
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     def site(id: String, props: Option[String]) =
-      PlaceInput(
+      Place.Input(
         Place(
           id,
           "Zzqmodern",

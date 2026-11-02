@@ -28,7 +28,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, Queue}
-import com.histmersion.api.library.{Assessment, MetadataPatch, RefsResult, SourcePatch, SourcePut, WorkRef}
+import com.histmersion.api.library.{Assessment, MetadataPatch, RefsResult, WorkRef}
 import com.histmersion.domain.library.Source
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
@@ -130,7 +130,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(h: ServerWiring, body: String = Body): Unit =
-    val r = h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(body)))
+    val r = h.library.sources
+      .put(Ck, com.histmersion.api.library.Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(body)))
     assert(r.isRight, r)
 
   private def startAndRun(a: AgentsHandlers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
@@ -397,7 +398,11 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("enrich-source P2: metadata compared upstream, refs and assess run, the acquisition item ticked off"):
     val c = ScriptedClient(Model); happyScripts(c)
     val (a, h) = handlers(c); seed(h)
-    assert(h.library.sources.patch(Ck, SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"))))).isRight)
+    assert(
+      h.library.sources
+        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz")))))
+        .isRight
+    )
     val up =
       FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2020)), retracted = false)
     a.attach(up)
@@ -422,7 +427,11 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(notesJson))
     )
     val (a, h) = handlers(c); seed(h)
-    assert(h.library.sources.patch(Ck, SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"))))).isRight)
+    assert(
+      h.library.sources
+        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz")))))
+        .isRight
+    )
     a.attach(FakeUpstream(WorkRef(doi = Some("10.1/zz")), retracted = true))
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
@@ -602,7 +611,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.library.sources
         .patch(
           Ck,
-          SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(Source.Status.Current))))
+          com.histmersion.api.library.Source
+            .Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(Source.Status.Current))))
         )
         .isRight
     )

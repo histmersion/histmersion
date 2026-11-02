@@ -36,7 +36,7 @@ object BookmarksCmd:
       TargetFlags
         .target(raw)
         .flatMap(t =>
-          c.call(PersonalApi.addBookmark)(BookmarkNew(t, label.map(BookmarkLabel(_)), title))
+          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title))
             .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
         )
     }

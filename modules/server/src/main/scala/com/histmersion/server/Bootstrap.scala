@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.{ApiError, Plural, Write}
+import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodOFetch, PeriodService, PeriodSources}
@@ -16,9 +16,12 @@ import com.histmersion.domain.catalogue.places.{
 import com.histmersion.util.storage.Location
 
 import java.nio.file.{Files, Path}
-import com.histmersion.api.catalogue.{GazetteerKind, GazetteerSourceInfo, PeriodImportResult, SkippedPeriod}
+import com.histmersion.api.catalogue.SkippedPeriod
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.catalogue.Period
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -91,24 +94,24 @@ final class Bootstrap(
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an upsert) and, with
     * `fetch`, the network sources in `init.fetch-sources`.
     */
-  def init(fetch: Boolean): Either[ApiError, JobInfo] =
+  def init(fetch: Boolean): Either[Api.Error, JobInfo] =
     maintenance.guard("init")(start(plan(fetch, onlyEmpty = false)))
 
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
-  def gazetteerSources: List[GazetteerSourceInfo] =
+  def gazetteerSources: List[Gazetteer.SourceInfo] =
     gazetteerImports.sources()
 
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
     */
-  def loadGazetteer(source: String, apply: Boolean): Either[ApiError, JobInfo] =
+  def loadGazetteer(source: String, apply: Boolean): Either[Api.Error, JobInfo] =
     maintenance.guard("places/load"):
-      GazetteerKind
+      Gazetteer.Kind
         .parse(source)
         .toRight(
-          ApiError(
+          Api.Error(
             s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})",
             Some(Write.CodeInvalid)
           )
@@ -125,7 +128,7 @@ final class Bootstrap(
       fetch = if fetch then cfg.init.sources else Nil
     )
 
-  private def start(p: InitPlan): Either[ApiError, JobInfo] =
+  private def start(p: InitPlan): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       Bootstrap.JobKind,
@@ -138,7 +141,7 @@ final class Bootstrap(
 
   private def run(id: String, p: InitPlan, note: String => Unit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
-    def withSkipped(r: PeriodImportResult): PeriodImportResult =
+    def withSkipped(r: Period.ImportResult): Period.ImportResult =
       if r.skippedCount > 0 then
         BackgroundJob.amendDetail(ds, id) { found =>
           val d = if found == JobDetail.empty then InitPlan.Detail(Some(p)) else found
@@ -179,16 +182,16 @@ final class Bootstrap(
   private def seedPlaces(note: String => Unit): Either[String, String] =
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note)
 
-  private def skippedNote(r: PeriodImportResult): String =
+  private def skippedNote(r: Period.ImportResult): String =
     if r.skippedCount == 0 then "" else s", ${r.skippedCount} skipped"
 
   private def fetchSource(
       name: String,
-      periods: PeriodImportResult => PeriodImportResult,
+      periods: Period.ImportResult => Period.ImportResult,
       check: Boolean = false,
       note: String => Unit = _ => ()
   ): Either[String, String] =
-    val gazetteer = GazetteerKind.parse(name)
+    val gazetteer = Gazetteer.Kind.parse(name)
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
       gazetteer match
@@ -196,7 +199,7 @@ final class Bootstrap(
           gazetteerImports.load(k, apply = !check, note).map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
-  private def fetchNetwork(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =
+  private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
         periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))

@@ -1,10 +1,10 @@
 package com.histmersion.api
 
-import com.histmersion.api.backup.BackupInfo
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, CorpusCounts, Health}
 import com.histmersion.api.jobs.{JobCounts, JobState}
 import com.histmersion.api.library.CorrespondingSource
 import com.histmersion.api.settings.ConfigFileInfo
+import com.histmersion.api.backup.Backup
 class AboutSuite extends munit.FunSuite:
 
   test("#718: a converter text maps to ok / busy / down, and wording never seen is unknown, not an error"):
@@ -44,7 +44,7 @@ class AboutSuite extends munit.FunSuite:
     health = Health("degraded", "ok", Some("28"), Some("busy: 1 job")),
     jobs = JobCounts(1, 2, 3, 4),
     counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
-    lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
+    lastBackup = Some(Backup.Info("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
     lastBackupAgeSeconds = Some(7200),
     problems = List("backups: cannot list /x")
   )

@@ -2,7 +2,7 @@ package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerDefaultsViews, ManagerKindDefinition}
 
-import com.histmersion.api.{ApiError, Plural}
+import com.histmersion.api.Plural
 import com.histmersion.api.library.{Acquire, CandidateSweep}
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.api.automation.Agents.*
@@ -16,6 +16,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.api.Api
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
@@ -101,21 +102,22 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   private def closeLine(c: ManagerContext, run: String): Option[String] =
     c.stepOutput(run, "close").flatMap(o => io.circe.parser.decode[String](o).toOption)
 
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
     itemKind match
       case OaIngest =>
         Acquire
           .normalizeDoi(raw)
-          .toRight(ApiError(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
+          .toRight(Api.Error(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
         work.agents.host
           .goal(g)
           .map(_.slug)
           .flatMap(s =>
-            Either.cond(m.goal.forall(_ == s), s, ApiError(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s"))
+            Either
+              .cond(m.goal.forall(_ == s), s, Api.Error(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s"))
           )
-      case other => Left(ApiError(s"unknown item kind '$other'"))
+      case other => Left(Api.Error(s"unknown item kind '$other'"))
 
   /** Each watcher's ingest backlog and the days it takes to drain. */
   override def backlog(): Map[String, (Int, Option[Int])] = work.oaBacklog.snapshot().perManager

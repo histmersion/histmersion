@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
@@ -20,8 +20,10 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.db.*
-import com.histmersion.api.automation.{AgentsMarkdown, Goal, GoalPut, ManagersMarkdown, Queue}
-import com.histmersion.api.library.{IngestReport, PdfInfo, Query, SourcePut, WorkRef}
+import com.histmersion.api.automation.{AgentsMarkdown, Goal, ManagersMarkdown, Queue}
+import com.histmersion.api.library.{PdfInfo, Query, WorkRef}
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes
@@ -83,20 +85,26 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(a: AgentsHandlers, h: ServerWiring): Unit =
-    assert(h.goals.put(Goal, GoalPut("Zz tin watched", notes = Some("where the tin came from"))).isRight)
+    assert(
+      h.goals
+        .put(Goal, com.histmersion.api.automation.Goal.Put("Zz tin watched", notes = Some("where the tin came from")))
+        .isRight
+    )
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, Query)).isRight)
 
   private def work(doi: String, title: String, oa: Boolean) =
     WorkRef(doi = Some(doi), title = Some(title), year = Some(2023), authors = List("Zz"), isOa = oa)
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
-  private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, IngestReport] =
+  private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, Ingest.Report] =
     if noCopy.contains(doi) then Left(s"no legal open-access copy of $doi")
     else
       val ck = "zzagent" + doi.replaceAll("[^a-z0-9]", "")
-      assert(h.library.sources.put(ck, SourcePut(title = s"Ingested $doi", year = Some(2023), doi = Some(doi))).isRight)
+      assert(
+        h.library.sources.put(ck, Source.Put(title = s"Ingested $doi", year = Some(2023), doi = Some(doi))).isRight
+      )
       Right(
-        IngestReport(
+        Ingest.Report(
           ck,
           Some(doi),
           Some(s"Ingested $doi"),
@@ -358,8 +366,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** The (paused) enrich manager with two source items. */
   private def enrichItems(a: AgentsHandlers, h: ServerWiring): Unit =
-    assert(h.library.sources.put(CkA, SourcePut(title = "Hint A", year = Some(2020))).isRight)
-    assert(h.library.sources.put(CkB, SourcePut(title = "Hint B", year = Some(2021))).isRight)
+    assert(h.library.sources.put(CkA, Source.Put(title = "Hint A", year = Some(2020))).isRight)
+    assert(h.library.sources.put(CkB, Source.Put(title = "Hint B", year = Some(2021))).isRight)
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
       a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity)

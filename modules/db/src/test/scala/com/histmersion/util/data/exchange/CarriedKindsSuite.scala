@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.BundleFiles
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.Bundle
 
@@ -12,7 +11,7 @@ class CarriedKindsSuite extends munit.FunSuite:
   private val kinds = TestExchange.kinds
 
   test("today's kinds carry every entry of the bundle format once, in the format's order"):
-    assertEquals(kinds.inBundleOrder.map(_.entry.value), BundleFiles.all)
+    assertEquals(kinds.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.Bundle.Files.all)
 
   test("the order of the entries does not depend on the order the kinds were registered in"):
     assertEquals(
@@ -32,12 +31,13 @@ class CarriedKindsSuite extends munit.FunSuite:
           com.augustnagro.magnum.DbCon
       ): com.histmersion.util.data.exchange.BundleEntities => com.histmersion.util.data.exchange.BundleEntities =
         identity
-    val withoutTombstones = TestExchange.carried.filterNot(_.entry.value == BundleFiles.Tombstones)
+    val withoutTombstones =
+      TestExchange.carried.filterNot(_.entry.value == com.histmersion.api.exchange.Bundle.Files.Tombstones)
     assertEquals(
       CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption,
       Some(
         List(
-          s"no carried kind writes ${BundleFiles.Tombstones}",
+          s"no carried kind writes ${com.histmersion.api.exchange.Bundle.Files.Tombstones}",
           s"${Bundle.Kind.Source.file} is carried twice",
           "entities/odd.ndjson is not a file of the bundle format"
         )

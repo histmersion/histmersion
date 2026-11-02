@@ -14,9 +14,9 @@ final case class CollectionImported(
     title: String,
     relinkedFrom: Option[String],
     file: String,
-    source: SourceWithFindings,
+    source: Source.WithFindings,
     cover: Option[CollectionCover],
-    job: Option[IngestAccepted],
+    job: Option[Ingest.Accepted],
     jobError: Option[String] = None,
     jobErrorCode: Option[String] = None
 ) derives KindlingsCodecAsObject,

@@ -1,8 +1,6 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.library.SourceWrite
-
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Licence
 import com.histmersion.domain.library.LibraryState
@@ -18,22 +16,9 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
-import com.histmersion.api.library.{
-  CalibreGap,
-  DeleteCount,
-  DeletePart,
-  Edge,
-  FindingRow,
-  Rename,
-  RenameCounts,
-  Source,
-  SourceAlias,
-  SourceDeletion,
-  SourceDetail,
-  SourcePatch,
-  SourceRef,
-  TocEntry
-}
+import com.histmersion.api.library.{CalibreGap, DeleteCount, DeletePart, Edge, Rename, Source, TocEntry}
+import com.histmersion.api.Api
+import com.histmersion.api.library.Finding
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
@@ -50,7 +35,7 @@ trait SourceService:
   def aliasesOf(citekey: String): Set[String]
 
   /** Every old citekey and the source it names now, by old citekey. */
-  def aliases: List[SourceAlias]
+  def aliases: List[Source.Alias]
 
   def citekeys: List[String]
 
@@ -60,13 +45,13 @@ trait SourceService:
   def calibreId(citekey: String): Option[String]
 
   /** A source as read: the record and its findings, in id order. */
-  def get(citekey: String): Option[(SourceDetail, List[FindingRow])]
+  def get(citekey: String): Option[(Source.Detail, List[Finding.Row])]
 
   /** A source as written: the record with its findings and edges. */
   def load(citekey: String): Option[Source]
 
   /** The citation-link view of the stored sources among `citekeys`, in citekey order. */
-  def refs(citekeys: List[String]): List[SourceRef]
+  def refs(citekeys: List[String]): List[Source.Ref]
 
   /** The citekey each wikilink target names: exact, an old citekey, or the one source a short form fits. */
   def resolveLinks(targets: List[String]): Map[String, String]
@@ -83,12 +68,12 @@ trait SourceService:
   def put(source: Source, caller: Caller): String
 
   /** Merge `patch` into the source `requested` names (an old citekey follows); the new last-write token. */
-  def patch(requested: String, patch: SourcePatch, caller: Caller): Either[ApiError, String]
+  def patch(requested: String, patch: Source.Patch, caller: Caller): Either[Api.Error, String]
 
-  def rename(from: String, to: String, caller: Caller): Either[ApiError, RenameCounts]
+  def rename(from: String, to: String, caller: Caller): Either[Api.Error, Rename.Counts]
 
   /** What deleting the source would do; nothing is changed. */
-  def deletion(citekey: String): Either[ApiError, SourceDeletePlan]
+  def deletion(citekey: String): Either[Api.Error, SourceDeletePlan]
 
   /** Delete the source unless something refuses it; `files` names its stored originals, `day` is the log's topic. */
   def delete(
@@ -96,7 +81,7 @@ trait SourceService:
       day: String,
       files: SourceDeletePlan => List[String],
       caller: Caller
-  ): Either[ApiError, SourceDeletePlan]
+  ): Either[Api.Error, SourceDeletePlan]
 
   /** Promote the parked edges whose target now names one stored source; how many. */
   def resolveEdges(caller: Caller): Int
@@ -138,7 +123,7 @@ trait SourceService:
   def calibrePushMeta(citekey: String): Option[CalibreGap]
 
   /** The Calibre id written back after a push. */
-  def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit]
+  def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[Api.Error, Unit]
 
 object SourceService:
 
@@ -150,14 +135,14 @@ object SourceService:
     def current(id: String): Option[String] = db.read(SourceRepo.canonical(id))
     def aliasOf(citekey: String): Option[String] = db.read(SourceRepo.aliasOf(citekey))
     def aliasesOf(citekey: String): Set[String] = db.read(SourceRepo.aliasesOf(citekey))
-    def aliases: List[SourceAlias] = db.read(SourceRepo.aliases)
+    def aliases: List[Source.Alias] = db.read(SourceRepo.aliases)
     def citekeys: List[String] = db.read(SourceRepo.citekeys()).toList
     def updatedAtMillis: Map[String, Long] = db.read(SourceRepo.updatedAtMillis())
     def calibreId(citekey: String): Option[String] = db.read(SourceRepo.calibreId(citekey))
-    def get(citekey: String): Option[(SourceDetail, List[FindingRow])] =
+    def get(citekey: String): Option[(Source.Detail, List[Finding.Row])] =
       db.read(SourceRepo.get(citekey)).map((s, fs) => (s, fs.toList))
     def load(citekey: String): Option[Source] = db.read(SourceRepo.load(citekey))
-    def refs(citekeys: List[String]): List[SourceRef] = db.read(SourceRepo.refs(citekeys))
+    def refs(citekeys: List[String]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
     def resolveLinks(targets: List[String]): Map[String, String] = db.read(SourceRepo.resolveAliases(targets))
     def toc(citekey: String): List[TocEntry] = db.read(SourceRepo.toc(citekey))
     def bodyText(citekey: String): String = db.read(SourceRepo.bodyText(citekey))
@@ -170,14 +155,14 @@ object SourceService:
       val s = settings()
       db.transact(SourceRepo.putIn(source, s.chunkChars, s.toleranceKm))
 
-    def patch(requested: String, patch: SourcePatch, caller: Caller): Either[ApiError, String] =
+    def patch(requested: String, patch: Source.Patch, caller: Caller): Either[Api.Error, String] =
       val s = settings()
       db.transact(SourceRepo.patchIn(requested, patch, s.chunkChars, s.toleranceKm))
 
-    def rename(from: String, to: String, caller: Caller): Either[ApiError, RenameCounts] =
+    def rename(from: String, to: String, caller: Caller): Either[Api.Error, Rename.Counts] =
       db.transact(SourceRepo.rename(from, to, referrers))
 
-    def deletion(citekey: String): Either[ApiError, SourceDeletePlan] =
+    def deletion(citekey: String): Either[Api.Error, SourceDeletePlan] =
       db.read(SourceDeleteRepo.planIn(citekey, referrers))
 
     def delete(
@@ -185,7 +170,7 @@ object SourceService:
         day: String,
         files: SourceDeletePlan => List[String],
         caller: Caller
-    ): Either[ApiError, SourceDeletePlan] =
+    ): Either[Api.Error, SourceDeletePlan] =
       db.transact(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
 
     def resolveEdges(caller: Caller): Int = db.transact(SourceRepo.resolveEdges())
@@ -208,7 +193,7 @@ object SourceService:
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, v))
     def calibreGaps(limit: Option[Int]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
     def calibrePushMeta(citekey: String): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
-    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit] =
+    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[Api.Error, Unit] =
       db.transact:
         if SourceRepo.setCalibreId(citekey, calibreId) == 0 then Left(Write.notFound(citekey)) else Right(())
 
@@ -228,15 +213,15 @@ object SourceService:
     def current(id: String): Option[String] = currentIn(state.get, id)
     def aliasOf(citekey: String): Option[String] = state.get.aliases.get(citekey)
     def aliasesOf(citekey: String): Set[String] = state.get.aliases.collect { case (a, ck) if ck == citekey => a }.toSet
-    def aliases: List[SourceAlias] = state.get.aliases.toList.sortBy(_._1).map(SourceAlias(_, _))
+    def aliases: List[Source.Alias] = state.get.aliases.toList.sortBy(_._1).map(Source.Alias(_, _))
     def citekeys: List[String] = state.get.sources.keys.toList.sorted
     def updatedAtMillis: Map[String, Long] = state.get.sources.view.mapValues(_.updatedAt.toEpochMilli).toMap
     def calibreId(citekey: String): Option[String] = state.get.sources.get(citekey).flatMap(_.source.calibreId)
 
-    def get(citekey: String): Option[(SourceDetail, List[FindingRow])] =
+    def get(citekey: String): Option[(Source.Detail, List[Finding.Row])] =
       state.get.sources.get(citekey).map { st =>
         val s = st.source
-        val detail = SourceDetail(
+        val detail = Source.Detail(
           s.citekey,
           s.title,
           s.authors,
@@ -258,7 +243,7 @@ object SourceService:
           None
         )
         val findings = s.findings.sortBy(_.id).map { f =>
-          FindingRow(
+          Finding.Row(
             f.claim,
             f.region,
             f.geo.map(_.lon),
@@ -289,12 +274,12 @@ object SourceService:
 
     def load(citekey: String): Option[Source] = loadIn(state.get, citekey)
 
-    def refs(citekeys: List[String]): List[SourceRef] =
+    def refs(citekeys: List[String]): List[Source.Ref] =
       val st = state.get
       citekeys.distinct.sorted.flatMap(ck =>
         st.sources
           .get(ck)
-          .map(x => SourceRef(ck, x.source.doi, x.source.authors, x.source.year, x.source.title, x.source.status))
+          .map(x => Source.Ref(ck, x.source.doi, x.source.authors, x.source.year, x.source.title, x.source.status))
       )
 
     /** The precedence of the database's resolution: the citekey itself, an old citekey, a short form. */
@@ -412,27 +397,27 @@ object SourceService:
       val _ = state.updateAndGet(written(_, source, at))
       token(at)
 
-    def patch(requested: String, patch: SourcePatch, caller: Caller): Either[ApiError, String] =
+    def patch(requested: String, patch: Source.Patch, caller: Caller): Either[Api.Error, String] =
       val at = clock.instant()
-      var answer: Either[ApiError, String] = Left(Write.notFound(requested))
+      var answer: Either[Api.Error, String] = Left(Write.notFound(requested))
       val _ = state.updateAndGet { st =>
         val citekey = currentIn(st, requested).getOrElse(requested)
         loadIn(st, citekey) match
           case None           => { answer = Left(Write.notFound(citekey)); st }
           case Some(existing) =>
-            SourceWrite.precondition(existing, patch) match
-              case Left(msg) => { answer = Left(ApiError(msg, Some(Write.CodePrecondition))); st }
+            Source.Write.precondition(existing, patch) match
+              case Left(msg) => { answer = Left(Api.Error(msg, Some(Write.CodePrecondition))); st }
               case Right(_)  =>
-                SourceWrite.applyPatch(existing, SourceWrite.srcAliased(patch, requested, citekey)) match
-                  case Left(msg)      => { answer = Left(ApiError(msg, Some(Write.CodeInvalid))); st }
+                Source.Write.applyPatch(existing, Source.Write.srcAliased(patch, requested, citekey)) match
+                  case Left(msg)      => { answer = Left(Api.Error(msg, Some(Write.CodeInvalid))); st }
                   case Right(updated) => { answer = Right(token(at)); written(st, updated, at) }
       }
       answer
 
-    def rename(from: String, to: String, caller: Caller): Either[ApiError, RenameCounts] =
+    def rename(from: String, to: String, caller: Caller): Either[Api.Error, Rename.Counts] =
       Rename.validate(from, to).flatMap { validated =>
         val at = clock.instant()
-        var answer: Either[ApiError, RenameCounts] = Left(Write.notFound(from))
+        var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(from))
         val _ = state.updateAndGet { st =>
           renamedIn(st, from, validated.value, at) match
             case Left(e)        => { answer = Left(e); st }
@@ -446,20 +431,20 @@ object SourceService:
         from: String,
         to: String,
         at: Instant
-    ): Either[ApiError, (LibraryState, RenameCounts)] =
+    ): Either[Api.Error, (LibraryState, Rename.Counts)] =
       val idTaken = st.sources.values.flatMap(_.source.findings).map(_.id).find(_.startsWith(to + "#"))
       if !st.sources.contains(from) then
         Left(st.aliases.get(from) match
           case Some(now) =>
-            ApiError(s"'$from' is an old citekey of '$now' — rename '$now' instead", Some(Write.CodeInvalid))
+            Api.Error(s"'$from' is an old citekey of '$now' — rename '$now' instead", Some(Write.CodeInvalid))
           case None => Write.notFound(from))
       else if st.sources.contains(to) then
-        Left(ApiError(s"'$to' is already the citekey of another source", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"'$to' is already the citekey of another source", Some(Write.CodeInvalid)))
       else
         st.aliases.get(to) match
           case Some(other) if other != from =>
             Left(
-              ApiError(
+              Api.Error(
                 s"'$to' is an old citekey of '$other' and still resolves to it — pick another",
                 Some(Write.CodeInvalid)
               )
@@ -468,7 +453,7 @@ object SourceService:
             idTaken match
               case Some(id) =>
                 Left(
-                  ApiError(s"finding id '$id' already exists — '$to' would collide with it", Some(Write.CodeInvalid))
+                  Api.Error(s"finding id '$id' already exists — '$to' would collide with it", Some(Write.CodeInvalid))
                 )
               case None =>
                 val unaliased =
@@ -476,7 +461,7 @@ object SourceService:
                   else st
                 Right(renamedNow(unaliased, from, to, at))
 
-    private def renamedNow(st: LibraryState, from: String, to: String, at: Instant): (LibraryState, RenameCounts) =
+    private def renamedNow(st: LibraryState, from: String, to: String, at: Instant): (LibraryState, Rename.Counts) =
       val shorts = resolveIn(st, Rename.shortForms(from)).collect { case (f, ck) if ck == from => f }.toSet
       val prefix = from + "#"
       val stored = st.sources(from)
@@ -534,7 +519,7 @@ object SourceService:
         texts.modify(_.aliases).using(_.updated(from, to)).modify(_.aliasTombstones).using(_ - from)
       (
         aliased,
-        RenameCounts(renumbered, Nil, retargeted.map(_._1), retargeted.map(_._2).sum, Nil, newEdges.size)
+        Rename.Counts(renumbered, Nil, retargeted.map(_._1), retargeted.map(_._2).sum, Nil, newEdges.size)
       )
 
     // ── delete ───────────────────────────────────────────────────────────────────────────────
@@ -542,12 +527,12 @@ object SourceService:
     private def doiKey(doi: Option[String]): Option[String] =
       doi.map(_.trim.toLowerCase.replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")).filter(_.nonEmpty)
 
-    private def planIn(st: LibraryState, requested: String): Either[ApiError, SourceDeletePlan] =
+    private def planIn(st: LibraryState, requested: String): Either[Api.Error, SourceDeletePlan] =
       st.sources.get(requested) match
         case None =>
           Left(st.aliases.get(requested) match
             case Some(now) =>
-              ApiError(s"'$requested' is an old citekey of '$now' — delete '$now' instead", Some(Write.CodeInvalid))
+              Api.Error(s"'$requested' is an old citekey of '$now' — delete '$now' instead", Some(Write.CodeInvalid))
             case None => Write.notFound(requested))
         case Some(x) =>
           val ck = requested
@@ -563,7 +548,7 @@ object SourceService:
             Aliases -> aliases.size,
             Identifiers -> doiKey(x.source.doi).size
           ).collect { case (p, rows) if rows > 0 => DeleteCount(p, rows) }
-          val d = SourceDeletion(
+          val d = Source.Deletion(
             citekey = ck,
             title = x.source.title,
             applied = false,
@@ -574,15 +559,15 @@ object SourceService:
           )
           Right(SourceDeletePlan(d, None, false, ck :: aliases, DeleteReport(counts = counts)))
 
-    def deletion(citekey: String): Either[ApiError, SourceDeletePlan] = planIn(state.get, citekey)
+    def deletion(citekey: String): Either[Api.Error, SourceDeletePlan] = planIn(state.get, citekey)
 
     def delete(
         citekey: String,
         day: String,
         files: SourceDeletePlan => List[String],
         caller: Caller
-    ): Either[ApiError, SourceDeletePlan] =
-      var answer: Either[ApiError, SourceDeletePlan] = Left(Write.notFound(citekey))
+    ): Either[Api.Error, SourceDeletePlan] =
+      var answer: Either[Api.Error, SourceDeletePlan] = Left(Write.notFound(citekey))
       val _ = state.updateAndGet { st =>
         planIn(st, citekey) match
           case Left(e)   => { answer = Left(e); st }
@@ -697,7 +682,7 @@ object SourceService:
 
     def calibrePushMeta(citekey: String): Option[CalibreGap] = stored(citekey).map(gapOf)
 
-    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[ApiError, Unit] =
+    def setCalibreId(citekey: String, calibreId: String, caller: Caller): Either[Api.Error, Unit] =
       if updated(citekey)(
           _.modify(_.source.calibreId).setTo(Some(calibreId)).modify(_.updatedAt).setTo(clock.instant())
         )

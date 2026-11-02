@@ -15,7 +15,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param}
-import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Bucket, Filter, Finding, Source}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
@@ -44,16 +44,16 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   // a fixture polygon drawn over Anatolia silently changes what `PlaceRepoSuite` (and any seeded
   // gazetteer) materialises. Keep new fixture geometry away from real places.
   private val batch = List(
-    PlaceInput(
+    Place.Input(
       Place("zzt_world", "Zzt World", com.histmersion.domain.catalogue.Place.Kind.Region),
-      List(PlaceName("Zzt World"))
+      List(Place.Name("Zzt World"))
     ),
-    PlaceInput(
+    Place.Input(
       Place("zzt_land", "Zzt Land", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(170, -50, 179, -40))),
-      List(PlaceName("Zzt Land")),
-      List(PlaceRelation("zzt_land", "zzt_world"))
+      List(Place.Name("Zzt Land")),
+      List(Place.Relation("zzt_land", "zzt_world"))
     ),
-    PlaceInput(
+    Place.Input(
       Place(
         "zzt_north",
         "Zzt North",
@@ -62,10 +62,10 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
         Some(Period(-1650, -1180)),
         Some("test fixture")
       ),
-      List(PlaceName("Zzt North")),
-      List(PlaceRelation("zzt_north", "zzt_land", PlaceRelation.PartOf, Some(Period(-1650, -1180))))
+      List(Place.Name("Zzt North")),
+      List(Place.Relation("zzt_north", "zzt_land", Place.Relation.PartOf, Some(Period(-1650, -1180))))
     ),
-    PlaceInput(
+    Place.Input(
       Place(
         "zzt_south",
         "Zzt South",
@@ -74,8 +74,8 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
         Some(Period(-1500, -1300)),
         Some("test fixture")
       ),
-      List(PlaceName("Zzt South")),
-      List(PlaceRelation("zzt_south", "zzt_land", PlaceRelation.PartOf, Some(Period(-1500, -1300))))
+      List(Place.Name("Zzt South")),
+      List(Place.Relation("zzt_south", "zzt_land", Place.Relation.PartOf, Some(Period(-1500, -1300))))
     )
   )
 
@@ -202,7 +202,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(ns.find(_.id == "zzt_land").map(_.kind), Some(com.histmersion.domain.catalogue.Place.Kind.Region))
     assert(rels.exists(r => r.childId == "zzt_north" && r.parentId == "zzt_land"))
     assertEquals(rels.find(_.childId == "zzt_south").flatMap(_.period), Some(Period(-1500, -1300)))
-    assert(rels.forall(_.kind == PlaceRelation.PartOf))
+    assert(rels.forall(_.kind == Place.Relation.PartOf))
 
   test("gazetteer() runs no query at all when nothing is located"):
     assertEquals(PlaceFixtures.gazetteer(ds, Vector(TreeRow("x", "x", "X"))), (Nil, Nil))

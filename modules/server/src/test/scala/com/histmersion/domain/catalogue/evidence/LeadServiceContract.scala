@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{AttestationPut, CatalogRecord, EventLinkCandidate, EventPut, EventTier}
+import com.histmersion.api.catalogue.{CatalogRecord, EventLinkCandidate, EventPut, EventTier}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.events.{CatalogMerge, EventSelection, EventSql}
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.Attestation
 
 /** The contract of the facts the leads and an event's card are computed from: the sources attesting an event (its own
   * first), and each event's lead — its tier, its catalogue's size, the sources proposed and confirmed — the catalogue's
@@ -18,7 +19,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     List("zzld2020_own", "zzld2021_att").foreach(s.source)
     s.events.put("zz_attested", EventPut("Zz attested", "battle", span(-1300, -1290), citekey = Some("zzld2020_own")))
     val _ = s.attestations.create(
-      AttestationPut(
+      Attestation.Put(
         "zzld2021_att",
         "event",
         "zz_attested",

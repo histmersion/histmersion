@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import com.histmersion.api.library.AcquireChecks
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.util.jobs.Job
 
@@ -10,5 +9,5 @@ object AcquisitionJobKinds:
     "Check what to acquire again",
     "Checks the to-acquire list again: which items have a legal open copy or are in the library now.",
     stoppable = true,
-    subject = AcquireChecks.RecheckJob.Detail.of(_).map(AcquireChecks.RecheckJob.describe)
+    subject = Acquire.Checks.RecheckJob.Detail.of(_).map(Acquire.Checks.RecheckJob.describe)
   )

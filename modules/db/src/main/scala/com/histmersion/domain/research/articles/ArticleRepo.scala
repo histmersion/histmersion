@@ -8,34 +8,20 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.{EventArticleRef, Period}
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.{
-  Article,
-  ArticleFilter,
-  ArticleKindCount,
-  ArticleLinks,
-  ArticleList,
-  ArticlePatch,
-  ArticleRef,
-  ArticleRow,
-  Articles,
-  ArticleVersion,
-  ArticleVersionFull,
-  ArticleView,
-  Backlink,
-  CitedSource
-}
+import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource}
+import com.histmersion.api.Api
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
-given DbCodec[ArticleVersion] = DbCodec.derived
-given DbCodec[ArticleVersionFull] = DbCodec.derived
+given given_DbCodec_ArticleVersion: DbCodec[Article.Version] = DbCodec.derived
+given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.derived
 
 /** The ARTICLES store (plan §5.2 stream 2.7) — the compiled wiki.
   *
@@ -50,11 +36,11 @@ given DbCodec[ArticleVersionFull] = DbCodec.derived
 private[articles] object ArticleRepo:
 
   private given DbCodec[Backlink] = DbCodec.derived
-  private given DbCodec[ArticleVersion] = DbCodec.derived
-  private given DbCodec[ArticleVersionFull] = DbCodec.derived
-  private given DbCodec[ArticleRow] = DbCodec.derived
+  private given DbCodec[Article.Version] = DbCodec.derived
+  private given DbCodec[Article.VersionFull] = DbCodec.derived
+  private given DbCodec[Article.Row] = DbCodec.derived
   private given DbCodec[CitedSource] = DbCodec.derived
-  private given DbCodec[ArticleRef] = DbCodec.derived
+  private given DbCodec[Article.Ref] = DbCodec.derived
 
   import Param.*
 
@@ -86,8 +72,8 @@ private[articles] object ArticleRepo:
     io.circe.Json.obj(a.reasons.toList.sortBy(_._1).map((k, v) => k -> io.circe.Json.fromString(v))*).noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
-  private[articles] def filterOf(json: Option[String]): Option[ArticleFilter] =
-    json.flatMap(Jsonb.read[ArticleFilter])
+  private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
+    json.flatMap(Jsonb.read[Article.Filter])
   private[articles] def reasonsOf(json: String): Map[String, String] =
     Jsonb.read[Map[String, String]](json).getOrElse(Map.empty)
 
@@ -100,7 +86,7 @@ private[articles] object ArticleRepo:
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
-  def patch(slug: String, p: ArticlePatch, by: String = "person")(using DbCon): Either[ApiError, String] =
+  def patch(slug: String, p: Article.Patch, by: String = "person")(using DbCon): Either[Api.Error, String] =
     // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
     // two concurrent patches both saw the token they were given and both "succeeded", the second
     // discarding the first. See the twin comment in `SourceRepo.patch`.
@@ -109,10 +95,10 @@ private[articles] object ArticleRepo:
       case None           => Left(Articles.notFound(slug))
       case Some(existing) =>
         Articles.precondition(existing, p) match
-          case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
+          case Left(msg) => Left(Api.Error(msg, Some(Write.CodePrecondition)))
           case Right(_)  =>
             Articles.applyPatch(existing, p) match
-              case Left(msg) => Left(ApiError(msg, Some(Write.CodeInvalid)))
+              case Left(msg) => Left(Api.Error(msg, Some(Write.CodeInvalid)))
               // the critique reasons (V091) sit beside the row: checked first, so a refused one
               // writes nothing; a patch of them alone leaves the article, its versions and its
               // token as they are (`by`: who set them, when a reason does not say)
@@ -149,13 +135,13 @@ private[articles] object ArticleRepo:
     */
   private[histmersion] def writeLinks(slug: String, body: String)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
-    val written = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
+    val written = Article.Links.targets(body).filter(_ != slug) // an article does not link to itself
     if written.nonEmpty then
       // an OLD citekey (V027) links the source it was renamed to, and is recorded under the new one
       // so `backlinksForSource` finds it
-      val known = CitekeyResolver.stored.canonical(written.filter(ArticleLinks.isCitekeyShaped))
+      val known = CitekeyResolver.stored.canonical(written.filter(Article.Links.isCitekeyShaped))
       val targets = written.map(t => known.getOrElse(t, t)).distinct
-      val links = ArticleLinks.classify(targets, known.values.toSet.contains)
+      val links = Article.Links.classify(targets, known.values.toSet.contains)
       val _ = batchUpdate(links)(l => sql"""INSERT INTO article_links (src_slug, target_kind, target)
               VALUES ($slug, ${l.targetKind}, ${l.target}) ON CONFLICT DO NOTHING""".update)
 
@@ -171,8 +157,8 @@ private[articles] object ArticleRepo:
           WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.toLowerCase}) > 0
           ORDER BY slug""".query[String].run().toList.flatMap { slug =>
       load(slug).flatMap { a =>
-        val (body, nb) = ArticleLinks.retarget(a.body, to)
-        val summary = a.summary.map(ArticleLinks.retarget(_, to))
+        val (body, nb) = Article.Links.retarget(a.body, to)
+        val summary = a.summary.map(Article.Links.retarget(_, to))
         val reasons = a.reasons.map((ck, r) => to(ck).getOrElse(ck) -> r)
         val nr = a.reasons.keys.count(to(_).isDefined)
         val moved = nb + summary.fold(0)(_._2) + nr
@@ -190,15 +176,15 @@ private[articles] object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
-  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
+  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[Api.Error, List[String]] =
     def exists(s: String) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Articles.notFound(oldSlug))
     else if exists(newSlug) then
-      Left(ApiError(s"'$newSlug' is already the slug of another article", Some(Write.CodeInvalid)))
+      Left(Api.Error(s"'$newSlug' is already the slug of another article", Some(Write.CodeInvalid)))
     else if aliasOf.exists(_ != oldSlug) then
       Left(
-        ApiError(
+        Api.Error(
           s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
           Some(Write.CodeInvalid)
         )
@@ -221,7 +207,7 @@ private[articles] object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
-  def rename(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
+  def rename(oldSlug: String, newSlug: String)(using DbCon): Either[Api.Error, List[String]] =
     renameIn(oldSlug.trim, newSlug.trim)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
@@ -262,24 +248,24 @@ private[articles] object ArticleRepo:
         )
       }
 
-  def get(slug: String)(using DbCon): Option[ArticleRow] =
+  def get(slug: String)(using DbCon): Option[Article.Row] =
     Sql
       .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(canonical(slug)))
       .frag
-      .query[ArticleRow]
+      .query[Article.Row]
       .run()
       .headOption
 
   /** The article plus both directions of its link graph — one connection, three queries. */
-  def view(requested: String)(using DbCon): Option[ArticleView] =
+  def view(requested: String)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
     Sql
       .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag
-      .query[ArticleRow]
+      .query[Article.Row]
       .run()
       .headOption
-      .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
+      .map(row => Article.View(row, backlinks(slug), sourcesCited(slug)))
 
   /** What points HERE: other articles through `article_links`, and sources whose agent-written `notes` contain a
     * `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather than `LIKE` so an underscore in a
@@ -332,12 +318,12 @@ private[articles] object ArticleRepo:
         .toSet
 
   /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
-  def refs(slugs: List[String])(using DbCon): List[ArticleRef] =
+  def refs(slugs: List[String])(using DbCon): List[Article.Ref] =
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Nil
     else
       sql"SELECT slug, title, summary FROM articles WHERE slug = ANY($wanted::text[]) ORDER BY slug"
-        .query[ArticleRef]
+        .query[Article.Ref]
         .run()
         .toList
 
@@ -364,19 +350,19 @@ private[articles] object ArticleRepo:
       text: Option[String],
       limit: Int,
       offset: Int
-  )(using DbCon): ArticleList =
+  )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(_.trim).filter(_.nonEmpty) match
       case Some(t) => Sql.raw("ORDER BY ts_rank_cd(a.tsv, ") ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
       case None    => Sql.raw("ORDER BY a.kind, a.title")
-    val kinds = ArticleList.byKind(
+    val kinds = Article.List.byKind(
       (Sql.raw("SELECT a.kind, count(*)::int FROM articles a WHERE ") ++ where ++ Sql
-        .raw(" GROUP BY a.kind")).frag.query[(String, Int)].run().toList.map(ArticleKindCount(_, _))
+        .raw(" GROUP BY a.kind")).frag.query[(String, Int)].run().toList.map(Article.KindCount(_, _))
     )
     val total = kinds.map(_.count).sum
     val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
       order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0)))).frag.query[ArticleSummaryRow].run()
-    ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0), kinds)
+    Article.List.of(total, rows.toList.map(_.summaryRow), offset.max(0), kinds)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
     * [[FilterSql.articleWhere]] (the one rule relating articles to sources).
@@ -419,7 +405,7 @@ private[articles] object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
-  def listVersions(slug: String, limit: Int = 20)(using DbCon): List[ArticleVersion] =
+  def listVersions(slug: String, limit: Int = 20)(using DbCon): List[Article.Version] =
     Sql
       .of(
         s"""SELECT v.id, v.slug, left(v.summary, 200),
@@ -430,7 +416,7 @@ private[articles] object ArticleRepo:
         Param.I(limit)
       )
       .frag
-      .query[ArticleVersion]
+      .query[Article.Version]
       .run()
       .toList
 
@@ -442,7 +428,7 @@ private[articles] object ArticleRepo:
   def latestVersion(slug: String)(using DbCon): Option[Long] =
     sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
 
-  def getVersion(slug: String, versionId: Long)(using DbCon): Option[ArticleVersionFull] =
+  def getVersion(slug: String, versionId: Long)(using DbCon): Option[Article.VersionFull] =
     Sql
       .of(
         s"""SELECT v.id, v.slug, v.body, v.summary,
@@ -452,7 +438,7 @@ private[articles] object ArticleRepo:
         Param.L(versionId)
       )
       .frag
-      .query[ArticleVersionFull]
+      .query[Article.VersionFull]
       .run()
       .headOption
 

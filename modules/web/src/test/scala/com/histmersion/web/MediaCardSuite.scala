@@ -2,8 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.domain.media.MediaRole
-import com.histmersion.api.catalogue.{EventSummary, PlaceLink, PlaceSummary}
-import com.histmersion.api.library.{SourceDetail, SourceWithFindings}
+import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.media.{MediaCount, MediaGeoHit, MediaProvider, MediaThumb}
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
 import com.histmersion.domain.catalogue.Place
@@ -27,13 +26,14 @@ class MediaCardSuite extends munit.FunSuite:
   )
 
   private val mycenae = PlaceDetail(
-    PlaceSummary("pleiades_570491", "Mycenae", Place.Kind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
+    com.histmersion.api.catalogue.Place
+      .Summary("pleiades_570491", "Mycenae", Place.Kind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
     geometry = Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
     parents = Nil,
     children = Nil,
     findings = 3,
     asOf = None,
-    links = List(PlaceLink("pleiades_570491", "commons", "Mycenae", "see_also")),
+    links = List(com.histmersion.api.catalogue.Place.Link("pleiades_570491", "commons", "Mycenae", "see_also")),
     media = List(thumb, thumb.copy(uid = "x", role = MediaRole.LocatorMap))
   )
 
@@ -47,7 +47,7 @@ class MediaCardSuite extends munit.FunSuite:
     assertEquals(Preview.card(mycenae.copy(media = Nil)).media, None)
 
   test("a source card shows its cover, else its illustration; none when it has neither (#1446)"):
-    val src = SourceDetail(
+    val src = com.histmersion.api.library.Source.Detail(
       "anthony2007",
       "The Horse, the Wheel, and Language",
       List("Anthony, David W."),
@@ -64,14 +64,20 @@ class MediaCardSuite extends munit.FunSuite:
       None
     )
     val cover = MediaThumb("u1", MediaRole.Cover, "/media/u1/thumb", "Cover: the local Calibre library")
-    assertEquals(Preview.card(SourceWithFindings(src, Nil, illustration = Some(cover))).media, Some(cover))
+    assertEquals(
+      Preview.card(com.histmersion.api.library.Source.WithFindings(src, Nil, illustration = Some(cover))).media,
+      Some(cover)
+    )
     assertEquals(
       Preview.creditLine(cover),
       ("Cover: the local Calibre library", None),
       "a cover carries no licence link"
     )
-    assertEquals(Preview.card(SourceWithFindings(src, Nil)).media, None)
-    assertEquals(Preview.card(SourceWithFindings(src, Nil)).title, "The Horse, the Wheel, and Language")
+    assertEquals(Preview.card(com.histmersion.api.library.Source.WithFindings(src, Nil)).media, None)
+    assertEquals(
+      Preview.card(com.histmersion.api.library.Source.WithFindings(src, Nil)).title,
+      "The Horse, the Wheel, and Language"
+    )
 
   test("the credit line under a picture: the credit, and the licence linked to its page (else the file page)"):
     assertEquals(

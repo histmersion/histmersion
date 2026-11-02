@@ -2,9 +2,9 @@ package com.histmersion.api
 
 import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.api.library.{Rename, RenameCount, RenameCounts, SourceDetail, SourceRenamed}
-import com.histmersion.api.research.ArticleLinks
+import com.histmersion.api.library.Rename
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how
   * finding ids and composite ids move, and the link rewrite that must change the link target and nothing else.
@@ -61,7 +61,7 @@ class RenameSuite extends munit.FunSuite:
     val md =
       """[[old2020_a]] [[old2020_a|the book]] [[old2020_a#ch-1|ch. 1]] [[ Old2020_A ]]
         |\[\[old2020_a\]\] ![[old2020_a]] [[old2020]] [[old2020_ab]] [[other2019_x]] [old2020_a]""".stripMargin
-    val (out, n) = ArticleLinks.retarget(md, to)
+    val (out, n) = Article.Links.retarget(md, to)
     assertEquals(
       out,
       """[[new1999_a]] [[new1999_a|the book]] [[new1999_a#ch-1|ch. 1]] [[ new1999_a ]]
@@ -71,10 +71,10 @@ class RenameSuite extends munit.FunSuite:
 
   test("retarget: nothing to move is the identity"):
     val md = "No [[links]] here to [[other2019_x]]."
-    assertEquals(ArticleLinks.retarget(md, _ => None), (md, 0))
+    assertEquals(Article.Links.retarget(md, _ => None), (md, 0))
 
   test("the rename report names the alias, the counts, and what Calibre and the mirror need"):
-    val src = SourceDetail(
+    val src = com.histmersion.api.library.Source.Detail(
       "page1959_history",
       "History",
       List("Page"),
@@ -90,9 +90,11 @@ class RenameSuite extends munit.FunSuite:
       None,
       None
     )
-    val counts = RenameCounts(3, List("troy"), List("x2020_y"), 5, List(RenameCount("jobs.citekey", 1)), 0)
+    val counts = Rename.Counts(3, List("troy"), List("x2020_y"), 5, List(Rename.Count("jobs.citekey", 1)), 0)
     val pushed =
-      SourcesMarkdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, Some("12")))
+      SourcesMarkdown.sourceRenamed(
+        com.histmersion.api.library.Source.Renamed("page2024_history", "page1959_history", src, counts, Some("12"))
+      )
     List(
       "`page2024_history` → `page1959_history`",
       "findings renumbered: 3",
@@ -104,6 +106,8 @@ class RenameSuite extends munit.FunSuite:
     )
       .foreach(s => assert(pushed.contains(s), s"missing '$s' in\n$pushed"))
     val notPushed =
-      SourcesMarkdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, None))
+      SourcesMarkdown.sourceRenamed(
+        com.histmersion.api.library.Source.Renamed("page2024_history", "page1959_history", src, counts, None)
+      )
     assert(notPushed.contains("calibre push page1959_history"), notPushed)
     assert(notPushed.contains("`page2024_history` directory"), notPushed)

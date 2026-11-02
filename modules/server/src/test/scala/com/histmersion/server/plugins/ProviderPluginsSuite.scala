@@ -251,8 +251,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(infos.map(_.name).take(2), List("wikidata", "depicts"))
     assertEquals(
       infos.last,
-      com.histmersion.api.media
-        .MediaProviderInfo("zq-portal", "Zq portal objects", "places", "", "zq-plugin", builtin = false, "cc0,cc-by")
+      com.histmersion.api.media.MediaProvider
+        .Info("zq-portal", "Zq portal objects", "places", "", "zq-plugin", builtin = false, "cc0,cc-by")
     )
     assert(infos.find(_.name == "met").exists(i => i.builtin && i.plugin == "media-met"), infos.toString)
     val cats = BuiltinCatalogues.infos(g.registries.eventCatalogues)

@@ -219,7 +219,7 @@ object AcquireMarkdown:
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
       .mkString("\n")
 
-  def ingest(r: IngestReport): String =
+  def ingest(r: Ingest.Report): String =
     val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>

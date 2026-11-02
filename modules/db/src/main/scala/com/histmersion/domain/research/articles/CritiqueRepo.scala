@@ -2,11 +2,12 @@ package com.histmersion.domain.research.articles
 
 import com.histmersion.domain.library.sources.CitekeyResolver
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.research.{CritiqueReason, Critiques}
+import com.histmersion.api.Api
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
@@ -33,21 +34,21 @@ private[articles] object CritiqueRepo:
     * removes the pair's reason in either direction. `by` is the setter of a reason that names none. The first refusal
     * is the answer.
     */
-  private def check(reasons: List[CritiqueReason], by: String)(using DbCon): Either[ApiError, List[Change]] =
+  private def check(reasons: List[CritiqueReason], by: String)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
-      case Some(m) => Left(ApiError(m, Some(Write.CodeInvalid)))
+      case Some(m) => Left(Api.Error(m, Some(Write.CodeInvalid)))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
         val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).distinct)
         val kinds = Critiques.Kinds
-        rs.foldLeft[Either[ApiError, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
+        rs.foldLeft[Either[Api.Error, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
           acc.flatMap { done =>
             (known.get(r.src), known.get(r.dst)) match
               case (None, _) =>
-                Left(ApiError(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Some(Write.CodeInvalid)))
+                Left(Api.Error(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Some(Write.CodeInvalid)))
               case (_, None) =>
-                Left(ApiError(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey", Some(Write.CodeInvalid)))
+                Left(Api.Error(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey", Some(Write.CodeInvalid)))
               case (Some(a), Some(b)) if r.reason.isEmpty => Right(done :+ Change.Remove(a, b))
               case (Some(a), Some(b))                     =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
@@ -59,7 +60,7 @@ private[articles] object CritiqueRepo:
                 dirs.find(_ == (a, b)).orElse(dirs.headOption) match
                   case None =>
                     Left(
-                      ApiError(
+                      Api.Error(
                         s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
                           "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)",
                         Some(Write.CodeInvalid)
@@ -78,7 +79,7 @@ private[articles] object CritiqueRepo:
     */
   def applyIn(slug: String, reasons: List[CritiqueReason], by: String)(
       write: => Unit
-  )(using DbCon): Either[ApiError, Int] =
+  )(using DbCon): Either[Api.Error, Int] =
     check(reasons, by).map { changes =>
       write
       changes.map {

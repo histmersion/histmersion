@@ -10,7 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Autopilot.AutopilotSet
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.api.library.RepairAcquire.RepairRequest
@@ -24,8 +24,10 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.db.*
-import com.histmersion.api.automation.{Goal, GoalPut, ManagersMarkdown, Queue}
-import com.histmersion.api.library.{IngestReport, PdfInfo, Query, RepairAcquire, SourcePut, WorkRef}
+import com.histmersion.api.automation.{Goal, ManagersMarkdown, Queue}
+import com.histmersion.api.library.{PdfInfo, Query, RepairAcquire, WorkRef}
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition
@@ -96,7 +98,11 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(a: AgentsHandlers, h: ServerWiring, goal: String = Goal, query: String = Query): Unit =
-    assert(h.goals.put(goal, GoalPut(s"Zz $goal", notes = Some("where the tin came from"))).isRight)
+    assert(
+      h.goals
+        .put(goal, com.histmersion.api.automation.Goal.Put(s"Zz $goal", notes = Some("where the tin came from")))
+        .isRight
+    )
     assert(a.addGoalLink(goal, LinkAdd(LinkKind.Query, query)).isRight)
 
   private def doi(n: String) = s"10.5555/zzagent.$n"
@@ -106,13 +112,13 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
 
   /** The fixture's legal ingest: stores the source, unless the DOI has no legal copy. */
-  private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[String, IngestReport] =
+  private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[String, Ingest.Report] =
     if noCopy.contains(d) then Left(s"${IngestBacklog.NoLegalCopy} $d: no fetcher had it")
     else
       val ck = ck0(d)
-      assert(h.library.sources.put(ck, SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck, Source.Put(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
       Right(
-        IngestReport(
+        Ingest.Report(
           ck,
           Some(d),
           Some(s"Ingested $d"),
@@ -354,7 +360,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(acquire(h).size, 4)
     // c reached the corpus meanwhile; the watcher now auto-ingests
     assert(
-      h.library.sources.put("zzagent2023_c", SourcePut(title = "C", year = Some(2023), doi = Some(doi("c")))).isRight
+      h.library.sources.put("zzagent2023_c", Source.Put(title = "C", year = Some(2023), doi = Some(doi("c")))).isRight
     )
     a.managing
       .update(m.id, ManagerUpdate(Some(m.config.copy(autoIngest = Some(true)))))

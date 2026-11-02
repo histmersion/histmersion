@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.Api
 import com.histmersion.config.*
 import sttp.client4.*
 import sttp.model.Uri
@@ -16,7 +16,7 @@ class ClientUriSuite extends munit.FunSuite:
   private val base = Uri.unsafeParse("http://example.invalid")
   private val interp = SttpClientInterpreter()
 
-  private def uriOf[I](ep: sttp.tapir.PublicEndpoint[I, ApiError, ?, Any])(in: I): String =
+  private def uriOf[I](ep: sttp.tapir.PublicEndpoint[I, Api.Error, ?, Any])(in: I): String =
     interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in).uri.toString
 
   test("an empty filter sends no query parameters"):

@@ -52,7 +52,7 @@ object MyItems:
     ref.identity.fold(Val(false): Signal[Boolean])(i => bookmarkOf(i).map(_.isDefined))
 
   def add(target: Target, label: Option[String], title: String): Future[Bookmark] =
-    tracked(ApiClient.addBookmark(BookmarkNew(target, label.map(BookmarkLabel(_)), Some(title)))) { b =>
+    tracked(ApiClient.addBookmark(Bookmark.New(target, label.map(Bookmark.Label(_)), Some(title)))) { b =>
       bookmarks.update(bs => b :: bs.filterNot(_.id == b.id))
     }
 
@@ -60,7 +60,7 @@ object MyItems:
     tracked(ApiClient.removeBookmark(b.id.value))(_ => bookmarks.update(_.filterNot(_.id == b.id)))
 
   def rename(b: Bookmark, label: Option[String]): Future[Bookmark] =
-    tracked(ApiClient.editBookmark(b.id.value, BookmarkEdit(label.map(BookmarkLabel(_)))))(n =>
+    tracked(ApiClient.editBookmark(b.id.value, Bookmark.Edit(label.map(Bookmark.Label(_)))))(n =>
       bookmarks.update(_.map(x => if x.id == n.id then n else x))
     )
 
@@ -75,10 +75,10 @@ object MyItems:
   def notesOn(identity: String): Signal[List[Note]] = notes.signal.map(_.filter(_.target.identity.contains(identity)))
 
   def addNote(target: Target, text: String, title: String): Future[Note] =
-    tracked(ApiClient.addNote(NoteNew(target, NoteText(text), Some(title))))(n => notes.update(n :: _))
+    tracked(ApiClient.addNote(Note.New(target, Note.Text(text), Some(title))))(n => notes.update(n :: _))
 
   def editNote(n: Note, text: String): Future[Note] =
-    tracked(ApiClient.editNote(n.id.value, NoteEdit(NoteText(text), Some(n.updatedAt))))(m =>
+    tracked(ApiClient.editNote(n.id.value, Note.Edit(Note.Text(text), Some(n.updatedAt))))(m =>
       notes.update(ns => m :: ns.filterNot(_.id == m.id))
     )
 
@@ -94,7 +94,7 @@ object MyItems:
 
   def setRead(ref: ItemRef, read: Boolean): Unit =
     ref.target.itemKey.foreach { key =>
-      tracked(ApiClient.setRead(ReadMarkSet(ref.kind, ItemKey(key), read, Some(ref.title))))(m =>
+      tracked(ApiClient.setRead(ReadMark.Set(ref.kind, ItemKey(key), read, Some(ref.title))))(m =>
         marks.update(_ + (markKey(m) -> m))
       ): Unit
     }

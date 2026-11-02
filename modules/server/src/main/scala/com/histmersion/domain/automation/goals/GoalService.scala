@@ -1,8 +1,8 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{ApiError, Write, YearFmt}
-import com.histmersion.api.automation.{Goal, GoalList, GoalPatch, GoalPut}
-import com.histmersion.api.automation.GoalPlans.{GoalLink, GoalSchedule}
+import com.histmersion.api.{Write, YearFmt}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
@@ -13,6 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.Api
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -27,15 +28,15 @@ trait GoalService:
   def children(slug: String): List[Goal]
 
   /** Create or replace a goal; a period that starts after it ends is refused. */
-  def put(slug: String, in: GoalPut): Either[ApiError, Unit]
+  def put(slug: String, in: Goal.Put): Either[Api.Error, Unit]
 
   /** One page of the goals (of one status, when given), by slug, with the total. */
-  def page(status: Option[String], limit: Int, offset: Int): GoalList
+  def page(status: Option[String], limit: Int, offset: Int): Goal.List
 
   /** A goal's fields changed as given (a cap of 0 or less clears it; a bound given alone replaces that bound); no such
     * goal is a not-found error.
     */
-  def patch(slug: String, p: GoalPatch): Either[ApiError, Unit]
+  def patch(slug: String, p: Goal.Patch): Either[Api.Error, Unit]
 
   /** A goal removed; false when there was none. */
   def delete(slug: String): Boolean
@@ -43,7 +44,7 @@ trait GoalService:
   /** A new slug, the old one kept as an alias (V053): refused when there is no such goal, or the new slug is another
     * goal's or another goal's old one.
     */
-  def rename(from: String, to: String): Either[ApiError, Unit]
+  def rename(from: String, to: String): Either[Api.Error, Unit]
 
   /** The goals that link each of these work-list items: (item id, goal slug, goal title), an item's goals by title. */
   def goalsOfItems(items: List[Int]): List[(Int, String, String)]
@@ -99,12 +100,12 @@ object GoalService:
     def get(slug: String): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: String): List[Goal] = db.read(GoalRepo.children(slug))
-    def put(slug: String, in: GoalPut): Either[ApiError, Unit] = db.transact(GoalRepo.put(slug, in))
-    def page(status: Option[String], limit: Int, offset: Int): GoalList =
+    def put(slug: String, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
+    def page(status: Option[String], limit: Int, offset: Int): Goal.List =
       db.read(GoalRepo.listIn(status, limit, offset))
-    def patch(slug: String, p: GoalPatch): Either[ApiError, Unit] = db.transact(GoalRepo.patchIn(slug, p))
+    def patch(slug: String, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug, p))
     def delete(slug: String): Boolean = db.transact(GoalRepo.deleteIn(slug))
-    def rename(from: String, to: String): Either[ApiError, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
+    def rename(from: String, to: String): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
     def goalsOfItems(items: List[Int]): List[(Int, String, String)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
     def links(goal: String): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
     def link(
@@ -162,11 +163,11 @@ object GoalService:
     def get(slug: String): Option[Goal] = goals.get(slug).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug).map(shown)
     def children(slug: String): List[Goal] = all().filter(_.parentSlug.contains(slug))
-    def put(slug: String, in: GoalPut): Either[ApiError, Unit] =
+    def put(slug: String, in: Goal.Put): Either[Api.Error, Unit] =
       (in.periodStart, in.periodEnd) match
         case (Some(a), Some(b)) if a > b =>
           Left(
-            ApiError(
+            Api.Error(
               s"goal '$slug': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
               Some(Write.CodeInvalid)
             )
@@ -186,14 +187,14 @@ object GoalService:
             )
           )
           Right(())
-    def page(status: Option[String], limit: Int, offset: Int): GoalList =
+    def page(status: Option[String], limit: Int, offset: Int): Goal.List =
       val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
       val listed = all().filter(g => st.forall(_ == g.status))
-      GoalList.of(listed.size, listed.slice(offset.max(0), offset.max(0) + limit.max(1)), offset.max(0))
+      Goal.List.of(listed.size, listed.slice(offset.max(0), offset.max(0) + limit.max(1)), offset.max(0))
 
-    private def notFound(slug: String) = ApiError(s"No goal '$slug'", Some(Write.CodeNotFound))
+    private def notFound(slug: String) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
 
-    def patch(slug: String, p: GoalPatch): Either[ApiError, Unit] =
+    def patch(slug: String, p: Goal.Patch): Either[Api.Error, Unit] =
       goals.get(slug).toRight(notFound(slug)).flatMap { r =>
         val g = r.goal
         val start = p.periodStart.orElse(g.periodStart)
@@ -201,7 +202,7 @@ object GoalService:
         (start, end) match
           case (Some(a), Some(b)) if a > b =>
             Left(
-              ApiError(
+              Api.Error(
                 s"goal '$slug': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
                 Some(Write.CodeInvalid)
               )
@@ -247,15 +248,15 @@ object GoalService:
       )
       before.goals.contains(slug)
 
-    def rename(from: String, to: String): Either[ApiError, Unit] =
+    def rename(from: String, to: String): Either[Api.Error, Unit] =
       val (old, now) = (from.trim, to.trim)
       val aliasOf = state.get.goalAliases.get(now)
       if !goals.contains(old) then Left(notFound(old))
       else if goals.contains(now) then
-        Left(ApiError(s"'$now' is already the slug of another goal", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"'$now' is already the slug of another goal", Some(Write.CodeInvalid)))
       else if aliasOf.exists(_ != old) then
         Left(
-          ApiError(
+          Api.Error(
             s"'$now' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
             Some(Write.CodeInvalid)
           )

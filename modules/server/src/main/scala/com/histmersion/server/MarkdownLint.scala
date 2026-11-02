@@ -29,8 +29,9 @@ import com.vladsch.flexmark.util.ast.{Document, Node}
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatRule, FormatSeverity}
-import com.histmersion.api.library.{Finding, Label, SourceRef}
-import com.histmersion.api.research.ArticleLinks
+import com.histmersion.api.library.{Finding, Label}
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *
@@ -76,13 +77,13 @@ object MarkdownLint:
     * only a problem when a source by that name exists). One `pageLinks` call answers both.
     */
   def lookups(texts: List[String]): List[String] =
-    texts.flatMap(t => ArticleLinks.targets(t) ++ CitekeyTok.findAllMatchIn(t).map(_.group(1))).distinct
+    texts.flatMap(t => Article.Links.targets(t) ++ CitekeyTok.findAllMatchIn(t).map(_.group(1))).distinct
 
   private def resolving(links: String => Option[LinkTarget], article: Boolean): Context =
     Context(
       article = article,
       resolves = Some(t => links(t).nonEmpty),
-      isCitekey = Some(t => links(t).exists(_.isInstanceOf[SourceRef]))
+      isCitekey = Some(t => links(t).exists(_.isInstanceOf[Source.Ref]))
     )
 
   /** An article's body (checked as an article: its `# Title` is expected, a `Sources cited` heading is not) and its
@@ -347,7 +348,7 @@ object MarkdownLint:
     // ── the masked text and its AST ──────────────────────────────────────────────────────────────
     // every wikilink the renderer rewrites is replaced by `W`s of the same length (as the page puts
     // an anchor there before flexmark runs), so `**[[ck]]**` is bold and `[[a_b|c]]` no table cell
-    private val links = ArticleLinks.occurrences(text)
+    private val links = Article.Links.occurrences(text)
     private val masked =
       val b = new java.lang.StringBuilder(text)
       links.filter(o => o.target.nonEmpty && !o.embed).foreach(o => (o.start until o.end).foreach(b.setCharAt(_, 'W')))
@@ -877,7 +878,7 @@ object MarkdownLint:
               if label.isEmpty || label.toLowerCase == target || Label.display(target) == label.toLowerCase
               then s"[[$target]]"
               else s"[[$target|${label.replace("|", "-").replace("]", ")").replace("[", "(")}]]"
-            val ok = ArticleLinks.normalize(target).nonEmpty
+            val ok = Article.Links.normalize(target).nonEmpty
             add(
               FormatRule.WikiPathLink,
               lk.getStartOffset,

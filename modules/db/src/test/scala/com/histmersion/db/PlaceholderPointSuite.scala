@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Sql}
-import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Finding, Source}
 
 /** A finding whose POINT is a placeholder (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
@@ -65,7 +65,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     case (x, y) => GeoPoint(x, y)
 
   private def seed(): Unit =
-    def in(p: Place) = PlaceInput(p, List(PlaceName(p.label)))
+    def in(p: Place) = Place.Input(p, List(Place.Name(p.label)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
@@ -192,9 +192,9 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place("zzph_tribe", "Zzph Tribe", com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
-          List(PlaceName("Zzph Tribe"))
+          List(Place.Name("Zzph Tribe"))
         )
       )
     )

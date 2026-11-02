@@ -1,21 +1,14 @@
 package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  CorrectionCounts,
-  Corrections,
-  CorrectionStatus,
-  CorrectionTarget,
-  EventFields,
-  EventTaxonomy
-}
+import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventFields, EventTaxonomy}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.catalogue.Correction
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
@@ -95,10 +88,10 @@ object EventImportService:
         r: CatalogRecord,
         names: List[String],
         wd: Option[String]
-    ): (CatalogueState, CorrectionCounts) =
+    ): (CatalogueState, Correction.Counts) =
       val now = EventFields.upstream(r)
       val applied = s.corrections.filter(c =>
-        c.targetKind == CorrectionTarget.Event && c.targetId == id && CorrectionStatus.applied(c.status)
+        c.targetKind == Correction.Target.Event && c.targetId == id && Correction.Status.applied(c.status)
       )
       def json(t: String) = io.circe.parser.parse(t).getOrElse(io.circe.Json.Null)
       val outcomes = applied.flatMap(c =>
@@ -182,7 +175,7 @@ object EventImportService:
         s: CatalogueState,
         eventId: String,
         group: List[(CatalogRecord, CatalogMerge.Placement)]
-    ): (CatalogueState, Boolean, Option[CorrectionCounts]) =
+    ): (CatalogueState, Boolean, Option[Correction.Counts]) =
       val recs = group.map(_._1).sortBy(_.key)
       val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
       val wd = recs.flatMap(_.wikidata).headOption
@@ -190,7 +183,7 @@ object EventImportService:
       def ownerIn(p: String): Option[CatalogRecord] =
         val storedKeys = s.catalogueRecords.filter(_._1 == eventId).map(_._2.key).toList
         CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
-      def refreshOrFill(p: String): (CatalogueState, Boolean, Option[CorrectionCounts]) =
+      def refreshOrFill(p: String): (CatalogueState, Boolean, Option[Correction.Counts]) =
         ownerIn(p).fold((fill(s, eventId, names, wd), false, None)) { r =>
           val (after, c) = refresh(s, eventId, r, names, wd)
           (after, false, Some(c))
@@ -216,7 +209,7 @@ object EventImportService:
           s: CatalogueState,
           created: Int,
           updated: Int,
-          counts: CorrectionCounts
+          counts: Correction.Counts
       ): (CatalogueState, EventSaved) = rest match
         case (eventId, group) :: tail =>
           val (after, made, refreshed) = saveOne(s, eventId, group)
@@ -231,7 +224,7 @@ object EventImportService:
       // the answer of the attempt that took: a contended update runs the loop again on the newer state
       val answer = AtomicReference[EventSaved]()
       val _ = state.updateAndGet { s0 =>
-        val (after, saved) = loop(groups, s0, 0, 0, CorrectionCounts())
+        val (after, saved) = loop(groups, s0, 0, 0, Correction.Counts())
         answer.set(saved)
         after
       }

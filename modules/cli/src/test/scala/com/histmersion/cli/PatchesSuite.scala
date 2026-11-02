@@ -2,10 +2,11 @@ package com.histmersion.cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
-import com.histmersion.api.catalogue.PeriodInput
-import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, MetadataPatch, SourcePatch}
+import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Finding
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.
@@ -50,7 +51,7 @@ class PatchesSuite extends munit.FunSuite:
   )
 
   test("no flags at all → every part absent (the server changes nothing)"):
-    assertEquals(build(), Right(SourcePatch()))
+    assertEquals(build(), Right(com.histmersion.api.library.Source.Patch()))
 
   test("--tags-add only sets the tags part, and only its add list"):
     val p = build(tagsAdd = Some("sea-peoples, collapse")).toOption.get
@@ -73,7 +74,7 @@ class PatchesSuite extends munit.FunSuite:
       addFindings = List("""{"claim":"c","lon":1.0,"lat":2.0}"""),
       removeFindings = List("x#0", "x#1")
     ).toOption.get
-    assertEquals(p.findings.get.add, List(FindingInput("c", lon = Some(1.0), lat = Some(2.0))))
+    assertEquals(p.findings.get.add, List(Finding.Input("c", lon = Some(1.0), lat = Some(2.0))))
     assertEquals(p.findings.get.remove, List("x#0", "x#1"))
 
   test("--add-finding with bad JSON is a usage error, not a crash"):
@@ -82,12 +83,15 @@ class PatchesSuite extends munit.FunSuite:
     assert(e.message.contains("--add-finding"), e.message)
 
   test("--period takes signed years, BCE negative; a malformed one is a usage error"):
-    assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(PeriodInput(-3300, -2600)))
+    assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(Period.Input(-3300, -2600)))
     assertEquals(build(period = Some("3300 BCE")).swap.toOption.get.exitCode, 1)
 
   test("--json carries the parts that have no flag, e.g. edges"):
     val p = build(json = Some("""{"edges":{"add":[{"src":"a","dst":"b","kind":"refutes"}]}}""")).toOption.get
-    assertEquals(p.edges, Some(EdgesPatch(add = List(EdgeInput("b", Edge.Kind.Refutes, Some("a"))))))
+    assertEquals(
+      p.edges,
+      Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input("b", Edge.Kind.Refutes, Some("a")))))
+    )
     assertEquals(p.tags, None)
 
   // #603: typed edges could only be added through --json
@@ -102,11 +106,11 @@ class PatchesSuite extends munit.FunSuite:
       Some(
         EdgesPatch(
           add = List(
-            EdgeInput("a", Edge.Kind.Refutes),
-            EdgeInput("lord1968_oralpoet", Edge.Kind.Challenges),
-            EdgeInput("notopoulos1960_achaean", Edge.Kind.Challenges)
+            com.histmersion.api.library.Edge.Input("a", Edge.Kind.Refutes),
+            com.histmersion.api.library.Edge.Input("lord1968_oralpoet", Edge.Kind.Challenges),
+            com.histmersion.api.library.Edge.Input("notopoulos1960_achaean", Edge.Kind.Challenges)
           ),
-          remove = List(EdgeInput("old2001_x", Edge.Kind.SupersededBy))
+          remove = List(com.histmersion.api.library.Edge.Input("old2001_x", Edge.Kind.SupersededBy))
         )
       )
     )

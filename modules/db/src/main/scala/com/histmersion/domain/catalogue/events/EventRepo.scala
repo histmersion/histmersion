@@ -2,12 +2,10 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.catalogue.EventEntry
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{
-  CorrectionTarget,
   EventEdge,
   EventFields,
-  EventGeoList,
   EventList,
   EventParticipant,
   EventPatch,
@@ -20,6 +18,9 @@ import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given_DbCodec_List
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Correction
+import com.histmersion.api.catalogue.EventGeo
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -64,7 +65,7 @@ private[events] object EventRepo:
     * land-clipped shape, as the map draws it); a local one, or an area known only by a point, none. Two statements: the
     * rows with their scale, then the outlines of the regional ones alone.
     */
-  def geo(listed: Sql, limit: Int, tolerance: Double)(using DbCon): EventGeoList =
+  def geo(listed: Sql, limit: Int, tolerance: Double)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
     val where = listed ++ Sql.of(" AND e.uncertainty <= ?", Param.L(EventPrecision.ApproximateUpTo))
@@ -90,7 +91,7 @@ private[events] object EventRepo:
           .run()
           .collect { case (id, Some(g)) => id -> g }
           .toMap
-    EventGeoList(items.map((_, g) => g.copy(outline = outlines.get(g.id))), unplaced, imprecise)
+    EventGeo.List(items.map((_, g) => g.copy(outline = outlines.get(g.id))), unplaced, imprecise)
 
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.
@@ -158,7 +159,7 @@ private[events] object EventRepo:
         edges,
         participants,
         wikidata,
-        corrections = CorrectionRepo.of(CorrectionTarget.Event, id).map(_.toDto())
+        corrections = CorrectionRepo.of(Correction.Target.Event, id).map(_.toDto())
       )
     }
 
@@ -188,7 +189,7 @@ private[events] object EventRepo:
       EventImportRepo.upstreamOf(id).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
         fields.foreach((f, v) =>
-          up.get(f).foreach(u => CorrectionRepo.record(CorrectionTarget.Event, id, f, v, u, Some(provider)))
+          up.get(f).foreach(u => CorrectionRepo.record(Correction.Target.Event, id, f, v, u, Some(provider)))
         )
       }
 
@@ -271,8 +272,8 @@ private[events] object EventRepo:
     * ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once the catalogue agrees, or
     * flags a conflict when the catalogue changes to something else).
     */
-  def patch(id: String, p: EventPatch)(using DbCon): Either[ApiError, Unit] =
-    if !exists(id) then Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+  def patch(id: String, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
+    if !exists(id) then Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
       p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
@@ -332,13 +333,13 @@ private[events] object EventRepo:
     * attestations and asset links that name it follow. What a bundle import does when an event was renamed on the other
     * side.
     */
-  def rename(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
+  def rename(oldId: String, newId: String)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[String].run().headOption
-    if !exists(oldId) then Left(ApiError(s"No event '$oldId'", Some(Write.CodeNotFound)))
-    else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
+    if !exists(oldId) then Left(Api.Error(s"No event '$oldId'", Some(Write.CodeNotFound)))
+    else if exists(newId) then Left(Api.Error(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
     else if aliasOf.exists(_ != oldId) then
       Left(
-        ApiError(
+        Api.Error(
           s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
           Some(Write.CodeInvalid)
         )

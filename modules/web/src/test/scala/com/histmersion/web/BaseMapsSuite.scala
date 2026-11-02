@@ -2,14 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.api.BBox
 import com.histmersion.web.map.*
-import com.histmersion.api.basemap.{
-  Basemap,
-  BasemapFocus,
-  BasemapLayerInfo,
-  BasemapOnDemand,
-  BasemapStatus,
-  BasemapStyleState
-}
+import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.instance.{DebounceConfig, EventsUiConfig, TimeConfig, UiConfig}
 
 /** The base map's choices and what each draws, on the fake engine's terms (no browser). */
@@ -40,22 +33,22 @@ class BaseMapsSuite extends munit.FunSuite:
       onDemand: Boolean = false,
       sea: Boolean = true
   ) =
-    BasemapStatus(
+    Basemap.Status(
       available,
       "/x",
       "-12,20,90,62",
       List(
-        BasemapLayerInfo("vector", available, "/x/vector.pmtiles", maxZoom = Some(10), version = Some("v1")),
-        BasemapLayerInfo(
+        Basemap.LayerInfo("vector", available, "/x/vector.pmtiles", maxZoom = Some(10), version = Some("v1")),
+        Basemap.LayerInfo(
           "terrain",
           available,
           "/x/terrain.pmtiles",
           maxZoom = Some(8),
           version = Some("t1"),
-          onDemand = Some(BasemapOnDemand(onDemand, 12, "/x/terrain-cache", 0, 0, 1000)),
-          focus = if focus then List(BasemapFocus("argolid", "/x/f.pmtiles", 1, "22,37,23,38", 9, 12, 10)) else Nil
+          onDemand = Some(Basemap.OnDemand(onDemand, 12, "/x/terrain-cache", 0, 0, 1000)),
+          focus = if focus then List(Basemap.Focus("argolid", "/x/f.pmtiles", 1, "22,37,23,38", 9, 12, 10)) else Nil
         ),
-        BasemapLayerInfo(
+        Basemap.LayerInfo(
           "bathymetry",
           available && sea,
           "/x/bathymetry.pmtiles",
@@ -65,7 +58,7 @@ class BaseMapsSuite extends munit.FunSuite:
       ),
       Basemap.FetchCommand,
       styles =
-        List(BasemapStyleState("readable", "Readable", readableMissing), BasemapStyleState("physical", "Physical")),
+        List(Basemap.StyleState("readable", "Readable", readableMissing), Basemap.StyleState("physical", "Physical")),
       mapMaxZoom = 16
     )
 

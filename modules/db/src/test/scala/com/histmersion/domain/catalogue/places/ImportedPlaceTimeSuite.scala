@@ -15,18 +15,13 @@ import com.histmersion.db.*
 import com.histmersion.api.catalogue.{
   GazDescription,
   Gazetteer,
-  GazetteerLoadCounts,
   GazGeometry,
   GazName,
   GazRecord,
   Geocode,
   LinkScheme,
   Period,
-  Place,
-  PlaceDating,
-  PlaceInput,
-  PlaceName,
-  PlaceRelation
+  Place
 }
 import com.histmersion.api.library.{ExternalId, Finding, Source}
 
@@ -99,7 +94,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     * GazetteerRepoSuite) — so the rule is off here: these tests are about time, which applies to every imported place,
     * a site's as much as a state's.
     */
-  private def load(source: String, version: String, rs: List[GazRecord]): GazetteerLoadCounts =
+  private def load(source: String, version: String, rs: List[GazRecord]): Gazetteer.LoadCounts =
     connect(ds)(GazetteerRepo.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
 
   private val Patones = rec(
@@ -159,7 +154,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     )
     assertEquals(stored, (Some(1769L - Gazetteer.DefaultOpenStartWindowYears), Some(1769L), true))
     val d = PlaceFixtures.get(ds, PatonesId).get
-    assertEquals((d.place.periodStart, d.place.periodEnd, d.place.dating), (None, Some(1769L), PlaceDating.EndOnly))
+    assertEquals((d.place.periodStart, d.place.periodEnd, d.place.dating), (None, Some(1769L), Place.Dating.EndOnly))
     assertEquals(d.place.when, "end 1769 CE, start unknown")
     assertEquals(d.place.importSource, Some("wikidata"))
     assert(!d.hasBoundary, "a point")
@@ -206,7 +201,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     val inside = Geocode.rank(cands.map(_.copy(tier = 0)), KindHint.Unknown, Some(Period(1600, 1650)), 4)
     assertEquals(inside.head.id, PatonesId)
     assertEquals(at(Period(1600, 1650)), Some(PatonesId))
-    assertEquals(PlaceFixtures.get(ds, "geonames_999500002").map(_.place.dating), Some(PlaceDating.Unknown))
+    assertEquals(PlaceFixtures.get(ds, "geonames_999500002").map(_.place.dating), Some(Place.Dating.Unknown))
 
   test(
     "an undated GeoNames place: found by name with no time, at a time only by a finding dated then, never on a time-sliced map"
@@ -216,7 +211,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     val id = "geonames_999500003"
     assertEquals(
       PlaceFixtures.get(ds, id).map(p => (p.place.dating, p.place.when)),
-      Some((PlaceDating.Unknown, "date unknown"))
+      Some((Place.Dating.Unknown, "date unknown"))
     )
     assert(found("Zzpt Bogazkale", None).contains(id), "picking with no time finds it")
     // the time rule (2026-10-09): an undated place is in a time view only by a finding dated then
@@ -228,7 +223,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     assertEquals(onMap("site", Some(-1350L)), Set.empty[String], "never on a time-sliced map")
 
   test("the seed's and an LPF dataset's open ranges are untouched"):
-    val seedRegion = PlaceInput(
+    val seedRegion = Place.Input(
       Place(
         "zzpt_region",
         "Zzpt Region",
@@ -240,7 +235,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         Some("fixture"),
         None
       ),
-      List(PlaceName("Zzpt Region"))
+      List(Place.Name("Zzpt Region"))
     )
     val _ = PlaceFixtures.upsertPlaces(ds, List(seedRegion))
     val lpf = GazRecord(
@@ -262,9 +257,9 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     assertEquals(onMap("region", None), Set("zzpt_region"))
     assert(found("Zzpt Lpf State", Some(-4000L)).contains("lpf_zzpt_1"), "an LPF 'until 1769' is as the dataset says")
     val d = PlaceFixtures.get(ds, "lpf_zzpt_1").get.place
-    assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), PlaceDating.Stated))
+    assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), Place.Dating.Stated))
     assert(PlaceFixtures.get(ds, "zzpt_region").get.hasBoundary)
-    assertEquals(PlaceFixtures.get(ds, "zzpt_region").get.place.dating, PlaceDating.Stated)
+    assertEquals(PlaceFixtures.get(ds, "zzpt_region").get.place.dating, Place.Dating.Stated)
 
   test("the base layers draw an imported place only once a finding is attached"):
     val dated = rec(
@@ -314,7 +309,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   // ── imported places are no part of the hierarchy and get no findings by proximity ──────────────
 
   test("a filter's scope, a place's children and the tree leave GeoNames/Wikidata places out"):
-    val region = PlaceInput(
+    val region = Place.Input(
       Place(
         "zzpt_land",
         "Zzpt Land",
@@ -326,9 +321,9 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         Some("fixture"),
         None
       ),
-      List(PlaceName("Zzpt Land"))
+      List(Place.Name("Zzpt Land"))
     )
-    val town = PlaceInput(
+    val town = Place.Input(
       Place(
         "zzpt_town",
         "Zzpt Town",
@@ -338,8 +333,8 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         Some("fixture"),
         None
       ),
-      List(PlaceName("Zzpt Town")),
-      List(PlaceRelation("zzpt_town", "zzpt_land"))
+      List(Place.Name("Zzpt Town")),
+      List(Place.Relation("zzpt_town", "zzpt_land"))
     )
     val _ = PlaceFixtures.upsertPlaces(ds, List(region, town))
     load(
@@ -387,7 +382,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         )
       )
     )
-    val seedPt = PlaceInput(
+    val seedPt = Place.Input(
       Place(
         "zzpt_seed_site",
         "Zzpt Seed Site",

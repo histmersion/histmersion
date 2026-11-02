@@ -66,7 +66,7 @@ class TargetSuite extends munit.FunSuite:
     assertEquals(ItemKind.parse("x"), None)
 
   test("ids are lower-case UUIDs"):
-    assert(BookmarkId.parse("0190F3C2-1111-7000-8000-000000000001").isRight)
-    assert(NoteId.parse("not").isLeft)
+    assert(Bookmark.Id.parse("0190F3C2-1111-7000-8000-000000000001").isRight)
+    assert(Note.Id.parse("not").isLeft)
     assertEquals(PersonalIds.limit(None), PersonalIds.DefaultLimit)
     assertEquals(PersonalIds.limit(Some(99999)), PersonalIds.MaxLimit)

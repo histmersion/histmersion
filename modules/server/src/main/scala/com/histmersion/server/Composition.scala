@@ -19,16 +19,10 @@ import com.histmersion.domain.library.acquisition.*
 import com.histmersion.server.hot.{Hot, PinRequests}
 import ox.{releaseAfterScope, Ox}
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.{
-  ArchiveFile,
-  ArchiveImportRequest,
-  ArchiveItem,
-  CalibrePushRequest,
-  IngestParams,
-  SourcePatch,
-  SourcePut
-}
+import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, CalibrePushRequest}
 import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
@@ -253,8 +247,8 @@ object Composition:
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
       def source(citekey: String) = h.library.sources.get(citekey, body = false)
-      def create(citekey: String, put: SourcePut) = h.library.sources.put(citekey, put)
-      def patch(citekey: String, patch: SourcePatch) = h.library.sources.patch(citekey, patch)
+      def create(citekey: String, put: Source.Put) = h.library.sources.put(citekey, put)
+      def patch(citekey: String, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: String) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
       def gaps(limit: Option[Int]) = h.calibreGaps.gaps(limit)
@@ -264,11 +258,11 @@ object Composition:
             .Try(file.bytes())
             .toEither
             .left
-            .map(e => ApiError(s"cannot read the original of '$citekey': ${e.getMessage}"))
+            .map(e => Api.Error(s"cannot read the original of '$citekey': ${e.getMessage}"))
             .map(StoredOriginal(_, disposition))
         }
       def queueItem(id: Int) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
-      def ingest(params: IngestParams, bytes: Array[Byte]) =
+      def ingest(params: Ingest.Params, bytes: Array[Byte]) =
         h.ingest.controllers.ingest(
           params,
           com.histmersion.domain.library.ingest.Upload.inline(params.filename.getOrElse("original"), bytes)

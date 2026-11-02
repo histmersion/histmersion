@@ -1,11 +1,12 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.library.{DeleteBlocker, DeleteBlockerKind, RenameCount}
+import com.histmersion.api.library.DeleteBlocker
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Rename
 
 /** The jobs that wrote or write a source: their records follow a rename and stay as history, and a job not finished yet
   * refuses a delete (it would write the source back).
@@ -16,7 +17,7 @@ final class JobSourceReferrer extends SourceReferrer:
     RenamedReferences(
       List(
         "jobs.citekey" -> sql"UPDATE jobs SET citekey = ${rename.to} WHERE citekey = ${rename.from}".update.run()
-      ).collect { case (t, n) if n > 0 => RenameCount(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
@@ -29,5 +30,5 @@ final class JobSourceReferrer extends SourceReferrer:
         .query[(String, String)]
         .run()
         .toList
-        .map((id, k) => DeleteBlocker(DeleteBlockerKind.Job, id, Some(k)))
+        .map((id, k) => DeleteBlocker(DeleteBlocker.Kind.Job, id, Some(k)))
     )

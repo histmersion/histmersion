@@ -7,10 +7,10 @@ import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.jobs.BackgroundJob
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.library.acquisition.{AcquireCheckRow, AcquireCheckService}
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
@@ -21,7 +21,8 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsApi, Queue}
 import com.histmersion.api.jobs.{JobInfo, JobState}
-import com.histmersion.api.library.AcquireChecks
+import com.histmersion.api.Api
+import com.histmersion.api.library.Acquire
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -162,17 +163,17 @@ final class AcquireRecheckService(
     * answers at once; any other is started as a job ([[startJob]]), and `all` resumes the `all` job a restart or the
     * drain stopped.
     */
-  def run(in: RecheckRequest, now: Instant = Instant.now()): Either[ApiError, RecheckResult] =
+  def run(in: RecheckRequest, now: Instant = Instant.now()): Either[Api.Error, RecheckResult] =
     in.id.filter(id =>
       !site.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
     ) match
-      case Some(id)                       => Left(ApiError(s"no open acquisition item #$id", Some(Write.CodeNotFound)))
-      case None if in.limit.exists(_ < 0) => Left(ApiError("--limit is 0 or more", Some(Write.CodeInvalid)))
+      case Some(id)                       => Left(Api.Error(s"no open acquisition item #$id", Some(Write.CodeNotFound)))
+      case None if in.limit.exists(_ < 0) => Left(Api.Error("--limit is 0 or more", Some(Write.CodeInvalid)))
       case None if in.all && in.id.isDefined =>
-        Left(ApiError("--all re-checks every open item; --id one of them — not both", Some(Write.CodeInvalid)))
+        Left(Api.Error("--all re-checks every open item; --id one of them — not both", Some(Write.CodeInvalid)))
       case None if in.all && in.limit.isDefined =>
         Left(
-          ApiError(
+          Api.Error(
             "--all re-checks every open item, past every cap; --limit caps a pass — not both",
             Some(Write.CodeInvalid)
           )
@@ -192,23 +193,23 @@ final class AcquireRecheckService(
         else if in.dryRun || in.id.isDefined then pass(in, now).toRight(passBusy)
         else site.maintenance.guard("queue/acquire/recheck")(byHand(in, now))
 
-  private def busy: ApiError =
+  private def busy: Api.Error =
     BackgroundJob.busy("an acquisition list re-check job", jobSlot.current, Some(AgentsApi.CodeConflict))
 
-  private def passBusy: ApiError =
-    if jobSlot.isRunning then busy else ApiError("a re-check pass is running already; try again in a moment")
+  private def passBusy: Api.Error =
+    if jobSlot.isRunning then busy else Api.Error("a re-check pass is running already; try again in a moment")
 
   /** A pass by hand, not a dry run, not one item: a job over every item (`all`, resuming the `all` job that was
     * stopped) or over the due ones the caps allow — or, when that is at most one, the pass at once.
     */
-  private def byHand(in: RecheckRequest, now: Instant): Either[ApiError, RecheckResult] =
+  private def byHand(in: RecheckRequest, now: Instant): Either[Api.Error, RecheckResult] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val fs = facts(None)
     val base = RecheckResult(dryRun = false, fs.size, fs.count(_.action != Action.NoDoi))
     if in.all then
       val stopped = latestJob()
         .filter(j => AcquireRecheck.resumable(j.status, j.error))
-        .flatMap(j => j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).filter(_.all).flatMap(planOf).map(j -> _))
+        .flatMap(j => j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).filter(_.all).flatMap(planOf).map(j -> _))
       val todo = fetchable(fs)
       stopped match
         case Some((j, plan)) =>
@@ -253,7 +254,7 @@ final class AcquireRecheckService(
     */
   private def resumeStopped(): Option[String] =
     latestJob().filter(j => AcquireRecheck.resumable(j.status, j.error)).flatMap { j =>
-      j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
+      j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, d.by, Some(j.id)) match
           case Right(job) =>
             Some(s"acquire re-check: job ${j.id} (${j.error.getOrElse("stopped")}) resumed as job ${job.id}")
@@ -265,12 +266,12 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
-  private def startJob(plan: JobPlan, by: String, resumes: Option[String]): Either[ApiError, JobInfo] =
+  private def startJob(plan: JobPlan, by: String, resumes: Option[String]): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(plan.all, plan.upTo, plan.since.toString, by, resumes)
     BackgroundJob.start(
       ds,
       RecheckJob.JobKind,
-      Some(AcquireChecks.RecheckJob.Detail(Some(detail))),
+      Some(Acquire.Checks.RecheckJob.Detail(Some(detail))),
       jobSlot,
       "an acquisition list re-check job",
       Some(AgentsApi.CodeConflict),
@@ -536,7 +537,7 @@ final class AcquireRecheckService(
           s"job ${j.id} stopped (${j.error.getOrElse("stopped")}" + j.progress.fold("")(p => s" at $p") + "): " +
             (if agents.drain.draining then "it resumes once the drain is lifted"
              else if agents.managers.running then "it resumes at the next managers' tick"
-             else if j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).exists(_.all) then
+             else if j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).exists(_.all) then
                "`histmersion queue acquire recheck --all` resumes it"
              else "the managers' tick resumes it, which is not running on this server")
         )

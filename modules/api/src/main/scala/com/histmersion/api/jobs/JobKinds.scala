@@ -6,7 +6,7 @@ import com.histmersion.util.jobs.Job
   * them, and the fields their jobs' detail may hold, in the order the detail shows them. A kind nobody registered is
   * shown by its identifier.
   */
-final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetailField[?]] = Nil):
+final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetail.Field[?]] = Nil):
   private val byWire: Map[String, JobKindEntry] = entries.map(e => e.kind.value -> e).toMap
 
   def kinds: List[Job.Kind] = entries.map(_.kind)

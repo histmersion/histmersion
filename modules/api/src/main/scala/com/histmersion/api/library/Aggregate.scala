@@ -1,7 +1,7 @@
 package com.histmersion.api.library
 
-import com.histmersion.api.catalogue.PeriodRow
 import com.histmersion.api.given
+import com.histmersion.api.catalogue.Period
 object Aggregate:
 
   def bucketSize(spanYears: Long): Long =
@@ -52,12 +52,12 @@ object Aggregate:
 
   val UnitStarts = "starts"
 
-  def histogram(rows: List[PeriodRow], from: Long, to: Long): List[TimeBucket] =
+  def histogram(rows: List[Period.Row], from: Long, to: Long): List[TimeBucket] =
     val (lo, hi) = order(from, to)
     histogram(rows, lo, hi, bucketSize(hi - lo))
 
   def histogram(
-      rows: List[PeriodRow],
+      rows: List[Period.Row],
       from: Long,
       to: Long,
       size: Long,
@@ -84,7 +84,7 @@ object Aggregate:
           TimeBucket(bStart, bEnd, byBucket.getOrElse(bStart, 0))
         }
 
-  def span(row: PeriodRow): Option[(Long, Long)] = (row.periodStart, row.periodEnd) match
+  def span(row: Period.Row): Option[(Long, Long)] = (row.periodStart, row.periodEnd) match
     case (Some(a), Some(b)) => Some(order(a, b))
     case (Some(a), None)    => Some((a, a))
     case (None, Some(b))    => Some((b, b))

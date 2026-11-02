@@ -2,13 +2,13 @@ package com.histmersion.domain.media.imports
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia}
 
-import com.histmersion.api.media.MediaProviderInfo
 import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 import com.histmersion.util.ocr.ConverterClient
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
+import com.histmersion.api.media.MediaProvider
 
 /** The collections `media import` can run, from the plugins' registry of the calling thread's generation: the
   * first-party ones and a third party's alike.
@@ -69,12 +69,12 @@ object MediaImporters:
       collections: ListMap[String, MediaCollection],
       pluginOf: String => String,
       allowFor: String => String
-  ): List[MediaProviderInfo] =
+  ): List[MediaProvider.Info] =
     BuiltinMedia.ordered(collections.keys.toList).flatMap(n => collections.get(n).map(n -> _)).map { (n, c) =>
       // a reserved name is registered by its first-party plugin alone
       val own = BuiltinMedia.entry(n)
       val firstParty = own.isDefined
-      MediaProviderInfo(
+      MediaProvider.Info(
         n,
         safe(c.title).getOrElse(n),
         safe(MediaImporter.over(c.asks)).getOrElse("places"),

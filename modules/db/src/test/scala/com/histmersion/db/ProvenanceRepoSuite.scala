@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.library.{MetadataPatch, Provenance, Source, SourcePatch}
+import com.histmersion.api.library.{MetadataPatch, Provenance, Source}
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.
@@ -56,7 +56,7 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     val patched = SourceFixtures.patch(
       ds,
       a,
-      SourcePatch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),
+      Source.Patch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),
       cfg.limits.chunkChars
     )
     assert(patched.isRight, patched.toString)

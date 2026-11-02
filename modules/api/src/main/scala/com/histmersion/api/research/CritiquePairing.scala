@@ -67,19 +67,19 @@ object CritiquePairing:
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 
-  private def edgeLine(e: CoverageEdge): String = s"[[${e.from}]] ${e.kind} [[${e.to}]]"
+  private def edgeLine(e: Coverage.Edge): String = s"[[${e.from}]] ${e.kind} [[${e.to}]]"
 
   def hits(
       body: String,
       resolve: String => Option[String],
-      edges: List[CoverageEdge],
+      edges: List[Coverage.Edge],
       work: String => Option[Work]
   ): List[Hit] =
     val es = edges.filter(e => Critiques.Kinds.contains(e.kind) && e.from != e.to)
     val blocks = Critiques.units(body)
-    val citedAnywhere = blocks.flatMap(u => ArticleLinks.targets(u.text).flatMap(resolve)).toSet
+    val citedAnywhere = blocks.flatMap(u => Article.Links.targets(u.text).flatMap(resolve)).toSet
     blocks.zipWithIndex.flatMap { (u, i) =>
-      val cited = ArticleLinks.targets(u.text).flatMap(resolve).distinct
+      val cited = Article.Links.targets(u.text).flatMap(resolve).distinct
       val text = prose(u.text)
       val where = words(text).take(8).mkString(" ")
       val partners = cited
@@ -152,7 +152,7 @@ object CritiquePairing:
     val crit = p.criticised.citekey
     val critic = p.critic.citekey
     val us = Critiques.units(body).zipWithIndex
-    def cites(u: Critiques.Block) = ArticleLinks.targets(u.text).flatMap(resolve).contains(crit)
+    def cites(u: Critiques.Block) = Article.Links.targets(u.text).flatMap(resolve).contains(crit)
     near.flatMap(n => us.find((u, i) => i == n && cites(u))).orElse(us.find((u, _) => cites(u))).map { (u, _) =>
       val head = words(prose(u.text)).take(10).mkString(" ")
       s"${p.ref.wire}: in the paragraph beginning \"$head\" (it cites [[$crit]]), add one sentence stating the " +

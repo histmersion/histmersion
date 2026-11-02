@@ -11,9 +11,11 @@ import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.catalogue.{GeoTime, MapTilesUiConfig, Period, PlaceTimeBasis, TileLayer, TilesApi}
+import com.histmersion.api.catalogue.{GeoTime, MapTilesUiConfig, Period, TileLayer, TilesApi}
 import com.histmersion.api.instance.UiConfig
-import com.histmersion.api.library.{Filter, GeoHit, SourceKinds}
+import com.histmersion.api.library.{Filter, GeoHit}
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Source
 
 object MapView:
 
@@ -159,7 +161,7 @@ object MapView:
     */
   private def addPlayAreas(features: js.Array[js.Dynamic], span: (Long, Long), keyOf: js.Dynamic => String): Unit =
     def byFindings(f: js.Dynamic) =
-      dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
+      dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
     val before = playAreas.keySet.toSet
     playAreas.filterInPlace { (k, a) =>
       val keep = PlaybackAreas.live(playhead, a.end, playFade)
@@ -284,7 +286,7 @@ object MapView:
       " " + ConfidenceBadge.html(c)
     )
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    CardIcons.html(CardIcons.sourceKind(pt.sourceKind.getOrElse(SourceKinds.Unknown))) +
+    CardIcons.html(CardIcons.sourceKind(pt.sourceKind.getOrElse(Source.Kinds.Unknown))) +
       s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title)}""" +
       s"""<br><i>$period</i><br>${Fmt.esc(pt.claim)}$conf<br>""" +
       s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
@@ -722,7 +724,7 @@ object MapView:
           def colorOf(f: js.Dynamic): String =
             viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
           def byFindings(f: js.Dynamic) =
-            dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
+            dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
           def isPoint(f: js.Dynamic) =
             val g = f.geometry
             !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g
@@ -811,7 +813,7 @@ object MapView:
     * never reads as a place known to exist then.
     */
   def placeClasses(base: String, basis: Option[String]): String =
-    if basis.flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings) then s"$base $ByFindingsClass" else base
+    if basis.flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings) then s"$base $ByFindingsClass" else base
 
   val ByFindingsClass = "hd-by-findings"
 

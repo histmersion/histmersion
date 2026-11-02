@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.domain.media.imports.BuiltinMedia
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.Attribution
 import com.histmersion.domain.Licence
@@ -26,6 +25,7 @@ import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.media.{MediaCoversRequest, MediaImportReport, MediaImportRequest}
+import com.histmersion.api.Api
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *
@@ -959,7 +959,7 @@ class MediaOracleSuite extends DbSuite:
       ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(MediaWire.env).asJava)
     )
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
-    def report(r: Either[ApiError, MediaImportReport]): String =
+    def report(r: Either[Api.Error, MediaImportReport]): String =
       r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)

@@ -16,7 +16,7 @@ import com.histmersion.util.jobs.JobRepo
 import com.histmersion.api.{Dataset, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.{LinkKind, ScheduleKind}
+import com.histmersion.api.automation.Goal.Plans.{LinkKind, ScheduleKind}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.data.exchange.TestExchange
@@ -30,20 +30,13 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.data.exchange.{BundleImport, MergeState}
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.api.automation.GoalPut
-import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName}
-import com.histmersion.api.exchange.{
-  BundleImportResult,
-  BundleInstance,
-  MergeApplyResult,
-  MergeJobState,
-  MergePlan,
-  MergeResolution,
-  MergeResolutions
-}
+import com.histmersion.api.catalogue.{EventPut, Period, Place}
+import com.histmersion.api.exchange.{MergeApplyResult, MergeJobState, MergePlan, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{Ingest, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.exchange.Bundle
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
@@ -109,7 +102,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .fold(e => fail(e), identity)
 
-  private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
+  private def importInto(ds: DataSource, bundle: Path, originals: Path): Bundle.ImportResult =
     com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
@@ -153,8 +146,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private def text(ds: DataSource, q: String): Option[String] =
     connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)
 
-  private def site(id: String, label: String, lon: Double, lat: Double): PlaceInput =
-    PlaceInput(
+  private def site(id: String, label: String, lon: Double, lat: Double): Place.Input =
+    Place.Input(
       Place(
         id,
         label,
@@ -162,7 +155,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
         Some(Period(-1650, -1180))
       ),
-      List(PlaceName(label))
+      List(Place.Name(label))
     )
 
   test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
@@ -254,7 +247,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       cfg.limits.chunkChars
     )
-    transact(work)(GoalRepo.put("zz_goal", GoalPut("A goal")))
+    transact(work)(GoalRepo.put("zz_goal", Goal.Put("A goal")))
     transact(work)(GoalLinkRepo.setPlan("zz_goal", """{"goal":"zz_goal","rationale":"work's plan"}"""))
     transact(work)(GoalLinkRepo.setBudget("zz_goal", Some(BigDecimal("2.5"))))
     assert(transact(work)(GoalLinkRepo.link("zz_goal", LinkKind.Source, "zzgoal2020_src", Some("why"))))
@@ -301,7 +294,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
     val (work, sw) = (fresh("ww"), spool("ww"))
-    transact(work)(GoalRepo.put("zz_goal", GoalPut("A watched goal")))
+    transact(work)(GoalRepo.put("zz_goal", Goal.Put("A watched goal")))
     assert(
       transact(work)(
         ManagerRepo.create(
@@ -380,7 +373,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val ds = fresh("rn")
     EventFixtures.put(ds, "zz_ev_a", EventPut("E", "battle"))
     EventFixtures.put(ds, "zz_ev_other", EventPut("Other", "battle"))
-    transact(ds)(GoalRepo.put("zz_goal_a", GoalPut("G")))
+    transact(ds)(GoalRepo.put("zz_goal_a", Goal.Put("G")))
     assert(EventFixtures.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
     // an old id of one event is not free for another
@@ -455,7 +448,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sw, sh) = (spool("alw"), spool("alh"))
     val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
     EventFixtures.put(work, "zz_ev_before", EventPut("E", "battle"))
-    transact(work)(GoalRepo.put("zz_goal_before", GoalPut("G")))
+    transact(work)(GoalRepo.put("zz_goal_before", Goal.Put("G")))
     assert(PlaceFixtures.rename(work, "zz_pl_before", "zz_pl_after").isRight)
     assert(EventFixtures.rename(work, "zz_ev_before", "zz_ev_after").isRight)
     assert(Transactor(work).transact(GoalRepo.renameIn("zz_goal_before", "zz_goal_after")).isRight)
@@ -503,7 +496,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val ds = fresh("job")
     val res = MergeApplyResult(
       java.util.UUID.randomUUID(),
-      BundleInstance(java.util.UUID.randomUUID(), Some("work")),
+      Bundle.Instance(java.util.UUID.randomUUID(), Some("work")),
       applied = true,
       "abc123",
       notes = List("a note")

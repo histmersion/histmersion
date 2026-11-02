@@ -4,7 +4,6 @@ import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
   CatalogRecord,
-  CorrectionCounts,
   EventCount,
   EventGeo,
   EventImportReport,
@@ -19,6 +18,7 @@ import com.histmersion.plugin.EventCatalogue
 import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
+import com.histmersion.api.catalogue.Correction
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
@@ -186,7 +186,7 @@ final class EventImports(
               EventCount.of(skipped),
               matchedIds.result().take(20),
               parts = 1,
-              corrections = saved.fold(CorrectionCounts())(_.corrections)
+              corrections = saved.fold(Correction.Counts())(_.corrections)
             )
           )
       progress(
@@ -276,7 +276,7 @@ final class EventImports(
     )
     // `var`s: the counts of the write
     var updated = 0
-    var counts = CorrectionCounts()
+    var counts = Correction.Counts()
     if !dryRun then
       again.grouped(ec.rederiveBatch.max(1)).zipWithIndex.foreach { (batch, i) =>
         val s =

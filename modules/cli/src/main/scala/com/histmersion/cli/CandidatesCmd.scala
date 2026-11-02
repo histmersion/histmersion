@@ -3,7 +3,8 @@ package com.histmersion.cli
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
-import com.histmersion.api.library.{AcquireApi, CandidateMark, Candidates, CandidatesMarkdown, CandidateSweepRequest}
+import com.histmersion.api.library.{AcquireApi, CandidateMark, Candidates, CandidatesMarkdown}
+import com.histmersion.api.library.CandidateSweep
 
 /** `histmersion candidates` (#3761): the new sources the deterministic search found for the research goals — list them,
   * sweep a goal's watches now, mark what was decided. A pure HTTP client of `AcquireApi`.
@@ -29,7 +30,7 @@ object CandidatesCmd:
   ) {
     (Opts.argument[String]("goal"), Opts.flag("dry-run", "Read, store nothing (no candidates, no watermarks)").orFalse)
       .mapN { (goal, dry) => (c: Client) =>
-        c.call(AcquireApi.sweepCandidates)(CandidateSweepRequest(goal, dry))
+        c.call(AcquireApi.sweepCandidates)(CandidateSweep.Request(goal, dry))
           .map(s => println(CandidatesMarkdown.sweep(s)))
       }
   }

@@ -1,11 +1,11 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Api, ApiError}
-import com.histmersion.api.catalogue.GazetteerSourceInfo
+import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.api.catalogue.Gazetteer
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
   * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET
@@ -17,8 +17,8 @@ object PlacesRoutes:
       places: PlacesControllers,
       gazetteer: GazetteerControllers,
       card: ServerEndpoint[Any, Identity],
-      sources: () => List[GazetteerSourceInfo],
-      load: (String, Boolean) => Either[ApiError, JobInfo]
+      sources: () => List[Gazetteer.SourceInfo],
+      load: (String, Boolean) => Either[Api.Error, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(

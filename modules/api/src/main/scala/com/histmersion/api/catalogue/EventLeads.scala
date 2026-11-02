@@ -14,24 +14,24 @@ object EventLeads:
 
   private def q(s: String): String = "\"" + s.replace("\"", "'") + "\""
 
-  def actions(eventId: String, label: String, yrs: String, proposed: Int): List[EventLeadAction] =
+  def actions(eventId: String, label: String, yrs: String, proposed: Int): List[EventLead.Action] =
     List(
-      EventLeadAction(
+      EventLead.Action(
         "discover",
         "search the literature",
         s"histmersion discover search ${q(label)} --not-in-db",
         Some(label)
       ),
-      EventLeadAction(
+      EventLead.Action(
         "acquire",
         "add to the acquire queue",
         s"histmersion queue acquire add ${q(s"literature on $label ($yrs)")} --topic events"
       ),
-      EventLeadAction("goal", "link to a goal", s"histmersion goals link <goal> --query ${q(label)}", Some(label))
+      EventLead.Action("goal", "link to a goal", s"histmersion goals link <goal> --query ${q(label)}", Some(label))
     ) ++
       Option
         .when(proposed > 0)(
-          EventLeadAction("confirm", "review the proposed sources", s"histmersion events links $eventId")
+          EventLead.Action("confirm", "review the proposed sources", s"histmersion events links $eventId")
         )
         .toList
 
@@ -62,7 +62,7 @@ object EventLeads:
         )
       )
 
-  def markdown(l: EventLeadList): String =
+  def markdown(l: EventLead.List): String =
     if l.leads.isEmpty then
       "_No leads: every event in the selection is attested by a source in the corpus, or none matched._"
     else

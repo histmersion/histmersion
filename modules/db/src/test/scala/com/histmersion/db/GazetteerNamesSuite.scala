@@ -18,7 +18,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.catalogue.places.PlaceSeed
-import com.histmersion.api.catalogue.{Geocode, Lpf, Period, PlaceAdd, PlaceEdits, PlaceInput}
+import com.histmersion.api.catalogue.{Geocode, Lpf, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.domain.catalogue.Place
@@ -86,7 +86,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       .getOrElse(fail("no db/places above the working directory"))
 
   /** The wanted features of the real seed files, as the first-run import parses them. */
-  private lazy val seed: List[PlaceInput] =
+  private lazy val seed: List[com.histmersion.api.catalogue.Place.Input] =
     def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
       val st = Files.list(dir)
       try
@@ -219,9 +219,9 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   test("a place added by hand is local, refused when the id is taken, and untouched by a re-seed"):
-    val in = PlaceEdits
+    val in = com.histmersion.api.catalogue.Place.Edits
       .toInput(
-        PlaceAdd(
+        com.histmersion.api.catalogue.Place.Add(
           "Zzgn Gornji",
           Place.Kind.Site,
           15.98,

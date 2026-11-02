@@ -1,8 +1,6 @@
 package com.histmersion.domain.automation.goals
 
 import com.histmersion.util.database.given
-import com.histmersion.api.ApiError
-import com.histmersion.api.exchange.{BundleGoal, BundleGoalAlias, BundleGoalLink, BundleGoalSchedule}
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Jsonb, Sql}
@@ -11,6 +9,8 @@ import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.Api
+import com.histmersion.api.exchange.Bundle
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
@@ -19,7 +19,7 @@ import java.util.UUID
   */
 object GoalBundleRepo:
 
-  def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
+  def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
     val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
                        ${rangeCols("g.period")}, p.uid, ${ts("g.created_at")}, ${ts("g.updated_at")},
@@ -55,7 +55,7 @@ object GoalBundleRepo:
       .distinctBy(r => (r.goalUid, r.kind))
       .groupBy(_.goalUid)
     rows.map { r =>
-      BundleGoal(
+      Bundle.Goal(
         r.uid,
         r.origin,
         r.slug,
@@ -73,22 +73,22 @@ object GoalBundleRepo:
         budgetUsd = r.budgetUsd.map(_.toDouble),
         links = links
           .get(r.uid)
-          .map(_.toList.map(l => BundleGoalLink(l.kind, l.ref, l.refUid, l.note, l.createdAt)))
+          .map(_.toList.map(l => Bundle.GoalLink(l.kind, l.ref, l.refUid, l.note, l.createdAt)))
           .filter(_.nonEmpty),
         schedules = schedules
           .get(r.uid)
-          .map(_.toList.map(x => BundleGoalSchedule(x.kind, x.cron, x.enabled, x.budgetUsd.map(_.toDouble))))
+          .map(_.toList.map(x => Bundle.GoalSchedule(x.kind, x.cron, x.enabled, x.budgetUsd.map(_.toDouble))))
           .filter(_.nonEmpty)
       )
     }
 
-  def goalAliases(scope: BundleScope)(using DbCon): Vector[BundleGoalAlias] =
+  def goalAliases(scope: BundleScope)(using DbCon): Vector[Bundle.GoalAlias] =
     (Sql.raw(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
                 FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++
       where(scope, "g.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(BundleGoalAlias.apply)
+      .map(Bundle.GoalAlias.apply)
 
   // ── the import's steps ──────────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ object GoalBundleRepo:
     * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
     * brought in has no next run until it is saved here: an imported collection never starts agent runs on its own.
     */
-  private def goalSets(w: BundleImport.Writer, g: BundleGoal)(using DbCon): Unit =
+  private def goalSets(w: BundleImport.Writer, g: Bundle.Goal)(using DbCon): Unit =
     val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
     g.links.getOrElse(Nil).foreach { l =>
       val ref: Option[String] = l.kind match

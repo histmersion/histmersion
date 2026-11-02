@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.{ApiError, Paging, Plural, Write}
+import com.histmersion.api.{Paging, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
@@ -11,6 +11,7 @@ import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsApi, ListFilters, Managers}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.Api
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -41,7 +42,7 @@ final class Approvals(
   ): Option[ApprovalInfo] =
     store.record(runId, kind, citekey, status, current, edgeKind, target, payload, state, result)
 
-  def list(state: Option[String], limit: Option[Int], page: Int): Either[ApiError, List[ApprovalInfo]] =
+  def list(state: Option[String], limit: Option[Int], page: Int): Either[Api.Error, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))
 
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
@@ -52,17 +53,17 @@ final class Approvals(
       limit: Int,
       before: Option[String],
       upTo: Option[String]
-  ): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.approvals(f)
-      page <- store.approvalPage(q, limit, before, upTo).left.map(ApiError(_, Some(Write.CodeNotFound)))
+      page <- store.approvalPage(q, limit, before, upTo).left.map(Api.Error(_, Some(Write.CodeNotFound)))
     yield
       val (rows, more) = page
       val (counts, facets) = store.approvalFacets(q)
       (rows, Paging.Page.filtered(counts, q.state.map(_.wire).toList, Option.when(more)(rows.last.id.toString), facets))
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
-  private def filter(state: Option[String]): Either[ApiError, Option[ApprovalState]] =
+  private def filter(state: Option[String]): Either[Api.Error, Option[ApprovalState]] =
     state.map(_.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
       case Some("all") => Right(None)
@@ -71,22 +72,22 @@ final class Approvals(
           .parse(s)
           .map(Some(_))
           .toRight(
-            ApiError(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})")
+            Api.Error(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})")
           )
 
   /** Approve (apply, then mark approved — or failed, with why) or reject an OPEN approval. 404 for an unknown id, 409
     * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
     * waiting on it applies it when it resumes (the caller wakes it).
     */
-  def decide(id: Long, decision: String, note: Option[String]): Either[ApiError, ApprovalInfo] =
+  def decide(id: Long, decision: String, note: Option[String]): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.trim).filter(_.nonEmpty).map(_.take(2000))
     for
-      d <- Decision.parse(decision).toRight(ApiError(s"unknown decision '$decision' (approve or reject)"))
-      a <- store.approval(id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
+      d <- Decision.parse(decision).toRight(Api.Error(s"unknown decision '$decision' (approve or reject)"))
+      a <- store.approval(id).toRight(Api.Error(s"No approval $id", Some(Write.CodeNotFound)))
       _ <- Either.cond(
         a.state == ApprovalState.Open.wire,
         (),
-        ApiError(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict))
+        Api.Error(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict))
       )
       out <- a.approvalKind match
         case Some(k) if k.blocking     => decideBlocking(a, d, clean)
@@ -103,13 +104,13 @@ final class Approvals(
       k: ApprovalKind,
       d: Decision,
       note: Option[String]
-  ): Either[ApiError, ApprovalInfo] =
+  ): Either[Api.Error, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     for
       _ <- Either.cond(
         store.decide(a.id, to, note, None),
         (),
-        ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
+        Api.Error(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
       )
       _ = (d, k) match
         case (Decision.Reject, _)                        => store.settle(a.id, ApprovalState.Rejected, "rejected")
@@ -128,10 +129,10 @@ final class Approvals(
             s"approved — the seeding manager ${Managers.seedId(a.subject.getOrElse("?"))} compiles " +
               Plural.count(a.articles.fold(0)(_.articles.size), "article")
           )
-      out <- store.approval(a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
+      out <- store.approval(a.id).toRight(Api.Error(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
-  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[String]): Either[ApiError, ApprovalInfo] =
+  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[String]): Either[Api.Error, ApprovalInfo] =
     val (to, result) = d match
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
@@ -139,24 +140,24 @@ final class Approvals(
       _ <- Either.cond(
         store.decide(a.id, to, note, Some(result)),
         (),
-        ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
+        Api.Error(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
       )
-      out <- store.approval(a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
+      out <- store.approval(a.id).toRight(Api.Error(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
-  private def decideSource(id: Long, d: Decision, clean: Option[String]): Either[ApiError, ApprovalInfo] =
+  private def decideSource(id: Long, d: Decision, clean: Option[String]): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)
         .flatMap(effects.proposal)
-        .toRight(ApiError(s"approval $id carries no readable proposal"))
+        .toRight(Api.Error(s"approval $id carries no readable proposal"))
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened
       to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
       _ <- Either.cond(
         store.decide(id, to, clean, None),
         (),
-        ApiError(s"approval $id was decided meanwhile", Some(AgentsApi.CodeConflict))
+        Api.Error(s"approval $id was decided meanwhile", Some(AgentsApi.CodeConflict))
       )
       _ = d match
         case Decision.Reject  => store.settle(id, ApprovalState.Rejected, "rejected")
@@ -164,5 +165,5 @@ final class Approvals(
           apply() match
             case Right(w) => store.settle(id, ApprovalState.Approved, s"applied: $w")
             case Left(m)  => store.settle(id, ApprovalState.Failed, m.take(1000))
-      out <- store.approval(id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
+      out <- store.approval(id).toRight(Api.Error(s"No approval $id", Some(Write.CodeNotFound)))
     yield out

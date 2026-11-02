@@ -18,7 +18,8 @@ import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{EventImportRequest, GazetteerExtract, GazetteerManifest, Geocode, Period}
+import com.histmersion.api.catalogue.{EventImportRequest, Geocode, Period}
+import com.histmersion.api.catalogue.Gazetteer
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's
@@ -971,7 +972,7 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = Files.writeString(d.resolve("places/regions.json"), seedRegions, UTF_8)
     val _ = Files.writeString(d.resolve("places/sites/sites.json"), seedSites, UTF_8)
     val pins = List(
-      GazetteerExtract(
+      Gazetteer.Extract(
         "geonames",
         "geonames-fixture.ndjson.gz",
         FixtureSha,
@@ -982,9 +983,9 @@ class CatalogueOracleSuite extends DbSuite:
         "CC BY 4.0",
         Some("GeoNames (geonames.org)")
       ),
-      GazetteerExtract("tgn", "tgn-absent.ndjson.gz", "0" * 64, 1, 1, "fixture-2", "TGN fixture", "ODC-By 1.0")
+      Gazetteer.Extract("tgn", "tgn-absent.ndjson.gz", "0" * 64, 1, 1, "fixture-2", "TGN fixture", "ODC-By 1.0")
     )
-    val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), GazetteerManifest(pins).asJson.spaces2, UTF_8)
+    val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
     Files.createDirectories(extracts)
     copyFixture("geonames-fixture.ndjson.gz", extracts.resolve("geonames-fixture.ndjson.gz"))

@@ -2,13 +2,14 @@ package com.histmersion.domain.library.search
 
 import com.histmersion.api.library.Tree
 
-import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.Api
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.catalogue.{Period, PlaceCounts}
+import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Aggregate, Filter, SearchHit, SearchResult, TimeHistogram}
+import com.histmersion.api.catalogue.Place
 
 /** The search over REST and MCP: the sources a filter selects with their matched findings and why, the histogram and
   * its nested tree, and the counts of what a filter selects. The gazetteer (`places`) is the catalogue's: the tree's
@@ -32,7 +33,7 @@ final class SearchControllers(
     search.sources(filters.page(f), cfg().limits.snippetWords, filters.scope(f))
 
   /** How many sources, findings, articles and events `f` selects. */
-  def selectionCounts(f: Filter): PlaceCounts = search.selectionCounts(f, filters.scope(f))
+  def selectionCounts(f: Filter): Place.Counts = search.selectionCounts(f, filters.scope(f))
 
   /** `/api/aggregate` — the timeline strip (§1.7) AND the nested tree (§1.6). Narrowed by the SAME filter as
     * `/api/sources` and `/api/findings`; the window defaults to the configured UI span.
@@ -45,20 +46,20 @@ final class SearchControllers(
     * Deeper levels are LAZY by construction: there is no cursor — a client narrows `from`/`to` (or `place`) to one
     * bucket and asks again, which is the same query with a smaller window.
     */
-  def aggregate(q: Api.AggregateQuery): Either[ApiError, TimeHistogram] =
+  def aggregate(q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
     val unit = norm(q.unit, "sources")
     Tree
       .parseBy(norm(q.by, Tree.KindTime))
       .toRight(
-        ApiError(
+        Api.Error(
           s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
             "time | region | time,region | region,time"
         )
       )
       .flatMap { axes =>
         if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
-          Left(ApiError(s"unsupported unit='$unit' — use sources, findings or starts"))
+          Left(Api.Error(s"unsupported unit='$unit' — use sources, findings or starts"))
         else aggregateOn(axes, unit, q)
       }
 
@@ -69,7 +70,7 @@ final class SearchControllers(
     * built them one `TimeBucket` at a time until the heap gave out, and `to = Long.MaxValue` overflowed the bucket
     * arithmetic on top of that.
     */
-  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[ApiError, TimeHistogram] =
+  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     val ui = cfg().ui
     val t = ui.time
     // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
@@ -81,7 +82,7 @@ final class SearchControllers(
     val wanted = Aggregate.bucketCount(from, to, size)
     if wanted > BigInt(math.max(1, ui.maxBuckets)) then
       Left(
-        ApiError(
+        Api.Error(
           s"that window needs $wanted buckets of $size year(s), over the " +
             s"${ui.maxBuckets} allowed (ui.max-buckets) — narrow `from`/`to`"
         )

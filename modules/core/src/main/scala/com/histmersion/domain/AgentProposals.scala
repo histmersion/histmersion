@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.library.{EdgeInput, EdgesPatch, MetadataPatch, SourcePatch}
+import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -45,11 +45,13 @@ object AgentProposals:
       case k => s"${k.wire} (not a source change)"
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
-    def patch: SourcePatch = kind match
-      case Approval.Kind.StatusChange => SourcePatch(metadata = Some(MetadataPatch(status = status)))
-      case Approval.Kind.Edge         =>
-        SourcePatch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target yield EdgeInput(t, k)).toList)))
-      case _ => SourcePatch()
+    def patch: com.histmersion.api.library.Source.Patch = kind match
+      case Approval.Kind.StatusChange =>
+        com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(status = status)))
+      case Approval.Kind.Edge =>
+        com.histmersion.api.library.Source.Patch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target
+        yield com.histmersion.api.library.Edge.Input(t, k)).toList)))
+      case _ => com.histmersion.api.library.Source.Patch()
 
   object Proposal:
     given Schema[Proposal] = summon[KindlingsSchema[Proposal]].schema

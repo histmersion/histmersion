@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.exchange.{BundleGoal, BundleGoalAlias}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
@@ -19,7 +18,7 @@ object GoalsCarried:
 
   private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
-  val goals: CarriedKind = CarriedKind.records[BundleGoal](
+  val goals: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Goal](
     Automation,
     Bundle.Kind.Goal,
     TableName("goals"),
@@ -27,7 +26,7 @@ object GoalsCarried:
   )(scope => GoalBundleRepo.goals(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.goals).setTo(ls))
 
   val aliases: CarriedKind =
-    CarriedKind.owned[BundleGoalAlias](
+    CarriedKind.owned[com.histmersion.api.exchange.Bundle.GoalAlias](
       Automation,
       BundleEntry("entities/goal-aliases.ndjson"),
       List(rows(49)(GoalBundleRepo.goalAliasesIn))

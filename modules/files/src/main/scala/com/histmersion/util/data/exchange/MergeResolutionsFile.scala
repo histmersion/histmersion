@@ -6,7 +6,7 @@ import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.library.EditionsPolicy
-import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions, MergeResolutionsText}
+import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the
   * template `--write-template` starts one from. Pure.
@@ -94,7 +94,7 @@ object MergeResolutionsFile:
     }
 
   /** `ID=decision` of a `--resolve` flag. */
-  def flag(s: String): Either[String, MergeResolution] = MergeResolutionsText.flag(s)
+  def flag(s: String): Either[String, MergeResolution] = MergeResolutions.Text.flag(s)
 
   /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */
-  def template(p: MergePlan, current: MergeResolutions): String = MergeResolutionsText.template(p, current)
+  def template(p: MergePlan, current: MergeResolutions): String = MergeResolutions.Text.template(p, current)

@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.media.covers.CoverChoice
@@ -33,7 +32,6 @@ import com.histmersion.api.library.{
   CalibreGap,
   CalibrePushRequest,
   CollectionAudit,
-  CollectionAuditRow,
   CollectionCover,
   CollectionEntry,
   CollectionFieldChange,
@@ -51,21 +49,14 @@ import com.histmersion.api.library.{
   CollectionSetDone,
   CollectionSetRequest,
   CollectionSync,
-  CollectionSyncPush,
-  CollectionSyncRequest,
   CollectionUpdateAll,
   CollectionUpdatedOne,
   CollectionUpdateRow,
   Ingest,
-  IngestAccepted,
-  IngestParams,
-  IngestReport,
-  MetadataPatch,
-  SourcePatch,
-  SourcePut,
-  SourceWithFindings
+  MetadataPatch
 }
 import com.histmersion.api.media.{MediaCoversRequest, MediaProvider, SourceCoverParams}
+import com.histmersion.api.Api
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
@@ -74,20 +65,25 @@ import com.histmersion.api.media.{MediaCoversRequest, MediaProvider, SourceCover
   */
 trait CollectionsService:
   def collections(): List[CollectionInfo]
-  def collection(name: String): Either[ApiError, CollectionInfo]
-  def search(name: String, q: Option[String], limit: Option[Int], unlinked: Boolean): Either[ApiError, CollectionSearch]
-  def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[ApiError, CollectionImported]
-  def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[ApiError, CollectionLinked]
-  def push(caller: Caller, name: String, req: CollectionPushRequest): Either[ApiError, CollectionPushed]
-  def updateOne(caller: Caller, name: String, citekey: String): Either[ApiError, CollectionUpdatedOne]
-  def updateAll(caller: Caller, name: String, apply: Boolean): Either[ApiError, CollectionUpdateAll]
-  def set(caller: Caller, name: String, req: CollectionSetRequest): Either[ApiError, CollectionSetDone]
-  def audit(name: String): Either[ApiError, CollectionAudit]
-  def gaps(name: String, limit: Option[Int]): Either[ApiError, CollectionGaps]
-  def sync(caller: Caller, name: String, req: CollectionSyncRequest): Either[ApiError, CollectionSync]
-  def archiveSearch(q: String, rows: Option[Int]): Either[ApiError, ArchiveSearchResult]
-  def archiveInfo(id: String): Either[ApiError, ArchiveItem]
-  def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[ApiError, IngestReport]
+  def collection(name: String): Either[Api.Error, CollectionInfo]
+  def search(
+      name: String,
+      q: Option[String],
+      limit: Option[Int],
+      unlinked: Boolean
+  ): Either[Api.Error, CollectionSearch]
+  def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
+  def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
+  def push(caller: Caller, name: String, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
+  def updateOne(caller: Caller, name: String, citekey: String): Either[Api.Error, CollectionUpdatedOne]
+  def updateAll(caller: Caller, name: String, apply: Boolean): Either[Api.Error, CollectionUpdateAll]
+  def set(caller: Caller, name: String, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
+  def audit(name: String): Either[Api.Error, CollectionAudit]
+  def gaps(name: String, limit: Option[Int]): Either[Api.Error, CollectionGaps]
+  def sync(caller: Caller, name: String, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
+  def archiveSearch(q: String, rows: Option[Int]): Either[Api.Error, ArchiveSearchResult]
+  def archiveInfo(id: String): Either[Api.Error, ArchiveItem]
+  def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
   /** The collection the library links its sources to (`sources.calibre_id`). */
@@ -125,22 +121,22 @@ object CollectionsService:
       archiveRows: Int
   ) extends CollectionsService:
 
-    private def fail(message: String): ApiError = ApiError(message)
-    private def usage(message: String): ApiError = ApiError(message, Some(CollectionsApi.Usage))
+    private def fail(message: String): Api.Error = Api.Error(message)
+    private def usage(message: String): Api.Error = Api.Error(message, Some(CollectionsApi.Usage))
 
-    private def lookup(name: String): Either[ApiError, HostCollection] =
+    private def lookup(name: String): Either[Api.Error, HostCollection] =
       registry()
         .get(name)
         .map(HostCollection(name, _))
         .toRight(
-          ApiError(
+          Api.Error(
             s"no source collection '$name' is registered on this server — its plugin is off or not installed",
             Some(CollectionsApi.NoCollection)
           )
         )
 
     /** The collections the library links sources to: Calibre alone (`sources.calibre_id`). */
-    private def linking(name: String): Either[ApiError, HostCollection] =
+    private def linking(name: String): Either[Api.Error, HostCollection] =
       if name == Calibre then lookup(name)
       else Left(fail(s"the library links sources to Calibre only, not to '$name'"))
 
@@ -157,7 +153,7 @@ object CollectionsService:
 
     def collections(): List[CollectionInfo] = registry().toList.map((n, c) => info(HostCollection(n, c)))
 
-    def collection(name: String): Either[ApiError, CollectionInfo] = lookup(name).map(info)
+    def collection(name: String): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
 
     private def entry(i: CollectionItem): CollectionEntry =
       CollectionEntry(
@@ -178,7 +174,7 @@ object CollectionsService:
         q: Option[String],
         limit: Option[Int],
         unlinked: Boolean
-    ): Either[ApiError, CollectionSearch] =
+    ): Either[Api.Error, CollectionSearch] =
       val max = limit.getOrElse(SearchLimit)
       if q.isEmpty && !unlinked then Left(usage("give a query, or --unlinked"))
       else if !unlinked then
@@ -204,7 +200,7 @@ object CollectionsService:
 
     // ── import ────────────────────────────────────────────────────────────────────────────────
 
-    def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[ApiError, CollectionImported] =
+    def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
       for
         c <- linking(name)
         _ <- req.acquireItem.fold(Right(()))(i =>
@@ -248,7 +244,7 @@ object CollectionsService:
     /** Create the source, or enrich it if the citekey exists — a re-import never wipes the findings and notes an agent
       * compiled; either way the record ends up linked to this entry.
       */
-    private def upsert(ck: String, item: CollectionItem, target: ImportTarget): Either[ApiError, SourceWithFindings] =
+    private def upsert(ck: String, item: CollectionItem, target: ImportTarget): Either[Api.Error, Source.WithFindings] =
       val summary = item.description.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
       val doi = item.identifiers.get("doi")
       target match
@@ -257,7 +253,7 @@ object CollectionsService:
             current <- library.source(ck)
             res <- library.patch(
               ck,
-              SourcePatch(
+              Source.Patch(
                 metadata = Some(
                   MetadataPatch(
                     title = item.title.orElse(Some("")),
@@ -275,7 +271,7 @@ object CollectionsService:
         case ImportTarget.Create =>
           library.create(
             ck,
-            SourcePut(
+            Source.Put(
               title = item.title.getOrElse(""),
               authors = item.authors,
               doi = doi,
@@ -317,19 +313,19 @@ object CollectionsService:
         file: CollectionFile,
         ck: String,
         acquireItem: Option[Int]
-    ): Either[ApiError, IngestAccepted] =
+    ): Either[Api.Error, Ingest.Accepted] =
       val fileName = file.name.reverse.takeWhile(_ != '/').reverse
       c.original(item, file) match
         case Right(f) if f.bytes.nonEmpty =>
           library.ingest(
-            IngestParams(ck, Some(fileName), provenance = Some("calibre"), acquireItem = acquireItem),
+            Ingest.Params(ck, Some(fileName), provenance = Some("calibre"), acquireItem = acquireItem),
             f.bytes
           )
         case _ => Left(usage(s"${file.name} is empty — there is nothing to convert"))
 
     // ── link, push, update, set ───────────────────────────────────────────────────────────────
 
-    def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[ApiError, CollectionLinked] =
+    def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
       for
         c <- linking(name)
         item <- c
@@ -337,7 +333,7 @@ object CollectionsService:
           .left
           .map(fail)
           .flatMap(_.toRight(fail(s"no Calibre book with id ${req.id}")))
-        sw <- library.patch(req.citekey, SourcePatch(metadata = Some(MetadataPatch(calibreId = Some(req.id)))))
+        sw <- library.patch(req.citekey, Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(req.id)))))
       yield CollectionLinked(sw.source.citekey, req.id, item.title.getOrElse(""))
 
     private def metadata(ck: String, s: CalibreGap): CollectionMetadata =
@@ -355,7 +351,7 @@ object CollectionsService:
 
     /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
       */
-    private def original(ck: String, hint: String): Either[ApiError, FetchedFile] =
+    private def original(ck: String, hint: String): Either[Api.Error, FetchedFile] =
       for
         o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.copy(message = e.message + hint))
         ext <- Ingest.dispositionExtension(o.disposition).toRight(fail(s"the server did not say what format '$ck' is"))
@@ -364,7 +360,7 @@ object CollectionsService:
     /** One push: the source's metadata, its stored original into the collection as a new item, and the new id recorded
       * so it stops counting as a gap.
       */
-    private def pushOne(c: HostCollection, ck: String): Either[ApiError, (String, String)] =
+    private def pushOne(c: HostCollection, ck: String): Either[Api.Error, (String, String)] =
       for
         s <- library.pushMeta(ck)
         file <- original(ck, StoredOriginalHint)
@@ -372,7 +368,7 @@ object CollectionsService:
         _ <- library.pushed(CalibrePushRequest(ck, id.value))
       yield (id.value, s.title)
 
-    def push(caller: Caller, name: String, req: CollectionPushRequest): Either[ApiError, CollectionPushed] =
+    def push(caller: Caller, name: String, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
       val ck = req.citekey
       linking(name).flatMap { c =>
         if !req.replace then pushOne(c, ck).map((id, title) => CollectionPushed(ck, id, title))
@@ -392,7 +388,7 @@ object CollectionsService:
           yield CollectionPushed(ck, id.toString, s.title, Some(fmt))
       }
 
-    def updateOne(caller: Caller, name: String, citekey: String): Either[ApiError, CollectionUpdatedOne] =
+    def updateOne(caller: Caller, name: String, citekey: String): Either[Api.Error, CollectionUpdatedOne] =
       for
         c <- linking(name)
         s <- library.pushMeta(citekey)
@@ -402,8 +398,8 @@ object CollectionsService:
         changes <- c.update(CollectionId(id.toString), metadata(citekey, s)).left.map(fail)
       yield CollectionUpdatedOne(citekey, id.toString, changes.map(_.field), s.title)
 
-    def updateAll(caller: Caller, name: String, apply: Boolean): Either[ApiError, CollectionUpdateAll] =
-      @tailrec def links(rest: List[LinkedSource], acc: List[CollectionLink]): Either[ApiError, List[CollectionLink]] =
+    def updateAll(caller: Caller, name: String, apply: Boolean): Either[Api.Error, CollectionUpdateAll] =
+      @tailrec def links(rest: List[LinkedSource], acc: List[CollectionLink]): Either[Api.Error, List[CollectionLink]] =
         rest match
           case Nil       => Right(acc.reverse)
           case l :: tail =>
@@ -429,7 +425,7 @@ object CollectionsService:
         case CollectionUpdateOutcome.Refused(reason)    => ("refused", Nil, Some(reason))
       CollectionUpdateRow(e.id.value, e.keys, state, cs, reason)
 
-    def set(caller: Caller, name: String, req: CollectionSetRequest): Either[ApiError, CollectionSetDone] =
+    def set(caller: Caller, name: String, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
       linking(name).flatMap(
         _.set(CollectionId(req.id), req.fields.map(f => f.name -> f.value)).left
           .map(fail)
@@ -438,7 +434,7 @@ object CollectionsService:
 
     // ── audit, gaps, sync ─────────────────────────────────────────────────────────────────────
 
-    def audit(name: String): Either[ApiError, CollectionAudit] =
+    def audit(name: String): Either[Api.Error, CollectionAudit] =
       val recs = linked()
       val records =
         recs.map(r => CollectionRecord(r.citekey, CollectionId(r.id), r.title, r.authors, r.year.map(Year(_))))
@@ -447,7 +443,7 @@ object CollectionsService:
         found <- c.audit(records).left.map(fail)
       yield CollectionAudit(
         found.map { f =>
-          CollectionAuditRow(
+          CollectionAudit.Row(
             f.id.value,
             f.keys,
             f.issues.map(_.code),
@@ -460,14 +456,14 @@ object CollectionsService:
         recs.flatMap(_.id.trim.toIntOption).distinct.size
       )
 
-    def gaps(name: String, limit: Option[Int]): Either[ApiError, CollectionGaps] =
+    def gaps(name: String, limit: Option[Int]): Either[Api.Error, CollectionGaps] =
       linking(name).map { _ =>
         val rows = library.gaps(limit).gaps.map(GapOriginal.row)
         val n = rows.count(_.counted)
         CollectionGaps(n, rows.size - n, rows.size, rows)
       }
 
-    def sync(caller: Caller, name: String, req: CollectionSyncRequest): Either[ApiError, CollectionSync] =
+    def sync(caller: Caller, name: String, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
       for
         g <- gaps(name, req.limit)
         c <- linking(name)
@@ -477,8 +473,8 @@ object CollectionsService:
           else
             g.gaps.filter(_.counted).map { r =>
               pushOne(c, r.citekey).fold(
-                e => CollectionSyncPush(r.citekey, None, Some(e.message)),
-                (id, _) => CollectionSyncPush(r.citekey, Some(id), None)
+                e => CollectionSync.Push(r.citekey, None, Some(e.message)),
+                (id, _) => CollectionSync.Push(r.citekey, Some(id), None)
               )
             }
         CollectionSync(g, req.apply, pushes)
@@ -497,7 +493,7 @@ object CollectionsService:
         i.files.map(f => ArchiveFile(f.name, f.format, f.megabytes.getOrElse(0.0)))
       )
 
-    def archiveSearch(q: String, rows: Option[Int]): Either[ApiError, ArchiveSearchResult] =
+    def archiveSearch(q: String, rows: Option[Int]): Either[Api.Error, ArchiveSearchResult] =
       val query = q.trim
       if query.isEmpty then Left(fail("give a search query"))
       else
@@ -509,16 +505,16 @@ object CollectionsService:
             .map(fail)
         yield ArchiveSearchResult(query, items.size, items.map(archiveItem))
 
-    private def archiveFound(c: HostCollection, id: String): Either[ApiError, CollectionItem] =
+    private def archiveFound(c: HostCollection, id: String): Either[Api.Error, CollectionItem] =
       c.item(CollectionId(id)).left.map(fail).flatMap(_.toRight(fail(s"no archive.org item '$id'")))
 
-    def archiveInfo(id: String): Either[ApiError, ArchiveItem] =
+    def archiveInfo(id: String): Either[Api.Error, ArchiveItem] =
       lookup(ArchiveOrg).flatMap(archiveFound(_, id)).map(archiveItem)
 
     /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
       * archive.org, and circumventing that is not something this pipeline does.
       */
-    def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[ApiError, IngestReport] =
+    def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
       for
         c <- lookup(ArchiveOrg)
         item <- archiveFound(c, req.id)

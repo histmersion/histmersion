@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{BundleKindCounts, BundleManifest}
 import com.histmersion.domain.MergePlanner
 
 import com.augustnagro.magnum.DbCon
@@ -14,10 +13,10 @@ trait MergeFollowUps:
     * articles to review, and the worklog line's id.
     */
   def recordIn(
-      m: BundleManifest,
+      m: com.histmersion.api.exchange.Bundle.Manifest,
       from: String,
       mergeId: UUID,
       ap: MergePlanner.Apply,
-      counts: List[BundleKindCounts],
+      counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
       dump: String
   )(using DbCon): (List[String], Int)

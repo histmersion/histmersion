@@ -4,13 +4,13 @@ import com.histmersion.api.catalogue.AttestationsMarkdown
 
 import chimp.server.*
 import com.histmersion.api.{Markdown, StrictJson}
-import com.histmersion.api.catalogue.AttestationPut
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.catalogue.Attestation
 
 /** The attestations for agents: list or show, create, delete. */
 object AttestationsTools:
@@ -108,7 +108,7 @@ object AttestationsTools:
         )
         .input[AttestationPutInput]
         .handle { in =>
-          val put = AttestationPut(
+          val put = Attestation.Put(
             in.citekey,
             in.targetType,
             in.targetId,

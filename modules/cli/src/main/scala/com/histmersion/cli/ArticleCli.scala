@@ -12,8 +12,9 @@ import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.SeedResult
-import com.histmersion.api.research.{ArticleCoverage, ArticleEdits, ArticleImport, ArticleMarkdown, ArticleReviewView}
+import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.research.Article
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -78,8 +79,8 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
-  def toImport(file: Path, kind: String, force: Boolean): ArticleImport =
-    ArticleImport(
+  def toImport(file: Path, kind: String, force: Boolean): Article.Import =
+    Article.Import(
       text = Files.readString(file),
       slug = Some(file.getFileName.toString.stripSuffix(".md")),
       kind = Some(kind),
@@ -264,17 +265,17 @@ object ArticleCli:
           read(e)
             .flatMap(t =>
               io.circe.parser
-                .decode[List[ArticleEdits.EditAnswer]](t)
+                .decode[List[Article.Edits.EditAnswer]](t)
                 .left
                 .map(err => CliError(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = ExitCode.Usage))
             )
-            .map(es => ArticleEdits.ArticleCheckRequest(edits = es, kind = kind))
+            .map(es => Article.Edits.ArticleCheckRequest(edits = es, kind = kind))
         case (None, Some(b)) =>
           read(b).map(t =>
-            ArticleEdits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind)
+            Article.Edits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind)
           )
         case _ => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
-      req.flatMap(c.checkArticle(slug, _)).map(r => Output.emit(json, r)(ArticleEdits.markdown))
+      req.flatMap(c.checkArticle(slug, _)).map(r => Output.emit(json, r)(Article.Edits.markdown))
     }
   }
 
@@ -348,7 +349,7 @@ object ArticleCli:
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleCoverage(slug).map(r => Output.emit(json, r)(ArticleCoverage.markdown))
+      c.articleCoverage(slug).map(r => Output.emit(json, r)(Article.Coverage.markdown))
     }
   }
 
@@ -358,7 +359,7 @@ object ArticleCli:
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleReview(slug).map(r => Output.emit(json, r)(ArticleReviewView.markdown))
+      c.articleReview(slug).map(r => Output.emit(json, r)(Article.ReviewView.markdown))
     }
   }
 

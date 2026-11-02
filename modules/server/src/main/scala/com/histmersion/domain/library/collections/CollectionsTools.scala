@@ -14,8 +14,6 @@ import com.histmersion.api.library.{
   CollectionPushRequest,
   CollectionSetRequest,
   CollectionsMarkdown,
-  CollectionSyncRequest,
-  CollectionUpdateAllRequest,
   CollectionUpdateOne
 }
 
@@ -43,7 +41,7 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.ApiError, A])(f: A => String) =
+    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => String) =
       ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")
@@ -88,7 +86,7 @@ object CollectionsTools:
               in.citekey match
                 case Some(ck) => answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
                 case None     =>
-                  answer(c.updateAll(me, name, CollectionUpdateAllRequest(in.apply)))(u =>
+                  answer(c.updateAll(me, name, CollectionUpdateAll.Request(in.apply)))(u =>
                     CollectionsMarkdown.updateAll(u.rows, u.applied)
                   )
             case "set" =>
@@ -102,8 +100,9 @@ object CollectionsTools:
               )
             case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
             case "gaps"  => answer(c.gaps(me, name, in.limit))(g => CollectionsMarkdown.gaps(g.gaps))
-            case "sync" => answer(c.sync(me, name, CollectionSyncRequest(in.apply, in.limit)))(CollectionsMarkdown.sync)
-            case other  =>
+            case "sync"  =>
+              answer(c.sync(me, name, CollectionSync.Request(in.apply, in.limit)))(CollectionsMarkdown.sync)
+            case other =>
               ToolResult.text(
                 s"_unknown action '$other' — list, info, search, import, link, push, update, set, audit, gaps, sync_"
               )

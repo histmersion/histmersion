@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
+import com.histmersion.api.exchange.{IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
@@ -45,8 +45,8 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def bodyIssue(right: UUID): Option[String] = runs.iterator.flatMap(_.bodyIssue(right)).nextOption()
 
   override def pairFirst(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -58,7 +58,12 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
     runs.iterator.flatMap(_.citekeyArgument(issue, decision)).nextOption()
 
   /** Every run folds; the folded source takes the bundle's body when one of them says so. */
-  override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
+  override def foldSources(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      citekey: String,
+      folds: PlanFolds
+  ): Boolean =
     runs.map(_.foldSources(right, left, citekey, folds)).exists(identity)
 
   override def renamed(source: UUID, citekey: String): Unit = runs.foreach(_.renamed(source, citekey))
@@ -69,12 +74,14 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
     runs.iterator.flatMap(_.ownerSource(foreign, kind)).nextOption()
 
-  override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] =
+  override def bodiesWanted(
+      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+  ): Set[String] =
     runs.flatMap(_.bodiesWanted(pairs)).toSet
 
   override def pair(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[String],
       questions: PairQuestions
@@ -96,13 +103,18 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def pairIssue(kind: Issue.Kind): Boolean = runs.exists(_.pairIssue(kind))
 
   override def foldPairFirst(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       keepsBundleBody: Boolean,
       folds: PlanFolds
   ): Unit = runs.foreach(_.foldPairFirst(right, left, keepsBundleBody, folds))
 
-  override def foldPair(right: BundleSource, left: BundleSource, alt: Option[DecisionKind], folds: PlanFolds): Unit =
+  override def foldPair(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      alt: Option[DecisionKind],
+      folds: PlanFolds
+  ): Unit =
     runs.foreach(_.foldPair(right, left, alt, folds))
 
   override def relabel(relabels: PlanRelabels): Unit = runs.foreach(_.relabel(relabels))

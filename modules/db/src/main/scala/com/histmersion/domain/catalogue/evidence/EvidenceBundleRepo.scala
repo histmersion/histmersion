@@ -8,7 +8,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.api.exchange.{BundleAttestation, BundleEventCandidate, BundleEventCheck, BundleEventSets}
+import com.histmersion.api.exchange.Bundle
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -18,7 +18,7 @@ private[evidence] object EvidenceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  def attestations(scope: BundleScope)(using DbCon): Vector[BundleAttestation] =
+  def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
     (Sql.raw(s"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
                        ${targetUid("t.target_type", "t.target_id")}, t.quote, t.prefix, t.suffix,
                        t.char_start, t.char_end, t.chunk_ord, t.page, t.canvas, t.xywh, t.cts_urn, t.note,
@@ -28,7 +28,7 @@ private[evidence] object EvidenceBundleRepo:
       .query[BAttestationFullRow]
       .run()
       .map(r =>
-        BundleAttestation(
+        Bundle.Attestation(
           r.uid,
           r.origin,
           r.sourceUid,
@@ -55,7 +55,7 @@ private[evidence] object EvidenceBundleRepo:
     * those recomputed after `since` and every DECISION (a status change does not move `computed_at`, and the decisions
     * are few).
     */
-  def eventCandidates(scope: BundleScope)(using DbCon): Vector[BundleEventCandidate] =
+  def eventCandidates(scope: BundleScope)(using DbCon): Vector[Bundle.EventCandidate] =
     val w = scope match
       case BundleScope.Since(_) =>
         Sql.raw("(c.status <> 'proposed' OR ") ++ where(scope, "e.uid", "c.computed_at") ++ ")"
@@ -67,7 +67,7 @@ private[evidence] object EvidenceBundleRepo:
       .query[BCandidateRow]
       .run()
       .map { r =>
-        BundleEventCandidate(
+        Bundle.EventCandidate(
           r.eventUid,
           r.sourceUid,
           r.citekey,
@@ -81,13 +81,13 @@ private[evidence] object EvidenceBundleRepo:
       }
 
   /** When the candidates of the events in scope were last computed (`event_link_checks`). */
-  def eventChecks(scope: BundleScope)(using DbCon): Vector[BundleEventCheck] =
+  def eventChecks(scope: BundleScope)(using DbCon): Vector[Bundle.EventCheck] =
     (Sql.raw(s"""SELECT e.uid, ${ts("k.checked_at")}
                 FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE """) ++
       where(scope, "e.uid", "k.checked_at") ++ " ORDER BY e.uid").frag
       .query[(UUID, String)]
       .run()
-      .map(BundleEventCheck.apply)
+      .map(Bundle.EventCheck.apply)
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ private[evidence] object EvidenceBundleRepo:
   def candidatesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import com.histmersion.api.exchange.BundleEventSets.newer
+    import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCandidates.nonEmpty then
       val here = Sql
         .raw(s"SELECT event_id, citekey, status, ${ts("computed_at")} FROM event_link_candidates")
@@ -118,7 +118,7 @@ private[evidence] object EvidenceBundleRepo:
                     VALUES ($id, $ck, ${c.score}, ${c.status}, ${c.findings}::text[], $passages::jsonb,
                       ${c.reasons}::text[], ${c.computedAt}::timestamptz)""".update.run(): Unit
             case Some((status, at)) =>
-              val keep = BundleEventSets.candidateStatus(status, c.status)
+              val keep = Bundle.EventSets.candidateStatus(status, c.status)
               if newer(Some(at), Some(c.computedAt)) then
                 sql"""UPDATE event_link_candidates SET score = ${c.score}, status = $keep, findings = ${c.findings}::text[],
                         passages = $passages::jsonb, reasons = ${c.reasons}::text[], computed_at = ${c.computedAt}::timestamptz
@@ -132,7 +132,7 @@ private[evidence] object EvidenceBundleRepo:
   def checksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import com.histmersion.api.exchange.BundleEventSets.newer
+    import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventChecks.nonEmpty then
       val here = Sql
         .raw(s"SELECT event_id, ${ts("checked_at")} FROM event_link_checks")

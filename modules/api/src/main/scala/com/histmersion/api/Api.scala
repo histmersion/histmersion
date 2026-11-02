@@ -11,56 +11,24 @@ import com.histmersion.api.automation.{
   AgentStateEntry,
   AgentStatePut,
   Goal,
-  GoalDeleted,
-  GoalList,
-  GoalPatch,
-  GoalPut,
   ListFilters,
   ManagersApi
 }
-import com.histmersion.api.backup.{Backup, BackupInfo, BackupStatus, RestoreRequest, RestoreResult}
+import com.histmersion.api.backup.{Backup, RestoreRequest, RestoreResult}
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.{
   Attestation,
-  AttestationDeleted,
-  AttestationList,
-  AttestationPatch,
-  AttestationPut,
   EventDeleted,
-  EventGeoList,
   EventList,
   EventPatch,
   EventPut,
   EventsApi,
-  GazetteerSourceInfo,
   HistoricalPeriod,
   ManualPlaceName,
-  PeriodDetail,
-  PeriodImportResult,
-  PlaceAdd,
-  PlaceFootprint,
-  PlaceGone,
-  PlaceHit,
-  PlaceImportResult,
-  PlaceLink,
-  PlaceMergeIn,
-  PlaceNameAdd,
-  PlaceNameChanged,
-  PlaceNameRemove,
-  PlaceOverride,
-  PlaceOverrideChanged,
-  PlaceOverrideSet,
-  PlaceRebuildResult,
-  PlaceRemoveIn,
-  PlaceSummary,
-  PlaceTreeRow,
   TilesApi
 }
 import com.histmersion.api.checks.FormatReport
 import com.histmersion.api.exchange.{
-  BundleImportResult,
-  BundleUpload,
-  BundleVerifyResult,
   MergeApplyJob,
   MergeApplyRequest,
   MergeDetail,
@@ -68,11 +36,10 @@ import com.histmersion.api.exchange.{
   MergeInfo,
   MergeLedger,
   MergePlan,
-  MergePlanRequest,
   MergeResolutions,
   MergeSession
 }
-import com.histmersion.api.instance.{About, Health, UiApi, UiConfig, VersionInfo}
+import com.histmersion.api.instance.{About, Health, UiApi, UiConfig}
 import com.histmersion.api.jobs.{JobActions, JobInfo}
 import com.histmersion.api.library.{
   AcquireApi,
@@ -80,41 +47,25 @@ import com.histmersion.api.library.{
   EdgesResolved,
   Facet,
   Filter,
-  FilterDocs,
-  FilterQuery,
   GeoHit,
   GeoHitPage,
   Ingest,
-  IngestAccepted,
-  IngestParams,
   InstanceLabel,
   NeighborRow,
   NoteImport,
   PassageResult,
-  RenameRequest,
   SearchHit,
   SearchResult,
   SeedRequest,
   SeedResult,
-  SourceAlias,
-  SourceDeleteRequest,
-  SourceDeletion,
-  SourceGraph,
-  SourcePatch,
-  SourcePut,
-  SourceRenamed,
-  SourceWithFindings,
   TimeHistogram
 }
-import com.histmersion.api.maintenance.{ReindexResult, VacuumRequest}
+import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.api.media.{
   AssetDetail,
   AssetInfo,
   AssetInput,
   AssetLink,
-  AssetLinkDeleted,
-  AssetLinkList,
-  AssetLinkPut,
   AssetPatch,
   AssetsStored,
   FigureLicenceFill,
@@ -127,25 +78,25 @@ import com.histmersion.api.media.{
   MediaItem,
   MediaList,
   MediaProvider,
-  MediaProviderInfo,
   SourceCoverParams
 }
-import com.histmersion.api.research.{
-  ArticleDeleted,
-  ArticleEdits,
-  ArticleImport,
-  ArticleList,
-  ArticlePatch,
-  ArticlePut,
-  ArticleReviewView,
-  ArticleVersion,
-  ArticleVersionFull,
-  ArticleView,
-  Backlink,
-  Coverage
-}
+import com.histmersion.api.research.{Backlink, Coverage}
 import com.histmersion.api.settings.{ConfigEditApi, ReloadReport}
 import com.histmersion.api.views.{AutopilotApi, EventDetail, PlaceDetail, ResolvedId}
+import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.instance.Version
+import com.histmersion.api.library.Rename
+import com.histmersion.api.library.Source
+import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.api.research.Article
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.AnyEndpoint
+import sttp.tapir.Schema
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -161,14 +112,14 @@ object Api:
   object FindingsQuery:
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
-  private lazy val base = endpoint.in("api").errorOut(jsonBody[ApiError])
+  private lazy val base = endpoint.in("api").errorOut(jsonBody[com.histmersion.api.Api.Error])
 
   /** A `def`, not a `val`: endpoints defined above `writeErrors` use it too. */
   private def writeBase = endpoint.in("api").errorOut(writeErrors)
 
   /** The parameter names are fixed: saved links, the web UI and the CLI rely on them. */
   lazy val filterQuery: EndpointInput[Filter] =
-    import com.histmersion.api.library.FilterDocs as D
+    import com.histmersion.api.library.Filter.Docs as D
     def q[A](p: D.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) =
       query[A](p.rest).description(p.doc)
     q[Option[String]](D.query)
@@ -190,39 +141,39 @@ object Api:
       .and(q[Option[Int]](D.offset))
       .and(q[Option[String]](D.title))
       .and(q[Option[String]](D.goal))
-      .mapTo[FilterQuery]
-      .map(_.toFilter)(FilterQuery.from)
+      .mapTo[Filter.Query]
+      .map(_.toFilter)(Filter.Query.from)
 
-  lazy val version: PublicEndpoint[Unit, ApiError, VersionInfo, Any] =
-    base.get.in("version").out(jsonBody[VersionInfo])
+  lazy val version: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Version.Info, Any] =
+    base.get.in("version").out(jsonBody[Version.Info])
 
-  lazy val health: PublicEndpoint[Unit, ApiError, Health, Any] =
+  lazy val health: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Health, Any] =
     base.get.in("health").out(jsonBody[Health])
 
-  lazy val about: PublicEndpoint[Unit, ApiError, About, Any] =
+  lazy val about: PublicEndpoint[Unit, com.histmersion.api.Api.Error, About, Any] =
     base.get.in("about").out(jsonBody[About])
 
-  lazy val config: PublicEndpoint[Unit, ApiError, UiConfig, Any] =
+  lazy val config: PublicEndpoint[Unit, com.histmersion.api.Api.Error, UiConfig, Any] =
     base.get.in("config").out(jsonBody[UiConfig])
 
-  lazy val search: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[SearchHit], Any] =
+  lazy val search: PublicEndpoint[(Option[String], Option[Int]), com.histmersion.api.Api.Error, List[SearchHit], Any] =
     base.get
       .in("search")
       .in(query[Option[String]]("q"))
       .in(query[Option[Int]]("limit"))
       .out(jsonBody[List[SearchHit]])
 
-  lazy val resolveId: PublicEndpoint[String, ApiError, ResolvedId, Any] =
+  lazy val resolveId: PublicEndpoint[String, com.histmersion.api.Api.Error, ResolvedId, Any] =
     base.get.in("resolve" / path[String]("id")).out(jsonBody[ResolvedId])
 
-  lazy val getSource: PublicEndpoint[(String, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val getSource: PublicEndpoint[(String, Boolean), com.histmersion.api.Api.Error, Source.WithFindings, Any] =
     base.get
       .in("sources" / path[String]("citekey"))
       .in(query[Boolean]("body").default(true))
-      .out(jsonBody[SourceWithFindings])
+      .out(jsonBody[Source.WithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val sourceArticles: PublicEndpoint[String, ApiError, List[Backlink], Any] =
+  lazy val sourceArticles: PublicEndpoint[String, com.histmersion.api.Api.Error, List[Backlink], Any] =
     base.get
       .in("sources" / path[String]("citekey") / "articles")
       .out(jsonBody[List[Backlink]])
@@ -237,7 +188,7 @@ object Api:
       chars: Option[Int] = None
   )
 
-  lazy val sourceView: PublicEndpoint[SourceViewQuery, ApiError, String, Any] =
+  lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, String, Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "view")
       .in(query[Boolean]("fullText").default(false))
@@ -247,7 +198,7 @@ object Api:
       .in(query[Option[Int]]("chars"))
       .mapInTo[SourceViewQuery]
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(stringBody)
 
   final case class PassagesQuery(
@@ -258,7 +209,7 @@ object Api:
       context: Option[Int] = None
   )
 
-  lazy val passages: PublicEndpoint[PassagesQuery, ApiError, PassageResult, Any] =
+  lazy val passages: PublicEndpoint[PassagesQuery, com.histmersion.api.Api.Error, PassageResult, Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "passages")
       .in(
@@ -273,7 +224,7 @@ object Api:
       .errorOut(writeErrors)
       .out(jsonBody[PassageResult])
 
-  lazy val findings: PublicEndpoint[FindingsQuery, ApiError, List[GeoHit], Any] =
+  lazy val findings: PublicEndpoint[FindingsQuery, com.histmersion.api.Api.Error, List[GeoHit], Any] =
     base.get
       .in("findings")
       .in(filterQuery)
@@ -281,7 +232,7 @@ object Api:
       .mapInTo[FindingsQuery]
       .out(jsonBody[List[GeoHit]])
 
-  lazy val findingsPage: PublicEndpoint[FindingsQuery, ApiError, GeoHitPage, Any] =
+  lazy val findingsPage: PublicEndpoint[FindingsQuery, com.histmersion.api.Api.Error, GeoHitPage, Any] =
     base.get
       .in("findings" / "page")
       .in(filterQuery)
@@ -313,7 +264,7 @@ object Api:
     ): AggregateQuery =
       AggregateQuery(Some(by), unit, filter, depth.orElse(Some(0)), asOf, samples)
 
-  lazy val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
+  lazy val aggregate: PublicEndpoint[AggregateQuery, com.histmersion.api.Api.Error, TimeHistogram, Any] =
     base.get
       .in("aggregate")
       .in(query[Option[String]]("by"))
@@ -326,39 +277,40 @@ object Api:
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 
-  lazy val neighbors: PublicEndpoint[(String, List[String]), ApiError, List[NeighborRow], Any] =
+  lazy val neighbors: PublicEndpoint[(String, List[String]), com.histmersion.api.Api.Error, List[NeighborRow], Any] =
     base.get
       .in("neighbors" / path[String]("citekey"))
       .in(query[List[String]]("kind"))
       .out(jsonBody[List[NeighborRow]])
 
-  lazy val graph: PublicEndpoint[(String, Option[Int]), ApiError, SourceGraph, Any] =
+  lazy val graph: PublicEndpoint[(String, Option[Int]), com.histmersion.api.Api.Error, Source.Graph, Any] =
     base.get
       .in("graph" / path[String]("citekey"))
       .in(query[Option[Int]]("depth"))
-      .out(jsonBody[SourceGraph])
+      .out(jsonBody[Source.Graph])
 
-  lazy val contradictions: PublicEndpoint[(Option[String], Option[Long]), ApiError, ContradictionsResult, Any] =
+  lazy val contradictions
+      : PublicEndpoint[(Option[String], Option[Long]), com.histmersion.api.Api.Error, ContradictionsResult, Any] =
     base.get
       .in("contradictions")
       .in(query[Option[String]]("citekey"))
       .in(query[Option[Long]]("since"))
       .out(jsonBody[ContradictionsResult])
 
-  lazy val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
+  lazy val seed: PublicEndpoint[SeedRequest, com.histmersion.api.Api.Error, SeedResult, Any] =
     writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
-  lazy val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
+  lazy val reindex: PublicEndpoint[(Option[String], Option[Int]), com.histmersion.api.Api.Error, ReindexResult, Any] =
     writeBase.post
       .in("reindex")
       .in(query[Option[String]]("after"))
       .in(query[Option[Int]]("limit"))
       .out(jsonBody[ReindexResult])
 
-  lazy val sources: PublicEndpoint[Filter, ApiError, SearchResult, Any] =
+  lazy val sources: PublicEndpoint[Filter, com.histmersion.api.Api.Error, SearchResult, Any] =
     base.get.in("sources").in(filterQuery).out(jsonBody[SearchResult])
 
-  lazy val facets: PublicEndpoint[(String, Option[String], Filter), ApiError, List[Facet], Any] =
+  lazy val facets: PublicEndpoint[(String, Option[String], Filter), com.histmersion.api.Api.Error, List[Facet], Any] =
     base.get
       .in("facets")
       .in(query[String]("field"))
@@ -367,108 +319,113 @@ object Api:
       .out(jsonBody[List[Facet]])
 
   private[api] def writeErrors =
-    oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError])(
-        ApiError.hasCode(Backup.CodeMaintenance)
+    oneOf[com.histmersion.api.Api.Error](
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
+        com.histmersion.api.Api.Error.hasCode(Write.CodeNotFound)
       ),
-      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError])(
-        ApiError.hasCode(Write.CodePrecondition)
+      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[com.histmersion.api.Api.Error])(
+        com.histmersion.api.Api.Error.hasCode(Backup.CodeMaintenance)
       ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[com.histmersion.api.Api.Error])(
+        com.histmersion.api.Api.Error.hasCode(Write.CodePrecondition)
+      ),
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
     )
 
   private def strictQuery = query[Boolean]("strict")
     .default(false)
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
 
-  lazy val putSource: PublicEndpoint[(String, SourcePut, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val putSource
+      : PublicEndpoint[(String, Source.Put, Boolean), com.histmersion.api.Api.Error, Source.WithFindings, Any] =
     endpoint.put
       .in("api" / "sources" / path[String]("citekey"))
-      .in(jsonBody[SourcePut])
+      .in(jsonBody[Source.Put])
       .in(strictQuery)
       .errorOut(writeErrors)
-      .out(jsonBody[SourceWithFindings])
+      .out(jsonBody[Source.WithFindings])
 
-  lazy val patchSource: PublicEndpoint[(String, SourcePatch, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val patchSource
+      : PublicEndpoint[(String, Source.Patch, Boolean), com.histmersion.api.Api.Error, Source.WithFindings, Any] =
     endpoint.patch
       .in("api" / "sources" / path[String]("citekey"))
-      .in(jsonBody[SourcePatch])
+      .in(jsonBody[Source.Patch])
       .in(strictQuery)
       .errorOut(writeErrors)
-      .out(jsonBody[SourceWithFindings])
+      .out(jsonBody[Source.WithFindings])
 
-  lazy val lintSource: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val lintSource: PublicEndpoint[String, com.histmersion.api.Api.Error, FormatReport, Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "lint")
       .errorOut(writeErrors)
       .out(jsonBody[FormatReport])
 
-  lazy val fixSourceFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val fixSourceFormat: PublicEndpoint[String, com.histmersion.api.Api.Error, FormatReport, Any] =
     endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
       .errorOut(writeErrors)
       .out(jsonBody[FormatReport])
 
-  lazy val renameSource: PublicEndpoint[(String, RenameRequest), ApiError, SourceRenamed, Any] =
+  lazy val renameSource: PublicEndpoint[(String, Rename.Request), com.histmersion.api.Api.Error, Source.Renamed, Any] =
     writeBase.post
       .in("sources" / path[String]("citekey") / "rename")
-      .in(jsonBody[RenameRequest])
-      .out(jsonBody[SourceRenamed])
+      .in(jsonBody[Rename.Request])
+      .out(jsonBody[Source.Renamed])
 
-  lazy val deleteSource: PublicEndpoint[(String, SourceDeleteRequest), ApiError, SourceDeletion, Any] =
+  lazy val deleteSource
+      : PublicEndpoint[(String, Source.DeleteRequest), com.histmersion.api.Api.Error, Source.Deletion, Any] =
     writeBase.post
       .in("sources" / path[String]("citekey") / "delete")
-      .in(jsonBody[SourceDeleteRequest])
-      .out(jsonBody[SourceDeletion])
+      .in(jsonBody[Source.DeleteRequest])
+      .out(jsonBody[Source.Deletion])
 
-  lazy val sourceAliases: PublicEndpoint[Unit, ApiError, List[SourceAlias], Any] =
-    base.get.in("source-aliases").out(jsonBody[List[SourceAlias]])
+  lazy val sourceAliases: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[Source.Alias], Any] =
+    base.get.in("source-aliases").out(jsonBody[List[Source.Alias]])
 
-  lazy val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
+  lazy val importNote: PublicEndpoint[NoteImport, com.histmersion.api.Api.Error, SeedResult, Any] =
     writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
-  lazy val exportSource: PublicEndpoint[String, ApiError, String, Any] =
+  lazy val exportSource: PublicEndpoint[String, com.histmersion.api.Api.Error, String, Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "export")
       .errorOut(writeErrors)
       .out(stringBody)
 
-  lazy val citekeys: PublicEndpoint[Unit, ApiError, List[String], Any] =
+  lazy val citekeys: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[String], Any] =
     base.get.in("citekeys").out(jsonBody[List[String]])
 
-  lazy val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
+  lazy val resolveEdges: PublicEndpoint[Unit, com.histmersion.api.Api.Error, EdgesResolved, Any] =
     writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
-  lazy val configReload: PublicEndpoint[Unit, ApiError, ReloadReport, Any] =
+  lazy val configReload: PublicEndpoint[Unit, com.histmersion.api.Api.Error, ReloadReport, Any] =
     writeBase.post.in("config" / "reload").out(jsonBody[ReloadReport])
 
-  lazy val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
-    writeBase.post.in("backup").out(jsonBody[BackupStatus])
+  lazy val backup: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Backup.Status, Any] =
+    writeBase.post.in("backup").out(jsonBody[Backup.Status])
 
   /** A job, not a request: Postgres cannot run `VACUUM` inside a transaction. */
-  lazy val maintenanceVacuum: PublicEndpoint[VacuumRequest, ApiError, JobInfo, Any] =
-    writeBase.post.in("maintenance" / "vacuum").in(jsonBody[VacuumRequest]).out(jsonBody[JobInfo])
+  lazy val maintenanceVacuum: PublicEndpoint[Vacuum.Request, com.histmersion.api.Api.Error, JobInfo, Any] =
+    writeBase.post.in("maintenance" / "vacuum").in(jsonBody[Vacuum.Request]).out(jsonBody[JobInfo])
 
-  lazy val backupStatus: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
-    endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[BackupStatus])
+  lazy val backupStatus: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Backup.Status, Any] =
+    endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[Backup.Status])
 
-  lazy val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =
-    base.get.in("backups").out(jsonBody[List[BackupInfo]])
+  lazy val backups: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[Backup.Info], Any] =
+    base.get.in("backups").out(jsonBody[List[Backup.Info]])
 
-  lazy val downloadBackup: PublicEndpoint[String, ApiError, TapirFile, Any] =
+  lazy val downloadBackup: PublicEndpoint[String, com.histmersion.api.Api.Error, TapirFile, Any] =
     endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)
 
-  lazy val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
+  lazy val restore: PublicEndpoint[RestoreRequest, com.histmersion.api.Api.Error, RestoreResult, Any] =
     writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
 
-  lazy val instance: PublicEndpoint[Unit, ApiError, InstanceInfo, Any] =
+  lazy val instance: PublicEndpoint[Unit, com.histmersion.api.Api.Error, InstanceInfo, Any] =
     base.get.in("instance").out(jsonBody[InstanceInfo])
 
-  lazy val setInstance: PublicEndpoint[InstanceLabel, ApiError, InstanceInfo, Any] =
+  lazy val setInstance: PublicEndpoint[InstanceLabel, com.histmersion.api.Api.Error, InstanceInfo, Any] =
     writeBase.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
-  lazy val exportBundle: PublicEndpoint[Option[String], ApiError, (TapirFile, String), Any] =
+  lazy val exportBundle: PublicEndpoint[Option[String], com.histmersion.api.Api.Error, (TapirFile, String), Any] =
     endpoint.get
       .in("api" / "bundle")
       .in(query[Option[String]]("since"))
@@ -476,51 +433,53 @@ object Api:
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition))
 
-  lazy val verifyBundle: PublicEndpoint[TapirFile, ApiError, BundleVerifyResult, Any] =
-    writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[BundleVerifyResult])
+  lazy val verifyBundle: PublicEndpoint[TapirFile, com.histmersion.api.Api.Error, Bundle.VerifyResult, Any] =
+    writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
 
   /** Not an MCP tool: its input is a file upload, which an MCP call cannot carry. */
-  lazy val importBundle: PublicEndpoint[(Boolean, TapirFile), ApiError, BundleImportResult, Any] =
+  lazy val importBundle: PublicEndpoint[(Boolean, TapirFile), com.histmersion.api.Api.Error, Bundle.ImportResult, Any] =
     writeBase.post
       .in("bundle" / "import")
       .in(query[Boolean]("dryRun").default(false))
       .in(fileBody)
-      .out(jsonBody[BundleImportResult])
+      .out(jsonBody[Bundle.ImportResult])
 
   /** Kept on the server under its sha256 so `merge plan` and `merge import` can name it: their body is the resolution
     * set, and a request carries one body.
     */
-  lazy val uploadBundle: PublicEndpoint[TapirFile, ApiError, BundleUpload, Any] =
-    writeBase.post.in("bundle" / "upload").in(fileBody).out(jsonBody[BundleUpload])
+  lazy val uploadBundle: PublicEndpoint[TapirFile, com.histmersion.api.Api.Error, Bundle.Upload, Any] =
+    writeBase.post.in("bundle" / "upload").in(fileBody).out(jsonBody[Bundle.Upload])
 
-  lazy val mergePlan: PublicEndpoint[MergePlanRequest, ApiError, MergePlan, Any] =
-    writeBase.post.in("merge" / "plan").in(jsonBody[MergePlanRequest]).out(jsonBody[MergePlan])
+  lazy val mergePlan: PublicEndpoint[MergePlan.Request, com.histmersion.api.Api.Error, MergePlan, Any] =
+    writeBase.post.in("merge" / "plan").in(jsonBody[MergePlan.Request]).out(jsonBody[MergePlan])
 
-  lazy val mergeImport: PublicEndpoint[MergeImportRequest, ApiError, BundleImportResult, Any] =
-    writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[BundleImportResult])
+  lazy val mergeImport: PublicEndpoint[MergeImportRequest, com.histmersion.api.Api.Error, Bundle.ImportResult, Any] =
+    writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[Bundle.ImportResult])
 
-  lazy val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyJob, Any] =
+  lazy val mergeApply: PublicEndpoint[MergeApplyRequest, com.histmersion.api.Api.Error, MergeApplyJob, Any] =
     writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
 
-  lazy val mergeApplyStatus: PublicEndpoint[String, ApiError, MergeApplyJob, Any] =
+  lazy val mergeApplyStatus: PublicEndpoint[String, com.histmersion.api.Api.Error, MergeApplyJob, Any] =
     writeBase.get.in("merge" / "apply" / path[String]("job")).out(jsonBody[MergeApplyJob])
 
-  lazy val mergeSession: PublicEndpoint[String, ApiError, MergeSession, Any] =
+  lazy val mergeSession: PublicEndpoint[String, com.histmersion.api.Api.Error, MergeSession, Any] =
     writeBase.get.in("merge" / "sessions" / path[String]("bundle")).out(jsonBody[MergeSession])
 
-  lazy val putMergeSession: PublicEndpoint[(String, MergeResolutions), ApiError, MergeSession, Any] =
+  lazy val putMergeSession
+      : PublicEndpoint[(String, MergeResolutions), com.histmersion.api.Api.Error, MergeSession, Any] =
     writeBase.put
       .in("merge" / "sessions" / path[String]("bundle"))
       .in(jsonBody[MergeResolutions])
       .out(jsonBody[MergeSession])
 
-  lazy val parseResolutions: PublicEndpoint[String, ApiError, MergeResolutions, Any] =
+  lazy val parseResolutions: PublicEndpoint[String, com.histmersion.api.Api.Error, MergeResolutions, Any] =
     writeBase.post.in("merge" / "resolutions").in(stringBody).out(jsonBody[MergeResolutions])
 
-  lazy val merges: PublicEndpoint[Option[Int], ApiError, List[MergeInfo], Any] =
+  lazy val merges: PublicEndpoint[Option[Int], com.histmersion.api.Api.Error, List[MergeInfo], Any] =
     base.get.in("merges").in(query[Option[Int]]("limit")).out(jsonBody[List[MergeInfo]])
 
-  lazy val mergeLedger: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, MergeLedger, Any] =
+  lazy val mergeLedger
+      : PublicEndpoint[(Option[String], Option[String], Option[Int]), com.histmersion.api.Api.Error, MergeLedger, Any] =
     writeBase.get
       .in("merges" / "ledger")
       .in(query[Option[String]]("uid"))
@@ -528,7 +487,7 @@ object Api:
       .in(query[Option[Int]]("limit"))
       .out(jsonBody[MergeLedger])
 
-  lazy val mergeDetail: PublicEndpoint[String, ApiError, MergeDetail, Any] =
+  lazy val mergeDetail: PublicEndpoint[String, com.histmersion.api.Api.Error, MergeDetail, Any] =
     writeBase.get.in("merges" / path[String]("id")).out(jsonBody[MergeDetail])
 
   final case class ArticleQuery(
@@ -537,22 +496,22 @@ object Api:
       text: Option[String] = None
   )
 
-  lazy val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
+  lazy val articles: PublicEndpoint[ArticleQuery, com.histmersion.api.Api.Error, Article.List, Any] =
     base.get
       .in("articles")
       .in(filterQuery)
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("text"))
       .mapInTo[ArticleQuery]
-      .out(jsonBody[ArticleList])
+      .out(jsonBody[Article.List])
 
-  lazy val renameArticle: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameArticle: PublicEndpoint[(String, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
     writeBase.post
       .in("articles" / path[String]("slug") / "rename")
       .in(jsonBody[LabelRename])
       .out(jsonBody[LabelRenamed])
 
-  lazy val getArticle: PublicEndpoint[(String, Boolean), ApiError, ArticleView, Any] =
+  lazy val getArticle: PublicEndpoint[(String, Boolean), com.histmersion.api.Api.Error, Article.View, Any] =
     endpoint.get
       .in("api" / "articles" / path[String]("slug"))
       .in(
@@ -561,80 +520,86 @@ object Api:
           .description("leave out the formatting lint and the coverage (a hover card's read)")
       )
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleView])
+      .out(jsonBody[Article.View])
 
-  lazy val putArticle: PublicEndpoint[(String, ArticlePut, Boolean), ApiError, ArticleView, Any] =
+  lazy val putArticle
+      : PublicEndpoint[(String, Article.Put, Boolean), com.histmersion.api.Api.Error, Article.View, Any] =
     endpoint.put
       .in("api" / "articles" / path[String]("slug"))
-      .in(jsonBody[ArticlePut])
+      .in(jsonBody[Article.Put])
       .in(strictQuery)
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleView])
+      .out(jsonBody[Article.View])
 
-  lazy val patchArticle: PublicEndpoint[(String, ArticlePatch, Boolean), ApiError, ArticleView, Any] =
+  lazy val patchArticle
+      : PublicEndpoint[(String, Article.Patch, Boolean), com.histmersion.api.Api.Error, Article.View, Any] =
     endpoint.patch
       .in("api" / "articles" / path[String]("slug"))
-      .in(jsonBody[ArticlePatch])
+      .in(jsonBody[Article.Patch])
       .in(strictQuery)
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleView])
+      .out(jsonBody[Article.View])
 
-  lazy val lintArticle: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val lintArticle: PublicEndpoint[String, com.histmersion.api.Api.Error, FormatReport, Any] =
     endpoint.get
       .in("api" / "articles" / path[String]("slug") / "lint")
       .errorOut(writeErrors)
       .out(jsonBody[FormatReport])
 
-  lazy val fixArticleFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val fixArticleFormat: PublicEndpoint[String, com.histmersion.api.Api.Error, FormatReport, Any] =
     endpoint.post
       .in("api" / "articles" / path[String]("slug") / "lint" / "fix")
       .errorOut(writeErrors)
       .out(jsonBody[FormatReport])
 
-  lazy val checkArticle
-      : PublicEndpoint[(String, ArticleEdits.ArticleCheckRequest), ApiError, ArticleEdits.ArticleCheck, Any] =
+  lazy val checkArticle: PublicEndpoint[
+    (String, Article.Edits.ArticleCheckRequest),
+    com.histmersion.api.Api.Error,
+    Article.Edits.ArticleCheck,
+    Any
+  ] =
     endpoint.post
       .in("api" / "articles" / path[String]("slug") / "check")
-      .in(jsonBody[ArticleEdits.ArticleCheckRequest])
+      .in(jsonBody[Article.Edits.ArticleCheckRequest])
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleEdits.ArticleCheck])
+      .out(jsonBody[Article.Edits.ArticleCheck])
 
-  lazy val articleCoverage: PublicEndpoint[String, ApiError, Coverage, Any] =
+  lazy val articleCoverage: PublicEndpoint[String, com.histmersion.api.Api.Error, Coverage, Any] =
     endpoint.get
       .in("api" / "articles" / path[String]("slug") / "coverage")
       .errorOut(writeErrors)
       .out(jsonBody[Coverage])
 
-  lazy val articleReview: PublicEndpoint[String, ApiError, ArticleReviewView, Any] =
+  lazy val articleReview: PublicEndpoint[String, com.histmersion.api.Api.Error, Article.ReviewView, Any] =
     endpoint.get
       .in("api" / "articles" / path[String]("slug") / "review")
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleReviewView])
+      .out(jsonBody[Article.ReviewView])
 
-  lazy val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
+  lazy val deleteArticle: PublicEndpoint[String, com.histmersion.api.Api.Error, Article.Deleted, Any] =
     endpoint.delete
       .in("api" / "articles" / path[String]("slug"))
       .errorOut(writeErrors)
-      .out(jsonBody[ArticleDeleted])
+      .out(jsonBody[Article.Deleted])
 
-  lazy val exportArticle: PublicEndpoint[String, ApiError, String, Any] =
+  lazy val exportArticle: PublicEndpoint[String, com.histmersion.api.Api.Error, String, Any] =
     endpoint.get
       .in("api" / "articles" / path[String]("slug") / "export")
       .errorOut(writeErrors)
       .out(stringBody)
 
-  lazy val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
-    base.post.in("articles" / "import").in(jsonBody[ArticleImport]).out(jsonBody[SeedResult])
+  lazy val importArticle: PublicEndpoint[Article.Import, com.histmersion.api.Api.Error, SeedResult, Any] =
+    base.post.in("articles" / "import").in(jsonBody[Article.Import]).out(jsonBody[SeedResult])
 
-  lazy val articleVersions: PublicEndpoint[String, ApiError, List[ArticleVersion], Any] =
-    base.get.in("articles" / path[String]("slug") / "versions").out(jsonBody[List[ArticleVersion]])
+  lazy val articleVersions: PublicEndpoint[String, com.histmersion.api.Api.Error, List[Article.Version], Any] =
+    base.get.in("articles" / path[String]("slug") / "versions").out(jsonBody[List[Article.Version]])
 
-  lazy val articleVersion: PublicEndpoint[(String, Long), ApiError, ArticleVersionFull, Any] =
+  lazy val articleVersion: PublicEndpoint[(String, Long), com.histmersion.api.Api.Error, Article.VersionFull, Any] =
     base.get
       .in("articles" / path[String]("slug") / "versions" / path[Long]("versionId"))
-      .out(jsonBody[ArticleVersionFull])
+      .out(jsonBody[Article.VersionFull])
 
-  lazy val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
+  lazy val articleSlugs: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[String], Any] =
     base.get.in("article-slugs").out(jsonBody[List[String]])
 
   // lazy: [[EventsApi]] builds on this object's inputs, so the list waits until both exist
@@ -802,13 +767,15 @@ object Api:
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ personal.PersonalApi.all ++
     library.CollectionsApi.all
 
-  lazy val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
+  lazy val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), com.histmersion.api.Api.Error, List[
+    Place.Hit
+  ], Any] =
     base.get
       .in("places")
       .in(query[Option[String]]("q"))
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("limit"))
-      .out(jsonBody[List[PlaceHit]])
+      .out(jsonBody[List[Place.Hit]])
 
   final case class PlacesGeoQuery(
       kind: Option[String] = None,
@@ -819,7 +786,7 @@ object Api:
       pick: Option[String] = None
   )
 
-  lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, ApiError, String, Any] =
+  lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, String, Any] =
     base.get
       .in("places" / "geo")
       .in(
@@ -833,22 +800,25 @@ object Api:
       )
       .out(stringBody)
 
-  lazy val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =
+  lazy val placeChildren
+      : PublicEndpoint[(String, Option[Long]), com.histmersion.api.Api.Error, List[Place.Summary], Any] =
     base.get
       .in("places" / path[String]("id") / "children")
       .in(query[Option[Long]]("asOf"))
-      .out(jsonBody[List[PlaceSummary]])
+      .out(jsonBody[List[Place.Summary]])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val placeTree: PublicEndpoint[(String, Option[Long], Option[Int]), ApiError, List[PlaceTreeRow], Any] =
+  lazy val placeTree
+      : PublicEndpoint[(String, Option[Long], Option[Int]), com.histmersion.api.Api.Error, List[Place.TreeRow], Any] =
     base.get
       .in("places" / path[String]("id") / "tree")
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("depth"))
-      .out(jsonBody[List[PlaceTreeRow]])
+      .out(jsonBody[List[Place.TreeRow]])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val place: PublicEndpoint[(String, Option[Long], Option[Boolean]), ApiError, PlaceDetail, Any] =
+  lazy val place
+      : PublicEndpoint[(String, Option[Long], Option[Boolean]), com.histmersion.api.Api.Error, PlaceDetail, Any] =
     base.get
       .in("places" / path[String]("id"))
       .in(query[Option[Long]]("asOf"))
@@ -856,22 +826,28 @@ object Api:
       .out(jsonBody[PlaceDetail])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val placeFootprints: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceFootprint], Any] =
+  lazy val placeFootprints
+      : PublicEndpoint[(String, Option[Long]), com.histmersion.api.Api.Error, List[Place.Footprint], Any] =
     base.get
       .in("places" / path[String]("id") / "footprints")
       .in(query[Option[Long]]("asOf"))
-      .out(jsonBody[List[PlaceFootprint]])
+      .out(jsonBody[List[Place.Footprint]])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val placeLinks: PublicEndpoint[String, ApiError, List[PlaceLink], Any] =
+  lazy val placeLinks: PublicEndpoint[String, com.histmersion.api.Api.Error, List[Place.Link], Any] =
     base.get
       .in("places" / path[String]("id") / "links")
-      .out(jsonBody[List[PlaceLink]])
+      .out(jsonBody[List[Place.Link]])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val periods: PublicEndpoint[(Option[String], Option[String], Option[Long], Option[Long]), ApiError, List[
-    HistoricalPeriod
-  ], Any] =
+  lazy val periods: PublicEndpoint[
+    (Option[String], Option[String], Option[Long], Option[Long]),
+    com.histmersion.api.Api.Error,
+    List[
+      HistoricalPeriod
+    ],
+    Any
+  ] =
     base.get
       .in("periods")
       .in(query[Option[String]]("q"))
@@ -880,59 +856,71 @@ object Api:
       .in(query[Option[Long]]("to"))
       .out(jsonBody[List[HistoricalPeriod]])
 
-  lazy val period: PublicEndpoint[String, ApiError, PeriodDetail, Any] =
+  lazy val period: PublicEndpoint[String, com.histmersion.api.Api.Error, Period.Detail, Any] =
     base.get
       .in("periods" / path[String]("id"))
-      .out(jsonBody[PeriodDetail])
+      .out(jsonBody[Period.Detail])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val seedPeriods: PublicEndpoint[Boolean, ApiError, PeriodImportResult, Any] =
+  lazy val seedPeriods: PublicEndpoint[Boolean, com.histmersion.api.Api.Error, Period.ImportResult, Any] =
     writeBase.post
       .in("periods" / "seed")
       .in(query[Boolean]("replace").default(false))
-      .out(jsonBody[PeriodImportResult])
+      .out(jsonBody[Period.ImportResult])
 
-  lazy val importPeriods: PublicEndpoint[(List[String], Option[String], String), ApiError, PeriodImportResult, Any] =
+  lazy val importPeriods: PublicEndpoint[
+    (List[String], Option[String], String),
+    com.histmersion.api.Api.Error,
+    Period.ImportResult,
+    Any
+  ] =
     writeBase.post
       .in("periods" / "import")
       .in(query[List[String]]("collection"))
       .in(query[Option[String]]("dataset"))
       .in(stringBody)
-      .out(jsonBody[PeriodImportResult])
+      .out(jsonBody[Period.ImportResult])
 
-  lazy val fetchPeriods: PublicEndpoint[(String, List[String]), ApiError, PeriodImportResult, Any] =
+  lazy val fetchPeriods
+      : PublicEndpoint[(String, List[String]), com.histmersion.api.Api.Error, Period.ImportResult, Any] =
     writeBase.post
       .in("periods" / "fetch")
       .in(query[String]("source"))
       .in(query[List[String]]("collection"))
-      .out(jsonBody[PeriodImportResult])
+      .out(jsonBody[Period.ImportResult])
 
-  lazy val init: PublicEndpoint[Boolean, ApiError, JobInfo, Any] =
+  lazy val init: PublicEndpoint[Boolean, com.histmersion.api.Api.Error, JobInfo, Any] =
     writeBase.post.in("init").in(query[Boolean]("fetch").default(false)).out(jsonBody[JobInfo])
 
-  lazy val importPlaces: PublicEndpoint[(Option[String], Option[String], String), ApiError, PlaceImportResult, Any] =
+  lazy val importPlaces: PublicEndpoint[
+    (Option[String], Option[String], String),
+    com.histmersion.api.Api.Error,
+    Place.ImportResult,
+    Any
+  ] =
     writeBase.post
       .in("places" / "import")
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("dataset"))
       .in(stringBody)
-      .out(jsonBody[PlaceImportResult])
+      .out(jsonBody[Place.ImportResult])
 
-  lazy val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
-    writeBase.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
+  lazy val rebuildPlaces: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Place.RebuildResult, Any] =
+    writeBase.post.in("places" / "rebuild").out(jsonBody[Place.RebuildResult])
 
-  lazy val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
+  lazy val fetchExternalPlaces
+      : PublicEndpoint[(String, Boolean), com.histmersion.api.Api.Error, Place.ImportResult, Any] =
     writeBase.post
       .in("places" / "fetch")
       .in(query[String]("source"))
       .in(query[Boolean]("dryRun"))
-      .out(jsonBody[PlaceImportResult])
+      .out(jsonBody[Place.ImportResult])
 
   /** Declared before `places/{id}` so `sources` is never read as an id. */
-  lazy val placeSources: PublicEndpoint[Unit, ApiError, List[GazetteerSourceInfo], Any] =
-    base.get.in("places" / "sources").out(jsonBody[List[GazetteerSourceInfo]])
+  lazy val placeSources: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[Gazetteer.SourceInfo], Any] =
+    base.get.in("places" / "sources").out(jsonBody[List[Gazetteer.SourceInfo]])
 
-  lazy val loadPlaces: PublicEndpoint[(String, Boolean), ApiError, JobInfo, Any] =
+  lazy val loadPlaces: PublicEndpoint[(String, Boolean), com.histmersion.api.Api.Error, JobInfo, Any] =
     writeBase.post
       .in("places" / "load")
       .in(query[String]("source"))
@@ -940,41 +928,44 @@ object Api:
       .out(jsonBody[JobInfo])
 
   /** Declared before `places/{id}` so `names` is never read as an id. */
-  lazy val placeNames: PublicEndpoint[Option[String], ApiError, List[ManualPlaceName], Any] =
+  lazy val placeNames: PublicEndpoint[Option[String], com.histmersion.api.Api.Error, List[ManualPlaceName], Any] =
     base.get.in("places" / "names").in(query[Option[String]]("place")).out(jsonBody[List[ManualPlaceName]])
 
-  lazy val addPlaceName: PublicEndpoint[(String, PlaceNameAdd), ApiError, PlaceNameChanged, Any] =
+  lazy val addPlaceName
+      : PublicEndpoint[(String, Place.NameAdd), com.histmersion.api.Api.Error, Place.NameChanged, Any] =
     writeBase.post
       .in("places" / path[String]("id") / "names")
-      .in(jsonBody[PlaceNameAdd])
-      .out(jsonBody[PlaceNameChanged])
+      .in(jsonBody[Place.NameAdd])
+      .out(jsonBody[Place.NameChanged])
 
-  lazy val removePlaceName: PublicEndpoint[(String, PlaceNameRemove), ApiError, PlaceNameChanged, Any] =
+  lazy val removePlaceName
+      : PublicEndpoint[(String, Place.NameRemove), com.histmersion.api.Api.Error, Place.NameChanged, Any] =
     writeBase.post
       .in("places" / path[String]("id") / "names" / "remove")
-      .in(jsonBody[PlaceNameRemove])
-      .out(jsonBody[PlaceNameChanged])
+      .in(jsonBody[Place.NameRemove])
+      .out(jsonBody[Place.NameChanged])
 
   /** Declared before `places/{id}` so `overrides` is never read as an id. */
-  lazy val placeOverrides: PublicEndpoint[Option[String], ApiError, List[PlaceOverride], Any] =
-    base.get.in("places" / "overrides").in(query[Option[String]]("place")).out(jsonBody[List[PlaceOverride]])
+  lazy val placeOverrides: PublicEndpoint[Option[String], com.histmersion.api.Api.Error, List[Place.Override], Any] =
+    base.get.in("places" / "overrides").in(query[Option[String]]("place")).out(jsonBody[List[Place.Override]])
 
-  lazy val setPlaceOverride: PublicEndpoint[(String, PlaceOverrideSet), ApiError, PlaceOverrideChanged, Any] =
+  lazy val setPlaceOverride
+      : PublicEndpoint[(String, Place.OverrideSet), com.histmersion.api.Api.Error, Place.OverrideChanged, Any] =
     writeBase.post
       .in("places" / path[String]("id") / "override")
-      .in(jsonBody[PlaceOverrideSet])
-      .out(jsonBody[PlaceOverrideChanged])
+      .in(jsonBody[Place.OverrideSet])
+      .out(jsonBody[Place.OverrideChanged])
 
-  lazy val mergePlace: PublicEndpoint[(String, PlaceMergeIn), ApiError, PlaceGone, Any] =
-    writeBase.post.in("places" / path[String]("id") / "merge").in(jsonBody[PlaceMergeIn]).out(jsonBody[PlaceGone])
+  lazy val mergePlace: PublicEndpoint[(String, Place.MergeIn), com.histmersion.api.Api.Error, Place.Gone, Any] =
+    writeBase.post.in("places" / path[String]("id") / "merge").in(jsonBody[Place.MergeIn]).out(jsonBody[Place.Gone])
 
-  lazy val removePlace: PublicEndpoint[(String, PlaceRemoveIn), ApiError, PlaceGone, Any] =
-    writeBase.post.in("places" / path[String]("id") / "remove").in(jsonBody[PlaceRemoveIn]).out(jsonBody[PlaceGone])
+  lazy val removePlace: PublicEndpoint[(String, Place.RemoveIn), com.histmersion.api.Api.Error, Place.Gone, Any] =
+    writeBase.post.in("places" / path[String]("id") / "remove").in(jsonBody[Place.RemoveIn]).out(jsonBody[Place.Gone])
 
-  lazy val addPlace: PublicEndpoint[PlaceAdd, ApiError, PlaceSummary, Any] =
-    writeBase.post.in("places").in(jsonBody[PlaceAdd]).out(jsonBody[PlaceSummary])
+  lazy val addPlace: PublicEndpoint[Place.Add, com.histmersion.api.Api.Error, Place.Summary, Any] =
+    writeBase.post.in("places").in(jsonBody[Place.Add]).out(jsonBody[Place.Summary])
 
-  lazy val buildHierarchy: PublicEndpoint[Unit, ApiError, SpatialHierarchyResult, Any] =
+  lazy val buildHierarchy: PublicEndpoint[Unit, com.histmersion.api.Api.Error, SpatialHierarchyResult, Any] =
     writeBase.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
 
   final case class EventQuery(
@@ -988,7 +979,7 @@ object Api:
       area: Option[String] = None
   )
 
-  lazy val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
+  lazy val events: PublicEndpoint[EventQuery, com.histmersion.api.Api.Error, EventList, Any] =
     base.get
       .in("events")
       .in(filterQuery)
@@ -1002,7 +993,7 @@ object Api:
       .mapInTo[EventQuery]
       .out(jsonBody[EventList])
 
-  lazy val eventsGeo: PublicEndpoint[EventQuery, ApiError, EventGeoList, Any] =
+  lazy val eventsGeo: PublicEndpoint[EventQuery, com.histmersion.api.Api.Error, EventGeo.List, Any] =
     base.get
       .in("events" / "geo")
       .in(filterQuery)
@@ -1014,32 +1005,32 @@ object Api:
       .in(query[Option[Boolean]]("context"))
       .in(query[Option[String]]("area"))
       .mapInTo[EventQuery]
-      .out(jsonBody[EventGeoList])
+      .out(jsonBody[EventGeo.List])
 
-  lazy val renameEvent: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameEvent: PublicEndpoint[(String, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
     writeBase.post.in("events" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  lazy val getEvent: PublicEndpoint[String, ApiError, EventDetail, Any] =
+  lazy val getEvent: PublicEndpoint[String, com.histmersion.api.Api.Error, EventDetail, Any] =
     endpoint.get
       .in("api" / "events" / path[String]("id"))
       .errorOut(writeErrors)
       .out(jsonBody[EventDetail])
 
-  lazy val putEvent: PublicEndpoint[(String, EventPut), ApiError, EventDetail, Any] =
+  lazy val putEvent: PublicEndpoint[(String, EventPut), com.histmersion.api.Api.Error, EventDetail, Any] =
     endpoint.put
       .in("api" / "events" / path[String]("id"))
       .in(jsonBody[EventPut])
       .errorOut(writeErrors)
       .out(jsonBody[EventDetail])
 
-  lazy val patchEvent: PublicEndpoint[(String, EventPatch), ApiError, EventDetail, Any] =
+  lazy val patchEvent: PublicEndpoint[(String, EventPatch), com.histmersion.api.Api.Error, EventDetail, Any] =
     endpoint.patch
       .in("api" / "events" / path[String]("id"))
       .in(jsonBody[EventPatch])
       .errorOut(writeErrors)
       .out(jsonBody[EventDetail])
 
-  lazy val deleteEvent: PublicEndpoint[String, ApiError, EventDeleted, Any] =
+  lazy val deleteEvent: PublicEndpoint[String, com.histmersion.api.Api.Error, EventDeleted, Any] =
     endpoint.delete
       .in("api" / "events" / path[String]("id"))
       .errorOut(writeErrors)
@@ -1053,7 +1044,7 @@ object Api:
       offset: Option[Int] = None
   )
 
-  lazy val attestations: PublicEndpoint[AttestationQuery, ApiError, AttestationList, Any] =
+  lazy val attestations: PublicEndpoint[AttestationQuery, com.histmersion.api.Api.Error, Attestation.List, Any] =
     base.get
       .in("attestations")
       .in(query[Option[String]]("citekey"))
@@ -1062,33 +1053,34 @@ object Api:
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
       .mapInTo[AttestationQuery]
-      .out(jsonBody[AttestationList])
+      .out(jsonBody[Attestation.List])
 
-  lazy val getAttestation: PublicEndpoint[Long, ApiError, Attestation, Any] =
+  lazy val getAttestation: PublicEndpoint[Long, com.histmersion.api.Api.Error, Attestation, Any] =
     endpoint.get
       .in("api" / "attestations" / path[Long]("id"))
       .errorOut(writeErrors)
       .out(jsonBody[Attestation])
 
-  lazy val createAttestation: PublicEndpoint[AttestationPut, ApiError, Attestation, Any] =
+  lazy val createAttestation: PublicEndpoint[Attestation.Put, com.histmersion.api.Api.Error, Attestation, Any] =
     endpoint.post
       .in("api" / "attestations")
-      .in(jsonBody[AttestationPut])
+      .in(jsonBody[Attestation.Put])
       .errorOut(writeErrors)
       .out(jsonBody[Attestation])
 
-  lazy val patchAttestation: PublicEndpoint[(Long, AttestationPatch), ApiError, Attestation, Any] =
+  lazy val patchAttestation
+      : PublicEndpoint[(Long, Attestation.Patch), com.histmersion.api.Api.Error, Attestation, Any] =
     endpoint.patch
       .in("api" / "attestations" / path[Long]("id"))
-      .in(jsonBody[AttestationPatch])
+      .in(jsonBody[Attestation.Patch])
       .errorOut(writeErrors)
       .out(jsonBody[Attestation])
 
-  lazy val deleteAttestation: PublicEndpoint[Long, ApiError, AttestationDeleted, Any] =
+  lazy val deleteAttestation: PublicEndpoint[Long, com.histmersion.api.Api.Error, Attestation.Deleted, Any] =
     endpoint.delete
       .in("api" / "attestations" / path[Long]("id"))
       .errorOut(writeErrors)
-      .out(jsonBody[AttestationDeleted])
+      .out(jsonBody[Attestation.Deleted])
 
   final case class GoalQuery(
       status: Option[String] = None,
@@ -1096,80 +1088,84 @@ object Api:
       offset: Option[Int] = None
   )
 
-  lazy val goals: PublicEndpoint[GoalQuery, ApiError, GoalList, Any] =
+  lazy val goals: PublicEndpoint[GoalQuery, com.histmersion.api.Api.Error, Goal.List, Any] =
     base.get
       .in("goals")
       .in(query[Option[String]]("status"))
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
       .mapInTo[GoalQuery]
-      .out(jsonBody[GoalList])
+      .out(jsonBody[Goal.List])
 
-  lazy val renameGoal: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameGoal: PublicEndpoint[(String, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
     writeBase.post.in("goals" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  lazy val renamePlace: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renamePlace: PublicEndpoint[(String, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
     writeBase.post.in("places" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  lazy val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
+  lazy val getGoal: PublicEndpoint[String, com.histmersion.api.Api.Error, Goal, Any] =
     endpoint.get
       .in("api" / "goals" / path[String]("slug"))
       .errorOut(writeErrors)
       .out(jsonBody[Goal])
 
-  lazy val putGoal: PublicEndpoint[(String, GoalPut), ApiError, Goal, Any] =
+  lazy val putGoal: PublicEndpoint[(String, Goal.Put), com.histmersion.api.Api.Error, Goal, Any] =
     endpoint.put
       .in("api" / "goals" / path[String]("slug"))
-      .in(jsonBody[GoalPut])
+      .in(jsonBody[Goal.Put])
       .errorOut(writeErrors)
       .out(jsonBody[Goal])
 
-  lazy val patchGoal: PublicEndpoint[(String, GoalPatch), ApiError, Goal, Any] =
+  lazy val patchGoal: PublicEndpoint[(String, Goal.Patch), com.histmersion.api.Api.Error, Goal, Any] =
     endpoint.patch
       .in("api" / "goals" / path[String]("slug"))
-      .in(jsonBody[GoalPatch])
+      .in(jsonBody[Goal.Patch])
       .errorOut(writeErrors)
       .out(jsonBody[Goal])
 
-  lazy val deleteGoal: PublicEndpoint[String, ApiError, GoalDeleted, Any] =
+  lazy val deleteGoal: PublicEndpoint[String, com.histmersion.api.Api.Error, Goal.Deleted, Any] =
     endpoint.delete
       .in("api" / "goals" / path[String]("slug"))
       .errorOut(writeErrors)
-      .out(jsonBody[GoalDeleted])
+      .out(jsonBody[Goal.Deleted])
 
-  lazy val agentStateList: PublicEndpoint[Unit, ApiError, List[AgentStateEntry], Any] =
+  lazy val agentStateList: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[AgentStateEntry], Any] =
     base.get.in("agent-state").out(jsonBody[List[AgentStateEntry]])
 
-  lazy val agentStateGet: PublicEndpoint[String, ApiError, AgentStateEntry, Any] =
+  lazy val agentStateGet: PublicEndpoint[String, com.histmersion.api.Api.Error, AgentStateEntry, Any] =
     endpoint.get
       .in("api" / "agent-state" / path[String]("key"))
       .errorOut(writeErrors)
       .out(jsonBody[AgentStateEntry])
 
-  lazy val agentStateSet: PublicEndpoint[(String, AgentStatePut), ApiError, AgentStateEntry, Any] =
+  lazy val agentStateSet: PublicEndpoint[(String, AgentStatePut), com.histmersion.api.Api.Error, AgentStateEntry, Any] =
     endpoint.put
       .in("api" / "agent-state" / path[String]("key"))
       .in(jsonBody[AgentStatePut])
       .errorOut(writeErrors)
       .out(jsonBody[AgentStateEntry])
 
-  lazy val agentStateDelete: PublicEndpoint[String, ApiError, AgentStateDeleted, Any] =
+  lazy val agentStateDelete: PublicEndpoint[String, com.histmersion.api.Api.Error, AgentStateDeleted, Any] =
     endpoint.delete
       .in("api" / "agent-state" / path[String]("key"))
       .errorOut(writeErrors)
       .out(jsonBody[AgentStateDeleted])
 
   private lazy val ingestErrors =
-    oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(Ingest.CodeConflict)),
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+    oneOf[com.histmersion.api.Api.Error](
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[com.histmersion.api.Api.Error])(
+        com.histmersion.api.Api.Error.hasCode(Ingest.CodeConflict)
+      ),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
+        com.histmersion.api.Api.Error.hasCode(Write.CodeNotFound)
+      ),
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
     )
 
   /** Query parameters, not a multipart part list: tapir's netty server has no multipart request-body support
     * (`RawBodyType.MultipartBody` throws `UnsupportedOperationException`), so the document travels as the raw body.
     */
-  lazy val ingestParams: EndpointInput[IngestParams] =
+  lazy val ingestParams: EndpointInput[Ingest.Params] =
     query[String]("citekey")
       .and(query[Option[String]]("filename"))
       .and(query[Boolean]("quality").default(false))
@@ -1183,53 +1179,57 @@ object Api:
         query[Option[Int]]("acquireItem")
           .description("id of the acquisition item this upload fulfils; the OCR job ticks it off when it succeeds")
       )
-      .mapTo[IngestParams]
+      .mapTo[Ingest.Params]
 
-  lazy val ingest: PublicEndpoint[(IngestParams, TapirFile), ApiError, IngestAccepted, Any] =
+  lazy val ingest: PublicEndpoint[(Ingest.Params, TapirFile), com.histmersion.api.Api.Error, Ingest.Accepted, Any] =
     endpoint.post
       .in("api" / "ingest")
       .in(ingestParams)
       .in(fileBody)
       .errorOut(ingestErrors)
       .out(statusCode(StatusCode.Accepted))
-      .out(jsonBody[IngestAccepted])
+      .out(jsonBody[Ingest.Accepted])
 
-  lazy val reocr: PublicEndpoint[(String, Boolean), ApiError, IngestAccepted, Any] =
+  lazy val reocr: PublicEndpoint[(String, Boolean), com.histmersion.api.Api.Error, Ingest.Accepted, Any] =
     endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "reocr")
       .in(query[Boolean]("quality").default(false))
       .errorOut(ingestErrors)
       .out(statusCode(StatusCode.Accepted))
-      .out(jsonBody[IngestAccepted])
+      .out(jsonBody[Ingest.Accepted])
 
-  lazy val original: PublicEndpoint[String, ApiError, (TapirFile, String), Any] =
+  lazy val original: PublicEndpoint[String, com.histmersion.api.Api.Error, (TapirFile, String), Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "original")
       .errorOut(ingestErrors)
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition))
 
-  lazy val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
+  lazy val job: PublicEndpoint[String, com.histmersion.api.Api.Error, JobInfo, Any] =
     base.get
       .in("jobs" / path[String]("id"))
       .out(jsonBody[JobInfo])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val jobControl: PublicEndpoint[(String, String), ApiError, JobInfo, Any] =
+  lazy val jobControl: PublicEndpoint[(String, String), com.histmersion.api.Api.Error, JobInfo, Any] =
     endpoint.post
       .in("api" / "jobs" / path[String]("id") / path[String]("action"))
       .errorOut(
-        oneOf[ApiError](
-          oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
-          oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(JobActions.CodeConflict)),
-          oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+        oneOf[com.histmersion.api.Api.Error](
+          oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
+            com.histmersion.api.Api.Error.hasCode(Write.CodeNotFound)
+          ),
+          oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[com.histmersion.api.Api.Error])(
+            com.histmersion.api.Api.Error.hasCode(JobActions.CodeConflict)
+          ),
+          oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
         )
       )
       .out(jsonBody[JobInfo])
 
   lazy val activity: PublicEndpoint[
     (Option[String], Option[String], Option[String], Option[Int], Option[String]),
-    ApiError,
+    com.histmersion.api.Api.Error,
     Activity.Page,
     Any
   ] =
@@ -1251,7 +1251,7 @@ object Api:
 
   lazy val jobs: PublicEndpoint[
     (ListFilters.JobFilter, Option[Int], Option[String], Option[String]),
-    ApiError,
+    com.histmersion.api.Api.Error,
     (List[JobInfo], Paging.Page),
     Any
   ] =
@@ -1264,31 +1264,31 @@ object Api:
       .out(jsonBody[List[JobInfo]])
       .out(Paging.headers)
 
-  lazy val assets: PublicEndpoint[String, ApiError, List[AssetInfo], Any] =
+  lazy val assets: PublicEndpoint[String, com.histmersion.api.Api.Error, List[AssetInfo], Any] =
     base.get.in("sources" / path[String]("citekey") / "assets").out(jsonBody[List[AssetInfo]])
 
-  lazy val putAssets: PublicEndpoint[(String, List[AssetInput]), ApiError, AssetsStored, Any] =
+  lazy val putAssets: PublicEndpoint[(String, List[AssetInput]), com.histmersion.api.Api.Error, AssetsStored, Any] =
     endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "assets")
       .in(jsonBody[List[AssetInput]])
       .errorOut(ingestErrors)
       .out(jsonBody[AssetsStored])
 
-  lazy val asset: PublicEndpoint[(String, String), ApiError, (Array[Byte], String), Any] =
+  lazy val asset: PublicEndpoint[(String, String), com.histmersion.api.Api.Error, (Array[Byte], String), Any] =
     endpoint.get
       .in("source" / path[String]("citekey") / "assets" / path[String]("name"))
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.AssetCacheControl)))
 
-  lazy val assetDetail: PublicEndpoint[(String, String), ApiError, AssetDetail, Any] =
+  lazy val assetDetail: PublicEndpoint[(String, String), com.histmersion.api.Api.Error, AssetDetail, Any] =
     base.get
       .in("sources" / path[String]("citekey") / "assets" / path[String]("name") / "detail")
       .out(jsonBody[AssetDetail])
 
-  lazy val patchAsset: PublicEndpoint[(String, String, AssetPatch), ApiError, AssetDetail, Any] =
+  lazy val patchAsset: PublicEndpoint[(String, String, AssetPatch), com.histmersion.api.Api.Error, AssetDetail, Any] =
     base.patch
       .in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
       .in(jsonBody[AssetPatch])
@@ -1303,7 +1303,7 @@ object Api:
       license: Option[String] = None
   )
 
-  lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, ApiError, List[MediaGeoHit], Any] =
+  lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, com.histmersion.api.Api.Error, List[MediaGeoHit], Any] =
     base.get
       .in("media-geo")
       .in(
@@ -1327,7 +1327,7 @@ object Api:
       offset: Option[Int] = None
   )
 
-  lazy val mediaList: PublicEndpoint[MediaQuery, ApiError, MediaList, Any] =
+  lazy val mediaList: PublicEndpoint[MediaQuery, com.histmersion.api.Api.Error, MediaList, Any] =
     base.get
       .in("media")
       .in(
@@ -1342,39 +1342,40 @@ object Api:
       )
       .out(jsonBody[MediaList])
 
-  lazy val mediaFacets: PublicEndpoint[Unit, ApiError, MediaFacets, Any] =
+  lazy val mediaFacets: PublicEndpoint[Unit, com.histmersion.api.Api.Error, MediaFacets, Any] =
     base.get.in("media" / "facets").out(jsonBody[MediaFacets])
 
-  lazy val mediaProviders: PublicEndpoint[Unit, ApiError, List[MediaProviderInfo], Any] =
-    base.get.in("media" / "providers").out(jsonBody[List[MediaProviderInfo]])
+  lazy val mediaProviders: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[MediaProvider.Info], Any] =
+    base.get.in("media" / "providers").out(jsonBody[List[MediaProvider.Info]])
 
-  lazy val mediaShow: PublicEndpoint[String, ApiError, MediaItem, Any] =
+  lazy val mediaShow: PublicEndpoint[String, com.histmersion.api.Api.Error, MediaItem, Any] =
     base.get
       .in("media" / path[String]("uid"))
       .out(jsonBody[MediaItem])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  lazy val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
+  lazy val mediaImport: PublicEndpoint[MediaImportRequest, com.histmersion.api.Api.Error, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])
 
-  lazy val mediaImportJob: PublicEndpoint[MediaImportRequest, ApiError, JobInfo, Any] =
+  lazy val mediaImportJob: PublicEndpoint[MediaImportRequest, com.histmersion.api.Api.Error, JobInfo, Any] =
     base.post
       .in("media" / "import" / "job")
       .in(jsonBody[MediaImportRequest])
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
-  lazy val mediaCovers: PublicEndpoint[MediaCoversRequest, ApiError, MediaCoversReport, Any] =
+  lazy val mediaCovers: PublicEndpoint[MediaCoversRequest, com.histmersion.api.Api.Error, MediaCoversReport, Any] =
     base.post.in("media" / "covers").in(jsonBody[MediaCoversRequest]).out(jsonBody[MediaCoversReport])
 
-  lazy val mediaCoversJob: PublicEndpoint[MediaCoversRequest, ApiError, JobInfo, Any] =
+  lazy val mediaCoversJob: PublicEndpoint[MediaCoversRequest, com.histmersion.api.Api.Error, JobInfo, Any] =
     base.post
       .in("media" / "covers" / "job")
       .in(jsonBody[MediaCoversRequest])
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
-  lazy val putSourceCover: PublicEndpoint[(SourceCoverParams, Array[Byte]), ApiError, MediaItem, Any] =
+  lazy val putSourceCover
+      : PublicEndpoint[(SourceCoverParams, Array[Byte]), com.histmersion.api.Api.Error, MediaItem, Any] =
     writeBase.put
       .in("media" / "sources" / path[String]("citekey") / "cover")
       .in(query[String]("provider").default(MediaProvider.Calibre))
@@ -1384,60 +1385,68 @@ object Api:
       .in(byteArrayBody)
       .out(jsonBody[MediaItem])
 
-  lazy val fillFigureLicences: PublicEndpoint[Boolean, ApiError, FigureLicenceFill, Any] =
+  lazy val fillFigureLicences: PublicEndpoint[Boolean, com.histmersion.api.Api.Error, FigureLicenceFill, Any] =
     base.post
       .in("media" / "fill-licences")
       .in(query[Boolean]("apply").default(false))
       .out(jsonBody[FigureLicenceFill])
 
-  lazy val mediaThumb: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+  lazy val mediaThumb: PublicEndpoint[String, com.histmersion.api.Api.Error, (Array[Byte], String), Any] =
     endpoint.get
       .in("media" / path[String]("uid") / "thumb")
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
-  lazy val mediaFile: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+  lazy val mediaFile: PublicEndpoint[String, com.histmersion.api.Api.Error, (Array[Byte], String), Any] =
     endpoint.get
       .in("media" / path[String]("uid") / "file")
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
-  lazy val assetLinks
-      : PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =
+  lazy val assetLinks: PublicEndpoint[
+    (Option[String], Option[String], Option[String], Option[String]),
+    com.histmersion.api.Api.Error,
+    AssetLink.List,
+    Any
+  ] =
     base.get
       .in("asset-links")
       .in(query[Option[String]]("citekey"))
       .in(query[Option[String]]("asset"))
       .in(query[Option[String]]("target_type"))
       .in(query[Option[String]]("target_id"))
-      .out(jsonBody[AssetLinkList])
+      .out(jsonBody[AssetLink.List])
 
-  lazy val createAssetLink: PublicEndpoint[AssetLinkPut, ApiError, AssetLink, Any] =
-    base.post.in("asset-links").in(jsonBody[AssetLinkPut]).out(jsonBody[AssetLink])
+  lazy val createAssetLink: PublicEndpoint[AssetLink.Put, com.histmersion.api.Api.Error, AssetLink, Any] =
+    base.post.in("asset-links").in(jsonBody[AssetLink.Put]).out(jsonBody[AssetLink])
 
-  lazy val deleteAssetLink: PublicEndpoint[Long, ApiError, AssetLinkDeleted, Any] =
-    base.delete.in("asset-links" / path[Long]("id")).out(jsonBody[AssetLinkDeleted])
+  lazy val deleteAssetLink: PublicEndpoint[Long, com.histmersion.api.Api.Error, AssetLink.Deleted, Any] =
+    base.delete.in("asset-links" / path[Long]("id")).out(jsonBody[AssetLink.Deleted])
 
   /** Registered before the image endpoint so Tapir matches it first. */
-  lazy val iiifInfo: PublicEndpoint[(String, String), ApiError, io.circe.Json, Any] =
+  lazy val iiifInfo: PublicEndpoint[(String, String), com.histmersion.api.Api.Error, io.circe.Json, Any] =
     endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(jsonBody[io.circe.Json])
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
 
   /** IIIF Image API Level 1: region `full|x,y,w,h`, size `max|^max|w,|,h|w,h|!w,h`, rotation `0` only, quality
     * `default`, format `jpg|png`.
     */
-  lazy val iiifImage
-      : PublicEndpoint[(String, String, String, String, String, String), ApiError, (Array[Byte], String), Any] =
+  lazy val iiifImage: PublicEndpoint[
+    (String, String, String, String, String, String),
+    com.histmersion.api.Api.Error,
+    (Array[Byte], String),
+    Any
+  ] =
     endpoint.get
       .in(
         "iiif" / path[String]("citekey") / path[String]("name") /
@@ -1445,8 +1454,51 @@ object Api:
           path[String]("filename")
       )
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))
+
+  final case class Error(message: String, code: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
+  object Error:
+    given Schema[Error] = summon[KindlingsSchema[Error]].schema
+
+    /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
+      * `Matchable`), so the value is checked with a type test.
+      */
+    def hasCode(code: String): PartialFunction[Any, Boolean] =
+      case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => true
+
+  object Index:
+
+    val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
+    val End = "<!-- END API INDEX -->"
+
+    def path(e: AnyEndpoint): String = e.showPathTemplate(showQueryParam = None)
+
+    def method(e: AnyEndpoint): String = e.method.map(_.method).getOrElse("GET")
+
+    def markdown(endpoints: List[AnyEndpoint]): String =
+      val order = List("GET", "POST", "PUT", "PATCH", "DELETE")
+      val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf(m))).toMap
+      val rows = byPath.keys.toList.sorted.map(p => s"| ${byPath(p).map(m => s"`$m`").mkString(" · ")} | `$p` |")
+      (s"${Plural.count(endpoints.size, "endpoint")} on ${Plural.count(byPath.size, "path")}:" ::
+        "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n")
+
+    val Page = "docs/user-guide/reference/rest-api.md"
+
+    def splice(readme: String, index: String): Either[String, String] =
+      val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
+      if b < 0 || e < b then Left(s"$Page has no $Begin … $End block")
+      else Right(readme.substring(0, b + Begin.length) + "\n" + index + "\n" + readme.substring(e))
+
+    def current(readme: String): Option[String] =
+      val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
+      Option.when(b >= 0 && e > b)(readme.substring(b + Begin.length, e).trim)
+
+  @main def generateApiIndex(repo: String): Unit =
+    val p = java.nio.file.Path.of(repo).resolve(Index.Page)
+    Index.splice(java.nio.file.Files.readString(p), Index.markdown(Api.all)) match
+      case Left(e)  => throw IllegalStateException(e)
+      case Right(s) => val _ = java.nio.file.Files.writeString(p, s)

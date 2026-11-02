@@ -81,8 +81,8 @@ class MarksPureSuite extends munit.FunSuite:
     assertEquals(Ago(now - 30 * 86_400_000.0, now, "2026-09-30T12:00:00Z"), "2026-09-30")
 
   test("the notes a map layer draws: those left at a point"):
-    val id = NoteId.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
+    val id = Note.Id.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
     val atPoint =
-      Note(id, Target(ItemKind.Point, lat = Some(Latitude(1)), lon = Some(Longitude(2))), NoteText("x"), "p")
+      Note(id, Target(ItemKind.Point, lat = Some(Latitude(1)), lon = Some(Longitude(2))), Note.Text("x"), "p")
     val onItem = atPoint.copy(target = src.target)
     assertEquals(NoteMarkers.placed(List(atPoint, onItem)), List(atPoint))

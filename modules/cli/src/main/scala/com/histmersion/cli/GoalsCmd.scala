@@ -7,8 +7,8 @@ import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.RunRequest
-import com.histmersion.api.automation.GoalPlans.*
-import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown, GoalPatch}
+import com.histmersion.api.automation.Goal.Plans.*
+import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown}
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.data.exchange.Bundle
 
@@ -51,7 +51,7 @@ object GoalsCmd:
       .mapN { (slug, title, status, notes, budget, from, to) => (c: Client) =>
         c.patchGoal(
           slug,
-          GoalPatch(
+          com.histmersion.api.automation.Goal.Patch(
             title = title,
             status = status,
             notes = notes,

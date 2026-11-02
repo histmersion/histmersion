@@ -6,7 +6,8 @@ import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.api.library.{IngestMarkdown, IngestParams}
+import com.histmersion.api.library.IngestMarkdown
+import com.histmersion.api.library.Ingest
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *
@@ -49,7 +50,7 @@ object IngestCmd:
     else
       val prov = provenance.orElse(Some("manual"))
       val params =
-        IngestParams(
+        Ingest.Params(
           citekey.trim,
           Some(file.getFileName.toString),
           quality,

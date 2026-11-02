@@ -12,7 +12,7 @@ import com.histmersion.domain.catalogue.places.PointAreas.Dating
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Gazetteer, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{Gazetteer, Place}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
 
@@ -58,23 +58,23 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place(
             Site,
             "Zzpa Site",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[150.0,-60.0]}""")
           ),
-          List(PlaceName("Zzpa Site"))
+          List(Place.Name("Zzpa Site"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             Thracia,
             "Zzpa Thracia",
             com.histmersion.domain.catalogue.Place.Kind.Region,
             Some("""{"type":"Point","coordinates":[150.8,-60.2]}""")
           ),
-          List(PlaceName("Zzpa Thracia"), PlaceName("Zzpa Thrace"))
+          List(Place.Name("Zzpa Thracia"), Place.Name("Zzpa Thrace"))
         )
       )
     )

@@ -1,5 +1,4 @@
 package com.histmersion.util.data.exchange
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -22,6 +21,7 @@ import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.Api
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and
@@ -152,7 +152,7 @@ object BundleImport:
         label: A => String,
         localLabel: Map[UUID, String],
         what: String
-    )(rename: (String, String) => Either[ApiError, ?]): Unit =
+    )(rename: (String, String) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(_ != label(a)).foreach { old =>
           importing(false)

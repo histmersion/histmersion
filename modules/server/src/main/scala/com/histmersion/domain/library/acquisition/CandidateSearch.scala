@@ -4,16 +4,18 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.sources.SourceService
 
-import com.histmersion.api.{ApiError, Plural, Write}
+import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{LocalDate, ZoneOffset}
 import com.histmersion.api.automation.{Goal, Queue}
-import com.histmersion.api.library.{Acquire, Candidates, CandidateSweep, CandidateWatch, SourceCandidate, WorkRef}
+import com.histmersion.api.library.{Acquire, Candidates, CandidateSweep, CandidateWatch, WorkRef}
+import com.histmersion.api.Api
+import com.histmersion.api.library.Source
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to
@@ -50,8 +52,8 @@ final class CandidateSearch(
     q ++ citing
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
-  def sweep(goal: String, dryRun: Boolean): Either[ApiError, CandidateSweep] =
-    goals.get(goal).toRight(ApiError(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
+  def sweep(goal: String, dryRun: Boolean): Either[Api.Error, CandidateSweep] =
+    goals.get(goal).toRight(Api.Error(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
       val c = cfg
       val now = today()
       val stored = candidates.watches(g.slug).map(w => (w.kind, w.subject, w.index) -> w).toMap
@@ -114,7 +116,7 @@ final class CandidateSearch(
         else
           fresh.count { (k, w, by) =>
             candidates.upsert(
-              SourceCandidate(
+              Source.Candidate(
                 0,
                 g.slug,
                 k,

@@ -7,16 +7,9 @@ import com.histmersion.config.given
 import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
-import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleEdits,
-  ArticleFilter,
-  CitedSource,
-  Coverage,
-  CoverageReason,
-  CoverageSource
-}
+import com.histmersion.api.research.{CitedSource, Coverage}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,
   * escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines.
@@ -273,7 +266,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil
   )
 
-  import com.histmersion.api.research.ArticleEdits.{EditAnswer, Op}
+  import com.histmersion.api.research.Article.Edits.{EditAnswer, Op}
   private def edit(op: Op, anchor: String, text: String = null) = EditAnswer(op, anchor, Option(text))
 
   /** The glossed sentence the fixer adds for C1. */
@@ -398,14 +391,14 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   test("checkBody: a whole body (a writer's draft) is checked with the same rules"):
     val c =
-      checkBody("tin", "", "concept", ArticleEdits.Draft.Body("Tin [[ghost2020_x]].\n\n## Sources cited\n"), corpus)
+      checkBody("tin", "", "concept", Article.Edits.Draft.Body("Tin [[ghost2020_x]].\n\n## Sources cited\n"), corpus)
     assert(c.fatal)
     assert(c.problems.exists(_.contains("ghost2020_x")) && c.problems.exists(_.contains("Sources cited")), c.problems)
-    val ok = checkBody("tin", "", "concept", ArticleEdits.Draft.Body(Good), corpus)
+    val ok = checkBody("tin", "", "concept", Article.Edits.Draft.Body(Good), corpus)
     assertEquals((ok.problems, ok.fatal, ok.edits), (Nil, false, Nil))
     // an index fragment needs no section set
     assertEquals(
-      checkBody("tin", "", "index", ArticleEdits.Draft.Body("More tin [[knapp2016_tin]]."), corpus).problems,
+      checkBody("tin", "", "index", Article.Edits.Draft.Body("More tin [[knapp2016_tin]]."), corpus).problems,
       Nil
     )
 
@@ -413,14 +406,14 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   /** `Good` with its hand-written Not used section removed: what an article with a filter holds. */
   private val Generated = Good.substring(0, Good.indexOf("## Not used")).trim + "\n"
-  private val cov = ArticleCoverage.compute(
+  private val cov = Article.Coverage.compute(
     "tin",
-    ArticleFilter(topics = List("tin")),
+    Article.Filter(topics = List("tin")),
     3,
     List(
-      CoverageSource("knapp2016_tin", "Tin", Some(2016), Source.Status.Current),
-      CoverageSource("egypt2001_old", "Egypt", Some(2001), Source.Status.Current),
-      CoverageSource("iso2024_new", "Isotopes", Some(2024), Source.Status.Contested)
+      Coverage.Source("knapp2016_tin", "Tin", Some(2016), Source.Status.Current),
+      Coverage.Source("egypt2001_old", "Egypt", Some(2001), Source.Status.Current),
+      Coverage.Source("iso2024_new", "Isotopes", Some(2024), Source.Status.Contested)
     ),
     Set("knapp2016_tin"),
     List("knapp2016_tin"),
@@ -461,7 +454,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       "tin",
       Generated,
       "concept",
-      ArticleEdits.Draft.Edits(
+      Article.Edits.Draft.Edits(
         List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].", "\n\n## Not used\n\n- [[knapp2016_tin]] — x"))
       ),
       corpus.copy(generated = true)
@@ -491,12 +484,12 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil,
       "",
-      List(CoverageReason("[[iso2024_new]]", "Its isotopes date a later trade."), CoverageReason("knapp2016_tin", ""))
+      List(Coverage.Reason("[[iso2024_new]]", "Its isotopes date a later trade."), Coverage.Reason("knapp2016_tin", ""))
     )
     val (f, ws) = fixCov(ok).fold(ps => fail(ps.mkString("; ")), identity)
     assertEquals(
       f.reasons,
-      List(CoverageReason("iso2024_new", "Its isotopes date a later trade."), CoverageReason("knapp2016_tin", ""))
+      List(Coverage.Reason("iso2024_new", "Its isotopes date a later trade."), Coverage.Reason("knapp2016_tin", ""))
     )
     assertEquals((f.body, ws), (Generated, Nil))
     // M1 applied but nothing placed; a reason for a cited source; one outside the filter; one for a source with no reason to remove
@@ -507,9 +500,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       "",
       List(
-        CoverageReason("knapp2016_tin", "not needed"),
-        CoverageReason("zz1999_gone", "never read"),
-        CoverageReason("egypt2001_old", "")
+        Coverage.Reason("knapp2016_tin", "not needed"),
+        Coverage.Reason("zz1999_gone", "never read"),
+        Coverage.Reason("egypt2001_old", "")
       )
     )
     val ps = fixCov(bad).left.toOption.get
@@ -531,7 +524,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil,
       "",
-      List(CoverageReason("knapp2016_tin", ""))
+      List(Coverage.Reason("knapp2016_tin", ""))
     )
     assert(fixCov(cite).isRight, fixCov(cite))
     // an article without a filter takes no reasons

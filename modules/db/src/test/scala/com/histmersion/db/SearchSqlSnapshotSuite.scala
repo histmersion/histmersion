@@ -14,7 +14,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{FacetField, Filter, Sort}
+import com.histmersion.api.library.{Filter, Sort}
+import com.histmersion.api.library.Facet
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and
@@ -128,11 +129,11 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
     ) ++ text.toList.map(q => "snippetsQuery" -> FilterSql.snippetsQuery(q, 30, List("zqa1990_a", "zqb2001_b")))
 
   private def facets(f: Filter, scope: PlaceScope): List[(String, Sql)] =
-    FacetField.values.toList.flatMap { ff =>
+    Facet.Field.values.toList.flatMap { ff =>
       List(
-        s"facetsQuery ${FacetField.label(ff)}" -> FilterSql.facetsQuery(ff, None, f, 50, scope),
-        s"facetsQuery ${FacetField.label(ff)} prefix" -> FilterSql.facetsQuery(ff, Some("Zq-T"), f, 5, scope),
-        s"facetsQuery ${FacetField.label(ff)} blank prefix" -> FilterSql.facetsQuery(ff, Some("  "), f, 5, scope)
+        s"facetsQuery ${Facet.Field.label(ff)}" -> FilterSql.facetsQuery(ff, None, f, 50, scope),
+        s"facetsQuery ${Facet.Field.label(ff)} prefix" -> FilterSql.facetsQuery(ff, Some("Zq-T"), f, 5, scope),
+        s"facetsQuery ${Facet.Field.label(ff)} blank prefix" -> FilterSql.facetsQuery(ff, Some("  "), f, 5, scope)
       )
     }
 
@@ -154,7 +155,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       "findingsQuery" -> FilterSql.findingsQuery(List("zqa1990_a", "zqb2001_b"))
     ).foreach((n, s) => out ++= s"## $n\n${render(s)}\n")
     out ++= s"## orderBy\n${Sort.values.toList.map(s => s"${Sort.label(s)}: ${FilterSql.orderBy(s)}").mkString("\n")}\n"
-    out ++= s"## facetValues\n${FacetField.values.toList.map(f => s"${FacetField.label(f)}: ${FilterSql.facetValues(f)}").mkString("\n")}\n"
+    out ++= s"## facetValues\n${Facet.Field.values.toList.map(f => s"${Facet.Field.label(f)}: ${FilterSql.facetValues(f)}").mkString("\n")}\n"
     out.result()
 
   test("the search's SQL, as recorded"):

@@ -5,11 +5,12 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.CompileArticle.*
-import com.histmersion.api.automation.GoalPlans.DraftMode
+import com.histmersion.api.automation.Goal.Plans.DraftMode
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.automation.GoalPlans
-import com.histmersion.api.research.{ArticleFilter, CoverageReason}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model, and the code
   * self-check of a draft — fatal problems always sent back, the rest sent back until the last attempt, then listed for
@@ -111,7 +112,7 @@ class CompileArticleSuite extends munit.FunSuite:
       |
       |Where the tin was mined is open [[a2019_tin]].""".stripMargin
 
-  private def draft(body: String, section: Option[String] = None, reasons: List[CoverageReason] = Nil) =
+  private def draft(body: String, section: Option[String] = None, reasons: List[Coverage.Reason] = Nil) =
     DraftAnswer("Tin", "Where Aegean tin came from.", body, section, reasons)
 
   test("self-check: a clean new article passes, with no Not used section or Method note (code generates both)"):
@@ -123,7 +124,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(d.problems, Nil)
     assertEquals(d.notUsed, List("c2001_old: about Egypt"))
     // the extraction's reason is what the article stores for the source it leaves out
-    assertEquals(d.reasons, List(CoverageReason("c2001_old", "about Egypt")))
+    assertEquals(d.reasons, List(Coverage.Reason("c2001_old", "about Egypt")))
 
   test("self-check (#958): a hand-written Not used section or Method note is sent back"):
     val old = goodBody + "\n\n## Not used\n\n- [[c2001_old]]: about Egypt\n\n_Method: search {topics:[tin]} → 3._"
@@ -164,7 +165,7 @@ class CompileArticleSuite extends munit.FunSuite:
       last = false
     ).left.toOption.get
     assertEquals(ps, List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason"))
-    val why = CoverageReason("b2024_iso", "Its isotopes speak to a later period.")
+    val why = Coverage.Reason("b2024_iso", "Its isotopes speak to a later period.")
     val (d, _) = checkDraft(
       draft(noIso, reasons = List(why)),
       "tin",
@@ -180,15 +181,15 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(
       d.reasons,
       List(
-        CoverageReason("b2024_iso", "Its isotopes speak to a later period."),
-        CoverageReason("c2001_old", "about Egypt")
+        Coverage.Reason("b2024_iso", "Its isotopes speak to a later period."),
+        Coverage.Reason("c2001_old", "about Egypt")
       ).sortBy(_.citekey)
     )
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
-      CoverageReason("[[a2019_tin]]", "not needed"),
-      CoverageReason("zz1999_nope", "never read"),
-      CoverageReason("c2001_old", "covers Egypt only")
+      Coverage.Reason("[[a2019_tin]]", "not needed"),
+      Coverage.Reason("zz1999_nope", "never read"),
+      Coverage.Reason("c2001_old", "covers Egypt only")
     )
     val ps2 = checkDraft(
       draft(goodBody, reasons = bad),
@@ -221,7 +222,7 @@ class CompileArticleSuite extends munit.FunSuite:
       corpus,
       last = true
     ).toOption.get
-    assertEquals(d2.reasons, List(CoverageReason("c2001_old", "covers Egypt only")))
+    assertEquals(d2.reasons, List(Coverage.Reason("c2001_old", "covers Egypt only")))
 
   test("self-check: fatal problems are always sent back, even on the last attempt"):
     val dangling = goodBody.replace("[[a2019_tin]].\n", "[[nowhere_2020]].\n")
@@ -339,19 +340,19 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(statusesSilent("[[a2019_tin]] says X.", st), Nil)
 
   test("the run's filter: its own, else the article's recorded one, else the title; and the log line"):
-    val stored = ArticleFilter(topics = List("tin"), status = List("current"))
+    val stored = Article.Filter(topics = List("tin"), status = List("current"))
     assertEquals(
       runFilter(Some("tin"), List("trade"), Nil, Some(stored), Some("Tin")),
-      Some(ArticleFilter(query = Some("tin"), topics = List("trade")))
+      Some(Article.Filter(query = Some("tin"), topics = List("trade")))
     )
     assertEquals(runFilter(None, Nil, Nil, Some(stored), Some("Tin")), Some(stored))
-    assertEquals(runFilter(None, Nil, Nil, None, Some("Tin")), Some(ArticleFilter(query = Some("Tin"))))
+    assertEquals(runFilter(None, Nil, Nil, None, Some("Tin")), Some(Article.Filter(query = Some("Tin"))))
     assertEquals(runFilter(Some(" "), Nil, Nil, None, None), None)
     assertEquals(
-      ArticleFilter(query = Some("tin"), topics = List("trade")).line,
+      Article.Filter(query = Some("tin"), topics = List("trade")).line,
       "search {query: \"tin\", topics: [\"trade\"]}"
     )
-    val d = GoalPlans.ArticleDraft("tin", DraftMode.Create, "Tin", "concept", "x", cited = List("a", "b"))
+    val d = Goal.Plans.ArticleDraft("tin", DraftMode.Create, "Tin", "concept", "x", cited = List("a", "b"))
     assert(
       logLine(d, written = true, "created", Some("abcdef123"), "run12345xyz").contains(
         "compiled a new article from 2 source(s); review run abcdef12 started"

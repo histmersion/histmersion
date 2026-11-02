@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
+import com.histmersion.api.exchange.{IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
@@ -51,8 +51,8 @@ trait PlanRun:
 
   /** What a pair of sources that are (or may be) one owns of this kind, asked before every kind's [[pair]]. */
   def pairFirst(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -67,7 +67,12 @@ trait PlanRun:
   /** A pair of sources that folds, under `citekey`, before every kind's [[foldPairFirst]]: whether the folded source
     * takes the bundle's body.
     */
-  def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean = false
+  def foldSources(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      citekey: String,
+      folds: PlanFolds
+  ): Boolean = false
 
   /** A source of the bundle that arrives under another citekey (a collision decided `rename-right`). */
   def renamed(source: UUID, citekey: String): Unit = ()
@@ -76,14 +81,16 @@ trait PlanRun:
   def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = None
 
   /** The bodies of the sources here (by sha256) the plan reads for this kind: of the pairs whose bodies differ. */
-  def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] = Set.empty
+  def bodiesWanted(
+      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+  ): Set[String] = Set.empty
 
   /** What a pair of sources that are (or may be) one owns of this kind: its questions under each alternative of the
     * body question (`bodyIssue`), `cond` the pair's own condition. `right` is the bundle's source, `left` the one here.
     */
   def pair(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[String],
       questions: PairQuestions
@@ -112,10 +119,20 @@ trait PlanRun:
   /** What a pair that folds does with the kind's lines before every kind's [[foldPair]]: `keepsBundleBody` is whether
     * the folded source takes the bundle's body.
     */
-  def foldPairFirst(right: BundleSource, left: BundleSource, keepsBundleBody: Boolean, folds: PlanFolds): Unit = ()
+  def foldPairFirst(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      keepsBundleBody: Boolean,
+      folds: PlanFolds
+  ): Unit = ()
 
   /** What a pair that folds does with the kind's lines; `alt` is the body question's decision, when there is one. */
-  def foldPair(right: BundleSource, left: BundleSource, alt: Option[DecisionKind], folds: PlanFolds): Unit = ()
+  def foldPair(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      alt: Option[DecisionKind],
+      folds: PlanFolds
+  ): Unit = ()
 
   /** The kind's labels of inserted records that a different record has here, given new ones before every kind's
     * [[relabel]]; `fates` is what became of each of the bundle's sources.

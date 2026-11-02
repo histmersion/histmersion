@@ -1,13 +1,14 @@
 package com.histmersion.domain.automation.goals
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
-import com.histmersion.api.automation.{Goal, GoalList, GoalPatch, GoalPut}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.Api
 
 object GoalRepo:
 
@@ -16,7 +17,7 @@ object GoalRepo:
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
-  def listIn(status: Option[String], limit: Int, offset: Int)(using DbCon): GoalList =
+  def listIn(status: Option[String], limit: Int, offset: Int)(using DbCon): Goal.List =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
     locally:
       val total = sql"""SELECT count(*)::int FROM goals g
@@ -26,7 +27,7 @@ object GoalRepo:
             ORDER BY g.slug
             LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
             """.query[GoalRow].run().toList.map(_.toDto)
-      GoalList.of(total, rows, offset.max(0))
+      Goal.List.of(total, rows, offset.max(0))
 
   def get(slug: String)(using DbCon): Option[Goal] =
     sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
@@ -53,13 +54,13 @@ object GoalRepo:
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
-  def put(slug: String, in: GoalPut)(using DbCon): Either[ApiError, Unit] =
+  def put(slug: String, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
     RangeSql
       .merge((None, None), in.periodStart, in.periodEnd, s"goal '$slug'")
       .getOrElse(Right((None, None)))
       .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
 
-  private def putIn(slug: String, in: GoalPut, period: Option[String])(using DbCon): Unit =
+  private def putIn(slug: String, in: Goal.Put, period: Option[String])(using DbCon): Unit =
     sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
           VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                   ${in.tags}::text[], ${in.regions}::text[],
@@ -70,10 +71,10 @@ object GoalRepo:
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
   /** A goal's fields changed as given, in the caller's transaction. */
-  def patchIn(slug: String, p: GoalPatch)(using DbCon): Either[ApiError, Unit] =
+  def patchIn(slug: String, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
-      if !exists then Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+      if !exists then Left(Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound)))
       else
         p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
@@ -108,15 +109,15 @@ object GoalRepo:
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its sub-goals' parent
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
-  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, Unit] =
+  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[Api.Error, Unit] =
     def exists(s: String) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug".query[String].run().headOption
-    if !exists(oldSlug) then Left(ApiError(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
+    if !exists(oldSlug) then Left(Api.Error(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
     else if exists(newSlug) then
-      Left(ApiError(s"'$newSlug' is already the slug of another goal", Some(Write.CodeInvalid)))
+      Left(Api.Error(s"'$newSlug' is already the slug of another goal", Some(Write.CodeInvalid)))
     else if aliasOf.exists(_ != oldSlug) then
       Left(
-        ApiError(
+        Api.Error(
           s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
           Some(Write.CodeInvalid)
         )

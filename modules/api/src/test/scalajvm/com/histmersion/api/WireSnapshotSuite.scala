@@ -16,25 +16,12 @@ import io.circe.syntax.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.AgentStateEntry
-import com.histmersion.api.backup.BackupStatus
-import com.histmersion.api.catalogue.{
-  Attestation,
-  EventDating,
-  EventSummary,
-  GazetteerKind,
-  GazetteerSourceInfo,
-  PlaceGone,
-  PlaceLink,
-  PlaceRebuildResult,
-  PlaceSummary,
-  SkippedPeriod
-}
+import com.histmersion.api.catalogue.{Attestation, EventDating, EventSummary, SkippedPeriod}
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.library.{
   ContradictionRow,
   ContradictionsResult,
-  FindingRow,
   GeoHit,
   GeoHitPage,
   GraphLink,
@@ -42,8 +29,7 @@ import com.histmersion.api.library.{
   Hit,
   ResolvedSource,
   SearchHit,
-  SearchResult,
-  SourceGraph
+  SearchResult
 }
 import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.media.{
@@ -61,6 +47,9 @@ import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.views.{EventDetail, PlaceDetail, ResolvedId}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Source
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.library.Finding
 
 /** The Markdown and JSON of the wire records slice 12 moves, over synthetic fixture values: the renderers no other
   * suite asserts on (the brief search, a source's findings, the graph, the contradictions, the map feed, the body
@@ -95,7 +84,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     offset = 0,
     next = Some(2)
   )
-  private val finding = FindingRow(
+  private val finding = Finding.Row(
     "Zq claim one.",
     Some("Zqland"),
     Some(30.5),
@@ -107,7 +96,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     Some(Confidence.High),
     significance = Some("key")
   )
-  private val graph = SourceGraph(
+  private val graph = com.histmersion.api.library.Source.Graph(
     "zq_alpha_2001",
     2,
     List(GraphNode("zq_alpha_2001", Some("Zq Alpha"), Some(2001), Some(Source.Status.Current)), GraphNode("zq_gamma")),
@@ -143,9 +132,9 @@ class WireSnapshotSuite extends munit.FunSuite:
     Some(Confidence.Low)
   )
   private val gazetteers = List(
-    GazetteerSourceInfo(
+    Gazetteer.SourceInfo(
       "zq-gaz",
-      GazetteerKind.Lpf,
+      Gazetteer.Kind.Lpf,
       "Zq gazetteer",
       Some("zq.lpf.json"),
       present = true,
@@ -160,10 +149,18 @@ class WireSnapshotSuite extends munit.FunSuite:
       periodStart = Some(-3000),
       periodEnd = Some(-500)
     ),
-    GazetteerSourceInfo("zq-missing", GazetteerKind.Geonames, "Zq missing", None, present = false, None)
+    Gazetteer.SourceInfo("zq-missing", Gazetteer.Kind.Geonames, "Zq missing", None, present = false, None)
   )
   private val summary =
-    PlaceSummary("zq_tell", "Zq Tell", "settlement", Some(-2000), Some(-1200), Some("zq-gaz"), "Zq Tell; Tell Zq")
+    com.histmersion.api.catalogue.Place.Summary(
+      "zq_tell",
+      "Zq Tell",
+      "settlement",
+      Some(-2000),
+      Some(-1200),
+      Some("zq-gaz"),
+      "Zq Tell; Tell Zq"
+    )
   private val thumb = MediaThumb(
     "00000000-0000-4000-8000-000000000001",
     "depiction",
@@ -217,11 +214,11 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val place = PlaceDetail(
     summary,
     Some("POINT(30.5 40.25)"),
-    List(PlaceSummary("zq_land", "Zqland", "region", None, None, None, "Zqland")),
+    List(com.histmersion.api.catalogue.Place.Summary("zq_land", "Zqland", "region", None, None, None, "Zqland")),
     Nil,
     findings = 3,
     asOf = Some(-1500),
-    links = List(PlaceLink("zq_tell", "wikidata", "Q2")),
+    links = List(com.histmersion.api.catalogue.Place.Link("zq_tell", "wikidata", "Q2")),
     locationPrecision = Place.Precision.Stated,
     media = List(thumb),
     siteType = Some("tell")
@@ -245,11 +242,15 @@ class WireSnapshotSuite extends munit.FunSuite:
       "bodySlice" -> Markdown.bodySlice("Zq body text.", 10, 40),
       "gazetteerSources" -> PlacesMarkdown.gazetteerSources(gazetteers),
       "placeGone" -> PlacesMarkdown.placeGone(
-        PlaceGone("zq_tell", "Zq Tell", Some("zq_land"), Some("Zqland"), 3, 2, 1)
+        com.histmersion.api.catalogue.Place.Gone("zq_tell", "Zq Tell", Some("zq_land"), Some("Zqland"), 3, 2, 1)
       ),
-      "placeGone none" -> PlacesMarkdown.placeGone(PlaceGone("zq_tell", "Zq Tell", None, None, 0, 0, 0)),
+      "placeGone none" -> PlacesMarkdown.placeGone(
+        com.histmersion.api.catalogue.Place.Gone("zq_tell", "Zq Tell", None, None, 0, 0, 0)
+      ),
       "placeAdded" -> PlacesMarkdown.placeAdded(summary),
-      "placeRebuild" -> PlacesMarkdown.placeRebuild(PlaceRebuildResult(10, 4, 5, 9, 1, 7)),
+      "placeRebuild" -> PlacesMarkdown.placeRebuild(
+        com.histmersion.api.catalogue.Place.RebuildResult(10, 4, 5, 9, 1, 7)
+      ),
       "attestation" -> AttestationsMarkdown.attestation(
         Attestation(
           7,
@@ -305,9 +306,9 @@ class WireSnapshotSuite extends munit.FunSuite:
         AssetLink(4, "zq_alpha_2001", "zq.png", "shows", "event", "zq-event")
       ),
       "backupStatus" -> Markdown.backupStatus(
-        BackupStatus("zq.dump", "done", 1500, Some(4096), Some("cd" * 32), None, List("old.dump"))
+        Backup.Status("zq.dump", "done", 1500, Some(4096), Some("cd" * 32), None, List("old.dump"))
       ),
-      "backupStatus failed" -> Markdown.backupStatus(BackupStatus("zq.dump", "failed", 10, error = Some("zq error"))),
+      "backupStatus failed" -> Markdown.backupStatus(Backup.Status("zq.dump", "failed", 10, error = Some("zq error"))),
       "event" -> event.markdown,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,

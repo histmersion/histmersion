@@ -1,8 +1,9 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{BookmarkLabel, MapZoom, ViewState}
+import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.{Latitude, Longitude, PageSize}
+import com.histmersion.api.personal.Bookmark
 
 /** A person's bookmarks, in memory and in the database. */
 class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
@@ -11,7 +12,7 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
     w.addSource("zz_pers_a", "Zz the first title")
     val b1 = w.bookmarks.add(me, item(MarkKind.Source, "zz_pers_a"), None, TargetLabel.tidy("as I saw it"), at(0))
     assertEquals(b1.title.value: String, "Zz the first title")
-    val b2 = w.bookmarks.add(me, item(MarkKind.Source, "zz_pers_a"), Some(BookmarkLabel("mine")), None, at(1))
+    val b2 = w.bookmarks.add(me, item(MarkKind.Source, "zz_pers_a"), Some(Bookmark.Label("mine")), None, at(1))
     assertEquals(b2.id, b1.id)
     assertEquals(b2.label.map(_.value.toString), Some("mine"))
     w.retitle("zz_pers_a", "Zz the second title")
@@ -52,8 +53,8 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
       None,
       None
     )
-    w.bookmarks.add(me, v, Some(BookmarkLabel("Argolid")), None, at(1))
-    w.bookmarks.add(me, v, Some(BookmarkLabel("Argolid again")), None, at(2))
+    w.bookmarks.add(me, v, Some(Bookmark.Label("Argolid")), None, at(1))
+    w.bookmarks.add(me, v, Some(Bookmark.Label("Argolid again")), None, at(2))
     w.bookmarks.add(me, point, None, None, at(3))
     val listed = w.bookmarks.list(me, None, SearchWords.Everything, all)
     assertEquals(listed.map(_.wire.name), List("Place on the map", "Argolid again", "Argolid", "Zz Tiryns"))

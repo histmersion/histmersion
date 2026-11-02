@@ -2,17 +2,8 @@ package com.histmersion.domain
 
 import com.histmersion.api.ListPatch
 import com.histmersion.api.research.{CritiqueReason, CritiqueRef}
-import com.histmersion.api.library.{
-  EdgeInput,
-  EdgesPatch,
-  FindingInput,
-  FindingsPatch,
-  MetadataField,
-  MetadataPatch,
-  SourcePatch,
-  WorkRef
-}
-import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
+import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataField, MetadataPatch, WorkRef}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.EnrichSource.{
   Classified,
@@ -29,6 +20,7 @@ import io.circe.{Decoder, Encoder}
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it
   * writes), every case and optional field among them. Their encodings are the golden files under `golden/checkpoints/`,
@@ -39,7 +31,7 @@ object CheckpointGolden:
   final case class Golden[A](file: String, values: List[A])(using val encoder: Encoder[A], val decoder: Decoder[A])
 
   private val findingInputs = List(
-    FindingInput(
+    Finding.Input(
       "Tin reached the Aegean from Afghanistan.",
       Some("Aegean"),
       Some(25.1),
@@ -51,7 +43,7 @@ object CheckpointGolden:
       Some("medium"),
       Some("a long-distance route")
     ),
-    FindingInput("A claim with nothing else.")
+    Finding.Input("A claim with nothing else.")
   )
 
   private val metadataPatches = List(
@@ -70,34 +62,34 @@ object CheckpointGolden:
     MetadataPatch()
   )
 
-  val sourcePatches: Golden[SourcePatch] = Golden(
+  val sourcePatches: Golden[com.histmersion.api.library.Source.Patch] = Golden(
     "source-patch.ndjson",
     List(
-      SourcePatch(
+      com.histmersion.api.library.Source.Patch(
         metadata = Some(metadataPatches.head),
         summary = Some("What the source argues."),
         body = Some("# Body"),
         notes = Some("Notes on [[smith1987_tin]]."),
         topics = Some(List("bronze_age")),
         regions = Some(List("Aegean")),
-        period = Some(PeriodInput(-3300, -1200)),
+        period = Some(Period.Input(-3300, -1200)),
         tags = Some(ListPatch(List("tin"), List("old"), Some(List("tin", "trade")))),
         findings = Some(FindingsPatch(findingInputs, List("smith1987_tin#3"), Some(findingInputs.take(1)))),
         edges = Some(
           EdgesPatch(
-            List(EdgeInput("doe2001_tin", Edge.Kind.Challenges, Some("smith1987_tin"))),
-            List(EdgeInput("roe1990_tin", Edge.Kind.Refutes))
+            List(com.histmersion.api.library.Edge.Input("doe2001_tin", Edge.Kind.Challenges, Some("smith1987_tin"))),
+            List(com.histmersion.api.library.Edge.Input("roe1990_tin", Edge.Kind.Refutes))
           )
         ),
         ifUpdatedAt = Some("2026-10-25T10:00:00Z")
       ),
-      SourcePatch(
+      com.histmersion.api.library.Source.Patch(
         metadata = Some(metadataPatches(1)),
         tags = Some(ListPatch(add = List("tin"))),
         findings = Some(FindingsPatch(add = findingInputs))
       ),
-      SourcePatch(metadata = Some(metadataPatches(2))),
-      SourcePatch()
+      com.histmersion.api.library.Source.Patch(metadata = Some(metadataPatches(2))),
+      com.histmersion.api.library.Source.Patch()
     ) ++
       EnrichSourceSamples.patches
   )
@@ -125,7 +117,8 @@ object CheckpointGolden:
   )
 
   /** What [[AgentProposals.Proposal.patch]] writes for each proposal. */
-  val proposalPatches: Golden[SourcePatch] = Golden("proposal-patch.ndjson", proposals.values.map(_.patch))
+  val proposalPatches: Golden[com.histmersion.api.library.Source.Patch] =
+    Golden("proposal-patch.ndjson", proposals.values.map(_.patch))
 
   val classified: Golden[Classified] = Golden(
     "enrich-classified.ndjson",
@@ -334,9 +327,9 @@ private object EnrichSourceSamples:
     "cited as current"
   )
 
-  val patches: List[SourcePatch] = List(
+  val patches: List[com.histmersion.api.library.Source.Patch] = List(
     EnrichSource
-      .patch(loaded, classified, List(FindingInput("A claim.", lon = Some(1.0), lat = Some(2.0))), Some("Notes."))
+      .patch(loaded, classified, List(Finding.Input("A claim.", lon = Some(1.0), lat = Some(2.0))), Some("Notes."))
       ._1,
     EnrichSource
       .patch(

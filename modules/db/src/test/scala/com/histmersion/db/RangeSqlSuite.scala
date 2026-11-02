@@ -11,8 +11,8 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Migrate, Param}
-import com.histmersion.api.automation.{GoalPatch, GoalPut}
 import com.histmersion.api.catalogue.Period
+import com.histmersion.api.automation.Goal
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].
@@ -75,24 +75,24 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
     assertEquals(
       transact(ds)(
-        GoalRepo.put("zz_period_goal", GoalPut("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000)))
+        GoalRepo.put("zz_period_goal", Goal.Put("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000)))
       ),
       Right(())
     )
     assertEquals(
-      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodStart = Some(-1300)))),
+      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", Goal.Patch(periodStart = Some(-1300)))),
       Right(())
     )
     val g = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
     assertEquals(
-      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodEnd = Some(-1100)))),
+      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", Goal.Patch(periodEnd = Some(-1100)))),
       Right(())
     )
     val g2 = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
-    assert(Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodStart = Some(-1000)))).isLeft)
+    assert(Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", Goal.Patch(periodStart = Some(-1000)))).isLeft)
     assertEquals(
       connect(ds)(GoalRepo.get("zz_period_goal")).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-1300L), Some(-1100L)))
@@ -101,12 +101,12 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
 
   dbTest("a goal put with one bound stores an open period; an inverted one is refused"):
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())
-    assertEquals(transact(ds)(GoalRepo.put("zz_period_open", GoalPut("Open", periodStart = Some(-3300)))), Right(()))
+    assertEquals(transact(ds)(GoalRepo.put("zz_period_open", Goal.Put("Open", periodStart = Some(-3300)))), Right(()))
     assertEquals(
       connect(ds)(GoalRepo.get("zz_period_open")).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-3300L), None))
     )
     assert(
-      transact(ds)(GoalRepo.put("zz_period_open", GoalPut("Open", periodStart = Some(5), periodEnd = Some(-5)))).isLeft
+      transact(ds)(GoalRepo.put("zz_period_open", Goal.Put("Open", periodStart = Some(5), periodEnd = Some(-5)))).isLeft
     )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())

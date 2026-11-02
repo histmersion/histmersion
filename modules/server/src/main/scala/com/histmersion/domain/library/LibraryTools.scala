@@ -6,7 +6,7 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 
 import chimp.server.*
-import com.histmersion.api.{Api, ApiError, StrictJson, Write}
+import com.histmersion.api.{Api, StrictJson, Write}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.findings.FindingsControllers
@@ -20,7 +20,8 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.checks.FormatMarkdown
-import com.histmersion.api.library.{Filter, FilterDocs, PassagesMarkdown, RenameRequest, SourcePatch, SourcePut}
+import com.histmersion.api.library.{Filter, PassagesMarkdown}
+import com.histmersion.api.library.Rename
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -40,7 +41,7 @@ object LibraryTools:
       sources: SourcesControllers,
       findings: FindingsControllers,
       citations: CitationsControllers,
-      exportNote: String => Either[ApiError, String]
+      exportNote: String => Either[Api.Error, String]
   ) =
     val searchTool =
       tool("search")
@@ -288,7 +289,7 @@ object LibraryTools:
         )
         .input[RenameSourceInput]
         .handle { in =>
-          sources.rename(in.citekey, RenameRequest(in.newCitekey)) match
+          sources.rename(in.citekey, Rename.Request(in.newCitekey)) match
             case Right(r) => ToolResult.text(SourcesMarkdown.sourceRenamed(r))
             case Left(e)  => McpOut.error(e)
         }
@@ -374,7 +375,7 @@ object LibraryTools:
     )
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
-    given Schema[SearchInput] = FilterDocs
+    given Schema[SearchInput] = Filter.Docs
       .describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
       .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
@@ -425,7 +426,7 @@ object LibraryTools:
       None
     )
   object FacetsInput:
-    given Schema[FacetsInput] = FilterDocs
+    given Schema[FacetsInput] = Filter.Docs
       .describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
       .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
@@ -549,7 +550,7 @@ object LibraryTools:
         None
       ) // region is folded into places, not passed separately
   object GeoWhenInput:
-    given Schema[GeoWhenInput] = FilterDocs
+    given Schema[GeoWhenInput] = Filter.Docs
       .describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
@@ -589,7 +590,11 @@ object LibraryTools:
 
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
-  final case class PutSourceInput(citekey: String, source: SourcePut, strict: Boolean = false)
+  final case class PutSourceInput(
+      citekey: String,
+      source: com.histmersion.api.library.Source.Put,
+      strict: Boolean = false
+  )
   object PutSourceInput:
     given Schema[PutSourceInput] = KindlingsSchema
       .derived[PutSourceInput]
@@ -597,7 +602,11 @@ object LibraryTools:
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
-  final case class PatchSourceInput(citekey: String, patch: SourcePatch, strict: Boolean = false)
+  final case class PatchSourceInput(
+      citekey: String,
+      patch: com.histmersion.api.library.Source.Patch,
+      strict: Boolean = false
+  )
   object PatchSourceInput:
     given Schema[PatchSourceInput] = KindlingsSchema
       .derived[PatchSourceInput]
@@ -669,6 +678,6 @@ object LibraryTools:
         None
       )
   object HistogramInput:
-    given Schema[HistogramInput] = FilterDocs
+    given Schema[HistogramInput] = Filter.Docs
       .describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))

@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunk
 
@@ -8,8 +7,11 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
-import com.histmersion.api.library.{Edge, FindingRow, RenameCounts, Source, SourceAlias, SourceDetail, SourcePatch}
+import com.histmersion.api.library.{Edge, Source}
 import com.histmersion.api.maintenance.ReindexResult
+import com.histmersion.api.Api
+import com.histmersion.api.library.Finding
+import com.histmersion.api.library.Rename
 
 /** The db suites' reads and writes of the library's sources on a database of their own, each in a transaction of its
   * own as the service runs them. A rename follows into every domain's records through the same referrers the server
@@ -44,10 +46,10 @@ object SourceFixtures:
   def patch(
       ds: DataSource,
       requested: String,
-      p: SourcePatch,
+      p: Source.Patch,
       chunkChars: Int,
       toleranceKm: Double = FindingPlacement.DefaultToleranceKm
-  ): Either[ApiError, String] = db(ds).transact(SourceRepo.patchIn(requested, p, chunkChars, toleranceKm))
+  ): Either[Api.Error, String] = db(ds).transact(SourceRepo.patchIn(requested, p, chunkChars, toleranceKm))
 
   def reindexChunks(
       ds: DataSource,
@@ -75,12 +77,12 @@ object SourceFixtures:
   def addEdges(ds: DataSource, edges: List[Edge]): Int =
     if edges.isEmpty then 0 else transact(ds)(SourceRepo.insertEdges(edges))
 
-  def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
+  def get(ds: DataSource, citekey: String): Option[(Source.Detail, Vector[Finding.Row])] =
     connect(ds)(SourceRepo.get(citekey))
-  def rename(ds: DataSource, oldCk: String, newRaw: String): Either[ApiError, RenameCounts] =
+  def rename(ds: DataSource, oldCk: String, newRaw: String): Either[Api.Error, Rename.Counts] =
     transact(ds)(SourceRepo.rename(oldCk, newRaw, referrers))
   def canonical(ds: DataSource, id: String): Option[String] = connect(ds)(SourceRepo.canonical(id))
-  def aliases(ds: DataSource): List[SourceAlias] = connect(ds)(SourceRepo.aliases)
+  def aliases(ds: DataSource): List[Source.Alias] = connect(ds)(SourceRepo.aliases)
   def aliasOf(ds: DataSource, ck: String): Option[String] = connect(ds)(SourceRepo.aliasOf(ck))
   def bodyText(ds: DataSource, ck: String): String = connect(ds)(SourceRepo.bodyText(ck))
   def bodyChunks(ds: DataSource, ck: String): List[Chunk] = connect(ds)(SourceRepo.bodyChunks(ck))
@@ -88,5 +90,5 @@ object SourceFixtures:
   def resolveAliases(ds: DataSource, targets: List[String]): Map[String, String] =
     connect(ds)(SourceRepo.resolveAliases(targets))
   def naming(ds: DataSource, name: String, limit: Int): List[String] = connect(ds)(SourceRepo.naming(name, limit))
-  def plan(ds: DataSource, ck: String): Either[ApiError, SourceDeletePlan] =
+  def plan(ds: DataSource, ck: String): Either[Api.Error, SourceDeletePlan] =
     connect(ds)(SourceDeleteRepo.planIn(ck, referrers))

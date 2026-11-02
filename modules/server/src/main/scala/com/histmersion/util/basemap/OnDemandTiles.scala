@@ -1,6 +1,5 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.basemap.BasemapOnDemand
 import com.histmersion.config.BasemapOnDemandConfig
 import com.histmersion.util.storage.{Store, StoreError, StoreKey}
 
@@ -9,6 +8,7 @@ import io.circe.Json
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
+import com.histmersion.api.basemap.Basemap
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
@@ -57,9 +57,9 @@ final class OnDemandTiles(
   private val inflight = ConcurrentHashMap[String, CompletableFuture[Either[String, Option[Array[Byte]]]]]()
   private lazy val gate = Semaphore(cfg().concurrency.max(1), true)
 
-  def status: BasemapOnDemand =
+  def status: Basemap.OnDemand =
     val c = cfg()
-    BasemapOnDemand(
+    Basemap.OnDemand(
       c.enabled,
       c.maxZoom,
       store.where(),

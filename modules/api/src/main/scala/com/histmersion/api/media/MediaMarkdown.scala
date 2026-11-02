@@ -27,7 +27,7 @@ object MediaMarkdown:
     if cs.isEmpty then "none"
     else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
 
-  def mediaProviders(ps: List[MediaProviderInfo]): String =
+  def mediaProviders(ps: List[MediaProvider.Info]): String =
     if ps.isEmpty then "No media provider is registered (every media plugin is switched off)."
     else
       ps.map { p =>
@@ -158,7 +158,7 @@ object MediaMarkdown:
     val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")
     s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh"
 
-  def assetLinkList(ll: AssetLinkList): String =
+  def assetLinkList(ll: AssetLink.List): String =
     OffsetPage.markdown(ll.page, "link(s)", "_No asset links._", ll.links)(assetLinkLine)
 
   def assetLink(l: AssetLink): String =

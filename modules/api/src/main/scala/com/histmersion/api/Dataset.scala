@@ -7,7 +7,7 @@ enum Dataset:
 object Dataset:
   def parse(s: String): Option[Dataset] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
-  def ofParam(raw: Option[String]): Either[ApiError, Dataset] =
+  def ofParam(raw: Option[String]): Either[Api.Error, Dataset] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(Local)
-      case Some(s) => parse(s).toRight(ApiError(s"dataset '$s' is not seed or local", Some(Write.CodeInvalid)))
+      case Some(s) => parse(s).toRight(Api.Error(s"dataset '$s' is not seed or local", Some(Write.CodeInvalid)))

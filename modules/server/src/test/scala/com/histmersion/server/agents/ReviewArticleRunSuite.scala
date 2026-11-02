@@ -23,9 +23,10 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.db.*
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
-import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
-import com.histmersion.api.research.{ArticleEdits, ArticleFilter, ArticlePatch, ArticlePut}
+import com.histmersion.api.library.EdgesPatch
 import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an
@@ -247,7 +248,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .put(
           Ck,
-          SourcePut(
+          Source.Put(
             title = "Bronze Age tin",
             authors = List("Ann Tinley"),
             year = Some(2019),
@@ -262,7 +263,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .put(
           Ck2,
-          SourcePut(
+          Source.Put(
             title = "Tin isotopes",
             year = Some(2024),
             body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
@@ -270,7 +271,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         )
         .isRight
     )
-    assert(h.research.articles.put(Slug, ArticlePut("Tin in the Bronze Age", "concept", Body)).isRight)
+    assert(h.research.articles.put(Slug, Article.Put("Tin in the Bronze Age", "concept", Body)).isRight)
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
@@ -586,7 +587,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     val direct =
       h.research.articles
-        .check(Slug, io.circe.parser.decode[ArticleEdits.ArticleCheckRequest](args).toOption.get)
+        .check(Slug, io.circe.parser.decode[Article.Edits.ArticleCheckRequest](args).toOption.get)
         .toOption
         .get
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
@@ -611,7 +612,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val c = PanelClient(Model)
     val (_, h) = handlers(c); seed(h)
     val draft = h.research.articles
-      .check("zzagent_new", ArticleEdits.ArticleCheckRequest(body = Some(s"New [[zzagent_ghost]].\n\nUncited.")))
+      .check("zzagent_new", Article.Edits.ArticleCheckRequest(body = Some(s"New [[zzagent_ghost]].\n\nUncited.")))
       .toOption
       .get
     assert(
@@ -625,22 +626,22 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.research.articles
         .check(
           "zzagent_new",
-          ArticleEdits.ArticleCheckRequest(edits = List(ArticleEdits.EditAnswer(ArticleEdits.Op.Delete, "x")))
+          Article.Edits.ArticleCheckRequest(edits = List(Article.Edits.EditAnswer(Article.Edits.Op.Delete, "x")))
         )
         .isLeft
     )
-    assert(h.research.articles.check(Slug, ArticleEdits.ArticleCheckRequest()).isLeft)
+    assert(h.research.articles.check(Slug, Article.Edits.ArticleCheckRequest()).isLeft)
     val clean = h.research.articles
       .check(
         Slug,
-        ArticleEdits.ArticleCheckRequest(
-          List(ArticleEdits.EditAnswer(ArticleEdits.Op.Replace, "Tin reached", Some("Tin, a metal, reached")))
+        Article.Edits.ArticleCheckRequest(
+          List(Article.Edits.EditAnswer(Article.Edits.Op.Replace, "Tin reached", Some("Tin, a metal, reached")))
         )
       )
       .toOption
       .get
     assertEquals((clean.problems, clean.fatal, clean.edits.map(_.applied)), (Nil, false, List(true)))
-    assert(ArticleEdits.markdown(clean).contains("No problems"), ArticleEdits.markdown(clean))
+    assert(Article.Edits.markdown(clean).contains("No problems"), Article.Edits.markdown(clean))
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, Body.trim, "a check writes nothing")
 
   test(
@@ -661,11 +662,11 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     // the two sources under a topic of their own, the article's filter
     List(Ck, Ck2).foreach(ck =>
-      assert(h.library.sources.patch(ck, SourcePatch(topics = Some(List("zzagent_review_tin")))).isRight)
+      assert(h.library.sources.patch(ck, Source.Patch(topics = Some(List("zzagent_review_tin")))).isRight)
     )
     assert(
       h.research.articles
-        .patch(Slug, ArticlePatch(filter = Some(ArticleFilter(topics = List("zzagent_review_tin")))))
+        .patch(Slug, Article.Patch(filter = Some(Article.Filter(topics = List("zzagent_review_tin")))))
         .isRight
     )
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
@@ -735,7 +736,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     val theirs = Body.replace("by sea", "by sea and by land")
     c.before =
-      w => if w == "fixer" then assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(theirs))).isRight)
+      w => if w == "fixer" then assert(h.research.articles.patch(Slug, Article.Patch(body = Some(theirs))).isRight)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     assertEquals(
@@ -1022,7 +1023,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(ledgerOf(h).flatMap(_.task), Some(item.id))
 
     // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
-    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(Revised))).isRight)
+    assert(h.research.articles.patch(Slug, Article.Patch(body = Some(Revised))).isRight)
     // (the retry amends the answer without looking the record up again: the first attempt's call counts)
     val noChecks = looked(rules("PASS"))
     val checked = text(
@@ -1056,7 +1057,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.research.articles
         .patch(
           Slug,
-          ArticlePatch(body =
+          Article.Patch(body =
             Some(Revised.replace("Where the tin was mined is open", s"The tin was mined in Central Asia [[$Ck2]]"))
           )
         )
@@ -1498,7 +1499,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .put(
           Ck3,
-          SourcePut(
+          Source.Put(
             title = "Tin routes",
             year = Some(2021),
             body = Some("The tin went overland before it reached the coast.")
@@ -1508,12 +1509,21 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
+        .patch(
+          Ck2,
+          Source
+            .Patch(edges = Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input(Ck, Edge.Kind.Refutes)))))
+        )
         .isRight
     )
     assert(
       h.library.sources
-        .patch(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Challenges))))))
+        .patch(
+          Ck3,
+          Source.Patch(edges =
+            Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input(Ck, Edge.Kind.Challenges))))
+          )
+        )
         .isRight
     )
 
@@ -1710,7 +1720,11 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def refuted(h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
+        .patch(
+          Ck2,
+          Source
+            .Patch(edges = Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input(Ck, Edge.Kind.Refutes)))))
+        )
         .isRight
     )
 
@@ -1823,7 +1837,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         s"Tin reached the Aegean by sea [[$Ck]].",
         s"Tin reached the Aegean by sea [[$Ck]].\n\nAn isotope study answers Tinley's sea route [[$Ck2]]."
       )
-    assert(h.research.articles.patch(Slug, ArticlePatch(body = Some(body))).isRight)
+    assert(h.research.articles.patch(Slug, Article.Patch(body = Some(body))).isRight)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
     assert(

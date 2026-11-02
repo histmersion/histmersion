@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.api.OpenSide
-import com.histmersion.api.catalogue.{Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
 import com.histmersion.api.instance.Version
 import com.histmersion.config.PlacesConfig
 import com.histmersion.plugin.*
@@ -36,7 +36,7 @@ object PluginGazetteers:
   /** Every place `source` answers, each checked and converted, in its order, and the ones refused with the reason.
     * `Left` when the source answered no dataset at all (its download failed, its body was not one).
     */
-  def places(source: GazetteerSource, http: PluginHttp): Either[String, (List[PlaceInput], List[String])] =
+  def places(source: GazetteerSource, http: PluginHttp): Either[String, (List[Place.Input], List[String])] =
     guard(source.fetch(http)).map { got =>
       val credit = guard(Right(source.rights)).toOption.flatMap(r => Option(r).flatMap(r => Option(r.credit)))
       val read = got.map(p => input(p, credit.getOrElse("")))
@@ -46,7 +46,7 @@ object PluginGazetteers:
   /** Pure: the host's place of a plugin's, or why it is refused — no id or kind, a shape or properties that are not
     * JSON, a period the host cannot read. Its source is its own, else the dataset's credit; nothing else is changed.
     */
-  def input(p: GazetteerPlace, credit: String): Either[String, PlaceInput] =
+  def input(p: GazetteerPlace, credit: String): Either[String, Place.Input] =
     try
       if p == null then Left("a place that is null")
       else
@@ -64,7 +64,7 @@ object PluginGazetteers:
             relations <- all(Option(p.relations).getOrElse(Nil))(relation).left.map(named)
           yield
             val source = Option(p.source).flatten.orElse(Option(credit).map(_.trim).filter(_.nonEmpty))
-            PlaceInput(Place(id, label, p.kind, geometry, period._1, source, properties, period._2), names, relations)
+            Place.Input(Place(id, label, p.kind, geometry, period._1, source, properties, period._2), names, relations)
     catch
       case NonFatal(e) =>
         Left(
@@ -72,21 +72,21 @@ object PluginGazetteers:
             s"${Spi.Version}?"
         )
 
-  private def name(n: GazetteerName): Either[String, PlaceName] =
+  private def name(n: GazetteerName): Either[String, Place.Name] =
     if n == null || n.name == null then Left("a name that is null")
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
-        PlaceName(n.name, Option(n.lang).getOrElse(""), period, open)
+        Place.Name(n.name, Option(n.lang).getOrElse(""), period, open)
       )
 
-  private def relation(r: GazetteerRelation): Either[String, PlaceRelation] =
+  private def relation(r: GazetteerRelation): Either[String, Place.Relation] =
     if r == null then Left("a relation that is null")
     else if Option(r.childId).forall(_.trim.isEmpty) || Option(r.parentId).forall(_.trim.isEmpty) then
       Left("a relation without both its places")
     else if Option(r.kind).forall(_.trim.isEmpty) then Left(s"the relation to '${r.parentId}' has no kind")
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>
-        PlaceRelation(r.childId, r.parentId, r.kind, period, open)
+        Place.Relation(r.childId, r.parentId, r.kind, period, open)
       )
 
   /** A plugin's period and open side as the host's: the period's ends checked again ([[SpiValues.periodOf]]); an open

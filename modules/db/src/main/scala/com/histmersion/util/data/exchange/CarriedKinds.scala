@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.BundleFiles
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
@@ -44,13 +43,16 @@ object CarriedKinds:
     */
   def of(kinds: List[CarriedKind]): Either[List[String], CarriedKinds] =
     val entries = kinds.map(_.entry.value)
-    val missing = BundleFiles.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")
+    val missing =
+      com.histmersion.api.exchange.Bundle.Files.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")
     val twice = entries.diff(entries.distinct).distinct.map(e => s"$e is carried twice")
-    val unknown = entries.filterNot(BundleFiles.all.contains).map(e => s"$e is not a file of the bundle format")
+    val unknown = entries
+      .filterNot(com.histmersion.api.exchange.Bundle.Files.all.contains)
+      .map(e => s"$e is not a file of the bundle format")
     val problems = missing ++ twice ++ unknown
     Either.cond(
       problems.isEmpty,
-      new CarriedKinds(kinds.sortBy(k => BundleFiles.all.indexOf(k.entry.value))),
+      new CarriedKinds(kinds.sortBy(k => com.histmersion.api.exchange.Bundle.Files.all.indexOf(k.entry.value))),
       problems
     )
 

@@ -1,8 +1,8 @@
 package com.histmersion.cli
 
 import com.histmersion.config.*
-import com.histmersion.api.backup.{BackupResult, BackupState, BackupStatus}
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.backup.Backup
 
 /** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
   * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as
@@ -53,19 +53,19 @@ object JobFollow:
     */
   @annotation.tailrec
   def backup(
-      fetch: () => Either[CliError, BackupStatus],
-      s: BackupStatus,
+      fetch: () => Either[CliError, Backup.Status],
+      s: Backup.Status,
       pollMs: Long = BackupPollMs,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = l => System.err.println(l)
-  ): Either[CliError, BackupResult] =
+  ): Either[CliError, Backup.Result] =
     s.stateOf match
-      case Some(BackupState.Running) =>
+      case Some(Backup.State.Running) =>
         progress(s"backup ${s.file} running for ${s.durationMs / 1000} s…")
         sleep(pollMs)
         fetch() match
           case Right(next) => backup(fetch, next, pollMs, sleep, progress)
           case Left(e)     => Left(e)
-      case Some(BackupState.Done) =>
+      case Some(Backup.State.Done) =>
         s.result.toRight(CliError(s"backup ${s.file} finished without a checksum", ExitCode.Refused))
       case _ => Left(failed(s"backup ${s.file}", s.error))

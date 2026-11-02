@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.scheduler.SchedulerService
 
-import com.histmersion.api.{ApiError, Plural, Write}
+import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.ApprovalKind
@@ -18,7 +18,8 @@ import com.histmersion.domain.automation.goals.FocusRepo
 
 import java.time.Instant
 import javax.sql.DataSource
-import com.histmersion.api.automation.GoalPlans
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
@@ -236,7 +237,7 @@ final class GoalFocusService(
   ): List[ManagerPolicy.Candidate] =
     current match
       case Some(active) if m.id == EnrichId || m.id == ReviewId =>
-        val link = if m.id == EnrichId then GoalPlans.LinkKind.Source.wire else GoalPlans.LinkKind.Article.wire
+        val link = if m.id == EnrichId then Goal.Plans.LinkKind.Source.wire else Goal.Plans.LinkKind.Article.wire
         val ratio = acfg.focusRatio
         val recent = Transactor(ds).read(FocusRepo.recentTargets(m.id, math.max(1, ratio)))
         val goalsOf = agents.focusStore.goalsOf(link, (due.map(_.target) ++ recent).distinct)
@@ -334,11 +335,11 @@ final class GoalFocusService(
   /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at the next
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
-  def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[ApiError, FocusInfo] =
+  def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-    def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(ApiError(s"`${in.action}` needs `goal`"))
-    def missing(g: String) = ApiError(s"no goal '$g'", Some(Write.CodeNotFound))
-    val done: Either[ApiError, String] = in.action.trim.toLowerCase match
+    def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `goal`"))
+    def missing(g: String) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
+    val done: Either[Api.Error, String] = in.action.trim.toLowerCase match
       case "pin" | "unpin" =>
         val on = in.action.trim.equalsIgnoreCase("pin")
         goal.flatMap(g => Either.cond(agents.focusStore.pin(g, on), g, missing(g))).map { g =>
@@ -348,14 +349,14 @@ final class GoalFocusService(
       case "priority" =>
         for
           g <- goal
-          n <- in.value.toRight(ApiError("`priority` needs `value` (higher first)"))
+          n <- in.value.toRight(Api.Error("`priority` needs `value` (higher first)"))
           _ <- Either.cond(agents.focusStore.priority(g, n), (), missing(g))
         yield
           event(g, s"focus: priority $n set by $by")
           s"$g priority $n (by $by)"
       case "max" =>
         in.value match
-          case Some(n) if n < 0 => Left(ApiError("`max` is 0 (no cap) or more"))
+          case Some(n) if n < 0 => Left(Api.Error("`max` is 0 (no cap) or more"))
           case v                =>
             Transactor(ds).transact(FocusRepo.setMaxOverride(v))
             Right(
@@ -363,7 +364,7 @@ final class GoalFocusService(
                 s"cap $n${if n == 0 then " (no cap)" else ""} (by $by)"
               )
             )
-      case other => Left(ApiError(s"unknown focus action '$other' (one of: ${FocusSet.Actions.mkString(", ")})"))
+      case other => Left(Api.Error(s"unknown focus action '$other' (one of: ${FocusSet.Actions.mkString(", ")})"))
     done.map { line =>
       log(s"autopilot focus: $line")
       agents.managers.nudge()

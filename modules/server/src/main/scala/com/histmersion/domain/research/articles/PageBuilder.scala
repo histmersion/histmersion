@@ -4,8 +4,9 @@ import com.histmersion.domain.Highlight
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.server.{ArticleHtml, ArticlePage, Citation, FullText, Pages, SourcePage}
-import com.histmersion.api.library.{Label, NeighborRow, NeighborTarget, SourceRef}
-import com.histmersion.api.research.{ArticleCoverage, ArticleLinks, ArticleRef}
+import com.histmersion.api.library.{Label, NeighborRow, NeighborTarget}
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.
@@ -21,7 +22,7 @@ final class PageBuilder(
   def source(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
     sources.get(ck).toOption.map { sw =>
       val s = sw.source
-      val ref = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
+      val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
       val rows = citations.neighbors(ck)
       val refs = sourceStore
         .refs(rows.filter(_.target == NeighborTarget.Source).map(_.citekey))
@@ -38,7 +39,7 @@ final class PageBuilder(
       val citingArticles = articles
         .sourceArticles(ck)
         .getOrElse(Nil)
-        .map(b => Citation.ToArticle(ArticleRef(b.id, b.title.getOrElse(Label.display(b.id))), None))
+        .map(b => Citation.ToArticle(Article.Ref(b.id, b.title.getOrElse(Label.display(b.id))), None))
       val term = q.map(_.trim).filter(_.nonEmpty)
       val page = SourcePage(
         ref = ref,
@@ -60,15 +61,16 @@ final class PageBuilder(
         formatting = sources.formatIssues(s.summary, s.notes)
       )
       val md = List(s.summary, s.notes, if full then s.ocrMarkdown else None).flatten.mkString("\n\n")
-      val links = articles.pageLinks(ArticleLinks.targets(md))
+      val links = articles.pageLinks(Article.Links.targets(md))
       (s.title, highlighted(Pages.source(page, links), term))
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
   def article(slug: String, q: Option[String]): Option[(String, String)] =
     articles.get(slug).toOption.map { v =>
-      val generated = v.coverage.fold(List.empty[String])(c => ArticleLinks.targets(ArticleCoverage.sections(c)))
-      val links = articles.pageLinks(ArticleLinks.targets(v.article.body) ++ v.sourcesCited.map(_.citekey) ++ generated)
+      val generated = v.coverage.fold(List.empty[String])(c => Article.Links.targets(Article.Coverage.sections(c)))
+      val links =
+        articles.pageLinks(Article.Links.targets(v.article.body) ++ v.sourcesCited.map(_.citekey) ++ generated)
       val html = Pages.article(
         ArticlePage(
           v.article,

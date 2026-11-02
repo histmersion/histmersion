@@ -5,9 +5,9 @@ import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.TheMap
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.catalogue.PlaceHit
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
+import com.histmersion.api.catalogue.Place
 
 /** The Places and Pictures tabs of the results: "On the map", what the map's sites and pictures layers hold in its view
   * (with what they only count there); "Everywhere", the places named by the filter's words, or every picture of the
@@ -44,7 +44,7 @@ object MapLists:
       )
     )
 
-  private def placeRow(h: PlaceHit): MapListRow =
+  private def placeRow(h: Place.Hit): MapListRow =
     MapListRow(
       h.id,
       h.label,

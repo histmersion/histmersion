@@ -9,9 +9,10 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import com.histmersion.db.*
-import com.histmersion.api.backup.{Backup, BackupState, RestoreRequest}
-import com.histmersion.api.library.{Filter, FindingInput, SourcePut}
+import com.histmersion.api.backup.{Backup, RestoreRequest}
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -133,7 +134,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   private def fixture(ck: String, title: String) =
-    SourcePut(
+    com.histmersion.api.library.Source.Put(
       title = title,
       authors = List("Tester"),
       year = Some(2026),
@@ -145,7 +146,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       periodEnd = Some(-1100),
       summary = Some(s"fixture $ck"),
       findings = List(
-        FindingInput(
+        Finding.Input(
           claim = s"$ck says something",
           region = Some("Anatolia"),
           lon = Some(32.0),
@@ -254,7 +255,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val started = h.upkeep.backup().toOption.getOrElse(fail("backup failed"))
     val deadline = System.nanoTime() + 300_000_000_000L
     var st = started
-    while st.stateOf.contains(BackupState.Running) && System.nanoTime() < deadline do
+    while st.stateOf.contains(Backup.State.Running) && System.nanoTime() < deadline do
       Thread.sleep(500)
       st = h.upkeep.backupStatus.toOption.getOrElse(st)
     st.result.getOrElse(fail(s"backup did not finish: $st"))

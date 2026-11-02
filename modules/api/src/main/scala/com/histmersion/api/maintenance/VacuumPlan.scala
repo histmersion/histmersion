@@ -9,5 +9,5 @@ object VacuumPlan:
   given Schema[VacuumPlan] = summon[KindlingsSchema[VacuumPlan]].schema
 
   /** A vacuum job's plan, in its detail. */
-  val Detail: com.histmersion.api.jobs.JobDetailField[Option[VacuumPlan]] =
-    com.histmersion.api.jobs.JobDetailField("vacuum", None)
+  val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[VacuumPlan]] =
+    com.histmersion.api.jobs.JobDetail.Field("vacuum", None)

@@ -2,16 +2,9 @@ package com.histmersion.api
 
 import io.circe.parser.decode
 import io.circe.syntax.*
-import com.histmersion.api.automation.GoalStages
-import com.histmersion.api.research.{
-  ArticleReviewView,
-  ReviewApproval,
-  ReviewBadge,
-  ReviewFinding,
-  ReviewGoal,
-  ReviewRound,
-  ReviewState
-}
+import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.research.Article
 
 /** The review view's words: reviewer names, a finding's fate, the Markdown every surface returns, and the wire shape of
   * the state.
@@ -36,25 +29,25 @@ class ArticleReviewViewSuite extends munit.FunSuite:
 
   test("reviewers by the names a person reads"):
     assertEquals(
-      List("rules", "cold-reader", "skeptic", "mechanical", "fixer").map(ArticleReviewView.reviewerName),
+      List("rules", "cold-reader", "skeptic", "mechanical", "fixer").map(Article.ReviewView.reviewerName),
       List("rules reviewer", "cold reader", "skeptic", "mechanical check", "fixer")
     )
 
   test("a finding's fate in words"):
     assertEquals(
-      ArticleReviewView.outcomeLine(rejected),
+      Article.ReviewView.outcomeLine(rejected),
       "rejected by fixer in run 1, round 2: the record does not bear on it"
     )
     val open = rejected.copy(outcome = "open", note = "", closedBy = None, closedRound = None, closedRunNumber = None)
-    assertEquals(ArticleReviewView.outcomeLine(open), "open")
+    assertEquals(Article.ReviewView.outcomeLine(open), "open")
     assertEquals(
-      ArticleReviewView.outcomeLine(open.copy(deferred = true, reopened = 2)),
+      Article.ReviewView.outcomeLine(open.copy(deferred = true, reopened = 2)),
       "open (left for the next run) (reopened 2 times)"
     )
-    assertEquals(ArticleReviewView.outcomeLine(open.copy(outcome = "wont-fix")), "won't fix")
+    assertEquals(Article.ReviewView.outcomeLine(open.copy(outcome = "wont-fix")), "won't fix")
 
   test("the Markdown: state, goals, approvals waiting, then the history by run and round"):
-    val v = ArticleReviewView(
+    val v = Article.ReviewView(
       "zz-art",
       ReviewBadge(ReviewState.Passed, "passed", "Reviewed: passed — no MAJOR finding is open."),
       outcome = Some("converged after 1 run"),
@@ -63,7 +56,7 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       goals = List(ReviewGoal("g", "A goal", "reviewed")),
       approvals = List(ReviewApproval(7, "article-filter"))
     )
-    val md = ArticleReviewView.markdown(v)
+    val md = Article.ReviewView.markdown(v)
     assert(md.startsWith("## Review of [[zz-art]]\n\n**passed** — Reviewed: passed — no MAJOR finding is open."), md)
     assert(md.contains("Review manager: converged after 1 run (2026-10-02T09:00:00Z)"), md)
     assert(md.contains("- `g` (reviewed) A goal"), md)
@@ -75,11 +68,11 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       ),
       md
     )
-    assert(ArticleReviewView.markdown(v.copy(rounds = Nil)).endsWith("No finding recorded."))
+    assert(Article.ReviewView.markdown(v.copy(rounds = Nil)).endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
     val b = ReviewBadge(ReviewState.InReview, "in review · round 2", "In review.", round = Some(2))
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
     assertEquals(ReviewState.parse(" Majors-Open "), Some(ReviewState.MajorsOpen))
-    assertEquals(GoalStages.all.map(_._1), com.histmersion.domain.automation.Goal.Status.all)
+    assertEquals(Goal.Stages.all.map(_._1), com.histmersion.domain.automation.Goal.Status.all)

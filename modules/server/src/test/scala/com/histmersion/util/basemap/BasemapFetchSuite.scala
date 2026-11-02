@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.util.storage.StoreKey
 
 import java.nio.file.{Files, Path}
-import com.histmersion.api.basemap.{Basemap, BasemapLayer}
+import com.histmersion.api.basemap.Basemap
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.
@@ -186,7 +186,7 @@ class BasemapFetchSuite extends munit.FunSuite:
           dropRules.filter(_.whole).map(_.layer).toSet,
           "© OSM",
           "2026-10-19T00:00:00Z",
-          BasemapLayer.Vector,
+          Basemap.Layer.Vector,
           Some((false, "roads; places"))
         ),
         _ => ()

@@ -9,7 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, Step}
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -17,8 +17,9 @@ import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.sql.DataSource
-import com.histmersion.api.automation.{Agents, GoalPatch}
-import com.histmersion.api.backup.BackupState
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.backup.Backup
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -284,7 +285,7 @@ final class AutopilotService(
       val kids = goals.filter(_.parentSlug.contains(g.slug)).map(c => status.getOrElse(c.slug, c.status))
       val facts = GoalFacts(g.slug, status(g.slug), managed, arts.size, compileOpen, arts.forall(passed), kids)
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
-        agents.host.patchGoal(g.slug, GoalPatch(status = Some(to))) match
+        agents.host.patchGoal(g.slug, Goal.Patch(status = Some(to))) match
           case Left(e) =>
             scribe.warn(s"autopilot: goal ${g.slug} not moved to $to: ${e.message}")
             None
@@ -365,7 +366,7 @@ final class AutopilotService(
         // the request answers `running` after a while: follow the job to its end
         var st = st0 // the job's last status, polled until it settles
         val deadline = System.currentTimeMillis() + 3L * 3600L * 1000L
-        while st.stateOf.contains(BackupState.Running) && System.currentTimeMillis() < deadline do
+        while st.stateOf.contains(Backup.State.Running) && System.currentTimeMillis() < deadline do
           Thread.sleep(10000)
           st = agents.host.backupStatus.getOrElse(st)
         st.result match

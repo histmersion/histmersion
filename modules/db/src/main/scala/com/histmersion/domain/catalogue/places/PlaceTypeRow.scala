@@ -2,7 +2,8 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
-import com.histmersion.api.catalogue.{Period, PlaceType}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
 
 final private[places] case class PlaceTypeRow(
     placeId: String,
@@ -11,5 +12,5 @@ final private[places] case class PlaceTypeRow(
     periodEnd: Option[Long],
     citekey: Option[String]
 ) derives DbCodec:
-  def toDto: PlaceType =
-    PlaceType(placeId, typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)
+  def toDto: Place.Type =
+    Place.Type(placeId, typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)

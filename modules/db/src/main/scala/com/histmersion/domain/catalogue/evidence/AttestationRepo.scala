@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.catalogue.{Attestation, AttestationList, AttestationPatch, AttestationPut}
+import com.histmersion.api.catalogue.Attestation
 
 import com.augustnagro.magnum.*
 
@@ -18,7 +18,7 @@ private[evidence] object AttestationRepo:
 
   def list(citekey: Option[String], targetType: Option[String], targetId: Option[String], limit: Int, offset: Int)(using
       DbCon
-  ): AttestationList =
+  ): Attestation.List =
     val ck = citekey.map(_.trim).filter(_.nonEmpty)
     val tt = targetType.map(_.trim).filter(_.nonEmpty)
     val ti = targetId.map(_.trim).filter(_.nonEmpty)
@@ -34,12 +34,12 @@ private[evidence] object AttestationRepo:
           ORDER BY a.id
           LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
           """.query[Attestation].run().toList
-    AttestationList.of(total, rows, offset.max(0))
+    Attestation.List.of(total, rows, offset.max(0))
 
   def get(id: Long)(using DbCon): Option[Attestation] =
     sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
-  def create(in: AttestationPut)(using DbCon): Attestation =
+  def create(in: Attestation.Put)(using DbCon): Attestation =
     val id = sql"""INSERT INTO attestations (citekey, target_type, target_id,
                       quote, prefix, suffix, char_start, char_end, chunk_ord,
                       page, canvas, xywh, cts_urn, note)
@@ -53,7 +53,7 @@ private[evidence] object AttestationRepo:
 
   def exists(id: Long)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
-  def update(id: Long, p: AttestationPatch)(using DbCon): Unit =
+  def update(id: Long, p: Attestation.Patch)(using DbCon): Unit =
     p.quote.foreach(v => sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run())
     p.prefix.foreach(v => sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run())
     p.suffix.foreach(v => sql"UPDATE attestations SET suffix = $v WHERE id = $id".update.run())

@@ -5,35 +5,6 @@ import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
 import com.histmersion.util.data.exchange.BundleFormat
-import com.histmersion.api.exchange.{
-  BundleAlias,
-  BundleArticle,
-  BundleArticleAlias,
-  BundleArticleVersion,
-  BundleAssessment,
-  BundleAsset,
-  BundleAssetLink,
-  BundleAttestation,
-  BundleCorrection,
-  BundleEdge,
-  BundleEvent,
-  BundleEventAlias,
-  BundleEventCandidate,
-  BundleEventCatalogue,
-  BundleEventCheck,
-  BundleFiles,
-  BundleFinding,
-  BundleGoal,
-  BundleGoalAlias,
-  BundlePeriod,
-  BundlePlace,
-  BundlePlaceAlias,
-  BundleQueueItem,
-  BundleSiteType,
-  BundleSource,
-  BundleTombstone,
-  BundleUnresolvedEdge
-}
 import com.histmersion.util.data.exchange.Bundle
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
@@ -41,33 +12,33 @@ import com.histmersion.util.data.exchange.Bundle
   * and streamed separately.
   */
 final case class BundleEntities(
-    sources: List[BundleSource] = Nil,
-    findings: List[BundleFinding] = Nil,
-    edges: List[BundleEdge] = Nil,
-    unresolvedEdges: List[BundleUnresolvedEdge] = Nil,
-    assessments: List[BundleAssessment] = Nil,
-    aliases: List[BundleAlias] = Nil,
-    articles: List[BundleArticle] = Nil,
-    versions: List[BundleArticleVersion] = Nil,
-    assets: List[BundleAsset] = Nil,
-    assetLinks: List[BundleAssetLink] = Nil,
-    attestations: List[BundleAttestation] = Nil,
-    events: List[BundleEvent] = Nil,
-    goals: List[BundleGoal] = Nil,
-    queue: List[BundleQueueItem] = Nil,
-    tombstones: List[BundleTombstone] = Nil,
-    places: List[BundlePlace] = Nil,
-    periods: List[BundlePeriod] = Nil,
-    articleAliases: List[BundleArticleAlias] = Nil,
-    eventAliases: List[BundleEventAlias] = Nil,
-    goalAliases: List[BundleGoalAlias] = Nil,
-    placeAliases: List[BundlePlaceAlias] = Nil,
+    sources: List[com.histmersion.api.exchange.Bundle.Source] = Nil,
+    findings: List[com.histmersion.api.exchange.Bundle.Finding] = Nil,
+    edges: List[com.histmersion.api.exchange.Bundle.Edge] = Nil,
+    unresolvedEdges: List[com.histmersion.api.exchange.Bundle.UnresolvedEdge] = Nil,
+    assessments: List[com.histmersion.api.exchange.Bundle.Assessment] = Nil,
+    aliases: List[com.histmersion.api.exchange.Bundle.Alias] = Nil,
+    articles: List[com.histmersion.api.exchange.Bundle.Article] = Nil,
+    versions: List[com.histmersion.api.exchange.Bundle.ArticleVersion] = Nil,
+    assets: List[com.histmersion.api.exchange.Bundle.Asset] = Nil,
+    assetLinks: List[com.histmersion.api.exchange.Bundle.AssetLink] = Nil,
+    attestations: List[com.histmersion.api.exchange.Bundle.Attestation] = Nil,
+    events: List[com.histmersion.api.exchange.Bundle.Event] = Nil,
+    goals: List[com.histmersion.api.exchange.Bundle.Goal] = Nil,
+    queue: List[com.histmersion.api.exchange.Bundle.QueueItem] = Nil,
+    tombstones: List[com.histmersion.api.exchange.Bundle.Tombstone] = Nil,
+    places: List[com.histmersion.api.exchange.Bundle.Place] = Nil,
+    periods: List[com.histmersion.api.exchange.Bundle.Period] = Nil,
+    articleAliases: List[com.histmersion.api.exchange.Bundle.ArticleAlias] = Nil,
+    eventAliases: List[com.histmersion.api.exchange.Bundle.EventAlias] = Nil,
+    goalAliases: List[com.histmersion.api.exchange.Bundle.GoalAlias] = Nil,
+    placeAliases: List[com.histmersion.api.exchange.Bundle.PlaceAlias] = Nil,
     /** The event-catalogue sets (#1647): not entities, merged by their own rules on import. */
-    eventCatalogue: List[BundleEventCatalogue] = Nil,
-    eventCandidates: List[BundleEventCandidate] = Nil,
-    eventChecks: List[BundleEventCheck] = Nil,
-    corrections: List[BundleCorrection] = Nil,
-    siteTypes: List[BundleSiteType] = Nil
+    eventCatalogue: List[com.histmersion.api.exchange.Bundle.EventCatalogue] = Nil,
+    eventCandidates: List[com.histmersion.api.exchange.Bundle.EventCandidate] = Nil,
+    eventChecks: List[com.histmersion.api.exchange.Bundle.EventCheck] = Nil,
+    corrections: List[com.histmersion.api.exchange.Bundle.Correction] = Nil,
+    siteTypes: List[com.histmersion.api.exchange.Bundle.SiteType] = Nil
 ):
   import BundleEntities.*
 
@@ -90,20 +61,20 @@ final case class BundleEntities(
       Bundle.Kind.QueueItem.file -> stamped(queue),
       Bundle.Kind.Place.file -> stamped(places),
       Bundle.Kind.Period.file -> stamped(periods),
-      BundleFiles.Edges -> plain(edges),
-      BundleFiles.UnresolvedEdges -> plain(unresolvedEdges),
-      BundleFiles.Assessments -> plain(assessments),
-      BundleFiles.Aliases -> plain(aliases),
-      BundleFiles.ArticleAliases -> plain(articleAliases),
-      BundleFiles.EventAliases -> plain(eventAliases),
-      BundleFiles.GoalAliases -> plain(goalAliases),
-      BundleFiles.PlaceAliases -> plain(placeAliases),
-      BundleFiles.EventCatalogue -> plain(eventCatalogue),
-      BundleFiles.EventCandidates -> plain(eventCandidates),
-      BundleFiles.EventChecks -> plain(eventChecks),
-      BundleFiles.EventCorrections -> plain(corrections),
-      BundleFiles.PlaceSiteTypes -> plain(siteTypes),
-      BundleFiles.Tombstones -> plain(tombstones)
+      com.histmersion.api.exchange.Bundle.Files.Edges -> plain(edges),
+      com.histmersion.api.exchange.Bundle.Files.UnresolvedEdges -> plain(unresolvedEdges),
+      com.histmersion.api.exchange.Bundle.Files.Assessments -> plain(assessments),
+      com.histmersion.api.exchange.Bundle.Files.Aliases -> plain(aliases),
+      com.histmersion.api.exchange.Bundle.Files.ArticleAliases -> plain(articleAliases),
+      com.histmersion.api.exchange.Bundle.Files.EventAliases -> plain(eventAliases),
+      com.histmersion.api.exchange.Bundle.Files.GoalAliases -> plain(goalAliases),
+      com.histmersion.api.exchange.Bundle.Files.PlaceAliases -> plain(placeAliases),
+      com.histmersion.api.exchange.Bundle.Files.EventCatalogue -> plain(eventCatalogue),
+      com.histmersion.api.exchange.Bundle.Files.EventCandidates -> plain(eventCandidates),
+      com.histmersion.api.exchange.Bundle.Files.EventChecks -> plain(eventChecks),
+      com.histmersion.api.exchange.Bundle.Files.EventCorrections -> plain(corrections),
+      com.histmersion.api.exchange.Bundle.Files.PlaceSiteTypes -> plain(siteTypes),
+      com.histmersion.api.exchange.Bundle.Files.Tombstones -> plain(tombstones)
     )
 
   /** uid → (kind, rev, label) of every stamped entity. */
@@ -224,31 +195,68 @@ object BundleEntities:
           case Left(e)  => problems += s"$path:${i + 1}: $e"; None
       }
     val es = BundleEntities(
-      sources = read[BundleSource](Bundle.Kind.Source.file, true),
-      findings = read[BundleFinding](Bundle.Kind.Finding.file, true),
-      edges = read[BundleEdge](BundleFiles.Edges, false),
-      unresolvedEdges = read[BundleUnresolvedEdge](BundleFiles.UnresolvedEdges, false),
-      assessments = read[BundleAssessment](BundleFiles.Assessments, false),
-      aliases = read[BundleAlias](BundleFiles.Aliases, false),
-      articles = read[BundleArticle](Bundle.Kind.Article.file, true),
-      versions = read[BundleArticleVersion](Bundle.Kind.ArticleVersion.file, true),
-      assets = read[BundleAsset](Bundle.Kind.Asset.file, true),
-      assetLinks = read[BundleAssetLink](Bundle.Kind.AssetLink.file, true),
-      attestations = read[BundleAttestation](Bundle.Kind.Attestation.file, true),
-      events = read[BundleEvent](Bundle.Kind.Event.file, true),
-      goals = read[BundleGoal](Bundle.Kind.Goal.file, true),
-      queue = read[BundleQueueItem](Bundle.Kind.QueueItem.file, true),
-      tombstones = read[BundleTombstone](BundleFiles.Tombstones, false),
-      places = read[BundlePlace](Bundle.Kind.Place.file, true),
-      periods = read[BundlePeriod](Bundle.Kind.Period.file, true),
-      articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false),
-      eventAliases = read[BundleEventAlias](BundleFiles.EventAliases, false),
-      goalAliases = read[BundleGoalAlias](BundleFiles.GoalAliases, false),
-      placeAliases = read[BundlePlaceAlias](BundleFiles.PlaceAliases, false),
-      eventCatalogue = read[BundleEventCatalogue](BundleFiles.EventCatalogue, false),
-      eventCandidates = read[BundleEventCandidate](BundleFiles.EventCandidates, false),
-      eventChecks = read[BundleEventCheck](BundleFiles.EventChecks, false),
-      corrections = read[BundleCorrection](BundleFiles.EventCorrections, false),
-      siteTypes = read[BundleSiteType](BundleFiles.PlaceSiteTypes, false)
+      sources = read[com.histmersion.api.exchange.Bundle.Source](Bundle.Kind.Source.file, true),
+      findings = read[com.histmersion.api.exchange.Bundle.Finding](Bundle.Kind.Finding.file, true),
+      edges = read[com.histmersion.api.exchange.Bundle.Edge](com.histmersion.api.exchange.Bundle.Files.Edges, false),
+      unresolvedEdges = read[com.histmersion.api.exchange.Bundle.UnresolvedEdge](
+        com.histmersion.api.exchange.Bundle.Files.UnresolvedEdges,
+        false
+      ),
+      assessments = read[com.histmersion.api.exchange.Bundle.Assessment](
+        com.histmersion.api.exchange.Bundle.Files.Assessments,
+        false
+      ),
+      aliases =
+        read[com.histmersion.api.exchange.Bundle.Alias](com.histmersion.api.exchange.Bundle.Files.Aliases, false),
+      articles = read[com.histmersion.api.exchange.Bundle.Article](Bundle.Kind.Article.file, true),
+      versions = read[com.histmersion.api.exchange.Bundle.ArticleVersion](Bundle.Kind.ArticleVersion.file, true),
+      assets = read[com.histmersion.api.exchange.Bundle.Asset](Bundle.Kind.Asset.file, true),
+      assetLinks = read[com.histmersion.api.exchange.Bundle.AssetLink](Bundle.Kind.AssetLink.file, true),
+      attestations = read[com.histmersion.api.exchange.Bundle.Attestation](Bundle.Kind.Attestation.file, true),
+      events = read[com.histmersion.api.exchange.Bundle.Event](Bundle.Kind.Event.file, true),
+      goals = read[com.histmersion.api.exchange.Bundle.Goal](Bundle.Kind.Goal.file, true),
+      queue = read[com.histmersion.api.exchange.Bundle.QueueItem](Bundle.Kind.QueueItem.file, true),
+      tombstones = read[com.histmersion.api.exchange.Bundle.Tombstone](
+        com.histmersion.api.exchange.Bundle.Files.Tombstones,
+        false
+      ),
+      places = read[com.histmersion.api.exchange.Bundle.Place](Bundle.Kind.Place.file, true),
+      periods = read[com.histmersion.api.exchange.Bundle.Period](Bundle.Kind.Period.file, true),
+      articleAliases = read[com.histmersion.api.exchange.Bundle.ArticleAlias](
+        com.histmersion.api.exchange.Bundle.Files.ArticleAliases,
+        false
+      ),
+      eventAliases = read[com.histmersion.api.exchange.Bundle.EventAlias](
+        com.histmersion.api.exchange.Bundle.Files.EventAliases,
+        false
+      ),
+      goalAliases = read[com.histmersion.api.exchange.Bundle.GoalAlias](
+        com.histmersion.api.exchange.Bundle.Files.GoalAliases,
+        false
+      ),
+      placeAliases = read[com.histmersion.api.exchange.Bundle.PlaceAlias](
+        com.histmersion.api.exchange.Bundle.Files.PlaceAliases,
+        false
+      ),
+      eventCatalogue = read[com.histmersion.api.exchange.Bundle.EventCatalogue](
+        com.histmersion.api.exchange.Bundle.Files.EventCatalogue,
+        false
+      ),
+      eventCandidates = read[com.histmersion.api.exchange.Bundle.EventCandidate](
+        com.histmersion.api.exchange.Bundle.Files.EventCandidates,
+        false
+      ),
+      eventChecks = read[com.histmersion.api.exchange.Bundle.EventCheck](
+        com.histmersion.api.exchange.Bundle.Files.EventChecks,
+        false
+      ),
+      corrections = read[com.histmersion.api.exchange.Bundle.Correction](
+        com.histmersion.api.exchange.Bundle.Files.EventCorrections,
+        false
+      ),
+      siteTypes = read[com.histmersion.api.exchange.Bundle.SiteType](
+        com.histmersion.api.exchange.Bundle.Files.PlaceSiteTypes,
+        false
+      )
     )
     (es, problems.result())

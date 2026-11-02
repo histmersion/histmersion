@@ -5,7 +5,7 @@ import com.monovore.decline.Command
 import java.nio.file.Files
 import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
-import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest, BundleReference}
+import com.histmersion.api.exchange.Bundle
 
 /** `histmersion bundle …`: the subcommands parse, and the manifest of a downloaded bundle is read locally (it is
   * printed after an export). No server.
@@ -26,17 +26,17 @@ class BundleCmdSuite extends munit.FunSuite:
     assert(!parses("bundle", "export"))
 
   test("the manifest of a bundle on disk is its first entry; anything else is refused"):
-    val m = BundleManifest(
+    val m = Bundle.Manifest(
       Bundle.Format,
       1,
       "33",
       UUID.randomUUID(),
-      BundleInstance(UUID.randomUUID(), Some("w")),
+      Bundle.Instance(UUID.randomUUID(), Some("w")),
       None,
       None,
       Nil,
-      BundleBlobs(0, 0),
-      BundleReference(0, "", 0, "")
+      Bundle.Blobs(0, 0),
+      Bundle.Reference(0, "", 0, "")
     )
     val f = Files.createTempFile("bundle", ".hmx")
     val out = Files.newOutputStream(f)

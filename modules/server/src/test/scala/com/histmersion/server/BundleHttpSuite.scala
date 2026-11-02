@@ -14,10 +14,6 @@ import com.histmersion.api.aliases.{InstanceInfo, LabelRenamed}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.exchange.{
   Bundle,
-  BundleImportResult,
-  BundleInstance,
-  BundleUpload,
-  BundleVerifyResult,
   MergeApplyJob,
   MergeDetail,
   MergeInfo,
@@ -107,7 +103,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         .filter(_.name == Bundle.ManifestPath)
         .flatMap(_ => BundleFormat.parseManifest(r.readAll()).toOption)
         .getOrElse(fail("no manifest"))
-      assertEquals(m.instance, BundleInstance(inst.id, Some("zz-work")))
+      assertEquals(m.instance, Bundle.Instance(inst.id, Some("zz-work")))
       // the same bytes again: the export is deterministic
       assert(java.util.Arrays.equals(get(s"$url/api/bundle").body, exp.body))
 
@@ -115,12 +111,12 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
       val v = post(s"$url/api/bundle/verify", exp.body)
       assertEquals(v.statusCode, 200, v.body)
-      assert(decode[BundleVerifyResult](v.body).ok, v.body)
+      assert(decode[Bundle.VerifyResult](v.body).ok, v.body)
       assertEquals(post(s"$url/api/bundle/verify", exp.body, None).statusCode, 401)
 
       val i = post(s"$url/api/bundle/import", exp.body)
       assertEquals(i.statusCode, 200, i.body)
-      val res = decode[BundleImportResult](i.body)
+      val res = decode[Bundle.ImportResult](i.body)
       assert(res.applied, i.body)
       assertEquals(res.changed, 0, i.body)
 
@@ -133,7 +129,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val exp = get(s"$url/api/bundle").body
       val up = post(s"$url/api/bundle/upload", exp)
       assertEquals(up.statusCode, 200, up.body)
-      val u = decode[BundleUpload](up.body)
+      val u = decode[Bundle.Upload](up.body)
       assertEquals(u.sha256, BundleFormat.sha256Hex(exp))
       assert(u.manifest.isDefined && u.problems.isEmpty, up.body)
       assertEquals(post(s"$url/api/bundle/upload", exp, None).statusCode, 401)
@@ -154,7 +150,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
       val im = postJson(s"$url/api/merge/import", s"""{"bundle":"${u.sha256}","dryRun":true}""")
       assertEquals(im.statusCode, 200, im.body)
-      assert(decode[BundleImportResult](im.body).dryRun, im.body)
+      assert(decode[Bundle.ImportResult](im.body).dryRun, im.body)
 
       // merge apply: a plan that is not the one reviewed is refused; its own bundle changes nothing,
       // so the apply is a no-op (no backup is taken); and it is not an MCP tool
@@ -318,7 +314,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     try
       var job = "" // the apply of the first run, asked about in the second
       serve { url =>
-        val sha = decode[BundleUpload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
+        val sha = decode[Bundle.Upload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
         val ap =
           decode[MergeApplyJob](postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").body)
         assertEquals(ap.state, MergeJobState.Done)
@@ -338,7 +334,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         assertEquals((i.state, i.bundle, i.planHash), (MergeJobState.Interrupted, "c" * 64, "feedbeef"))
         assert(i.error.exists(_.contains("never half applied")), i.toString)
         // …and it no longer blocks the next apply
-        val sha = decode[BundleUpload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
+        val sha = decode[Bundle.Upload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
         assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").statusCode, 200)
         // the jobs list shows it, by what it is
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))

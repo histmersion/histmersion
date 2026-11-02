@@ -2,8 +2,10 @@ package com.histmersion.cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
-import com.histmersion.api.catalogue.PeriodInput
-import com.histmersion.api.research.{ArticleFilter, ArticlePatch, CoverageReason, CritiqueReason}
+import com.histmersion.api.research.CritiqueReason
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.
@@ -40,7 +42,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
     )
 
   test("no flags at all is an empty patch — nothing is touched"):
-    assertEquals(build(), Right(ArticlePatch()))
+    assertEquals(build(), Right(Article.Patch()))
 
   test("tag flags become one ListPatch; untouched parts stay absent"):
     val p = build(tagsAdd = Some("sea-peoples, collapse"), tagsRemove = Some("old")).toOption.get
@@ -58,7 +60,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals((p.title, p.summary, p.kind), (Some("T"), Some("S"), Some("report")))
 
   test("--period parses signed years, and refuses anything else"):
-    assertEquals(build(period = Some("-1300,-1100")).toOption.get.period, Some(PeriodInput(-1300, -1100)))
+    assertEquals(build(period = Some("-1300,-1100")).toOption.get.period, Some(Period.Input(-1300, -1100)))
     assert(build(period = Some("-1300")).isLeft)
     assert(build(period = Some("a,b")).isLeft)
 
@@ -98,7 +100,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.filter,
       Some(
-        ArticleFilter(
+        Article.Filter(
           query = Some("Theseus"),
           topics = List("greek_myth", "attica"),
           from = Some(-1500),
@@ -109,24 +111,24 @@ class ArticlePatchesSuite extends munit.FunSuite:
     )
     assertEquals(
       p.reasons,
-      List(CoverageReason("graves2017_greek", "retells the myths"), CoverageReason("nilsson1927_minoan", ""))
+      List(Coverage.Reason("graves2017_greek", "retells the myths"), Coverage.Reason("nilsson1927_minoan", ""))
     )
     // no flag: the --json filter stands
     assertEquals(
       ArticlePatches.withCoverage(base, ArticlePatches.FilterFlags(), Nil).toOption.get.filter,
-      Some(ArticleFilter(query = Some("from json")))
+      Some(Article.Filter(query = Some("from json")))
     )
     assertEquals(
-      ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(clear = true), Nil).toOption.get.filter,
-      Some(ArticleFilter())
+      ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = true), Nil).toOption.get.filter,
+      Some(Article.Filter())
     )
     assert(
       ArticlePatches
-        .withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(query = Some("x"), clear = true), Nil)
+        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(query = Some("x"), clear = true), Nil)
         .isLeft
     )
-    assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(), List("no-equals-sign")).isLeft)
-    assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(period = Some("-1500")), Nil).isLeft)
+    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List("no-equals-sign")).isLeft)
+    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(period = Some("-1500")), Nil).isLeft)
 
   test("§6.8: --critique-reason sets or removes one checklist pair's reason, after those of --json"):
     val base = build(json =
@@ -148,5 +150,5 @@ class ArticlePatchesSuite extends munit.FunSuite:
       )
     )
     assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
-    val bad = ArticlePatches.withCritiques(ArticlePatch(), List("smith1987_dying=no pair"))
+    val bad = ArticlePatches.withCritiques(Article.Patch(), List("smith1987_dying=no pair"))
     assert(bad.left.exists(e => e.message.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage), bad)

@@ -6,8 +6,8 @@ object Approval:
 
   /** A change an agent run proposed that a person may have to accept before code applies it: a source's status, a typed
     * disagreement edge between two sources, a goal's plan, or an article a run compiled. `blocking` = the run WAITS for
-    * the decision (`waiting_approval`) and applies it itself when it resumes; the other kinds are applied by the decision
-    * and the run never waits.
+    * the decision (`waiting_approval`) and applies it itself when it resumes; the other kinds are applied by the
+    * decision and the run never waits.
     */
   enum Kind(val wire: String, val blocking: Boolean):
     case StatusChange extends Kind("status-change", false)
@@ -22,8 +22,8 @@ object Approval:
       */
     case ArticlePlan extends Kind("article-plan", false)
 
-    /** A structured action for a process manager (hold, prioritise, skip, a settings change) that a MODEL proposed from a
-      * hint (phase 3): applied only when a person approves it. `subject` = the manager.
+    /** A structured action for a process manager (hold, prioritise, skip, a settings change) that a MODEL proposed from
+      * a hint (phase 3): applied only when a person approves it. `subject` = the manager.
       */
     case HintEffect extends Kind("hint-effect", false)
 

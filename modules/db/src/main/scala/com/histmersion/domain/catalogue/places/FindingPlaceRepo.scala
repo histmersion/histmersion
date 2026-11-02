@@ -7,7 +7,8 @@ import com.histmersion.util.database.RangeSql
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
-import com.histmersion.api.catalogue.{Geocode, PlaceRebuildResult}
+import com.histmersion.api.catalogue.Geocode
+import com.histmersion.api.catalogue.Place
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,
@@ -16,7 +17,7 @@ import com.histmersion.api.catalogue.{Geocode, PlaceRebuildResult}
 private[places] object FindingPlaceRepo:
   import PlaceRepo.*
 
-  def rebuildFindingPlaces(toleranceKm: Double)(using DbCon): PlaceRebuildResult =
+  def rebuildFindingPlaces(toleranceKm: Double)(using DbCon): Place.RebuildResult =
     // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
     // Without it the INSERT…SELECT can see (in its snapshot) a finding another transaction has
     // just deleted and then fail the foreign key; and two rebuilds, or a rebuild and a
@@ -31,7 +32,7 @@ private[places] object FindingPlaceRepo:
     val located = sql"SELECT count(DISTINCT finding_id)::int FROM finding_places".query[Int].run().head
     val total = sql"SELECT count(*)::int FROM findings".query[Int].run().head
     val places = sql"SELECT count(*)::int FROM places".query[Int].run().head
-    PlaceRebuildResult(links, byGeometry, byName, located, total - located, places)
+    Place.RebuildResult(links, byGeometry, byName, located, total - located, places)
 
   /** Re-materialise `finding_places` for ONE citekey, inside the CALLER's transaction.
     *

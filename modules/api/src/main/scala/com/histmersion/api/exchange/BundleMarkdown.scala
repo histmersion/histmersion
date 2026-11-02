@@ -11,7 +11,7 @@ object BundleMarkdown:
       .getOrElse(" · _(no label — `histmersion bundle instance --label <name>`)_") +
       s"  \n_created ${i.createdAt}_"
 
-  private def who(i: BundleInstance): String = i.label.fold(i.id.toString)(l => s"$l (${i.id})")
+  private def who(i: Bundle.Instance): String = i.label.fold(i.id.toString)(l => s"$l (${i.id})")
 
   private def bytes(n: Long): String =
     if n < 1024 then s"$n B"
@@ -19,7 +19,7 @@ object BundleMarkdown:
     else if n < 1024L * 1024 * 1024 then s"${n / (1024L * 1024)} MB"
     else s"${n / (1024L * 1024 * 1024)} GB"
 
-  def manifest(m: BundleManifest): String =
+  def manifest(m: Bundle.Manifest): String =
     val files = m.files
       .filter(_.lines > 0)
       .map(f => s"| ${f.path.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
@@ -30,12 +30,12 @@ object BundleMarkdown:
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
-  def verify(r: BundleVerifyResult): String =
+  def verify(r: Bundle.VerifyResult): String =
     val head = if r.ok then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, "blob")} verified"
     else s"**NOT OK** — ${Plural.count(r.problems.size, "problem")}"
     (head :: r.manifest.map(manifest).toList ++ problems("Problems", r.problems)).mkString("\n\n")
 
-  def importResult(r: BundleImportResult): String =
+  def importResult(r: Bundle.ImportResult): String =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
       else if r.dryRun then "**Dry run** — nothing was written; this is what an import would do"

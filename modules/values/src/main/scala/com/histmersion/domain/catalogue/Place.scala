@@ -11,10 +11,10 @@ object Place:
 
   object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]
 
-  /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but these
-    * are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a people or a
-    * civic tribe — the Ubii, the Athenian tribe Aiantis: a group of persons that a gazetteer places at a representative
-    * point, never an area (Pleiades files them as regions; `lint --rule place-kind` moves them).
+  /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
+    * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
+    * people or a civic tribe — the Ubii, the Athenian tribe Aiantis: a group of persons that a gazetteer places at a
+    * representative point, never an area (Pleiades files them as regions; `lint --rule place-kind` moves them).
     */
   object Kind:
     val Region = "region"
@@ -24,8 +24,8 @@ object Place:
     val People = "people"
     val all: List[String] = List(Region, Polity, Site, Feature, People)
 
-    /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when nothing
-      * recognisable is there, so the caller's default wins.
+    /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when
+      * nothing recognisable is there, so the caller's default wins.
       */
     def parse(s: String): Option[String] =
       val t = s.trim.toLowerCase
@@ -46,16 +46,16 @@ object Place:
       then Some(Feature)
       else None
 
-  /** How exact a place's POINT is (V077). Pleiades gives a place whose only location is a square of the Barrington Atlas
-    * grid the centre of that square as its representative point: Thessalia (the late Roman province) at 37.5 N 22.5 E —
-    * in the Peloponnese — and Viennensis and Tarraconensis both at 42.5 N 2.5 W. Such a point says "somewhere in this
-    * square", not "here" ([[GridCell]]).
+  /** How exact a place's POINT is (V077). Pleiades gives a place whose only location is a square of the Barrington
+    * Atlas grid the centre of that square as its representative point: Thessalia (the late Roman province) at 37.5 N
+    * 22.5 E — in the Peloponnese — and Viennensis and Tarraconensis both at 42.5 N 2.5 W. Such a point says "somewhere
+    * in this square", not "here" ([[GridCell]]).
     *
-    * Told from the coordinates alone ([[LocationPrecision.of]]), because the seed keeps only the representative point: a
-    * Pleiades point that is the centre of a 5°, 1° or ½° cell. On the live corpus (2026-10-09) 2 426 Pleiades points are,
-    * and 2 363 of them are "rough" in Pleiades' own locations dump; no precise point of any size sits exactly on a centre
-    * at five decimals. Only Pleiades rows: a Wikidata coordinate in whole minutes (37°15′ = 37.25) is coarse, but it is
-    * not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
+    * Told from the coordinates alone ([[LocationPrecision.of]]), because the seed keeps only the representative point:
+    * a Pleiades point that is the centre of a 5°, 1° or ½° cell. On the live corpus (2026-10-09) 2 426 Pleiades points
+    * are, and 2 363 of them are "rough" in Pleiades' own locations dump; no precise point of any size sits exactly on a
+    * centre at five decimals. Only Pleiades rows: a Wikidata coordinate in whole minutes (37°15′ = 37.25) is coarse,
+    * but it is not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
     * `PlaceCleanupSuite`.
     */
   enum Precision:

@@ -21,7 +21,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.exchange.{BundleArticle, BundleArticleAlias}
 import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
@@ -35,7 +34,7 @@ object ArticlesCarried:
 
   private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
-  val articles: CarriedKind = CarriedKind.records[BundleArticle](
+  val articles: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Article](
     Research,
     Bundle.Kind.Article,
     TableName("articles"),
@@ -77,7 +76,7 @@ object ArticlesCarried:
   private def set(stem: String): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
 
   val aliases: CarriedKind =
-    CarriedKind.owned[BundleArticleAlias](
+    CarriedKind.owned[com.histmersion.api.exchange.Bundle.ArticleAlias](
       Research,
       set("article-aliases"),
       List(rows(44)(ArticleBundleRepo.articleAliasesIn))

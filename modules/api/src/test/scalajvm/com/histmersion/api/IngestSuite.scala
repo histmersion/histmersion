@@ -4,11 +4,12 @@ package com.histmersion.api
   * Markdown renderers. No database, no HTTP.
   */
 
-import com.histmersion.api.catalogue.{PeriodSkip, SkippedPeriod}
+import com.histmersion.api.catalogue.SkippedPeriod
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.library.{Ingest, IngestMarkdown}
 import com.histmersion.api.media.{AssetInfo, AssetLinks, ImageSize}
+import com.histmersion.api.catalogue.Period
 class IngestSuite extends munit.FunSuite:
 
   private val md =
@@ -311,7 +312,7 @@ class IngestSuite extends munit.FunSuite:
           .Detail(Some(plan))
           .set(
             SkippedPeriod.Skipped,
-            List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside"))
+            List(SkippedPeriod("p0x1", "Old Kingdom", Period.Skip.OutOfRange, "-2701 → 2150 lies outside"))
           )
           .set(SkippedPeriod.SkippedCount, 1)
       )

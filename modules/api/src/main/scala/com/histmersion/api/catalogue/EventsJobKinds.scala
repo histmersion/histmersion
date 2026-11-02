@@ -1,12 +1,13 @@
 package com.histmersion.api.catalogue
-import com.histmersion.api.jobs.{JobDetailField, JobKindEntry}
+import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.util.jobs.Job
+import com.histmersion.api.jobs.JobDetail
 
 /** The events' jobs, as the catalogue registers them: a catalogue's import, and the re-dating of its events. */
 object EventsJobKinds:
 
   /** The catalogue an events job reads, as a person names it, in the job's detail. */
-  val Catalogue: JobDetailField[Option[String]] = JobDetailField("events", None)
+  val Catalogue: JobDetail.Field[Option[String]] = JobDetail.Field("events", None)
 
   val EventsImport: JobKindEntry = JobKindEntry.of(
     Job.Kind("events-import"),

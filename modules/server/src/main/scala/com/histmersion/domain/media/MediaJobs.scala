@@ -1,12 +1,12 @@
 package com.histmersion.domain.media
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, JobStops, WorkCarrier}
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
+import com.histmersion.api.Api
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its
@@ -21,19 +21,19 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
   private val jobSlot = BackgroundJob.Slot(busy)
 
   /** `body` run now as `what`, unless another media run holds the slot. */
-  def exclusive[A](what: String)(body: => Either[ApiError, A]): Either[ApiError, A] =
+  def exclusive[A](what: String)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
     if busy.compareAndSet(None, Some(what)) then
       try body
       finally busy.set(None)
     else
       Left(
-        ApiError(
+        Api.Error(
           s"a media run is already going (${busy.get.getOrElse("?")}) — see `histmersion jobs`; try again when it ends"
         )
       )
 
   /** `work` behind the maintenance guard (`what` names the write). */
-  def guarded[A](what: String)(work: => Either[ApiError, A]): Either[ApiError, A] = maintenance.guard(what)(work)
+  def guarded[A](what: String)(work: => Either[Api.Error, A]): Either[Api.Error, A] = maintenance.guard(what)(work)
 
   /** Whether a maintenance run holds the lock: a job stops between its batches. */
   def held: Boolean = maintenance.active
@@ -44,7 +44,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     */
   def start(kind: String, describe: String)(
       body: (String => Unit) => Either[String, String]
-  ): Either[ApiError, JobInfo] =
+  ): Either[Api.Error, JobInfo] =
     maintenance.guard(kind) {
       BackgroundJob.start(
         ds,

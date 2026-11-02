@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{Api, ApiError, Write}
+import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.data.maintenance.WriteGate
@@ -33,7 +33,7 @@ final class AssetsControllers(
 
   private val Uuid = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
-  private def notFound(uid: String) = ApiError(s"No picture '$uid'", Some(Write.CodeNotFound))
+  private def notFound(uid: String) = Api.Error(s"No picture '$uid'", Some(Write.CodeNotFound))
 
   private def canonical(citekey: String): String = sources.current(citekey).getOrElse(citekey)
 
@@ -43,14 +43,14 @@ final class AssetsControllers(
 
   def figures(citekey: String): List[AssetInfo] = assets.figures(canonical(citekey))
 
-  def figure(citekey: String, name: String): Either[ApiError, (Array[Byte], String)] =
+  def figure(citekey: String, name: String): Either[Api.Error, (Array[Byte], String)] =
     assets
       .figure(canonical(citekey), AssetLinks.safeName(name))
       .map((mime, bytes) => (bytes, mime))
-      .toRight(ApiError(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
+      .toRight(Api.Error(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
 
   /** Add figures to an existing source (the host-side seed path). */
-  def putFigures(citekey: String, in: List[AssetInput]): Either[ApiError, AssetsStored] =
+  def putFigures(citekey: String, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
     maintenance.guard("put_assets")(
       Citekey.of(citekey).flatMap { _ =>
         if !sources.exists(citekey) then Left(Write.notFound(citekey))
@@ -59,15 +59,15 @@ final class AssetsControllers(
     )
 
   /** Wire figures → storable ones, failing the whole batch on the first unusable payload. */
-  def decode(in: List[AssetInput]): Either[ApiError, List[NewFigure]] =
-    in.foldLeft[Either[ApiError, List[NewFigure]]](Right(Nil)) { (acc, a) =>
-      acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(ApiError(_)).map(xs :+ _))
+  def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
+    in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
+      acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(Api.Error(_)).map(xs :+ _))
     }
 
-  def detail(citekey: String, name: String): Either[ApiError, AssetDetail] =
-    assets.detail(citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+  def detail(citekey: String, name: String): Either[Api.Error, AssetDetail] =
+    assets.detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
 
-  def patch(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
+  def patch(citekey: String, name: String, p: AssetPatch): Either[Api.Error, AssetDetail] =
     maintenance.guard("patch_asset")(assets.patch(citekey, name, p))
 
   // ── the pictures ──
@@ -78,12 +78,12 @@ final class AssetsControllers(
 
   def facets: MediaFacets = assets.facets
 
-  def show(uid: String): Either[ApiError, MediaItem] = uuid(uid).flatMap(assets.show).toRight(notFound(uid))
+  def show(uid: String): Either[Api.Error, MediaItem] = uuid(uid).flatMap(assets.show).toRight(notFound(uid))
 
-  def thumb(uid: String): Either[ApiError, (Array[Byte], String)] =
+  def thumb(uid: String): Either[Api.Error, (Array[Byte], String)] =
     uuid(uid).flatMap(assets.thumb).map((m, b) => (b, m)).toRight(notFound(uid))
 
-  def file(uid: String): Either[ApiError, (Array[Byte], String)] =
+  def file(uid: String): Either[Api.Error, (Array[Byte], String)] =
     uuid(uid).flatMap(assets.file).map((m, b) => (b, m)).toRight(notFound(uid))
 
   // ── the cards' pictures ──

@@ -7,7 +7,7 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
-import com.histmersion.api.research.ArticlePlans.FilterProposal
+import com.histmersion.api.research.Article.Plans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.VocabularyCodecs.given
@@ -15,7 +15,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.ArticlePatch
+import com.histmersion.api.research.Article
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -127,7 +127,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         cfg.approvals.filterMode match
           case ApprovalMode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
-              site.articles.patch(slug, ArticlePatch(filter = Some(p.filter))).left.map(_.message).map { _ =>
+              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message).map { _ =>
                 val a = ctx.approvalStore.openSubject(
                   Some(ctx.run.id),
                   ApprovalKind.ArticleFilter,
@@ -192,7 +192,7 @@ object InferFilterPipeline:
         Left(s"[[${v.article.slug}]] records a filter already (${has.get.line}); the proposal was not applied")
       else
         articles
-          .patch(v.article.slug, ArticlePatch(filter = Some(p.filter)))
+          .patch(v.article.slug, Article.Patch(filter = Some(p.filter)))
           .left
           .map(_.message)
           .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")

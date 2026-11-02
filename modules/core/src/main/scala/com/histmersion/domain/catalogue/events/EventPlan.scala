@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.exchange.{BundleEvent, BundleRange, IssueDetail, MergeDecision, MergeIssue, MergeIssueDetail}
+import com.histmersion.api.exchange.{IssueDetail, MergeDecision, MergeIssue}
 import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
@@ -22,7 +22,8 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 
   private val km = DecisionKind
   private val localEvent = in.local.events.map(e => e.uid -> e).toMap
-  private val eventLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundleEvent]
+  private val eventLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Event]
   private def eventIn(es: BundleEntities, u: UUID) = es.events.find(_.uid == u).get
 
   /** The same dating and place on both sides: one event. */
@@ -44,7 +45,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
     if kind != Bundle.Kind.Event then None
-    else localEvent.get(u).zip(localized.events.find(_.uid == u)).map(MergeIssueDetail.eventDetail)
+    else localEvent.get(u).zip(localized.events.find(_.uid == u)).map(MergeIssue.Detail.eventDetail)
 
   override def conflict(row: MergePlanner.Row, localized: BundleEntities): Option[PlanMerge] =
     Option.when(
@@ -62,7 +63,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       "event id",
       List(km.KeepLeft, km.KeepRight, km.RenameRight),
       (e, o) => localEvent.get(o).filter(sameCore(_, e)).map(_ => SameEvent),
-      (e, o) => localEvent.get(o).map(MergeIssueDetail.eventDetail(_, e))
+      (e, o) => localEvent.get(o).map(MergeIssue.Detail.eventDetail(_, e))
     )
 
   // an event under another id here that is the same event: the same label, dates and place
@@ -111,7 +112,10 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       case _ => ()
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
-    es.modify(_.events).setTo(MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: BundleEvent) => true))
+    es.modify(_.events)
+      .setTo(
+        MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: com.histmersion.api.exchange.Bundle.Event) => true)
+      )
 
   // gazetteer places: an event written must point at a place that is here or coming
   override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[String] =
@@ -130,15 +134,20 @@ object EventPlan:
   private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
   /** Two events with one id that say the same about when and where (§5.4): they are one. */
-  def sameCore(l: BundleEvent, r: BundleEvent): Boolean =
+  def sameCore(l: com.histmersion.api.exchange.Bundle.Event, r: com.histmersion.api.exchange.Bundle.Event): Boolean =
     l.notBefore == r.notBefore && l.beginBy == r.beginBy && l.endFrom == r.endFrom && l.notAfter == r.notAfter &&
       l.geom == r.geom && l.placeId == r.placeId
 
   /** Two events under DIFFERENT ids that are one (§5.4): the same label (fingerprint), outer spans that share a year,
     * and the same place — the same gazetteer id, or the same geometry, or neither side placing it.
     */
-  def sameEventAcrossIds(l: BundleEvent, r: BundleEvent): Boolean =
-    def outer(e: BundleEvent) = Some(BundleRange(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom)))
+  def sameEventAcrossIds(
+      l: com.histmersion.api.exchange.Bundle.Event,
+      r: com.histmersion.api.exchange.Bundle.Event
+  ): Boolean =
+    def outer(e: com.histmersion.api.exchange.Bundle.Event) = Some(
+      com.histmersion.api.exchange.Bundle.Range(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
+    )
     val place = (l.placeId, r.placeId, l.geom, r.geom) match
       case (Some(a), Some(b), _, _)       => a == b
       case (None, None, Some(a), Some(b)) => a == b
@@ -150,7 +159,10 @@ object EventPlan:
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing edges of both — the
     * winner's where both have one.
     */
-  def foldEvent(winner: BundleEvent, other: BundleEvent): BundleEvent =
+  def foldEvent(
+      winner: com.histmersion.api.exchange.Bundle.Event,
+      other: com.histmersion.api.exchange.Bundle.Event
+  ): com.histmersion.api.exchange.Bundle.Event =
     val stated =
       if winner.central.isDefined || winner.plusMinus.isDefined || winner.datingMethod.isDefined then winner else other
     winner.copy(

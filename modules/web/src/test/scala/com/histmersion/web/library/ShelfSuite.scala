@@ -17,11 +17,17 @@ class ShelfSuite extends munit.FunSuite:
     )
     assertEquals(LibraryAddress.search(None), "")
 
-  private val bid = BookmarkId.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
+  private val bid = Bookmark.Id.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
 
   test("a bookmark's row: its name, the item's title when renamed, a dot while a source is not read"):
     val b =
-      Bookmark(bid, Target.item(ItemKind.Source, "zz"), "Zz title", Some(BookmarkLabel("mine")), "2026-10-30T12:00:00Z")
+      Bookmark(
+        bid,
+        Target.item(ItemKind.Source, "zz"),
+        "Zz title",
+        Some(Bookmark.Label("mine")),
+        "2026-10-30T12:00:00Z"
+      )
     val r = ShelfRow.of(b, _ => false, _ => "now")
     assertEquals((r.name, r.kind, r.line, r.unread), ("mine", "Source", "Zz title", true))
     assertEquals(ShelfRow.of(b, _ == "source:zz", _ => "now").unread, false)
@@ -29,7 +35,7 @@ class ShelfSuite extends munit.FunSuite:
       bid,
       Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150))),
       "Period",
-      Some(BookmarkLabel("crisis"))
+      Some(Bookmark.Label("crisis"))
     )
     assertEquals(
       (ShelfRow.of(p, _ => false, _ => "").line, ShelfRow.of(p, _ => false, _ => "").unread),

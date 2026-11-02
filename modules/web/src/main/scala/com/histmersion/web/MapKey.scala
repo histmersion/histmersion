@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
-import com.histmersion.api.library.SourceKinds
+import com.histmersion.api.library.Source
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
@@ -70,9 +70,9 @@ object MapKey:
       ) ->
         "several nearby, events among them"
     )
-    val kinds = SourceKinds.all.map(k =>
+    val kinds = Source.Kinds.all.map(k =>
       badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
-        (if k == SourceKinds.Unknown then "source of unknown kind" else k)
+        (if k == Source.Kinds.Unknown then "source of unknown kind" else k)
     )
     def list(items: List[(String, String)]) =
       items.map((m, label) => s"""<li>$m<span>${Fmt.esc(label)}</span></li>""").mkString

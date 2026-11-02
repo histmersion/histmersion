@@ -6,14 +6,13 @@ import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{Api, ApiError, BBox, TimeSpan, Write}
+import com.histmersion.api.{Api, BBox, TimeSpan, Write}
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
   Attestation,
   CatalogProviderInfo,
   EventCandidatesRequest,
   EventLead,
-  EventLeadList,
   EventLeads,
   EventLinkCandidate,
   EventLinkList,
@@ -60,9 +59,9 @@ final class EventLinksControllers(
 ):
   private def ec = settings().events
 
-  private def notFound(m: String) = ApiError(m, Some(Write.CodeNotFound))
+  private def notFound(m: String) = Api.Error(m, Some(Write.CodeNotFound))
 
-  private def eventOrFail(id: String): Either[ApiError, EventEntry] =
+  private def eventOrFail(id: String): Either[Api.Error, EventEntry] =
     events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(s"No event '$id'"))
 
   /** The names of an event worth searching for. */
@@ -117,7 +116,7 @@ final class EventLinksControllers(
     EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
 
   /** An event's candidates — computed on the first ask, stored after. */
-  def links(id: String): Either[ApiError, EventLinkList] =
+  def links(id: String): Either[Api.Error, EventLinkList] =
     eventOrFail(id).map { d =>
       if links.isChecked(d.event.id) then EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
       else compute(d)
@@ -127,7 +126,7 @@ final class EventLinksControllers(
     * (not the stored evidence): the attestation carries that passage's quote and offsets. A source with none is
     * refused, with why.
     */
-  def applyLinks(caller: Caller, id: String, req: EventLinksRequest): Either[ApiError, EventLinksResult] =
+  def applyLinks(caller: Caller, id: String, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
     maintenance.guard("event_links") {
       eventOrFail(id).map { d =>
         val eid = d.event.id
@@ -191,7 +190,7 @@ final class EventLinksControllers(
     }
 
   /** The candidates of many events, as a job: those never computed (or all), `links.batch` at a time. */
-  def candidatesJob(caller: Caller, req: EventCandidatesRequest): Either[ApiError, JobInfo] =
+  def candidatesJob(caller: Caller, req: EventCandidatesRequest): Either[Api.Error, JobInfo] =
     req.event.map(_.trim).filter(_.nonEmpty) match
       case Some(one) =>
         eventOrFail(one).flatMap(_ =>
@@ -240,7 +239,7 @@ final class EventLinksControllers(
     )
 
   /** The leads of the events `q` selects — catalogue ones by default, with the catalogue's context. */
-  def leads(q: Api.EventQuery): EventLeadList =
+  def leads(q: Api.EventQuery): EventLead.List =
     val f = resolve(q.filter)
     val selection = EventSelection(
       f,
@@ -257,7 +256,7 @@ final class EventLinksControllers(
     )
     val (total, rows) =
       leadFacts.leads(selection, ec.leads.km, ec.leads.years, settings().limits.page(Some(f.limit), 50), f.offset)
-    EventLeadList(total, rows.flatMap(leadOf))
+    EventLead.List(total, rows.flatMap(leadOf))
 
   // ── an event's card ─────────────────────────────────────────────────────────────────────────
 

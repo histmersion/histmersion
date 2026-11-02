@@ -3,7 +3,7 @@ package com.histmersion.server
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.catalogue.{Lpf, Place}
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a hover, a keystroke
   * and a filter change fire, against a server on the test database, each repeated so the statement is prepared
@@ -54,11 +54,11 @@ class InteractiveLatencySuite extends munit.FunSuite:
 
   private val doc = Lpf.render(
     List(
-      PlaceInput(
+      Place.Input(
         Place("zzl_world", "Zzl World", com.histmersion.domain.catalogue.Place.Kind.Region),
-        List(PlaceName("Zzl World"))
+        List(Place.Name("Zzl World"))
       ),
-      PlaceInput(
+      Place.Input(
         Place(
           "zzl_land",
           "Zzl Land",
@@ -67,8 +67,8 @@ class InteractiveLatencySuite extends munit.FunSuite:
             """{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}"""
           )
         ),
-        List(PlaceName("Zzl Land"), PlaceName("Zzlandia", "xx")),
-        List(PlaceRelation("zzl_land", "zzl_world"))
+        List(Place.Name("Zzl Land"), Place.Name("Zzlandia", "xx")),
+        List(Place.Relation("zzl_land", "zzl_world"))
       )
     )
   )

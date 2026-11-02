@@ -4,12 +4,10 @@ import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.ApiError
-import com.histmersion.api.automation.GoalPlans
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
-import com.histmersion.api.automation.GoalPlans.DraftMode
+import com.histmersion.api.automation.Goal.Plans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
 import com.histmersion.domain.{ManagerDefaults, SeedPlanDefaults}
@@ -17,6 +15,8 @@ import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
@@ -84,7 +84,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   ): Unit =
     item.kind match
       case ArticleCompile if site.articles.get(item.target).isRight =>
-        m.goal.foreach(g => c.linkGoal(g, GoalPlans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
+        m.goal.foreach(g => c.linkGoal(g, Goal.Plans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
         val _ = c.ensure(Kind.Review, ReviewId, None)
         c.chainReview(ReviewId, item.target, s"compiled by ${m.id}", out)
         c.event(m.id, Some(item.id), run, Feed.Evaluated, s"${item.target}: queued for the review manager")
@@ -101,7 +101,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         then c.autopilotSoon()
       case _ => ()
 
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
     itemKind match
       case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
@@ -112,12 +112,12 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             Either.cond(
               m.goal.forall(_ == s),
               s,
-              ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")
+              Api.Error(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")
             )
           )
       case ArticleCompile =>
-        Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
-      case other => Left(ApiError(s"unknown item kind '$other'"))
+        Left(Api.Error(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case other => Left(Api.Error(s"unknown item kind '$other'"))
 
   /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
     * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the

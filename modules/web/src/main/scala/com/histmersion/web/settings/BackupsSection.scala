@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.backup.{Backup, BackupInfo}
+import com.histmersion.api.backup.Backup
 import com.histmersion.web.{ApiClient, Auth}
 import com.raquo.laminar.api.L.*
 
@@ -11,7 +11,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object BackupsSection:
   def pane: HtmlElement =
-    val list = Var(Option.empty[Either[String, List[BackupInfo]]])
+    val list = Var(Option.empty[Either[String, List[Backup.Info]]])
     val busy = Var(false)
     val said = Var(Option.empty[Either[String, String]])
     def load(): Unit = ApiClient.backups().onComplete(r => list.set(Some(r.toEither.left.map(SettingsStore.message))))

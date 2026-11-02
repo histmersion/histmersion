@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.scheduler
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, ManagerSupervisor}
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalState, Billing, PauseReason, Pipeline, Role, RunState}
@@ -14,7 +14,9 @@ import com.histmersion.api.automation.AgentScheduler.*
 
 import java.time.Instant
 import javax.sql.DataSource
-import com.histmersion.api.automation.{Agents, AgentScheduler, GoalPlans, PlanQuota, Stalls}
+import com.histmersion.api.automation.{Agents, AgentScheduler, PlanQuota, Stalls}
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The central agent scheduler (docs/research-goal-advancement.md "As built"): the managers PRODUCE pending items; once
   * per managers' tick [[pass]] reads them all — with each goal's priority and age, the plan pools each would draw on,
@@ -128,8 +130,8 @@ final class SchedulerService(
         .filter(i => i.notBefore.flatMap(ManagerPolicy.parseInstant).forall(!_.isAfter(now)))
     }
     def targetsOf(id: String) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
-    val articleGoals = agents.focusStore.goalsOf(GoalPlans.LinkKind.Article.wire, targetsOf(ReviewId))
-    val sourceGoals = agents.focusStore.goalsOf(GoalPlans.LinkKind.Source.wire, targetsOf(EnrichId))
+    val articleGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Article.wire, targetsOf(ReviewId))
+    val sourceGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Source.wire, targetsOf(EnrichId))
 
     /** The goal an item advances: its manager's, else the best of the goals its target is linked to. */
     def goalOf(m: ManagerInfo, i: ManagerItem): Option[String] =
@@ -359,7 +361,7 @@ final class SchedulerService(
     )
 
   /** Why one item (its id, or a target among the open items) is where it is. */
-  def why(ref: String, now: Instant = Instant.now(agents.clock)): Either[ApiError, WhyInfo] =
+  def why(ref: String, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
     val r = ref.trim
     val item = r
       .stripPrefix("#")
@@ -367,7 +369,7 @@ final class SchedulerService(
       .flatMap(agents.managerStore.item(_))
       .orElse(agents.managerStore.openFor(r).headOption)
     item
-      .toRight(ApiError(s"no manager item '$r' (an item id, or the target of an open item)", Some(Write.CodeNotFound)))
+      .toRight(Api.Error(s"no manager item '$r' (an item id, or the target of an open item)", Some(Write.CodeNotFound)))
       .map { i =>
         val base = WhyInfo(i.id, i.managerId, i.kind, i.target, i.status, run = i.runId)
         ItemStatus.parse(i.status) match
@@ -500,10 +502,10 @@ final class SchedulerService(
   /** Switch the strategy live (`default` = back to agents.scheduler.strategy); the next tick uses it (nudged now).
     * Answers what a pass would do with it.
     */
-  def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock)): Either[ApiError, SchedulerStatus] =
+  def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, SchedulerStatus] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val name = in.strategy.trim.toLowerCase(java.util.Locale.ROOT)
-    val done: Either[ApiError, String] =
+    val done: Either[Api.Error, String] =
       if name == "default" then
         agents.autopilotRow.setStrategy(None, by)
         Right(
@@ -512,7 +514,7 @@ final class SchedulerService(
       else
         Strategies.parse(name) match
           case None =>
-            Left(ApiError(s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"))
+            Left(Api.Error(s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"))
           case Some(st) =>
             agents.autopilotRow.setStrategy(Some(st.name), by)
             Right(s"strategy ${st.name} (by $by)")

@@ -1,10 +1,7 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
-  BundleImportResult,
-  BundleInstance,
-  BundleManifest,
   MergeApplyResult,
   MergeDecision,
   MergeDetail,
@@ -25,6 +22,7 @@ import com.histmersion.util.data.exchange.BundlePlan.Ledger
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.Api
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
@@ -44,7 +42,7 @@ object MergeRepo:
       r.id,
       r.bundleId,
       r.bundleSha256,
-      BundleInstance(r.fromInstance, r.fromLabel),
+      com.histmersion.api.exchange.Bundle.Instance(r.fromInstance, r.fromLabel),
       r.appliedAt,
       r.planHash,
       r.backup,
@@ -66,11 +64,11 @@ object MergeRepo:
       .map(info)
 
   /** One merge by its id or an unambiguous prefix of it: `Left` when none, or several, match. */
-  def find(idOrPrefix: String)(using DbCon): Either[ApiError, MergeRow] =
+  def find(idOrPrefix: String)(using DbCon): Either[Api.Error, MergeRow] =
     val p = idOrPrefix.trim.toLowerCase(java.util.Locale.ROOT)
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
-        ApiError(
+        Api.Error(
           s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)",
           Some(Write.CodeInvalid)
         )
@@ -87,14 +85,14 @@ object MergeRepo:
         .toList match
         case List(r) => Right(r)
         case Nil     =>
-          Left(ApiError(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)", Some(Write.CodeNotFound)))
+          Left(Api.Error(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)", Some(Write.CodeNotFound)))
         case _ =>
-          Left(ApiError(s"'$idOrPrefix' names more than one merge — give more of its id", Some(Write.CodeInvalid)))
+          Left(Api.Error(s"'$idOrPrefix' names more than one merge — give more of its id", Some(Write.CodeInvalid)))
 
   /** One merge with its report (an apply's or an import's, as written), its resolutions and the decisions it left to
     * remember.
     */
-  def detail(idOrPrefix: String)(using DbCon): Either[ApiError, MergeDetail] =
+  def detail(idOrPrefix: String)(using DbCon): Either[Api.Error, MergeDetail] =
     find(idOrPrefix).map { r =>
       val (report, resolutions) = sql"SELECT report::text, resolutions::text FROM merges WHERE id = ${r.id}"
         .query[(String, Option[String])]
@@ -103,7 +101,8 @@ object MergeRepo:
       val json = Jsonb.read[io.circe.Json](report)
       // an apply wrote a MergeApplyResult (it has `applied` and `tally`), an import a BundleImportResult
       val applied = json.filter(_.hcursor.downField("tally").succeeded).flatMap(_.as[MergeApplyResult].toOption)
-      val imported = if applied.isDefined then None else json.flatMap(_.as[BundleImportResult].toOption)
+      val imported = if applied.isDefined then None
+      else json.flatMap(_.as[com.histmersion.api.exchange.Bundle.ImportResult].toOption)
       val remembered = sql"SELECT issue_id, decision FROM merge_decisions WHERE merge_id = ${r.id} ORDER BY issue_id"
         .query[(String, String)]
         .run()
@@ -117,12 +116,12 @@ object MergeRepo:
     */
   def ledger(uid: Option[String], merge: Option[String], limit: Int, rules: MergeRuleSet)(using
       DbCon
-  ): Either[ApiError, MergeLedger] =
+  ): Either[Api.Error, MergeLedger] =
     val label = rules.ledgerLabelSql
     val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
                             l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
     def asUid(s: String): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
-    val target: Either[ApiError, Option[UUID]] = uid.map(_.trim).filter(_.nonEmpty) match
+    val target: Either[Api.Error, Option[UUID]] = uid.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(u) =>
         asUid(u)
@@ -130,7 +129,7 @@ object MergeRepo:
                 UNION ALL SELECT s.uid FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE a.alias = $u
                 LIMIT 1""".query[UUID].run().headOption)
           .map(Some(_))
-          .toRight(ApiError(s"'$u' is neither a uid nor a citekey here", Some(Write.CodeNotFound)))
+          .toRight(Api.Error(s"'$u' is neither a uid nor a citekey here", Some(Write.CodeNotFound)))
     for
       t <- target
       m <- merge.map(_.trim).filter(_.nonEmpty) match
@@ -220,7 +219,7 @@ object MergeRepo:
     * local one it maps to.
     */
   def record(
-      m: BundleManifest,
+      m: com.histmersion.api.exchange.Bundle.Manifest,
       bundleSha: String,
       ownBundle: Boolean,
       decided: List[MergePlanner.Row],

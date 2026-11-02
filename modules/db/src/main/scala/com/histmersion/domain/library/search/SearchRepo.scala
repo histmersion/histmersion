@@ -5,8 +5,8 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
-import com.histmersion.api.catalogue.PlaceCounts
 import com.histmersion.api.library.{Filter, Hit, SearchResult}
+import com.histmersion.api.catalogue.Place
 
 /** The filter's queries over sources: the search with its matched findings and passages, and the counts of what a
   * filter selects.
@@ -29,9 +29,9 @@ private[search] object SearchRepo:
     (q.frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
-  def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): PlaceCounts =
+  def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
     (FilterSql.selectionCountsQuery(filter, scope).frag.query[(Int, Int, Int, Int)].run().head match
-      case (s, f, a, e) => PlaceCounts(s, f, a, e)
+      case (s, f, a, e) => Place.Counts(s, f, a, e)
     )
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that made it match, why

@@ -12,7 +12,8 @@ import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, Lint}
-import com.histmersion.api.library.{AcquireChecks, AcquireChecksMarkdown}
+import com.histmersion.api.library.AcquireChecksMarkdown
+import com.histmersion.api.library.Acquire
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
@@ -126,7 +127,7 @@ object OpsTools:
         com.histmersion.server.agents.EngineContributions
           .work(h.agents)
           .acquireRecheck
-          .run(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
+          .run(Acquire.Checks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"

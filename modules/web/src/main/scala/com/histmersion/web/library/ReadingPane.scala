@@ -1,8 +1,6 @@
 package com.histmersion.web.library
 
 import com.histmersion.api.YearFmt
-import com.histmersion.api.research.ArticleView
-import com.histmersion.api.library.FindingRow
 import com.histmersion.web.*
 import com.histmersion.web.map.{GeoBounds, TheMap}
 import com.histmersion.web.ui.Layout
@@ -11,6 +9,8 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
+import com.histmersion.api.library.Finding
+import com.histmersion.api.research.Article
 
 /** Library's reading pane: the item chosen in the table. Its actions (show it on the map, open its page in a new tab,
   * pin it as a window; in a narrow window, back to the list), then what it is, its title, its authors, its status,
@@ -21,7 +21,7 @@ import scala.util.Failure
 object ReadingPane:
 
   private val sourceReads = BoundedCache[String, Future[SourceReading]](Layout.libraryPage)
-  private val articleReads = BoundedCache[String, Future[ArticleView]](Layout.libraryPage)
+  private val articleReads = BoundedCache[String, Future[Article.View]](Layout.libraryPage)
 
   /** A failed read is forgotten, so choosing the item again tries again. */
   private def cached[A](cache: BoundedCache[String, Future[A]], key: String)(read: => Future[A]): Future[A] =
@@ -43,7 +43,7 @@ object ReadingPane:
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
-  private def readArticle(slug: String): Future[ArticleView] =
+  private def readArticle(slug: String): Future[Article.View] =
     cached(articleReads, slug)(ApiClient.getArticle(slug, brief = true))
 
   def element(section: LibrarySection, chosen: Signal[Option[String]]): HtmlElement =
@@ -187,13 +187,13 @@ object ReadingPane:
     )
 
   /** The box around a source's located findings, for the map to show. Pure. */
-  def bounds(findings: List[FindingRow]): Option[GeoBounds] =
+  def bounds(findings: List[Finding.Row]): Option[GeoBounds] =
     val points = findings.flatMap(f => f.lat.zip(f.lon))
     Option.when(points.nonEmpty)(
       GeoBounds(points.map(_._1).min, points.map(_._2).min, points.map(_._1).max, points.map(_._2).max)
     )
 
-  private def findings(ck: String, all: List[FindingRow]): Modifier[HtmlElement] =
+  private def findings(ck: String, all: List[Finding.Row]): Modifier[HtmlElement] =
     Option.when(all.nonEmpty)(
       div(
         cls := "reading-findings",
@@ -237,13 +237,13 @@ object ReadingPane:
 
   private def articlePane(slug: String): HtmlElement =
     val row = LibraryLists.articles.now().rows.find(_.slug == slug)
-    val reading = Var(Option.empty[Either[String, ArticleView]])
+    val reading = Var(Option.empty[Either[String, Article.View]])
     val page = ArticleLink.href(slug)
     def showOnMap(): Unit =
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(slug))
     val ref0 = marks.ItemRef.article(slug, row.map(_.title).getOrElse(slug))
-    def refOf(v: Option[Either[String, ArticleView]]) =
+    def refOf(v: Option[Either[String, Article.View]]) =
       v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title))
     val ref = reading.signal.map(refOf).distinct
     div(

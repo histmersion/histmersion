@@ -3,7 +3,7 @@ package com.histmersion.domain.media.covers
 import com.histmersion.pluginhost.{figureRules, HttpTransport, Polite}
 import com.histmersion.upstreams.media.MediaText
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.media.assets.{AssetService, PictureTarget, ProviderAsset, SourceFigure}
 import com.histmersion.domain.media.figures.FigurePick
@@ -23,6 +23,7 @@ import com.histmersion.api.media.{
   MediaSourceLine,
   SourceCoverParams
 }
+import com.histmersion.api.Api
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -161,8 +162,8 @@ final class SourcePictures(
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
-  def storeCover(p: SourceCoverParams, bytes: Array[Byte]): Either[ApiError, MediaItem] =
-    val bad = (m: String) => Left(ApiError(m, Some(Write.CodeInvalid)))
+  def storeCover(p: SourceCoverParams, bytes: Array[Byte]): Either[Api.Error, MediaItem] =
+    val bad = (m: String) => Left(Api.Error(m, Some(Write.CodeInvalid)))
     if p.provider != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
     else if p.key.trim.isEmpty then bad("the cover's key (its Calibre id) is missing")
@@ -173,7 +174,7 @@ final class SourcePictures(
         case None       => bad("the cover is not a JPEG, PNG, GIF or WebP image")
         case Some(mime) =>
           sources.current(p.citekey.trim) match
-            case None     => Left(ApiError(s"No source '${p.citekey}'", Some(Write.CodeNotFound)))
+            case None     => Left(Api.Error(s"No source '${p.citekey}'", Some(Write.CodeNotFound)))
             case Some(ck) =>
               val key = p.key.trim
               val size = ImageSize.of(bytes)
@@ -200,7 +201,7 @@ final class SourcePictures(
               )
               val (uid, _) = assets.save(a, (PictureTarget.Source.wire, ck))
               assets.setSourcePicture(ck, uid, MediaRole.Cover, Some(MediaProvider.Calibre))
-              assets.show(uid).toRight(ApiError(s"cover of '$ck' not stored"))
+              assets.show(uid).toRight(Api.Error(s"cover of '$ck' not stored"))
 
   // ── a run over the corpus ─────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{Api, ApiError, Write}
+import com.histmersion.api.{Api, Write}
 import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
@@ -30,9 +30,11 @@ object AssetFixtures:
   def count(ds: DataSource, citekey: String): Int = connect(ds)(AssetRepo.count(citekey))
   def detail(ds: DataSource, citekey: String, name: String): Option[AssetDetail] =
     connect(ds)(AssetRepo.detail(citekey, name))
-  def patch(ds: DataSource, citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
+  def patch(ds: DataSource, citekey: String, name: String, p: AssetPatch): Either[Api.Error, AssetDetail] =
     transact(ds)(AssetRepo.patch(citekey, name, p))
-      .flatMap(_ => detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
+      .flatMap(_ =>
+        detail(ds, citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+      )
 
   /** What the media's `media-licence` check lists: (`citekey/name` or `media:<uid>`, what is missing). */
   def licenceGaps(ds: DataSource): List[(String, String)] = connect(ds)(MediaRepo.licenceGaps())

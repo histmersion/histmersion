@@ -7,7 +7,8 @@ import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.automation.{Agents, Goal}
-import com.histmersion.api.research.{ArticleList, ArticleReviewView, ReviewGoal, ReviewState}
+import com.histmersion.api.research.{ReviewGoal, ReviewState}
+import com.histmersion.api.research.Article
 
 /** An article's review state and history over every surface: the badge on each `GET /api/articles` row (derived from
   * the review manager's item and the ledger counted in SQL), `GET /api/articles/{slug}/review` (the history from the
@@ -105,7 +106,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         // ── the list: a badge per row, from the cheap query ───────────────────────────────────
         val (ls, lb) = get(s"$url/api/articles?title=Zz%20zzrev&limit=50")
         assertEquals(ls, 200, lb)
-        val rows = io.circe.parser.decode[ArticleList](lb).toOption.get.articles.map(a => a.slug -> a.review).toMap
+        val rows = io.circe.parser.decode[Article.List](lb).toOption.get.articles.map(a => a.slug -> a.review).toMap
         val running = rows(Running).get
         assertEquals(
           (running.state, running.label, running.round),
@@ -118,7 +119,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         // ── one article's review: history in run order, goals, approvals ─────────────────────
         val (rs, rb) = get(s"$url/api/articles/$Running/review")
         assertEquals(rs, 200, rb)
-        val r = io.circe.parser.decode[ArticleReviewView](rb).toOption.get
+        val r = io.circe.parser.decode[Article.ReviewView](rb).toOption.get
         assertEquals(
           r.rounds.map(rd => (rd.run, rd.runNumber, rd.round, rd.findings.map(_.id))),
           List((RunA, 1, 1, List("R1", "C1")), (RunB, 2, 1, List("S1")))
@@ -128,7 +129,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(r.goals, List(ReviewGoal(Goal, "Zz review goal", "compiled")))
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
-        val fresh = io.circe.parser.decode[ArticleReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get
+        val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get
         assertEquals((fresh.badge.state, fresh.rounds, fresh.goals), (ReviewState.Unreviewed, Nil, Nil))
 
         // ── the page: the badge and the goal under the title, the history at the end ─────────

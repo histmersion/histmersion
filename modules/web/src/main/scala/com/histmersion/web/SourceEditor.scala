@@ -4,9 +4,10 @@ import com.histmersion.api.{ListPatch, Wording, YearFmt, Years}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.catalogue.{Period, PeriodInput}
-import com.histmersion.api.library.{FacetField, Filter, MetadataPatch, SourceDetail, SourcePatch}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{Filter, MetadataPatch}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Facet
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with
@@ -32,7 +33,7 @@ object SourceEditor:
   )
 
   object Draft:
-    def of(s: SourceDetail): Draft = Draft(
+    def of(s: com.histmersion.api.library.Source.Detail): Draft = Draft(
       title = s.title,
       authors = s.authors,
       year = s.year.fold("")(_.toString),
@@ -64,7 +65,10 @@ object SourceEditor:
   /** The patch that turns `orig` into `d`: only the changed parts, with `orig`'s `updatedAt` as the precondition —
     * `Right(None)` when nothing changed, `Left` with what is wrong, per field.
     */
-  def toPatch(orig: SourceDetail, d: Draft): Either[List[(Field, String)], Option[SourcePatch]] =
+  def toPatch(
+      orig: com.histmersion.api.library.Source.Detail,
+      d: Draft
+  ): Either[List[(Field, String)], Option[com.histmersion.api.library.Source.Patch]] =
     val errs = List.newBuilder[(Field, String)]
     def text(v: String, was: Option[String], field: Field, what: String): Option[String] =
       val t = v.trim
@@ -100,7 +104,7 @@ object SourceEditor:
       case (Right(Some(a)), Right(Some(b))) =>
         if a > b then {
           errs += Field.Period -> s"the period starts (${YearFmt(a)}) after it ends (${YearFmt(b)})"; None
-        } else Option.when(!(orig.periodStart.contains(a) && orig.periodEnd.contains(b)))(PeriodInput(a, b))
+        } else Option.when(!(orig.periodStart.contains(a) && orig.periodEnd.contains(b)))(Period.Input(a, b))
       case _ => errs += Field.Period -> "give both the start and the end of the period"; None
 
     val tags = Option.when(d.tags.toSet != orig.tags.toSet)(
@@ -111,7 +115,7 @@ object SourceEditor:
     if problems.nonEmpty then Left(problems)
     else
       val meta = MetadataPatch(title = title, authors = authors, year = yr, venue = venue, doi = doi, status = status)
-      val patch = SourcePatch(
+      val patch = com.histmersion.api.library.Source.Patch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary,
         topics = Option.when(d.topics != orig.topics)(d.topics),
@@ -119,7 +123,8 @@ object SourceEditor:
         period = period,
         tags = tags
       )
-      if patch == SourcePatch() then Right(None) else Right(Some(patch.copy(ifUpdatedAt = orig.updatedAt)))
+      if patch == com.histmersion.api.library.Source.Patch() then Right(None)
+      else Right(Some(patch.copy(ifUpdatedAt = orig.updatedAt)))
 
   /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
     * message about none of them is shown above the buttons.
@@ -147,7 +152,7 @@ object SourceEditor:
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
   def apply(ck: String): HtmlElement =
-    val orig = Var(Option.empty[SourceDetail])
+    val orig = Var(Option.empty[com.histmersion.api.library.Source.Detail])
     // the form's own model until it is saved; it shadows nothing in UiState
     val draft = Var(Option.empty[Draft])
     val errors = Var(List.empty[(Field, String)])
@@ -215,7 +220,7 @@ object SourceEditor:
       div(cls := "form-field", label(name, control), extra, errorFor(f))
 
     def chips(
-        facet: FacetField,
+        facet: Facet.Field,
         get: Draft => List[String],
         set: (Draft, List[String]) => Draft,
         hint: String
@@ -223,11 +228,11 @@ object SourceEditor:
       val zoomed = draft.zoomLazy(_.fold(Nil)(get))((od, v) => od.map(set(_, v)))
       ChipInput(
         ChipInput.Config(
-          field = FacetField.label(facet),
-          label = FacetField.label(facet),
+          field = Facet.Field.label(facet),
+          label = Facet.Field.label(facet),
           placeholder = hint,
           debounceMs = 150,
-          getSuggestions = prefix => ApiClient.facets(FacetField.label(facet), Some(prefix), Filter()),
+          getSuggestions = prefix => ApiClient.facets(Facet.Field.label(facet), Some(prefix), Filter()),
           onChange = vs => zoomed.set(vs)
         ),
         zoomed.signal
@@ -262,7 +267,7 @@ object SourceEditor:
         div(
           cls := "form-field",
           label("authors"),
-          chips(FacetField.Authors, _.authors, (d, v) => d.copy(authors = v), "add an author…"),
+          chips(Facet.Field.Authors, _.authors, (d, v) => d.copy(authors = v), "add an author…"),
           errorFor(Field.Authors)
         ),
         div(
@@ -286,19 +291,19 @@ object SourceEditor:
         div(
           cls := "form-field",
           label("topics"),
-          chips(FacetField.Topics, _.topics, (d, v) => d.copy(topics = v), "add a topic…"),
+          chips(Facet.Field.Topics, _.topics, (d, v) => d.copy(topics = v), "add a topic…"),
           errorFor(Field.Topics)
         ),
         div(
           cls := "form-field",
           label("regions"),
-          chips(FacetField.Places, _.regions, (d, v) => d.copy(regions = v), "add a region…"),
+          chips(Facet.Field.Places, _.regions, (d, v) => d.copy(regions = v), "add a region…"),
           errorFor(Field.Regions)
         ),
         div(
           cls := "form-field",
           label("tags"),
-          chips(FacetField.Tags, _.tags, (d, v) => d.copy(tags = v), "add a tag…"),
+          chips(Facet.Field.Tags, _.tags, (d, v) => d.copy(tags = v), "add a tag…"),
           errorFor(Field.Tags)
         ),
         div(

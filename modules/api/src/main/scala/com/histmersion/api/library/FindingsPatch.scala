@@ -8,9 +8,9 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
 final case class FindingsPatch(
-    add: List[FindingInput] = Nil,
+    add: List[Finding.Input] = Nil,
     remove: List[String] = Nil,
-    replace: Option[List[FindingInput]] = None
+    replace: Option[List[Finding.Input]] = None
 ) derives KindlingsSchema
 object FindingsPatch:
   given Schema[FindingsPatch] = summon[KindlingsSchema[FindingsPatch]].schema

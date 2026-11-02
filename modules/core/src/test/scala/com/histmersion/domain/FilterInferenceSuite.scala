@@ -6,7 +6,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.FilterInference.*
 import com.histmersion.domain.FilterInference.Limits
-import com.histmersion.api.research.ArticleFilter
+import com.histmersion.api.research.Article
 
 /** infer-filter's code checks: the answer's shape, then what the filter returns against the article's citations and the
   * hit bounds; a failing filter goes back, and on the last attempt nothing is proposed.
@@ -14,7 +14,7 @@ import com.histmersion.api.research.ArticleFilter
 class FilterInferenceSuite extends munit.FunSuite:
 
   private val lim = Limits(minHits = 3, maxHits = 50, minCitedShare = 0.6)
-  private val f = ArticleFilter(topics = List("tin"))
+  private val f = Article.Filter(topics = List("tin"))
 
   test("filterOf: an empty filter, a blank rationale and an unknown status are refused; a filter is tidied"):
     assert(filterOf(FilterAnswer("why")).left.exists(_.head.contains("selects nothing")))

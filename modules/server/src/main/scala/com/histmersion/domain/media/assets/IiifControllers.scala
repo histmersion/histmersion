@@ -1,11 +1,12 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 
 import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import javax.imageio.ImageIO
 import com.histmersion.api.media.{AssetLinks, Iiif}
+import com.histmersion.api.Api
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *
@@ -18,13 +19,13 @@ import com.histmersion.api.media.{AssetLinks, Iiif}
 final class IiifControllers(assets: AssetService, baseUrl: () => String):
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
-  def info(citekey: String, name: String): Either[ApiError, io.circe.Json] =
+  def info(citekey: String, name: String): Either[Api.Error, io.circe.Json] =
     val safeName = AssetLinks.safeName(name)
     assets.figure(citekey, safeName) match
-      case None             => Left(ApiError(s"No asset '$safeName' for '$citekey'", Some(Write.CodeNotFound)))
+      case None             => Left(Api.Error(s"No asset '$safeName' for '$citekey'", Some(Write.CodeNotFound)))
       case Some((_, bytes)) =>
         decodeImage(bytes) match
-          case None      => Left(ApiError(s"Asset '$safeName' is not a decodable image"))
+          case None      => Left(Api.Error(s"Asset '$safeName' is not a decodable image"))
           case Some(img) =>
             val id = s"${baseUrl()}/iiif/${enc(citekey)}/${enc(safeName)}"
             Right(Iiif.infoJson(id, img.getWidth, img.getHeight))
@@ -39,13 +40,13 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
       sizeStr: String,
       rotationStr: String,
       filename: String
-  ): Either[ApiError, (Array[Byte], String)] =
+  ): Either[Api.Error, (Array[Byte], String)] =
     // parse the filename as `default.{format}`
     val safeName = AssetLinks.safeName(name)
     for
       format <- parseFilename(filename)
-      region <- Iiif.Region.parse(regionStr).left.map(ApiError(_))
-      size <- Iiif.Size.parse(sizeStr).left.map(ApiError(_))
+      region <- Iiif.Region.parse(regionStr).left.map(Api.Error(_))
+      size <- Iiif.Size.parse(sizeStr).left.map(Api.Error(_))
       _ <- validateRotation(rotationStr)
       result <- render(citekey, safeName, region, size, format)
     yield result
@@ -53,16 +54,16 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
-  private def parseFilename(filename: String): Either[ApiError, String] =
+  private def parseFilename(filename: String): Either[Api.Error, String] =
     filename match
-      case s"default.$ext" => Iiif.parseFormat(ext).left.map(ApiError(_))
-      case _ => Left(ApiError(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
+      case s"default.$ext" => Iiif.parseFormat(ext).left.map(Api.Error(_))
+      case _ => Left(Api.Error(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
 
   /** Level 1 supports rotation `0` only. */
-  private def validateRotation(s: String): Either[ApiError, Unit] =
+  private def validateRotation(s: String): Either[Api.Error, Unit] =
     s.trim match
       case "0" => Right(())
-      case _   => Left(ApiError(s"unsupported rotation: '$s' (only '0' is supported at Level 1)"))
+      case _   => Left(Api.Error(s"unsupported rotation: '$s' (only '0' is supported at Level 1)"))
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
   private def render(
@@ -71,14 +72,14 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
       region: Iiif.Region,
       size: Iiif.Size,
       format: String
-  ): Either[ApiError, (Array[Byte], String)] =
+  ): Either[Api.Error, (Array[Byte], String)] =
     assets.figure(citekey, name) match
       case None =>
-        Left(ApiError(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
+        Left(Api.Error(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
       case Some((_, bytes)) =>
         decodeImage(bytes) match
           case None =>
-            Left(ApiError(s"Asset '$name' is not a decodable image"))
+            Left(Api.Error(s"Asset '$name' is not a decodable image"))
           case Some(img) =>
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
 
@@ -87,7 +88,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
     Option(ImageIO.read(new ByteArrayInputStream(bytes)))
 
   /** Crop the image to the requested region. */
-  private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[ApiError, BufferedImage] =
+  private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[Api.Error, BufferedImage] =
     region match
       case Iiif.Region.Full               => Right(img)
       case Iiif.Region.Pixels(x, y, w, h) =>
@@ -98,11 +99,12 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
         val cy = math.max(0, math.min(y, imgH))
         val cw = math.max(1, math.min(w, imgW - cx))
         val ch = math.max(1, math.min(h, imgH - cy))
-        if cx >= imgW || cy >= imgH then Left(ApiError(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)"))
+        if cx >= imgW || cy >= imgH then
+          Left(Api.Error(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)"))
         else Right(img.getSubimage(cx, cy, cw, ch))
 
   /** Scale the image to the requested size. */
-  private def applySize(img: BufferedImage, size: Iiif.Size): Either[ApiError, BufferedImage] =
+  private def applySize(img: BufferedImage, size: Iiif.Size): Either[Api.Error, BufferedImage] =
     val srcW = img.getWidth
     val srcH = img.getHeight
     size match
@@ -152,7 +154,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
-  private def encode(img: BufferedImage, format: String): Either[ApiError, (Array[Byte], String)] =
+  private def encode(img: BufferedImage, format: String): Either[Api.Error, (Array[Byte], String)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =
@@ -164,7 +166,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
         rgb
       else img
     val written = ImageIO.write(toEncode, if format == "jpg" then "JPEG" else "PNG", out)
-    if !written then Left(ApiError(s"cannot encode image as $format"))
+    if !written then Left(Api.Error(s"cannot encode image as $format"))
     else Right((out.toByteArray, Iiif.contentType(format)))
 
   private def enc(s: String): String =

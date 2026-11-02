@@ -1,13 +1,14 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.{ApiError, Write}
-import com.histmersion.api.media.{AssetLink, AssetLinkList, AssetLinkPut}
+import com.histmersion.api.Write
+import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.MediaState
 import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.Api
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
@@ -18,10 +19,10 @@ trait AssetLinkService:
       asset: Option[String],
       targetType: Option[String],
       targetId: Option[String]
-  ): AssetLinkList
+  ): AssetLink.List
 
   /** A link made; refused when the figure it names is not stored. */
-  def create(in: AssetLinkPut): Either[ApiError, AssetLink]
+  def create(in: AssetLink.Put): Either[Api.Error, AssetLink]
 
   /** Whether there was a link `id` to remove. */
   def delete(id: Long): Boolean
@@ -31,8 +32,8 @@ object AssetLinkService:
 
   private def named(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
-  private def noFigure(in: AssetLinkPut): ApiError =
-    ApiError(s"No asset '${in.citekey}/${in.assetName}'", Some(Write.CodeNotFound))
+  private def noFigure(in: AssetLink.Put): Api.Error =
+    Api.Error(s"No asset '${in.citekey}/${in.assetName}'", Some(Write.CodeNotFound))
 
   final private class Implementation(db: Transactor) extends AssetLinkService:
     def list(
@@ -40,11 +41,11 @@ object AssetLinkService:
         asset: Option[String],
         targetType: Option[String],
         targetId: Option[String]
-    ): AssetLinkList =
+    ): AssetLink.List =
       val rows = db.read(AssetLinkRepo.list(named(citekey), named(asset), named(targetType), named(targetId)))
-      AssetLinkList.of(rows.size, rows, 0)
+      AssetLink.List.of(rows.size, rows, 0)
 
-    def create(in: AssetLinkPut): Either[ApiError, AssetLink] =
+    def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       db.transact:
         if !AssetLinkRepo.figureExists(in.citekey, in.assetName) then Left(noFigure(in))
         else Right(AssetLinkRepo.insert(in))
@@ -58,7 +59,7 @@ object AssetLinkService:
         asset: Option[String],
         targetType: Option[String],
         targetId: Option[String]
-    ): AssetLinkList =
+    ): AssetLink.List =
       val (ck, an, tt, ti) = (named(citekey), named(asset), named(targetType), named(targetId))
       val rows = state.get.assetLinks
         .filter(l =>
@@ -67,9 +68,9 @@ object AssetLinkService:
         )
         .sortBy(_.id)
         .toList
-      AssetLinkList.of(rows.size, rows, 0)
+      AssetLink.List.of(rows.size, rows, 0)
 
-    def create(in: AssetLinkPut): Either[ApiError, AssetLink] =
+    def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a => a.citekey.contains(in.citekey) && a.name == in.assetName) then Left(noFigure(in))
       else
         val after = state.updateAndGet { s =>

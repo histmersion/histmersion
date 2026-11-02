@@ -7,7 +7,7 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.{ApiError, GeoPoint, Write}
+import com.histmersion.api.{GeoPoint, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -19,17 +19,11 @@ import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.catalogue.{Period, Place}
-import com.histmersion.api.library.{
-  DeleteBlockerKind,
-  DeletePart,
-  Edge,
-  Finding,
-  Source,
-  SourceDeleteRequest,
-  SourceDeletion
-}
+import com.histmersion.api.library.{DeletePart, Edge, Finding, Source}
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.research.Article
+import com.histmersion.api.Api
+import com.histmersion.api.library.DeleteBlocker
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing
@@ -196,7 +190,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     "the dry run lists every part, the parked edges, the aliases, the files and the Calibre id — and changes nothing"
   ):
     seed()
-    val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, Source.DeleteRequest()).fold(e => fail(e.message), identity)
     assert(!d.applied && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
     import com.histmersion.api.library.DeletePart.*
@@ -250,10 +244,10 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     List(s"See [[$Del]].", s"See [[$Old|the book]].", s"See [[zzdel2020]] (short).").zipWithIndex.foreach { (body, i) =>
       val slug = s"${Slug}_cites$i"
       val _ = ArticleFixtures.put(ds, Article(slug, s"Cites $i", "concept", s"# C\n\n$body", None, Nil, Nil, None))
-      val dry = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
-      assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlockerKind.Article, slug)), body)
+      val dry = h.library.sources.delete(Del, Source.DeleteRequest()).fold(e => fail(e.message), identity)
+      assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlocker.Kind.Article, slug)), body)
       val e = h.library.sources
-        .delete(Del, SourceDeleteRequest(apply = true))
+        .delete(Del, Source.DeleteRequest(apply = true))
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(e.message.contains(s"cited by article $slug") && e.message.contains("no override"), e.message)
@@ -266,19 +260,19 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     connect(ds):
       sql"UPDATE events SET citekey = $Del WHERE id = $Event".update.run()
       sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
-    val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
-    assertEquals(d.blockers.map(_.kind), List(DeleteBlockerKind.Event, DeleteBlockerKind.Job))
-    assert(h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).isLeft)
+    val d = h.library.sources.delete(Del, Source.DeleteRequest()).fold(e => fail(e.message), identity)
+    assertEquals(d.blockers.map(_.kind), List(DeleteBlocker.Kind.Event, DeleteBlocker.Kind.Job))
+    assert(h.library.sources.delete(Del, Source.DeleteRequest(apply = true)).isLeft)
     assert(SourceFixtures.load(ds, Del).isDefined)
 
   test(
     "an old citekey follows the alias (#1799): the dry run names the source under its current key; an unknown one is not deleted"
   ):
     seed()
-    assertEquals(h.library.sources.delete(Old, SourceDeleteRequest()).map(_.citekey), Right(Del))
+    assertEquals(h.library.sources.delete(Old, Source.DeleteRequest()).map(_.citekey), Right(Del))
     assert(
       h.library.sources
-        .delete("zzdel1999_nothing", SourceDeleteRequest())
+        .delete("zzdel1999_nothing", Source.DeleteRequest())
         .left
         .exists(_.code.contains(Write.CodeNotFound))
     )
@@ -289,7 +283,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   ):
     seed()
     val theUid = uid(Del)
-    val d = h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, Source.DeleteRequest(apply = true)).fold(e => fail(e.message), identity)
     assert(d.applied && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
@@ -351,17 +345,17 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     seed()
     put(source(Twin))
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
-    val d = h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, Source.DeleteRequest(apply = true)).fold(e => fail(e.message), identity)
     assert(!d.files.contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
 
   test("the delete is a write: refused while a restore holds the maintenance lock; the dry run is not"):
     seed()
-    var out: Either[ApiError, SourceDeletion] = Left(ApiError("never ran")) // set inside the lock, read after it
-    var dry: Either[ApiError, SourceDeletion] = Left(ApiError("never ran"))
+    var out: Either[Api.Error, Source.Deletion] = Left(Api.Error("never ran")) // set inside the lock, read after it
+    var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error("never ran"))
     val _ = h.maintenance.exclusively("test-restore") {
-      out = h.library.sources.delete(Del, SourceDeleteRequest(apply = true))
-      dry = h.library.sources.delete(Del, SourceDeleteRequest())
+      out = h.library.sources.delete(Del, Source.DeleteRequest(apply = true))
+      dry = h.library.sources.delete(Del, Source.DeleteRequest())
       Right(())
     }
     assertEquals(out.swap.toOption.flatMap(_.code), Some(Backup.CodeMaintenance))

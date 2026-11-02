@@ -16,7 +16,7 @@ final case class Bucket(
     contested: Boolean = false,
     alsoUnder: List[String] = Nil,
     children: List[Bucket] = Nil,
-    samples: List[BucketSample] = Nil
+    samples: List[Bucket.Sample] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 object Bucket:
@@ -26,3 +26,7 @@ object Bucket:
     * the same way). Ask for it with `Bucket.schema`; do not add a given `Schema[Bucket]` here.
     */
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
+
+  final case class Sample(citekey: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
+  object Sample:
+    given Schema[Sample] = summon[KindlingsSchema[Sample]].schema

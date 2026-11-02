@@ -6,9 +6,9 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapLayer, BasemapRemoveQuery, BasemapStatus}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.basemap.Basemap
 
 /** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
   * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's
@@ -21,7 +21,7 @@ object MapRegionsView:
 
   def configure(ui: UiConfig): Unit = jobPollMs = math.max(200, ui.jobPollMs)
 
-  private val status = Var(Option.empty[BasemapStatus])
+  private val status = Var(Option.empty[Basemap.Status])
   private val pick = Var("configured")
   private val box = Var("")
   private val content = Var(Content.Map)
@@ -29,7 +29,7 @@ object MapRegionsView:
   private val job = Var(Option.empty[JobInfo])
 
   /** The fetch whose dry run succeeded last: downloading asks for the same, so its size was seen. */
-  private val checked = Var(Option.empty[BasemapFetchQuery])
+  private val checked = Var(Option.empty[Basemap.FetchQuery])
   private val error = Var(Option.empty[String])
   private val confirmAll = Var(false)
 
@@ -52,7 +52,7 @@ object MapRegionsView:
   private def namedOf(id: String): Option[String] =
     status.now().flatMap(_.regions.find(_.name == id)).map(_.name)
 
-  private def current(dryRun: Boolean): Either[String, BasemapFetchQuery] =
+  private def current(dryRun: Boolean): Either[String, Basemap.FetchQuery] =
     request(box.now(), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
   private def choose(id: String): Unit =
@@ -68,10 +68,10 @@ object MapRegionsView:
         follow(ApiClient.basemapFetch(q), Option.when(dryRun)(q))
 
   /** Follow the job until it ends; a dry run that succeeds marks its fetch as checked. */
-  private def follow(started: Future[JobInfo], dry: Option[BasemapFetchQuery]): Unit =
+  private def follow(started: Future[JobInfo], dry: Option[Basemap.FetchQuery]): Unit =
     started.onComplete(_.fold(e => error.set(Some(e.getMessage)), j => { job.set(Some(j)); poll(j.id, dry) }))
 
-  private def poll(id: String, dry: Option[BasemapFetchQuery]): Unit =
+  private def poll(id: String, dry: Option[Basemap.FetchQuery]): Unit =
     val _ = scala.scalajs.js.timers.setTimeout(jobPollMs.toDouble) {
       if mounted then
         ApiClient
@@ -90,7 +90,7 @@ object MapRegionsView:
           )
     }
 
-  private def remove(q: BasemapRemoveQuery): Unit =
+  private def remove(q: Basemap.RemoveQuery): Unit =
     ApiClient
       .basemapRemove(q)
       .onComplete(_.fold(e => error.set(Some(e.getMessage)), _ => { confirmAll.set(false); load() }))
@@ -224,9 +224,9 @@ object MapRegionsView:
     )
 
   /** What is downloaded now: the map's region and each detailed-relief region, each with its remove. */
-  private def downloaded(s: BasemapStatus): HtmlElement =
-    val map = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present)
-    val focus = s.layers.find(_.layer == BasemapLayer.Terrain.wire).toList.flatMap(_.focus)
+  private def downloaded(s: Basemap.Status): HtmlElement =
+    val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present)
+    val focus = s.layers.find(_.layer == Basemap.Layer.Terrain.wire).toList.flatMap(_.focus)
     dl(
       cls := "about-rows map-regions-downloaded",
       map.toList.flatMap { m =>
@@ -243,7 +243,7 @@ object MapRegionsView:
               cls := "btn btn--sm btn--danger map-region-remove-all",
               child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => if confirmAll.now() then remove(BasemapRemoveQuery("all")) else confirmAll.set(true))
+              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery("all")) else confirmAll.set(true))
             )
           )
         )
@@ -259,7 +259,7 @@ object MapRegionsView:
               dataAttr("region") := f.name,
               "remove",
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => remove(BasemapRemoveQuery("none", focus = Some(f.name))))
+              onClick --> (_ => remove(Basemap.RemoveQuery("none", focus = Some(f.name))))
             )
           )
         )

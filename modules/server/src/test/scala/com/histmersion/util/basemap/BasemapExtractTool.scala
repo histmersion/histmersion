@@ -9,7 +9,7 @@ import com.histmersion.util.storage.{Store, StoreKey}
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
-import com.histmersion.api.basemap.{Basemap, BasemapLayer}
+import com.histmersion.api.basemap.Basemap
 
 /** Measuring tools for docs/research-terrain-basemap.md (and how the browser fixture's vector extract was made), with
   * the fetch's own code — never run by the tests:
@@ -89,7 +89,7 @@ object BasemapExtractTool:
         Set.empty,
         cfg.terrain.attribution,
         java.time.Instant.now().toString,
-        BasemapLayer.Terrain
+        Basemap.Layer.Terrain
       )
       val (outStore, outKey) = at(o)
       val (bytes, tiles) = BasemapFetch
@@ -121,7 +121,7 @@ object BasemapExtractTool:
       if keepAll then Set.empty else drop.filter(_.whole).map(_.layer).toSet,
       cfg.vector.attribution,
       java.time.Instant.now().toString,
-      BasemapLayer.Vector,
+      Basemap.Layer.Vector,
       Some((keepAll, cfg.vector.drop))
     )
     val (bytes, tiles) = BasemapFetch
