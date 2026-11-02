@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -3847,3 +3847,152 @@ test, the contracts' four). Two server tests failed in that run: `DataOracleSuit
 new cache, above) and `MaintenanceRegistrySuite` — the reindex task registered with no owner (a parameter shadowed by the
 member it set), fixed in its own commit; the maintenance suites passed again after it. A cached format check had passed
 over a file a clean one reformats; it was formatted into its commit before the run.
+
+### Part 4 as built (the sources' and findings' rules of the merge plan, the automation's view of the library, 2026-11-02)
+
+Branch `refactor-s10d` from master 3585bc07 (slice 10 parts 1 to 3 deployed). Four commits: the oracles on the unchanged
+code, the sources' and findings' rules of the plan, the automation's view of the library (with the native metadata),
+this section. **With this part slice 10 is complete.** Endpoints, MCP tools, CLI commands, agent definitions and their
+toolbox, every answer schema, bundle entries, merge plans, decisions, the ledger and lint output are unchanged:
+`ContractSnapshotSuite` (`toolbox.json` and `mcp-tools.json` included), `CliHelpSnapshotSuite`, `AutomationOracleSuite`,
+`DataOracleSuite`, `CatalogueOracleSuite`, `MediaOracleSuite`, `LibraryOracleSuite`, `AcquisitionOracleSuite`,
+`SearchSqlSnapshotSuite`, the Calibre transcript, `ArchiveTrafficSuite`, the new `MergePlanOracleSuite` and the gated
+agent transcripts held byte for byte; no oracle or snapshot was re-recorded after the first commit, and no migration was
+added.
+
+**The oracles, extended first** (recorded on the unchanged code and stable before anything moved):
+
+| oracle | what it records |
+|---|---|
+| `MergePlanOracleSuite` (core, pure; `oracle/merge/plans.txt`) | `MergePlanner.plan` over the crafted fixture of `MergeFixture` and two more inputs, 16 scenarios, each result whole — the plan (its JSON), the rows, what an import cannot do, the old citekeys left out, the notes, what `merge apply` does (folds, renames, snapshots, versions, copies, attestations, tombstones, body renames, reviews, the decisions remembered, the rows touched, the tally) and every final line (`BundleEntities.payloads`), with the sketches and bodies the plan asks for: the fixture with nothing decided, every question answered (and the conditional year after it), the gate answered `both` and the collision renamed left, refused resolutions (an invalid citekey, a citekey taken here and one taken in the bundle, a `map` to nothing, to another source's citekey and under the bundle's, a stale id), both editions policies; findings of merged pairs (the same claim at another confidence, near duplicates kept and merged, ids renumbered after the survivor's, an id another finding has here relabelled, a collided source's findings renamed, a gated pair's held); the score's edge cases (titles similar and overlapping, first, overlapping and disjoint authors, one year apart, a reprint, venues, OCR bodies alike, partly alike and different by MinHash, an old citekey, two DOIs, an ISBN, an ambiguous match with what it also resembles) |
+| the gated transcripts (`AgentEngineSuite`'s comparison) | the comparison of two enrich-source runs in the record: each run's totals, each step's models, what served them, billing, tokens, cost, attempts and turns, the outputs (findings, the quote check, places, dates, period, text lengths, the claims only one run made) and the notes; a step's seconds are the wall clock's and stay out |
+
+The acquisition sweep's and the currency check's candidates, rankings and picks were in the transcripts already
+(`SchedulerRunSuite`, `ManagerPhase3Suite`, `IngestBacklogDbSuite`, `GoalAgentsRunSuite`: every step's output and every
+row they write), as were the plan-goal lookups. The transcripts (`HISTMERSION_ORACLE_RUNS=1
+HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`, each run on a new test database —
+a second run on the same one differs, as part 3 noted) held 351 tests identical on the unchanged code twice and on the
+branch after the automation's move.
+
+**The sources' and findings' rules of the plan** (core module). `domain.library.LibraryPlan` is the library's
+`PlanRules`: `PlanRuns` of `sources.SourcePlan` and `findings.FindingPlan`, registered by `SourceMergeRules.planning`
+and `FindingMergeRules.planning`, so `MergeRuleSet.planning` hands it to the planner after the catalogue's and the
+media's, in registration order.
+
+- `SourcePlan` — the matching (`SourceMatcher.assign` over the sides `matchSides` gives), the sketches a plan asks for,
+  the question whether two sources are one work (its id, title, evidence, what the source also resembles, the
+  suggestion), the fields' questions of a pair (DOI, year, status, title, authors, summary, notes, period, the OCR
+  body), a citekey taken here and its suggested rename (`SourcePlan.renameSuggestion`), the detail of a source's row
+  question, the citekey taken by a source changed on both sides, the arguments that name a citekey (`map`, a rename no
+  kind checks — `Citekeys.valid`), a pair folded field by field (`SourcePlan.fold`, was `MergeFold.foldSource`, with
+  `richerAuthors`), a source renamed, the plan's list of how each source was matched (`SourceMatch`) and the final
+  source lines.
+- `FindingPlan` — a finding belongs to its source; inside a pair the bundle's findings matched with this collection's
+  (`FindingPlan.matches` and `Match`, were `MergeFold.matchFindings` and `FindingMatch`), the near duplicates' questions
+  and the confidence note, the folds (`FindingPlan.fold`), the ids after the survivor's (`nextIds`), a renamed source's
+  findings, an id another finding has here relabelled, the final finding lines.
+- `MergeText`, `SourceMatcher` and `Citekeys` are in `domain.library.sources`, moved unchanged but for the package.
+  `MergeFold` keeps the folds of goals, queue items and articles and the small rules every kind shares (`richer`,
+  `union…`, `hull`, `overlap`, `narrower`), over `util.text.Fingerprint`, as `MergeText.fold` and `tokens` were.
+
+The planner's own hooks for them, each called where the planner did that work, so issues, merges, notes and the
+apply's lists keep their order whatever the registration order: `sketchesWanted`, `matchSources` (the pairs, as
+`SourcePair`s: both sources, the gate question's id, whether a strong key matched them, how), `sourceQuestions` (given
+each bundle source's `SourceFate`), `bodyIssue`, `pairFirst` (before every kind's `pair`; `PairQuestions.info` added for
+its note), `labelsTakenFirst`, `citekeyArgument`, `foldSources` (before every kind's `foldPairFirst`; whether the
+folded source takes the bundle's body), `renamed`, `relabelFirst` (before every kind's `relabel`) and `planned` (the plan
+with what a kind lists of its own); `rowDetail`, `ownerSource`, `pairIssue` and `lines` are the shared ones, which only
+the library's runs answer for sources and findings. The planner keeps the generic mechanisms: identity, the fates of
+the bundle's sources from the pairs, the old citekeys' conflicts, the citekeys the merged sources take (the articles'
+links follow them), the merged sources' edges, the old labels' rule, the issue ids, the resolutions, the counts and the
+hash (its matches' lines read from the fates). `MergePlanner.sketchesWanted` takes the rules.
+
+**The automation's view of the library.**
+
+- `Scheduling` keeps the schedules' rules (`decide`, `budget`) and the DOIs an acquisition item names (`dois`, which the
+  work lists deduplicate by); the sweeps' rules are the library's, in the core module's `domain.library.workflows`:
+  `AcquisitionSweepRules` (`Candidate`, `candidates`, `Pick`, `Ranking`, `checkRanking`, `ingestPicks`, `ingestOa`,
+  `acquireText`) and `CurrencyCheckRules` (`CurrencyAction`, `currencyAction`, `acquireText`), named for their
+  pipelines (a bare `AcquisitionSweep` is shadowed by `Managers.AcquisitionSweep` in the pipelines' wildcard imports).
+  The ranking's answer schema is `LibraryAnswers.ranking` (out of `AnswerSchemas`; `AnswerSchemasSuite` checks every
+  schema of the three lists, and `toolbox.json` is byte-identical).
+- A DOI's normal form is `values.Doi.normalize` (was `Acquire.normalizeDoi`'s body, which now forwards to it), so the
+  engine's `Scheduling.dois` and `PlanGoal.check` name no library type.
+- `PlanGoal.Lookup` answers a `PlanGoal.Work` (title, year, authors, citekey, whether the corpus holds it, open access,
+  retracted); the composition's `TransitionHost.workLookup` makes it of the library's `WorkRef` (chimney).
+- `agent compare`: `CompareRuns.compare` takes an `OutputComparison` (`domain.automation.agents`), which
+  `WorkflowDefinition.outputs` offers (none by default); enrich-source's workflow offers the library's
+  `EnrichComparison` (the quote check, the claims, `EnrichSide` per run, out of `CompareRuns`), and
+  `AgentsHandlers.compare` asks the workflow the runs name. `CompareRuns.output` (a step's checkpoint) is public for
+  it. The text both the quote check and the reviewers' comparison normalise in is `util.text.ComparedText`
+  (`AgentVerify.normalise` forwards to it).
+- The approvals' lists read a source proposal's evidence and quote from its payload as
+  `domain.automation.approvals.ProposalEvidence` (db module), not as the library's `AgentProposals.Proposal`
+  (`ProposalEvidenceSuite`: every proposal's payload reads as its evidence and quote).
+
+**Services and their twins.** No service changed shape: the plans and rules are pure and tested as such
+(`MergePlanOracleSuite`, `MergePlannerSuite`, `MergeExtrasSuite` and `BundleMergeSuite` with `LibraryPlan`;
+`SourcePlanSuite`, `FindingPlanSuite`, `MergeTextSuite`, `PlanRunsSuite` with the new hooks, `AcquisitionSweepRulesSuite`,
+`CurrencyCheckRulesSuite`, `CompareRunsSuite`, `DoiSuite`, `ComparedTextSuite`); the merge's db suites run with
+`TestExchange`, the workflows through the transcripts.
+
+**Equivalence.** The oracles, snapshots and transcripts above identical after every commit. No read path that
+`catalogue_live.py` or `library_live.py` covers changed (the merge plan, the sweeps and the comparison are not on them),
+so no live-volume run was made.
+
+**Architecture.** `exceptions.tsv` 251 → 233 rows, deletions only: direction 189 → 171 (`MergeFold` naming
+`FindingMatch`, `MergeText`; `MergePlanner` naming `Citekeys`, `Finding`, `FindingMatch`, `MergeText`, `SourceMatch`,
+`SourceMatcher`; `CompareRuns` naming `AgentVerify`, `EnrichSource`; `PlanGoal` naming `Acquire`, `WorkRef`; `Scheduling`
+naming `Acquire`, `AgentProposals`, `Edge`, `FollowupRow`, `WorkRef`; `AgentRepo` naming `AgentProposals`), repository
+(26), filesystem (32) and process (4) unchanged. `places.tsv`: the rows of `Citekeys`, `MergeText` and `SourceMatcher`
+gone (they are in their package).
+
+**Slice 10 is complete.** The library rows that remain, each with its owner:
+
+| rows | owner | why |
+|---|---|---|
+| `db/LintRepo` naming `Hit`; `core/CompareRuns` naming `Finding` | slice 11 (research) | name collisions with research's types: `CritiquePairing.Hit` in the article rules that stay in `LintRepo`, `ReviewArticle.Finding` in the review comparison that stays in `CompareRuns` (with its `ReviewArticle` row) |
+| `api/MergeMarkdown` naming `LabelRenamed`, `SourceMatch`; `api/MergePlan` naming `SourceMatch`; `api/Lint` naming `Edge`; `api/Agents`, `api/Managers` naming `Ingest`; `api/AgentsMarkdown` naming `Edge`, `Query`; `api/GoalsExport` naming `Query`; `api/Autopilot`, `api/ManagersApi`, `api/Queue`, `api/JobDetail` naming the acquisition's records; `api/Wording` naming `Edge`, `EnrichSource`; `files/BundleEntities` naming `Finding`; `api/Markdown` (16), `api/Write` (11), `api/Tree`, `api/ResolvedId`, `api/AssetLinkTarget`, `api/AttestationTarget`, `db/Db`, `config/BasemapBathymetryConfig` | slice 12 | wire records (`api.library.*`) and the format's vocabulary |
+
+**Deviations.**
+
+- `MatchWeights` stays `util.data.exchange`'s: it is the type of `MergeSettings.weights`, the `merge.weights` block every
+  plan is handed (as the catalogue's place knobs stay `MergeSettings.placeWithinKm`, §21 part 4), and the core module
+  cannot read config; the library's record would have to be named by `MergeSettings` (a new direction row) or the
+  weights passed untyped. Its only reader is the library's `SourceMatcher`.
+- The library's rules have hooks of their own rather than answering the shared stages (`pair`, `labelsTaken`,
+  `argument`, `relabel`): the library registers after the catalogue and the media, and its questions and notes came
+  first at those stages; a hook called at the planner's old place keeps the order whatever the registration order.
+- The sources' rules are two runs (`SourcePlan`, `FindingPlan`) by feature; the planner keeps the old citekeys'
+  conflicts, the merged sources' citekeys and edges and the aliases they leave (generic mechanisms over the bundle's
+  lines that name no library type).
+- The review half of the run comparison stays in `CompareRuns` (research's, slice 11), so `CompareRuns` keeps naming
+  `ReviewArticle` and its `Finding`; `OutputComparison` has the enrich member the wire record (`RunCompare`, slice 12)
+  has.
+- `ProposalEvidence` reads two fields of a proposal's payload where the lists decoded the whole `Proposal`: the payloads
+  of source proposals are written by `SourceProposals` from `Proposal`, so every stored one reads the same; a
+  hand-written payload that is no `Proposal` but has an `evidence` would now show it.
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled
+classes: `domain.Scheduling$Candidate$`, `Pick$`, `Ranking$` → `domain.library.workflows.AcquisitionSweepRules$…$`
+(`derived$KindlingsCodecAsObject$lzy1`, `lzy2` with `given_Schema_Pick$lzy1`, `lzy3` with `given_Schema_Ranking$lzy1`,
+as now numbered); added `domain.automation.approvals.ProposalEvidence$` (`derived$KindlingsCodecAsObject$lzy1`). The new
+plans, rules, comparison, `OutputComparison.none`, `ComparedText` and `Doi`'s pattern are eager values; `PlanGoal.Work`
+derives nothing. No tracing-agent run, no native build. To check at the bundle: `--self-check`; `smoke.sh`; `merge plan`
+and `merge apply` (sources by DOI, fingerprint and score, a same-work question answered `map` and `both`, a citekey
+collision renamed right and left, an invalid citekey refused, findings near-duplicated and merged), `bundle import`;
+an acquisition sweep with a ranking and auto-ingest (`agent run acquisition-sweep`, a watcher's sweep), a currency
+check proposing an edge and queueing a paper, `agent plan-goal` (a work looked up), `agent compare` of two enrich-source
+runs, `agent approvals` (a status and an edge proposal with their evidence and quote), `queue acquire` (a DOI
+deduplicated).
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, the format check and every
+module's suites with the DB suites on a throwaway database (`just test-quick` with every module named): 5 243 tests,
+0 failed — values 23 (`DoiSuite`), valuesJS 23, api 825, apiJS 88, config 67, files 73, core 772 (`MergePlanOracleSuite`,
+`PlanRunsSuite`'s new test, `ComparedTextSuite`; the folds' and the sweeps' tests moved to `SourcePlanSuite`,
+`FindingPlanSuite`, `AcquisitionSweepRulesSuite` and `CurrencyCheckRulesSuite`), pluginApi 45, upstreams 57, pluginHost
+39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52,
+pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 522
+(`ProposalEvidenceSuite`), cli 232, web 639, server 1 543 (1 skipped, 1 ignored). The first clean run's format check
+failed on two new test files a cached `scalafmtAll` had replayed over; they were formatted into their commit and the
+clean run repeated.
