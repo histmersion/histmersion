@@ -15,6 +15,7 @@ object ArchitectureInventory {
   case class Policy(roots: List[String] = List("modules"), report: String = "refactor-audit/architecture",
     objects: String = "docs/research-domain-model/objects.md", expectedObjects: Int = 645,
     requiredServices: List[String] = Nil, visibilityScopes: Map[String,String] = Map.empty,
+    propertyOwners: Map[String,String] = Map.empty,
     databasePrefixes: List[String] = List("com/histmersion/util/database/", "com/augustnagro/magnum/", "java/sql/", "javax/sql/"), visibilityTargets: List[Target] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
@@ -196,6 +197,28 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
     write("sources.tsv","path\tsha256",visited.asScala.toList.sorted.map { case(p,h) => List(p,h) })
     write("declarations.tsv","path\tline\tmodule\tpackage\tsymbol\towner\tname\tkind\tmodifiers\tparents\tsignature\ttop-level\tconstructor\tsource\tast",
       defs.map(d => List(d.path,d.line.toString,d.module,d.pkg,d.symbol,d.owner,d.name,d.kind,d.mods,d.parents.mkString(";"),d.signature,d.topLevel.toString,d.ctor,d.source,d.ast)))
+    val ownershipTypes = defs.filter(d => Set("class","case-class","trait","object","enum","alias")(d.kind))
+    policy.propertyOwners.foreach { case(child,parent) =>
+      require(ownershipTypes.exists(_.symbol == child),"Configured property is absent: " + child)
+      require(ownershipTypes.exists(d => d.symbol == parent && d.kind == "object"),"Configured property owner is not a current object: " + parent)
+      require(child != parent,"A property cannot own itself: " + child)
+    }
+    val ownershipRows = ownershipTypes.map { d =>
+      val configured = policy.propertyOwners.get(d.symbol)
+      val prefixCandidates = ownershipTypes.filter(p => p.module == d.module && p.pkg == d.pkg && p.owner == d.owner &&
+        p.name.length < d.name.length && d.name.startsWith(p.name) && d.name.charAt(p.name.length).isUpper &&
+        !d.name.endsWith("Rule")).map(_.symbol).distinct.sorted
+      val status = configured.fold(if(d.topLevel) "top-level-owner-review" else "nested-owner-review") { p =>
+        if(d.owner == p) "configured-owner-satisfied" else "configured-owner-violation"
+      }
+      List(d.symbol,d.path,d.line.toString,d.module,d.kind,d.owner,configured.getOrElse(""),status,prefixCandidates.mkString(";"),
+        "Prefixes are hypotheses only; components, unrelated names and namespace-only owners require semantic review")
+    }
+    write("type-ownership.tsv","symbol\tpath\tline\tmodule\tkind\tactual-owner\tconfigured-owner\tstatus\tprefix-candidates\tuncertainty",ownershipRows)
+    write("type-ownership-counts.tsv","scope\tmodule\tstatus\tcount",ownershipRows.groupBy(r =>
+      (if(r(1).contains("/src/test/")) "test" else "production",r(3),r(7))).toList.sortBy(_._1).map {
+        case((scope,module,status),rs) => List(scope,module,status,rs.size.toString)
+      })
     val resolvedRefs = refs.map { r =>
       val targets = bySymbol.getOrElse(r.target,Nil)
       List(r.path,r.line.toString,r.owner,r.target,r.spelling,r.shape,

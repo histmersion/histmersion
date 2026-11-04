@@ -57,6 +57,7 @@ models/resolution-summary.tsv
 operations/occurrences.tsv
 operations/sources.tsv
 architecture/declarations.tsv
+architecture/type-ownership.tsv
 architecture/references.tsv
 architecture/type-references.tsv
 architecture/alias-references.tsv

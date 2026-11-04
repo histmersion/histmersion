@@ -41,6 +41,12 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(plan("`Moved`").startsWith("same-name-candidates"),"Relocated name not retained for review")
     require(plan("`Missing`").startsWith("original-absent"),"Missing original incorrectly completed")
     val declarations = table("declarations.tsv")
+    val ownership = table("type-ownership.tsv").map(r => r.head -> r).toMap
+    def owned(name: String) = ownership("com/histmersion/inventoryfixture/" + name)
+    require(owned("Entity.Kind#")(7) == "configured-owner-satisfied","Correct companion property rejected")
+    require(owned("EntityPatch#")(7) == "configured-owner-violation","Top-level property accepted")
+    require(owned("UnprefixedProperty#")(7) == "configured-owner-violation","Non-prefixed property missed")
+    require(owned("EntityService#")(7) == "top-level-owner-review" && owned("EntityService#")(8).contains("Entity."),"Prefix hypothesis silently approved as ownership")
     require(declarations.filter(_(7) == "enum-case").map(_(6)).toSet == Set("Active","Done","Failed"),"Enum cases missing")
     require(declarations.count(_(7) == "given-template") == 1,"Template given missing")
     require(declarations.exists(r => r(6) == "Record" && r(7) == "case-class" && r(12).contains("private")),"Constructor visibility lost")
@@ -62,6 +68,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     run("omitted-file",cli ++ args ++ List(source + "/Services.scala"),1)
     run("absent-service",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-service.conf") ++ List(source),1)
     run("absent-visibility",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-visibility.conf") ++ List(source),1)
+    run("absent-property",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-property.conf") ++ List(source),1)
     Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)
   }
 }
