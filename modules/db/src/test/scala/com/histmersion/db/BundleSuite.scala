@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleExport
@@ -144,7 +144,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     doi = Some(s"10.1234/$ck"),
     year = Some(2001),
     venue = Some("JNES"),
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = List("hittites"),
     regions = List("Anatolia"),
     tags = List("bronze-age", "z"),

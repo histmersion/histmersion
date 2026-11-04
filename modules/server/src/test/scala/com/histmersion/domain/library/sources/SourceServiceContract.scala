@@ -3,7 +3,7 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.{LibraryStores, LibraryStoreSuite}
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{
   DeletePart,
@@ -45,7 +45,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       None,
       Some(1990),
       Some("Zq Review"),
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       List("bronze age"),
       List("Zqland"),
       List("zq-oracle"),

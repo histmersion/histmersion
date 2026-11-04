@@ -4,7 +4,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.automation.Agents.{ApprovalKind, RunState}
+import com.histmersion.api.automation.Agents.ApprovalKind, com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.Scheduling.*
 import com.histmersion.domain.library.Edge
 

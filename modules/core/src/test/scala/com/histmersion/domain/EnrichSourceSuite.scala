@@ -8,7 +8,7 @@ import com.histmersion.domain.EnrichSource.*
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.WorkRef
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 class EnrichSourceSuite extends munit.FunSuite:

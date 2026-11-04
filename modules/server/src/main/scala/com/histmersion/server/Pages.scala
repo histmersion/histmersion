@@ -266,7 +266,7 @@ object Pages:
             c.authors,
             c.year,
             c.title,
-            c.status.transformInto[Option[com.histmersion.api.library.Source.Status]]
+            c.status.transformInto[Option[com.histmersion.domain.library.Source.Status]]
           )
         )
         .orElse(links(ck).collect { case r: Source.Ref =>
@@ -277,7 +277,7 @@ object Pages:
             r.authors,
             r.year,
             Some(r.title),
-            Some(r.status.transformInto[com.histmersion.api.library.Source.Status])
+            Some(r.status.transformInto[com.histmersion.domain.library.Source.Status])
           )
         })
     }
@@ -292,7 +292,7 @@ object Pages:
           c.authors,
           c.year,
           c.title,
-          c.status.transformInto[Option[com.histmersion.api.library.Source.Status]]
+          c.status.transformInto[Option[com.histmersion.domain.library.Source.Status]]
         )
       )
     numbered ++ rest
@@ -307,7 +307,7 @@ object Pages:
           case Some(t) =>
             val byline =
               List(Source.Ref.shortAuthors(e.authors), e.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(" ")
-            val status = e.status.fold("")(s => " " + statusBadge(s))
+            val status = e.status.fold("")(s => " " + statusBadge(s.transformInto[com.histmersion.api.library.Source.Status]))
             val ident = identifier(e.citekey, e.doi)
             s"""<li$id>${sourceLink(e.citekey, e.doi, if byline.nonEmpty then byline else t)} <i>${esc(
                 t

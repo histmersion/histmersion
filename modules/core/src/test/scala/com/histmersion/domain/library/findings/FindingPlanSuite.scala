@@ -4,7 +4,7 @@ import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
 import MergeFixture.{uid, work}
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.exchange.Bundle
 
 /** The findings of a pair that is one matched, folded and numbered (docs/research-merge-import.md §5.4). */

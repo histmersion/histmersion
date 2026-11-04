@@ -28,7 +28,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
   val kind: Kind = Kind.Enrich
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind.transformInto[com.histmersion.api.automation.Manager.Kind], m)
+    ReviewSettings.defaultsFor(kind.transformInto[com.histmersion.domain.automation.Manager.Kind], m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case SourceEnrich => Pipeline.EnrichSource
@@ -66,7 +66,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
           .runsFor(Pipeline.EnrichSource, src.source.citekey)
           .toList
           .filterNot(_.dryRun)
-          .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+          .flatMap(r => com.histmersion.domain.automation.Run.State.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
         AutoEnrich.enrichedBy(src.findings.size, src.source.notes, runs)
 
   // ── auto-enrich ────────────────────────────────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
               .runsFor(Pipeline.EnrichSource, ck)
               .toList
               .filterNot(_.dryRun)
-              .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+              .flatMap(r => com.histmersion.domain.automation.Run.State.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
             AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
               case Left(skip)                        => AutoEnrich.note(skip)
               case Right(()) if cfg.managers.enabled => Some(ingested(a.managers, ck))
@@ -140,7 +140,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
               .runsFor(Pipeline.EnrichSource, src.source.citekey)
               .toList
               .filterNot(_.dryRun)
-              .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+              .flatMap(r => com.histmersion.domain.automation.Run.State.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
             // a person's Enrich enriches again; an ingest's or a selection's skips an enriched source
             val enriched = Option
               .when(item.origin != ItemOrigin.Person.wire)(

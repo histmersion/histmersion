@@ -194,5 +194,4 @@ final class AutoApprovals(
 
   def config: AgentsConfig = cfg
   def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
-  def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
-    agents.approvalStore.autoApprovedSince(kind, since)
+  def autoApprovedSince(kind: com.histmersion.domain.automation.Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[com.histmersion.domain.automation.Approval.Kind, ApprovalKind].transform(kind), since)

@@ -31,14 +31,7 @@ class RenameCmdSuite extends munit.FunSuite:
     assert(parse("page2024_history").isLeft)
     assert(parse().isLeft)
 
-  test("an unusable new citekey is refused before anything is sent"):
-    def says(args: List[String], text: String) =
-      parse(args*) match
-        case Left(help) => assert(help.errors.mkString.contains(text), help.errors.mkString)
-        case Right(a)   => fail(s"accepted $a")
-    says(List("page2024_history", "page2024_history"), "already the citekey")
-    says(List("page2024_history", "Page 1959"), "invalid citekey")
-    says(List("page2024_history", "page-1959"), "LINK-shaped")
+  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args("page2024_history", to, json = false)))) }
 
   test("the subcommand is registered under `rename`"):
     val top = Command("histmersion", "test")(RenameCmd.command)

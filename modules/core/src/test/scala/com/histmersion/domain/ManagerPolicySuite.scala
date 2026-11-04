@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.given
 
-import com.histmersion.api.automation.Agents.RunState
+import com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.ManagerPolicy.*
 import com.histmersion.api.automation.Managers.*
 
@@ -74,14 +74,14 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(notesFor(hs, 7).map(_.text), List("a", "b"))
 
   test("status line: paused, starved, at capacity, pending, idle"):
-    assertEquals(statusNote(State.Paused, None, 0, 3, 3, 0, None), "paused")
+    assertEquals(statusNote(com.histmersion.domain.automation.Manager.State.Paused, None, 0, 3, 3, 0, None), "paused")
     assertEquals(
-      statusNote(State.Active, Some("skeptic chain below its plan floor"), 0, 3, 3, 0, None),
+      statusNote(com.histmersion.domain.automation.Manager.State.Active, Some("skeptic chain below its plan floor"), 0, 3, 3, 0, None),
       "starved: skeptic chain below its plan floor"
     )
-    assert(statusNote(State.Active, None, 0, 3, 3, 2, None).startsWith("at capacity"))
-    assertEquals(statusNote(State.Active, None, 0, 0, 0, 0, None), "idle")
-    assertEquals(statusNote(State.Active, None, 1, 3, 0, 0, Some("budget: x")), "budget: x")
+    assert(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, 0, 3, 3, 2, None).startsWith("at capacity"))
+    assertEquals(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, 0, 0, 0, 0, None), "idle")
+    assertEquals(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, 1, 3, 0, 0, Some("budget: x")), "budget: x")
 
   test("config: k=v pairs parse; a typo is an error; settings resolve over the defaults"):
     val c = ManagerConfig.parse(
@@ -104,16 +104,16 @@ class ManagerPolicySuite extends munit.FunSuite:
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
     def ev(st: RunState, f: StepFacts, failures: Int = 0) =
       evaluateStep(s, InferFilter, "tin", failures, ItemState(), "run-1234567890", st, Some("boom"), f, now)
-    assertEquals(ev(RunState.Done, StepFacts.Finished("ok")), Next.Done("ok", ItemState()))
-    assertEquals(ev(RunState.Done, StepFacts.Waiting(7, "waits")), Next.Wait(7, "waits"))
-    assertEquals(ev(RunState.Done, StepFacts.NotDone("no", None)), Next.Stop("no", None, ItemState()))
-    ev(RunState.Failed, StepFacts.Finished("x")) match
+    assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Finished("ok")), Next.Done("ok", ItemState()))
+    assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Waiting(7, "waits")), Next.Wait(7, "waits"))
+    assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.NotDone("no", None)), Next.Stop("no", None, ItemState()))
+    ev(com.histmersion.domain.automation.Run.State.Failed, StepFacts.Finished("x")) match
       case Next.Retry(nb, 1, _) => assertEquals(nb, now.plusSeconds(15 * 60))
       case other                => fail(other.toString)
-    ev(RunState.Failed, StepFacts.Finished("x"), failures = 2) match
+    ev(com.histmersion.domain.automation.Run.State.Failed, StepFacts.Finished("x"), failures = 2) match
       case Next.Stop(o, Some(t), _) => assert(o.contains("3 failed runs") && t.contains("[[tin]]"), t)
       case other                    => fail(other.toString)
-    assert(ev(RunState.Cancelled, StepFacts.Finished("x")).isInstanceOf[Next.Stop])
+    assert(ev(com.histmersion.domain.automation.Run.State.Cancelled, StepFacts.Finished("x")).isInstanceOf[Next.Stop])
 
   test("decided: an open approval is not decided; a decided one reads with its result"):
     assertEquals(decided("open", None), None)
@@ -131,9 +131,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       ManagerRunDefaults(1),
       ManagerRunDefaults(1)
     )
-    assertEquals(ReviewSettings.forKind(Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
-    assertEquals(ReviewSettings.forKind(Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
-    assertEquals(ReviewSettings.forKind(Kind.Review, ManagerConfig(), m).maxRuns, 2)
+    assertEquals(ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
+    assertEquals(ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
+    assertEquals(ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Review, ManagerConfig(), m).maxRuns, 2)
     val sd = SeedPlanDefaults(maxArticles = 6, minSources = 5).managerDefaults(m)
     assertEquals((sd.maxRuns, sd.minSources, sd.maxArticles), (Some(1), Some(5), Some(6)))
     val c = ManagerConfig.parse(List("stale-after-days=30", "infer-filter=off", "min-sources=3", "max-articles=4"))
@@ -144,10 +144,10 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List("infer-filter=maybe")).isLeft)
 
   test("item kinds and the enqueue words"):
-    assertEquals(itemKindOf(Kind.Review, ""), Some(ArticleReview))
-    assertEquals(itemKindOf(Kind.Review, "extend"), Some(ArticleExtend))
-    assertEquals(itemKindOf(Kind.Seed, "propose"), Some(ProposeArticles))
-    assertEquals(itemKindOf(Kind.Enrich, "review"), None)
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, ""), Some(ArticleReview))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, "extend"), Some(ArticleExtend))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Seed, "propose"), Some(ProposeArticles))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Enrich, "review"), None)
     assertEquals(EnqueueKind.parse("source-enrich"), Some(EnqueueKind.Enrich))
     assertEquals(EnqueueKind.parse(""), Some(EnqueueKind.Review))
     assertEquals(EnqueueKind.parse("nope"), None)
@@ -167,17 +167,17 @@ class ManagerPolicySuite extends munit.FunSuite:
   )
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
-    assertEquals(itemKinds(Kind.Watch), List(AcquisitionSweep, CurrencyCheck, OaIngest))
-    assertEquals(itemKindOf(Kind.Watch, ""), Some(AcquisitionSweep))
-    assertEquals(itemKindOf(Kind.Watch, "backlog"), Some(OaIngest))
-    assertEquals(itemKindOf(Kind.Review, "ingest"), None)
-    assertEquals(itemKindOf(Kind.Watch, "currency"), Some(CurrencyCheck))
-    assertEquals(itemKindOf(Kind.Watch, "review"), None)
+    assertEquals(itemKinds(com.histmersion.api.automation.Manager.Kind.Watch), List(AcquisitionSweep, CurrencyCheck, OaIngest))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, ""), Some(AcquisitionSweep))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, "backlog"), Some(OaIngest))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, "ingest"), None)
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, "currency"), Some(CurrencyCheck))
+    assertEquals(itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, "review"), None)
     assertEquals(watchId(" tin "), "watch:tin")
     assertEquals(Sweep.of(ManagerConfig()), List(Sweep.Acquisition, Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List("currency")))), List(Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)
-    assertEquals(ReviewSettings.forKind(Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
+    assertEquals(ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
     val d = watch.managerDefaults(mcfg)
     assertEquals(
       (d.autoIngest, d.autoIngestPerDay, d.sweeps),
@@ -236,7 +236,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assertEquals(
       ReviewSettings
-        .defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5))
+        .defaultsFor(com.histmersion.domain.automation.Manager.Kind.Enrich, mcfg.copy(dailyUsd = 5))
         .dailyUsd,
       Some(5.0)
     )

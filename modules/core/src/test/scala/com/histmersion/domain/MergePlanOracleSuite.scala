@@ -15,10 +15,10 @@ import io.circe.syntax.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
-import com.histmersion.domain.library.{Confidence, EditionsPolicy}
+import com.histmersion.api.library.Confidence, com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.exchange.Bundle
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the

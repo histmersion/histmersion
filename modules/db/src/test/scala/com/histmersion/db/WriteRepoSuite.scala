@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Files
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
@@ -35,7 +35,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     doi = Some("10.0/x"),
     year = Some(2020),
     venue = Some("Nature"),
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = List("t"),
     regions = List("Anatolia"),
     tags = List("adna", "yamnaya"),

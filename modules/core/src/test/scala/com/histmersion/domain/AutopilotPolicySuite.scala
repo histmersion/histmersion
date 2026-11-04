@@ -261,7 +261,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       0,
       ItemState(),
       "run-12345678",
-      RunState.Done,
+      com.histmersion.domain.automation.Run.State.Done,
       None,
       StepFacts.Redo("the draft was rejected"),
       now
@@ -275,7 +275,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       1,
       ItemState(),
       "run-12345678",
-      RunState.Done,
+      com.histmersion.domain.automation.Run.State.Done,
       None,
       StepFacts.Redo("the draft was rejected"),
       now

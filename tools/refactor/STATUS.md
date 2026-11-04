@@ -1,0 +1,30 @@
+# Detector work status
+
+Work continues in `contracts3-scalafix`. Main and `contracts2` must remain untouched.
+Application changes must use Scalafix; no manual application edits or text-replacement scripts.
+
+- Baseline: `6e1b5387`, a snapshot of the unfinished `contracts2` work.
+- `ContractInventory.scala` produces a preliminary AST candidate inventory and G1–G43 checklist.
+- `CapabilityAccess.scala` detects configured direct semantic references and follows repository calls through known helper bodies, with exact-owner permissions and witness chains. Local symbols are keyed by source file; chained dependencies are deduplicated.
+- Two rounds of cheap-model source audits are recorded in `refactor-audit/audited-examples.md`, with definite violations, valid cases and uncertain cases kept separate.
+- `SourceContracts.scala` checks configured primitive roles, repository visibility, forbidden production packages, domain Handlers declarations and object launcher signatures. It parses all 3,125 Scala files. Main sources yield 34 primitive-role, 12 visibility and 4 Handlers declaration findings. Concept mappings currently cover three audited service owners, not all concepts.
+- All 24 structural source expectations passed. Two syntactic fixture files assert 18 diagnostics and clean lookalikes. Deliberately missing and unexpected diagnostics fail with exit 1.
+- Stale source guards and omitted source coverage also failed with exit 1, for their intended reasons.
+- The G1–G43 readiness register is in `migration.conf`; the generated matrix is `refactor-audit/migration/coverage-matrix.md`. The readiness command executes structural checks and their fixtures, checks source fingerprints, and fails because 42 goals remain partial/unmeasured. An incomplete register is rejected with exit 4. It does not pretend the external semantic checks ran as part of that command.
+- Six compiled semantic fixture files passed 37 exact diagnostic assertions (32 direct, 5 indirect), including aliases, cross-file helpers, recursion, safe statement closure, local-symbol collisions, injected clocks and pure configuration parsing.
+- Invalid capability permissions were rejected. Normal verification rejected violating fixtures.
+- Strict configuration decoding compiles and the positive fixture tests pass.
+- Negative checks passed: misspelled configuration keys fail with exit 4; deliberately missing diagnostics and omitted fixture files fail with exit 1. Normal verification of the expanded semantic fixture set fails with exit 1 on indirect violations, in addition to emitting direct lint errors.
+- Production compilation now passes with normal SemanticDB after scoped Scalafix boundary repairs. These fix CLI wire imports, API/domain conversions, checked coordinates, interface signatures and mismatched enum branches. No production type constraints were weakened.
+- The fresh ordinary capability audit covers all 2,355 main files, with zero omissions and 432 findings. All 21 source expectations pass. Structural coverage remains complete with 50 findings and 24 passing source expectations. This repairs measurement, not the remaining architectural violations.
+- Full aggregate `Test/compile` now passes. Three API suites using moved domain helpers were relocated to core by Scalafix; test imports and boundary conversions were repaired in core, db, server, files and CLI. Core's 817 tests pass across the initial run and successful rerun of its two repaired suites. Behavioral verification of client/file/server suites is recorded in RESULTS.md.
+- Historical best-effort compilation emitted isolated metadata in `target/refactor-best-effort`. That provisional audit reported 432 findings and 4,578 missing-symbol name lookups. It has now been superseded by the successful normal compilation and ordinary audit above.
+- The historical best-effort build failed on inherited CLI errors and a server pickling assertion. A deliberately broken fixture proves known symbols remain detectable and normal verification must still reject provisional evidence. Do not include provisional metadata in ordinary audit roots.
+- Its findings include transaction lifecycle operations in GazetteerRepo, QueryRepo and VacuumRepo.
+- Configuration loading is distinguished from pure parsing. Reproducible commands and failure expectations are in README.md. Current ordinary coverage and source assertions are in `refactor-audit/capabilities/`; `capabilities-best-effort/` retains historical provisional evidence.
+- The remaining policy review includes infrastructure scope (notably plugin-testkit) and owner existence/permission validation. A finding is against the configured policy, not a final architectural judgment.
+- Callback/dynamic dispatch, initializer effects, inferred-type dependency checks, broad architectural ownership mappings and most goal families remain incomplete. Best-effort evidence must never make the migration gate green.
+
+The workspace became directly writable after switching this conversation's directory. Further tooling edits belong here, without staging files in `/tmp`.
+
+Application changes and detector work are uncommitted. Build files still match the copied baseline. Large generated evidence files are ignored by Git and regenerated by the documented commands.

@@ -14,7 +14,7 @@ import com.histmersion.util.database.{Db, Migrate}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.backup.Backup
@@ -78,7 +78,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,

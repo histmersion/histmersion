@@ -20,7 +20,7 @@ import com.histmersion.api.instance.{AboutMarkdown, Version}
 import com.histmersion.api.library.{PassagesMarkdown, SeedRequest, SeedResult}
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import sttp.client4.*
 

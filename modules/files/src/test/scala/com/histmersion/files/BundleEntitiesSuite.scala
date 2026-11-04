@@ -8,7 +8,7 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
   * decode round trip) and the reader's problem reports.

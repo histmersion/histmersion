@@ -34,7 +34,7 @@ final class WorkListView(
     workLists.kindOf(list).map { k =>
       val scope = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
         case (_, Some(j))    => QueueScope.ForJob(j)
-        case (Some(g), None) => QueueScope.ForGoal(g, goals.refs(g, LinkKind.QueueItem).toSet, withDone = all)
+        case (Some(g), None) => QueueScope.ForGoal(g, goals.refs(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem).toSet, withDone = all)
         case (None, None)    => if all then QueueScope.All else QueueScope.Open
       val items = queues.list(k, scope)
       val checks =

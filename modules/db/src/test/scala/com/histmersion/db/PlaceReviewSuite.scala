@@ -92,7 +92,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
         doi = None,
         year = Some(2026),
         venue = None,
-        status = com.histmersion.domain.library.Source.Status.Current,
+        status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -126,7 +126,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       List(Thess),
       "the moved place's findings are matched again at once"
     )
-    assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(Place.Precision.Stated))
+    assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(com.histmersion.api.catalogue.Place.Precision.Stated))
     assertEquals(PlaceFixtures.relocations(ds).filter(_.id.startsWith("pleiades_99910")), Nil)
     assertEquals(
       PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm),

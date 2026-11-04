@@ -159,7 +159,7 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("kinds: wire names match the tombstone trigger's, files are distinct"):
     assertEquals(
-      com.histmersion.util.data.exchange.Bundle.Kind.values.toList.map(_.wire),
+      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(_.wire),
       List(
         "source",
         "finding",
@@ -176,8 +176,8 @@ class BundleFormatSuite extends munit.FunSuite:
       )
     )
     assertEquals(Bundle.Files.all.distinct.size, Bundle.Files.all.size)
-    com.histmersion.util.data.exchange.Bundle.Kind.values.foreach(k =>
-      assertEquals(com.histmersion.util.data.exchange.Bundle.Kind.fromWire(k.wire), Some(k))
+    com.histmersion.api.exchange.Bundle.Kind.values.foreach(k =>
+      assertEquals(com.histmersion.api.exchange.Bundle.Kind.fromWire(k.wire), Some(k))
     )
 
   test("markdown: an import report says what it did, and lists every problem"):
@@ -186,7 +186,7 @@ class BundleFormatSuite extends munit.FunSuite:
       Bundle.Instance(I, Some("work")),
       dryRun = false,
       applied = false,
-      List(Bundle.KindCounts(com.histmersion.util.data.exchange.Bundle.Kind.Source, inserted = 2)),
+      List(Bundle.KindCounts(com.histmersion.api.exchange.Bundle.Kind.Source, inserted = 2)),
       0,
       List("source x: clash"),
       Nil,

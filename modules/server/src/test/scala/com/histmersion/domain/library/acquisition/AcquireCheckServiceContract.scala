@@ -21,7 +21,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       doi,
       Some(2000),
       None,
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,

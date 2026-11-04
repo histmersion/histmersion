@@ -88,7 +88,7 @@ final class GoalFocusService(
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
           .flatMap(_.toBooleanOption)
-          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.api.automation.Approval.Kind]))
+          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
       case _ => true
 
   final private case class Read(
@@ -148,7 +148,7 @@ final class GoalFocusService(
     GoalFocus.Settings(
       max,
       agents.sourcesToPlan,
-      plansByPerson = !cfg.approvals.checked(ApprovalKind.GoalPlan),
+      plansByPerson = !cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan),
       r.openPlans
     )
 

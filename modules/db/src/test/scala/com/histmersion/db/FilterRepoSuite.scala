@@ -8,7 +8,7 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Finding, Hit, SearchResult, Sort, Source}
@@ -58,7 +58,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
       title: String,
       authors: List[String],
       year: Int,
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       topics: List[String],
       regions: List[String],
       tags: List[String],
@@ -94,7 +94,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     "Collapse of the Bronze Age",
     List("Eric H. Cline"),
     2014,
-    com.histmersion.domain.library.Source.Status.Current,
+    com.histmersion.api.library.Source.Status.Current,
     List("collapse"),
     List("Levant"),
     List("sea-peoples"),
@@ -112,7 +112,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     "Steppe horses",
     List("David W. Anthony"),
     2007,
-    com.histmersion.domain.library.Source.Status.Foundational,
+    com.histmersion.api.library.Source.Status.Foundational,
     List("migration"),
     List("Pontic Steppe"),
     List("steppe"),
@@ -139,7 +139,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     "Pacific island chronology",
     List("Pacific Author"),
     2020,
-    com.histmersion.domain.library.Source.Status.Unassessed,
+    com.histmersion.api.library.Source.Status.Unassessed,
     List("chronology"),
     List("Oceania"),
     List("sea-peoples"),
@@ -160,7 +160,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
       s"Case study $ck",
       List("Case Author"),
       2021,
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       Nil,
       List(region),
       List(tag),

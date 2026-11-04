@@ -471,7 +471,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
           doi = None,
           year = Some(2026),
           venue = None,
-          status = com.histmersion.domain.library.Source.Status.Current,
+          status = com.histmersion.api.library.Source.Status.Current,
           topics = Nil,
           regions = Nil,
           tags = Nil,

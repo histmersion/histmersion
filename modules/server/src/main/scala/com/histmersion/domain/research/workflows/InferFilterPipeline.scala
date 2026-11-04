@@ -125,7 +125,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         val json = p.asJson.noSpaces
         val what = s"${p.filter.line} → ${Plural.count(p.total, "source")}, ${p.citedIn} of ${p.cited} cited"
         cfg.approvals.filterMode match
-          case ApprovalMode.Auto =>
+          case com.histmersion.domain.automation.Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
               site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message).map { _ =>
                 val a = ctx.approvalStore.openSubject(
@@ -139,7 +139,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
                 Recorded(Some(a.id), applied = true, s"filter recorded: $what")
               }
             )(Right(Recorded(None, applied = false, s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")))
-          case ApprovalMode.Manual =>
+          case com.histmersion.domain.automation.Approval.Mode.Manual =>
             ctx.write(s"${ApprovalKind.ArticleFilter.wire} approval for [[$slug]]", p.asJson)(
               Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticleFilter, slug, json))
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))

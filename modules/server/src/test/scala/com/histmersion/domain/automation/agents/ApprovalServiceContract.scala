@@ -7,8 +7,8 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 
 import java.time.Instant
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 /** The contract the approvals keep: a source's open proposal is not doubled; a run's step approval opens once; a
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's
@@ -23,20 +23,9 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       st: ApprovalState = ApprovalState.Open,
       result: Option[String] = None
   ) =
-    a(s).record(
-      None,
-      p.kind,
-      p.citekey,
-      p.status,
-      current,
-      p.edgeKind,
-      p.target,
-      com.histmersion.util.database.Jsonb.write(p),
-      st,
-      result
-    )
+    a(s).record(None, p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(current), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target, com.histmersion.util.database.Jsonb.write(p), st, result)
   private def before(s: EngineStores, p: Proposal) =
-    a(s).proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target)
+    a(s).proposedBefore(p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target)
   private val status = Proposal(ApprovalKind.StatusChange, "zz2020_a", Some(Source.Status.Contested), evidence = "e")
   private val edge = Proposal(ApprovalKind.Edge, "zz2020_a", None, Some(Edge.Kind.Refutes), Some("zz2021_b"))
 
@@ -129,19 +118,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
   stest("pages newest first, with cursors; filters by kind, text (the run's goal and manager too), goal; facets") { s =>
     val run = s.run("zz2020_x", goal = Some("zz-tin"), manager = Some("watch:zz-tin"))
     val ids = (1 to 5).toList.map(i => a(s).openSubject(None, ApprovalKind.ArticlePlan, s"zz-subj-$i", "{}").id)
-    val src = a(s)
-      .record(
-        Some(run),
-        ApprovalKind.Edge,
-        "zz2020_x",
-        None,
-        None,
-        Some(Edge.Kind.Refutes),
-        Some("zz2019_y"),
-        "{}",
-        ApprovalState.Open,
-        None
-      )
+    val src = a(s).record(Some(run), ApprovalKind.Edge, "zz2020_x", None, None, Some(com.histmersion.domain.library.Edge.Kind.Refutes), Some("zz2019_y"), "{}", ApprovalState.Open, None)
       .get
     val Right((first, more)) = a(s).approvalPage(None, 2, None, None): @unchecked
     assertEquals((first.map(_.id), more), (List(src.id, ids(4)), true))

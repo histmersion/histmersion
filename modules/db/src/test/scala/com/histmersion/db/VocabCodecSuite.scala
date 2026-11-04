@@ -6,7 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.{Jsonb, Migrate}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
@@ -36,7 +36,7 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = Some(2020),
         venue = None,
-        status = com.histmersion.domain.library.Source.Status.Current,
+        status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -64,7 +64,7 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
       fs.map(f => f.claim -> f.confidence).toMap,
       Map("stated low" -> Some(Confidence.Low), "garbled" -> None, "not stated" -> None)
     )
-    assertEquals(s.status, com.histmersion.domain.library.Source.Status.Unassessed)
+    assertEquals(s.status, com.histmersion.api.library.Source.Status.Unassessed)
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
 
 /** [[Jsonb]] (#1946): one rule for a jsonb column — what does not decode reads as the fallback or as absent, never as

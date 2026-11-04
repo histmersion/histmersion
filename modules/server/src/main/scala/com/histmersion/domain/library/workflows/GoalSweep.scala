@@ -24,8 +24,8 @@ private[workflows] trait GoalSweep:
 
   /** The sources a goal is about: linked directly, and cited by the articles linked to it. */
   protected def goalSources(goal: String, max: Int): List[String] =
-    val direct = goals.refs(goal, LinkKind.Source)
-    val viaArts = goals.refs(goal, LinkKind.Article).flatMap(site.citedSources)
+    val direct = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Source)
+    val viaArts = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article).flatMap(site.citedSources)
     (direct ++ viaArts).distinct.take(math.max(0, max))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */
@@ -51,13 +51,13 @@ private[workflows] trait GoalSweep:
         ctx.write(
           s"link queue item $id to goal $goal",
           io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = goals.link(goal, LinkKind.QueueItem, id.toString, Some(doi)) }(())
+        ) { val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(doi)) }(())
         Right(false)
       case None =>
         val item = QueueAdd(text, topic = Some(s"goal $goal"), goal = Some(goal), job = Some(ctx.run.id))
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           site.workLists.add("acquire", item).left.map(_.message).map { added =>
-            val _ = goals.link(goal, LinkKind.QueueItem, added.id.toString, Some(doi))
+            val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), added.id.toString, Some(doi))
             true
           }
         )(Right(true))

@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
@@ -224,7 +224,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2025),
       venue = None,
-      status = com.histmersion.domain.library.Source.Status.Current,
+      status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,
       regions = Nil,
       tags = Nil,

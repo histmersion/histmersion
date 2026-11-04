@@ -89,7 +89,7 @@ final class ModelPicker(
       case Some(ms) =>
         parseModels(ms, known()).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
       case None =>
-        parseChain(cfg.role(role.transformInto[com.histmersion.api.automation.AgentRole]), known())
+        parseChain(cfg.role(role.transformInto[com.histmersion.domain.automation.AgentRole]), known())
           .map(_ -> SettingSource.Config)
           .left
           .map(m => s"agents.roles.${role.wire}: $m")

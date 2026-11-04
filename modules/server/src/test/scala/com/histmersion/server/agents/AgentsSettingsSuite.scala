@@ -35,7 +35,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assert(on.agents.enabled)
-    assertEquals(on.agents.role(Role.Extractor), "local:m")
+    assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor), "local:m")
     assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
     assert(cfg.agents.autoEnrich, "auto-enrich is on by default (it acts only with agents on)")
     assert(
@@ -47,8 +47,8 @@ class AgentsSettingsSuite extends munit.FunSuite:
 
   test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.statusMode, ApprovalMode.Manual)
-    assertEquals(cfg.agents.approvals.edgeMode, ApprovalMode.Manual)
+    assertEquals(cfg.agents.approvals.statusMode, com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(cfg.agents.approvals.edgeMode, com.histmersion.domain.automation.Approval.Mode.Manual)
     assertEquals(cfg.researchAgents.review.maxRounds, 3)
     assertEquals(cfg.agents.trace.keepMessagesDays, 30)
     assertEquals(cfg.agents.promptsDir, "")
@@ -67,14 +67,14 @@ class AgentsSettingsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(on.agents.approvals.edgeMode, ApprovalMode.Auto)
+    assertEquals(on.agents.approvals.edgeMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(on.researchAgents.review.maxRounds, 2)
     assertEquals(on.agents.promptsDir, "/tmp/p")
     assertEquals(on.agents.trace.keepMessagesDays, 0)
 
   test("P3 keys: publishing waits for a person, the scheduler is on but needs agents; env overrides"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.publishMode, ApprovalMode.Manual)
+    assertEquals(cfg.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Manual)
     assertEquals(cfg.agents.roles.planner, "")
     assertEquals(cfg.agents.roles.writer, "")
     assert(cfg.agents.scheduler.enabled && cfg.researchAgents.compile.review)
@@ -93,8 +93,8 @@ class AgentsSettingsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(on.agents.approvals.publishMode, ApprovalMode.Auto)
-    assertEquals(on.agents.role(Role.Writer), "local:w")
+    assertEquals(on.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
+    assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Writer), "local:w")
     assert(!on.agents.scheduler.enabled)
     assertEquals(on.researchAgents.compile.maxSources, 5)
 
@@ -117,9 +117,9 @@ class AgentsSettingsSuite extends munit.FunSuite:
     )
     assertEquals(cfg.agents.quota.fallthrough, "", "no chain falls from a plan to a paid key unless asked")
     assert(!cfg.agents.providers.codex.useApiKey && !cfg.agents.providers.opencode.chatgptLogin)
-    assertEquals(cfg.agents.provider(ProviderKind.Codex), None)
+    assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.Codex), None)
     assertEquals(cfg.agents.allowances, "")
-    assertEquals(cfg.agents.provider(ProviderKind.ClaudeCode), None, "claude-code is no HTTP provider")
+    assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.ClaudeCode), None, "claude-code is no HTTP provider")
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
         java.util.Map.of(
@@ -135,7 +135,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      parseChain(on.agents.role(Agents.Role.Extractor)).map(_.map(_.wire)),
+      parseChain(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor)).map(_.map(_.wire)),
       Right(List("claude-code:sonnet", "local:qwen"))
     )
     assertEquals(parseAllowances(on.agents.allowances).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
@@ -144,14 +144,14 @@ class AgentsSettingsSuite extends munit.FunSuite:
 
   test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
     val c = AgentApprovalsConfig("manual", "manual", "auto", articlePlan = "Auto", goalPlan = "checked")
-    assert(c.checked(ApprovalKind.ArticlePlan) && c.checked(ApprovalKind.GoalPlan))
-    assert(c.checked(ApprovalKind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
-    assert(!AgentApprovalsConfig("manual", "manual", "manual").checked(ApprovalKind.ArticlePlan))
-    assert(!c.checked(ApprovalKind.Edge))
-    assertEquals(c.publishMode, Agents.ApprovalMode.Auto)
+    assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan) && c.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan))
+    assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
+    assert(!AgentApprovalsConfig("manual", "manual", "manual").checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan))
+    assert(!c.checked(com.histmersion.domain.automation.Approval.Kind.Edge))
+    assertEquals(c.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(
       c.copy(articlePublish = "checked").publishMode,
-      Agents.ApprovalMode.Manual,
+      com.histmersion.domain.automation.Approval.Mode.Manual,
       "checked: the run waits, the supervisor decides"
     )
 

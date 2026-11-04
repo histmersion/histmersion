@@ -26,7 +26,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.EdgesPatch
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 

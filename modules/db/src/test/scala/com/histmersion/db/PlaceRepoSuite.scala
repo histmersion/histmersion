@@ -12,7 +12,7 @@ import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
@@ -87,7 +87,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2020),
     venue = None,
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
     regions = List("Anatolia"),
     tags = Nil,

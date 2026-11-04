@@ -35,11 +35,11 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     )
     places.foreach { p =>
       val c = """\[([-0-9.]+),([-0-9.]+)\]""".r.findFirstMatchIn(p.geometry.get).get
-      val want = com.histmersion.domain.catalogue.Place.Precision.of(p.id, c.group(1).toDouble, c.group(2).toDouble)
+      val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, c.group(1).toDouble, c.group(2).toDouble)
       assertEquals(
         stored(p.id)
-          .flatMap(com.histmersion.domain.catalogue.Place.Precision.parse)
-          .getOrElse(com.histmersion.domain.catalogue.Place.Precision.Stated),
+          .flatMap(com.histmersion.api.catalogue.Place.Precision.parse)
+          .getOrElse(com.histmersion.api.catalogue.Place.Precision.Stated),
         want,
         p.id
       )
@@ -53,7 +53,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     yield (x, y)
     pts.foreach { (x, y) =>
       val sqlSays = connect(ds)(sql"SELECT histmersion_grid_centre($x, $y)".query[Boolean].run().head)
-      assertEquals(sqlSays, com.histmersion.domain.catalogue.Place.Precision.gridCentre(x, y), s"($x, $y)")
+      assertEquals(sqlSays, com.histmersion.api.catalogue.Place.Precision.gridCentre(x, y), s"($x, $y)")
     }
 
   test("the geocoder ranks a grid square's centre below a precise point of the same name"):
@@ -79,11 +79,11 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(
       PlaceFixtures.get(ds, Thess).map(_.locationPrecision),
-      Some(com.histmersion.domain.catalogue.Place.Precision.GridCell)
+      Some(com.histmersion.api.catalogue.Place.Precision.GridCell)
     )
     assertEquals(
       PlaceFixtures.get(ds, Regio1).map(_.locationPrecision),
-      Some(com.histmersion.domain.catalogue.Place.Precision.Stated)
+      Some(com.histmersion.api.catalogue.Place.Precision.Stated)
     )
 
   test("the assignment's placeholder minimum is the configured one"):

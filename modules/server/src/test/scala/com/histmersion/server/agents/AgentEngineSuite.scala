@@ -29,7 +29,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, Queue}
 import com.histmersion.api.library.{Assessment, MetadataPatch, RefsResult, WorkRef}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes

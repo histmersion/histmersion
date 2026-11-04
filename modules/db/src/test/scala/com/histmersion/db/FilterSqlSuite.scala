@@ -12,7 +12,7 @@ import com.histmersion.util.database.Param.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Sort}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.given

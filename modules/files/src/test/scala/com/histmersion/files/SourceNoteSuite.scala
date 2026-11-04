@@ -2,7 +2,7 @@ package com.histmersion.files
 
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Edge, Finding, Source}
@@ -21,7 +21,7 @@ class SourceNoteSuite extends munit.FunSuite:
     doi = Some("10.1038/nature14317"),
     year = Some(2015),
     venue = Some("Nature"),
-    status = com.histmersion.domain.library.Source.Status.Foundational,
+    status = com.histmersion.api.library.Source.Status.Foundational,
     topics = List("ancient_dna", "yamnaya_culture"),
     regions = List("Eurasian Steppe", "Central Europe"),
     tags = List("adna"),
@@ -96,7 +96,7 @@ class SourceNoteSuite extends munit.FunSuite:
       doi = None,
       year = None,
       venue = None,
-      status = com.histmersion.domain.library.Source.Status.Unassessed,
+      status = com.histmersion.api.library.Source.Status.Unassessed,
       topics = Nil,
       regions = Nil,
       tags = Nil,

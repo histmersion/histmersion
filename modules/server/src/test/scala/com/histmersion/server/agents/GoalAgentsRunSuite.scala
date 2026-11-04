@@ -32,7 +32,7 @@ import com.histmersion.api.library.{
   WorkRef
 }
 import com.histmersion.api.research.ArticleMarkdown
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.research.Article
 

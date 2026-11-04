@@ -37,7 +37,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   private def source(
       ck: String,
       tags: List[String],
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       period: Period,
       author: String
   ) =
@@ -91,14 +91,14 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       val _ = source(
         "zz_rel_match",
         List(Tag),
-        com.histmersion.domain.library.Source.Status.Current,
+        com.histmersion.api.library.Source.Status.Current,
         Period(-1300, -1200),
         "Zzrelauthor"
       )
       val _ = source(
         "zz_rel_other",
         Nil,
-        com.histmersion.domain.library.Source.Status.Contested,
+        com.histmersion.api.library.Source.Status.Contested,
         Period(-600, -500),
         "Someone"
       )

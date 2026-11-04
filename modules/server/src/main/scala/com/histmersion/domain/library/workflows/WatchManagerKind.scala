@@ -110,8 +110,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
     itemKind match
       case OaIngest =>
-        Acquire
-          .normalizeDoi(raw)
+        com.histmersion.domain.library.Doi.normalize(raw)
           .toRight(Api.Error(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")

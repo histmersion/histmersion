@@ -6,9 +6,9 @@ import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.domain.automation.workflows.WorkflowDefinition
 import com.histmersion.domain.automation.workflows.WorkflowId
-import com.histmersion.api.automation.AgentRole
+import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
-import com.histmersion.api.automation.TargetKind
+import com.histmersion.domain.automation.TargetKind
 
 /** One of research's and the engine's pipelines registered as a workflow, through this transition adapter until
   * research defines its own (the library registers its own, `LibraryWorkflow`): its identifier, version, target, roles
@@ -23,12 +23,12 @@ final class PipelineWorkflow(
 ) extends WorkflowDefinition:
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire)
   def version: Int = pipeline.version
-  def target: TargetKind = pipeline.targetKind
-  def roles: List[AgentRole] = pipeline.roles
+  def target: TargetKind = io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.TargetKind, TargetKind].transform(pipeline.targetKind)
+  def roles: List[AgentRole] = io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]].transform(pipeline.roles)
   def describe: String = pipeline.describe
 
   def allowedTools(role: AgentRole): Set[ToolName] =
-    agents.flatMap(a => definitions.agent(a).toOption).filter(_.role == role).flatMap(_.tools).toSet
+    agents.flatMap(a => definitions.agent(a).toOption).filter(_.role == io.scalaland.chimney.Transformer.derive[AgentRole, com.histmersion.api.automation.AgentRole].transform(role)).flatMap(_.tools).toSet
 
   def run(run: RunCtx): Either[Halt, String] = impl.run(run)
 

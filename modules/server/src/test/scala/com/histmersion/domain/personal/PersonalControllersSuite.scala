@@ -9,7 +9,7 @@ import com.histmersion.domain.personal.marks.Readable
 import com.histmersion.domain.personal.notes.NoteService
 import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference

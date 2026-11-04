@@ -12,7 +12,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
   private def source(
       ck: String,
       year: Int,
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       edges: List[Edge] = Nil
   ): Source =
     Source(
@@ -45,19 +45,19 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
 
   private def corpus(s: com.histmersion.domain.library.LibraryStores): Unit =
     List(
-      source(E, 1950, com.histmersion.domain.library.Source.Status.Contested),
-      source(D, 2010, com.histmersion.domain.library.Source.Status.Current),
-      source(C, 1975, com.histmersion.domain.library.Source.Status.Superseded, List(Edge(C, A, "superseded_by"))),
+      source(E, 1950, com.histmersion.api.library.Source.Status.Contested),
+      source(D, 2010, com.histmersion.api.library.Source.Status.Current),
+      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(C, A, "superseded_by"))),
       source(
         B,
         2001,
-        com.histmersion.domain.library.Source.Status.Current,
+        com.histmersion.api.library.Source.Status.Current,
         List(Edge(B, A, "refutes"), Edge(B, D, "references"))
       ),
       source(
         A,
         1990,
-        com.histmersion.domain.library.Source.Status.Current,
+        com.histmersion.api.library.Source.Status.Current,
         List(Edge(A, B, "references"), Edge(A, "zq_topic", "references"))
       )
     ).foreach(x => s.sources.put(x, Caller.Local): Unit)
@@ -67,16 +67,16 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     assertEquals(
       s.citations.neighbors(A, Nil).map(r => (r.direction, r.kind, r.citekey, r.status, r.target)),
       List(
-        ("in", "refutes", B, Some(com.histmersion.domain.library.Source.Status.Current), NeighborTarget.Source),
+        ("in", "refutes", B, Some(com.histmersion.api.library.Source.Status.Current), NeighborTarget.Source),
         (
           "in",
           "superseded_by",
           C,
-          Some(com.histmersion.domain.library.Source.Status.Superseded),
+          Some(com.histmersion.api.library.Source.Status.Superseded),
           NeighborTarget.Source
         ),
         ("out", "references", "zq_topic", None, NeighborTarget.Unresolved),
-        ("out", "references", B, Some(com.histmersion.domain.library.Source.Status.Current), NeighborTarget.Source)
+        ("out", "references", B, Some(com.histmersion.api.library.Source.Status.Current), NeighborTarget.Source)
       )
     )
     assertEquals(s.citations.neighbors(A, List("refutes")).map(_.citekey), List(B))

@@ -319,7 +319,7 @@ object CalibreCmd:
             doi = b.doi,
             year = b.year,
             venue = b.publisher,
-            status = Some(com.histmersion.domain.library.Source.Status.Unassessed),
+            status = Some(com.histmersion.api.library.Source.Status.Unassessed),
             tags = b.tags,
             summary = summary,
             provenance = Some("calibre"),

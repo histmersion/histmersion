@@ -7,8 +7,8 @@ import com.histmersion.config.given
 import com.histmersion.domain.AgentProposals.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode}
 import com.histmersion.api.library.MetadataPatch
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 class AgentProposalsSuite extends munit.FunSuite:
 
@@ -109,6 +109,6 @@ class AgentProposalsSuite extends munit.FunSuite:
     assertEquals(route(edge, None, Manual, Auto), Route.Apply)
 
   test("an approval mode that is not exactly auto is manual"):
-    assertEquals(ApprovalModes.configured("AUTO"), ApprovalMode.Auto)
-    assertEquals(ApprovalModes.configured("automatic"), ApprovalMode.Manual)
-    assertEquals(ApprovalModes.configured(""), ApprovalMode.Manual)
+    assertEquals(ApprovalModes.configured("AUTO"), com.histmersion.domain.automation.Approval.Mode.Auto)
+    assertEquals(ApprovalModes.configured("automatic"), com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(ApprovalModes.configured(""), com.histmersion.domain.automation.Approval.Mode.Manual)

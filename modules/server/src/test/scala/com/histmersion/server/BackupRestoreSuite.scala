@@ -11,7 +11,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.db.*
 import com.histmersion.api.backup.{Backup, RestoreRequest}
 import com.histmersion.api.library.Filter
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs

@@ -5,7 +5,7 @@ import com.histmersion.api.given
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 class SourceNoteParseSuite extends munit.FunSuite:
   val note =

@@ -96,7 +96,7 @@ final class ProposeArticlesPipeline(
     site.goal(slug).left.map(_.message).map { g =>
       val links = goals.links(g.slug)
       val area = g.slug :: family(g.slug)
-      val articles = area.flatMap(a => goals.refs(a, LinkKind.Article)).distinct.flatMap { ref =>
+      val articles = area.flatMap(a => goals.refs(a, com.histmersion.domain.automation.Goal.LinkKind.Article)).distinct.flatMap { ref =>
         site.articles.get(ref).toOption.map { v =>
           val f = site.articleStore.load(v.article.slug).flatMap(_.filter)
           Existing(v.article.slug, v.article.title, f, site.articles.citedSources(v.article.body))

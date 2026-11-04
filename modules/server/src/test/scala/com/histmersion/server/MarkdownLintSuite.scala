@@ -5,7 +5,7 @@ import com.histmersion.domain.*
 import MarkdownLint.Context
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
 import com.histmersion.api.research.CoverageSearch
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 

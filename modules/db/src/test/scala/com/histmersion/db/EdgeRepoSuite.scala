@@ -35,7 +35,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     doi = Some(s"10.1/$ck"),
     year = Some(2020),
     venue = None,
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = topics,
     regions = Nil,
     tags = Nil,

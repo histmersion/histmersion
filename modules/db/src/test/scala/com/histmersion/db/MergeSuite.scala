@@ -21,8 +21,8 @@ import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
-import com.histmersion.domain.library.Confidence
-import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.exchange.MergeDecision.Kind as DecisionKind
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.{BundleExport, BundleScope}
@@ -42,7 +42,7 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.util.database.given
@@ -139,7 +139,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       year: Int,
       doi: Option[String] = None,
       body: Option[String] = None,
-      status: com.histmersion.domain.library.Source.Status = com.histmersion.domain.library.Source.Status.Current,
+      status: com.histmersion.api.library.Source.Status = com.histmersion.api.library.Source.Status.Current,
       notes: Option[String] = None,
       venue: Option[String] = None,
       summary: Option[String] = None,
@@ -286,7 +286,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         List("Trevor Bryce"),
         2006,
         doi = Some("10.1093/acprof:oso/9780199279081.001.0001"),
-        status = com.histmersion.domain.library.Source.Status.Contested,
+        status = com.histmersion.api.library.Source.Status.Contested,
         edges = List("guterbock1997_perspectives" -> "references")
       )
     )
@@ -457,8 +457,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .toSet
 
-  import com.histmersion.util.data.exchange.Issue.Kind.*
-  import com.histmersion.util.data.exchange.Issue.Severity.*
+  import com.histmersion.api.exchange.MergeIssue.Kind.*
+  import com.histmersion.api.exchange.MergeIssue.Severity.*
   private val expected: Set[Shape] = Set(
     (NotesDiffers, "S", Some("guterbock1997_hittite"), Some("guterbock1997_perspectives"), Blocking, None),
     (DoiDiffers, "S", Some("kuhrt1995_ancient"), Some("kuhrt1995_near"), Blocking, None),
@@ -712,7 +712,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assertEquals(
       SourceFixtures.load(home, "bryce2005_kingdom_hittites").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Contested)
+      Some(com.histmersion.api.library.Source.Status.Contested)
     )
     assertEquals(SourceFixtures.load(home, "page1959_history").flatMap(_.year), Some(1959))
     assertEquals(

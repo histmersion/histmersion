@@ -23,18 +23,7 @@ object RenameCmd:
   final case class Args(oldCitekey: String, newCitekey: String, json: Boolean)
 
   val args: Opts[Args] =
-    (
-      Opts.argument[String]("old"),
-      Opts.argument[String]("new"),
-      Output.jsonFlag
-    ).mapN(Args.apply)
-      .mapValidated(a =>
-        Rename
-          .validate(a.oldCitekey, a.newCitekey)
-          .leftMap(_.message)
-          .toValidatedNel
-          .map(ck => a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = ck.value))
-      )
+    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = a.newCitekey.trim))
 
   val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(

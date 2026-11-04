@@ -79,7 +79,7 @@ object HtmlRender:
   def statusBadge(status: Source.Status): String =
     s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
         status.transformInto[com.histmersion.api.library.Source.Status]
-      )} (${status.wire})">${Wording.status.transformInto[com.histmersion.api.library.Source.Status](status)}</span>"""
+      )} (${status.wire})">${Wording.status(status.transformInto[com.histmersion.api.library.Source.Status])}</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
   def confidenceBadge(c: Confidence): String =

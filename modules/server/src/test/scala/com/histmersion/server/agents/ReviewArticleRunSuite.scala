@@ -24,7 +24,7 @@ import com.histmersion.db.*
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.library.EdgesPatch
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 

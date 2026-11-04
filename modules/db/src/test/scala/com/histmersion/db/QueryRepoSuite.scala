@@ -63,7 +63,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = Some(2020),
         venue = None,
-        status = com.histmersion.domain.library.Source.Status.Current,
+        status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,

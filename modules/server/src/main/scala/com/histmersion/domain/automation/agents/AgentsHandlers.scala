@@ -817,7 +817,7 @@ final class AgentsHandlers(
             .flatMap(i => site.queues.get(QueueItemId(i)))
             .map(_.id.toString)
             .toRight(Api.Error(s"No queue item '$ref'", Some(Write.CodeNotFound)))
-        case LinkKind.SearchQuery =>
+        case LinkKind.Query =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars,
             ref,

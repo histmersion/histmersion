@@ -41,10 +41,4 @@ final class CalibreGapControllers(
 
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] =
     maintenance.guard("calibre/pushed"):
-      Citekey
-        .of(req.citekey)
-        .flatMap(_ =>
-          sources
-            .setCalibreId(req.citekey, req.calibreId, Caller.Local)
-            .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true))
-        )
+      Citekey.parse(req.citekey).left.map(Api.Error(_)).flatMap(_ => sources.setCalibreId(req.citekey, req.calibreId, Caller.Local).map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
