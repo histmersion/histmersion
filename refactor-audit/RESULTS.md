@@ -4,6 +4,14 @@ Baseline: `6e1b5387`. Application and test changes use Scalafix. The current bui
 
 ## Current checkpoint
 
+ModelSettingsRepo is now private to agents. Its only outside consumer, ModelChainRunSuite, moved into that feature through Scalafix, preserving every test body and adding imports for its four shared helpers. Full production and aggregate test compilation pass. The suite is discovered under its new package but is ignored without HISTMERSION_TEST_DB_URL; database behavior has not been rerun. Structural findings are 43 (34 primitive roles, nine repository visibility), with 27/27 source guards and complete source coverage. The global readiness check still fails on 42 partial/unmeasured goals.
+
+For the historical automation oracle run, select both `com.histmersion.server.agents.*` and `com.histmersion.domain.automation.agents.ModelChainRunSuite`. Its resource filename remains ModelChainRunSuite.txt. This scoped package/file recipe preserves test bodies; it is not a general suite migration rule. LeaseRepo's repository test extraction remains next.
+
+Final semantic inventory covers 3,126/3,126 source/test files; all three migrated repositories pass visibility enforcement. Capabilities remain at 228 with 2,356/2,356 production files and 31/31 source guards. Capability enforcement still exits nonzero for the remaining violations, including the indirect repository finding.
+
+Previous checkpoint:
+
 Repository visibility: Scalafix now inventories all 3,126 production/test files against twelve exact repository symbols, including imports, aliases and nested member references. GoalBundleRepo is private to goals and QueueBundleRepo private to worklists. Production and aggregate test compilation pass. Structural findings fell from 46 to 44 (34 primitive roles, 10 repository visibility), with 26/26 source guards; capability findings remain 228 with complete 2,356-file production coverage and 31/31 source guards. No permission was broadened. The global readiness check still fails on 42 partial/unmeasured goals.
 
 The rewrite fixture matches its expected source, compiles and passes the second check. An outside-consumer fixture is rejected before mutation, and stale source hashes reject reapplication of the old inventory. This batch changes visibility only; live database tests were not run. The remaining ten repositories and their production/test consumer counts are recorded in `repository-visibility/checklist.tsv`; full regenerated AST/reference details are in that report directory.

@@ -1,4 +1,6 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.automation.agents
+
+import com.histmersion.server.agents.{RunTranscripts, ScriptedClient, ServerEngineSite, TestRuns}
 
 import com.histmersion.util.database.Transactor
 
