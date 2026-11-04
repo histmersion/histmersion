@@ -3,7 +3,7 @@ model-concepts-invariants	1,4,5,6,8	0	2	pending-independent-sample	unestablished
 layer-boundaries	2,7,12	0	2	pending-independent-sample	unestablished	0	unestablished
 type-and-feature-ownership	3,9,10,21,25,26,34,37,38,41	0	2	pending-independent-sample	unestablished	0	unestablished
 repository-visibility	11	0	2	regression-examples-only	unestablished	0	unestablished
-transaction-ownership	13,14	0	2	bounded-source-sample-17TP-3FN-0FP-10-negative-lines;recall-85pct-failed	3-reviewed-owner-problems;diagnostic-denominator-unestablished	0	must-fix-or-explicitly-accept;setReadOnly-and-static-transaction-SQL-detection-gaps
+transaction-ownership	13,14	1	2	original-recall-85pct-preserved;round1-28-source-assertions-pass;fresh-independent-acceptance-pending	3-reviewed-owner-problems;22-current-diagnostics-not-independent-boundaries	0	must-fix-or-explicitly-accept;3-dynamic-SQL-evidence-cases;history-policy-adoption-pending
 capability-access	15,23,32,40	0	2	regression-examples-only	unestablished	0	must-fix-or-explicitly-accept
 service-implementations-tests	16,17,42	0	2	pending-independent-sample	unestablished	0	unestablished
 derivation	18,30	0	2	fixtures-and-prior-batch; fresh-sample-pending	unestablished	0	unestablished

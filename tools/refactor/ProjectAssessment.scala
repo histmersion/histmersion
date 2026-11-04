@@ -75,6 +75,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       run("copy-fixtures", cli ++ List("--rules", "file:tools/refactor/CopyVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/CopyVerification.scala"))
       run("copy-multiple-fixtures", cli ++ List("--config", "tools/refactor/copy-multiple-verification.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/CopyVerification.scala"))
       run("architecture-fixtures", cli ++ List("--rules", "file:tools/refactor/ArchitectureInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ArchitectureInventoryVerification.scala"))
+      run("transaction-mode-fixtures", cli ++ List("--rules", "file:tools/refactor/TransactionModeVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/TransactionModeVerification.scala"))
       run("build-inventory", cli ++ List("--config", "tools/refactor/build-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/BuildInventory.scala"))
       run("resource-inventory", cli ++ List("--config", "tools/refactor/resource-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/ResourceInventory.scala"))
       run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))

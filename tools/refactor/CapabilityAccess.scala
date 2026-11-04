@@ -14,7 +14,8 @@ object CapabilityAccess {
     implicit val decoder: ConfDecoder[Example] = generic.deriveDecoder(Example()).noTypos
   }
   final case class Ban(id: String = "", symbols: List[String] = Nil, prefixes: List[String] = Nil,
-      within: List[String] = Nil, outside: List[String] = Nil, repositoriesOnly: Boolean = false, message: String = "", allowedParameterTypes: List[String] = Nil)
+      within: List[String] = Nil, outside: List[String] = Nil, repositoriesOnly: Boolean = false, message: String = "", allowedParameterTypes: List[String] = Nil,
+      literalSymbols: List[String] = Nil, literalPattern: String = "")
   object Ban {
     implicit val surface: generic.Surface[Ban] = generic.deriveSurface[Ban]
     implicit val decoder: ConfDecoder[Ban] = generic.deriveDecoder(Ban()).noTypos
@@ -51,6 +52,8 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
   private val unresolved = new ConcurrentLinkedQueue[Hit]()
   private val checkedExamples = new ConcurrentLinkedQueue[Example]()
   private val matched = policy.bans.map(b => b -> SymbolMatcher.normalized(b.symbols: _*))
+  private val literalMatchers = policy.bans.filter(_.literalSymbols.nonEmpty).map(b => b -> SymbolMatcher.normalized(b.literalSymbols: _*)).toMap
+  private val literalPatterns = policy.bans.filter(_.literalSymbols.nonEmpty).map(b => b -> b.literalPattern.r).toMap
 
   override def withConfiguration(config: Configuration): Configured[Rule] =
     config.conf.getOrElse("CapabilityAccess")(Policy()).andThen { p =>
@@ -59,7 +62,8 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
         Option.when(p.bans.isEmpty)("bans must be nonempty"),
         Option.when(ids.distinct.size != ids.size)("duplicate ban id"),
         Option.when(p.permissions.map(_.id).distinct.size != p.permissions.size)("duplicate permission id"),
-        Option.when(p.bans.exists(b => b.id.isEmpty || b.message.isEmpty || (b.symbols.isEmpty && b.prefixes.isEmpty)))("every ban requires id, message and symbols or prefixes"),
+        Option.when(p.bans.exists(b => b.id.isEmpty || b.message.isEmpty || (b.symbols.isEmpty && b.prefixes.isEmpty && b.literalSymbols.isEmpty)))("every ban requires id, message and symbols or prefixes"),
+        Option.when(p.bans.exists(b => b.literalSymbols.nonEmpty != b.literalPattern.nonEmpty || scala.util.Try(b.literalPattern.r).isFailure))("literal matching requires both symbols and a valid pattern"),
         Option.when(p.permissions.exists(a => a.id.isEmpty || a.owner.isEmpty || a.reason.isEmpty || a.capabilities.isEmpty || !a.capabilities.forall(ids.contains)))("invalid permission: require id, owner, reason and known capabilities"),
         Option.when(p.examples.exists(e => e.path.isEmpty || e.line < 1 || e.snippet.isEmpty || !ids.contains(e.rule) || e.count < 0 || e.reason.isEmpty) ||
           p.examples.map(e => (e.path, e.line, e.rule)).distinct.size != p.examples.size)("invalid/duplicate source expectation")
@@ -97,6 +101,24 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
 
   private def matches(b: Ban, matcher: SymbolMatcher, s: Symbol): Boolean =
     !s.isNone && (matcher.matches(s) || b.prefixes.exists(s.value.startsWith))
+
+  private def invocation(t: Tree): Option[Term.Apply] = t.parent.flatMap {
+    case s: Term.Select if s.name eq t => invocation(s)
+    case a: Term.ApplyType if a.fun eq t => invocation(a)
+    case a: Term.Apply if a.fun eq t => Some(a)
+    case _ => None
+  }
+  private def literalCall(b: Ban, n: Name)(implicit doc: SemanticDocument): Boolean =
+    literalMatchers.get(b).exists(_.matches(n.symbol))
+  private def literalMatch(b: Ban, n: Name)(implicit doc: SemanticDocument): Boolean =
+    literalCall(b,n) && invocation(n).flatMap(_.argClause.values.headOption).exists {
+      case Lit.String(value) => literalPatterns(b).findPrefixOf(value).nonEmpty
+      case _ => false
+    }
+  private def matchesAt(b: Ban, matcher: SymbolMatcher, n: Name)(implicit doc: SemanticDocument): Boolean =
+    matches(b,matcher,n.symbol) || literalMatch(b,n)
+  private def contextAt(n: Name)(implicit doc: SemanticDocument): Tree =
+    if(policy.bans.exists(b => literalMatch(b,n))) invocation(n).getOrElse(n.parent.getOrElse(n)) else n.parent.getOrElse(n)
 
   private def approvedOverload(b: Ban, s: Symbol)(implicit doc: SemanticDocument): Boolean =
     b.allowedParameterTypes.nonEmpty && s.info.exists(_.signature match {
@@ -147,18 +169,28 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
       val repo = ownerSymbols.exists(policy.repositoryOwners.contains) || owners.exists(o =>
         o.parent.exists(t => t.is[Defn.Class] || t.is[Defn.Object] || t.is[Defn.Trait]) && policy.repositorySuffixes.exists(o.value.endsWith))
       val method = owners.find(_.parent.exists(_.is[Defn.Def])).map(_.symbol).filterNot(_.isNone).map(graphKey(_, path))
+      matched.foreach { case (ban, _) =>
+        if(repo && literalCall(ban,n)) invocation(n).flatMap(_.argClause.values.headOption).foreach { argument =>
+          val unsupported = argument match {
+            case Lit.String(value) => value.trim.startsWith("--") || value.trim.startsWith("/*") || value.dropRight(1).contains(';')
+            case _ => true
+          }
+          if(unsupported) unresolved.add(Hit("unresolved-transaction-sql",path,n.pos.startLine + 1,n.pos.startColumn + 1,owner,symbol.value,
+            argument.pos.text,argument.structure,"SQL expression needs effect review; not evidence of compliance",n.pos))
+        }
+      }
       if (!symbol.isNone && isInvoked(n)) method.foreach { caller =>
-        val context = n.parent.getOrElse(n)
+        val context = contextAt(n)
         calls.add(Call(caller, graphKey(symbol, path), repo, ownerSymbols,
           Hit("", path, n.pos.startLine + 1, n.pos.startColumn + 1, owner, symbol.value,
             context.pos.text, context.structure, "", n.pos)))
         matched.foreach { case (ban, matcher) =>
-          if (ban.repositoriesOnly && matches(ban, matcher, symbol) && !approvedOverload(ban, symbol))
+          if (ban.repositoriesOnly && matchesAt(ban, matcher, n) && !approvedOverload(ban, symbol))
             seeds.add((caller, ban.id, graphKey(symbol, path)))
         }
       }
       matched.collect {
-        case (ban, matcher) if matches(ban, matcher, symbol) && !redundantQualifier(n, ban, matcher) && !approvedOverload(ban, symbol) &&
+        case (ban, matcher) if matchesAt(ban, matcher, n) && !redundantQualifier(n, ban, matcher) && !approvedOverload(ban, symbol) &&
           (ban.within.isEmpty || ownerSymbols.exists(o => ban.within.exists(o.startsWith))) &&
           !ownerSymbols.exists(o => ban.outside.exists(o.startsWith)) &&
           (!ban.repositoriesOnly || repo) =>
@@ -166,7 +198,7 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
           allowance match {
             case Some(a) => permitted.add(a.id); None
             case None =>
-              val context = n.parent.getOrElse(n)
+              val context = contextAt(n)
               Some(Hit(ban.id, path, n.pos.startLine + 1, n.pos.startColumn + 1, owner, symbol.value,
                 context.pos.text, context.structure, ban.message, n.pos))
           }
@@ -260,7 +292,8 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
         s"expected-files=${expectedSources.size}", s"missing-files=${missing.size}", s"files=${files.size}", s"violations=${hits.size}",
         s"indirect-repository-findings=${indirect.size}",
         "coverage=direct resolved references plus repository calls through known source method bodies; dynamic dispatch, callbacks, external helper bodies and inferred-type escapes remain unmeasured",
-        "unresolved-reference-names counts missing symbols only; compiler error placeholders may still have symbols",
+        "unresolved-reference-names includes unsupported transaction SQL expressions; missing-symbol names are collected only in best-effort mode",
+        "SQL controls: configured JDBC method symbols with a direct string literal and a recognized leading command; dynamic, comment-prefixed and compound SQL require review",
         "completion=check Scalafix exit status for missing/stale SemanticDB and parse failures; this file alone is not a pass") ++
         policy.bans.map(b => s"${b.id}=${hits.count(_.id == b.id)}") ++
         policy.permissions.map(p => s"permission:${p.id}:uses=${permitted.asScala.count(_ == p.id)}")).asJava, UTF_8)

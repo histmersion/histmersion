@@ -1,0 +1,9 @@
+VERIFIED_ADDITIVE_DETECTOR_CORRECTION; HISTORY_POLICY_ADOPTION_PENDING
+sources=da863e495749de201450c162c1a0a8a3ffef58999b16723f0e6dc659a29dc597
+original-occurrences=228
+current-occurrences=231
+added-occurrences=3
+added-anchors=2
+All original anchor identities and multiplicities preserved; application sources unchanged.
+Original sample failure and original history baseline remain unchanged.
+These are pre-existing TX-0001 violations newly detected, not new code regressions or fixes.
