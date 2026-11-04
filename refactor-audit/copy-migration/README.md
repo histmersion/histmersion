@@ -73,6 +73,22 @@ matching the rewrite planner. The reconciled pre-first-batch occurrence baseline
 is 442 (198 rewritten plus 244 remaining); the original 441-group baseline above
 is preserved. Both allowed detector-refinement rounds are now used.
 
+### Explicit correction to the confirmed denominator
+
+Final reconciliation found one false positive in the raw detector output:
+`BlobOut#copy.` is the `OutputStream => Unit` constructor field selected by
+`BundleExport` as `b.copy`, not the generated record-copy method. Its source
+definition and usage are recorded in `adjudications.tsv`. The rule was not
+expanded for another refinement round; this reviewed non-violation must be
+subtracted when interpreting confirmed counts, while the raw reports stay intact.
+
+Thus the reconciled baseline is **442 raw occurrences, 441 confirmed violations**.
+The first batch left **244 raw / 243 confirmed**, and the second leaves
+**108 raw / 107 confirmed**. Both batches removed **334 confirmed violations**
+(75.7% of the confirmed production copy baseline). This is an explicit baseline
+correction with source evidence, not an unreported denominator change. The raw
+detector's aggregate count gate still includes this known non-violation.
+
 The multi-field rewrite has 136 eligible calls. It preserves named-argument
 source order through chained lenses. It requires immutable constructor fields,
 no explicit parents, and no executable constructor statements. Constructors

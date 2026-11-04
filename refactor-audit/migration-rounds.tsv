@@ -7,7 +7,7 @@ transaction-ownership	13,14	0	2	regression-examples-only	unestablished	0	must-fi
 capability-access	15,23,32,40	0	2	regression-examples-only	unestablished	0	must-fix-or-explicitly-accept
 service-implementations-tests	16,17,42	0	2	pending-independent-sample	unestablished	0	unestablished
 derivation	18,30	0	2	fixtures-and-prior-batch; fresh-sample-pending	unestablished	0	unestablished
-record-updates	19	2	2	acceptance-20TP-0FN-0FP-3TN; same-line-offset-regression; limited-negative-diversity	441-original-groups;442-reconciled-occurrences;tests-pending-triage	334-production-occurrences	108-production-occurrences
+record-updates	19	2	2	acceptance-20TP-0FN-0FP-3TN; offset-regression;1-adjudicated-field-accessor-false-positive	441-original-raw-groups;442-raw-occurrences;441-confirmed;tests-pending-triage	334-confirmed-production-occurrences	107-confirmed-production;1-raw-non-violation
 accumulator-algorithms	20	0	2	pending-independent-sample	unestablished	0	unestablished
 comments-and-naming	22	0	2	pending-independent-sample	unestablished	0	unestablished
 build-config-isolation	24,27,29,31	0	2	fixtures-only	unestablished	0	module-isolation-must-fix-or-explicitly-accept
