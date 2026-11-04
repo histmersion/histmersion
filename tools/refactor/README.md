@@ -113,6 +113,33 @@ and coverage report both matter.
 
 ## Compiler repair rules
 
+### CLI stderr boundary batch
+
+`CliErrorBoundary.scala` inspects resolved Console.err/System.err uses and the
+actual PrintStream method signature. It rewrites immediate calls only: String
+print/println and zero-argument println/flush on stable known singleton roots.
+Method references, non-string overloads, escaped streams and effectful receivers
+remain unsupported in the report. `cli-error.conf`, `cli-error-apply.conf` and
+`cli-error-check.conf` provide inspect/apply/check modes with the ordinary
+semantic options and `--files modules/cli/src/main`.
+
+`AddCliError.scala` inserts narrow package-private methods and a regression into
+OutputSuite through AST patches. By-name String parameters allow each method to
+capture its stream before evaluating the message, preserving original evaluation
+order. Console.err and System.err remain separate; no PrintStream escapes the
+boundary. Run aggregate compilation and `cli/testOnly *` after applying.
+
+The executable fixtures use `cli-error-fixtures/Support.scala` and either
+`cli-error-fixtures/input` or the separately rewritten output. Run with
+`--main-class fixture.Verify --server=false --semanticdb` and a dedicated target
+root. Apply `cli-error-fixtures.conf` with `--out-from`/`--out-to`, compare its
+Example.scala with the expected file, and run the output with Support.scala.
+Tests assert stream replacement during argument evaluation, distinct dynamic and
+process stderr, exact bytes, overload selection and flush counts.
+`cli-error-fixtures-check.conf` rejects the original's eight supported calls and
+passes the recompiled output, retaining two unsupported examples. Application
+check mode must report zero supported and unsupported cases for this batch.
+
 ### CLI stdout boundary batch
 
 `CliOutputBoundary.scala` matches semantic `Predef.print`/`println` references in

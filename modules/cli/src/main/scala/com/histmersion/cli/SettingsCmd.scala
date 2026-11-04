@@ -33,7 +33,7 @@ object SettingsCmd:
   private def orLocal[A](viaServer: => Either[Cli.Error, A], viaFile: => Either[Cli.Error, A]): Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
-        System.err.println(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
+        com.histmersion.cli.Cli.processErrorLine(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
 

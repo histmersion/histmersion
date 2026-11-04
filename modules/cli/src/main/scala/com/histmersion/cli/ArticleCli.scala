@@ -128,7 +128,7 @@ object ArticleCli:
           case Left(e) => Some(s"$slug: ${e.message}")
       }
       com.histmersion.cli.Cli.writeLine(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
-      failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
+      failed.take(10).foreach(f => com.histmersion.cli.Cli.errorLine(s"  ! $f"))
       if failed.isEmpty then Right(total)
       else Left(Cli.Error(s"${failed.size} of $total article(s) could not be exported", exitCode = ExitCode.Refused))
     }
@@ -150,7 +150,7 @@ object ArticleCli:
   def report(r: SeedResult): Unit =
     com.histmersion.cli.Cli.writeLine(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
     r.skipped.take(10).foreach(s => com.histmersion.cli.Cli.writeLine(s"  ~ $s"))
-    r.failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
+    r.failed.take(10).foreach(f => com.histmersion.cli.Cli.errorLine(s"  ! $f"))
 
   /** The filter flags are the shared ones: they select SOURCES, and an article is listed when it cites one of them
     * (`--title` is the article's own title). The positional query is the article's own full text.

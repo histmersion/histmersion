@@ -187,7 +187,7 @@ object AgentCmd:
       case Left(e)  => Left(e)
       case Right(d) =>
         val line = AgentsMarkdown.runLine(d.run)
-        if line != last then Console.err.println(line)
+        if line != last then com.histmersion.cli.Cli.errorLine(line)
         RunState.parse(d.run.status) match
           case Some(RunState.Queued) | Some(RunState.Running) =>
             Thread.sleep(PollMs.toLong)
@@ -317,7 +317,7 @@ object AgentCmd:
         val failed = ids.toList.flatMap { id =>
           c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))) match
             case Right(a) => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.approvalLine(a)); None
-            case Left(e)  => Console.err.println(s"#$id: ${e.message}"); Some(e)
+            case Left(e)  => com.histmersion.cli.Cli.errorLine(s"#$id: ${e.message}"); Some(e)
         }
         failed match
           case Nil        => Right(())

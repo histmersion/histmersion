@@ -74,7 +74,7 @@ object AcquireCmd:
         client.updateRetractions.flatMap { started =>
           if json then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
           else
-            Console.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
+            com.histmersion.cli.Cli.errorLine("refreshing the Retraction Watch mirror (~30 MB)…")
             pollRetractions(client, 0).map(r => com.histmersion.cli.Cli.writeLine(AcquireMarkdown.retractionsUpdate(r)))
         }
       }
@@ -97,7 +97,7 @@ object AcquireCmd:
         )
       case Right(_) =>
         Thread.sleep(2000)
-        Console.err.print(".")
+        com.histmersion.cli.Cli.errorWrite(".")
         pollRetractions(c, waited + 2)
 
   private val assessOne =

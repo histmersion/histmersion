@@ -221,7 +221,7 @@ object MergeCmd:
         )
         Thread.sleep(PollMs.toLong)
         c.mergeApplyStatus(j.job) match
-          case Left(e)     => Console.err.println(); Left(e)
+          case Left(e)     => com.histmersion.cli.Cli.errorLine(); Left(e)
           case Right(next) =>
             if next.state != MergeJobState.Running then JobFollow.Progress.clear()
             follow(c, next)

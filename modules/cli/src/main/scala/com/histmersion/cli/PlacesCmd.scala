@@ -89,7 +89,7 @@ object PlacesCmd:
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
                 if total > 1 then
-                  Console.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
+                  com.histmersion.cli.Cli.errorWrite(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
                 c.importPlaces(kind, Lpf.render(g), dataset)
                   .map(r =>
                     com.histmersion.api.catalogue.Place.ImportResult(
@@ -102,7 +102,7 @@ object PlacesCmd:
               }
             }
             .map { r =>
-              if total > 1 then Console.err.print("\r" + " " * 72 + "\r")
+              if total > 1 then com.histmersion.cli.Cli.errorWrite("\r" + " " * 72 + "\r")
               r
             }
 

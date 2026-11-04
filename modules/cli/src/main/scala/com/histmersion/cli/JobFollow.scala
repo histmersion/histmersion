@@ -20,8 +20,8 @@ object JobFollow:
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:
     val Width = 72
-    def line(text: String): Unit = Console.err.print(s"\r${" " * Width}\r$text")
-    def clear(): Unit = Console.err.print("\r" + " " * Width + "\r")
+    def line(text: String): Unit = com.histmersion.cli.Cli.errorWrite(s"\r${" " * Width}\r$text")
+    def clear(): Unit = com.histmersion.cli.Cli.errorWrite("\r" + " " * Width + "\r")
 
   def failed(what: String, why: Option[String]): Cli.Error =
     Cli.Error(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
@@ -57,7 +57,7 @@ object JobFollow:
       s: Backup.Status,
       pollMs: Long = BackupPollMs,
       sleep: Long => Unit = Thread.sleep,
-      progress: String => Unit = l => System.err.println(l)
+      progress: String => Unit = l => com.histmersion.cli.Cli.processErrorLine(l)
   ): Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>

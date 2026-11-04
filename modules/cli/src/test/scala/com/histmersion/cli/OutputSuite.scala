@@ -93,3 +93,29 @@ class OutputSuite extends munit.FunSuite:
     assertEquals(evaluated, 1)
     assertEquals(rendered, 1)
   }
+
+  test("CLI stderr boundary preserves progress, overloads, flush and single evaluation") {
+    val bytes = new java.io.ByteArrayOutputStream
+    var flushes = 0
+    var lines = 0
+    val stream = new java.io.PrintStream(bytes, false, "UTF-8") {
+      override def flush(): Unit = { flushes += 1; super.flush() }
+      override def println(value: String): Unit = { lines += 1; super.println(value) }
+    }
+    var evaluated = 0
+    Console.withErr(stream) {
+      Cli.errorWrite({ evaluated += 1; "雪" })
+      Cli.errorLine("line")
+      Cli.errorLine()
+      Cli.errorFlush()
+      JobFollow.Progress.line("working")
+      JobFollow.Progress.clear()
+      intercept[IllegalArgumentException] { Cli.errorLine(throw new IllegalArgumentException("failed")) }
+    }
+    val nl = System.lineSeparator()
+    val blank = " " * JobFollow.Progress.Width
+    assertEquals(bytes.toString("UTF-8"), s"雪line${nl}${nl}\r${blank}\rworking\r${blank}\r")
+    assertEquals(flushes, 1)
+    assertEquals(lines, 1)
+    assertEquals(evaluated, 1)
+  }

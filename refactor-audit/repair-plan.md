@@ -18,7 +18,7 @@ Application and application-test edits remain Scalafix-only. Use semantic symbol
 
 Batch 1 is complete: 137 semantic patches across 48 files, both files moved, all four targeted findings removed, compilation and 25 contract/agent tests passing. The contract run also exposed and repaired an API/domain role comparison; snapshot expectations were unchanged.
 
-Batch 2's stdout pass is complete: 163 `Predef.print`/`println` references in 23 files route through the existing permitted Cli boundary. All 233 CLI tests pass, including byte/evaluation regression coverage. Capability findings are 269, including 41 remaining console findings; structural findings remain 46. Next: classify remaining stderr/progress calls and non-CLI diagnostics, preserving stream selection and flush behavior. Each batch is independently reviewable and committed after verification.
+Batch 2's stdout and stderr passes are complete: 163 stdout references in 23 files and 24 stderr calls in 12 files route through the existing permitted Cli boundary. All 234 CLI tests pass, including byte/evaluation/progress regression coverage. Capability findings are 245, including 17 remaining console findings outside CLI; structural findings remain 46. Next: distinguish non-CLI diagnostics from launcher/help/protocol output before choosing logging or explicit output ownership. Never replace machine-readable resolver/relink output with logger formatting. Each batch is independently reviewable and committed after verification.
 
 ## Transaction designs that must be preserved
 

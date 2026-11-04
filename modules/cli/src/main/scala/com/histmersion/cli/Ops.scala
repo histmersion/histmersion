@@ -157,12 +157,12 @@ object Ops:
         // under it): stop rather than loop
         val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
         if r.remaining > 0 || moreAreas then
-          Console.err.print(if moreAreas then
+          com.histmersion.cli.Cli.errorWrite(if moreAreas then
             s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
           else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
           fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
         else
-          if sources > 0 || ar > 0 then Console.err.print("\r" + " " * 70 + "\r")
+          if sources > 0 || ar > 0 then com.histmersion.cli.Cli.errorWrite("\r" + " " * 70 + "\r")
           Right(
             List(s"resolve-edges: $ed edge target(s) rewritten", s"reindex: $s source(s) → $ch chunk(s)") ++
               mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses")

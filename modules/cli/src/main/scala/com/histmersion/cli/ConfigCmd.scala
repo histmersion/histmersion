@@ -23,10 +23,10 @@ object ConfigCmd:
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
               case Left(err) => Left(Cli.Error(err))
               case Right(l)  =>
-                if !Files.exists(p) then System.err.println("(not there yet: the defaults and the environment apply)")
+                if !Files.exists(p) then com.histmersion.cli.Cli.processErrorLine("(not there yet: the defaults and the environment apply)")
                 else
-                  l.file.warnings.foreach(w => System.err.println(s"warning: $w"))
-                  if l.file.unknownKeys.isEmpty then System.err.println("(reads cleanly)")
+                  l.file.warnings.foreach(w => com.histmersion.cli.Cli.processErrorLine(s"warning: $w"))
+                  if l.file.unknownKeys.isEmpty then com.histmersion.cli.Cli.processErrorLine("(reads cleanly)")
                 Right(())
     )
   }
