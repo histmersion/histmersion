@@ -1,0 +1,42 @@
+import scalafix.v1._
+import java.nio.file.{Files,Paths}
+import java.nio.charset.StandardCharsets.UTF_8
+import scala.jdk.CollectionConverters._
+
+class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInventoryVerification") {
+  override def afterComplete(): Unit = {
+    val report = Paths.get("refactor-audit/architecture/verification.txt")
+    Files.createDirectories(report.getParent); Files.writeString(report,"RUNNING\n")
+    val logs = Paths.get("target/architecture-verification"); Files.createDirectories(logs)
+    def run(label: String, args: List[String], expected: Int = 0): Unit = {
+      println("Architecture inventory verification: " + label)
+      val code = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(logs.resolve(label + ".log").toFile).start().waitFor()
+      require(code == expected,s"$label exited $code, expected $expected; see $logs/$label.log")
+    }
+    val source = "tools/refactor/architecture-fixture/src/main/scala"
+    run("compile",List("scala-cli","compile",source,"--server=false","-S","3.10.0","--scalac-option","-source:future",
+      "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString,
+      "--compilation-output","target/architecture-fixture-classes"))
+    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val args = List("--config","tools/refactor/architecture-fixture/inspect.conf","--scala-version","3.10.0","--sourceroot",".","--classpath","target/architecture-fixture-classes","--files")
+    run("positive",cli ++ args ++ List(source))
+    def table(name: String) = Files.readAllLines(Paths.get("target/architecture-fixture-report",name),UTF_8).asScala.drop(1).map(_.split("\t",-1).toList).toList
+    val services = table("services.tsv")
+    val service = services.find(_.head == "com/histmersion/inventoryfixture/SampleService#").get
+    require(service(6).split(";").toSet == Set("com/histmersion/inventoryfixture/SampleService.Implementation#","com/histmersion/inventoryfixture/SampleService.InMemory#"),"Incorrect semantic implementation edges: " + service)
+    require(service(7).endsWith("SampleService.Implementation#") && service(8).endsWith("SampleService.InMemory#"))
+    require(!service(6).contains("Unrelated"),"Name-only InMemory false positive")
+    require(!service(6).contains("Wrapped"),"Parent type argument incorrectly treated as implemented parent")
+    val plan = table("object-plan.tsv").map(r => r(2) -> r(7)).toMap
+    require(plan("`Retained`").startsWith("original-object-present"),"Original object missed")
+    require(plan("`Moved`").startsWith("same-name-candidates"),"Relocated name not retained for review")
+    require(plan("`Missing`").startsWith("original-absent"),"Missing original incorrectly completed")
+    val declarations = table("declarations.tsv")
+    require(declarations.filter(_(7) == "enum-case").map(_(6)).toSet == Set("Active","Done","Failed"),"Enum cases missing")
+    require(declarations.count(_(7) == "given-template") == 1,"Template given missing")
+    require(declarations.exists(r => r(6) == "Record" && r(7) == "case-class" && r(12).contains("private")),"Constructor visibility lost")
+    require(table("references.tsv").exists(r => r(3) == "com/histmersion/inventoryfixture/SampleService#read()." && r(6) == "project-declaration"),"Call edge unresolved")
+    run("omitted-file",cli ++ args ++ List(source + "/Services.scala"),1)
+    Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file rejected").asJava,UTF_8)
+  }
+}

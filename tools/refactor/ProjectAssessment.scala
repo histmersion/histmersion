@@ -49,10 +49,15 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       if (policy.compile) run("compile", List("sbt", "--server", "-batch", "set every scalafmtOnCompile := false", "set ThisBuild / scalacOptions += \"-Xsemanticdb\"", "compile", "Test/compile"))
       run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/SchemaVerification.scala"))
       run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ModelInventoryVerification.scala"))
+      run("operation-fixtures", cli ++ List("--rules", "file:tools/refactor/OperationInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/OperationInventoryVerification.scala"))
+      run("architecture-fixtures", cli ++ List("--rules", "file:tools/refactor/ArchitectureInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ArchitectureInventoryVerification.scala"))
+      run("build-inventory", cli ++ List("--config", "tools/refactor/build-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/BuildInventory.scala"))
+      run("resource-inventory", cli ++ List("--config", "tools/refactor/resource-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/ResourceInventory.scala"))
       run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
       run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
       require(before == fingerprint(sourceFiles), "Application sources changed during assessment")
       require(policyHash == fingerprint(policyFiles), "Rule/configuration changed during assessment")
+      run("inventory-coverage", cli ++ List("--config", "tools/refactor/inventory-coverage.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/InventoryCoverage.scala"))
       val modules = sourceFiles.map(p => module(p.toString)).distinct.sorted
       val scopes = scala.collection.mutable.LinkedHashMap.empty[String, String]
       val hits = scala.collection.mutable.ListBuffer.empty[(String, String)]

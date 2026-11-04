@@ -1,0 +1,5 @@
+PASS
+Resolved implementations exclude unrelated same-name InMemory
+Constructor visibility and method-reference edges retained
+Every object-plan row reconciled; missing originals never count as completion
+Omitted source file rejected
