@@ -1,5 +1,20 @@
 # Priority-family status
 
+## Capability treatment checkpoint
+
+The bounded source review in `capability-treatment/README.md` now confirms 58
+supported occurrences in 48 existing anchors, plus one separately identified
+resource-access detector gap. Two raw findings are adjudicated non-violations;
+149 occurrences in 125 anchors remain candidates. No exceptions were accepted,
+and no detector output or original baseline was removed. Independent sampled
+precision/recall and test-policy coverage remain unestablished.
+
+The next repair batch covers AgentTrees, PluginTree and Prompts: 29 supported
+occurrences plus the resource gap. Plugin file/process capabilities remain a
+required cross-module design batch; they must not acquire server dependencies.
+No new application fixes are claimed by this treatment review. Transaction fixes
+below remain verified; copy automation remains paused.
+
 ## Transaction repair checkpoint
 
 TX-0001–TX-0003 are now verified fixed by a single guarded targeted Scalafix batch.
