@@ -148,3 +148,21 @@ class PluginResolverSuite extends munit.FunSuite:
       Some("unknown option --nope")
     )
     assertEquals(DependencyResolver.run(List("nothing"), _ => (), _ => ()), 1)
+
+  test("resolver exit boundary supplies errors and preserves failure status") {
+    val out = List.newBuilder[String]
+    val err = List.newBuilder[String]
+    assertEquals(DependencyResolver.exitCode(List("nothing"), s => { out += s; () }, s => { err += s; () }), 1)
+    assertEquals(out.result(), Nil)
+    assert(err.result().head.startsWith("usage: pluginResolver"))
+    val failures = List.newBuilder[String]
+    var calls = 0
+    val status = DependencyResolver.exitCode(List("nothing"), _ => (), s => {
+      calls += 1
+      if calls == 1 then throw new IllegalArgumentException("sink failed")
+      failures += s
+      ()
+    })
+    assertEquals(status, 3)
+    assertEquals(failures.result(), List("pluginResolver: IllegalArgumentException: sink failed"))
+  }

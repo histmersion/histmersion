@@ -11,6 +11,8 @@ cli-output*.tsv*
 cli-output-fixtures/
 cli-error*.tsv*
 cli-error-fixtures/
+launcher-output*.tsv
+launcher-fixtures/
 controller-renames-check.tsv*
 repair-fixtures/
 files.txt

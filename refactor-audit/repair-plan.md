@@ -22,6 +22,8 @@ Batch 2's stdout and stderr passes are complete: 163 stdout references in 23 fil
 
 ## Transaction designs that must be preserved
 
+Launcher follow-up: three diagnostics now log; eleven resolver/relink implementation references use supplied output callbacks. Three exact console-only entry-function permissions cover four relocated stream references and three existing server help/error/self-check references. Current findings: 228 capabilities, 46 structural. Compilation passes; 24 resolver tests and 24/25 selected server tests pass. The remaining generated-plugin-tree test rejects pre-existing local skill/metadata files, which were preserved. Next work is batch 3's repository consumer inventory, not transaction lifecycle rewriting.
+
 - `QueryRepo.exec` establishes read-only mode and timeout, always rolls back, and restores connection state. The service must retain the restricted database role and SQL validation. Extend the database capability with an explicit read-only/rollback operation if needed; ordinary `Transactor.read` is not an equivalent replacement. Test forbidden writes, timeout, errors and pooled-connection state restoration.
 - `GazetteerRepo.session` commits or rolls back batches, prunes in batches and supports dry-run counts. Extract orchestration without turning a bounded batch operation into one giant transaction. Test successful batches, mid-batch failure, dry run and pruning/sweep behavior.
 - `VacuumRepo.vacuum` needs autocommit outside a transaction. The infrastructure owner must supply that execution mode; moving it into `transact` would be incorrect. Test both analyze modes and restoration/closure on failure.

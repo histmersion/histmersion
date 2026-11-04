@@ -334,7 +334,7 @@ object Supervisor:
       if !p.waitFor(10, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
     }
     val (rc, out) = run(pgStop(l), l)
-    if rc != 0 then System.err.println(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")
+    if rc != 0 then scribe.error(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")
 
   /** Run a Postgres tool with the bundle's environment; returns (exit code, output lines). */
   private def run(cmd: List[String], l: Layout): (Int, List[String]) =

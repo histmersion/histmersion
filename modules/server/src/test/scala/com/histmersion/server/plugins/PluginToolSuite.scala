@@ -224,3 +224,34 @@ class PluginToolSuite extends munit.FunSuite:
     )
     val actual = m.files.map(f => f.file -> RelinkPlugins.sha256(kit.resolve(f.file))).toMap
     assertEquals(PluginKit.verifyKit(m.files, actual), Nil)
+
+  test("relink exit boundary preserves JSON, usage and failure channels") {
+    val out = List.newBuilder[String]
+    val err = List.newBuilder[String]
+    val emit: String => Unit = s => { out += s; () }
+    val reject: String => Unit = s => { err += s; () }
+    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString), emit, reject), 0)
+    assertEquals(out.result(), List(PluginKit.renderJars(List(RelinkPlugins.describe(hello, loader)))))
+    assertEquals(err.result(), Nil)
+    out.clear()
+    assertEquals(RelinkPlugins.exitCode(Nil, emit, reject), 1)
+    assertEquals(out.result(), Nil)
+    assert(err.result().head.startsWith("usage:"))
+    err.clear()
+    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString), _ => throw new IllegalArgumentException("sink failed"), reject), 3)
+    assertEquals(err.result(), List("pluginTool: IllegalArgumentException: sink failed"))
+  }
+
+  tmp.test("relink exit boundary emits only the plugin set digest") { d =>
+    val kit = kitWith(d, Map.empty)
+    val jar = d.resolve("output.jar")
+    val record = d.resolve("record.json")
+    val out = List.newBuilder[String]
+    val err = List.newBuilder[String]
+    assertEquals(RelinkPlugins.exitCode(List("plugin-set", jar.toString, record.toString, "jvm", kit.toString, hello.toString), s => { out += s; () }, s => { err += s; () }), 0)
+    val expected = PluginKit.digest(List(hello.getFileName.toString -> RelinkPlugins.sha256(hello)))
+    assertEquals(out.result(), List(expected))
+    assertEquals(err.result(), Nil)
+    assert(Files.exists(jar))
+    assert(Files.readString(record).contains(expected))
+  }

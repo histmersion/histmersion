@@ -1,7 +1,15 @@
 # Refactor detectors
 
-These tools read application sources. They do not rewrite application code.
+Detector configurations read application sources; explicitly named repair configurations apply Scalafix patches.
 Run commands from the `contracts3-scalafix` worktree root.
+
+## Launcher output repair
+
+`launcher-output.conf` is a reviewed snapshot recipe using `RepairBoundaries` AST templates, scoped to four production files. It threads supplied output functions through resolver/relink signatures and callers and sends three diagnostics to scribe. Run it twice: outer definition patches intentionally defer nested body rewrites. `launcher-output-check.conf` must then pass with zero remaining matches. It is not a general semantic migration rule: its source paths, owners and shapes must be reviewed again for a different snapshot.
+
+`launcher-output-tests.conf` adds regression tests through Scalafix in `PluginResolverSuite.scala` and `PluginToolSuite.scala`. These exercise JSON, digest-only stdout, usage stderr and exception exit status. The test insertion is idempotent. The application compiles with `-source:future` and normal SemanticDB; always disable scalafmt-on-compile during this migration.
+
+The three exact entry-function permissions in `capabilities.conf` permit console access only. Seven raw stream references remain at these entries (four relocated, three existing); report this policy change separately from code repairs. The server generated-plugin-tree test currently rejects additional local skill and metadata files; do not delete those files to make this batch green. See `refactor-audit/RESULTS.md` for full results and outstanding findings.
 
 ## Migration readiness
 
