@@ -9,8 +9,11 @@ including 22 transaction diagnostics, and three unresolved SQL expressions acros
 the same 2,357 production files. All 28 frozen source assertions now pass. Its three
 added occurrences were already present in TX-0001; they are not code regressions or
 fixes. The table below preserves the preceding integrated-assessment checkpoint.
-History policy adoption remains pending; see transaction-round1.md. Do not treat the
-preceding integrated pass as a pass under the changed detector version.
+The additive history policy is now adopted without replacing the original baseline.
+A new full integrated assessment passes under that policy: 231 occurrences in 190
+anchors, 79 identity-ambiguous occurrences, no new/reopened anchors or multiplicity
+changes. See transaction-round1.md. This pass does not prove detector completeness
+or eliminate the outstanding transaction repair work.
 
 | Family | Production evidence | Test evidence | Confirmed outstanding / verified fixes | Confidence and unresolved work |
 |---|---|---|---|---|

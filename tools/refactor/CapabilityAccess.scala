@@ -266,6 +266,10 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
     if (policy.report.nonEmpty) {
       val out = Paths.get(policy.report)
       Files.createDirectories(out)
+      def digest(s: String): String = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(UTF_8)).map(b => f"${b & 255}%02x").mkString
+      val policyInputs = List("CapabilityAccess.scala","capabilities.conf","capabilities-source.conf","capability-source-examples.conf")
+      val policyDigest = digest(policyInputs.map(name => name + "\t" + digest(Files.readString(Paths.get("tools/refactor",name)))).mkString("\n"))
+      Files.writeString(out.resolve("identity-policy.txt"),policyDigest + "\n",UTF_8)
       Files.write(out.resolve("rules.txt"), policy.bans.map(_.id).asJava, UTF_8)
       def escaped(s: String): String = s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
       val hits = records.asScala.toList.sortBy(h => (h.path, h.line, h.column, h.id))

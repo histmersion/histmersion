@@ -1,5 +1,11 @@
 # Capability and transaction evidence history
 
+Current ledger: the original 228-occurrence baseline remains immutable. The
+separate `adoptions/transaction-round1/` event adds three pre-existing TX-0001
+occurrences in two anchors. The effective inventory is 231 occurrences in 190
+anchors; 79 occurrences have ambiguous identity. None was marked fixed or
+accepted. The following baseline description remains historical evidence.
+
 `CapabilityHistory` is a separate Scalafix measurement gate. Its frozen baseline
 contains 228 production diagnostics grouped into 188 anchors. There are 151
 occurrences with unique non-local anchors and 77 occurrences whose identity is
@@ -63,3 +69,29 @@ missing coverage and stale evidence fail. Capture overwrite fails, and the
 frozen baseline remains byte-for-byte identical. `verification.txt` records
 that suite. These tests validate enforcement mechanics, not independent
 positive/negative source samples for detector precision and recall.
+
+## Explicit additive policy adoption
+
+`capability-history-adopt-transaction-round1.conf` records the reviewed correction
+without replacing the baseline or original contract. Adoption requires the exact
+original application-source fingerprint, complete production coverage, every old
+identity and multiplicity unchanged, and exactly the reviewed new identities and
+counts. The reviewed additions include classification, treatment and owner-problem
+ID. A reason and source evidence are mandatory. Existing events cannot be overwritten.
+
+The event retains its predecessor contract, new contract, additions and evidence,
+plus hashes of the unchanged baseline and reviewed additions. Ordinary checks use
+the original baseline plus that event, and reject changes to either. This narrow
+operation does not support arbitrary renames, baseline removals or multiple policy
+transitions; those require explicit future reconciliation work.
+
+Capability reports now carry a detector/policy-input fingerprint. Checks reject
+reports emitted by a different version, even when source files are unchanged.
+The fingerprint covers the standard versioned capability-rule/configuration inputs;
+the normal assessment is the supported producer. Adopting a separately measured
+report is allowed only in explicit adoption mode with the unchanged-source proof.
+
+The enforcement suite additionally verifies stale detector rejection, rejected
+unreviewed additions during adoption, successful reviewed-only adoption, refused
+event overwrite, and rejection of an unrelated regression after adoption. The
+original baseline remains byte-for-byte unchanged throughout.

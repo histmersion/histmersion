@@ -1,5 +1,13 @@
 # Transaction detector refinement 1 of 2
 
+Subsequent checkpoint: the reviewed additive correction has been adopted in
+`capability-history/adoptions/transaction-round1/`, without changing the original
+baseline or contract. The full integrated assessment passes under that adopted
+policy: 231 occurrences, 190 anchors, 79 identity-ambiguous occurrences, zero new
+or reopened anchors and zero multiplicity changes. The pending-adoption text below
+and reconciliation.txt preserve the state at initial detector verification.
+Next work is the repair batch described in transaction-repair-contract.md.
+
 This is detector progress, not a transaction repair. Application sources and the
 original history baseline remain unchanged. The failed original source sample
 is preserved in transaction-sample/ and version control.

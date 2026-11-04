@@ -1,6 +1,7 @@
 PASS
-target/capability-history-verification/2026-11-04T22-15-06.881369Z
+target/capability-history-verification/2026-11-04T22-35-14.720214Z
 Unchanged and line-shifted observations pass; frozen baseline overwrite is rejected.
 Equal-count replacement, duplicate insertion and reappearance fail.
 Missing coverage and stale source evidence fail; baseline remains byte-for-byte unchanged.
+Stale detector versions fail. Reviewed additive adoption passes; unreviewed additions, event overwrite and unrelated later regressions fail.
 Synthetic report mutations test history enforcement, not detector precision or recall.
