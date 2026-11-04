@@ -50,6 +50,9 @@ final class Deps(
 ):
 
   /** Transactions on the application role ([[ds]]). */
+  val stores: com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  val resources: com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  val jvmHome: com.histmersion.util.system.JvmHome = SystemContext.jvmHome()
   val transactor: Transactor = Transactor(ds)
 
   /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */

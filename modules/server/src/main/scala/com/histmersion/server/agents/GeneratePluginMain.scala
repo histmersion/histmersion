@@ -8,4 +8,7 @@ import java.nio.file.Path
   * tools and roles the engine is given today.
   */
 @main def generatePlugin(root: String): Unit =
-  PluginTree.write(Path.of(root).toAbsolutePath.normalize, EngineContributions.roster)
+  given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(classOf[com.histmersion.domain.automation.agents.Prompts].getClassLoader)
+  val store = summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, Path.of(root).toAbsolutePath.normalize)
+  PluginTree.write(store, EngineContributions.roster).fold(message => { scribe.error(s"cannot generate the plugin: $message"); sys.exit(1) }, identity)

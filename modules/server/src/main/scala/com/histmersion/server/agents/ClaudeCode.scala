@@ -101,7 +101,7 @@ object ClaudeCode:
       token: Option[String],
       quotaUrl: String,
       env: java.util.Map[String, String]
-  ): Unit =
+  )(using com.histmersion.util.system.JvmHome): Unit =
     cfg.envChanges.foreach {
       case (k, Some(v)) => val _ = env.put(k, v)
       case (k, None)    => val _ = env.remove(k)
@@ -155,7 +155,7 @@ object ClaudeCode:
   /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai connectors, the config
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
-  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: Int, env: java.util.Map[String, String]): Unit =
+  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: Int, env: java.util.Map[String, String])(using com.histmersion.util.system.JvmHome): Unit =
     environment(cfg, maxTokens, None, "", env)
     val _ = env.remove(AgentGenerator.QuotaUrlEnv)
     val _ = env.remove(AgentGenerator.TokenEnv)

@@ -1,6 +1,6 @@
 # Project-wide rule measurements
 
-28 source modules; 3128 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
+28 source modules; 3132 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
 
 Counts are matches within each rule's stated scope, not proof of all 43 architectural goals. Relationship counts and rewrite-plan nodes must not be added to diagnostic counts. CLI-only rows outside cli are not applicable. Zero is never a claim that an unimplemented goal is covered.
 
@@ -10,11 +10,11 @@ Counts are matches within each rule's stated scope, not proof of all 43 architec
 | capability/console-factory | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/domain-console | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/environment | 8 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/properties | 12 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/properties | 11 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/console | 0 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/clock | 103 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/lifecycle | 11 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/filesystem | 67 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/clock | 102 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/lifecycle | 10 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/filesystem | 41 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/http | 1 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/config-load | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/process | 7 | unknown | incomparable | production; configured symbol/owner policy |

@@ -221,13 +221,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
 
   /** Every bundled file, relative to `agents/`. */
   def index: List[String] =
-    Option(getClass.getClassLoader.getResourceAsStream("agents/index.txt"))
-      .map(in =>
-        try String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
-        finally in.close()
-      )
-      .toList
-      .flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty))
+    prompts.bundledText("index.txt").toOption.toList.flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty))
 
   def agentNames: List[String] = index.filter(r => !r.contains('/') && r.endsWith(".md")).map(_.stripSuffix(".md"))
   def skillNames: List[String] = index.collect { case r if r.startsWith("skills/") => r.split('/')(1) }.distinct

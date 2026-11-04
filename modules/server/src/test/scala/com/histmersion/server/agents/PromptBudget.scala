@@ -41,6 +41,10 @@ import java.nio.file.{Files, Path}
 
 object PromptBudget:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   final case class Row(agent: String, system: Int, tools: Map[String, Int], answer: Int):
     def toolChars: Int = tools.values.sum
     def total: Int = system + toolChars + answer

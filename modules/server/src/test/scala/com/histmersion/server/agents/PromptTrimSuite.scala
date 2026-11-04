@@ -16,6 +16,10 @@ import com.histmersion.domain.automation.agents.{
   */
 class PromptTrimSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
   private def headless(s: StepAgent) = d.system(agent(s), ToolStyle.Claude)

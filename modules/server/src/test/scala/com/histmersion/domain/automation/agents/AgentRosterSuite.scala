@@ -8,6 +8,10 @@ import com.histmersion.domain.automation.AgentRole
 /** The definitions take only the roles the contributed workflows run, as they list only the contributed tools. */
 class AgentRosterSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   test("every bundled definition takes a contributed role"):
     val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
     assert(defs.agents.isRight, defs.agents.left.toOption.getOrElse(""))

@@ -12,10 +12,10 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | citekey | java/lang/String# | 515 | 513 | api, cli, core, db, files, plugins/calibre, server, web |
 | kind | java/lang/String# | 406 | 404 | api, cli, config, core, db, files, plugin-api, plugin-host, plugin-testkit, plugins/ai-http, plugins/events, server, upstreams, web |
 | s | java/lang/String# | 378 | 373 | api, cli, config, core, db, files, plugin-host, plugin-vaults, plugins/calibre, plugins/events, plugins/media, server, upstreams, values, web |
-| name | java/lang/String# | 364 | 362 | api, chimney-iron, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/calibre, plugins/gazetteers, plugins/media, server, upstreams, values, web |
+| name | java/lang/String# | 367 | 365 | api, chimney-iron, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/calibre, plugins/gazetteers, plugins/media, server, upstreams, values, web |
 | limit | scala/Int# | 362 | 360 | api, cli, config, core, db, plugin-api, plugins/calibre, plugins/media, server, upstreams, web |
 | slug | java/lang/String# | 326 | 324 | api, cli, core, db, server, web |
-| text | java/lang/String# | 320 | 300 | api, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-fixtures/hello-lib, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/gazetteers, plugins/media, server, upstreams, web |
+| text | java/lang/String# | 326 | 303 | api, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-fixtures/hello-lib, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/gazetteers, plugins/media, server, upstreams, web |
 | title | java/lang/String# | 260 | 258 | api, cli, core, db, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugins/ai-http, plugins/calibre, plugins/events, plugins/fetchers, plugins/gazetteers, plugins/media, server, upstreams, web |
 | goal | java/lang/String# | 233 | 231 | api, core, db, server, web |
 | label | java/lang/String# | 225 | 220 | api, cli, config, core, db, files, plugin-api, plugin-host, plugins/calibre, plugins/media, server, upstreams, web |
@@ -83,8 +83,8 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | id | scala/Int# | 53 | 50 | api, cli, db, plugins/calibre, server, web |
 | itemId | scala/Long# | 52 | 52 | api, core, db, server |
 | targetType | java/lang/String# | 49 | 49 | api, db, server |
+| value | java/lang/String# | 49 | 47 | api, cli, config, console, core, db, plugin-vaults, server, web |
 | to | java/lang/String# | 49 | 45 | api, cli, core, db, plugin-api, plugins/calibre, server, web |
 | current | java/lang/String# | 48 | 38 | api, cli, core, db, plugins/calibre, server, web |
 | message | java/lang/String# | 48 | 45 | api, cli, config, core, db, plugin-api, plugin-host, plugin-resolver, plugin-testkit, plugins/ai-http, server, upstreams, values, web |
-| value | java/lang/String# | 48 | 46 | api, cli, config, console, core, db, plugin-vaults, server, web |
 | check | java/lang/String# | 47 | 39 | api, config, core, db, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugin-testkit, plugins/ai-http, plugins/media, server, values |

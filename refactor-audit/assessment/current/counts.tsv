@@ -1,5 +1,5 @@
 rule	module	count
-capability/clock	ALL	103
+capability/clock	ALL	102
 capability/clock	api	0
 capability/clock	chimney-iron	0
 capability/clock	chimney-iron-tests	0
@@ -24,7 +24,7 @@ capability/clock	plugins/events	0
 capability/clock	plugins/fetchers	0
 capability/clock	plugins/gazetteers	0
 capability/clock	plugins/media	0
-capability/clock	server	90
+capability/clock	server	89
 capability/clock	upstreams	0
 capability/clock	values	0
 capability/clock	web	0
@@ -202,7 +202,7 @@ capability/environment	server	0
 capability/environment	upstreams	0
 capability/environment	values	0
 capability/environment	web	0
-capability/filesystem	ALL	67
+capability/filesystem	ALL	41
 capability/filesystem	api	0
 capability/filesystem	chimney-iron	0
 capability/filesystem	chimney-iron-tests	0
@@ -227,7 +227,7 @@ capability/filesystem	plugins/events	0
 capability/filesystem	plugins/fetchers	0
 capability/filesystem	plugins/gazetteers	0
 capability/filesystem	plugins/media	0
-capability/filesystem	server	28
+capability/filesystem	server	2
 capability/filesystem	upstreams	0
 capability/filesystem	values	0
 capability/filesystem	web	0
@@ -260,7 +260,7 @@ capability/http	server	0
 capability/http	upstreams	0
 capability/http	values	0
 capability/http	web	0
-capability/lifecycle	ALL	11
+capability/lifecycle	ALL	10
 capability/lifecycle	api	0
 capability/lifecycle	chimney-iron	0
 capability/lifecycle	chimney-iron-tests	0
@@ -285,7 +285,7 @@ capability/lifecycle	plugins/events	0
 capability/lifecycle	plugins/fetchers	0
 capability/lifecycle	plugins/gazetteers	0
 capability/lifecycle	plugins/media	0
-capability/lifecycle	server	10
+capability/lifecycle	server	9
 capability/lifecycle	upstreams	0
 capability/lifecycle	values	0
 capability/lifecycle	web	0
@@ -318,7 +318,7 @@ capability/process	server	0
 capability/process	upstreams	0
 capability/process	values	0
 capability/process	web	0
-capability/properties	ALL	12
+capability/properties	ALL	11
 capability/properties	api	0
 capability/properties	chimney-iron	0
 capability/properties	chimney-iron-tests	0
@@ -343,7 +343,7 @@ capability/properties	plugins/events	0
 capability/properties	plugins/fetchers	0
 capability/properties	plugins/gazetteers	0
 capability/properties	plugins/media	0
-capability/properties	server	5
+capability/properties	server	4
 capability/properties	upstreams	0
 capability/properties	values	0
 capability/properties	web	0

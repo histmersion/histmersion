@@ -24,6 +24,7 @@ config-load=0
 process=0
 repo-factory=0
 repo-transaction=6
+permission:plugin-generator-exit:uses=0
 permission:console-adapter:uses=0
 permission:cli-console-composition:uses=0
 permission:resolver-console-composition:uses=0

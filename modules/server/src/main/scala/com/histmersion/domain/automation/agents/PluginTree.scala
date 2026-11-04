@@ -1,23 +1,10 @@
 package com.histmersion.domain.automation.agents
 
-import io.circe.syntax.*
-
+import com.histmersion.util.storage.{Resources, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.*
 
-/** The repository's checked-in copy of the interactive Claude Code plugin — `plugin/` and the root
-  * `.claude-plugin/marketplace.json` — for people without a running server. A generator output like the rest;
-  * `PluginTreeSuite` fails when it is out of date. Regenerate with `just plugin` (`sbt "server/Test/runMain
-  * com.histmersion.server.agents.generatePlugin <repo root>"` — the test classpath runs it in process, outside the
-  * native-image tracing agent).
-  */
 object PluginTree:
-
-  /** The tree from the bundled definitions (no server, no override directory); `roster` the agent tools they may list
-    * and the roles they may take.
-    */
-  def tree(roster: AgentRoster): Either[String, Map[String, String]] =
+  def tree(roster: AgentRoster)(using Stores, Resources): Either[String, Map[String, String]] =
     val defs = AgentDefinitions(Prompts(""), roster)
     for
       as <- defs.agents
@@ -25,30 +12,36 @@ object PluginTree:
       ss <- defs.skills
     yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
 
-  /** The generated directories the tree owns: anything else in them is stale. */
   val Owned: List[String] = List("plugin/agents", "plugin/skills")
 
-  /** Writes the tree under `root`, removing what it no longer holds from the directories it owns. */
-  def write(root: Path, roster: AgentRoster): Unit =
-    tree(roster) match
-      case Left(m)  => scribe.error(s"cannot generate the plugin: $m"); sys.exit(1)
-      case Right(t) =>
-        Owned.map(root.resolve).filter(Files.exists(_)).foreach { d =>
-          val all = Files.walk(d)
-          try
-            all.sorted(java.util.Comparator.reverseOrder()).forEach { p =>
-              val rel = root.relativize(p).toString
-              if Files.isSymbolicLink(p) || (Files.isRegularFile(p) && !t
-                  .contains(rel)) || (Files.isDirectory(p) && p != d && !t.keys.exists(_.startsWith(rel + "/")))
-              then
-                val _ = Files.deleteIfExists(p)
-            }
-          finally all.close()
-        }
-        t.foreach { (rel, text) =>
-          val f = root.resolve(rel)
-          if Files.isSymbolicLink(f.getParent) then Files.delete(f.getParent)
-          Files.createDirectories(f.getParent)
-          Files.writeString(f, text, UTF_8)
-        }
-        scribe.info(s"wrote ${t.size} file(s) under $root")
+  def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[String, Unit] =
+    tree(roster).flatMap(t => writeTree(store, t))
+
+  private[agents] def writeTree(store: Store, tree: Map[String, String]): Either[String, Unit] =
+    try
+      val entries = tree.toList.map { (name, text) =>
+        Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity) -> text
+      }
+      val wanted = entries.map(_._1.value).toSet
+      def prune(key: Store.Key, root: Store.Key): Unit =
+        if store.isLink(key) then
+          val _ = store.delete(key)
+        else if store.isDirectory(key) then
+          store.names(key).foreach(name => prune(key.child(name), root))
+          if key != root && !wanted.exists(_.startsWith(key.value + "/")) then
+            val _ = store.deleteTree(key)
+        else if store.isFile(key) && !wanted(key.value) then
+          val _ = store.delete(key)
+      Owned.foreach { name =>
+        val key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
+        if store.exists(key) || store.isLink(key) then prune(key, key)
+      }
+      entries.foreach { (key, text) =>
+        if store.isLink(key.parent) then
+          val _ = store.delete(key.parent)
+        store.makeDirectory(key.parent).fold(error => throw java.io.IOException(error.message), identity)
+        store.write(key, text.getBytes(UTF_8)).fold(error => throw java.io.IOException(error.message), _ => ())
+      }
+      scribe.info(s"wrote ${tree.size} file(s) under ${store.where()}")
+      Right(())
+    catch case error: java.io.IOException => Left(error.getMessage)
