@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.library.workflows.*
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -53,10 +53,10 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -87,7 +87,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assert(h.goals.put(Goal, com.histmersion.api.automation.Goal.Put("Zz scheduled tin")).isRight)
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, Ck, None)))
 
-  private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
+  private def start(a: AgentsControllers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get

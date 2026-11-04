@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.{
   AgentDef,
   AgentDefinitions,
-  AgentsHandlers,
+  AgentsControllers,
   AgentTrees,
   LlmCall,
   PoolSink,
@@ -29,7 +29,7 @@ final class CliRuntime(
   val tokens: RunTokens = RunTokens()
   val trees: AgentTrees = AgentTrees(app, definitions, paths)
 
-  /** Wired by [[AgentsHandlers]] (it needs the DataSource); `var` only for that late attachment. */
+  /** Wired by [[AgentsControllers]] (it needs the DataSource); `var` only for that late attachment. */
   @volatile var pools: Option[PoolSink] = None
 
   /** `127.x`, `::1`, `localhost`: nobody else can reach the server, so nobody else can spend a plan. */

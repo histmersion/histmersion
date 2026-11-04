@@ -7,7 +7,7 @@ import com.histmersion.domain.library.workflows.WatchManagerKind
 import com.histmersion.domain.research.workflows.ResearchWorkflows
 
 import com.histmersion.domain.automation.agents.AgentRoster
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.goals.PlanGoalPipeline
 import com.histmersion.domain.automation.managers.HintEffectPipeline
 import com.histmersion.domain.automation.workflows.PipelineDef
@@ -24,7 +24,7 @@ import com.histmersion.server.{Deps, ServerWiring}
   * engine's own pipelines ([[PipelineWorkflow]]); the tools in the toolbox's order ([[ToolboxOrder]]).
   */
 object EngineContributions:
-  def of(deps: Deps, w: ServerWiring, a: AgentsHandlers): Contributions =
+  def of(deps: Deps, w: ServerWiring, a: AgentsControllers): Contributions =
     def cfg = deps.cfg.agents
     val ds = deps.ds
     val library = LibraryWorkflows(() => deps.cfg, ds, deps.transactor, w.librarySite, a)
@@ -55,20 +55,20 @@ object EngineContributions:
     AgentRoster(ToolboxOrder.names, io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[com.histmersion.domain.automation.AgentRole]].transform((Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct))
 
   /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
-  def enrich(a: AgentsHandlers): EnrichManagerKind =
+  def enrich(a: AgentsControllers): EnrichManagerKind =
     a.workflows.managerKinds
       .collectFirst { case e: EnrichManagerKind => e }
       .getOrElse(throw IllegalStateException("no enrich manager kind is registered"))
 
   /** The acquisition work the watch kind of `a`'s registry holds. */
-  def work(a: AgentsHandlers): AcquisitionWork = watch(a).work
+  def work(a: AgentsControllers): AcquisitionWork = watch(a).work
 
   /** The watch kind of `a`'s registry. */
-  def watch(a: AgentsHandlers): WatchManagerKind =
+  def watch(a: AgentsControllers): WatchManagerKind =
     a.workflows.managerKinds
       .collectFirst { case w: WatchManagerKind => w }
       .getOrElse(throw IllegalStateException("no watch manager kind is registered"))
 
   /** The autopilot's page over `a`: its status with the watch kind's upstreams and acquisition list's re-check. */
-  def autopilot(a: AgentsHandlers): com.histmersion.server.views.AutopilotView =
+  def autopilot(a: AgentsControllers): com.histmersion.server.views.AutopilotView =
     com.histmersion.server.views.AutopilotView(a.managing, watch(a).upstreams, work(a).acquireRecheck.status, a.clock)

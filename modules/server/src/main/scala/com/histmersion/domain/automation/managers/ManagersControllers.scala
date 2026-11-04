@@ -35,11 +35,11 @@ import com.histmersion.api.automation.Goal
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
   * changing a manager works with agents off (nothing starts until they are on).
   */
-final class ManagersHandlers(
+final class ManagersControllers(
     ds: DataSource,
     cfg: => AgentsConfig,
     limits: => Limits,
-    agents: AgentsHandlers,
+    agents: AgentsControllers,
     supervisor: ManagerSupervisor,
     host: AutomationHost
 ):
@@ -195,7 +195,7 @@ final class ManagersHandlers(
         None,
         None,
         Feed.Hint,
-        s"settings changed: ${ManagersHandlers.describe(c)}" +
+        s"settings changed: ${ManagersControllers.describe(c)}" +
           (if in.cron.isDefined then
              cron.fold("; no cron")(x => s"; cron `${x.text}`, next ${next.fold("never")(_.toString)}")
            else "")
@@ -607,7 +607,7 @@ final class ManagersHandlers(
         case HintEffect.Config =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
           val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
-          Right(s" — settings now: ${ManagersHandlers.describe(c)}")
+          Right(s" — settings now: ${ManagersControllers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
       _ = Transactor(ds).transact(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = agents.managerStore.event(
@@ -843,5 +843,5 @@ final class ManagersHandlers(
       EventPage(es, Option.when(es.size == lim)(es.last.id))
     }
 
-object ManagersHandlers:
+object ManagersControllers:
   def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

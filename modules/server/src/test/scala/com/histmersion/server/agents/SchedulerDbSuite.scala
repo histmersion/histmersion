@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.augustnagro.magnum.*
 import com.histmersion.config.*
@@ -79,10 +79,10 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(
       c: AppConfig = cfg,
       digestClock: java.time.Clock = TestRuns.noonClock()
-  ): (AgentsHandlers, ServerWiring, StubUpstream) =
+  ): (AgentsControllers, ServerWiring, StubUpstream) =
     val deps = Deps(c, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h, Some(digestClock)), (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsControllers(ServerEngineSite(deps, h, Some(digestClock)), (_, _) => Right(ScriptedClient(Model)))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -113,7 +113,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def ck(d: String) = "zzfocus" + d.replaceAll("[^a-z0-9]", "")
 
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
-  private def seed(a: AgentsHandlers, h: ServerWiring, up: StubUpstream): Unit =
+  private def seed(a: AgentsControllers, h: ServerWiring, up: StubUpstream): Unit =
     goals.foreach { s =>
       assert(h.goals.put(s, Goal.Put(s"Zz $s")).isRight)
       assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, s"zzfocus query $s")).isRight)
@@ -155,7 +155,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       )
 
-  private def on(a: AgentsHandlers): Unit =
+  private def on(a: AgentsControllers): Unit =
     a.managers.ensureDefaults()
     // the review manager's own selection narrowed to these goals' article (other suites' articles stay out)
     a.managing
@@ -171,7 +171,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     connect(ds)(AgentRepo.list(None, 1000)).filter(r => r.managerId.isDefined && r.target.startsWith("zzfocus"))
 
   final private class Clock(var now: Instant = Instant.now()): // a var: the test's own moving time
-    def tick(a: AgentsHandlers, minutes: Int = 6): List[String] =
+    def tick(a: AgentsControllers, minutes: Int = 6): List[String] =
       now = now.plusSeconds(minutes.toLong * 60L)
       a.managers.tick(now)
 

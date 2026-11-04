@@ -241,7 +241,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
       .flatMap(AgentDefinitions.parse(name, _, tools))
       .flatMap(d =>
         Either.cond(
-          roster.roles.contains(d.role),
+          roster.roles.contains(io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.AgentRole, com.histmersion.domain.automation.AgentRole].transform(d.role)),
           d,
           s"agents/$name.md: role ${d.role.wire} is no contributed workflow's " +
             s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"

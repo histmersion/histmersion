@@ -2,7 +2,7 @@ package com.histmersion.domain.library.workflows
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 
 import com.histmersion.config.*
@@ -40,7 +40,7 @@ final class OaBacklog(
     lib: => LibraryAgentsConfig,
     site: LibrarySite,
     upstream: () => AgentUpstream,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   private def watch = lib.managers.watch

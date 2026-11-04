@@ -86,10 +86,10 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     override def ingestLegalInto(doi: String, into: Option[String]) = { asked.add(doi -> into); answer(doi, into) }
     override def fetcherGeneration = generation
 
-  private def setup(cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, RecheckUpstream) =
+  private def setup(cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, RecheckUpstream) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val up = RecheckUpstream()
     a.attach(up)
     (a, h, up)
@@ -119,7 +119,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
 
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
-  private def passNow(a: AgentsHandlers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
+  private def passNow(a: AgentsControllers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
     a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error("a pass is running"))
   private def status(h: ServerWiring, id: Int): String =
     h.workListView.list("acquire", all = true).toOption.get.items.find(_.id == id).get.status
@@ -314,7 +314,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val acq = com.histmersion.server.AcquisitionTesting.controllers(
       deps,
       Discovery,
@@ -359,7 +359,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     r.fold(e => fail(e.message), res => res.job.getOrElse(fail(s"not a job: $res")))
 
   /** The job once it ended (it runs on its own thread) and its slot is free. */
-  private def ended(a: AgentsHandlers, id: String): JobInfo =
+  private def ended(a: AgentsControllers, id: String): JobInfo =
     awaitTrue(s"job $id")(
       Transactor(ds).read(JobRepo.get(id)).exists(j => JobState.parse(j.status).exists(_.isTerminal)) &&
         !a.acquireRecheck.jobRunning
@@ -639,7 +639,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     a.attach(
       AgentUpstream.of(
         com.histmersion.server.AcquisitionTesting.controllers(

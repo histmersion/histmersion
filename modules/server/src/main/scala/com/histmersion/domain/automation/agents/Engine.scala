@@ -29,7 +29,7 @@ import com.histmersion.api.Api
 final class Engine(
     val ds: DataSource,
     cfgNow: => AgentsConfig,
-    val agents: AgentsHandlers,
+    val agents: AgentsControllers,
     val workflows: Workflows
 ):
 

@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsHandlers}
+import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsControllers}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -54,11 +54,11 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val Empty = s"""{"citekey":"$Ck","title":"","year":null}"""
   private val Right_ = s"""{"citekey":"$Ck","title":"A Catalogue of Fishes","year":1956}"""
 
-  private def handlers(c: ScriptedClient): AgentsHandlers =
+  private def handlers(c: ScriptedClient): AgentsControllers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
-    AgentsHandlers(
+    AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
     )
@@ -95,7 +95,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** The real `claude-code` client on the generated tree, running `fake` (the picker sees the scripted local model, so
     * no plan pool is read).
     */
-  private def claudeHandlers(fake: FakeCli.Fake): AgentsHandlers =
+  private def claudeHandlers(fake: FakeCli.Fake): AgentsControllers =
     val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
@@ -106,7 +106,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
-    AgentsHandlers(
+    AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")
     )

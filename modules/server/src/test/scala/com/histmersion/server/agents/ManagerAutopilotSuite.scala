@@ -94,10 +94,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds, ds, clock = suiteClock)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
+    (AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -208,12 +208,12 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
 
-  private def exec(a: AgentsHandlers, id: String): RunInfo =
+  private def exec(a: AgentsControllers, id: String): RunInfo =
     a.engine.execute(id)
     connect(ds)(AgentRepo.get(id)).get
 
   /** The watchers' sweeps need no model (offline: nothing found): run what they queued. */
-  private def drainWatchers(a: AgentsHandlers): Unit =
+  private def drainWatchers(a: AgentsControllers): Unit =
     connect(ds)(AgentRepo.list(Some("queued"), 200))
       .filter(_.managerId.exists(_.startsWith("watch:")))
       .foreach(r => a.engine.execute(r.id))
@@ -224,7 +224,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     * ensure interval every tick.
     */
   final private class Clock(var now: Instant = Instant.now(suiteClock)): // a var: the test's own moving time
-    def tick(a: AgentsHandlers, minutes: Int = 6): List[String] =
+    def tick(a: AgentsControllers, minutes: Int = 6): List[String] =
       now = now.plusSeconds(minutes.toLong * 60L)
       a.managers.tick(now)
 

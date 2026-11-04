@@ -31,7 +31,7 @@ import com.histmersion.api.automation.Goal
 final class SchedulerService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   /** A person's choice of strategy (name, by, at), if any. */

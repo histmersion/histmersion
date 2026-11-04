@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, LlmClient}
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, Zero}
 
 import com.augustnagro.magnum.*
@@ -60,10 +60,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -84,7 +84,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(a: AgentsHandlers, h: ServerWiring): Unit =
+  private def seed(a: AgentsControllers, h: ServerWiring): Unit =
     assert(
       h.goals
         .put(Goal, com.histmersion.api.automation.Goal.Put("Zz tin watched", notes = Some("where the tin came from")))
@@ -365,7 +365,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val CkB = "zzagent2021_hintb"
 
   /** The (paused) enrich manager with two source items. */
-  private def enrichItems(a: AgentsHandlers, h: ServerWiring): Unit =
+  private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
     assert(h.library.sources.put(CkA, Source.Put(title = "Hint A", year = Some(2020))).isRight)
     assert(h.library.sources.put(CkB, Source.Put(title = "Hint B", year = Some(2021))).isRight)
     a.managers.ensureDefaults()
@@ -375,7 +375,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def enrichItem(ck: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(EnrichId, SourceEnrich, ck)).get
 
-  private def openHintApprovals(a: AgentsHandlers): List[ApprovalInfo] =
+  private def openHintApprovals(a: AgentsControllers): List[ApprovalInfo] =
     a.approvalsList(None, None).toOption.get.filter(_.kind == "hint-effect")
 
   test(

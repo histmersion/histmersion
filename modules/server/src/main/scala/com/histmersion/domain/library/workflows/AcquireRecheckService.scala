@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
@@ -50,7 +50,7 @@ final class AcquireRecheckService(
     rcfg: => RecheckConfig,
     site: LibrarySite,
     upstream: () => AgentUpstream,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   private def settings: Settings =

@@ -4,7 +4,7 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.LeaseRepo
 
-import com.histmersion.domain.automation.agents.{AgentLease, AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentLease, AgentsControllers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -85,10 +85,10 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
+    (AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -128,7 +128,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
 
   /** The review manager, active, narrowed to this suite's articles. */
-  private def activeReview(a: AgentsHandlers, cfg: ManagerConfig = ManagerConfig()): ManagerInfo =
+  private def activeReview(a: AgentsControllers, cfg: ManagerConfig = ManagerConfig()): ManagerInfo =
     a.managers.ensureDefaults()
     val m = a.managing
       .update(ReviewId, ManagerUpdate(Some(cfg.copy(includeTags = Some(List(Tag))))))

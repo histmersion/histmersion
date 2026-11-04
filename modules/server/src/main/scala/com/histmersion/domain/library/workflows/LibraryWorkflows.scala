@@ -3,7 +3,7 @@ package com.histmersion.domain.library.workflows
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.agents.StepAgent
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.workflows.ToolContribution
@@ -21,7 +21,7 @@ final class LibraryWorkflows(
     ds: DataSource,
     transactor: Transactor,
     site: LibrarySite,
-    a: AgentsHandlers
+    a: AgentsControllers
 ):
   /** The acquisition toolset, the ingest backlog, the acquisition list's re-check and the seeding. */
   val work: AcquisitionWork = AcquisitionWork(cfg, ds, transactor, site, a)

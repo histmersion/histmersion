@@ -17,13 +17,13 @@ import com.histmersion.api.Api
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
-  * ([[decideAll]]) — each approval through [[AgentsHandlers.decide]], the very decision a person's click takes (a
+  * ([[decideAll]]) — each approval through [[AgentsControllers.decide]], the very decision a person's click takes (a
   * waiting run is woken, a plan applied).
   */
 final class ApprovalDigestService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   /** Does code decide an approval of kind `k` now (the autopilot's checks)? */
@@ -49,7 +49,7 @@ final class ApprovalDigestService(
     )
 
   /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
-    * clock, when it has one: [[AgentsHandlers.digestClock]]), the digest's line goes to the worklog.
+    * clock, when it has one: [[AgentsControllers.digestClock]]), the digest's line goes to the worklog.
     */
   def tick(now: Instant): List[String] =
     val hour = cfg.autopilot.digestHour

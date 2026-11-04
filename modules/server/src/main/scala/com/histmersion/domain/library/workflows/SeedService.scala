@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -27,7 +27,7 @@ final class SeedService(
     candidates: CandidateService,
     cfg: => AgentsConfig,
     site: LibrarySite,
-    agents: AgentsHandlers,
+    agents: AgentsControllers,
     acquisition: () => AgentUpstream,
     backlog: OaBacklog
 ):

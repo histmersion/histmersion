@@ -1,12 +1,12 @@
 files=3127
 expected-files=3125
 missing-files=0
-findings=50
+findings=46
 fixture-files=2
 scope=configured primitive roles, feature repository visibility, forbidden packages, Handlers declarations, object main; other goals NOT MEASURED
 mode=inventory; violations do not fail this run, but missing coverage or failed expectations do
 bucket=0
-handlers=4
+handlers=0
 object-main=0
 primitive-role=34
 repo-visibility=12

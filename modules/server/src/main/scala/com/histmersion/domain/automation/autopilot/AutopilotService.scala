@@ -45,7 +45,7 @@ import com.histmersion.api.backup.Backup
 final class AutopilotService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   private def acfg = cfg.autopilot

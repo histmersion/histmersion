@@ -133,8 +133,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** The work lists' operations (the pipelines' worklog lines). */
   def workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
 
-  val agents: com.histmersion.domain.automation.agents.AgentsHandlers =
-    com.histmersion.domain.automation.agents.AgentsHandlers(
+  val agents: com.histmersion.domain.automation.agents.AgentsControllers =
+    com.histmersion.domain.automation.agents.AgentsControllers(
       com.histmersion.server.agents.ServerEngineSite(deps, this)
     )
 

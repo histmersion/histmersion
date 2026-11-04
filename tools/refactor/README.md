@@ -113,6 +113,36 @@ and coverage report both matter.
 
 ## Compiler repair rules
 
+### Controller rename batch
+
+`RenameControllers.scala` uses the exact configured class/companion symbols. It
+preserves aliases, unrelated same-named symbols and string literals. Its TSV
+records every candidate's symbol, source, AST and disposition. These two mappings
+were inspected against normally compiled production and test sources before use;
+this rule is not a general package/class relocation engine.
+
+Use `controller-renames.conf` to inspect, `controller-renames-apply.conf` to apply
+and `controller-renames-check.conf` to reject remaining matches, with the normal
+Scalafix semantic options and `--files modules/server` (including tests).
+After applying, `MoveControllerFiles.scala` moves the two source files only when
+the renamed class and companion exist and destinations do not collide.
+`ControllerDocLinks.scala` updates the reviewed old links inside comment tokens.
+Recompile before running semantic checks again.
+
+`controller-fixtures/input/Example.scala` exercises constructors, companions,
+aliased imports, qualified types, callbacks, lookalikes and string preservation.
+Compile with SemanticDB, run `controller-fixtures.conf` using `--out-from` and
+`--out-to`, compare against `controller-fixtures/expected/Example.scala`, and
+compile the result. `controller-fixtures-reject.conf` must fail on the input and
+pass on the recompiled output. The application check must also pass after the
+rename. The four structural findings become zero without removing the Handlers
+violation cases from `structure-fixtures.scala`.
+
+The contract snapshot run also exposed an API/domain role comparison in
+`AgentDefinitions.agent`. `controller-boundary-repair.conf` performs the checked
+AST replacement that converts the parsed API role to the domain role before
+roster membership is tested. Snapshot expectations are unchanged.
+
 `RepairBoundaries.scala` matches parsed Scala trees using scoped recipes in
 `repair-boundaries.conf` and `repair-tests.conf`. Names starting with `__` are
 AST captures. Repeated captures must have identical structure. Paths and optional

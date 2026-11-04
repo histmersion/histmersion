@@ -43,7 +43,7 @@ import com.histmersion.api.automation.Goal
 final class GoalFocusService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   private def acfg = cfg.autopilot
