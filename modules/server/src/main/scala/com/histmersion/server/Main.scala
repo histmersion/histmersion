@@ -6,6 +6,7 @@ import com.histmersion.api.plugins.PluginsMarkdown
 import com.histmersion.config.{AppConfig, Environment, UserPaths}
 import com.histmersion.domain.library.acquisition.CoreBudget
 import ox.{never, supervised}
+import com.histmersion.util.console.Console
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
   * is one, then [[Composition]] and the listener.
@@ -14,13 +15,14 @@ import ox.{never, supervised}
   // the command line first: an argument the server does not know ends it HERE, before the config, the
   // bundled runtime or the database is touched. The usage and the self-check report are the binary's
   // own output to a terminal, the one place this server writes to stdout/stderr directly.
+  val console = Console.system
   val mode = ServerArgs.parse(args.toList) match
     case Right(ServerMode.Help) =>
-      System.out.println(ServerArgs.Usage)
+      console.out.println(ServerArgs.Usage)
       sys.exit(0)
     case Right(m)  => m
     case Left(err) =>
-      System.err.println(s"histmersion-server: $err\n\n${ServerArgs.Usage}")
+      console.err.println(s"histmersion-server: $err\n\n${ServerArgs.Usage}")
       sys.exit(1)
   // netty's pooled allocator mishandles ByteBuf refCnt under native-image → use unpooled buffers.
   // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
@@ -54,7 +56,7 @@ import ox.{never, supervised}
   mode match
     case ServerMode.SelfCheck =>
       val zones = TimeZoneCheck.jdk()
-      System.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List(zones)))
+      console.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List(zones)))
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
   val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)

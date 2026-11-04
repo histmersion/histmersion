@@ -14,6 +14,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
+import com.histmersion.util.console.Console
 
 /** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The server
   * judges the new key and answers why it refuses one.
@@ -25,7 +26,7 @@ object RenameCmd:
   val args: Opts[Args] =
     (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = a.newCitekey.trim))
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "rename",
       s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"

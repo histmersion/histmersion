@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets.UTF_8
   */
 class ManagerCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val manager = Command("t", "test")(ManagerCmd.manager)
   private val enqueue = Command("t", "test")(ManagerCmd.enqueue)
   private val managers = Command("t", "test")(ManagerCmd.managers)

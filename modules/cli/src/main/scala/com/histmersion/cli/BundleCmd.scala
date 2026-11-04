@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path, StandardCopyOption}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
+import com.histmersion.util.console.Console
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import
@@ -30,7 +31,7 @@ object BundleCmd:
       }
     finally in.close()
 
-  private val exportCmd = Opts.subcommand(
+  private def exportCmd (using console: Console) = Opts.subcommand(
     "export",
     "Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle"
   ) {
@@ -51,12 +52,12 @@ object BundleCmd:
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
             e => Left(Cli.Error(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
-            m => Right(com.histmersion.cli.Cli.writeLine(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
+            m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
           )
     }
   }
 
-  private val verifyCmd = Opts.subcommand(
+  private def verifyCmd (using console: Console) = Opts.subcommand(
     "verify",
     "Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed"
   ) {
@@ -68,7 +69,7 @@ object BundleCmd:
     }
   }
 
-  private val importCmd = Opts.subcommand(
+  private def importCmd (using console: Console) = Opts.subcommand(
     "import",
     "Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open"
   ) {
@@ -94,17 +95,17 @@ object BundleCmd:
     }
   }
 
-  private val instanceCmd = Opts.subcommand(
+  private def instanceCmd (using console: Console) = Opts.subcommand(
     "instance",
     "This collection's identity (the origin of every row it creates); --label names it, e.g. work or home"
   ) {
     Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
       label => (c: Client) =>
-        label.fold(c.instance)(l => c.setInstance(Some(l))).map(i => com.histmersion.cli.Cli.writeLine(BundleMarkdown.instance(i)))
+        label.fold(c.instance)(l => c.setInstance(Some(l))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "bundle",
       "Portable .hmx bundles: export, verify and import a whole collection, carrying its identities"

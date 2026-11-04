@@ -8,11 +8,12 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.PluginsReport
+import com.histmersion.util.console.Console
 
 object PluginCmd:
 
   /** The install on this machine, wherever the CLI is pointed. */
-  private[cli] def install: Either[Cli.Error, LocalInstall] =
+  private[cli] def install(using console: Console) : Either[Cli.Error, LocalInstall] =
     val env = (k: String) => Option(java.lang.System.getenv(k))
     val exe =
       scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(Path.of(_))
@@ -22,7 +23,7 @@ object PluginCmd:
       .left
       .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
 
-  private[cli] def local(c: Client): Either[Cli.Error, PluginOps] =
+  private[cli] def local(c: Client)(using console: Console) : Either[Cli.Error, PluginOps] =
     if !PluginKit.isLoopback(c.serverUrl) then
       Left(
         Cli.Error(
@@ -37,7 +38,7 @@ object PluginCmd:
   private def running(c: Client): (Option[PluginsReport], Boolean) =
     c.about.fold(_ => (None, false), a => (Some(a.plugins), true))
 
-  private val add = Opts.subcommand(
+  private def add (using console: Console) = Opts.subcommand(
     "add",
     "Install a plugin on this machine: a local path (copied, with the .pom beside it), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); the dependencies its POM lists are installed with it, except what Histmersion ships; shows its id, version, SPI, access and dependencies first"
   ) {
@@ -62,13 +63,13 @@ object PluginCmd:
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>
           if rebuild then ops.rebuild(Nil)
-          else Right(com.histmersion.cli.Cli.writeLine("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
+          else Right(Cli.out.println("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
         }
       }
     }
   }
 
-  private val rm =
+  private def rm (using console: Console) =
     Opts.subcommand("rm", "Remove an installed plugin (by id or jar file name) from this machine's plugins directory") {
       (Opts.argument[String]("id|file"), Opts.flag("rebuild", "Relink right after removing").orFalse).mapN {
         (what, rebuild) => (c: Client) =>
@@ -77,20 +78,20 @@ object PluginCmd:
               .rm(what)
               .flatMap(_ =>
                 if rebuild then ops.rebuild(Nil)
-                else Right(com.histmersion.cli.Cli.writeLine("the running binary still has it until: histmersion plugin rebuild"))
+                else Right(Cli.out.println("the running binary still has it until: histmersion plugin rebuild"))
               )
           )
       }
     }
 
-  private val list = Opts.subcommand(
+  private def list (using console: Console) = Opts.subcommand(
     "list",
     "The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each"
   ) {
-    Opts.unit.map(_ => (c: Client) => local(c).map(ops => com.histmersion.cli.Cli.writeLine(ops.list(running(c)._1).mkString("\n"))))
+    Opts.unit.map(_ => (c: Client) => local(c).map(ops => Cli.out.println(ops.list(running(c)._1).mkString("\n"))))
   }
 
-  private val status = Opts.subcommand(
+  private def status (using console: Console) = Opts.subcommand(
     "status",
     "Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing"
   ) {
@@ -98,12 +99,12 @@ object PluginCmd:
       (c: Client) =>
         local(c).map { ops =>
           val (r, answered) = running(c)
-          com.histmersion.cli.Cli.writeLine(ops.status(r, answered)._2.mkString("\n"))
+          Cli.out.println(ops.status(r, answered)._2.mkString("\n"))
         }
     )
   }
 
-  private val rebuild = Opts.subcommand(
+  private def rebuild (using console: Console) = Opts.subcommand(
     "rebuild",
     "Relink the server with the plugins directory (bin/histmersion-relink: pre-flight, native-image, self-check, swap, restart, health; the previous binary comes back on failure)"
   ) {
@@ -125,14 +126,14 @@ object PluginCmd:
     }
   }
 
-  private val rollback =
+  private def rollback (using console: Console) =
     Opts.subcommand("rollback", "Put the previous server binary back (the one before the last relink) and restart") {
       Opts.flag("no-restart", "Do not restart the service").orFalse.map { noRestart => (c: Client) =>
         local(c).flatMap(_.rebuild("--rollback" :: (if noRestart then List("--no-restart") else Nil)))
       }
     }
 
-  private val repo = Opts.subcommand(
+  private def repo (using console: Console) = Opts.subcommand(
     "repo",
     "The Maven repository of this machine's install that a plugin compiles against: the plugin API, histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships) and the plugin testkit; --url: as a file: URL; --m2: copy it into the local Maven repository (~/.m2/repository), which a build names as m2Local (scala-cli) or Resolver.mavenLocal (sbt)"
   ) {
@@ -150,36 +151,36 @@ object PluginCmd:
           dir <- PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k)))
           copied <- PluginAuthoring.publishToMavenLocal(install, dir)
         yield
-          com.histmersion.cli.Cli.writeLine(if asUrl then dir.toUri.toString else dir.toString)
-          com.histmersion.cli.Cli.processErrorLine(if copied.isEmpty then
+          Cli.out.println(if asUrl then dir.toUri.toString else dir.toString)
+          Cli.err.println(if copied.isEmpty then
             s"Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts are up to date there"
           else
             s"copied ${copied.size} file(s) of Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts there")
       else
         PluginAuthoring
           .localRepository(install)
-          .map(i => com.histmersion.cli.Cli.writeLine(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
+          .map(i => Cli.out.println(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
     }
   }
 
-  private val apiJar = Opts.subcommand(
+  private def apiJar (using console: Console) = Opts.subcommand(
     "api-jar",
     "The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc"
   ) {
     Opts.flag("sources", "The sources jar instead of the jar").orFalse.map { sources => (_: Client) =>
       PluginAuthoring.apiJars(install).flatMap { (jar, src) =>
-        if !sources then Right(com.histmersion.cli.Cli.writeLine(jar))
+        if !sources then Right(Cli.out.println(jar))
         else
           Either.cond(
             Files.isRegularFile(src),
-            com.histmersion.cli.Cli.writeLine(src),
+            Cli.out.println(src),
             Cli.Error(s"no sources jar beside $jar", exitCode = ExitCode.Refused)
           )
       }
     }
   }
 
-  private val create = Opts.subcommand(
+  private def create (using console: Console) = Opts.subcommand(
     "new",
     "Write a new plugin project for scala-cli: project.scala (the build), <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)"
   ) {
@@ -217,15 +218,15 @@ object PluginCmd:
           )
         yield
           if copied.nonEmpty then
-            com.histmersion.cli.Cli.writeLine(
+            Cli.out.println(
               s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
             )
-          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(com.histmersion.cli.Cli.writeLine)
+          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(value => Cli.out.println(value))
       }
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "plugin",
       "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one"

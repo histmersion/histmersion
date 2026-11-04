@@ -23,6 +23,7 @@ import com.histmersion.api.library.{
   MetadataPatch
 }
 import com.histmersion.api.media.MediaCoversRequest
+import com.histmersion.util.console.Console
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps`.
   *
@@ -39,7 +40,7 @@ import com.histmersion.api.media.MediaCoversRequest
   */
 object CalibreCmd:
 
-  private def calibre(c: Client): Calibre = Calibre(Settings.app.cli.calibre)
+  private def calibre(c: Client)(using console: Console) : Calibre = Calibre(Settings.app.cli.calibre)
 
   private def fail(msg: String) = Cli.Error(msg, exitCode = ExitCode.Refused)
 
@@ -49,7 +50,7 @@ object CalibreCmd:
 
   // ── search ──────────────────────────────────────────────────────────────────────────────────
 
-  private val search = Opts.subcommand(
+  private def search (using console: Console) = Opts.subcommand(
     "search",
     "Search the local Calibre library (read-only); --unlinked lists the entries no source links yet, newest first"
   ) {
@@ -84,7 +85,7 @@ object CalibreCmd:
       unlinked: Boolean,
       max: Int,
       json: Boolean
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     if !unlinked then
       calibre(c).search(q.getOrElse(""), max).left.map(fail).map { books =>
         Output.emit(json, books.map(com.histmersion.cli.Calibre.Json.Book.of))(_ => Calibre.markdownSearch(books))
@@ -117,7 +118,7 @@ object CalibreCmd:
 
   // ── import (Calibre → corpus) ───────────────────────────────────────────────────────────────
 
-  private val importCmd = Opts.subcommand(
+  private def importCmd (using console: Console) = Opts.subcommand(
     "import",
     "Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched)"
   ) {
@@ -162,15 +163,15 @@ object CalibreCmd:
       noWait: Boolean,
       item: Option[Int],
       json: Boolean
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     s.importItem(CollectionImportRequest(id.toString, citekey, format, !noConvert, !json, item)).flatMap { res =>
-      if json then com.histmersion.cli.Cli.writeLine(Output.json(res.source))
+      if json then Cli.out.println(Output.json(res.source))
       else
-        com.histmersion.cli.Cli.writeLine(s"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
-        res.relinkedFrom.foreach(prev => com.histmersion.cli.Cli.writeLine(s"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
-        com.histmersion.cli.Cli.writeLine(s"File (left in place, never modified): ${res.file}")
+        Cli.out.println(s"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
+        res.relinkedFrom.foreach(prev => Cli.out.println(s"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
+        Cli.out.println(s"File (left in place, never modified): ${res.file}")
         res.cover.foreach(cv =>
-          if cv.warning then com.histmersion.cli.Cli.errorLine(s"warning: cover not stored — ${cv.line}") else com.histmersion.cli.Cli.writeLine(cv.line)
+          if cv.warning then Cli.err.println(s"warning: cover not stored — ${cv.line}") else Cli.out.println(cv.line)
         )
       if noConvert then Right(())
       else
@@ -180,7 +181,7 @@ object CalibreCmd:
             Left(Cli.Error(e, exitCode = code))
           case None =>
             res.job.fold(Right(())) { a =>
-              com.histmersion.cli.Cli.writeLine(
+              Cli.out.println(
                 s"queued job ${a.jobId} for ${a.citekey}" +
                   item.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
               )
@@ -197,7 +198,7 @@ object CalibreCmd:
       noWait: Boolean,
       item: Option[Int],
       json: Boolean
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     for
       // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
       _ <- item.fold(Right(()))(i =>
@@ -235,13 +236,13 @@ object CalibreCmd:
         .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
       res <- upsert(c, ck, book, target)
       _ =
-        if json then com.histmersion.cli.Cli.writeLine(Output.json(res))
+        if json then Cli.out.println(Output.json(res))
         else
-          com.histmersion.cli.Cli.writeLine(s"Imported Calibre id $id as `$ck` — ${book.title}")
+          Cli.out.println(s"Imported Calibre id $id as `$ck` — ${book.title}")
           target match
-            case ImportTarget.Update(Some(prev)) => com.histmersion.cli.Cli.writeLine(s"Re-linked `$ck` from Calibre id $prev to $id")
+            case ImportTarget.Update(Some(prev)) => Cli.out.println(s"Re-linked `$ck` from Calibre id $prev to $id")
             case _                               => ()
-          com.histmersion.cli.Cli.writeLine(s"File (left in place, never modified): $file")
+          Cli.out.println(s"File (left in place, never modified): $file")
       // the book's cover for its hover card (#1446): Calibre's own, else Open Library's by its ISBN —
       // best-effort, a missing cover never fails the import
       _ = if !json then importCover(c, ck, book)
@@ -266,17 +267,17 @@ object CalibreCmd:
     yield ()
 
   /** The imported book's cover, best-effort: a line saying what happened, never a failure. */
-  private def importCover(c: Client, ck: String, book: com.histmersion.cli.Calibre.Book): Unit =
+  private def importCover(c: Client, ck: String, book: com.histmersion.cli.Calibre.Book)(using console: Console) : Unit =
     MediaCovers.one(c, ck, book, dryRun = false) match
-      case MediaCovers.Outcome.Uploaded(_)             => com.histmersion.cli.Cli.writeLine(s"Cover: from the Calibre library")
+      case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
       case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
         c.mediaCovers(
           MediaCoversRequest(dryRun = false, citekey = Some(ck), illustrations = false, isbn = Some(isbn))
         ) match
-          case Right(r) if r.covers > 0 => com.histmersion.cli.Cli.writeLine(s"Cover: from Open Library (ISBN $isbn)")
-          case _                        => com.histmersion.cli.Cli.writeLine(s"Cover: none (no cover file in Calibre, none at Open Library)")
-      case MediaCovers.Outcome.Skipped(why) => com.histmersion.cli.Cli.writeLine(s"Cover: none ($why)")
-      case MediaCovers.Outcome.Failed(why)  => com.histmersion.cli.Cli.errorLine(s"warning: cover not stored — $why")
+          case Right(r) if r.covers > 0 => Cli.out.println(s"Cover: from Open Library (ISBN $isbn)")
+          case _                        => Cli.out.println(s"Cover: none (no cover file in Calibre, none at Open Library)")
+      case MediaCovers.Outcome.Skipped(why) => Cli.out.println(s"Cover: none ($why)")
+      case MediaCovers.Outcome.Failed(why)  => Cli.err.println(s"warning: cover not stored — $why")
 
   /** Create the source, or enrich it if the citekey already exists — a re-import must never wipe the findings and notes
     * an agent compiled. Either way the record ends up linked to THIS entry (#721: an import into an existing record
@@ -329,7 +330,7 @@ object CalibreCmd:
 
   // ── link (re-point a record at another Calibre entry) ────────────────────────────────────────
 
-  private val link = Opts.subcommand(
+  private def link (using console: Console) = Opts.subcommand(
     "link",
     "Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)"
   ) {
@@ -357,7 +358,7 @@ object CalibreCmd:
 
   // ── push / sync (corpus → Calibre) ──────────────────────────────────────────────────────────
 
-  private val push = Opts.subcommand(
+  private def push (using console: Console) = Opts.subcommand(
     "push",
     "Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)"
   ) {
@@ -392,7 +393,7 @@ object CalibreCmd:
     }
   }
 
-  private def hostPush(c: Client, ck: String, file: Option[String], replace: Boolean, json: Boolean) =
+  private def hostPush(c: Client, ck: String, file: Option[String], replace: Boolean, json: Boolean) (using console: Console) =
     if replace then
       replaceOne(c, ck, file.map(Path.of(_))).map { case (id, fmt) =>
         Output.emit(json, com.histmersion.cli.Calibre.Json.Replaced(ck, id, fmt))(_ =>
@@ -410,7 +411,7 @@ object CalibreCmd:
     * no duplicate entry appears. The file is `--file`, else the original the server stored at ingest, downloaded to a
     * temporary directory and removed afterwards.
     */
-  private def replaceOne(c: Client, ck: String, file: Option[Path]): Either[Cli.Error, (Int, String)] =
+  private def replaceOne(c: Client, ck: String, file: Option[Path])(using console: Console) : Either[Cli.Error, (Int, String)] =
     for
       s <- AcquireClient(c).calibreMeta(ck)
       id <- s.calibreId
@@ -451,13 +452,13 @@ object CalibreCmd:
     * `<originals-dir>/<citekey>/paper.*` on this host, else the original the server stored, downloaded to a temporary
     * directory), `calibredb add`, then record the new id back in the corpus so it stops counting as a gap.
     */
-  private[cli] def pushOne(
+  private[cli] def pushOne(using console: Console)(
       c: Client,
       ck: String,
       file: Option[Path],
       calibre: Calibre = Calibre(Settings.app.cli.calibre),
       originals: Option[String] = Settings.app.cli.calibre.originals
-  ): Either[Cli.Error, (Int, String)] =
+  ) : Either[Cli.Error, (Int, String)] =
     for
       // the authors must come back as a LIST: "Stocker, Sharon R." is ONE author, so the
       // comma-joined `SourceDetail.authors` cannot be split apart again
@@ -476,11 +477,11 @@ object CalibreCmd:
       _ <- AcquireClient(c).calibrePushed(CalibrePushRequest(ck, id.toString))
     yield (id, s.title)
 
-  private val update = Opts.subcommand(
+  private def update (using console: Console) = Opts.subcommand(
     "update",
     "Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)"
   ) {
-    def hostUpdate(c: Client, ck: String, json: Boolean) =
+    def hostUpdate(c: Client, ck: String, json: Boolean) (using console: Console) =
       for
         s <- AcquireClient(c).calibreMeta(ck)
         id <- s.calibreId
@@ -491,7 +492,7 @@ object CalibreCmd:
         if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
         else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
       )
-    def hostUpdateAll(c: Client, apply: Boolean, json: Boolean) =
+    def hostUpdateAll(c: Client, apply: Boolean, json: Boolean) (using console: Console) =
       for
         linked <- linkedRecords(c)
         entries <- calibre(c).updateAll(linked, apply).left.map(fail)
@@ -557,7 +558,7 @@ object CalibreCmd:
       tags = s.topics
     )
 
-  private val set = Opts.subcommand(
+  private def set (using console: Console) = Opts.subcommand(
     "set",
     s"Set fields on a Calibre entry, e.g. --field languages:eng (settable: ${Calibre.SettableFields.mkString(", ")}; Calibre GUI must be closed)"
   ) {
@@ -577,11 +578,11 @@ object CalibreCmd:
               s.set(CollectionSetRequest(id.toString, fields.map(CollectionFieldValue(_, _)))).map(_ => ())
             case None => calibre(c).set(id, fields).left.map(fail)
         )
-        .map(_ => com.histmersion.cli.Cli.writeLine(s"set ${raw.map(_.takeWhile(_ != ':')).mkString(", ")} on Calibre id $id"))
+        .map(_ => Cli.out.println(s"set ${raw.map(_.takeWhile(_ != ':')).mkString(", ")} on Calibre id $id"))
     }
   }
 
-  private val audit = Opts.subcommand(
+  private def audit (using console: Console) = Opts.subcommand(
     "audit",
     "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only"
   ) {
@@ -597,7 +598,7 @@ object CalibreCmd:
     }
   }
 
-  private def hostAudit(c: Client, json: Boolean): Either[Cli.Error, Unit] =
+  private def hostAudit(c: Client, json: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
     for
       q <- c.query(
         "SELECT citekey, calibre_id, title, array_to_string(authors, '|') AS authors, year " +
@@ -634,7 +635,7 @@ object CalibreCmd:
   ): Either[Cli.Error, List[Calibre.GapEntry]] =
     AcquireClient(c).calibreGaps(limit).map(g => Calibre.classify(g.gaps, Calibre.originalFor(originals, _)))
 
-  private val sync = Opts.subcommand(
+  private def sync (using console: Console) = Opts.subcommand(
     "sync",
     "Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)"
   ) {
@@ -651,14 +652,14 @@ object CalibreCmd:
   /** `calibre sync`: push the COUNTED gaps (an original on this host or on the server); the records with no fetched
     * file are not gaps, so they are neither pushed nor reported as skipped — one summary line says how many there are.
     */
-  private[cli] def syncGaps(
+  private[cli] def syncGaps(using console: Console)(
       c: Client,
       apply: Boolean,
       limit: Option[Int],
       json: Boolean,
       calibre: Calibre = Calibre(Settings.app.cli.calibre),
       originals: Option[String] = Settings.app.cli.calibre.originals
-  ): Either[Cli.Error, Unit] =
+  ) : Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
       if json && !apply then
         Right(Output.emit(json, com.histmersion.cli.Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
@@ -666,9 +667,9 @@ object CalibreCmd:
         val ready = entries.filter(_.counted)
         val missing = entries.count(_.original == Calibre.GapOriginal.Missing)
         val note = if missing == 0 then "" else " · " + Calibre.uncountedLine(missing)
-        if ready.nonEmpty then com.histmersion.cli.Cli.writeLine(Calibre.markdownGaps(ready) + "\n")
+        if ready.nonEmpty then Cli.out.println(Calibre.markdownGaps(ready) + "\n")
         if !apply then
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             s"Dry run: ${ready.size} source(s) would be pushed$note" +
               (if ready.nonEmpty then " Re-run with --apply." else "")
           )
@@ -676,11 +677,11 @@ object CalibreCmd:
         else
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
-            case (ck, Right((id, _))) => com.histmersion.cli.Cli.writeLine(s"  + $ck → Calibre id $id")
-            case (ck, Left(e))        => com.histmersion.cli.Cli.errorLine(s"  ! $ck: ${e.message}")
+            case (ck, Right((id, _))) => Cli.out.println(s"  + $ck → Calibre id $id")
+            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.message}")
           }
           val failed = results.count(_._2.isLeft)
-          com.histmersion.cli.Cli.writeLine(s"pushed ${results.size - failed} source(s), $failed failed$note")
+          Cli.out.println(s"pushed ${results.size - failed} source(s), $failed failed$note")
           if failed == 0 then Right(())
           else Left(fail(s"$failed of ${results.size} push(es) failed"))
     }
@@ -688,7 +689,7 @@ object CalibreCmd:
   /** The server's collection for `gaps` and `sync`, unless this machine keeps originals of its own
     * (`cli.calibre.originals-dir`), which only the CLI can see and classify by.
     */
-  private def onServerUnlessLocalOriginals(c: Client): Option[CollectionsClient] =
+  private def onServerUnlessLocalOriginals(c: Client)(using console: Console) : Option[CollectionsClient] =
     if Settings.app.cli.calibre.originals.isDefined then None else server(c)
 
   /** `calibre sync` on the server: the same lines as [[syncGaps]], the pushes made there. */
@@ -697,7 +698,7 @@ object CalibreCmd:
       apply: Boolean,
       limit: Option[Int],
       json: Boolean
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     s.sync(CollectionSync.Request(apply, limit)).flatMap { r =>
       if json && !apply then
         Right(
@@ -709,9 +710,9 @@ object CalibreCmd:
         val ready = r.gaps.gaps.filter(_.counted)
         val missing = r.gaps.gaps.count(_.original == "none")
         val note = if missing == 0 then "" else " · " + CollectionsMarkdown.uncountedLine(missing)
-        if ready.nonEmpty then com.histmersion.cli.Cli.writeLine(CollectionsMarkdown.gaps(ready) + "\n")
+        if ready.nonEmpty then Cli.out.println(CollectionsMarkdown.gaps(ready) + "\n")
         if !apply then
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             s"Dry run: ${ready.size} source(s) would be pushed$note" +
               (if ready.nonEmpty then " Re-run with --apply." else "")
           )
@@ -719,11 +720,11 @@ object CalibreCmd:
         else
           r.pushes.foreach(p =>
             p.id match
-              case Some(id) => com.histmersion.cli.Cli.writeLine(s"  + ${p.citekey} → Calibre id $id")
-              case None     => com.histmersion.cli.Cli.errorLine(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")
+              case Some(id) => Cli.out.println(s"  + ${p.citekey} → Calibre id $id")
+              case None     => Cli.err.println(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")
           )
           val failed = r.pushes.count(_.id.isEmpty)
-          com.histmersion.cli.Cli.writeLine(s"pushed ${r.pushes.size - failed} source(s), $failed failed$note")
+          Cli.out.println(s"pushed ${r.pushes.size - failed} source(s), $failed failed$note")
           if failed == 0 then Right(())
           else Left(fail(s"$failed of ${r.pushes.size} push(es) failed"))
     }
@@ -734,12 +735,12 @@ object CalibreCmd:
       quiet: Boolean,
       limit: Option[Int],
       json: Boolean
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     s.gaps(limit).flatMap { g =>
       val counted = g.gaps.filter(_.counted)
       if json then
         Right(Output.emit(json, com.histmersion.cli.Calibre.Json.Gaps.of(g))(_ => CollectionsMarkdown.gaps(g.gaps)))
-      else if !quiet then Right(com.histmersion.cli.Cli.writeLine(CollectionsMarkdown.gaps(g.gaps)))
+      else if !quiet then Right(Cli.out.println(CollectionsMarkdown.gaps(g.gaps)))
       else if counted.isEmpty then Right(())
       else
         Left(
@@ -751,7 +752,7 @@ object CalibreCmd:
         )
     }
 
-  private val gaps = Opts.subcommand(
+  private def gaps (using console: Console) = Opts.subcommand(
     "gaps",
     "List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)"
   ) {
@@ -769,18 +770,18 @@ object CalibreCmd:
     * record with no fetched file is one informational line in the full report and a `counted: false` row in `--json`,
     * never a gap.
     */
-  private[cli] def listGaps(
+  private[cli] def listGaps(using console: Console)(
       c: Client,
       quiet: Boolean,
       limit: Option[Int],
       json: Boolean,
       originals: Option[String] = Settings.app.cli.calibre.originals
-  ): Either[Cli.Error, Unit] =
+  ) : Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
       val counted = entries.filter(_.counted)
       if json then
         Right(Output.emit(json, com.histmersion.cli.Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
-      else if !quiet then Right(com.histmersion.cli.Cli.writeLine(Calibre.markdownGaps(entries)))
+      else if !quiet then Right(Cli.out.println(Calibre.markdownGaps(entries)))
       else if counted.isEmpty then Right(())
       else
         // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
@@ -793,7 +794,7 @@ object CalibreCmd:
         )
     }
 
-  val all: Opts[Client => Either[Cli.Error, Unit]] =
+  def all(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("calibre", "The local Calibre library: search, import, link, push, update, set, audit, sync, gaps") {
       search orElse importCmd orElse link orElse push orElse update orElse set orElse audit orElse sync orElse gaps
     }

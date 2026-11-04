@@ -9,13 +9,14 @@ import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.aliases.{Aliases, LabelRenames}
 import com.histmersion.api.exchange.MergeMarkdown
+import com.histmersion.util.console.Console
 
 /** `histmersion article|events|goals rename <old> <new>` — a new slug or id; the old one keeps resolving (an alias).
   * The label is checked here with the server's own rule ([[LabelRenames]]).
   */
 object LabelRenameCmd:
 
-  def apply(kind: Bundle.Kind): Opts[Client => Either[Cli.Error, Unit]] =
+  def apply(kind: Bundle.Kind)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     val (what, effect) = kind match
       case Bundle.Kind.Article =>
         ("an article a new slug", "versions, links and every [[old]] in other articles follow")

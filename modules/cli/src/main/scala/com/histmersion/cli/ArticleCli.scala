@@ -16,6 +16,7 @@ import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.SeedResult
 import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.api.research.Article
+import com.histmersion.util.console.Console
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -92,33 +93,33 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: Boolean, skip: Set[String]): SeedResult =
+  def importAll(c: Client, root: Path, force: Boolean, skip: Set[String])(using console: Console) : SeedResult =
     val fs = files(root, skip)
     val total = fs.size
-    if total > 0 then com.histmersion.cli.Cli.writeLine(s"importing $total article(s) from $root")
+    if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
     @tailrec def loop(
         rest: List[(Path, String)],
         number: Int,
         imported: Int,
         failed: List[String],
         skipped: List[String]
-    ): SeedResult =
+    )(using console: Console) : SeedResult =
       rest match
         case Nil               => SeedResult(imported, failed, 0, skipped)
         case (f, kind) :: tail =>
           val name = f.getFileName.toString.stripSuffix(".md")
-          com.histmersion.cli.Cli.writeLine(s"$number/$total $kind/$name")
+          Cli.out.println(s"$number/$total $kind/$name")
           c.importArticle(toImport(f, kind, force)) match
             case Right(r) => loop(tail, number + 1, imported + r.imported, failed ++ r.failed, skipped ++ r.skipped)
             case Left(e)  => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message}", skipped)
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path): Either[Cli.Error, Int] =
+  def exportAll(c: Client, out: Path)(using console: Console) : Either[Cli.Error, Int] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
-        com.histmersion.cli.Cli.writeLine(s"${i + 1}/$total $slug")
+        Cli.out.println(s"${i + 1}/$total $slug")
         c.exportArticle(slug) match
           case Right(text) =>
             val dir = out.resolve(kindOfNote(text))
@@ -127,8 +128,8 @@ object ArticleCli:
             None
           case Left(e) => Some(s"$slug: ${e.message}")
       }
-      com.histmersion.cli.Cli.writeLine(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
-      failed.take(10).foreach(f => com.histmersion.cli.Cli.errorLine(s"  ! $f"))
+      Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
+      failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
       if failed.isEmpty then Right(total)
       else Left(Cli.Error(s"${failed.size} of $total article(s) could not be exported", exitCode = ExitCode.Refused))
     }
@@ -147,15 +148,15 @@ object ArticleCli:
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────
 
   /** Progress report of an article import (also used by `histmersion seed`). */
-  def report(r: SeedResult): Unit =
-    com.histmersion.cli.Cli.writeLine(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
-    r.skipped.take(10).foreach(s => com.histmersion.cli.Cli.writeLine(s"  ~ $s"))
-    r.failed.take(10).foreach(f => com.histmersion.cli.Cli.errorLine(s"  ! $f"))
+  def report(r: SeedResult)(using console: Console) : Unit =
+    Cli.out.println(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
+    r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
+    r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
 
   /** The filter flags are the shared ones: they select SOURCES, and an article is listed when it cites one of them
     * (`--title` is the article's own title). The positional query is the article's own full text.
     */
-  private val list =
+  private def list (using console: Console) =
     Opts.subcommand("list", "List/search compiled articles (the filter flags select the sources they cite)") {
       (
         Opts.argument[String]("query").orNone,
@@ -170,7 +171,7 @@ object ArticleCli:
       }
     }
 
-  private val get =
+  private def get (using console: Console) =
     Opts.subcommand("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)") {
       (
         Opts.argument[String]("slug"),
@@ -194,7 +195,7 @@ object ArticleCli:
       .flag("strict", "Refuse the write when the Markdown has a formatting error (default: write, then list them)")
       .orFalse
 
-  private val put = Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
+  private def put (using console: Console) = Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
     (
       Opts.argument[String]("file.md"),
       Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone,
@@ -213,13 +214,13 @@ object ArticleCli:
             // slug the note itself declares (as the server parsed it), so the writer sees them now
             val slug = ArticleNote.parse(req.text, req.slug.getOrElse(""), fallback).map(_.slug).filter(_.nonEmpty)
             if r.imported > 0 then
-              slug.foreach(s => c.lintArticle(s).foreach(f => com.histmersion.cli.Cli.writeLine(FormatMarkdown.notice(f.issues))))
+              slug.foreach(s => c.lintArticle(s).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
           }
       }
   }
 
   /** `article lint <slug> [--fix]` — what in the article will not display as written. */
-  private val lint = Opts.subcommand(
+  private def lint (using console: Console) = Opts.subcommand(
     "lint",
     "Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)"
   ) {
@@ -236,7 +237,7 @@ object ArticleCli:
   /** `article check <slug> (--edits-file f.json | --body-file f.md) [--kind k]` — dry-run a change as the review
     * pipeline checks its fixer's answer: nothing is written.
     */
-  private val check = Opts.subcommand(
+  private def check (using console: Console) = Opts.subcommand(
     "check",
     "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing"
   ) {
@@ -280,13 +281,13 @@ object ArticleCli:
     }
   }
 
-  private val delete = Opts.subcommand("delete", "Remove one article (its links go with it)") {
+  private def delete (using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.deleteArticle(slug).map(d => com.histmersion.cli.Cli.writeLine(s"deleted ${d.slug}")))
+      .map(slug => (c: Client) => c.deleteArticle(slug).map(d => Cli.out.println(s"deleted ${d.slug}")))
   }
 
-  private val exportCmd = Opts.subcommand("export", "Write each article to <dir>/<kind>/<slug>.md") {
+  private def exportCmd (using console: Console) = Opts.subcommand("export", "Write each article to <dir>/<kind>/<slug>.md") {
     Opts.argument[String]("dir").map { dir => (c: Client) =>
       val out = Path.of(dir)
       val _ = Files.createDirectories(out)
@@ -294,7 +295,7 @@ object ArticleCli:
     }
   }
 
-  private val importCmd = Opts.subcommand("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)") {
+  private def importCmd (using console: Console) = Opts.subcommand("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)") {
     (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         val p = Path.of(dir)
@@ -345,7 +346,7 @@ object ArticleCli:
       .orEmpty
 
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
-  private val coverage = Opts.subcommand(
+  private def coverage (using console: Console) = Opts.subcommand(
     "coverage",
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
@@ -355,7 +356,7 @@ object ArticleCli:
   }
 
   /** `article review <slug>` — where the article stands with the review panel, and its review history. */
-  private val review = Opts.subcommand(
+  private def review (using console: Console) = Opts.subcommand(
     "review",
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
@@ -364,7 +365,7 @@ object ArticleCli:
     }
   }
 
-  private val patch = Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
+  private def patch (using console: Console) = Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
     (
       Opts.argument[String]("slug"),
       Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
@@ -409,27 +410,27 @@ object ArticleCli:
           .flatMap(ArticlePatches.withCritiques(_, crs))
           .flatMap(p =>
             c.patchArticle(slug, p, strict).map { v =>
-              com.histmersion.cli.Cli.writeLine(ArticleMarkdown.article(v))
-              v.article.updatedAt.foreach(u => com.histmersion.cli.Cli.writeLine(s"\nupdatedAt: $u"))
+              Cli.out.println(ArticleMarkdown.article(v))
+              v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
             }
           )
     }
   }
 
-  private val versions = Opts.subcommand("versions", "Show the edit history of one article") {
+  private def versions (using console: Console) = Opts.subcommand("versions", "Show the edit history of one article") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.articleVersions(slug).map(vs => com.histmersion.cli.Cli.writeLine(ArticleMarkdown.versions(slug, vs))))
+      .map(slug => (c: Client) => c.articleVersions(slug).map(vs => Cli.out.println(ArticleMarkdown.versions(slug, vs))))
   }
 
-  private val versionCmd = Opts.subcommand("version", "Show one historical version's full body") {
+  private def versionCmd (using console: Console) = Opts.subcommand("version", "Show one historical version's full body") {
     (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-      c.articleVersion(slug, id).map(v => com.histmersion.cli.Cli.writeLine(ArticleMarkdown.version(v)))
+      c.articleVersion(slug, id).map(v => Cli.out.println(ArticleMarkdown.version(v)))
     }
   }
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "article",
       "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"

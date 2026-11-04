@@ -6,6 +6,8 @@ Application and application-test edits remain Scalafix-only. Use semantic symbol
 
 ## Ordered batches
 
+Console correction supersedes the callback design: command output now uses our Console through `using`, with `Cli.out`/`Cli.err` accessors. Diagnostics use scribe. Raw streams are restricted to the adapter; commands cannot construct their own adapter, and domain/plugin code cannot depend on Console. Existing callback-based recipes are historical steps, not the target architecture. Capability findings remain 228 and structural findings 46 under the stricter policy.
+
 | Batch | Work and evidence | Acceptance |
 |---|---|---|
 | 1. Controller names | Rename `AgentsHandlers` and `ManagersHandlers`, their companions, imports, constructor/type references and filenames through a semantic Scalafix rule. The four findings represent two class/companion pairs. Preflight destination collisions and inspect aliases, named imports and references in tests. | Four Handlers findings disappear; all references resolve; no wire endpoint/tool names change; aggregate compilation and relevant controller/contract tests pass. |

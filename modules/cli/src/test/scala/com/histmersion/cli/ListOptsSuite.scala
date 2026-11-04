@@ -8,6 +8,8 @@ import com.monovore.decline.Command
   */
 class ListOptsSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def parse[A](opts: com.monovore.decline.Opts[A], args: String*): Either[String, A] =
     Command("t", "test")(opts).parse(args.toList, Map.empty).left.map(_.toString)
 

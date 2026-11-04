@@ -20,6 +20,7 @@ import java.util.zip.ZipFile
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
+import com.histmersion.util.console.Console
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
   * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
@@ -44,7 +45,7 @@ import scala.util.control.NonFatal
   * learn what it contributes and on what terms: that runs the plugin's code, in this short-lived JVM, as installing it
   * will.
   */
-@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList, s => System.out.println(s), s => System.err.println(s)))
+@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList)(using Console.system))
 
 object RelinkPlugins:
 
@@ -54,27 +55,27 @@ object RelinkPlugins:
       |       pluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
-  def exitCode(args: List[String], stdout: String => Unit, stderr: String => Unit): Int = try run(args, stdout, stderr)
+  def exitCode(args: List[String])(using console: Console): Int = try run(args)(using console)
     catch
       case NonFatal(e) =>
-        stderr(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
-  private def run(args: List[String], stdout: String => Unit, stderr: String => Unit): Int = args match
-    case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)), stdout, stderr)
-    case cmd :: rest                   => run(cmd, rest, Nil, stdout, stderr)
-    case Nil                           => stderr(Usage); 1
+  private def run(args: List[String])(using console: Console): Int = args match
+    case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))(using console)
+    case cmd :: rest                   => run(cmd, rest, Nil)(using console)
+    case Nil                           => console.errorLine(Usage); 1
 
-  private def run(cmd: String, args: List[String], deps: List[Path], stdout: String => Unit, stderr: String => Unit): Int =
+  private def run(cmd: String, args: List[String], deps: List[Path])(using console: Console): Int =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd, args) match
       case ("describe", jars) if jars.nonEmpty =>
-        stdout(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
+        console.writeLine(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
         0
       case ("check", kit :: jars) =>
         val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
-        lines.foreach(l => stdout(l))
-        problems.foreach(p => stdout(s"refused: $p"))
+        lines.foreach(l => console.writeLine(l))
+        problems.foreach(p => console.writeLine(s"refused: $p"))
         if problems.isEmpty then 0 else 2
       case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
         val described = jars.map(j => describe(Path.of(j), loader))
@@ -89,16 +90,16 @@ object RelinkPlugins:
         )
         writePluginSet(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
-        stdout(set.digest)
+        console.writeLine(set.digest)
         0
       case ("kit-manifest", kit :: version :: commit :: graalvm :: Nil) =>
         val m = kitManifest(Path.of(kit), version, Option(commit).filter(c => c != "-" && c.nonEmpty), graalvm)
         val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
         val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
-        stdout(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
+        console.writeLine(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
         0
       case _ =>
-        stderr(Usage)
+        console.errorLine(Usage)
         1
 
   // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.config.edit.*
 import org.ekrich.config.ConfigFactory
 import com.histmersion.api.settings.{ConfigEdit, ConfigEditMarkdown}
+import com.histmersion.util.console.Console
 
 /** `histmersion config get|set|unset|restart` — the settings file. Through the server, which writes the file it reads
   * and reloads it; with `--local`, or when the server does not answer, the file on THIS machine is read and changed
@@ -30,14 +31,14 @@ object SettingsCmd:
     .orFalse
 
   /** The server is down: the file on this machine instead (said once, on stderr). */
-  private def orLocal[A](viaServer: => Either[Cli.Error, A], viaFile: => Either[Cli.Error, A]): Either[Cli.Error, A] =
+  private def orLocal[A](viaServer: => Either[Cli.Error, A], viaFile: => Either[Cli.Error, A])(using console: Console) : Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
-        com.histmersion.cli.Cli.processErrorLine(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
+        Cli.err.println(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
 
-  val get: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def get(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "get",
     "A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, " +
       "its default and what it does — a credential only as set or not"
@@ -69,13 +70,13 @@ object SettingsCmd:
       consent: Boolean,
       json: Boolean,
       c: Client
-  ): Either[Cli.Error, Unit] =
+  )(using console: Console) : Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(List(ConfigEdit.Change(key, value)), literalConsent = consent, reload = reload)
     val viaFile = Local.write(w).map(out => if reload then out.copy(reload = c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
     done.map(out => Output.emit(json, out)(ConfigEditMarkdown.written))
 
-  val set: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def set(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "set",
     "Change a setting in the settings file, in place (comments, order, includes and anything written by hand are kept, " +
       "the old file is kept as .bak), checked first; then the server applies it"
@@ -86,7 +87,7 @@ object SettingsCmd:
     }
   }
 
-  val unset: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def unset(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "unset",
     "Take a setting out of the settings file (back to its default), in place; then the server applies it"
   ) {
@@ -95,7 +96,7 @@ object SettingsCmd:
     }
   }
 
-  val restart: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def restart(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "restart",
     "Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)"
   ) {

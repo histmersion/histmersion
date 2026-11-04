@@ -12,6 +12,8 @@ import com.histmersion.api.exchange.Bundle
   */
 class BundleCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val top = Command("histmersion", "test")(BundleCmd.command)
   private def parses(args: String*) = top.parse(args.toList, Map.empty).isRight
 

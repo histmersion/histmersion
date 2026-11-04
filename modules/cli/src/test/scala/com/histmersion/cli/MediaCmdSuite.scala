@@ -17,6 +17,8 @@ import com.histmersion.api.jobs.JobInfo
   */
 class MediaCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val running = JobInfo(
     "j7",
     "media-import",

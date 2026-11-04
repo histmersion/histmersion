@@ -9,10 +9,11 @@ import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.util.console.Console
 
 object AttestationsCmd:
 
-  private val search = Opts.subcommand("search", "Find attestations by source or target") {
+  private def search (using console: Console) = Opts.subcommand("search", "Find attestations by source or target") {
     (
       Opts.option[String]("citekey", "Filter by source citekey").orNone,
       Opts.option[String]("target-type", s"Filter by target type: ${AttestationTarget.all.mkString("|")}").orNone,
@@ -22,17 +23,17 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
         c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, offset))
-          .map(r => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestationList(r)))
+          .map(r => Cli.out.println(AttestationsMarkdown.attestationList(r)))
       }
   }
 
-  private val showCmd = Opts.subcommand("show", "One attestation by id") {
+  private def showCmd (using console: Console) = Opts.subcommand("show", "One attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.getAttestation(id).map(a => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestation(a)))
+      c.getAttestation(id).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
     }
   }
 
-  private val addCmd = Opts.subcommand("add", "Create an attestation linking an entity to a source passage") {
+  private def addCmd (using console: Console) = Opts.subcommand("add", "Create an attestation linking an entity to a source passage") {
     (
       Opts.option[String]("citekey", "Source citekey"),
       Opts.option[String]("target-type", s"Target type: ${AttestationTarget.all.mkString("|")}"),
@@ -44,17 +45,17 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
         c.createAttestation(Attestation.Put(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
-          .map(a => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestation(a)))
+          .map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
       }
   }
 
-  private val rmCmd = Opts.subcommand("rm", "Delete an attestation by id") {
+  private def rmCmd (using console: Console) = Opts.subcommand("rm", "Delete an attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAttestation(id).map(d => com.histmersion.cli.Cli.writeLine(s"Deleted attestation #${d.id}."))
+      c.deleteAttestation(id).map(d => Cli.out.println(s"Deleted attestation #${d.id}."))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("attestations", "Granular source references: search, show, add, rm") {
       search orElse showCmd orElse addCmd orElse rmCmd
     }

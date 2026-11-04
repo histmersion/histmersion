@@ -36,11 +36,13 @@ core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM 
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: the database primitives (`util.database`: Db, Sql, Param, Codecs, Migrate, …), Flyway
          migrations, and the features' repositories in their packages.      depends on config, core
-server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
+server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host, console (+ plugin-vaults;
          plugins/fetchers, plugins/events, plugins/media, plugins/gazetteers, plugins/ai-http and plugins/calibre
          at run time only)
          (and through them on values, api and config)
-cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
+console ── the application's Console interface and stream adapters (`util.console`), JVM only, no application dependencies.
+         Command implementations receive it with `using`; only process entry points select adapters.
+cli   ── a PURE HTTP CLIENT of the server.         depends on api, config, files and console — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, Plugin.Context, Secret, Secret.Vault) and its own newtypes (Year, Doi, …):
               sconfig + kindlings + iron ONLY
@@ -72,7 +74,7 @@ plugin-vaults ─ the built-in secret-vault plugins.                          de
 plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
 plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network; the AI-provider suites)
 plugin-fixtures/hello-lib + hello-deps ─ a TEST plugin with a dependency of its own, in a fixture Maven repo
-plugin-resolver ── resolves user plugins' dependencies (coursier): relink kit tools/, never on a class path
+plugin-resolver ── resolves user plugins' dependencies (coursier): relink kit tools/, never on a class path; depends on console
 chimney-iron ── a Chimney macro extension (newtype → newtype); compile-time only, consumed `% Provided`
 chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
@@ -172,9 +174,12 @@ is a written reason.
   the chunker, bbox maths — all pure, all unit-testable with no database.
 - **`Either[…, A]` for expected failures.** 404, a bad citekey, a malformed filter, an unreachable
   server: these are values, not exceptions. Exceptions are for genuinely unexpected states.
-- **Never `println` or `Console.err` outside `cli/Cli`.** The server logs through **scribe**; the CLI
-  turns an `Either` into an exit code at the very edge (1 = usage, 2 = the server said no,
-  3 = unreachable/startup failure).
+- **User output uses our `util.console.Console`, passed with `using`.** `Cli.out.println(...)` and
+  `Cli.err.println(...)` resolve that contextual interface; they are not global streams. Raw streams and
+  terminal input belong only to its adapter. Entry points choose adapters, with no global Console instance
+  or fallback given. Domain and plugin code must not receive Console. Diagnostic logging uses **scribe**,
+  separately from user output; the CLI configures logs to stderr so JSON stdout stays clean. The CLI turns
+  an `Either` into an exit code at the edge (1 = usage, 2 = the server said no, 3 = unreachable/startup failure).
 - **No side effects in object initialisers.** `Main` is the composition root: it builds
   config → `DataSource` → migrate → `Deps` → `ServerWiring` → endpoints → bind, in that order, explicitly.
   A `private val ds = Db.fromConfig()` at the top of an `object` is exactly the pattern this replaced.

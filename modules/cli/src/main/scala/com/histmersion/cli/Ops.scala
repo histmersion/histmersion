@@ -10,6 +10,7 @@ import com.histmersion.api.automation.{GoalsExport, Queue}
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, FormatReport, Lint}
 import com.histmersion.api.library.{AcquireChecksMarkdown, Query}
 import com.histmersion.api.library.Acquire
+import com.histmersion.util.console.Console
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -126,7 +127,7 @@ object Ops:
     * imported areas to remove), because a whole-corpus pass is far longer than one HTTP request.
     */
   @annotation.tailrec
-  private def fixLoop(
+  private def fixLoop(using console: Console)(
       c: Client,
       rules: List[String],
       sources: Int,
@@ -136,7 +137,7 @@ object Ops:
       placed: Option[Int] = None,
       places: Option[List[String]] = None,
       areas: Int = 0
-  ): Either[Cli.Error, List[String]] =
+  ) : Either[Cli.Error, List[String]] =
     c.lintFix(rules) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -157,12 +158,12 @@ object Ops:
         // under it): stop rather than loop
         val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
         if r.remaining > 0 || moreAreas then
-          com.histmersion.cli.Cli.errorWrite(if moreAreas then
+          Cli.err.print(if moreAreas then
             s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
           else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
           fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
         else
-          if sources > 0 || ar > 0 then com.histmersion.cli.Cli.errorWrite("\r" + " " * 70 + "\r")
+          if sources > 0 || ar > 0 then Cli.err.print("\r" + " " * 70 + "\r")
           Right(
             List(s"resolve-edges: $ed edge target(s) rewritten", s"reindex: $s source(s) → $ch chunk(s)") ++
               mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses")
@@ -192,7 +193,7 @@ object Ops:
         r.copy(subject = p.getFileName.toString, text = None)
       }
 
-  val lint: Opts[Client => Either[Cli.Error, Unit]] =
+  def lint(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
@@ -214,7 +215,7 @@ object Ops:
           .orNone,
         Output.jsonFlag
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
-        def show(r: FormatReport) = Output.emit(json, r)(FormatMarkdown.report)
+        def show(r: FormatReport) (using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
         (article, source, file) match
           case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
           case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
@@ -229,21 +230,21 @@ object Ops:
       }
     }
 
-  val query: Opts[Client => Either[Cli.Error, Unit]] =
+  def query(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
       (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
         c.query(sql).map(r => Output.emit(json, r)(Query.markdown))
       }
     }
 
-  val schema: Opts[Client => Either[Cli.Error, Unit]] =
+  def schema(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
       Output.jsonFlag.map { json => (c: Client) =>
         c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown))
       }
     }
 
-  val queue: Opts[Client => Either[Cli.Error, Unit]] =
+  def queue(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
     Opts.subcommand(
@@ -276,7 +277,7 @@ object Ops:
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[Cli.Error, Unit] = cmd match
+  private def run(c: Client, cmd: QueueCmd, json: Boolean)(using console: Console) : Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all)
         .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))
@@ -292,9 +293,9 @@ object Ops:
     case QueueCmd.Rm(id) =>
       c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
     case QueueCmd.Export(dir) =>
-      writeMeta(c, Path.of(dir)).map(fs => com.histmersion.cli.Cli.writeLine(s"wrote ${fs.mkString(", ")} to $dir"))
+      writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
-      readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => com.histmersion.cli.Cli.writeLine(s"  $l")))
+      readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => Cli.out.println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
       c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
         Acquire.Checks.RecheckRequest(dryRun, limit, id, Some("cli"), all)

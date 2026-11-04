@@ -14,17 +14,18 @@ import com.histmersion.api.media.{
   MediaImportRequest,
   MediaProvider
 }
+import com.histmersion.util.console.Console
 
 object MediaCmd:
 
-  private val detail = Opts.subcommand("detail", "Show asset metadata including spatial/temporal") {
+  private def detail (using console: Console) = Opts.subcommand("detail", "Show asset metadata including spatial/temporal") {
     (Opts.argument[String]("citekey"), Opts.argument[String]("name"))
       .mapN { (ck, name) => (c: Client) =>
-        c.assetDetail(ck, name).map(d => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetDetail(ck, d)))
+        c.assetDetail(ck, name).map(d => Cli.out.println(MediaMarkdown.assetDetail(ck, d)))
       }
   }
 
-  private val patch = Opts.subcommand("patch", "Update asset metadata") {
+  private def patch (using console: Console) = Opts.subcommand("patch", "Update asset metadata") {
     (
       Opts.argument[String]("citekey"),
       Opts.argument[String]("name"),
@@ -38,7 +39,7 @@ object MediaCmd:
     )
       .mapN { (ck, name, kind, caption, license, lat, lon, ps, pe) => (c: Client) =>
         c.patchAsset(ck, name, AssetPatch(kind, caption, license, lat, lon, ps, pe))
-          .map(d => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetDetail(ck, d)))
+          .map(d => Cli.out.println(MediaMarkdown.assetDetail(ck, d)))
       }
   }
 
@@ -47,7 +48,7 @@ object MediaCmd:
   /** `media import <provider>`: the same flags and the same job for every provider — the built-in ones and any a plugin
     * of the server registered (`media providers` lists them; the server decides).
     */
-  private val importCmd = Opts.subcommand(
+  private def importCmd (using console: Console) = Opts.subcommand(
     "import",
     "Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, " +
       "cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a " +
@@ -74,10 +75,10 @@ object MediaCmd:
     )
       .mapN { (name, dry, limit, place, event, refresh, noWait) => (c: Client) =>
         val req = MediaImportRequest(name, dry, limit, place, event, refresh)
-        if dry then c.mediaImport(req).map(r => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaImportReport(r)))
+        if dry then c.mediaImport(req).map(r => Cli.out.println(MediaMarkdown.mediaImportReport(r)))
         else
           c.mediaImportJob(req).flatMap { j =>
-            com.histmersion.cli.Cli.writeLine(
+            Cli.out.println(
               s"media import job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
             )
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -86,15 +87,15 @@ object MediaCmd:
   }
 
   /** `media providers`: what `media import` can run on this server — its plugins' registered collections. */
-  private val providersCmd = Opts.subcommand(
+  private def providersCmd (using console: Console) = Opts.subcommand(
     "providers",
     "The providers `media import` can run on this server: the built-in ones and any a plugin registered, " +
       "with what each asks about, the plugin that provides it and the licences it may store"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.mediaProviders.map(ps => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaProviders(ps))))
+    Opts.unit.map(_ => (c: Client) => c.mediaProviders.map(ps => Cli.out.println(MediaMarkdown.mediaProviders(ps))))
   }
 
-  private val listCmd =
+  private def listCmd (using console: Console) =
     Opts.subcommand("list", "Stored pictures — source figures and providers' — with licence and credit") {
       (
         Opts.option[String]("provider", s"${MediaProvider.all.mkString("|")}").orNone,
@@ -107,32 +108,32 @@ object MediaCmd:
         Opts.flag("facets", "Only the counts per provider and licence").orFalse
       )
         .mapN { (provider, licence, place, event, q, limit, offset, facets) => (c: Client) =>
-          if facets then c.mediaFacets.map(f => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaFacets(f)))
+          if facets then c.mediaFacets.map(f => Cli.out.println(MediaMarkdown.mediaFacets(f)))
           else
             c.mediaList(Api.MediaQuery(provider, licence, place, event, q, limit, offset))
-              .map(l => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaList(l)))
+              .map(l => Cli.out.println(MediaMarkdown.mediaList(l)))
         }
     }
 
-  private val showCmd = Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
+  private def showCmd (using console: Console) = Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
     Opts.argument[String]("uid").map { uid => (c: Client) =>
-      c.mediaShow(uid.stripPrefix("media:")).map(m => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaItem(m)))
+      c.mediaShow(uid.stripPrefix("media:")).map(m => Cli.out.println(MediaMarkdown.mediaItem(m)))
     }
   }
 
-  private val fillCmd = Opts.subcommand(
+  private def fillCmd (using console: Console) = Opts.subcommand(
     "fill-licences",
     "Give a source's figures the licence the source records (only figures with none); counts unless --apply"
   ) {
     Opts.flag("apply", "Write the licences").orFalse.map { apply => (c: Client) =>
-      c.fillFigureLicences(apply).map(f => com.histmersion.cli.Cli.writeLine(MediaMarkdown.figureLicenceFill(f)))
+      c.fillFigureLicences(apply).map(f => Cli.out.println(MediaMarkdown.figureLicenceFill(f)))
     }
   }
 
   /** `histmersion media covers` — the sources' pictures: Calibre covers (read here, host-side), Open Library covers and
     * the papers' illustrations (the server).
     */
-  private val coversCmd = Opts.subcommand(
+  private def coversCmd (using console: Console) = Opts.subcommand(
     "covers",
     "Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else " +
       "Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what " +
@@ -172,15 +173,15 @@ object MediaCmd:
                 )
               )
           _ = if !noCalibre then
-            com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
+            Cli.out.println(MediaMarkdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
           // 3. the rest is the server's: Open Library by the records' ISBNs, and the illustrations
           req = MediaCoversRequest(dry, limit, only, refresh, covers = !noOl, illustrations = !noIll)
           _ <-
             if !req.covers && !req.illustrations then Right(())
-            else if dry || only.isDefined then c.mediaCovers(req).map(r => com.histmersion.cli.Cli.writeLine(MediaMarkdown.mediaCoversReport(r)))
+            else if dry || only.isDefined then c.mediaCovers(req).map(r => Cli.out.println(MediaMarkdown.mediaCoversReport(r)))
             else
               c.mediaCoversJob(req).flatMap { j =>
-                com.histmersion.cli.Cli.writeLine(
+                Cli.out.println(
                   s"media covers job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
                 )
                 if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -189,7 +190,7 @@ object MediaCmd:
       }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "media",
       "Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch"

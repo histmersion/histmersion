@@ -5,6 +5,8 @@ import java.nio.file.{Files, Path}
 /** `histmersion places seed`'s file walk is a pure function of a directory, so it is tested as one. */
 class PlacesCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def tree(): Path =
     val root = Files.createTempDirectory("histmersion-places")
     List("01-natural-earth.json", "03-pleiades.json", "README.md", "build.py")

@@ -1,8 +1,16 @@
 # Detector results
 
-Baseline: `6e1b5387`. Production compiler repairs have now been applied through Scalafix. Build files remain unchanged.
+Baseline: `6e1b5387`. Application and test changes use Scalafix. The current build adds the dependency-free console module and scribe for CLI diagnostics.
 
 ## Current checkpoint
+
+The callback/permission approach below was rejected and replaced with our own Console interface, passed with `using`. `Cli.out.println` and `Cli.err.println` resolve the supplied instance. CLI, resolver and relink implementations no longer receive loose printing callbacks or access global streams. Command builders receive the contextual console; the four process entries choose adapters. No global Console instance or fallback given is defined. Diagnostic output uses scribe; CLI logs are configured for stderr.
+
+Raw output permission now belongs only to the Console adapter. The previous Cli and entry-point output exceptions were removed. New checks forbid adapter construction inside command implementations, raw terminal input outside the adapter, and Console dependencies in domain/plugin code. The console fixture verifies six diagnostics and permitted/lookalike cases; enforcement rejects it with exit 64. Production coverage is 2,356/2,356, with 31/31 capability source guards. Findings remain 228 capability and 46 structural; this correction strengthens the architecture without claiming an additional backlog reduction. The structural audit covers 3,126 source/test files plus two fixtures, with 24/24 source guards.
+
+Production and aggregate test compilation pass. The complete CLI and resolver suites and selected server launcher suites pass; details are in STATUS.md. The refreshed semantic migration inventory has no remaining output targets and its no-write second pass succeeds. Native builds and the full server runtime suite were not run.
+
+The following entries are historical checkpoints, including the superseded callback design.
 
 The launcher batch moves three diagnostic calls to scribe and replaces eleven raw console references in resolver/relink implementations with supplied output callbacks. Four raw stream references now live at their two entry functions. Three exact entry-function console permissions cover those four references and the server entry's three existing help/error/self-check references. This is both a code repair and an explicit policy change, not seventeen code fixes. No other capability permission changes.
 

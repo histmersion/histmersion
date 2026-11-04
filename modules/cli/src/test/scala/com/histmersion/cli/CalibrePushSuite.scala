@@ -14,6 +14,8 @@ import java.nio.file.{Files, Path}
   */
 class CalibrePushSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val Pdf = "%PDF-1.4 server copy"
 
   private def gap(ck: String, stored: Option[Boolean] = None, provenance: String = "unpaywall") =

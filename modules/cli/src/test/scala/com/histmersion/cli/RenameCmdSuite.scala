@@ -8,6 +8,8 @@ import com.histmersion.api.library.Source
   */
 class RenameCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val cmd = Command("rename", "test")(RenameCmd.args)
   private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
 

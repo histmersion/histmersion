@@ -3,6 +3,7 @@ package com.histmersion.cli
 import com.monovore.decline.*
 import io.circe.Encoder
 import io.circe.syntax.*
+import com.histmersion.util.console.Console
 
 /** The one way a command prints its answer (#1946): the shared Markdown rendering — for people and LLMs — or, with
   * `--json`, the response as the server sent it, for scripts. Every command that offers JSON takes [[jsonFlag]] (one
@@ -22,5 +23,5 @@ object Output:
     if json then Output.json(a) else markdown(a)
 
   /** Print `a` as JSON when `json`, else as its Markdown. */
-  def emit[A: Encoder](json: Boolean, a: A)(markdown: A => String): Unit =
-    com.histmersion.cli.Cli.writeLine(render(json, a)(markdown))
+  def emit[A: Encoder](json: Boolean, a: A)(markdown: A => String)(using console: Console) : Unit =
+    Cli.out.println(render(json, a)(markdown))

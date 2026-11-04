@@ -12,10 +12,11 @@ import com.histmersion.api.automation.Agents.RunRequest
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown}
 import com.histmersion.domain.automation.Goal
+import com.histmersion.util.console.Console
 
 object GoalsCmd:
 
-  private val list = Opts.subcommand("list", "List research goals") {
+  private def list (using console: Console) = Opts.subcommand("list", "List research goals") {
     (
       Opts.option[String]("status", s"Filter: ${Goal.Status.all.mkString("|")}").orNone,
       Opts.option[Int]("limit", "Max results").orNone,
@@ -28,13 +29,13 @@ object GoalsCmd:
       }
   }
 
-  private val get = Opts.subcommand("get", "Show one goal: sub-goals, links, schedules, approved plan") {
+  private def get (using console: Console) = Opts.subcommand("get", "Show one goal: sub-goals, links, schedules, approved plan") {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
       c.call(AgentsApi.goalView)(slug).map(v => Output.emit(json, v)(AgentsMarkdown.goalView))
     }
   }
 
-  private val update = Opts.subcommand("update", "Update goal fields (patch)") {
+  private def update (using console: Console) = Opts.subcommand("update", "Update goal fields (patch)") {
     (
       Opts.argument[String]("slug"),
       Opts.option[String]("title", "New title").orNone,
@@ -60,11 +61,11 @@ object GoalsCmd:
             periodStart = from,
             periodEnd = to
           )
-        ).map(g => com.histmersion.cli.Cli.writeLine(GoalsMarkdown.goal(g)))
+        ).map(g => Cli.out.println(GoalsMarkdown.goal(g)))
       }
   }
 
-  private val plan = Opts.subcommand(
+  private def plan (using console: Console) = Opts.subcommand(
     "plan",
     "Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)"
   ) {
@@ -77,11 +78,11 @@ object GoalsCmd:
       AgentCmd.followOpt
     ).mapN { (slug, model, budget, fol) => (c: Client) =>
       c.call(AgentsApi.startRun)(RunRequest(Agents.Pipeline.PlanGoal.wire, slug, model, budget))
-        .flatMap(r => if fol then AgentCmd.follow(c, r.id, "") else Right(com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r))))
+        .flatMap(r => if fol then AgentCmd.follow(c, r.id, "") else Right(Cli.out.println(AgentsMarkdown.runLine(r))))
     }
   }
 
-  private val link = Opts.subcommand("link", "Link a goal to a source, an article, a search query or a queue item") {
+  private def link (using console: Console) = Opts.subcommand("link", "Link a goal to a source, an article, a search query or a queue item") {
     val target =
       Opts.option[String]("source", "A citekey").map(LinkKind.Source -> _) orElse
         Opts.option[String]("article", "An article slug").map(LinkKind.Article -> _) orElse
@@ -91,11 +92,11 @@ object GoalsCmd:
         Opts.option[Int]("item", "A queue item id").map(i => LinkKind.QueueItem -> i.toString)
     (Opts.argument[String]("slug"), target, Opts.option[String]("note", "Why it is linked").orNone).mapN {
       (slug, t, note) => (c: Client) =>
-        c.call(AgentsApi.addGoalLink)((slug, LinkAdd(t._1, t._2, note))).map(l => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.linkLine(l)))
+        c.call(AgentsApi.addGoalLink)((slug, LinkAdd(t._1, t._2, note))).map(l => Cli.out.println(AgentsMarkdown.linkLine(l)))
     }
   }
 
-  private val unlink = Opts.subcommand("unlink", "Remove one link of a goal") {
+  private def unlink (using console: Console) = Opts.subcommand("unlink", "Remove one link of a goal") {
     (
       Opts.argument[String]("slug"),
       Opts
@@ -104,11 +105,11 @@ object GoalsCmd:
       Opts.argument[String]("ref")
     ).mapN { (slug, kind, ref) => (c: Client) =>
       c.call(AgentsApi.removeGoalLink)((slug, kind, ref))
-        .map(r => com.histmersion.cli.Cli.writeLine(if r.removed then "unlinked" else "there was no such link"))
+        .map(r => Cli.out.println(if r.removed then "unlinked" else "there was no such link"))
     }
   }
 
-  private val schedule = Opts.subcommand(
+  private def schedule (using console: Console) = Opts.subcommand(
     "schedule",
     "Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — " +
       "resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled"
@@ -131,18 +132,18 @@ object GoalsCmd:
         set match
           case None =>
             c.call(AgentsApi.removeSchedule)((slug, kind))
-              .map(r => com.histmersion.cli.Cli.writeLine(if r.removed then "removed" else "there was no such schedule"))
+              .map(r => Cli.out.println(if r.removed then "removed" else "there was no such schedule"))
           case Some((cron, off, budget)) =>
             c.call(AgentsApi.setSchedule)((slug, kind, ScheduleSet(cron, enabled = !off, budget)))
-              .map(s => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.scheduleLine(s)))
+              .map(s => Cli.out.println(AgentsMarkdown.scheduleLine(s)))
       }
   }
 
-  private val schedules = Opts.subcommand("schedules", "Every goal's schedules, the next due first") {
-    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.schedules)(()).map(ss => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.schedules(ss))))
+  private def schedules (using console: Console) = Opts.subcommand("schedules", "Every goal's schedules, the next due first") {
+    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.schedules)(()).map(ss => Cli.out.println(AgentsMarkdown.schedules(ss))))
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename") {
       list orElse get orElse update orElse plan orElse link orElse unlink orElse schedule orElse schedules orElse
         LabelRenameCmd(Bundle.Kind.Goal)

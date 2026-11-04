@@ -9,6 +9,8 @@ import com.histmersion.api.backup.Backup
   */
 class JobFollowSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def job(status: String, error: Option[String] = None) =
     JobInfo(id = "j1", kind = "ingest", status = status, error = error)
 

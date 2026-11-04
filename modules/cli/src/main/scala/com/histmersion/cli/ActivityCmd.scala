@@ -4,13 +4,14 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.api.automation.{Activity, ActivityMarkdown}
+import com.histmersion.util.console.Console
 
 /** `histmersion activity [--kind k] [--running] [--since s] [--goal g] [--limit n] [--before c]` — Research › Activity:
   * agent runs, background jobs, worklog lines and a person's decisions, one list, newest first.
   */
 object ActivityCmd:
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "activity",
       "What the agents, the server and you did, one list, newest first: agent runs, " +

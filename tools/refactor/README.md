@@ -3,7 +3,26 @@
 Detector configurations read application sources; explicitly named repair configurations apply Scalafix patches.
 Run commands from the `contracts3-scalafix` worktree root.
 
-## Launcher output repair
+## Injected command console
+
+Command output uses our `com.histmersion.util.console.Console`, passed with `using`. `Cli.out.println(...)` and `Cli.err.println(...)` are contextual accessors, not global streams. Commands that previously captured output in singleton fields are now contextual builders. Console adapters are selected at process entry points; no companion default given is supplied. Scribe remains the diagnostic logger, and the CLI configures it to stderr. Configuration warnings retain lazy evaluation and use scribe.
+
+The dependency-free JVM `console` module is shared by CLI, server launchers and plugin-resolver. It contains the interface and stream adapters, never domain code. Only the adapter has raw stream/input permission. Four exact entry methods may select an adapter, but may not print directly. Rules reject console construction inside commands and Console dependencies in domain/plugin code.
+
+`console-inventory.conf` uses SemanticDB to trace output dependencies through methods and member values, with file-scoped local symbols. `console-inject.conf` applies the resulting plan through AST/token patches. Always regenerate the plan from ordinary SemanticDB immediately before applying: source hashes reject stale plans. The final inventory has no remaining targets, and `--check` on the regenerated plan passes. This is snapshot migration tooling, not proof of arbitrary callback or dynamic-dispatch coverage.
+
+The other `console-*.conf` recipes generate the parsed interface, update launchers/tests, handle default arguments, expose the imperative API and separate terminal prompts. They record the reviewed stages of this migration; do not rerun historical generation recipes indiscriminately against the completed code.
+
+Compile the policy fixture against the real interface:
+
+```text
+scala-cli compile tools/refactor/console-policy-fixtures.scala modules/console/src/main/scala/com/histmersion/util/console/Console.scala --server=false --semanticdb --semanticdb-targetroot /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/refactor-console-fixtures
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/console-policy-fixtures.conf --scala-version 3.10.0 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-console-fixtures --files tools/refactor/console-policy-fixtures.scala
+```
+
+Six exact diagnostics must pass fixture verification; substituting `console-policy-reject.conf` must exit 64. User-output regressions cover isolated injected consoles, channels, Unicode, JSON, progress, prompts and exit statuses. Production and aggregate test compilation use `scalafmtOnCompile := false` and ordinary `-Xsemanticdb`.
+
+## Historical launcher output repair (superseded)
 
 `launcher-output.conf` is a reviewed snapshot recipe using `RepairBoundaries` AST templates, scoped to four production files. It threads supplied output functions through resolver/relink signatures and callers and sends three diagnostics to scribe. Run it twice: outer definition patches intentionally defer nested body rewrites. `launcher-output-check.conf` must then pass with zero remaining matches. It is not a general semantic migration rule: its source paths, owners and shapes must be reviewed again for a different snapshot.
 

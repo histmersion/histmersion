@@ -3,6 +3,7 @@ package com.histmersion.cli
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
+import com.histmersion.util.console.Console
 
 /** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
   * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as
@@ -20,22 +21,22 @@ object JobFollow:
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:
     val Width = 72
-    def line(text: String): Unit = com.histmersion.cli.Cli.errorWrite(s"\r${" " * Width}\r$text")
-    def clear(): Unit = com.histmersion.cli.Cli.errorWrite("\r" + " " * Width + "\r")
+    def line(text: String)(using console: Console) : Unit = Cli.err.print(s"\r${" " * Width}\r$text")
+    def clear()(using console: Console) : Unit = Cli.err.print("\r" + " " * Width + "\r")
 
   def failed(what: String, why: Option[String]): Cli.Error =
     Cli.Error(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
-  def job(
+  def job(using console: Console)(
       fetch: String => Either[Cli.Error, JobInfo],
       id: String,
       waited: Long = 0,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = Progress.line,
       clear: () => Unit = () => Progress.clear()
-  ): Either[Cli.Error, JobInfo] =
+  ) : Either[Cli.Error, JobInfo] =
     fetch(id) match
       case Left(e)  => clear(); Left(e)
       case Right(j) =>
@@ -52,13 +53,13 @@ object JobFollow:
     * checksum, is `ExitCode.Refused`.
     */
   @annotation.tailrec
-  def backup(
+  def backup(using console: Console)(
       fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
       pollMs: Long = BackupPollMs,
       sleep: Long => Unit = Thread.sleep,
-      progress: String => Unit = l => com.histmersion.cli.Cli.processErrorLine(l)
-  ): Either[Cli.Error, Backup.Result] =
+      progress: String => Unit = l => Cli.err.println(l)
+  ) : Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>
         progress(s"backup ${s.file} running for ${s.durationMs / 1000} s…")

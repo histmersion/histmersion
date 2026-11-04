@@ -7,6 +7,7 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.api.library.CalibreEntryCheck
 import com.histmersion.api.library.Source
+import com.histmersion.util.console.Console
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *
@@ -26,7 +27,7 @@ object DeleteCmd:
       Output.jsonFlag
     ).mapN((ck, apply, json) => Args(ck.trim, apply, json))
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "delete",
       "Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched"
@@ -52,7 +53,7 @@ object DeleteCmd:
           case Right(None)    => CalibreEntryCheck.Missing
           case Left(e)        => CalibreEntryCheck.Unchecked(e.linesIterator.nextOption().getOrElse(e).take(200))
 
-  def run(c: Client, a: Args): Either[Cli.Error, Unit] =
+  def run(c: Client, a: Args)(using console: Console) : Either[Cli.Error, Unit] =
     c.deleteSource(a.citekey, a.apply).flatMap { d =>
       lazy val check = d.calibreId.map { id =>
         val cfg = Settings.app.cli.calibre

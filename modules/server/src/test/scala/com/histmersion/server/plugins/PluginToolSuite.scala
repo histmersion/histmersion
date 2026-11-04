@@ -17,6 +17,17 @@ import scala.jdk.CollectionConverters.*
   */
 class PluginToolSuite extends munit.FunSuite:
 
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console = new com.histmersion.util.console.Console {
+    def write(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(): Unit = stdout("")
+    def errorWrite(value: => String): Unit = stderr(value)
+    def errorLine(value: => String): Unit = stderr(value)
+    def errorLine(): Unit = stderr("")
+    def errorFlush(): Unit = ()
+    def readLine(): String = throw new UnsupportedOperationException("input not used")
+  }
+
   private lazy val hello: Path =
     val in = getClass.getClassLoader.getResourceAsStream("plugin-fixtures.txt")
     val line = String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("hello=")).get
@@ -230,15 +241,15 @@ class PluginToolSuite extends munit.FunSuite:
     val err = List.newBuilder[String]
     val emit: String => Unit = s => { out += s; () }
     val reject: String => Unit = s => { err += s; () }
-    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString), emit, reject), 0)
+    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString))(using consoleFor(emit, reject)), 0)
     assertEquals(out.result(), List(PluginKit.renderJars(List(RelinkPlugins.describe(hello, loader)))))
     assertEquals(err.result(), Nil)
     out.clear()
-    assertEquals(RelinkPlugins.exitCode(Nil, emit, reject), 1)
+    assertEquals(RelinkPlugins.exitCode(Nil)(using consoleFor(emit, reject)), 1)
     assertEquals(out.result(), Nil)
     assert(err.result().head.startsWith("usage:"))
     err.clear()
-    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString), _ => throw new IllegalArgumentException("sink failed"), reject), 3)
+    assertEquals(RelinkPlugins.exitCode(List("describe", hello.toString))(using consoleFor(_ => throw new IllegalArgumentException("sink failed"), reject)), 3)
     assertEquals(err.result(), List("pluginTool: IllegalArgumentException: sink failed"))
   }
 
@@ -248,7 +259,7 @@ class PluginToolSuite extends munit.FunSuite:
     val record = d.resolve("record.json")
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    assertEquals(RelinkPlugins.exitCode(List("plugin-set", jar.toString, record.toString, "jvm", kit.toString, hello.toString), s => { out += s; () }, s => { err += s; () }), 0)
+    assertEquals(RelinkPlugins.exitCode(List("plugin-set", jar.toString, record.toString, "jvm", kit.toString, hello.toString))(using consoleFor(s => { out += s; () }, s => { err += s; () })), 0)
     val expected = PluginKit.digest(List(hello.getFileName.toString -> RelinkPlugins.sha256(hello)))
     assertEquals(out.result(), List(expected))
     assertEquals(err.result(), Nil)

@@ -8,6 +8,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.library.Ingest
+import com.histmersion.util.console.Console
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *
@@ -22,11 +23,11 @@ object IngestCmd:
     * The exit code is the point: a failed conversion must not look like success in a script — it exits
     * [[ExitCode.Refused]].
     */
-  def pollJob(c: Client, id: String, waited: Int): Either[Cli.Error, Unit] =
-    JobFollow.job(c.job, id, waited * 1000L).map(j => com.histmersion.cli.Cli.writeLine(IngestMarkdown.job(j)))
+  def pollJob(c: Client, id: String, waited: Int)(using console: Console) : Either[Cli.Error, Unit] =
+    JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
-  def upload(
+  def upload(using console: Console)(
       c: Client,
       file: Path,
       citekey: String,
@@ -39,7 +40,7 @@ object IngestCmd:
       noWait: Boolean,
       provenance: Option[String] = None,
       acquireItem: Option[Int] = None
-  ): Either[Cli.Error, Unit] =
+  ) : Either[Cli.Error, Unit] =
     if citekey.trim.isEmpty then
       Left(Cli.Error("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
@@ -63,14 +64,14 @@ object IngestCmd:
           acquireItem
         )
       c.ingest(params, file.toFile).flatMap { a =>
-        com.histmersion.cli.Cli.writeLine(
+        Cli.out.println(
           s"queued job ${a.jobId} for ${a.citekey}" +
             acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
         )
         if noWait then Right(()) else pollJob(c, a.jobId, 0)
       }
 
-  private val reocr =
+  private def reocr (using console: Console) =
     Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
       (
         Opts.argument[String]("citekey"),
@@ -79,28 +80,28 @@ object IngestCmd:
       )
         .mapN { (ck, quality, noWait) => (c: Client) =>
           c.reocr(ck, quality).flatMap { a =>
-            com.histmersion.cli.Cli.writeLine(s"queued job ${a.jobId} for ${a.citekey}")
+            Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
             if noWait then Right(()) else pollJob(c, a.jobId, 0)
           }
         }
     }
 
-  private val assets =
+  private def assets (using console: Console) =
     Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
       Opts
         .argument[String]("citekey")
-        .map(ck => (c: Client) => c.assets(ck).map(rows => com.histmersion.cli.Cli.writeLine(IngestMarkdown.assets(ck, rows.toVector))))
+        .map(ck => (c: Client) => c.assets(ck).map(rows => Cli.out.println(IngestMarkdown.assets(ck, rows.toVector))))
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: String, help: String): Opts[Client => Either[Cli.Error, Unit]] =
+  private def control(action: String, help: String)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(action, help) {
       (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.call(Api.jobControl)((id, action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
       }
     }
 
-  private val controls =
+  private def controls (using console: Console) =
     control(
       "pause",
       "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
@@ -109,7 +110,7 @@ object IngestCmd:
       control("resume", "Resume a paused job: it goes on with the parts it had not done") orElse
       control("cancel", "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
 
-  private val jobs = Opts.subcommand(
+  private def jobs (using console: Console) = Opts.subcommand(
     "jobs",
     "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
       "or one job by id; `jobs pause|resume|cancel <id>` controls one"
@@ -140,4 +141,4 @@ object IngestCmd:
       }
   }
 
-  val all: Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs
+  def all(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs

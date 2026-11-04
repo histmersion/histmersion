@@ -27,6 +27,7 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.util.console.Console
 
 object EventsCmd:
 
@@ -34,7 +35,7 @@ object EventsCmd:
     * `--from`/`--to` are matched against the event's own span, `--title` against its label. The positional query
     * searches the event's label and description.
     */
-  private val search = Opts.subcommand(
+  private def search (using console: Console) = Opts.subcommand(
     "search",
     "Find events by label or description (the filter flags select their sources)"
   ) {
@@ -61,7 +62,7 @@ object EventsCmd:
       }
   }
 
-  private val showCmd = Opts.subcommand("show", "One event: datings, edges, participants") {
+  private def showCmd (using console: Console) = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       c.getEvent(id).map(d => Output.emit(json, d)(_.markdown))
     }
@@ -124,7 +125,7 @@ object EventsCmd:
       }
 
   /** `events patch <id>`: the fields given change, the rest stay — `PATCH /api/events/{id}`. */
-  private val patchCmd = Opts.subcommand(
+  private def patchCmd (using console: Console) = Opts.subcommand(
     "patch",
     "Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue " +
       "event the changes are kept across re-imports (`events corrections` lists them)"
@@ -133,24 +134,24 @@ object EventsCmd:
       for
         p <- patch
         d <- c.patchEvent(id, p)
-      yield com.histmersion.cli.Cli.writeLine(d.markdown)
+      yield Cli.out.println(d.markdown)
     }
   }
 
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[Cli.Error, Unit] =
-    com.histmersion.cli.Cli.writeLine(
+  private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
+    Cli.out.println(
       s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
     if noWait then Right(())
     else
       IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-        done.detail.flatMap(EventImportReport.Detail.of).foreach(r => com.histmersion.cli.Cli.writeLine(EventImportReport.markdown(r)))
+        done.detail.flatMap(EventImportReport.Detail.of).foreach(r => Cli.out.println(EventImportReport.markdown(r)))
       }
 
-  private val importCmd = Opts.subcommand(
+  private def importCmd (using console: Console) = Opts.subcommand(
     "import",
     "Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, " +
       "eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue " +
@@ -183,7 +184,7 @@ object EventsCmd:
       }
   }
 
-  private val rederiveCmd = Opts.subcommand(
+  private def rederiveCmd (using console: Console) = Opts.subcommand(
     "rederive",
     "Compute the dating of the stored catalogue records again from the records as read — NO network — and " +
       "refresh the events the catalogues created (corrections by hand kept): the step after an importer's " +
@@ -196,19 +197,19 @@ object EventsCmd:
     )
       .mapN { (p, dry, noWait) => (c: Client) =>
         c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else
             IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => com.histmersion.cli.Cli.writeLine(EventRederiveReport.markdown(r)))
+              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
             }
         }
       }
   }
 
-  private val correctionsCmd = Opts.subcommand(
+  private def correctionsCmd (using console: Console) = Opts.subcommand(
     "corrections",
     "The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts " +
       "first — the catalogue changed a corrected field to something else"
@@ -219,18 +220,18 @@ object EventsCmd:
       Opts.option[Int]("limit", "At most this many").orNone
     )
       .mapN { (st, ev, limit) => (c: Client) =>
-        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => com.histmersion.cli.Cli.writeLine(Corrections.markdown(l)))
+        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => Cli.out.println(Corrections.markdown(l)))
       }
   }
 
-  private val cataloguesCmd = Opts.subcommand(
+  private def cataloguesCmd (using console: Console) = Opts.subcommand(
     "catalogues",
     "The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them"
   ) {
     Opts.unit.map { _ => (c: Client) =>
       c.call(EventsApi.catalogues)(())
         .map(cs =>
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             cs.map(i =>
               s"- **${i.id}** — ${i.title} (${i.home})\n  - licence: ${i.licence}\n  - cite as: ${i.citation}"
             ).mkString("\n")
@@ -239,7 +240,7 @@ object EventsCmd:
     }
   }
 
-  private val linksCmd = Opts.subcommand(
+  private def linksCmd (using console: Console) = Opts.subcommand(
     "links",
     "The sources that may discuss an event (findings near it, passages naming it) — proposed, unconfirmed; " +
       "--apply confirms one (an attestation from a passage naming the event), --reject stops proposing one"
@@ -253,12 +254,12 @@ object EventsCmd:
       .mapN { (id, re, confirm, reject) => (c: Client) =>
         if re || confirm.nonEmpty || reject.nonEmpty then
           c.call(EventsApi.applyLinks)((id, EventLinksRequest(re, confirm, reject)))
-            .map(r => com.histmersion.cli.Cli.writeLine(EventLinksMarkdown.result(r)))
-        else c.call(EventsApi.links)(id).map(l => com.histmersion.cli.Cli.writeLine(EventLinksMarkdown.list(l)))
+            .map(r => Cli.out.println(EventLinksMarkdown.result(r)))
+        else c.call(EventsApi.links)(id).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
       }
   }
 
-  private val candidatesCmd = Opts.subcommand(
+  private def candidatesCmd (using console: Console) = Opts.subcommand(
     "candidates",
     "Compute the proposed links of the events not checked yet (--all: every event), as a server job"
   ) {
@@ -273,7 +274,7 @@ object EventsCmd:
       }
   }
 
-  private val leadsCmd = Opts.subcommand(
+  private def leadsCmd (using console: Console) = Opts.subcommand(
     "leads",
     "Questions the events raise: catalogue events no source in the corpus discusses, with the findings around " +
       "them counted and the commands that act on them (the filter flags select as for search)"
@@ -286,11 +287,11 @@ object EventsCmd:
     )
       .mapN { (kind, tier, area, f) => (c: Client) =>
         c.call(EventsApi.leads)(Api.EventQuery(f, kind = kind, tier = tier, area = area))
-          .map(l => com.histmersion.cli.Cli.writeLine(EventLeads.markdown(l)))
+          .map(l => Cli.out.println(EventLeads.markdown(l)))
       }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "events",
       "Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads"

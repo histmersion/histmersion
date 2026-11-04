@@ -18,13 +18,14 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
+import com.histmersion.util.console.Console
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
 object ManagerCmd:
 
-  val managers: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def managers(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "managers",
     "The process managers: each one's state, items, runs in flight, status line and last event"
   ) {
@@ -43,7 +44,7 @@ object ManagerCmd:
       "max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' " +
       "plans and drafts decided by code checks), extend-min-new"
 
-  private val create = Opts.subcommand(
+  private def create (using console: Console) = Opts.subcommand(
     "new",
     "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
       "starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check " +
@@ -70,7 +71,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent enqueue <review|extend|enrich|seed> <target>` — what the page buttons do. */
-  val enqueue: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def enqueue(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "enqueue",
     "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
       "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused"
@@ -88,7 +89,7 @@ object ManagerCmd:
   /** `histmersion agent autopilot [status|on|off]` — the one switch (docs/research-process-managers.md "As built: the
     * autopilot").
     */
-  val autopilot: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def autopilot(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "autopilot",
     "The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last " +
       "activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and " +
@@ -109,7 +110,7 @@ object ManagerCmd:
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse,
       Output.jsonFlag
     ).mapN { (verb, rest, dry, json) => (c: Client) =>
-      def status(call: Either[Cli.Error, AutopilotStatus]) =
+      def status(call: Either[Cli.Error, AutopilotStatus]) (using console: Console) =
         call.map(s => Output.emit(json, s)(_.markdown))
       verb.trim.toLowerCase match
         case "mode" =>
@@ -149,7 +150,7 @@ object ManagerCmd:
   /** `histmersion agent scheduler [status|queue|why <item>|strategy <name|default>]` — the central scheduler
     * (docs/research-goal-advancement.md "As built").
     */
-  val scheduler: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def scheduler(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "scheduler",
     "The central scheduler that admits the managers' work across every job type: status (default) — the strategy, " +
       "the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each " +
@@ -190,7 +191,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent stalls [--days n]` — the goals with no progress, why, and what unblocks them. */
-  val stalls: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def stalls(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "stalls",
     "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
       "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
@@ -203,7 +204,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent digest` — everything waiting for a person, by kind (#3762 proposal 3). */
-  val digest: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def digest(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "digest",
     "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
       "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
@@ -215,7 +216,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent decide-all <approve|reject> --kind k | --subject s | --id n…` — a group at once. */
-  val decideAll: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def decideAll(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "decide-all",
     "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
       "narrow together; one is needed), the oldest first, each through the same decision a single one takes"
@@ -263,10 +264,10 @@ object ManagerCmd:
 
   private val target = Opts.argument[String]("target")
 
-  private def itemPatch(c: Client, id: String, t: String, p: ItemPatch) =
-    c.call(ManagersApi.patchItem)((id, t, p)).map(i => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.item(i)))
+  private def itemPatch(c: Client, id: String, t: String, p: ItemPatch) (using console: Console) =
+    c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
-  private val verbs: Opts[(Client, String) => Either[Cli.Error, Unit]] =
+  private def verbs(using console: Console) : Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
       Output.jsonFlag.map(json =>
         (c, id) => c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
@@ -289,7 +290,7 @@ object ManagerCmd:
           Opts.option[Long]("before", "Only events older than this id").orNone,
           Opts.option[Int]("limit", "How many").orNone
         ).mapN { (b, lim) => (c, id) =>
-          c.call(ManagersApi.events)((id, b, lim)).map(p => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.events(p)))
+          c.call(ManagersApi.events)((id, b, lim)).map(p => Cli.out.println(ManagersMarkdown.events(p)))
         }
       ) orElse
       verb("pause", "Start no new runs (its runs in flight go on, unless --runs)")(
@@ -297,17 +298,17 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((id, "pause", Some(r))).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
+            (c, id) => c.call(ManagersApi.action)((id, "pause", Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "resume", None)).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, "resume", None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "stop", None)).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, "stop", None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
@@ -326,7 +327,7 @@ object ManagerCmd:
           .mapN { (text, item, once, suggest) => (c, id) =>
             c.call(ManagersApi.addHint)(
               (id, HintAdd(text, item, Some(once), None, Some("cli"), suggest = Some(suggest)))
-            ).map(h => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.hint(h)))
+            ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))
           }
       ) orElse
       verb(
@@ -336,7 +337,7 @@ object ManagerCmd:
       )(
         (Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone)
           .mapN { (kind, t, p) => (c, id) =>
-            c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.item(i)))
+            c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => Cli.out.println(ManagersMarkdown.item(i)))
           }
       ) orElse
       verb("hold", "Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released")(
@@ -374,7 +375,7 @@ object ManagerCmd:
           .map(t =>
             (c, id) =>
               c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(t))))
-                .map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
+                .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("config", s"Replace its settings: key=value pairs (none: back to the server's defaults): $SettingKeys")(
@@ -385,18 +386,18 @@ object ManagerCmd:
             (c, id) =>
               config(kvs)
                 .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
-                .map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
+                .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       )
 
-  val manager: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def manager(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "manager",
     "One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config"
   ) {
     create orElse (
       Opts.argument[String]("id"),
       verbs.orElse(
-        Opts((c: Client, id: String) => c.call(ManagersApi.get)(id).map(d => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.detail(d))))
+        Opts((c: Client, id: String) => c.call(ManagersApi.get)(id).map(d => Cli.out.println(ManagersMarkdown.detail(d))))
       )
     ).mapN((id, f) => (c: Client) => f(c, id))
   }

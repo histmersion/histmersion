@@ -21,6 +21,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergePlan
+import com.histmersion.util.console.Console
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
@@ -105,7 +106,7 @@ object MergeCmd:
       else Right(u)
     }
 
-  private val planCmd = Opts.subcommand(
+  private def planCmd (using console: Console) = Opts.subcommand(
     "plan",
     "Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by"
   ) {
@@ -136,7 +137,7 @@ object MergeCmd:
             .map(_ => ())
         }
         _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
-        _ = template.foreach(t => com.histmersion.cli.Cli.writeLine(s"\n→ resolution template written to $t"))
+        _ = template.foreach(t => Cli.out.println(s"\n→ resolution template written to $t"))
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
@@ -146,7 +147,7 @@ object MergeCmd:
     }
   }
 
-  private val applyCmd = Opts.subcommand(
+  private def applyCmd (using console: Console) = Opts.subcommand(
     "apply",
     "Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction"
   ) {
@@ -171,7 +172,7 @@ object MergeCmd:
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
           (), {
-            com.histmersion.cli.Cli.writeLine(MergeMarkdown.plan(plan))
+            Cli.out.println(MergeMarkdown.plan(plan))
             Cli.Error(
               "the merge cannot be applied yet: decide what is open (listed above), then apply again",
               exitCode = ExitCode.Refused
@@ -190,7 +191,7 @@ object MergeCmd:
         )
         job <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
         r <- follow(c, job)
-        _ = com.histmersion.cli.Cli.writeLine(MergeMarkdown.applied(r))
+        _ = Cli.out.println(MergeMarkdown.applied(r))
         _ <- Either.cond(r.applied, (), Cli.Error("the merge was not applied (see above)", exitCode = ExitCode.Refused))
       yield ()
     }
@@ -201,7 +202,7 @@ object MergeCmd:
 
   /** Follow an apply job to its end: the apply takes a backup first, which can outlast the request. */
   @annotation.tailrec
-  def follow(c: Client, j: MergeApplyJob): Either[Cli.Error, MergeApplyResult] =
+  def follow(c: Client, j: MergeApplyJob)(using console: Console) : Either[Cli.Error, MergeApplyResult] =
     j.state match
       case MergeJobState.Done =>
         j.result.toRight(Cli.Error(s"merge apply ${j.job}: done, but no result", exitCode = ExitCode.Refused))
@@ -221,25 +222,25 @@ object MergeCmd:
         )
         Thread.sleep(PollMs.toLong)
         c.mergeApplyStatus(j.job) match
-          case Left(e)     => com.histmersion.cli.Cli.errorLine(); Left(e)
+          case Left(e)     => Cli.err.println(); Left(e)
           case Right(next) =>
             if next.state != MergeJobState.Running then JobFollow.Progress.clear()
             follow(c, next)
 
-  private val listCmd = Opts.subcommand("list", "The merges this collection took in, newest first") {
+  private def listCmd (using console: Console) = Opts.subcommand("list", "The merges this collection took in, newest first") {
     (Opts.option[Int]("limit", "How many (default 50)").orNone, Output.jsonFlag).mapN { (limit, json) => (c: Client) =>
       c.merges(limit).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
     }
   }
 
-  private val showCmd =
+  private def showCmd (using console: Console) =
     Opts.subcommand("show", "One merge: its report, the resolutions it was given, the decisions it remembers") {
       (Opts.argument[String]("merge-id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.mergeDetail(id).map(d => Output.emit(json, d)(MergeMarkdown.detail))
       }
     }
 
-  private val ledgerCmd = Opts.subcommand(
+  private def ledgerCmd (using console: Console) = Opts.subcommand(
     "ledger",
     "The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge)"
   ) {
@@ -253,7 +254,7 @@ object MergeCmd:
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "merge",
       "Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges"

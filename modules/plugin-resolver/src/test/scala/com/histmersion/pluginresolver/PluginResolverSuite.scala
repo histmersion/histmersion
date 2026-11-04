@@ -10,6 +10,17 @@ import scala.jdk.CollectionConverters.*
   */
 class PluginResolverSuite extends munit.FunSuite:
 
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console = new com.histmersion.util.console.Console {
+    def write(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(): Unit = stdout("")
+    def errorWrite(value: => String): Unit = stderr(value)
+    def errorLine(value: => String): Unit = stderr(value)
+    def errorLine(): Unit = stderr("")
+    def errorFlush(): Unit = ()
+    def readLine(): String = throw new UnsupportedOperationException("input not used")
+  }
+
   private val fixtures: Path =
     val text = String(getClass.getClassLoader.getResourceAsStream("plugin-fixtures-repo.txt").readAllBytes(), UTF_8)
     Path.of(text.linesIterator.collectFirst { case s"repo=$p" => p }.getOrElse(fail("no fixture repository")))
@@ -39,7 +50,7 @@ class PluginResolverSuite extends munit.FunSuite:
     val err = List.newBuilder[String]
     val rc = DependencyResolver.parse(s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString) match
       case Left(e)  => fail(e)
-      case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)), out += _, err += _)
+      case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)))(using consoleFor(out += _, err += _))
     (rc, out.result(), err.result())
 
   private def lines(p: Path): List[String] = Files.readAllLines(p, UTF_8).asScala.toList
@@ -112,11 +123,11 @@ class PluginResolverSuite extends munit.FunSuite:
     val again = DependencyResolver
       .parse(List("--kit", s.kit.toString, "--lib", s.lib.toString, s.plugins.resolve("hello-deps-0.1.0.jar").toString))
       .fold(e => fail(e), identity)
-    assertEquals(DependencyResolver.resolve(again.copy(cache = Some(s.cache)), _ => (), _ => ()), 0)
+    assertEquals(DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ())), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
     val other = RepositoryUrl.fromArgument(s.kit.resolve("other-repo").toString).fold(e => fail(e), identity)
     assertEquals(
-      DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()),
+      DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ())),
       0
     )
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(other.value, fixtures.toUri.toString))
@@ -147,22 +158,22 @@ class PluginResolverSuite extends munit.FunSuite:
       DependencyResolver.parse(List("--kit", "k", "--lib", "l", "--nope")).left.toOption,
       Some("unknown option --nope")
     )
-    assertEquals(DependencyResolver.run(List("nothing"), _ => (), _ => ()), 1)
+    assertEquals(DependencyResolver.run(List("nothing"))(using consoleFor(_ => (), _ => ())), 1)
 
   test("resolver exit boundary supplies errors and preserves failure status") {
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    assertEquals(DependencyResolver.exitCode(List("nothing"), s => { out += s; () }, s => { err += s; () }), 1)
+    assertEquals(DependencyResolver.exitCode(List("nothing"))(using consoleFor(s => { out += s; () }, s => { err += s; () })), 1)
     assertEquals(out.result(), Nil)
     assert(err.result().head.startsWith("usage: pluginResolver"))
     val failures = List.newBuilder[String]
     var calls = 0
-    val status = DependencyResolver.exitCode(List("nothing"), _ => (), s => {
+    val status = DependencyResolver.exitCode(List("nothing"))(using consoleFor(_ => (), s => {
       calls += 1
       if calls == 1 then throw new IllegalArgumentException("sink failed")
       failures += s
       ()
-    })
+    }))
     assertEquals(status, 3)
     assertEquals(failures.result(), List("pluginResolver: IllegalArgumentException: sink failed"))
   }

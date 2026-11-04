@@ -8,10 +8,11 @@ import com.histmersion.config.*
 import com.histmersion.api.media.AssetRelation
 import com.histmersion.domain.media.Asset
 import com.histmersion.api.media.AssetLink
+import com.histmersion.util.console.Console
 
 object AssetLinksCmd:
 
-  private val search = Opts.subcommand("search", "Find asset links") {
+  private def search (using console: Console) = Opts.subcommand("search", "Find asset links") {
     (
       Opts.option[String]("citekey", "Filter by citekey").orNone,
       Opts.option[String]("asset", "Filter by asset name").orNone,
@@ -19,11 +20,11 @@ object AssetLinksCmd:
       Opts.option[String]("target-id", "Filter by target id").orNone
     )
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
-        c.assetLinks(ck, asset, tt, ti).map(r => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetLinkList(r)))
+        c.assetLinks(ck, asset, tt, ti).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
       }
   }
 
-  private val addCmd = Opts.subcommand("add", "Create an asset link") {
+  private def addCmd (using console: Console) = Opts.subcommand("add", "Create an asset link") {
     (
       Opts.option[String]("citekey", "Source citekey"),
       Opts.option[String]("asset", "Asset file name"),
@@ -35,17 +36,17 @@ object AssetLinksCmd:
     )
       .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
         c.createAssetLink(AssetLink.Put(ck, asset, rel, tt, ti, xywh, notes))
-          .map(l => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetLink(l)))
+          .map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
       }
   }
 
-  private val rmCmd = Opts.subcommand("rm", "Delete an asset link by id") {
+  private def rmCmd (using console: Console) = Opts.subcommand("rm", "Delete an asset link by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAssetLink(id).map(d => com.histmersion.cli.Cli.writeLine(s"Deleted asset link #${d.id}."))
+      c.deleteAssetLink(id).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("asset-links", "Semantic links between assets and entities: search, add, rm") {
       search orElse addCmd orElse rmCmd
     }
