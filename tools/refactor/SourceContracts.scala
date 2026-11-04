@@ -174,6 +174,7 @@ class SourceContracts(val policy: SourceContracts.Policy) extends SyntacticRule(
     val unchecked = policy.examples.filterNot(checked.asScala.toSet)
     val out = Paths.get(policy.report)
     Files.createDirectories(out)
+    Files.write(out.resolve("rules.txt"), rules.toList.sorted.asJava, UTF_8)
     def esc(s: String): String = s.replace("\\", "\\\\").replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
     def write(n: String, ls: Iterable[String]): Unit = Files.write(out.resolve(n), ls.toList.asJava, UTF_8)
     val all = hits.asScala.toList.sortBy(h => (h.path, h.line, h.column, h.rule))

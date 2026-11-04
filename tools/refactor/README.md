@@ -3,6 +3,24 @@
 Detector configurations read application sources; explicitly named repair configurations apply Scalafix patches.
 Run commands from the `contracts3-scalafix` worktree root.
 
+## Project-wide measurement and bulk rewrite gates
+
+```text
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/assessment.conf --scala-version 3.10.0 --files tools/refactor/ProjectAssessment.scala
+```
+
+This read-only Scalafix assessment compiles production and tests with ordinary SemanticDB and formatting disabled, runs the developed capability/structural detectors and current migration measurements over all modules, and verifies the structural fixtures and source expectations. The assessment itself never applies application patches. Child commands are sbt and Scalafix; no Python or shell rewrite scripts are used.
+
+`refactor-audit/assessment/current/summary.md` gives per-rule totals; `matrix.tsv` gives per-rule/per-source-module counts and baseline deltas. `coverage.tsv` lists production/test source counts, and `status.txt` must say MEASUREMENT_COMPLETE before these reports are accepted. Logs and detailed source/AST reports are in the same directory. Any failed compiler, missing/stale SemanticDB, source assertion, fixture, coverage check or source/policy change during the run fails the assessment; old reports must not be treated as current success. Sources shared by cross-built rows are counted once, not as independently verified platform-specific occurrences.
+
+The 25 current metrics cover 14 capability checks, five structural checks, configured repository consumers, configured old owners/controller names, and the CLI stdout/stderr/console-injection migrations. The CLI migration metrics are applicable only to CLI production; their zero entries in other modules are not compliance evidence. Primitive-role mappings and repository/owner inventories remain explicitly configured scopes. Historical insertion/generation recipes (Console scaffolding, test insertion, one-off boundary patches and file movers) are not general detectors and must not be replayed as assessments. ContractInventory produces review candidates rather than confirmed violations. The 43-goal readiness matrix remains separate and still exposes unimplemented policy checks.
+
+The initial baseline is versioned in `assessment/baseline.tsv`. Normal runs never replace it. `assessment-baseline.conf` explicitly captures a new reviewed baseline; do not use it to hide regressions. Rule/configuration fingerprint changes make deltas incomparable until the policy change is reviewed. `assessment-regression.conf` rejects increases in any rule/module cell against a comparable baseline.
+
+For a batch completion gate, include `assessment.conf` and set `ProjectAssessment.zero = ["capability/console", "migration/old-owner"]` to the exact metrics the batch promises to eliminate. The command must exit successfully and report zero for each selected metric. `assessment-zero-reject.conf` deliberately selects the still-violated clock rule and must fail. Unsupported stdout/stderr shapes count as residuals, not as successful rewrites. Set `compile = false` only when ordinary compilation was already completed for the exact sources; SemanticDB validity is still checked.
+
+Bulk migration target: at least 90% of the agreed violations fixed automatically, with the difficult remainder recorded explicitly. Select whole AST/symbol transformation families by volume; a one-occurrence rewrite proves a fixture, not useful migration throughput. `automation-backlog.md` reconciles the historical architecture ledger by family without presenting its stale exception counts as current findings. Before claiming a percentage, distinguish confirmed violations, valid cases, automatic fixes and deferred cases, retain a stable denominator, and validate definitions and call sites together. Do not sum overlapping detector metrics or count relocation/reference changes as separate policy violations fixed.
+
 ## Injected command console
 
 Command output uses our `com.histmersion.util.console.Console`, passed with `using`. `Cli.out.println(...)` and `Cli.err.println(...)` are contextual accessors, not global streams. Commands that previously captured output in singleton fields are now contextual builders. Console adapters are selected at process entry points; no companion default given is supplied. Scribe remains the diagnostic logger, and the CLI configures it to stderr. Configuration warnings retain lazy evaluation and use scribe.
