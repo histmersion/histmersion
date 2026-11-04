@@ -41,6 +41,19 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(plan("`Moved`").startsWith("same-name-candidates"),"Relocated name not retained for review")
     require(plan("`Missing`").startsWith("original-absent"),"Missing original incorrectly completed")
     val declarations = table("declarations.tsv")
+    val models = table("model-construction.tsv").map(r => r.head -> r).toMap
+    require(models("com/histmersion/inventoryfixture/Record#")(5) == "private","Private constructor access lost")
+    require(models("com/histmersion/inventoryfixture/Record#")(8) == "required-invariant; preservation-unproven","Private constructor falsely proves invariant")
+    require(models("com/histmersion/inventoryfixture/Unchecked#")(8) == "required-invariant; public-constructor-review","Public invariant constructor missed")
+    require(models("com/histmersion/inventoryfixture/Plain#")(8) == "configured-no-aggregate-invariant","Plain record falsely requires smart constructor")
+    val sites = table("construction-sites.tsv")
+    require(sites.exists(r => r(4) == "new" && r(5).contains("inventoryfixture/Record#")),"Explicit constructor missing")
+    require(sites.exists(r => r(4) == "companion-apply-candidates" && r(5).contains("inventoryfixture/Plain#")),"Generated apply missing")
+    require(sites.exists(r => r(4) == "copy" && r(5).contains("inventoryfixture/Plain#")),"Generated copy missing")
+    require(sites.exists(r => r(3).endsWith("PlainFactory.") && r(5).contains("inventoryfixture/Plain#")),"Companion apply target inferred from name instead of result signature")
+    val factories = table("factory-candidates.tsv")
+    require(factories.exists(r => r(1).endsWith("Record.from().") && r(6).contains("invariant-unproven")),"Either factory falsely proves validation")
+    require(factories.exists(r => r(0).endsWith("Record#") && r(1).endsWith("Construction.delegated().") && r(6).startsWith("returns-model;")),"Alias-returning delegated factory missing")
     val ownership = table("type-ownership.tsv").map(r => r.head -> r).toMap
     def owned(name: String) = ownership("com/histmersion/inventoryfixture/" + name)
     require(owned("Entity.Kind#")(7) == "configured-owner-satisfied","Correct companion property rejected")
@@ -76,6 +89,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     run("absent-visibility",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-visibility.conf") ++ List(source),1)
     run("absent-property",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-property.conf") ++ List(source),1)
     run("absent-contract",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-contract.conf") ++ List(source),1)
+    run("absent-invariant",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-invariant.conf") ++ List(source),1)
     Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)
   }
 }
