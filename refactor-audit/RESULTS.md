@@ -4,6 +4,12 @@ Baseline: `6e1b5387`. Application and test changes use Scalafix. The current bui
 
 ## Current checkpoint
 
+Repository visibility: Scalafix now inventories all 3,126 production/test files against twelve exact repository symbols, including imports, aliases and nested member references. GoalBundleRepo is private to goals and QueueBundleRepo private to worklists. Production and aggregate test compilation pass. Structural findings fell from 46 to 44 (34 primitive roles, 10 repository visibility), with 26/26 source guards; capability findings remain 228 with complete 2,356-file production coverage and 31/31 source guards. No permission was broadened. The global readiness check still fails on 42 partial/unmeasured goals.
+
+The rewrite fixture matches its expected source, compiles and passes the second check. An outside-consumer fixture is rejected before mutation, and stale source hashes reject reapplication of the old inventory. This batch changes visibility only; live database tests were not run. The remaining ten repositories and their production/test consumer counts are recorded in `repository-visibility/checklist.tsv`; full regenerated AST/reference details are in that report directory.
+
+Earlier checkpoint:
+
 The callback/permission approach below was rejected and replaced with our own Console interface, passed with `using`. `Cli.out.println` and `Cli.err.println` resolve the supplied instance. CLI, resolver and relink implementations no longer receive loose printing callbacks or access global streams. Command builders receive the contextual console; the four process entries choose adapters. No global Console instance or fallback given is defined. Diagnostic output uses scribe; CLI logs are configured for stderr.
 
 Raw output permission now belongs only to the Console adapter. The previous Cli and entry-point output exceptions were removed. New checks forbid adapter construction inside command implementations, raw terminal input outside the adapter, and Console dependencies in domain/plugin code. The console fixture verifies six diagnostics and permitted/lookalike cases; enforcement rejects it with exit 64. Production coverage is 2,356/2,356, with 31/31 capability source guards. Findings remain 228 capability and 46 structural; this correction strengthens the architecture without claiming an additional backlog reduction. The structural audit covers 3,126 source/test files plus two fixtures, with 24/24 source guards.

@@ -17,6 +17,12 @@ console-plan.tsv
 console-repairs.tsv
 console-fixtures/
 console-rejected/
+repository-fixture/
+repository-fixture-output/
+repository-visibility/sources.tsv
+repository-visibility/declarations.tsv
+repository-visibility/references.tsv
+repository-visibility/outside-files.tsv
 controller-renames-check.tsv*
 repair-fixtures/
 files.txt
