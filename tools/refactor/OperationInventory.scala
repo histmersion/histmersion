@@ -13,7 +13,7 @@ object OperationInventory {
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
   }
   case class Candidate(family: String, path: String, line: Int, owner: String, symbol: String, symbolOwner: String,
-    receiver: String, receiverType: String, source: String, ast: String, allocations: List[String])
+    receiver: String, receiverType: String, source: String, ast: String, allocations: List[String], offset: Int)
   def files(roots: List[String]): Set[String] = roots.flatMap { r =>
     val stream = Files.walk(Paths.get(r).toAbsolutePath.normalize)
     try stream.iterator.asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".scala") &&
@@ -108,18 +108,18 @@ class OperationInventory(val policy: OperationInventory.Policy) extends Semantic
         val resolvedOwner = if(family == "copy" && n.symbol.isNone) receiverOwner.getOrElse("") else scoped(n.symbol.owner)
         candidates.add(Candidate(family,path,n.pos.startLine+1,owner(n),scoped(n.symbol),resolvedOwner,
           receiver.fold("")(_.syntax),receiver.flatMap(_.symbol.info).fold("<unresolved-expression-type>")(_.signature.toString),
-          tree.pos.text,tree.structure,allocations))
+          tree.pos.text,tree.structure,allocations,tree.pos.start))
       }
     }
     doc.tree.collect { case g: Defn.GivenAlias =>
       val symbols = g.decltpe.collect { case n: Name if !n.symbol.isNone => n.symbol.value }.distinct
       candidates.add(Candidate("given-instance",path,g.pos.startLine+1,owner(g),scoped(g.name.symbol),"",g.decltpe.syntax,
-        symbols.mkString("; "),g.pos.text,g.structure,Nil))
+        symbols.mkString("; "),g.pos.text,g.structure,Nil,g.pos.start))
     }
     doc.tree.collect { case g: Defn.Given =>
       val symbols = g.templ.inits.flatMap(_.tpe.collect { case n: Name if !n.symbol.isNone => n.symbol.value }).distinct
       candidates.add(Candidate("given-instance",path,g.pos.startLine+1,owner(g),scoped(g.name.symbol),"",g.templ.inits.map(_.tpe.syntax).mkString("; "),
-        symbols.mkString("; "),g.pos.text,g.structure,Nil))
+        symbols.mkString("; "),g.pos.text,g.structure,Nil,g.pos.start))
     }
     Patch.empty
   }
@@ -150,11 +150,11 @@ class OperationInventory(val policy: OperationInventory.Policy) extends Semantic
       case "derivation-call" => "other-derived-review"
       case "given-instance" => "instance-body-review"
     }
-    val all = candidates.asScala.toList.distinct.sortBy(c => (c.family,c.path,c.line,c.symbol,c.source))
+    val all = candidates.asScala.toList.distinct.sortBy(c => (c.family,c.path,c.offset,c.symbol))
     def esc(s: String): String = s.replace("\\","\\\\").replace("\t","\\t").replace("\n","\\n").replace("\r","\\r")
     def write(name: String, header: String, rows: List[List[String]]): Unit = Files.write(out.resolve(name),(header :: rows.map(_.map(esc).mkString("\t"))).asJava,UTF_8)
-    write("occurrences.tsv","family\tclassification\tpath\tscope\tline\towner\tsymbol\tsymbol-owner\treceiver\treceiver-signature\tsource\tast\tvisible-allocations",all.map { c =>
-      List(c.family,classification(c),c.path,if(c.path.contains("/src/test/")) "test" else "production",c.line.toString,c.owner,c.symbol,c.symbolOwner,c.receiver,c.receiverType,c.source,c.ast,c.allocations.mkString("; "))
+    write("occurrences.tsv","family\tclassification\tpath\tscope\tline\towner\tsymbol\tsymbol-owner\treceiver\treceiver-signature\tsource\tast\tvisible-allocations\tstart-offset",all.map { c =>
+      List(c.family,classification(c),c.path,if(c.path.contains("/src/test/")) "test" else "production",c.line.toString,c.owner,c.symbol,c.symbolOwner,c.receiver,c.receiverType,c.source,c.ast,c.allocations.mkString("; "),c.offset.toString)
     })
     write("sources.tsv","path\tsha256",visited.asScala.toList.sorted.map { case(p,h) => List(p,h) })
     val totals = all.groupBy(c => (c.family,classification(c),if(c.path.contains("/src/test/")) "test" else "production")).toList.sortBy(_._1)

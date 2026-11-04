@@ -97,7 +97,7 @@ object Gazetteer:
     if r.span.isEmpty && !ds.span.isEmpty then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
-    ns.map(n => n.copy(name = n.name.trim, lang = n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
+    ns.map(n => n.modify(_.name).setTo(n.name.trim).modify(_.lang).setTo(n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
       .filter(_.name.nonEmpty)
       .groupBy(n => (n.name, n.lang))
       .toList
@@ -161,7 +161,7 @@ object Gazetteer:
             )
           )
       }
-      .map(d => d.copy(text = d.text.trim, lang = d.lang.trim.toLowerCase(java.util.Locale.ROOT)))
+      .map(d => d.modify(_.text).setTo(d.text.trim).modify(_.lang).setTo(d.lang.trim.toLowerCase(java.util.Locale.ROOT)))
       .filter(_.text.nonEmpty)
       .distinctBy(d => (d.lang, d.text))
 
@@ -351,23 +351,8 @@ object Gazetteer:
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
-      copy(
-        records = records + o.records,
-        created = created + o.created,
-        joined = joined + o.joined,
-        placesChanged = placesChanged + o.placesChanged,
-        namesAdded = namesAdded + o.namesAdded,
-        namesRemoved = namesRemoved + o.namesRemoved,
-        namesChanged = namesChanged + o.namesChanged,
-        linksAdded = linksAdded + o.linksAdded,
-        linksRemoved = linksRemoved + o.linksRemoved,
-        placesRemoved = placesRemoved + o.placesRemoved,
-        skipped = (skipped ++ o.skipped).take(20),
-        descriptionsAdded = descriptionsAdded + o.descriptionsAdded,
-        descriptionsRemoved = descriptionsRemoved + o.descriptionsRemoved,
-        descriptionsChanged = descriptionsChanged + o.descriptionsChanged,
-        linksChanged = linksChanged + o.linksChanged,
-        pointAreasSkipped = pointAreasSkipped + o.pointAreasSkipped
+      this.modify(
+        _.records).setTo(records + o.records).modify(_.created).setTo(created + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
       )
 
     def unchanged: Boolean =

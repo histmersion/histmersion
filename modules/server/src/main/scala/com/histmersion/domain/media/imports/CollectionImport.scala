@@ -224,7 +224,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         db.checked(col.provider, t.targetType, t.id, found.getOrElse(t.id, 0), None)
       )
     )
-    base.copy(stored = stored, updated = updated, linked = linked, revoked = revoked.sorted, failed = failed.result())
+    base.modify(_.stored).setTo(stored).modify(_.updated).setTo(updated).modify(_.linked).setTo(linked).modify(_.revoked).setTo(revoked.sorted).modify(_.failed).setTo(failed.result())
 
   /** The record's rendition (at most `max-bytes`) and its thumbnail — the collection's own small rendition, else one
     * made here; without either the card shows no picture for it.

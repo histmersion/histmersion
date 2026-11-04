@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.YearFmt
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
@@ -109,9 +111,8 @@ object Preview:
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
   def card(sw: com.histmersion.api.library.Source.WithFindings): Card =
-    card(sw.source).copy(
-      media = sw.illustration,
-      icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover)))
+    card(sw.source).modify(
+      _.media).setTo(sw.illustration).modify(_.icon).setTo(Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover)))
     )
 
   def card(a: com.histmersion.api.research.Article.View): Card =

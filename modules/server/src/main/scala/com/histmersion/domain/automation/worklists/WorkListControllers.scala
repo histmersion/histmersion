@@ -33,7 +33,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           for
             status <- Queue.statusOf(in.status).left.map(Api.Error(_))
             createdAt <- Queue.createdAtOf(in.createdAt).left.map(Api.Error(_))
-          yield queues.add(k, in.copy(topic = topic, status = status, createdAt = createdAt))
+          yield queues.add(k, in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt))
       }
 
   def patch(id: Int, p: QueuePatch): Either[Api.Error, QueueItem] =

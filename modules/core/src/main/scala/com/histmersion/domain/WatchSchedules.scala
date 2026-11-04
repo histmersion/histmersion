@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Goal.Plans.GoalSchedule
 import com.histmersion.api.automation.Managers.*
 
@@ -69,7 +71,7 @@ object WatchSchedules:
              .map(s =>
                s"one cron for both: `${pick.get.cron}` (fires most often) over the ${s.kind.wire} schedule's `${s.cron}`"
              ))
-    Plan(base.copy(sweeps = Some(sweeps.map(_.wire)), budgetUsd = budget), cron, next, notes)
+    Plan(base.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget), cron, next, notes)
 
   /** A watcher as the goal surfaces show its schedules: one per sweep it runs, with its cron, its next firing, its last
     * run (the item's) and a note saying whether it is paused.

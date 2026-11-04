@@ -1,5 +1,7 @@
 package com.histmersion.web.marks
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 import com.histmersion.api.personal.{MapZoom, Target}
@@ -53,7 +55,7 @@ object MapMenu:
         () =>
           writing(
             MyItems
-              .add(here.copy(from = None, to = None), None, "Place on the map")
+              .add(here.modify(_.from).setTo(None).modify(_.to).setTo(None), None, "Place on the map")
               .foreach(_ => Flash.say("Bookmarked the place: it is in My library › Bookmarks."))
           )
       ),

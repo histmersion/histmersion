@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
@@ -84,17 +86,8 @@ object MergeFold:
       case PlanOutcome.Differ if planDecision.contains(MergeDecision.Kind.KeepRight) => (r.plan, r.planApprovedAt)
       case _                                                                         => (l.plan, l.planApprovedAt)
     keepLocalSchedules(
-      l.copy(
-        status = if rank(r.status) > rank(l.status) then r.status else l.status,
-        notes = notes,
-        tags = unionTags(l.tags, r.tags),
-        regions = unionNames(l.regions, r.regions),
-        period = l.period.orElse(r.period),
-        parentUid = l.parentUid.orElse(r.parentUid),
-        plan = plan,
-        planApprovedAt = approved,
-        budgetUsd = l.budgetUsd.orElse(r.budgetUsd),
-        rev = ""
+      l.modify(
+        _.status).setTo(if rank(r.status) > rank(l.status) then r.status else l.status).modify(_.notes).setTo(notes).modify(_.tags).setTo(unionTags(l.tags, r.tags)).modify(_.regions).setTo(unionNames(l.regions, r.regions)).modify(_.period).setTo(l.period.orElse(r.period)).modify(_.parentUid).setTo(l.parentUid.orElse(r.parentUid)).modify(_.plan).setTo(plan).modify(_.planApprovedAt).setTo(approved).modify(_.budgetUsd).setTo(l.budgetUsd.orElse(r.budgetUsd)).modify(_.rev).setTo(""
       ),
       r
     )
@@ -135,7 +128,7 @@ object MergeFold:
       .sortBy(k => (k.kind, k.ref, k.refUid.fold("")(_.toString)))
     val ss = l.schedules.getOrElse(Nil)
     val schedules = (ss ++ r.schedules.getOrElse(Nil).filterNot(x => ss.exists(_.kind == x.kind))).sortBy(_.kind)
-    l.copy(links = Option(links).filter(_.nonEmpty), schedules = Option(schedules).filter(_.nonEmpty))
+    l.modify(_.links).setTo(Option(links).filter(_.nonEmpty)).modify(_.schedules).setTo(Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
   def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(String, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
@@ -151,12 +144,8 @@ object MergeFold:
   /** One queue item out of two: `done` anywhere is done. */
   def foldQueue(l: Bundle.QueueItem, r: Bundle.QueueItem): Bundle.QueueItem =
     val done = l.status == Queue.Done || r.status == Queue.Done
-    l.copy(
-      status = if done then Queue.Done else l.status,
-      doneAt = if l.status == Queue.Done then l.doneAt else if done then r.doneAt else l.doneAt,
-      topic = l.topic.orElse(r.topic),
-      reason = l.reason.orElse(r.reason),
-      rev = ""
+    l.modify(
+      _.status).setTo(if done then Queue.Done else l.status).modify(_.doneAt).setTo(if l.status == Queue.Done then l.doneAt else if done then r.doneAt else l.doneAt).modify(_.topic).setTo(l.topic.orElse(r.topic)).modify(_.reason).setTo(l.reason.orElse(r.reason)).modify(_.rev).setTo(""
     )
 
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
@@ -205,11 +194,6 @@ object MergeFold:
     * regions unioned.
     */
   def foldArticle(l: Bundle.Article, r: Bundle.Article, body: String): Bundle.Article =
-    l.copy(
-      body = body,
-      summary = if text(l.summary).isDefined then l.summary else r.summary.orElse(l.summary),
-      tags = unionTags(l.tags, r.tags),
-      regions = unionNames(l.regions, r.regions),
-      period = l.period.orElse(r.period),
-      rev = ""
+    l.modify(
+      _.body).setTo(body).modify(_.summary).setTo(if text(l.summary).isDefined then l.summary else r.summary.orElse(l.summary)).modify(_.tags).setTo(unionTags(l.tags, r.tags)).modify(_.regions).setTo(unionNames(l.regions, r.regions)).modify(_.period).setTo(l.period.orElse(r.period)).modify(_.rev).setTo(""
     )

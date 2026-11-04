@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.{PresetRegion, SkippedPeriod}
 import com.histmersion.api.catalogue.PeriodO
 final case class PeriodODataset(
@@ -17,7 +19,6 @@ final case class PeriodODataset(
   def only(ids: Set[String]): PeriodODataset =
     if ids.isEmpty then this
     else
-      copy(
-        authorities = authorities.filter(a => ids.contains(a.id)),
-        skipped = skipped.filter(s => ids.exists(s.id.startsWith))
+      this.modify(
+        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(s.id.startsWith))
       )

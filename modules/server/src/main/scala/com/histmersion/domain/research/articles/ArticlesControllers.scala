@@ -220,9 +220,8 @@ final class ArticlesControllers(
     if brief then view
     else
       view.map(v =>
-        v.copy(
-          formatting = formatting(v.article.body, v.article.summary),
-          coverage = store.load(v.article.slug).flatMap(coverageOf)
+        v.modify(
+          _.formatting).setTo(formatting(v.article.body, v.article.summary)).modify(_.coverage).setTo(store.load(v.article.slug).flatMap(coverageOf)
         )
       )
 
@@ -546,7 +545,7 @@ final class ArticlesControllers(
                 .map(m => Api.Error(m, Some(Write.CodeInvalid)))
                 .flatMap(k => strictGate(req.strict, formatting(parsed.body, parsed.summary)).map(_ => k))
                 .map { k =>
-                  val _ = store.put(parsed.copy(slug = s, kind = k), Caller.Local)
+                  val _ = store.put(parsed.modify(_.slug).setTo(s).modify(_.kind).setTo(k), Caller.Local)
                   SeedResult(1, Nil, 0, Nil)
                 }
           }

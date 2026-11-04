@@ -102,7 +102,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
         folds.fold(f, o, Bundle.Kind.Event)
         eventLine(o) = es =>
           foldEvent(
-            eventIn(es, o).copy(id = localEvent(o).id, origin = localEvent(o).origin),
+            eventIn(es, o).modify(_.id).setTo(localEvent(o).id).modify(_.origin).setTo(localEvent(o).origin),
             localEvent(o)
           )
         folds.count(_.modify(_.eventsMerged).using(_ + 1))

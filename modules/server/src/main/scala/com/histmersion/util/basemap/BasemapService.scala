@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -96,10 +98,8 @@ final class BasemapService(
     reader(l) match
       case Left(e) =>
         val now = files.stat(p)
-        base.copy(
-          present = now.exists(_.isFile),
-          bytes = now.fold(0L)(_.size.value),
-          error = Some(e)
+        base.modify(
+          _.present).setTo(now.exists(_.isFile)).modify(_.bytes).setTo(now.fold(0L)(_.size.value)).modify(_.error).setTo(Some(e)
         )
       case Right(None)    => base
       case Right(Some(f)) =>

@@ -213,7 +213,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m,
               item,
               RunRequest(Pipeline.ProposeArticles.wire, g.slug, budgetUsd = m.config.budgetUsd),
-              _.copy(minSources = m.config.minSources, maxArticles = m.config.maxArticles),
+              _.modify(_.minSources).setTo(m.config.minSources).modify(_.maxArticles).setTo(m.config.maxArticles),
               item.state,
               "propose-articles",
               out

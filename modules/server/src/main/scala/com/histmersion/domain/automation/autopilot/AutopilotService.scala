@@ -220,7 +220,7 @@ final class AutopilotService(
       case Step.AutoIngestOn(id, perDay) =>
         agents.managerStore.get(id).flatMap { m =>
           val c =
-            m.config.copy(autoIngest = Some(true), autoIngestPerDay = m.config.autoIngestPerDay.orElse(Some(perDay)))
+            m.config.modify(_.autoIngest).setTo(Some(true)).modify(_.autoIngestPerDay).setTo(m.config.autoIngestPerDay.orElse(Some(perDay)))
           Option.when(agents.managerStore.setConfig(id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))) {
             event(
               id,

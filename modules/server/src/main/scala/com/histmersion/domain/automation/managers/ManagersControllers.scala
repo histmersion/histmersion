@@ -394,7 +394,7 @@ final class ManagersControllers(
         host.goal(in.target.trim).flatMap { g =>
           val id = seedId(g.slug)
           val _ = supervisor.ensure(Kind.Seed, id, Some(g.slug))
-          addItem(id, in.copy(kind = ProposeArticles, target = g.slug)).map(i => EnqueueResult(id, List(i)))
+          addItem(id, in.modify(_.kind).setTo(ProposeArticles).modify(_.target).setTo(g.slug)).map(i => EnqueueResult(id, List(i)))
         }
       case Some(EnqueueKind.Enrich) =>
         supervisor.ensureDefaults()
@@ -586,7 +586,7 @@ final class ManagersControllers(
       Left(Api.Error("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
     else if e.until.exists(u => ManagerPolicy.parseInstant(u).isEmpty) then
       Left(Api.Error(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
-    else Right(e.copy(action = a, targets = (e.targets ++ item.map(_.target).toList).distinct))
+    else Right(e.modify(_.action).setTo(a).modify(_.targets).setTo((e.targets ++ item.map(_.target).toList).distinct))
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
   private def proposeEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect, by: String): String =
@@ -726,7 +726,7 @@ final class ManagersControllers(
         case Some(m) =>
           val cur = Sweep.of(m.config)
           val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled else cur.contains(x))
-          val c = m.config.copy(sweeps = Some(sweeps.map(_.wire)), budgetUsd = in.budgetUsd.orElse(m.config.budgetUsd))
+          val c = m.config.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(in.budgetUsd.orElse(m.config.budgetUsd))
           val next = if m.cron.contains(cron.text) && m.nextTickAt.isDefined then
             m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
           else cron.next(now)

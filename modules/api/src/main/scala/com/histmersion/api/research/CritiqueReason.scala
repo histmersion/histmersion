@@ -1,4 +1,6 @@
 package com.histmersion.api.research
+import hearth.kindlings.optics.syntax.*
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -39,9 +41,7 @@ object CritiqueReason:
       Left(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)")
     else
       Right(
-        r.copy(
-          src = r.src.trim.toLowerCase(java.util.Locale.ROOT),
-          dst = r.dst.trim.toLowerCase(java.util.Locale.ROOT),
-          reason = text
+        r.modify(
+          _.src).setTo(r.src.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.dst).setTo(r.dst.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.reason).setTo(text
         )
       )

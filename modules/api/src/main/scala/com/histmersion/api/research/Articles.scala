@@ -1,5 +1,7 @@
 package com.histmersion.api.research
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
@@ -113,16 +115,8 @@ object Articles:
         Article.Filter.normalise
       )
       reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons)
-    yield existing.copy(
-      title = patch.title.map(_.trim).filter(_.nonEmpty).getOrElse(existing.title),
-      kind = kind,
-      body = body,
-      summary = summary.orElse(existing.summary),
-      tags = patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _)),
-      regions = patch.regions.getOrElse(existing.regions).map(_.trim).filter(_.nonEmpty).distinct,
-      period = period,
-      filter = filter,
-      reasons = reasons
+    yield existing.modify(
+      _.title).setTo(patch.title.map(_.trim).filter(_.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(_.trim).filter(_.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
     )
 
   private def bodyOf(current: String, patch: Article.Patch): Either[String, String] =

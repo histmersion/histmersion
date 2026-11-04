@@ -32,5 +32,5 @@ Counts are matches within each rule's stated scope, not proof of all 43 architec
 | migration/cli-stderr | 0 | 0 | 0 | cli production only; includes unsupported matches |
 | migration/console-injection | 0 | 0 | 0 | cli production only; dependency-plan nodes |
 | derivation/schema-bridge | 0 | 0 | 0 | production+tests; semantic plain KindlingsSchema bridges, including deferred shapes |
-| updates/case-class-copy-production | 244 | 244 | 0 | production; resolved case-class copy occurrences, including deferred rewrite shapes |
-| updates/case-class-copy-test | 1585 | 1585 | 0 | test; resolved case-class copy occurrences, including deferred rewrite shapes |
+| updates/case-class-copy-production | 108 | 108 | 0 | production; resolved case-class copy occurrences, including deferred rewrite shapes |
+| updates/case-class-copy-test | 1587 | 1587 | 0 | test; resolved case-class copy occurrences, including deferred rewrite shapes |

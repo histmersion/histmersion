@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.AttestationTarget
@@ -57,7 +59,7 @@ final class AttestationsControllers(
       for
         t <- AttestationTarget.check(in.targetType).left.map(Api.Error(_, Some(Write.CodeInvalid)))
         _ <- Either.cond(sources.canonical(ck).isDefined, (), Write.notFound(ck))
-      yield attestations.create(in.copy(citekey = ck, targetType = t, targetId = refId(t, in.targetId)))
+      yield attestations.create(in.modify(_.citekey).setTo(ck).modify(_.targetType).setTo(t).modify(_.targetId).setTo(refId(t, in.targetId)))
 
   def patch(caller: Caller, id: Long, p: Attestation.Patch): Either[Api.Error, Attestation] =
     maintenance.guard("patch_attestation")(attestations.patch(id, p))

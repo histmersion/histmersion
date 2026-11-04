@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 
@@ -56,18 +58,8 @@ object Patches:
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds = mergeFindings(base.findings, adds, removeFindings)
       edges = mergeEdges(base.edges, eAdd, eRem)
-    yield base.copy(
-      metadata = meta,
-      summary = summary.orElse(base.summary),
-      notes = notes,
-      body = body,
-      topics = topics.map(csv).orElse(base.topics),
-      regions = regions.map(csv).orElse(base.regions),
-      period = p,
-      tags = tags,
-      findings = finds,
-      edges = edges,
-      ifUpdatedAt = ifUpdatedAt.orElse(base.ifUpdatedAt)
+    yield base.modify(
+      _.metadata).setTo(meta).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.notes).setTo(notes).modify(_.body).setTo(body).modify(_.topics).setTo(topics.map(csv).orElse(base.topics)).modify(_.regions).setTo(regions.map(csv).orElse(base.regions)).modify(_.period).setTo(p).modify(_.tags).setTo(tags).modify(_.findings).setTo(finds).modify(_.edges).setTo(edges).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
@@ -75,7 +67,7 @@ object Patches:
     if title.isEmpty && status.isEmpty then base
     else
       val m = base.getOrElse(MetadataPatch())
-      Some(m.copy(title = title.orElse(m.title), status = status.orElse(m.status)))
+      Some(m.modify(_.title).setTo(title.orElse(m.title)).modify(_.status).setTo(status.orElse(m.status)))
 
   private def mergeTags(
       base: Option[ListPatch],
@@ -98,7 +90,7 @@ object Patches:
     if add.isEmpty && remove.isEmpty then base
     else
       val f = base.getOrElse(FindingsPatch())
-      Some(f.copy(add = f.add ++ add, remove = f.remove ++ remove))
+      Some(f.modify(_.add).setTo(f.add ++ add).modify(_.remove).setTo(f.remove ++ remove))
 
   private def mergeEdges(
       base: Option[EdgesPatch],
@@ -108,7 +100,7 @@ object Patches:
     if add.isEmpty && remove.isEmpty then base
     else
       val e = base.getOrElse(EdgesPatch())
-      Some(e.copy(add = e.add ++ add, remove = e.remove ++ remove))
+      Some(e.modify(_.add).setTo(e.add ++ add).modify(_.remove).setTo(e.remove ++ remove))
 
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList

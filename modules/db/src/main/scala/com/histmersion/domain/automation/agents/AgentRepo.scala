@@ -1,4 +1,6 @@
 package com.histmersion.domain.automation.agents
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.api.automation.ListFilters
@@ -462,20 +464,19 @@ object AgentRepo:
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>
         val p = Jsonb.read[Goal.Plans.Plan](r.proposal)
-        base.copy(plan = p, evidence = p.map(_.rationale).getOrElse(""))
+        base.modify(_.plan).setTo(p).modify(_.evidence).setTo(p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.ArticlePublish) =>
         val d = Jsonb.read[Goal.Plans.ArticleDraft](r.proposal)
-        base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
+        base.modify(_.article).setTo(d).modify(_.evidence).setTo(d.flatMap(_.summary).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
         val p = Jsonb.read[com.histmersion.api.automation.Managers.HintProposal](r.proposal)
-        base.copy(
-          hintEffect = p,
-          evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")
+        base.modify(
+          _.hintEffect).setTo(p).modify(_.evidence).setTo(p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")
         )
       case _ =>
         base.withArticleProposal(Jsonb.read[io.circe.Json](r.proposal)).getOrElse {
           val p = Jsonb.read[ProposalEvidence](r.proposal)
-          base.copy(evidence = p.flatMap(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
+          base.modify(_.evidence).setTo(p.flatMap(_.evidence).getOrElse("")).modify(_.quote).setTo(p.flatMap(_.quote))
         }
 
   /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */

@@ -211,9 +211,9 @@ object AcquireRecheck:
   ):
     def add(outcome: Outcome, detail: String): Tally = outcome match
       case Outcome.Closed  => this.modify(_.closed).setTo(closed + 1)
-      case Outcome.Fetched => copy(tried = tried + 1, fetched = fetched + 1)
-      case Outcome.NoCopy  => copy(tried = tried + 1, noCopy = noCopy + 1)
-      case Outcome.Failed  => copy(tried = tried + 1, failed = failed + 1, lastFailure = Some(detail))
+      case Outcome.Fetched => this.modify(_.tried).setTo(tried + 1).modify(_.fetched).setTo(fetched + 1)
+      case Outcome.NoCopy  => this.modify(_.tried).setTo(tried + 1).modify(_.noCopy).setTo(noCopy + 1)
+      case Outcome.Failed  => this.modify(_.tried).setTo(tried + 1).modify(_.failed).setTo(failed + 1).modify(_.lastFailure).setTo(Some(detail))
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
   def progressLine(t: Tally): String =

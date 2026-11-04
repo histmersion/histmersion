@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 
@@ -28,7 +30,7 @@ object MapTiles:
       case TileLayer.Media  => List(time, q.kind.getOrElse(""), q.provider.getOrElse(""), q.license.getOrElse(""))
       case TileLayer.Events =>
         List(
-          f.copy(limit = 0, offset = 0, sort = Filter().sort).toString,
+          f.modify(_.limit).setTo(0).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort).toString,
           q.kind.getOrElse(""),
           q.tier.getOrElse(""),
           q.historicity.getOrElse(""),

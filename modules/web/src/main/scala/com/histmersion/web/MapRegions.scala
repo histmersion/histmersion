@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -31,7 +33,7 @@ object MapRegions:
     val world = RegionChoice("world", "the whole world", Some("world"))
     val configured =
       if s.bbox.trim.equalsIgnoreCase("world") then
-        world.copy(id = "configured", label = "the configured region (the whole world)")
+        world.modify(_.id).setTo("configured").modify(_.label).setTo("the configured region (the whole world)")
       else RegionChoice("configured", s"the configured region (${s.bbox})", Some(s.bbox))
     List(configured) ++ s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
       Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, "a box of my own", None))

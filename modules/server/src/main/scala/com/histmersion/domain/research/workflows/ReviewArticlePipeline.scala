@@ -235,7 +235,7 @@ final class ReviewArticlePipeline(
         )
       )
       _ <- ctx.code[List[String]](s"proposals-$r")(Right(propose(ctx, merged)))
-    yield State(merged, snap, carry.copy(ledger = ledger, reasons = carry.reasons ++ stored), unwritten)
+    yield State(merged, snap, carry.modify(_.ledger).setTo(ledger).modify(_.reasons).setTo(carry.reasons ++ stored), unwritten)
 
   /** A verification pass after a fix: the lint again, then each reviewer that owns a finding the fixer claims to have
     * fixed re-checks those, and the edited passages, only.

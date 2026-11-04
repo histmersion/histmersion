@@ -319,7 +319,7 @@ object BundleImporter:
       notes = planned.notes
     )
     if problems.nonEmpty then base
-    else if plan.changes == 0 then base.copy(applied = true, replanChanges = Some(0), tally = MergeTally())
+    else if plan.changes == 0 then base.modify(_.applied).setTo(true).modify(_.replanChanges).setTo(Some(0)).modify(_.tally).setTo(MergeTally())
     else
       backup() match
         case Left(e) =>
@@ -331,7 +331,7 @@ object BundleImporter:
           MergeRepo.tombstone(ap.tombstones)
           val folded = planned.rows.filter(r => r.decision == Decision.FastForward && ap.touch(r.uid))
           folded.groupBy(_.kind).foreach((k, rs) => MergeRepo.touch(kinds.tableOf(k), rs.map(_.uid).distinct))
-          val report = base.copy(applied = true, backup = Some(dump), problems = Nil)
+          val report = base.modify(_.applied).setTo(true).modify(_.backup).setTo(Some(dump)).modify(_.problems).setTo(Nil)
           val mergeId = MergeRepo
             .record(
               m,
@@ -348,9 +348,6 @@ object BundleImporter:
           val (reviews, logEntry) = followUps.recordIn(m, input.fromLabel, mergeId, ap, counts, dump)
           // the same bundle, planned again over what was just written: nothing should be left to do
           val (_, again) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
-          report.copy(
-            mergeId = Some(mergeId),
-            reviews = reviews,
-            logEntry = Some(logEntry),
-            replanChanges = Some(again.plan.changes)
+          report.modify(
+            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews).modify(_.logEntry).setTo(Some(logEntry)).modify(_.replanChanges).setTo(Some(again.plan.changes)
           )

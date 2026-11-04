@@ -61,9 +61,8 @@ object Storage:
     if add.isEmpty then r
     else
       withHints(
-        r.copy(
-          entries = r.entries ++ nest(add),
-          volumes = (r.volumes ++ volumes.filterNot(v => r.volumes.exists(_.id == v.id)))
+        r.modify(
+          _.entries).setTo(r.entries ++ nest(add)).modify(_.volumes).setTo((r.volumes ++ volumes.filterNot(v => r.volumes.exists(_.id == v.id)))
         )
       )
 

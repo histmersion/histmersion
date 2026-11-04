@@ -1,4 +1,6 @@
 package com.histmersion.api.automation
+import hearth.kindlings.optics.syntax.*
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -453,10 +455,10 @@ object Agents:
     def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
       if approvalKind.exists(_.proposesFilter) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
-        Some(copy(filter = f, evidence = f.map(_.rationale).getOrElse("")))
+        Some(this.modify(_.filter).setTo(f).modify(_.evidence).setTo(f.map(_.rationale).getOrElse("")))
       else if approvalKind.exists(_.proposesArticles) then
         val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
-        Some(copy(articles = p, evidence = p.map(_.rationale).getOrElse("")))
+        Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(p.map(_.rationale).getOrElse("")))
       else None
 
 

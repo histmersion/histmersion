@@ -116,9 +116,8 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
         yield MediaSample(t.targetType, t.id, t.label, u.item.key, u.item.title, r.license, note, u.item.pageUrl)
       }
       .take(cfg.samples.max(0))
-    val base = counted.copy(
-      samples = samples,
-      rejected = MediaCount.of(counted.rejected.flatMap(c => List.fill(c.n)(c.key)) ++ found.notTaken)
+    val base = counted.modify(
+      _.samples).setTo(samples).modify(_.rejected).setTo(MediaCount.of(counted.rejected.flatMap(c => List.fill(c.n)(c.key)) ++ found.notTaken)
     )
 
     if dryRun then base.modify(_.failed).setTo(failed.result())
@@ -237,13 +236,8 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
         .get(placeId)
         .exists(t => each(s"category $c → $placeId")(db.commonsCategory(placeId, c, t.qid)).getOrElse(false))
     )
-    base.copy(
-      stored = stored,
-      updated = updated,
-      linked = linked,
-      categories = cats,
-      revoked = revoked.sorted,
-      failed = failed.result()
+    base.modify(
+      _.stored).setTo(stored).modify(_.updated).setTo(updated).modify(_.linked).setTo(linked).modify(_.categories).setTo(cats).modify(_.revoked).setTo(revoked.sorted).modify(_.failed).setTo(failed.result()
     )
 
   /** The picture and its thumbnail — the provider's own copies; the picture must not pass `max-bytes`. A failed

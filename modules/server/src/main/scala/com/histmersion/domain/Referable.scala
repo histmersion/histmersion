@@ -46,7 +46,7 @@ object Referable:
         (r.live.get(from), r.live.get(into)) match
           case (Some(gone), Some(kept)) =>
             val redirect = gone.uid.zip(kept.uid).toMap
-            r.copy(live = r.live - from, redirects = r.redirects ++ redirect)
+            r.modify(_.live).setTo(r.live - from).modify(_.redirects).setTo(r.redirects ++ redirect)
           case _ => r
       }: Unit
 

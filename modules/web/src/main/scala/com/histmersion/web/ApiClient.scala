@@ -108,7 +108,7 @@ object ApiClient:
   def tileTemplate(q: TilesApi.TileQuery): String =
     val req = interp
       .toRequest(TilesApi.tile, None)
-      .apply(q.copy(z = TilePlaceholder.Z, x = TilePlaceholder.X, y = TilePlaceholder.Y))
+      .apply(q.modify(_.z).setTo(TilePlaceholder.Z).modify(_.x).setTo(TilePlaceholder.X).modify(_.y).setTo(TilePlaceholder.Y))
     dom.window.location.origin + TilePlaceholder.fill(req.uri.toString)
 
   def config(): Future[UiConfig] = call(Api.config)(())

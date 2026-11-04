@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -349,16 +351,8 @@ object BasemapFetch:
     */
   def localHeader(p: Plan): PmTiles.Header =
     val b = p.bbox
-    p.header.copy(
-      minZoom = p.minZoom,
-      maxZoom = p.maxZoom,
-      minLon = b.minLon,
-      minLat = b.minLat,
-      maxLon = b.maxLon,
-      maxLat = b.maxLat,
-      centerZoom = math.max(p.minZoom, math.min(p.maxZoom, 5)),
-      centerLon = (b.minLon + b.maxLon) / 2,
-      centerLat = (b.minLat + b.maxLat) / 2
+    p.header.modify(
+      _.minZoom).setTo(p.minZoom).modify(_.maxZoom).setTo(p.maxZoom).modify(_.minLon).setTo(b.minLon).modify(_.minLat).setTo(b.minLat).modify(_.maxLon).setTo(b.maxLon).modify(_.maxLat).setTo(b.maxLat).modify(_.centerZoom).setTo(math.max(p.minZoom, math.min(p.maxZoom, 5))).modify(_.centerLon).setTo((b.minLon + b.maxLon) / 2).modify(_.centerLat).setTo((b.minLat + b.maxLat) / 2
     )
 
   /** The local archive's metadata: the source's, its `vector_layers` without the `dropped` ones, its attribution

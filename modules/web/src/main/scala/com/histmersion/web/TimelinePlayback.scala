@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.Api
 import com.histmersion.web.ui.Layout
@@ -209,7 +211,7 @@ object TimelinePlayback:
       asking = true
       val mine = generation
       val q =
-        Api.FindingsQuery.of(f.copy(period = Some(Period(period._1, period._2)), limit = Layout.playbackFetchLimit))
+        Api.FindingsQuery.of(f.modify(_.period).setTo(Some(Period(period._1, period._2))).modify(_.limit).setTo(Layout.playbackFetchLimit))
       ApiClient.findings(q).onComplete { r =>
         if mine == generation then
           asking = false

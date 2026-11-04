@@ -133,7 +133,7 @@ object BookmarkService:
         ) match
           case Some(existing) if label.isDefined =>
             s.modify(_.bookmarks)
-              .using(_.map(b => if b.id == existing.id then b.copy(label = label, updatedAt = at) else b))
+              .using(_.map(b => if b.id == existing.id then b.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at) else b))
           case Some(_) => s
           case None    => s.modify(_.bookmarks).using(_ :+ StoredBookmark(user, id, t, label, title, at, at))
       }
@@ -148,10 +148,10 @@ object BookmarkService:
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         at: MarkTime
     ): Option[Bookmark] =
-      val after = changed(id, user)(_.copy(label = label, updatedAt = at))
+      val after = changed(id, user)(_.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at))
       live(after, user).find(_.id == id).map(s => shown(List(s), items).head)
 
     def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark] =
       val found = live(state.get, user).find(_.id == id)
-      found.foreach(_ => changed(id, user)(_.copy(deletedAt = Some(at), updatedAt = at)): Unit)
+      found.foreach(_ => changed(id, user)(_.modify(_.deletedAt).setTo(Some(at)).modify(_.updatedAt).setTo(at)): Unit)
       found.map(s => shown(List(s), items).head)

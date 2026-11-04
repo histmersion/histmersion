@@ -117,7 +117,7 @@ object PluginEvents:
   ): Polite =
     Polite(
       http,
-      media.copy(requestIntervalMs = intervalMs, maxRetryAfterSeconds = media.maxRetryAfterSeconds.max(120)),
+      media.modify(_.requestIntervalMs).setTo(intervalMs).modify(_.maxRetryAfterSeconds).setTo(media.maxRetryAfterSeconds.max(120)),
       sleep = sleep,
       log = log
     )

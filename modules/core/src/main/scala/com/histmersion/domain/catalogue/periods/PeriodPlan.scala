@@ -106,7 +106,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         folds.fold(f, o, Bundle.Kind.Period)
         folds.count(_.modify(_.periodsMerged).using(_ + 1))
         if d.kind == km.KeepRight then
-          periodLine(o) = es => periodIn(es, o).copy(origin = localPeriod(o).origin, rev = "")
+          periodLine(o) = es => periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo("")
         else folds.keepLocal(f)
       case _ => ()
 

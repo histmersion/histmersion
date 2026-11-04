@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 object CopyToLens {
   case class Policy(mode: String = "inspect", declarations: String = "", manifest: String = "", report: String = "target/copy-to-lens",
-    modules: List[String] = List("api","core","db","files","server","cli","web","plugin-host"), tests: Boolean = false)
+    modules: List[String] = List("api","core","db","files","server","cli","web","plugin-host"), tests: Boolean = false, multiple: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -74,6 +74,24 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         if(n.symbol.isNone) receiverOwner.flatMap(s => local.get(s).orElse(indexed.get(s))) else None)
       val args = a.argClause.values
       val assignment = args match { case List(v: Term.Assign) if v.lhs.is[Term.Name] => Some(v); case _ => None }
+      val assignments = args.collect { case v: Term.Assign if v.lhs.is[Term.Name] => v }
+      val multi = policy.multiple && args.size > 1 && assignments.size == args.size
+      val starts = assignments.map(v => v.tokens.dropWhile(!_.is[Token.Equals]).drop(1).dropWhile(t => t.is[Token.Space] || t.is[Token.Tab] || t.is[Token.LF] || t.is[Token.CR]).head)
+      val pureConstructor = cls.exists(c => c.templ.inits.isEmpty &&
+        c.ctor.paramss.flatten.forall(p => !p.mods.exists(_.is[Mod.VarParam])) &&
+        c.templ.stats.forall {
+          case _: Defn.Def | _: Decl.Def | _: Defn.Type => true
+          case _ => false
+        })
+      val separators = assignments.zipWithIndex.map { case(v,i) =>
+        if(i == 0) v.tokens.takeWhile(_.pos.start < starts(i).pos.start)
+        else {
+          val previous = assignments(i-1)
+          val last = previous.tokens.reverse.dropWhile(t => t.is[Token.Space] || t.is[Token.Tab] || t.is[Token.LF] || t.is[Token.CR]).head
+          val end = if(last.is[Token.Comma]) last.pos.start else previous.pos.end
+          a.tokens.filter(t => t.pos.start >= end && t.pos.end <= starts(i).pos.start)
+        }
+      }
       val inFold = parents(a).exists {
         case call: Term.Apply => name(call.fun).exists(n => Set("fold","foldLeft","foldRight")(n.value))
         case d: Defn.Def => d.mods.exists { case m: Mod.Annot => m.init.tpe.syntax.endsWith("tailrec"); case _ => false }
@@ -87,17 +105,19 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         else if(cls.get.templ.stats.exists { case d: Defn.Def => Set("copy","modify")(d.name.value); case _ => false }) "custom-copy-or-modify"
         else if(inFold) "accumulator-algorithm-review"
         else if(a.fun.is[Term.ApplyType]) "explicit-type-arguments"
-        else if(assignment.isEmpty) "multi-field-positional-or-empty-copy"
-        else if(!cls.get.ctor.paramss.flatten.exists(p => p.name.value == assignment.get.lhs.syntax && !p.mods.exists(m => m.is[Mod.Private] || m.is[Mod.Protected]))) "field-access-review"
-        else if(assignment.get.tokens.takeWhile(_.pos.start < assignment.get.rhs.pos.start).exists(_.is[Token.Comment])) "argument-comment-review"
+        else if(assignment.isEmpty && !multi) "multi-field-positional-or-empty-copy"
+        else if(multi && !pureConstructor) "multi-field-constructor-effects-review"
+        else if(!assignments.forall(v => cls.get.ctor.paramss.flatten.exists(p => p.name.value == v.lhs.syntax && !p.mods.exists(m => m.is[Mod.Private] || m.is[Mod.Protected])))) "field-access-review"
+        else if(separators.flatten.exists(_.is[Token.Comment])) "argument-comment-review"
         else "eligible"
       rows.add(List(path,(a.pos.startLine+1).toString,a.pos.start.toString,n.symbol.value,reason,a.pos.text,a.structure))
       if(reason == "eligible" && policy.mode == "apply") {
         changed = true
-        val v = assignment.get
-        val prefix = v.tokens.takeWhile(_.pos.start < v.rhs.pos.start)
         val replacement = if(a.fun.is[Term.Name]) "this.modify" else "modify"
-        (Patch.replaceTree(n,replacement) + Patch.removeTokens(prefix) + Patch.addLeft(v.rhs,"_." + v.lhs.syntax + ").setTo(")).atomic
+        (Patch.replaceTree(n,replacement) + assignments.zipWithIndex.map { case(v,i) =>
+          val prefix = if(i == 0) "_." else ").modify(_."
+          Patch.removeTokens(separators(i)) + Patch.addLeft(starts(i),prefix + v.lhs.syntax + ").setTo(")
+        }.asPatch).atomic
       } else if(reason == "eligible" && policy.mode == "check") Patch.lint(Diagnostic("remaining",reason,a.pos))
       else Patch.empty
     }.asPatch

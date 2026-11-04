@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.CitekeyResolver
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.Search
@@ -163,7 +165,7 @@ private[articles] object ArticleRepo:
         val nr = a.reasons.keys.count(to(_).isDefined)
         val moved = nb + summary.fold(0)(_._2) + nr
         Option.when(moved > 0) {
-          write(a.copy(body = body, summary = summary.map(_._1), reasons = reasons))
+          write(a.modify(_.body).setTo(body).modify(_.summary).setTo(summary.map(_._1)).modify(_.reasons).setTo(reasons))
           slug -> moved
         }
       }

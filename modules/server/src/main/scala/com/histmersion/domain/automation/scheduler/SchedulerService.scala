@@ -378,50 +378,43 @@ final class SchedulerService(
           case Some(ItemStatus.Pending) =>
             val snap = last.getOrElse(dry(now))
             snap.d.started.find(_._1.c.id == i.id) match
-              case Some((_, w)) => base.copy(code = AgentScheduler.Code.Running, why = s"started by the last pass: $w")
+              case Some((_, w)) => base.modify(_.code).setTo(AgentScheduler.Code.Running).modify(_.why).setTo(s"started by the last pass: $w")
               case None         =>
                 snap.d.waiting.find(_._1.c.id == i.id) match
-                  case Some((_, w)) => base.copy(code = w.code, why = w.why, behind = w.behind, position = w.position)
+                  case Some((_, w)) => base.modify(_.code).setTo(w.code).modify(_.why).setTo(w.why).modify(_.behind).setTo(w.behind).modify(_.position).setTo(w.position)
                   case None         =>
                     val notBefore = i.notBefore.flatMap(ManagerPolicy.parseInstant).filter(_.isAfter(now))
                     val paused = agents.managerStore.get(i.managerId).filterNot(_.state == State.Active.wire)
                     if i.kind == OaIngest then
-                      base.copy(
-                        code = AgentScheduler.Code.NotDue,
-                        why =
-                          "a legal open-access ingest: the ingest backlog drains it within the day's ingest allowance (no AI allowance)"
+                      base.modify(
+                        _.code).setTo(AgentScheduler.Code.NotDue).modify(_.why).setTo("a legal open-access ingest: the ingest backlog drains it within the day's ingest allowance (no AI allowance)"
                       )
                     else
                       notBefore match
                         case Some(t) =>
-                          base.copy(
-                            code = AgentScheduler.Code.NotDue,
-                            why = s"not due before $t (a cooldown or a failed run's backoff)"
+                          base.modify(
+                            _.code).setTo(AgentScheduler.Code.NotDue).modify(_.why).setTo(s"not due before $t (a cooldown or a failed run's backoff)"
                           )
                         case None =>
                           paused match
                             case Some(m) =>
-                              base.copy(
-                                code = AgentScheduler.Code.Paused,
-                                why = s"its manager ${m.id} is ${m.state}: it starts nothing"
+                              base.modify(
+                                _.code).setTo(AgentScheduler.Code.Paused).modify(_.why).setTo(s"its manager ${m.id} is ${m.state}: it starts nothing"
                               )
                             case None => base.modify(_.why).setTo("not looked at yet: the next pass decides it")
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>
-                base.copy(
-                  code = AgentScheduler.Code.Person,
-                  approval = hd.untilApproval,
-                  why = s"waits for a person to decide approval #${hd.untilApproval.get}; it holds no place"
+                base.modify(
+                  _.code).setTo(AgentScheduler.Code.Person).modify(_.approval).setTo(hd.untilApproval).modify(_.why).setTo(s"waits for a person to decide approval #${hd.untilApproval.get}; it holds no place"
                 )
               case Some(hd) =>
-                base.copy(
-                  code = AgentScheduler.Code.Held,
-                  why = s"held: ${hd.reason}" +
+                base.modify(
+                  _.code).setTo(AgentScheduler.Code.Held).modify(_.why).setTo(s"held: ${hd.reason}" +
                     hd.until.fold("")(u => s" (until $u)") + hd.untilSource
                       .fold("")(u => s" (until $u is in the corpus)")
                 )
-              case None => base.copy(code = AgentScheduler.Code.Held, why = "held")
+              case None => base.modify(_.code).setTo(AgentScheduler.Code.Held).modify(_.why).setTo("held")
           case Some(ItemStatus.Active) =>
             val run = i.runId.flatMap(agents.runs.get(_))
             run.map(_.status).flatMap(RunState.parse) match
@@ -429,21 +422,18 @@ final class SchedulerService(
                 val open = run.toList
                   .flatMap(r => agents.approvalStore.approvalsOf(r.id, None))
                   .filter(_.state == ApprovalState.Open.wire)
-                base.copy(
-                  code = AgentScheduler.Code.Person,
-                  approval = open.lastOption.map(_.id),
-                  why = s"its run waits for a person to decide ${open.lastOption
+                base.modify(
+                  _.code).setTo(AgentScheduler.Code.Person).modify(_.approval).setTo(open.lastOption.map(_.id)).modify(_.why).setTo(s"its run waits for a person to decide ${open.lastOption
                       .fold("an approval")(a => s"approval #${a.id} (${a.kind})")}; " +
                     "it holds no place until then"
                 )
               case Some(RunState.Paused) =>
-                base.copy(
-                  code = AgentScheduler.Code.Paused,
-                  why = s"its run is paused: ${run.flatMap(_.error).getOrElse("")}".trim
+                base.modify(
+                  _.code).setTo(AgentScheduler.Code.Paused).modify(_.why).setTo(s"its run is paused: ${run.flatMap(_.error).getOrElse("")}".trim
                 )
-              case Some(st) => base.copy(code = AgentScheduler.Code.Running, why = s"its run is ${st.wire}")
-              case None     => base.copy(code = AgentScheduler.Code.Running, why = "its run is being evaluated")
-          case _ => base.copy(code = AgentScheduler.Code.Settled, why = s"settled: ${i.outcome.getOrElse(i.status)}")
+              case Some(st) => base.modify(_.code).setTo(AgentScheduler.Code.Running).modify(_.why).setTo(s"its run is ${st.wire}")
+              case None     => base.modify(_.code).setTo(AgentScheduler.Code.Running).modify(_.why).setTo("its run is being evaluated")
+          case _ => base.modify(_.code).setTo(AgentScheduler.Code.Settled).modify(_.why).setTo(s"settled: ${i.outcome.getOrElse(i.status)}")
       }
 
   // ── the stall report ───────────────────────────────────────────────────────────────────────────

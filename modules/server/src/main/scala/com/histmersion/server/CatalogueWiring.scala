@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.library.Filter
@@ -49,7 +51,7 @@ final class CatalogueWiring(
       deps,
       http,
       presentYear,
-      f => f.copy(limit = deps.cfg.limits.page(Some(f.limit), deps.cfg.limits.search), offset = f.offset.max(0)),
+      f => f.modify(_.limit).setTo(deps.cfg.limits.page(Some(f.limit), deps.cfg.limits.search)).modify(_.offset).setTo(f.offset.max(0)),
       _ => PlaceScope.empty
     )
   def this(deps: Deps, http: HttpTransport) =

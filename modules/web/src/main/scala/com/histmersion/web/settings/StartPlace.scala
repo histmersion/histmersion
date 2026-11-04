@@ -55,7 +55,7 @@ object StartPlace:
         d.geometry.flatMap(viewOf) match
           case Some((at, zoom)) =>
             choice.update(
-              _.copy(mode = MapStartMode.Place.wire, lat = at.lat, lon = at.lon, zoom = zoom, label = h.label)
+              _.modify(_.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(at.lat).modify(_.lon).setTo(at.lon).modify(_.zoom).setTo(zoom).modify(_.label).setTo(h.label)
             )
             problem.set(None); hits.set(Nil); query.set(h.label)
           case None => problem.set(Some(s"${h.label} has no location on the map; choose another place."))
@@ -97,12 +97,8 @@ object StartPlace:
             onClick --> { _ =>
               val s = TheMap.surface
               choice.update(
-                _.copy(
-                  mode = MapStartMode.Place.wire,
-                  lat = s.center.lat,
-                  lon = s.center.lon,
-                  zoom = math.round(s.zoom * 10) / 10.0,
-                  label = "the view I chose"
+                _.modify(
+                  _.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(s.center.lat).modify(_.lon).setTo(s.center.lon).modify(_.zoom).setTo(math.round(s.zoom * 10) / 10.0).modify(_.label).setTo("the view I chose"
                 )
               )
             }

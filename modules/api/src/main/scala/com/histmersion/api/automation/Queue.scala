@@ -121,13 +121,8 @@ object Queue:
     val closedBy =
       if status != Done then None
       else p.closedBy.map(_.trim).filter(_.nonEmpty).orElse(Option.when(cur.status == Done)(cur.closedBy).flatten)
-    cur.copy(
-      status = status,
-      text = p.text.getOrElse(cur.text),
-      topic = clearable(p.topic, cur.topic),
-      reason = clearable(p.reason, cur.reason),
-      goal = clearable(p.goal, cur.goal),
-      closedBy = closedBy
+    cur.modify(
+      _.status).setTo(status).modify(_.text).setTo(p.text.getOrElse(cur.text)).modify(_.topic).setTo(clearable(p.topic, cur.topic)).modify(_.reason).setTo(clearable(p.reason, cur.reason)).modify(_.goal).setTo(clearable(p.goal, cur.goal)).modify(_.closedBy).setTo(closedBy
     )
 
   def createdAtOf(raw: Option[String]): Either[String, Option[String]] =

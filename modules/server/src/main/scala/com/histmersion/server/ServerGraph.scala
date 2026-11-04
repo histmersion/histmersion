@@ -97,18 +97,12 @@ final class ServerGraph private (
               AppConfig.fromMerged(eff).map(src.adjust) match
                 case Left(e)    => base.modify(_.errors).setTo(List(s"the config does not decode: $e"))
                 case Right(app) =>
-                  val hc = HotConfig(app, next.copy(config = app, merged = eff))
+                  val hc = HotConfig(app, next.modify(_.config).setTo(app).modify(_.merged).setTo(eff))
                   graph.reload(hc, applied, drain = math.max(0, app.config.drainSeconds).seconds) match
                     case Left(e)  => base.modify(_.errors).setTo(List(e))
                     case Right(o) =>
-                      base.copy(
-                        published = true,
-                        generation = o.generation,
-                        applied = applied,
-                        rebuilt = o.rebuilt,
-                        plugins = if o.rebuilt.contains(ServerGraph.Plugins) then plugins.latest.rebuilt else Nil,
-                        draining = o.draining,
-                        warnings = warnings ++ o.warnings
+                      base.modify(
+                        _.published).setTo(true).modify(_.generation).setTo(o.generation).modify(_.applied).setTo(applied).modify(_.rebuilt).setTo(o.rebuilt).modify(_.plugins).setTo(if o.rebuilt.contains(ServerGraph.Plugins) then plugins.latest.rebuilt else Nil).modify(_.draining).setTo(o.draining).modify(_.warnings).setTo(warnings ++ o.warnings
                       )
         ServerGraph.log(report)
         report

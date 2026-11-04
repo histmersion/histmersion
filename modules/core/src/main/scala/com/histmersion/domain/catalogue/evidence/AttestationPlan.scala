@@ -164,12 +164,12 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
             case None                                  => ()
             case Some(AnchorTry(_, _, Some(a), co, _)) =>
               attLine(t.uid) =
-                es => attIn(es, t.uid).copy(charStart = Some(a.start), charEnd = Some(a.end), chunkOrd = co)
+                es => attIn(es, t.uid).modify(_.charStart).setTo(Some(a.start)).modify(_.charEnd).setTo(Some(a.end)).modify(_.chunkOrd).setTo(co)
               f.count(_.modify(_.attestationsReanchored).using(_ + 1))
             case Some(AnchorTry(_, _, None, _, issue)) =>
               issue.flatMap(f.decisionIn).map(_.kind) match
                 case Some(km.KeepUnanchored) =>
-                  attLine(t.uid) = es => attIn(es, t.uid).copy(charStart = None, charEnd = None, chunkOrd = None)
+                  attLine(t.uid) = es => attIn(es, t.uid).modify(_.charStart).setTo(None).modify(_.charEnd).setTo(None).modify(_.chunkOrd).setTo(None)
                 case _ =>
                   droppedUids += t.uid
                   f.count(_.modify(_.attestationsDropped).using(_ + 1))
