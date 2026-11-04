@@ -5,7 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.StatusCount
 import com.histmersion.api.catalogue.ArticleEventLead
 import com.histmersion.api.given
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 final case class Coverage(
     slug: String,
@@ -76,7 +76,7 @@ object Coverage:
       citekey: String,
       title: String,
       year: Option[Int],
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       authors: List[String] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema

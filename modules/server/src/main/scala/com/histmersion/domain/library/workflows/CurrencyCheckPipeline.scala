@@ -1,5 +1,9 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
+import com.histmersion.domain.library.acquisition.Ident
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.PipelineDef
 
@@ -12,7 +16,7 @@ import io.circe.syntax.*
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.library.Acquire
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Edge
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -77,7 +81,13 @@ final class CurrencyCheckPipeline(
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
-            val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
+            val known = ctx.approvalStore.proposedBefore(
+              p.kind,
+              p.citekey,
+              p.status.transformInto[Option[com.histmersion.api.library.Source.Status]],
+              p.edgeKind.transformInto[Option[com.histmersion.api.library.Edge.Kind]],
+              p.target
+            ) ||
               site.citations
                 .neighbors(p.citekey, p.edgeKind.map(Edge.Kind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
@@ -89,7 +99,7 @@ final class CurrencyCheckPipeline(
               case _                                       => false)
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
-            row.doi.flatMap(Acquire.normalizeDoi).exists { doi =>
+            row.doi.flatMap(Ident.doi).exists { doi =>
               queueOnce(ctx, goal, doi, CurrencyCheckRules.acquireText(row, t.citekey, goal), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added

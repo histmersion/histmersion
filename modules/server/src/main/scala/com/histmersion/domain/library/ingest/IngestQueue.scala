@@ -1,13 +1,23 @@
 package com.histmersion.domain.library.ingest
+import com.histmersion.api.jobs.JobInfo
+
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.{AcquireMatch, Caller}
-import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope, QueueService}
+import com.histmersion.domain.AcquireMatch
+import com.histmersion.domain.Caller
+import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.domain.automation.worklists.QueueScope
+import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.library.sources.SourceService
-import com.histmersion.domain.media.assets.{AssetService, NewFigure}
+import com.histmersion.domain.media.assets.AssetService
+import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.jobs.{JobPool, JobRecords, Pinning}
-import com.histmersion.util.ocr.{ConverterClient, ConverterState}
+import com.histmersion.util.jobs.JobPool
+import com.histmersion.util.jobs.JobRecords
+import com.histmersion.util.jobs.Pinning
+import com.histmersion.util.ocr.ConverterClient
+import com.histmersion.util.ocr.ConverterState
 import com.histmersion.util.storage.Store
 
 import hearth.kindlings.optics.syntax.*
@@ -22,7 +32,7 @@ import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.Api
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the

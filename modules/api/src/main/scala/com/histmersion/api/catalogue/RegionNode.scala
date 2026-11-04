@@ -1,5 +1,4 @@
 package com.histmersion.api.catalogue
-import com.histmersion.api.catalogue.Period
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
 final case class RegionNode(
@@ -15,8 +14,8 @@ final case class RegionNode(
 object RegionNode:
 
   val RootKinds: Set[String] = Set(
-    com.histmersion.domain.catalogue.Place.Kind.Region,
-    com.histmersion.domain.catalogue.Place.Kind.Polity,
+    com.histmersion.api.catalogue.Place.Kind.Region,
+    com.histmersion.api.catalogue.Place.Kind.Polity,
     "continent"
   )
 

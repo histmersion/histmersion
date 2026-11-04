@@ -10,7 +10,6 @@ import com.histmersion.domain.library.Citekey
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, CalibrePushResult}
-import com.histmersion.api.library.of
 import com.histmersion.api.Api
 
 /** The sources not in Calibre yet, what a push names one by, and the Calibre id written back after a push — what the
@@ -34,7 +33,11 @@ final class CalibreGapControllers(
     CalibreGaps(marked.size, marked)
 
   def pushMeta(citekey: String): Either[Api.Error, CalibreGap] =
-    Citekey.of(citekey).flatMap(_ => sources.calibrePushMeta(citekey).toRight(Write.notFound(citekey)))
+    Citekey
+      .parse(citekey)
+      .left
+      .map(Write.invalid)
+      .flatMap(_ => sources.calibrePushMeta(citekey).toRight(Write.notFound(citekey)))
 
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] =
     maintenance.guard("calibre/pushed"):

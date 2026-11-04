@@ -2,7 +2,7 @@ package com.histmersion.api
 
 import com.histmersion.api.library.Acquire.{EdgeKinds, Ident, Verdicts}
 import com.histmersion.api.library.{Acquire, FollowupRow, RetractionNotice, UpdateNotice, WorkRef}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The pure rules of stream 2.6: citekeys, identifier parsing, verdicts, follow-up classification and the Retraction
   * Watch CSV. No network, no database.
@@ -47,7 +47,7 @@ class AcquireSuite extends munit.FunSuite:
 
   // #699
   test("assess --apply: only unassessed is overwritten, unless forced; a retraction always is"):
-    import com.histmersion.domain.library.Source.Status.*
+    import com.histmersion.api.library.Source.Status.*
     assertEquals(Acquire.statusDecision(Verdicts.Current, Unassessed, force = false), Some(Right(Current)))
     assertEquals(Acquire.statusDecision(Verdicts.Current, Contested, force = false), Some(Left(Contested)))
     assertEquals(Acquire.statusDecision(Verdicts.Current, Foundational, force = false), Some(Left(Foundational)))

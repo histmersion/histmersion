@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
@@ -7,7 +9,6 @@ import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
-import com.histmersion.util.data.exchange.Bundle
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an

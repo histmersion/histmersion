@@ -1,10 +1,8 @@
 package com.histmersion.api.exchange
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.MatchOutcome
+import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.given
-import com.histmersion.util.data.exchange.Issue
 
 object MergeMarkdown:
 
@@ -13,11 +11,12 @@ object MergeMarkdown:
 
   def plan(p: MergePlan, all: Boolean = false): String =
     val m = p.matches
-    val open = p.issues.filter(i => i.severity == Issue.Severity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
+    val open =
+      p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
     val decided =
-      p.issues.filter(i => i.severity == Issue.Severity.Blocking && i.condition.isEmpty && i.decision.isDefined)
+      p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty && i.decision.isDefined)
     val conditional = p.issues.filter(_.condition.isDefined)
-    val defaults = p.issues.filter(i => i.severity == Issue.Severity.Default && i.condition.isEmpty)
+    val defaults = p.issues.filter(i => i.severity == MergeIssue.Severity.Default && i.condition.isEmpty)
     val head = List(
       s"**Bundle** ${who(p.from)} → ${who(p.into)} · format ${p.formatVersion} · schema V${p.schemaVersion} · " +
         s"as of ${p.asOf.getOrElse("—")}",
@@ -62,7 +61,7 @@ object MergeMarkdown:
 
   def applied(r: MergeApplyResult): String =
     val t = r.tally
-    def count(k: com.histmersion.util.data.exchange.Bundle.Kind)(f: Bundle.KindCounts => Int): Int =
+    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => Int): Int =
       r.counts.find(_.kind == k).fold(0)(f)
     val head =
       if r.applied && r.mergeId.isEmpty then
@@ -74,16 +73,16 @@ object MergeMarkdown:
     val body = Option
       .when(r.applied && r.mergeId.isDefined)(
         List(
-          s"**sources** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
+          s"**sources** +${count(com.histmersion.api.exchange.Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
             s"${t.sourcesRenamed} renamed · aliases +${t.aliases}",
-          s"**findings** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Finding)(_.inserted)} · merged ${t.findingsMerged} · " +
-            s"**assets** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Asset)(_.inserted)} · merged ${t.assetsMerged} · " +
+          s"**findings** +${count(com.histmersion.api.exchange.Bundle.Kind.Finding)(_.inserted)} · merged ${t.findingsMerged} · " +
+            s"**assets** +${count(com.histmersion.api.exchange.Bundle.Kind.Asset)(_.inserted)} · merged ${t.assetsMerged} · " +
             s"**attestations** re-anchored ${t.attestationsReanchored} · dropped ${t.attestationsDropped}",
-          s"**articles** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
+          s"**articles** +${count(com.histmersion.api.exchange.Bundle.Kind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
             s"${t.articlesFastForward} fast-forward · ${t.articlesBoth} both · ${t.articlesFromFile} from a file",
           s"**events** merged ${t.eventsMerged} · **goals** merged ${t.goalsMerged} · **queue** merged ${t.queueMerged} · " +
-            s"**places** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
-            s"**periods** +${count(com.histmersion.util.data.exchange.Bundle.Kind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
+            s"**places** +${count(com.histmersion.api.exchange.Bundle.Kind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
+            s"**periods** +${count(com.histmersion.api.exchange.Bundle.Kind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
             s"self-loops dropped ${t.selfLoopsDropped} · redirects +${t.redirects}",
           s"**queued** ${Plural.count(r.reviews.size, "/review-article task")}" +
             (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
@@ -167,10 +166,10 @@ object MergeMarkdown:
 
   def renamed(r: LabelRenamed): String =
     val what = r.entity match
-      case com.histmersion.util.data.exchange.Bundle.Kind.Article => "Article"
-      case com.histmersion.util.data.exchange.Bundle.Kind.Event   => "Event"
-      case com.histmersion.util.data.exchange.Bundle.Kind.Place   => "Place"
-      case _                                                      => "Goal"
+      case com.histmersion.api.exchange.Bundle.Kind.Article => "Article"
+      case com.histmersion.api.exchange.Bundle.Kind.Event   => "Event"
+      case com.histmersion.api.exchange.Bundle.Kind.Place   => "Place"
+      case _                                                => "Goal"
     s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")
 
@@ -178,25 +177,25 @@ object MergeMarkdown:
     Option.when(lines.nonEmpty)(s"**$title**\n" + lines.mkString("\n"))
 
   def issue(i: MergeIssue): String =
-    val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${DecisionKind.wireOf(c.when)})_")
+    val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)})_")
     val lines = List(
       i.left.map(s => s"here `${s.label}`" + s.lines.map(l => s" · $l").mkString),
       i.right.map(s => s"bundle `${s.label}`" + s.lines.map(l => s" · $l").mkString),
       Option.when(i.why.nonEmpty)("why " + i.why.mkString(" · ")),
       Option.when(i.options.nonEmpty)(
-        "decide " + i.options.map(k => s"`${DecisionKind.wireOf(k)}${argHint(i, k)}`").mkString(" | ") +
+        "decide " + i.options.map(k => s"`${MergeDecision.Kind.wireOf(k)}${argHint(i, k)}`").mkString(" | ") +
           i.suggested.filter(_ => i.decision.isEmpty).fold("")(s => s" (suggested `${s.wire}`)")
       ),
       i.decision.map(d => s"decided `${d.wire}`" + i.decidedBy.fold("")(by))
     ).flatten
     (s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n")
 
-  private def by(b: Issue.DecidedBy): String = b match
-    case Issue.DecidedBy.Remembered => " as an earlier merge apply did"
-    case other                      => s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}"
+  private def by(b: MergeIssue.DecidedBy): String = b match
+    case MergeIssue.DecidedBy.Remembered => " as an earlier merge apply did"
+    case other                           => s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}"
 
-  private def argHint(i: MergeIssue, k: DecisionKind): String = k match
-    case DecisionKind.Map => ":" + List(i.left, i.right).flatten.map(_.label).mkString("|")
-    case DecisionKind.RenameRight | DecisionKind.RenameLeft | DecisionKind.File =>
+  private def argHint(i: MergeIssue, k: MergeDecision.Kind): String = k match
+    case MergeDecision.Kind.Map => ":" + List(i.left, i.right).flatten.map(_.label).mkString("|")
+    case MergeDecision.Kind.RenameRight | MergeDecision.Kind.RenameLeft | MergeDecision.Kind.File =>
       i.suggested.filter(_.kind == k).flatMap(_.argument).fold(":<value>")(a => s":$a")
     case _ => ""

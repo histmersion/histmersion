@@ -415,7 +415,7 @@ object SourceService:
       answer
 
     def rename(from: String, to: String, caller: Caller): Either[Api.Error, Rename.Counts] =
-      Rename.validate(from, to).flatMap { validated =>
+      Citekeys.renameTo(from, to).left.map(Write.invalid).flatMap { validated =>
         val at = clock.instant()
         var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(from))
         val _ = state.updateAndGet { st =>

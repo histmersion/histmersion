@@ -2,8 +2,8 @@ package com.histmersion.web.library
 
 import com.histmersion.api.{Wording, YearFmt}
 import com.histmersion.api.library.{Label, SearchHit}
-import com.histmersion.domain.media.MediaRole
-import com.histmersion.domain.library.Source
+import com.histmersion.api.media.MediaRole
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its

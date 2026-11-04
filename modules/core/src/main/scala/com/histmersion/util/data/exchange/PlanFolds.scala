@@ -1,11 +1,12 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.exchange.{MergeDecision, MergeTally}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a kind's rules of a plan can do once its questions are decided: fold a record of the bundle into one here, read
   * the decision in force for an issue, count what the apply does, and keep this collection's row of a line.

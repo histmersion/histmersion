@@ -1,6 +1,6 @@
 package com.histmersion.api.personal
 
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import io.circe.parser.decode
 import io.circe.syntax.*
 import com.histmersion.api.ItemKind

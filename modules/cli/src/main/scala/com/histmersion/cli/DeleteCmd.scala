@@ -1,13 +1,11 @@
 package com.histmersion.cli
 
-import com.histmersion.domain.library.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.api.library.CalibreEntryCheck
-import com.histmersion.api.library.of
 import com.histmersion.api.library.Source
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
@@ -27,7 +25,6 @@ object DeleteCmd:
       Opts.flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)").orFalse,
       Output.jsonFlag
     ).mapN((ck, apply, json) => Args(ck.trim, apply, json))
-      .mapValidated(a => Citekey.of(a.citekey).leftMap(_.message).toValidatedNel.map(_ => a))
 
   val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(

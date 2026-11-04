@@ -1,10 +1,11 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.data.DataOwner
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.util.data.exchange.PlanRules
 import com.histmersion.util.data.exchange.MergeRules
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats attestations: they travel with the sources they quote, and nothing points at them. */
 object AttestationMergeRules extends MergeRules:

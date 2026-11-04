@@ -5,8 +5,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 import com.histmersion.api.given
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.util.data.exchange.Issue
 
 final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,
@@ -38,26 +36,26 @@ object MergeResolutions:
           .map { k =>
             val arg = (k, i.suggested) match
               case (_, Some(s)) if s.kind == k && s.argument.isDefined => s":${s.argument.get}"
-              case (DecisionKind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
-              case _ if k.takesArgument  => ":<value>"
-              case _                     => ""
-            DecisionKind.wireOf(k) + arg
+              case (MergeDecision.Kind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
+              case _ if k.takesArgument        => ":<value>"
+              case _                           => ""
+            MergeDecision.Kind.wireOf(k) + arg
           }
           .mkString(" | ")
       def line(i: MergeIssue): String =
         val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
-        val cond = i.condition.fold("")(c => s"if ${c.issue} = ${DecisionKind.wireOf(c.when)}: ")
+        val cond = i.condition.fold("")(c => s"if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}: ")
         (chosen.get(i.id), i.condition, i.severity) match
           case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
           case (None, Some(_), _) =>
             s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}"
-          case (None, None, Issue.Severity.Default) =>
+          case (None, None, MergeIssue.Severity.Default) =>
             s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}"
-          case (None, None, _) if i.decidedBy.contains(Issue.DecidedBy.Policy) =>
+          case (None, None, _) if i.decidedBy.contains(MergeIssue.DecidedBy.Policy) =>
             s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what"
           case (None, None, _) =>
             s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
-      val issues = p.issues.filter(_.severity != Issue.Severity.Info)
+      val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
       List(
         List(
           s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",

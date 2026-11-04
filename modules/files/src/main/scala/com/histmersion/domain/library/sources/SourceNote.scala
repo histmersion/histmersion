@@ -7,7 +7,7 @@ import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 import com.histmersion.util.data.mirror.Frontmatter
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.storage.SafePath
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
@@ -208,7 +208,7 @@ object SourceNote:
       doi = str(m, "doi"),
       year = int(m, "year"),
       venue = str(m, "venue"),
-      status = com.histmersion.domain.library.Source.Status.fromString(str(m, "status").getOrElse("unassessed")),
+      status = com.histmersion.api.library.Source.Status.fromString(str(m, "status").getOrElse("unassessed")),
       topics = list(m, "topics"),
       regions = list(m, "regions"),
       tags = list(m, "tags"),

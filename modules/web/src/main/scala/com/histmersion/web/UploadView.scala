@@ -1,7 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.domain.library.Citekey
-
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -41,8 +39,8 @@ object UploadView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`. Always a valid
-    * [[Citekey]] or `None` (the reader types one).
+  /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
+    * reader types one); the server judges it when the upload is sent.
     */
   def suggestCitekey(fileName: String): Option[String] =
     val stem = fileName.reverse.dropWhile(_ != '.').drop(1).reverse match
@@ -56,12 +54,13 @@ object UploadView:
       .dropWhile(!_.isLetter)
       .take(60)
       .stripSuffix("_")
-    Option(slug).filter(Citekey.valid)
+    Option(slug).filter(_.length >= 2)
 
   /** The parameters to send, or what is wrong, field by field. */
   def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
     val file = Option.when(d.fileName.isEmpty)(Field.File -> "choose a file to upload")
-    val ck = Citekey.parse(d.citekey).left.toOption.map(Field.Citekey -> _)
+    // the key itself is the server's to judge (it answers why it refuses one)
+    val ck = Option.when(d.citekey.trim.isEmpty)(Field.Citekey -> "citekey is required")
     val year = d.year.trim match
       case "" => Right(None)
       case y  =>

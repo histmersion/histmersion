@@ -47,6 +47,6 @@ class GoalsViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.linksOf(ls, LinkKind.Source).map(_.ref), List("a", "b"))
 
   test("every goal stage has a meaning, in the order a goal moves through them"):
-    assertEquals(GoalsView.stages.map(_._1), com.histmersion.domain.automation.Goal.Status.all)
+    assertEquals(GoalsView.stages.map(_._1), com.histmersion.api.automation.Goal.Status.all)
     assert(GoalsView.stages.forall(_._2.nonEmpty))
     assertEquals(GoalsView.meaning("nonsense"), None)

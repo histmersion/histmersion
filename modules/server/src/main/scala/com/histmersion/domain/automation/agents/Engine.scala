@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
 
@@ -45,7 +47,11 @@ final class Engine(
     * (a run of no registered workflow offers none).
     */
   def offered(run: RunInfo, agent: AgentDef): List[ToolName] =
-    workflows.parse(run.pipeline).fold(Nil)(w => agent.tools.filter(w.allowedTools(agent.role)))
+    workflows
+      .parse(run.pipeline)
+      .fold(Nil)(w =>
+        agent.tools.filter(w.allowedTools(agent.role.transformInto[com.histmersion.domain.automation.AgentRole]))
+      )
 
   /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
   private val lastPrune = java.util.concurrent.atomic.AtomicLong(0L)

@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.catalogue.EventsMarkdown
 
 import cats.syntax.all.*
@@ -24,7 +26,6 @@ import com.histmersion.api.catalogue.{
   EventTaxonomy
 }
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.catalogue.Correction
 
 object EventsCmd:

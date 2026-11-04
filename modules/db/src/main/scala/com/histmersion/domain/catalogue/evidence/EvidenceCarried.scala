@@ -1,12 +1,13 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the evidence: the attestations (after the bodies they point into, this collection's own
   * moved first where a merge kept another body), the sources that possibly discuss an event and when they were last

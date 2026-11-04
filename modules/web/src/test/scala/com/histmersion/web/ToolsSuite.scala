@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Source
 
 import sttp.model.Method
 import com.histmersion.api.automation.{Agents, AgentScheduler, ListFilters, Managers, Queue}
@@ -9,9 +9,9 @@ import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.maintenance.Vacuum
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.automation.Manager
-import com.histmersion.domain.automation.Run
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Manager
+import com.histmersion.api.automation.Run
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Period
 
@@ -19,6 +19,9 @@ import com.histmersion.api.catalogue.Period
   * lists' text and order.
   */
 class ToolsSuite extends munit.FunSuite:
+
+  /** The citekey shape the server accepts (the model's `Citekey`), for the suggestions' tests. */
+  private val CitekeyShape = "(?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 
   override def beforeEach(context: BeforeEach): Unit =
     UiState.mirrorHash = false
@@ -142,11 +145,11 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
     assert(Approval.Kind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
     assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("unblocks its review")))
-    assert(com.histmersion.domain.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
+    assert(com.histmersion.api.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
   }
 
   test("every value a filter button, chip or menu offers has a meaning on hover") {
-    import com.histmersion.domain.automation.{ItemStatus, ProviderKind}
+    import com.histmersion.api.automation.{ItemStatus, ProviderKind}
     assert(JobState.values.forall(s => JobsView.stateMeaning(s).nonEmpty))
     val jobKinds = List(
       Ingest.KindIngest,
@@ -239,19 +242,23 @@ class ToolsSuite extends munit.FunSuite:
 
   // ── upload ─────────────────────────────────────────────────────────────────────────────────────
 
-  test("a citekey is suggested from the file name, and is always a valid one") {
+  test("a citekey is suggested from the file name, in the shape the server accepts") {
     assertEquals(UploadView.suggestCitekey("Anthony 2007 - The Horse.pdf"), Some("anthony_2007_the_horse"))
     assertEquals(UploadView.suggestCitekey("2019_Olalde.PDF"), Some("olalde"))
     assertEquals(UploadView.suggestCitekey("Çatalhöyük.pdf"), Some("atalh_y_k"))
     assertEquals(UploadView.suggestCitekey("1234.pdf"), None)
-    UploadView.suggestCitekey("x" * 300 + ".pdf").foreach(ck => assert(Citekey.valid(ck), ck))
+    UploadView.suggestCitekey("x" * 300 + ".pdf").foreach(ck => assert(ck.matches(CitekeyShape), ck))
   }
 
-  test("the upload form is validated field by field before anything is sent") {
+  test("the upload form is validated field by field before anything is sent; the citekey only for being given") {
     val bad = UploadView.validate(UploadView.Draft(citekey = "Bad Key", year = "twenty", doi = "nope"))
     assertEquals(
       bad.left.toOption.get.map(_._1),
-      List(UploadView.Field.File, UploadView.Field.Citekey, UploadView.Field.Year, UploadView.Field.Doi)
+      List(UploadView.Field.File, UploadView.Field.Year, UploadView.Field.Doi)
+    )
+    assertEquals(
+      UploadView.validate(UploadView.Draft(citekey = " ")).left.toOption.get.map(_._1).take(2),
+      List(UploadView.Field.File, UploadView.Field.Citekey)
     )
     val ok = UploadView.validate(
       UploadView.Draft(
@@ -667,7 +674,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(ck(""), None)
     List(Killen, Lambert, Finkelberg, Becks, Beckman, Kristiansen, AyaliDarshan, Bailey)
       .flatMap(ck)
-      .foreach(k => assert(Citekey.valid(k), k))
+      .foreach(k => assert(k.matches(CitekeyShape), k))
   }
 
   test("Upload… fills the form from the item and links the upload to it") {

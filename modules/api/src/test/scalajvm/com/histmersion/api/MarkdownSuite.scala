@@ -4,10 +4,10 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.research.BacklinksMarkdown
 
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.{Hit, NeighborRow, NeighborTarget, SearchHit, SearchResult, TimeBucket}
 import com.histmersion.api.research.{ArticleMarkdown, Backlink}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */

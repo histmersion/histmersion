@@ -1,31 +1,13 @@
 package com.histmersion.api.library
 import com.histmersion.api.text.WikiLinks
-import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
 import com.histmersion.api.given
-import com.histmersion.api.library.of
 import com.histmersion.api.Api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 object Rename:
-
-  def validate(oldCk: String, newRaw: String): Either[Api.Error, Citekey] =
-    Citekey.of(newRaw).flatMap { ck =>
-      if ck.value == oldCk.trim then
-        Left(Api.Error(s"'$ck' is already the citekey of that source", Some(Write.CodeInvalid)))
-      else if !WikiLinks.isCitekeyShaped(ck.value) then
-        Left(
-          Api.Error(
-            s"'$ck' is a valid citekey but not a LINK-shaped one — `[[$ck]]` would resolve to an " +
-              "article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an " +
-              "underscore (e.g. page1959_history)",
-            Some(Write.CodeInvalid)
-          )
-        )
-      else Right(ck)
-    }
 
   def shortForms(ck: String): List[String] =
     ck.indices.filter(i => i > 0 && ck.charAt(i) == '_').map(ck.take(_)).toList

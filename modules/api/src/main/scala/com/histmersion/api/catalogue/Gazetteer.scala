@@ -3,7 +3,7 @@ import io.circe.{Json, JsonObject}
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.Plural
 import com.histmersion.api.WireEnum
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -66,9 +66,9 @@ object Gazetteer:
     case Span(from, to) => Validity(from, to, startUnknown = false)
 
   val DefaultPointAreaKinds: List[String] = List(
-    com.histmersion.domain.catalogue.Place.Kind.Region,
-    com.histmersion.domain.catalogue.Place.Kind.Polity,
-    com.histmersion.domain.catalogue.Place.Kind.People
+    com.histmersion.api.catalogue.Place.Kind.Region,
+    com.histmersion.api.catalogue.Place.Kind.Polity,
+    com.histmersion.api.catalogue.Place.Kind.People
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
@@ -189,7 +189,7 @@ object Gazetteer:
       ordinal: Int,
       defaultSource: Option[String] = None
   ): Either[String, GazRecord] =
-    Lpf.readFeature(j, com.histmersion.domain.catalogue.Place.Kind.Site, ordinal).flatMap { in =>
+    Lpf.readFeature(j, com.histmersion.api.catalogue.Place.Kind.Site, ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(s"feature #$ordinal has no @id").map { ref =>
@@ -262,8 +262,8 @@ object Gazetteer:
         yield GazGeometry.GeoJson(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
         val kind =
           get("types")
-            .flatMap(t => t.split(";").toList.flatMap(com.histmersion.domain.catalogue.Place.Kind.parse).headOption)
-            .getOrElse(com.histmersion.domain.catalogue.Place.Kind.Site)
+            .flatMap(t => t.split(";").toList.flatMap(com.histmersion.api.catalogue.Place.Kind.parse).headOption)
+            .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
         val sp = Span(get("start").flatMap(Lpf.parseYear), get("end").flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get("ccodes")

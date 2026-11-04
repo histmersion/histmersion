@@ -1,15 +1,20 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.library.workflows.{AcquisitionWork, EnrichManagerKind, LibraryWorkflows, WatchManagerKind}
+import com.histmersion.domain.library.workflows.AcquisitionWork
+import com.histmersion.domain.library.workflows.EnrichManagerKind
+import com.histmersion.domain.library.workflows.LibraryWorkflows
+import com.histmersion.domain.library.workflows.WatchManagerKind
 import com.histmersion.domain.research.workflows.ResearchWorkflows
 
-import com.histmersion.domain.automation.agents.{AgentRoster, AgentsHandlers}
+import com.histmersion.domain.automation.agents.AgentRoster
+import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.goals.PlanGoalPipeline
 import com.histmersion.domain.automation.managers.HintEffectPipeline
-import com.histmersion.domain.automation.workflows.{PipelineDef, WorkflowDefinition}
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.WorkflowDefinition
 
 import com.histmersion.api.automation.Agents.Pipeline
-import com.histmersion.domain.automation.AgentRole
+import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, ServerWiring}
 

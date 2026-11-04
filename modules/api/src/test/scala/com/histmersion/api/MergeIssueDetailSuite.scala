@@ -5,7 +5,7 @@ import io.circe.syntax.*
 
 import java.util.UUID
 import com.histmersion.api.exchange.{IssueField, IssuePlace, IssueSide, IssueSpan}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeIssue

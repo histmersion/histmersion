@@ -3,7 +3,7 @@ package com.histmersion.api
 import com.histmersion.api.library.SourcesMarkdown
 
 import com.histmersion.api.library.Rename
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how

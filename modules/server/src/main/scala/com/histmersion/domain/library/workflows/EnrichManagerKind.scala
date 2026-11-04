@@ -1,13 +1,17 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
-import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.managers.ManagerKindDefinition
 
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.AutoEnrich
-import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerDefaults
 
@@ -24,7 +28,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
   val kind: Kind = Kind.Enrich
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m)
+    ReviewSettings.defaultsFor(kind.transformInto[com.histmersion.api.automation.Manager.Kind], m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case SourceEnrich => Pipeline.EnrichSource

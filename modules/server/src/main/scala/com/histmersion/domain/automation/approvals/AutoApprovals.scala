@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.approvals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.*
@@ -44,7 +46,9 @@ final class AutoApprovals(
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
-        manager.flatMap(_.config.autoApprove).getOrElse(cfg.approvals.checked(k))
+        manager
+          .flatMap(_.config.autoApprove)
+          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
     )
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */

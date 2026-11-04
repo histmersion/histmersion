@@ -1,14 +1,15 @@
 package com.histmersion.util.jobs
+import com.histmersion.api.jobs.JobInfo
 
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.jobs.{JobKindEntry, JobKindMeaning, JobKindName, JobKinds}
-import com.histmersion.util.jobs.Job
 
 class JobKindsRegistrySuite extends munit.FunSuite:
-  private val a = JobKindEntry(Job.Kind("alpha"), JobKindName("Alpha"), JobKindMeaning("Does alpha."), stoppable = true)
+  private val a =
+    JobKindEntry(JobInfo.Kind("alpha"), JobKindName("Alpha"), JobKindMeaning("Does alpha."), stoppable = true)
   private val b =
     JobKindEntry(
-      Job.Kind("beta-run"),
+      JobInfo.Kind("beta-run"),
       JobKindName("Beta"),
       JobKindMeaning("Does beta."),
       subject = JobDetail.Purpose.of
@@ -17,7 +18,7 @@ class JobKindsRegistrySuite extends munit.FunSuite:
 
   test("kinds in the order they were registered; looked up by kind or by the identifier as stored or typed"):
     assertEquals(kinds.kinds.map(k => k.value: String), List("alpha", "beta-run"))
-    assertEquals(kinds.get(Job.Kind("beta-run")), Some(b))
+    assertEquals(kinds.get(JobInfo.Kind("beta-run")), Some(b))
     assertEquals(kinds.parse("  ALPHA "), Some(a))
     assertEquals(kinds.parse("gamma"), None)
 

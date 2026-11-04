@@ -1,4 +1,6 @@
 package com.histmersion.web
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.{Plural, RegisteredPlanMatches, YearFmt}
 import com.histmersion.web.map.*
@@ -9,8 +11,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.MatchOutcome
+import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.exchange.{
   IssueField,
   IssuePlace,
@@ -29,8 +30,7 @@ import com.histmersion.api.exchange.{
   MergeResolutions
 }
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Source
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
@@ -60,9 +60,9 @@ object MergeView:
     if i.condition.isDefined then Group.Conditional
     else
       i.severity match
-        case Issue.Severity.Blocking => if i.decision.isEmpty then Group.Open else Group.Decided
-        case Issue.Severity.Default  => Group.Defaults
-        case Issue.Severity.Info     => Group.Info
+        case MergeIssue.Severity.Blocking => if i.decision.isEmpty then Group.Open else Group.Decided
+        case MergeIssue.Severity.Default  => Group.Defaults
+        case MergeIssue.Severity.Info     => Group.Info
 
   /** The issues by group, empty groups left out, the plan's order kept within a group. */
   def grouped(issues: List[MergeIssue]): List[(Group, List[MergeIssue])] =
@@ -73,7 +73,7 @@ object MergeView:
   def matched(p: MergePlan): List[Source.Match] = RegisteredPlanMatches.kind.all(p.sources)
 
   def counter(p: MergePlan): (Int, Int) =
-    val blocking = p.issues.filter(i => i.severity == Issue.Severity.Blocking && i.condition.isEmpty)
+    val blocking = p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
 
   /** The issues a filter text keeps: it matches the id, the kind, the title or either side's label. */
@@ -82,7 +82,7 @@ object MergeView:
     if t.isEmpty then issues
     else
       issues.filter(i =>
-        (List(i.id, Issue.Kind.wireOf(i.kind), i.title, i.entity.wire) ++
+        (List(i.id, MergeIssue.Kind.wireOf(i.kind), i.title, i.entity.wire) ++
           i.left.map(_.label).toList ++ i.right.map(_.label).toList).exists(_.toLowerCase.contains(t))
       )
 
@@ -97,7 +97,7 @@ object MergeView:
   ): MergeResolutions =
     val rest = r.resolve.filterNot(_.issue == issue)
     r.copy(resolve =
-      (rest ++ decision.map(d => MergeResolution(issue, d.wire, text.filter(_ => d.kind == DecisionKind.File))))
+      (rest ++ decision.map(d => MergeResolution(issue, d.wire, text.filter(_ => d.kind == MergeDecision.Kind.File))))
         .sortBy(_.issue)
     )
 
@@ -106,40 +106,40 @@ object MergeView:
     r.resolve.find(_.issue == issue).flatMap(x => MergeDecision.parse(x.decision).toOption)
 
   /** What a decision kind means, in words. */
-  def describe(k: DecisionKind): String = k match
-    case DecisionKind.KeepLeft       => "keep this collection's"
-    case DecisionKind.KeepRight      => "take the bundle's"
-    case DecisionKind.Both           => "keep both"
-    case DecisionKind.Concat         => "join both texts"
-    case DecisionKind.Hull           => "the span covering both"
-    case DecisionKind.Map            => "one source, under"
-    case DecisionKind.RenameRight    => "keep both, the bundle's under a new key"
-    case DecisionKind.RenameLeft     => "keep both, this collection's under a new key"
-    case DecisionKind.File           => "the merged text, as edited here"
-    case DecisionKind.Merge          => "make them one"
-    case DecisionKind.Drop           => "drop it"
-    case DecisionKind.KeepUnanchored => "keep it without a place in the text"
+  def describe(k: MergeDecision.Kind): String = k match
+    case MergeDecision.Kind.KeepLeft       => "keep this collection's"
+    case MergeDecision.Kind.KeepRight      => "take the bundle's"
+    case MergeDecision.Kind.Both           => "keep both"
+    case MergeDecision.Kind.Concat         => "join both texts"
+    case MergeDecision.Kind.Hull           => "the span covering both"
+    case MergeDecision.Kind.Map            => "one source, under"
+    case MergeDecision.Kind.RenameRight    => "keep both, the bundle's under a new key"
+    case MergeDecision.Kind.RenameLeft     => "keep both, this collection's under a new key"
+    case MergeDecision.Kind.File           => "the merged text, as edited here"
+    case MergeDecision.Kind.Merge          => "make them one"
+    case MergeDecision.Kind.Drop           => "drop it"
+    case MergeDecision.Kind.KeepUnanchored => "keep it without a place in the text"
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
-  def kindText(k: Issue.Kind): String = Issue.Kind.wireOf(k).replace('-', ' ')
+  def kindText(k: MergeIssue.Kind): String = MergeIssue.Kind.wireOf(k).replace('-', ' ')
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
     */
-  def fieldOf(k: Issue.Kind): Option[String] = k match
-    case Issue.Kind.StatusDiffers                          => Some("status")
-    case Issue.Kind.TitleDiffers                           => Some("title")
-    case Issue.Kind.AuthorsDiffers                         => Some("authors")
-    case Issue.Kind.YearDiffers                            => Some("year")
-    case Issue.Kind.DoiDiffers                             => Some("DOI")
-    case Issue.Kind.SummaryDiffers                         => Some("summary")
-    case Issue.Kind.NotesDiffers                           => Some("notes")
-    case Issue.Kind.PeriodDiffers                          => Some("period")
-    case Issue.Kind.BodyDiffers                            => Some("OCR body")
-    case Issue.Kind.SameWork | Issue.Kind.CitekeyCollision => Some("citekey")
-    case Issue.Kind.NamedPeriodDiffers                     => Some("span")
-    case Issue.Kind.GoalPlanDiffers                        => Some("plan")
-    case _                                                 => None
+  def fieldOf(k: MergeIssue.Kind): Option[String] = k match
+    case MergeIssue.Kind.StatusDiffers                               => Some("status")
+    case MergeIssue.Kind.TitleDiffers                                => Some("title")
+    case MergeIssue.Kind.AuthorsDiffers                              => Some("authors")
+    case MergeIssue.Kind.YearDiffers                                 => Some("year")
+    case MergeIssue.Kind.DoiDiffers                                  => Some("DOI")
+    case MergeIssue.Kind.SummaryDiffers                              => Some("summary")
+    case MergeIssue.Kind.NotesDiffers                                => Some("notes")
+    case MergeIssue.Kind.PeriodDiffers                               => Some("period")
+    case MergeIssue.Kind.BodyDiffers                                 => Some("OCR body")
+    case MergeIssue.Kind.SameWork | MergeIssue.Kind.CitekeyCollision => Some("citekey")
+    case MergeIssue.Kind.NamedPeriodDiffers                          => Some("span")
+    case MergeIssue.Kind.GoalPlanDiffers                             => Some("plan")
+    case _                                                           => None
 
   /** The result column of a field table: for the row the issue is about, what the merge writes as decided now (`Left` =
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
@@ -149,17 +149,17 @@ object MergeView:
     if !fieldOf(i.kind).contains(f.field) then None
     else
       Some(d.map(_.kind) match
-        case Some(DecisionKind.KeepLeft)    => Right(f.left.getOrElse("—"))
-        case Some(DecisionKind.KeepRight)   => Right(f.right.getOrElse("—"))
-        case Some(DecisionKind.Concat)      => Right(List(f.left, f.right).flatten.mkString("\n\n"))
-        case Some(DecisionKind.Hull)        => Right("the span covering both")
-        case Some(DecisionKind.Map)         => Right(d.flatMap(_.argument).getOrElse("—"))
-        case Some(DecisionKind.Both)        => Right("two records: " + List(f.left, f.right).flatten.mkString(" and "))
-        case Some(DecisionKind.RenameRight) =>
+        case Some(MergeDecision.Kind.KeepLeft)  => Right(f.left.getOrElse("—"))
+        case Some(MergeDecision.Kind.KeepRight) => Right(f.right.getOrElse("—"))
+        case Some(MergeDecision.Kind.Concat)    => Right(List(f.left, f.right).flatten.mkString("\n\n"))
+        case Some(MergeDecision.Kind.Hull)      => Right("the span covering both")
+        case Some(MergeDecision.Kind.Map)       => Right(d.flatMap(_.argument).getOrElse("—"))
+        case Some(MergeDecision.Kind.Both) => Right("two records: " + List(f.left, f.right).flatten.mkString(" and "))
+        case Some(MergeDecision.Kind.RenameRight) =>
           Right(s"${f.left.getOrElse("")} here, ${d.flatMap(_.argument).getOrElse("")} for the bundle's")
-        case Some(DecisionKind.RenameLeft) =>
+        case Some(MergeDecision.Kind.RenameLeft) =>
           Right(s"${d.flatMap(_.argument).getOrElse("")} here, ${f.right.getOrElse("")} for the bundle's")
-        case Some(other) => Right(DecisionKind.wireOf(other))
+        case Some(other) => Right(MergeDecision.Kind.wireOf(other))
         case None        => Left("to decide"))
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
@@ -584,7 +584,7 @@ object MergeView:
       i.condition.map(c =>
         p_(
           cls := "muted",
-          s"Applies only if ${c.issue} is decided ${DecisionKind.wireOf(c.when)}. ",
+          s"Applies only if ${c.issue} is decided ${MergeDecision.Kind.wireOf(c.when)}. ",
           button(
             typ := "button",
             cls := "link-btn",
@@ -680,7 +680,7 @@ object MergeView:
                 if hasMarkers(d) then "resolve every <<<<<<< … >>>>>>> region first" else "decide file: with this text"
               ),
               onClick --> (_ =>
-                set(i.id, Some(MergeDecision.withArg(DecisionKind.File, fileName(i))), Some(draft.now()))
+                set(i.id, Some(MergeDecision.withArg(MergeDecision.Kind.File, fileName(i))), Some(draft.now()))
               )
             )
         ),
@@ -781,7 +781,7 @@ object MergeView:
         " ",
         code(d.wire)
       )
-    def withArgument(k: DecisionKind): HtmlElement =
+    def withArgument(k: MergeDecision.Kind): HtmlElement =
       val arg = Var(
         current
           .filter(_.kind == k)
@@ -826,28 +826,28 @@ object MergeView:
         else
           div(
             i.options.map {
-              case DecisionKind.Map =>
+              case MergeDecision.Kind.Map =>
                 div(
                   List(i.left, i.right).flatten.map(s =>
                     radio(
-                      MergeDecision.withArg(DecisionKind.Map, s.label),
-                      describe(DecisionKind.Map),
+                      MergeDecision.withArg(MergeDecision.Kind.Map, s.label),
+                      describe(MergeDecision.Kind.Map),
                       " ",
                       strong(s.label)
                     )
                   )
                 )
-              case k @ (DecisionKind.RenameRight | DecisionKind.RenameLeft) => withArgument(k)
-              case DecisionKind.File                                        =>
+              case k @ (MergeDecision.Kind.RenameRight | MergeDecision.Kind.RenameLeft) => withArgument(k)
+              case MergeDecision.Kind.File                                              =>
                 label(
                   cls := "merge-option",
                   input(
                     typ := "radio",
                     nameAttr := name,
-                    checked := i.decision.exists(_.kind == DecisionKind.File),
+                    checked := i.decision.exists(_.kind == MergeDecision.Kind.File),
                     disabled := true
                   ),
-                  describe(DecisionKind.File),
+                  describe(MergeDecision.Kind.File),
                   span(cls := "muted", " — write it above and press “use this text”")
                 )
               case k => radio(MergeDecision.of(k), describe(k))

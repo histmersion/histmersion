@@ -1,4 +1,6 @@
 package com.histmersion.api.jobs
+import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -22,4 +24,13 @@ final case class JobInfo(
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = state == JobState.Done
 object JobInfo:
+
+  /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */
+  type Kind = Kind.T
+  object Kind extends RefinedType[String, Pure]
+
+  /** A job's id as the wire names it; the server checks it is one. */
+  type Id = Id.T
+  object Id extends RefinedType[String, Pure]
+
   given Schema[JobInfo] = summon[KindlingsSchema[JobInfo]].schema

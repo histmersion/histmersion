@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
 import com.histmersion.api.research.Article
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
 
 /** The icon at the head of every card ([[Preview.cardView]]) and of every row a map cluster lists — one per KIND of

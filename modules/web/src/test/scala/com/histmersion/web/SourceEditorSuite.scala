@@ -3,7 +3,7 @@ package com.histmersion.web
 import com.histmersion.api.ListPatch
 import SourceEditor.{Draft, Field}
 import com.histmersion.api.library.MetadataPatch
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,

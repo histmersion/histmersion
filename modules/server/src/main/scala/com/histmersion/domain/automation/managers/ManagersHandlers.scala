@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.{connect, transact}
@@ -731,7 +733,10 @@ final class ManagersHandlers(
                   if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")
                 }"
           )
-      _ = agents.goals.removeSchedule(goal, kind) // a row the managers had not moved yet is replaced
+      _ = agents.goals.removeSchedule(
+        goal,
+        kind.transformInto[com.histmersion.domain.automation.ScheduleKind]
+      ) // a row the managers had not moved yet is replaced
       m <- manager(id)
     yield
       supervisor.nudge()
@@ -744,7 +749,7 @@ final class ManagersHandlers(
     * watcher itself stays.
     */
   def removeSchedule(goal: String, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
-    val legacy = agents.goals.removeSchedule(goal, kind)
+    val legacy = agents.goals.removeSchedule(goal, kind.transformInto[com.histmersion.domain.automation.ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher = agents.managerStore.get(watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
       val rest = Sweep.of(m.config).filterNot(_ == sw)

@@ -54,8 +54,6 @@ object Articles:
 
   def notFound(slug: String): Api.Error = Api.Error(s"No article '$slug'", Some(Write.CodeNotFound))
 
-  def slugOf(raw: String): Either[String, String] = com.histmersion.domain.research.Slug.parse(raw).map(_.value)
-
   def kindOf(raw: String): Either[String, String] =
     val k = raw.trim.toLowerCase
     if Kind.matches(k) then Right(k)
@@ -67,9 +65,10 @@ object Articles:
 
   def dirOfKind(kind: String): String = kind.trim.toLowerCase
 
+  /** The article a put makes, or why it is refused; `slug` is the server's, already checked. */
   def applyPut(slug: String, p: Article.Put): Either[String, Article] =
+    val s = slug
     for
-      s <- slugOf(slug)
       k <- kindOf(p.kind)
       _ <- if p.title.trim.nonEmpty then Right(()) else Left("title must not be empty")
       period <- periodOf(p.periodStart, p.periodEnd)

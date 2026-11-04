@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.research.Slug
+
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.research.Articles
@@ -72,7 +74,7 @@ object PlanArticles:
     val dropped = List.newBuilder[String]
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
-        Articles.slugOf(Option(x.slug).getOrElse("")) match
+        Slug.parse(Option(x.slug).getOrElse("")).map(_.value) match
           case Left(m)                                            => problems += s"article '${x.slug}': $m"; acc
           case Right(s) if Option(x.title).forall(_.trim.isEmpty) => problems += s"article '$s' has no title"; acc
           case Right(s) if acc.exists(_.slug == s)                => dropped += s"'$s' proposed twice"; acc

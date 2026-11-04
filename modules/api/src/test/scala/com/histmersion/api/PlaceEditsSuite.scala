@@ -4,7 +4,7 @@ import com.histmersion.api.catalogue.PlacesMarkdown
 
 import io.circe.parser.parse
 import com.histmersion.api.catalogue.{ManualPlaceName, Period}
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
 class PlaceEditsSuite extends munit.FunSuite:

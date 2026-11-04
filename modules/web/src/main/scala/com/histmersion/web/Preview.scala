@@ -10,7 +10,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
-import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.media.MediaRole
 import com.histmersion.api.catalogue.{Corrections, EventGeo, EventLeads, EventPrecision, EventTier, Place}
 import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
@@ -49,7 +49,7 @@ object Preview:
       title: String,
       byline: String,
       identifier: String,
-      status: Option[com.histmersion.domain.library.Source.Status],
+      status: Option[com.histmersion.api.library.Source.Status],
       chips: List[(String, String)],
       where: String,
       summary: Option[String],

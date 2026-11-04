@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
@@ -9,7 +11,6 @@ import com.histmersion.util.data.exchange.MergeRules
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats events: lines of other kinds point at them by uid, the ledger names one by its id; a plan knows
   * which of the bundle's event ids and old ids name an event here.

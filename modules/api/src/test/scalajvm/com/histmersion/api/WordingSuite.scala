@@ -1,16 +1,16 @@
 package com.histmersion.api
 
-import com.histmersion.domain.automation.Pipeline
+import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.maintenance.Vacuum
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.automation.Manager
-import com.histmersion.domain.automation.Run
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Manager
+import com.histmersion.api.automation.Run
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Acquire
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without

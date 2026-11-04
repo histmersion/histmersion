@@ -3,7 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 final case class CitedSource(
     citekey: String,

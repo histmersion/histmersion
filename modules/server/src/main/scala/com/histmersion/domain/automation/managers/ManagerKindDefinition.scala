@@ -8,7 +8,8 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerDefaults
-import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 
 import java.time.Instant
 import scala.collection.mutable.Builder

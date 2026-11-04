@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.collections
 
+import com.histmersion.api.Write
+
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
@@ -25,7 +27,6 @@ import com.histmersion.api.library.{
   CollectionUpdatedOne,
   CollectionUpdateOne
 }
-import com.histmersion.api.library.of
 import com.histmersion.api.Api
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
@@ -33,7 +34,7 @@ import com.histmersion.api.Api
   */
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
-  private def citekey(raw: String): Either[Api.Error, String] = Citekey.of(raw).map(_.value)
+  private def citekey(raw: String): Either[Api.Error, String] = Citekey.parse(raw).left.map(Write.invalid).map(_.value)
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
   def collection(caller: Caller, name: String): Either[Api.Error, CollectionInfo] = service.collection(name)

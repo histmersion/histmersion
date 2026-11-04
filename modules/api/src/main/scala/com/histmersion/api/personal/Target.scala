@@ -1,8 +1,8 @@
 package com.histmersion.api.personal
 
-import com.histmersion.api.ValueCodecs.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.YearFmt
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

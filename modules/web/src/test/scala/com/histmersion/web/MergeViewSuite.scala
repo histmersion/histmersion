@@ -1,9 +1,10 @@
 package com.histmersion.web
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.YearFmt
 
 import java.util.UUID
-import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.exchange.{
   IssueCondition,
   IssueField,
@@ -18,8 +19,7 @@ import com.histmersion.api.exchange.{
   MergeResolution,
   MergeResolutions
 }
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.
@@ -30,10 +30,10 @@ class MergeViewSuite extends munit.FunSuite:
 
   private def issue(
       id: String,
-      sev: Issue.Severity = Issue.Severity.Blocking,
+      sev: MergeIssue.Severity = MergeIssue.Severity.Blocking,
       decision: Option[String] = None,
       cond: Option[IssueCondition] = None,
-      kind: Issue.Kind = Issue.Kind.StatusDiffers
+      kind: MergeIssue.Kind = MergeIssue.Kind.StatusDiffers
   ): MergeIssue =
     MergeIssue(
       id,
@@ -43,7 +43,7 @@ class MergeViewSuite extends munit.FunSuite:
       s"title of $id",
       Some(IssueSide(s"left_$id", U)),
       Some(IssueSide(s"right_$id", U)),
-      options = List(DecisionKind.KeepLeft, DecisionKind.KeepRight),
+      options = List(MergeDecision.Kind.KeepLeft, MergeDecision.Kind.KeepRight),
       condition = cond,
       decision = decision.map(d => MergeDecision.parse(d).toOption.get)
     )
@@ -71,8 +71,8 @@ class MergeViewSuite extends munit.FunSuite:
     val is = List(
       issue("S-1"),
       issue("S-2", decision = Some("keep-left")),
-      issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
-      issue("O-4", Issue.Severity.Default, Some("keep-left"))
+      issue("S-3", cond = Some(IssueCondition("S-9", MergeDecision.Kind.Map))),
+      issue("O-4", MergeIssue.Severity.Default, Some("keep-left"))
     )
     assertEquals(
       MergeView.grouped(is).map((g, xs) => g -> xs.map(_.id)),
@@ -89,8 +89,8 @@ class MergeViewSuite extends munit.FunSuite:
       List(
         issue("S-1"),
         issue("S-2", decision = Some("keep-left")),
-        issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
-        issue("O-4", Issue.Severity.Default)
+        issue("S-3", cond = Some(IssueCondition("S-9", MergeDecision.Kind.Map))),
+        issue("O-4", MergeIssue.Severity.Default)
       )
     )
     assertEquals(MergeView.counter(p), (1, 2))
@@ -100,19 +100,20 @@ class MergeViewSuite extends munit.FunSuite:
     assert(!MergeView.applicable(plan(Nil).copy(problems = List("a blob is missing"))))
 
   test("the filter matches the id, the kind, the title and the labels"):
-    val is = List(issue("S-1"), issue("A-2", kind = Issue.Kind.ArticleDiverged))
+    val is = List(issue("S-1"), issue("A-2", kind = MergeIssue.Kind.ArticleDiverged))
     assertEquals(MergeView.filtered(is, "  ").map(_.id), List("S-1", "A-2"))
     assertEquals(MergeView.filtered(is, "article-diverged").map(_.id), List("A-2"))
     assertEquals(MergeView.filtered(is, "RIGHT_S-1").map(_.id), List("S-1"))
 
   test("a decision replaces the earlier one of its issue; taking it back removes it; a text goes with file: only"):
     val r0 = MergeResolutions(List(MergeResolution("S-2", "keep-left")))
-    val r1 = MergeView.decide(r0, "S-1", Some(MergeDecision.of(DecisionKind.KeepRight)), Some("ignored"))
+    val r1 = MergeView.decide(r0, "S-1", Some(MergeDecision.of(MergeDecision.Kind.KeepRight)), Some("ignored"))
     assertEquals(r1.resolve, List(MergeResolution("S-1", "keep-right"), MergeResolution("S-2", "keep-left")))
-    val r2 = MergeView.decide(r1, "S-2", Some(MergeDecision.withArg(DecisionKind.File, "merged/x.md")), Some("text"))
+    val r2 =
+      MergeView.decide(r1, "S-2", Some(MergeDecision.withArg(MergeDecision.Kind.File, "merged/x.md")), Some("text"))
     assertEquals(r2.resolve.find(_.issue == "S-2"), Some(MergeResolution("S-2", "file:merged/x.md", Some("text"))))
     assertEquals(MergeView.decide(r2, "S-1", None).resolve.map(_.issue), List("S-2"))
-    assertEquals(MergeView.chosen(r2, "S-2").map(_.kind), Some(DecisionKind.File))
+    assertEquals(MergeView.chosen(r2, "S-2").map(_.kind), Some(MergeDecision.Kind.File))
 
   test(
     "the result column: the row the issue is about follows the decision (to decide until then); the others are the server's"
@@ -120,22 +121,27 @@ class MergeViewSuite extends munit.FunSuite:
     val i = issue("S-1")
     val f = IssueField("status", Some("current"), Some("contested"))
     assertEquals(MergeView.resultOf(i, f, None), Some(Left("to decide")))
-    assertEquals(MergeView.resultOf(i, f, Some(MergeDecision.of(DecisionKind.KeepRight))), Some(Right("contested")))
     assertEquals(
-      MergeView.resultOf(i, IssueField("title", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.KeepRight))),
+      MergeView.resultOf(i, f, Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
+      Some(Right("contested"))
+    )
+    assertEquals(
+      MergeView
+        .resultOf(i, IssueField("title", Some("a"), Some("b")), Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
       None
     )
-    val notes = issue("S-2", kind = Issue.Kind.NotesDiffers)
+    val notes = issue("S-2", kind = MergeIssue.Kind.NotesDiffers)
     assertEquals(
-      MergeView.resultOf(notes, IssueField("notes", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.Concat))),
+      MergeView
+        .resultOf(notes, IssueField("notes", Some("a"), Some("b")), Some(MergeDecision.of(MergeDecision.Kind.Concat))),
       Some(Right("a\n\nb"))
     )
-    val gate = issue("S-3", kind = Issue.Kind.SameWork)
+    val gate = issue("S-3", kind = MergeIssue.Kind.SameWork)
     assertEquals(
       MergeView.resultOf(
         gate,
         IssueField("citekey", Some("a"), Some("b")),
-        Some(MergeDecision.withArg(DecisionKind.Map, "b"))
+        Some(MergeDecision.withArg(MergeDecision.Kind.Map, "b"))
       ),
       Some(Right("b"))
     )

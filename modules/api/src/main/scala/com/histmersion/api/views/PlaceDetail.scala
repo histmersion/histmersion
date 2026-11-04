@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.given
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** A place's page as the server answers it: the gazetteer's `PlaceCard` with the place's pictures. */
 final case class PlaceDetail(

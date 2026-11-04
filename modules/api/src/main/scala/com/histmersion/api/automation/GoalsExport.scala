@@ -26,8 +26,8 @@ object GoalsExport:
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
-    val order = com.histmersion.domain.automation.Goal.Status.all.filter(counts.contains) ++ counts.keys.toList
-      .filterNot(com.histmersion.domain.automation.Goal.Status.all.contains)
+    val order = com.histmersion.api.automation.Goal.Status.all.filter(counts.contains) ++ counts.keys.toList
+      .filterNot(com.histmersion.api.automation.Goal.Status.all.contains)
       .sorted
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
     s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
@@ -69,7 +69,7 @@ object GoalsExport:
 
   private def linkSections(links: List[GoalLink], itemStatus: Map[Int, String]): List[String] =
     def section(
-        kind: com.histmersion.domain.automation.Goal.LinkKind,
+        kind: com.histmersion.api.automation.Goal.LinkKind,
         label: String,
         line: GoalLink => String,
         key: GoalLink => (Long, String)
@@ -81,25 +81,25 @@ object GoalsExport:
     val byId = (l: GoalLink) => (l.ref.toLongOption.getOrElse(Long.MaxValue), l.ref)
     List(
       section(
-        com.histmersion.domain.automation.Goal.LinkKind.Article,
+        com.histmersion.api.automation.Goal.LinkKind.Article,
         "Articles",
         l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
         byRef
       ),
       section(
-        com.histmersion.domain.automation.Goal.LinkKind.Source,
+        com.histmersion.api.automation.Goal.LinkKind.Source,
         "Sources",
         l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
         byRef
       ),
       section(
-        com.histmersion.domain.automation.Goal.LinkKind.Query,
+        com.histmersion.api.automation.Goal.LinkKind.Query,
         "Searches",
         l => s"\"${oneLine(l.ref)}\"${noted(l)}",
         byRef
       ),
       section(
-        com.histmersion.domain.automation.Goal.LinkKind.QueueItem,
+        com.histmersion.api.automation.Goal.LinkKind.QueueItem,
         "Queue items",
         l => queueLine(l, itemStatus),
         byId

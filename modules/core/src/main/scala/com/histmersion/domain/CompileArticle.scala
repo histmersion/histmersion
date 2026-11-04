@@ -8,9 +8,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.Goal.Plans.ArticleDraft
-import com.histmersion.domain.library.Confidence
-import com.histmersion.domain.research.DraftMode
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.research.DraftMode
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 

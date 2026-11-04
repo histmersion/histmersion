@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.exchange.EditionsPolicy
+
 import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.MatchWeights
 
@@ -10,7 +12,6 @@ import MergeText.AuthorAgreement
 import com.histmersion.util.text.MinHash
 
 import java.util.UUID
-import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.api.exchange.Bundle
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.

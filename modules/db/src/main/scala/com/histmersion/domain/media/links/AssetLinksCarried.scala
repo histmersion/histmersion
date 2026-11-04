@@ -1,11 +1,12 @@
 package com.histmersion.domain.media.links
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the figures' links: each line stamped with its rev; an import writes them after the blobs,
   * once every figure they name is here.

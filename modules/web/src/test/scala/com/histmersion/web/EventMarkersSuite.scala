@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.{
   SiteTypes
 }
 import com.histmersion.api.views.EventDetail
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its

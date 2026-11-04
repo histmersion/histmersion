@@ -1,11 +1,12 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
 
 import com.augustnagro.magnum.DbCon
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge between two collections treats one kind of record: whether lines of other kinds can point at its records
   * (a plan looks them up as live here), how the ledger names one, and what a plan must know of this collection for the

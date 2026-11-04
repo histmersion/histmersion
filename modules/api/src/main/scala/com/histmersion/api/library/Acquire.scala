@@ -9,45 +9,6 @@ import sttp.tapir.Schema
 
 object Acquire:
 
-  enum Ident:
-    case Doi(value: String)
-
-    case Arxiv(value: String)
-
-    case Citekey(value: String)
-
-  private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
-  private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
-
-  /** DOIs are case-insensitive, so they are stored lower-case ([[com.histmersion.domain.library.Doi.normalize]]). */
-  def normalizeDoi(raw: String): Option[String] = com.histmersion.domain.library.Doi.normalize(raw)
-
-  def normalizeArxiv(raw: String): Option[String] =
-    Option(raw).map(_.trim).filter(_.nonEmpty).flatMap { s =>
-      s.toLowerCase match
-        case ArxivNew(id) => Some(id)
-        case _            =>
-          s match
-            case ArxivOld(id) => Some(id)
-            case _            => None
-    }
-
-  def parseIdent(raw: String): Either[String, Ident] =
-    val s = Option(raw).getOrElse("").trim
-    if s.isEmpty then Left("empty identifier — give a DOI, arxiv:<id>, or a citekey")
-    else
-      normalizeDoi(s)
-        .map(Ident.Doi.apply)
-        .orElse(normalizeArxiv(s).map(Ident.Arxiv.apply))
-        .orElse(Option.when(isCitekey(s))(Ident.Citekey(s)))
-        .toRight(s"'$s' is neither a DOI, an arXiv id, nor a citekey")
-
-  /** Deliberately permissive: the corpus holds hand-written keys and keys of older conventions that the generator would
-    * not produce, so the store, not a regular expression, decides whether a citekey exists.
-    */
-  def isCitekey(s: String): Boolean =
-    s.nonEmpty && s.head.isLetter && !s.exists(_.isWhitespace) && !s.contains("/")
-
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
 
   val MinCitekeyYear = 1000
@@ -164,19 +125,19 @@ object Acquire:
       case Verdicts.LowImpact => s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic"
       case _                  => s"UNASSESSED — $cited; judge relevance to the topic by hand"
 
-  def statusFor(verdict: String): Option[com.histmersion.domain.library.Source.Status] = verdict match
-    case Verdicts.Retracted => Some(com.histmersion.domain.library.Source.Status.Retracted)
-    case Verdicts.Corrected => Some(com.histmersion.domain.library.Source.Status.Contested)
-    case Verdicts.Current   => Some(com.histmersion.domain.library.Source.Status.Current)
+  def statusFor(verdict: String): Option[com.histmersion.api.library.Source.Status] = verdict match
+    case Verdicts.Retracted => Some(com.histmersion.api.library.Source.Status.Retracted)
+    case Verdicts.Corrected => Some(com.histmersion.api.library.Source.Status.Contested)
+    case Verdicts.Current   => Some(com.histmersion.api.library.Source.Status.Current)
     case _                  => None
 
   def statusDecision(
       verdict: String,
-      current: com.histmersion.domain.library.Source.Status,
+      current: com.histmersion.api.library.Source.Status,
       force: Boolean
-  ): Option[Either[com.histmersion.domain.library.Source.Status, com.histmersion.domain.library.Source.Status]] =
+  ): Option[Either[com.histmersion.api.library.Source.Status, com.histmersion.api.library.Source.Status]] =
     statusFor(verdict).map { target =>
-      if target == com.histmersion.domain.library.Source.Status.Retracted || force || current == com.histmersion.domain.library.Source.Status.Unassessed || current == target
+      if target == com.histmersion.api.library.Source.Status.Retracted || force || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
       then Right(target)
       else Left(current)
     }
@@ -265,7 +226,8 @@ object Acquire:
 
   /** The export's `Reason` column is full of quoted commas and embedded newlines, so it needs a real CSV reader.
     * Columns are located by header name because their order has changed between exports, and the last row for a DOI
-    * wins because the export lists amendments chronologically.
+    * wins because the export lists amendments chronologically. The DOI is as the export writes it: the server
+    * normalizes it (and drops a row whose DOI is none).
     */
   def parseRetractionWatch(csv: String): List[RetractionRow] =
     Csv.parse(csv) match
@@ -275,7 +237,7 @@ object Acquire:
         def col(r: List[String], name: String): Option[String] =
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
-          col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
+          col(r, "OriginalPaperDOI").map { doi =>
             RetractionRow(doi, col(r, "Reason"), col(r, "RetractionDate"), col(r, "RetractionNature"))
           }
         }

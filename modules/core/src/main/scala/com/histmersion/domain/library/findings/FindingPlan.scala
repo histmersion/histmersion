@@ -1,19 +1,27 @@
 package com.histmersion.domain.library.findings
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.exchange.{IssueCondition, IssueDetail, IssueField, IssueSide, MergeIssue}
-import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
-import com.histmersion.domain.library.sources.{MergeText, SourceMatcher}
+import com.histmersion.domain.MergeFold
+import com.histmersion.domain.MergePlanner
+import com.histmersion.domain.MergeSettings
+import com.histmersion.domain.library.sources.MergeText
+import com.histmersion.domain.library.sources.SourceMatcher
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.{BundlePlan, PairQuestions, PlanFolds, PlanRelabels, PlanRun, SourceFate}
-import com.histmersion.domain.library.Confidence
-import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.util.data.exchange.BundlePlan
+import com.histmersion.util.data.exchange.PairQuestions
+import com.histmersion.util.data.exchange.PlanFolds
+import com.histmersion.util.data.exchange.PlanRelabels
+import com.histmersion.util.data.exchange.PlanRun
+import com.histmersion.util.data.exchange.SourceFate
+import com.histmersion.api.library.Confidence
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import scala.annotation.tailrec
 import scala.collection.mutable
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -24,7 +32,7 @@ import com.histmersion.util.data.exchange.Issue
 final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   import FindingPlan.*
 
-  private val km = DecisionKind
+  private val km = MergeDecision.Kind
   private val findingSource = in.foreign.findings.map(f => f.uid -> f.sourceUid).toMap
   private val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
   private val nearIssue = mutable.Map.empty[UUID, String] // the bundle's finding → its question
@@ -54,7 +62,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     ms.foreach {
       case Match.Near(rf, lf, j) =>
         val id = MergePlanner.issueId(
-          Issue.Kind.FindingNearDuplicate,
+          MergeIssue.Kind.FindingNearDuplicate,
           Bundle.Kind.Finding,
           List(rf.uid),
           List(lf.uid),
@@ -65,8 +73,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
         questions.ask(
           MergeIssue(
             id,
-            Issue.Kind.FindingNearDuplicate,
-            Issue.Severity.Default,
+            MergeIssue.Kind.FindingNearDuplicate,
+            MergeIssue.Severity.Default,
             Bundle.Kind.Finding,
             s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, 2)})",
             Some(IssueSide(lf.id, lf.uid, List(MergeIssue.Detail.preview(lf.claim)))),
@@ -104,7 +112,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
       case _ => ()
     }
 
-  override def pairIssue(kind: Issue.Kind): Boolean = kind == Issue.Kind.FindingNearDuplicate
+  override def pairIssue(kind: MergeIssue.Kind): Boolean = kind == MergeIssue.Kind.FindingNearDuplicate
 
   // the same claim folds, a near duplicate folds when decided `merge`, the rest arrive under the survivor's citekey,
   // numbered after its last

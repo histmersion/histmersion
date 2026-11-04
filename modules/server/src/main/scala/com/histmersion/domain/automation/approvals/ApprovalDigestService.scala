@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.approvals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.*
@@ -26,7 +28,12 @@ final class ApprovalDigestService(
 
   /** Does code decide an approval of kind `k` now (the autopilot's checks)? */
   private def checked(k: String): Boolean =
-    ApprovalKind.parse(k).exists(kk => agents.autoApprovals.Kinds.contains(kk) && cfg.approvals.checked(kk))
+    ApprovalKind
+      .parse(k)
+      .exists(kk =>
+        agents.autoApprovals.Kinds.contains(kk) && cfg.approvals
+          .checked(kk.transformInto[com.histmersion.domain.automation.Approval.Kind])
+      )
 
   /** The digest as of `now`. */
   def digest(now: Instant = Instant.now(agents.clock)): Digest =

@@ -1,8 +1,9 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.MergeDecision
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.domain.MergePlanner
-import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
 
@@ -25,7 +26,7 @@ trait PairQuestions:
   def toLocal(u: UUID): UUID
 
   /** A question: the issue, and the decisions an import can carry out itself. */
-  def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit
+  def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit
 
   /** A line of the plan's notes. */
   def info(line: String): Unit

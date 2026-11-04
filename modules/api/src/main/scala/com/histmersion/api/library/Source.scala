@@ -1,4 +1,6 @@
 package com.histmersion.api.library
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.{Ascii, WireEnumValues}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.Dataset
@@ -9,9 +11,6 @@ import com.histmersion.api.Write.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.{ListPatch, StrictJson}
-import com.histmersion.domain.library.Confidence
-import com.histmersion.domain.library.{MatchMethod, MatchOutcome}
-import com.histmersion.util.data.exchange.Issue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
@@ -26,7 +25,7 @@ final case class Source(
     doi: Option[String],
     year: Option[Int],
     venue: Option[String],
-    status: com.histmersion.domain.library.Source.Status,
+    status: com.histmersion.api.library.Source.Status,
     topics: List[String],
     regions: List[String],
     tags: List[String],
@@ -44,6 +43,23 @@ final case class Source(
 )
 
 object Source:
+
+  enum Status:
+    case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
+
+    /** The wire / storage spelling (`current`), as the JSON codec writes it. */
+    def wire: String = Ascii.lower(toString)
+
+  object Status:
+
+    def fromString(s: String): Status =
+      values.find(_.toString.equalsIgnoreCase(s)).getOrElse(Unassessed)
+
+    given WireEnumValues[Status]:
+      def all: Array[Status] = Status.values
+      def wire(e: Status): String = e.toString.toLowerCase
+      def fromWire(s: String): Option[Status] =
+        Status.values.find(_.toString.equalsIgnoreCase(s))
 
   final case class Alias(alias: String, citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
   object Alias:
@@ -192,7 +208,7 @@ object Source:
       authors: List[String],
       year: Option[Int],
       venue: Option[String],
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       topics: List[String],
       regions: List[String],
       tags: List[String],
@@ -321,7 +337,7 @@ object Source:
       doi: Option[String] = None,
       year: Option[Int] = None,
       venue: Option[String] = None,
-      status: Option[com.histmersion.domain.library.Source.Status] = None,
+      status: Option[com.histmersion.api.library.Source.Status] = None,
       topics: List[String] = Nil,
       regions: List[String] = Nil,
       tags: List[String] = Nil,
@@ -362,7 +378,7 @@ object Source:
       provenance = s.provenance,
       calibreId = s.calibreId,
       findings = s.findings.map(Finding.Input.of),
-      edges = s.edges.flatMap(e => com.histmersion.domain.library.Edge.Kind.fromWire(e.kind).map(Edge.Input(e.dst, _)))
+      edges = s.edges.flatMap(e => com.histmersion.api.library.Edge.Kind.fromWire(e.kind).map(Edge.Input(e.dst, _)))
     )
 
   /** `idLabel` is the DOI when present, else the citekey: the owner's decision to show DOIs in the UI while keeping the
@@ -374,7 +390,7 @@ object Source:
       authors: List[String],
       year: Option[Int],
       title: String,
-      status: com.histmersion.domain.library.Source.Status
+      status: com.histmersion.api.library.Source.Status
   ):
     def idLabel: String = doi.getOrElse(citekey)
 
@@ -456,7 +472,7 @@ object Source:
         doi = blankToNone(p.doi),
         year = p.year,
         venue = blankToNone(p.venue),
-        status = p.status.getOrElse(com.histmersion.domain.library.Source.Status.Unassessed),
+        status = p.status.getOrElse(com.histmersion.api.library.Source.Status.Unassessed),
         topics = p.topics,
         regions = p.regions,
         tags = p.tags,
@@ -557,10 +573,10 @@ object Source:
         case Some(other) if other != citekey && !aliases.contains(other) =>
           Left(
             s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
-              s"source: patch '$other' to record '$other' --${com.histmersion.domain.library.Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
+              s"source: patch '$other' to record '$other' --${com.histmersion.api.library.Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
               s"(src may be omitted; it defaults to the $role)"
           )
-        case _ => Right(Edge(citekey, in.dst.trim, com.histmersion.domain.library.Edge.Kind.wireOf(in.kind)))
+        case _ => Right(Edge(citekey, in.dst.trim, com.histmersion.api.library.Edge.Kind.wireOf(in.kind)))
 
     private[api] def metadataCheck(m: MetadataPatch): Either[String, Unit] =
       val both = m.clear.filter {
@@ -641,10 +657,10 @@ object Source:
         s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
 
     private[api] def supersededEdgeCheck(
-        status: com.histmersion.domain.library.Source.Status,
+        status: com.histmersion.api.library.Source.Status,
         edges: List[Edge]
     ): Either[String, Unit] =
-      if status == com.histmersion.domain.library.Source.Status.Superseded && !edges.exists(_.kind == "superseded_by")
+      if status == com.histmersion.api.library.Source.Status.Superseded && !edges.exists(_.kind == "superseded_by")
       then
         Left(
           "status=superseded requires a superseded_by edge — add one with edges.add " +

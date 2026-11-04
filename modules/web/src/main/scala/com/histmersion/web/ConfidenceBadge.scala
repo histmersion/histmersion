@@ -4,7 +4,7 @@ import com.histmersion.api.{ConfidenceStyle, HtmlAtoms}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 
 /** The confidence mark: the shared icon plus the colour the map's dots use for that level ([[ConfidenceStyle]]),
   * labelled for screen readers and on hover.

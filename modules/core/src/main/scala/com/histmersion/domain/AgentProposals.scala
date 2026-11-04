@@ -6,9 +6,9 @@ import com.histmersion.api.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
   * the pure rules that decide whether code applies one at once or records it for a person

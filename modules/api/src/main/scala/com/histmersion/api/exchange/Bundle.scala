@@ -1,14 +1,84 @@
 package com.histmersion.api.exchange
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
 import com.histmersion.api.aliases.Aliases
-import com.histmersion.domain.library.Confidence
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.library.Source
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Json
 import java.util.UUID
 import sttp.tapir.Schema
 object Bundle:
+
+  /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
+    * kebab-case (`article-version`), as the V031 trigger writes them.
+    */
+  enum Kind:
+    case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
+
+    /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance imports itself are
+      * not carried (docs/research-merge-import.md §7.8).
+      */
+    case Place, Period
+
+    def wire: String = Kind.wireOf(this)
+
+    /** The NDJSON file holding this kind's lines. */
+    def file: String = s"entities/${Kind.fileStem(this)}.ndjson"
+
+    /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
+    def issueLetter: String = Kind.letterOf(this)
+
+  object Kind:
+    def wireOf(k: Kind): String = k match
+      case Source         => "source"
+      case Finding        => "finding"
+      case Article        => "article"
+      case ArticleVersion => "article-version"
+      case Asset          => "asset"
+      case AssetLink      => "asset-link"
+      case Attestation    => "attestation"
+      case Event          => "event"
+      case Goal           => "goal"
+      case QueueItem      => "queue-item"
+      case Place          => "place"
+      case Period         => "period"
+
+    private def fileStem(k: Kind): String = k match
+      case Source         => "sources"
+      case Finding        => "findings"
+      case Article        => "articles"
+      case ArticleVersion => "article-versions"
+      case Asset          => "assets"
+      case AssetLink      => "asset-links"
+      case Attestation    => "attestations"
+      case Event          => "events"
+      case Goal           => "goals"
+      case QueueItem      => "queue"
+      case Place          => "places"
+      case Period         => "periods"
+
+    private def letterOf(k: Kind): String = k match
+      case Source         => "S"
+      case Finding        => "F"
+      case Article        => "A"
+      case ArticleVersion => "V"
+      case Asset          => "X"
+      case AssetLink      => "K"
+      case Attestation    => "T"
+      case Event          => "E"
+      case Goal           => "G"
+      case QueueItem      => "Q"
+      case Place          => "P"
+      case Period         => "N"
+
+    def fromWire(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+
+    given WireEnumValues[Kind]:
+      def all: Array[Kind] = Kind.values
+      def wire(e: Kind): String = wireOf(e)
+      def fromWire(s: String): Option[Kind] = Kind.fromWire(s)
   val Format = "histmersion-bundle"
   val FormatVersion = 1
   val Extension = ".hmx"
@@ -276,7 +346,7 @@ object Bundle:
     val Tombstones = "entities/tombstones.ndjson"
 
     val all: List[String] =
-      com.histmersion.util.data.exchange.Bundle.Kind.values.toList.map(_.file) ++
+      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(_.file) ++
         List(
           Edges,
           UnresolvedEdges,
@@ -371,7 +441,7 @@ object Bundle:
     given Schema[Instance] = summon[KindlingsSchema[Instance]].schema
 
   final case class KindCounts(
-      kind: com.histmersion.util.data.exchange.Bundle.Kind,
+      kind: com.histmersion.api.exchange.Bundle.Kind,
       inserted: Int = 0,
       updated: Int = 0,
       unchanged: Int = 0,
@@ -481,7 +551,7 @@ object Bundle:
       doi: Option[String],
       year: Option[Int],
       venue: Option[String],
-      status: com.histmersion.domain.library.Source.Status,
+      status: com.histmersion.api.library.Source.Status,
       topics: List[String],
       regions: List[String],
       tags: List[String],
@@ -503,7 +573,7 @@ object Bundle:
 
   final case class Tombstone(
       uid: UUID,
-      kind: com.histmersion.util.data.exchange.Bundle.Kind,
+      kind: com.histmersion.api.exchange.Bundle.Kind,
       origin: UUID,
       deletedAt: String
   ) derives KindlingsCodecAsObject

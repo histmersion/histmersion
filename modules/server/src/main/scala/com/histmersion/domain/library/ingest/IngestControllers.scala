@@ -14,7 +14,6 @@ import scala.util.Using
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetLinks
-import com.histmersion.api.library.of
 import com.histmersion.api.Api
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
@@ -44,7 +43,7 @@ final class IngestControllers(
 
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
-    Citekey.of(p.citekey).flatMap { validated =>
+    Citekey.parse(p.citekey).left.map(Write.invalid).flatMap { validated =>
       val citekey: String = validated.value
       val size = upload.size
       val limits = cfg().limits
@@ -122,7 +121,9 @@ final class IngestControllers(
     * under docling with `quality`).
     */
   def reocr(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
-    maintenance.guard("reocr")(Citekey.of(citekey).flatMap(_ => reocrValid(citekey, quality)))
+    maintenance.guard("reocr")(
+      Citekey.parse(citekey).left.map(Write.invalid).flatMap(_ => reocrValid(citekey, quality))
+    )
 
   private def reocrValid(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
@@ -151,7 +152,7 @@ final class IngestControllers(
     * 404 when the source or its stored file is missing.
     */
   def original(citekey: String): Either[Api.Error, (Blob, String)] =
-    Citekey.of(citekey).flatMap { _ =>
+    Citekey.parse(citekey).left.map(Write.invalid).flatMap { _ =>
       sources.load(citekey) match
         case None    => Left(Write.notFound(citekey))
         case Some(s) =>

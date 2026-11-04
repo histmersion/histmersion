@@ -2,7 +2,7 @@ package com.histmersion.api.research
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.Plural
 import com.histmersion.api.StrictJson
@@ -15,7 +15,7 @@ import com.histmersion.api.library.Label
 import com.histmersion.api.{ListPatch, StrictJson}
 import com.histmersion.api.{Plural, StatusCount}
 import com.histmersion.api.{Plural, WireEnum}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec

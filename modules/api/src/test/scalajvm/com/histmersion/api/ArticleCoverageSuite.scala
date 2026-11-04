@@ -3,7 +3,7 @@ package com.histmersion.api
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.research.{Articles, CoverageSearch, DriftKind}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 

@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.assets
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
@@ -7,7 +9,6 @@ import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats figures: the ledger names one by its name; other lines point at one by uid; a plan knows which
   * names the figures of the bundle's sources have here, and folds, renames and relabels them by [[AssetPlan]].

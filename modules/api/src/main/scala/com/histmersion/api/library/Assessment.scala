@@ -19,7 +19,7 @@ final case class Assessment(
     recommendation: String,
     applied: Option[String] = None,
     checkedAt: Option[String] = None,
-    kept: Option[com.histmersion.domain.library.Source.Status] = None
+    kept: Option[com.histmersion.api.library.Source.Status] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 object Assessment:

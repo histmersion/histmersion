@@ -1,8 +1,11 @@
 package com.histmersion.domain.research.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.api.Write
 import com.histmersion.config.*

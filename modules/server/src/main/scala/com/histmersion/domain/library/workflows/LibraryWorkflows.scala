@@ -1,9 +1,13 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.{AgentsHandlers, StepAgent}
+import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.StepAgent
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
-import com.histmersion.domain.automation.workflows.{ToolContribution, WorkflowDefinition}
+import com.histmersion.domain.automation.workflows.ToolContribution
+import com.histmersion.domain.automation.workflows.WorkflowDefinition
 import com.histmersion.util.database.Transactor
 
 import javax.sql.DataSource

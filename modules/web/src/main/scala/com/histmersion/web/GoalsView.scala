@@ -100,29 +100,27 @@ object GoalsView:
     else if watch && autoIngest && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
       Left("ingests a day: a whole number")
     else
-      Articles.slugOf(s) match
-        case Left(m)   => Left(m)
-        case Right(ok) =>
-          val w = Option.when(watch)(
-            Managers.ManagerConfig(
-              autoIngest = Some(autoIngest),
-              autoIngestPerDay = if autoIngest then cap.toIntOption else None
-            )
-          )
-          Right(
-            NewArea(
-              ok,
-              Goal.Put(
-                t,
-                com.histmersion.domain.automation.Goal.Status.Planned,
-                Option(notes.trim).filter(_.nonEmpty),
-                tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct
-              ),
-              plan,
-              seed,
-              w
-            )
-          )
+      val ok = s
+      val w = Option.when(watch)(
+        Managers.ManagerConfig(
+          autoIngest = Some(autoIngest),
+          autoIngestPerDay = if autoIngest then cap.toIntOption else None
+        )
+      )
+      Right(
+        NewArea(
+          ok,
+          Goal.Put(
+            t,
+            com.histmersion.api.automation.Goal.Status.Planned,
+            Option(notes.trim).filter(_.nonEmpty),
+            tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct
+          ),
+          plan,
+          seed,
+          w
+        )
+      )
 
   /** What the form did, in one line. */
   def createdNote(

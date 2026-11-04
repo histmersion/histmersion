@@ -5,7 +5,7 @@ package com.histmersion.api.aliases
   * the identity area, as `BundleKind` is of the bundle: a lower domain names a higher one's kind (an attestation's
   * target, an asset link's) without naming that domain. Each owner registers the table its aliases are kept in.
   */
-import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.exchange.Bundle
 object AliasKinds:
   private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))
 

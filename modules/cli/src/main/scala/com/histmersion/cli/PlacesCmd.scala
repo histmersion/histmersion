@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import cats.syntax.all.*
@@ -11,7 +13,6 @@ import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.catalogue.SiteTypes
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains

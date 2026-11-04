@@ -6,7 +6,7 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.catalogue.{Lpf, Period}
 import com.histmersion.api.library.Facet
 import com.histmersion.api.views.PlaceDetail
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
 class PlacesSuite extends munit.FunSuite:

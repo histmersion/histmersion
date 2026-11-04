@@ -2,7 +2,7 @@ package com.histmersion.api
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.{Article, ArticleMarkdown, Articles, Backlink, CitedSource}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The pure write rules for articles (plan §5.2 stream 2.7): validation, full replace, and the selective merge that
   * makes `patch_article` safe to call without re-uploading the prose.

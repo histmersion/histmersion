@@ -1,8 +1,8 @@
 package com.histmersion.web
 
 import com.histmersion.api.views.PlaceDetail
-import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Source
 
 class PreviewSuite extends munit.FunSuite:
 

@@ -1,8 +1,9 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.MergeRules
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats goals: other lines point at them by uid, and the ledger names one by its slug. */
 object GoalMergeRules extends MergeRules:

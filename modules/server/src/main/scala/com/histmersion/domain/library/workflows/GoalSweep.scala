@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.workflows.Pipelines

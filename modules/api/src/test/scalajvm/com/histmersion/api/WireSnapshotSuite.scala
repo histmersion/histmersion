@@ -9,7 +9,7 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.media.MediaMarkdown
 
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import hearth.kindlings.optics.syntax.*
 import io.circe.syntax.*
 
@@ -45,8 +45,8 @@ import com.histmersion.api.media.{
 }
 import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.views.{EventDetail, PlaceDetail, ResolvedId}
-import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Source
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.library.Finding

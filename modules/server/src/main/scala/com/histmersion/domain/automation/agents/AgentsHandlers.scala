@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.approvals.{ApprovalDigestService, Approvals, AutoApprovals}
 import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
@@ -821,7 +823,12 @@ final class AgentsHandlers(
             ref,
             Api.Error(s"a query is 1 to ${cfg.plan.queryChars} characters")
           )
-      _ = goals.link(g.slug, in.kind, r, in.note.map(_.trim).filter(_.nonEmpty))
+      _ = goals.link(
+        g.slug,
+        in.kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind],
+        r,
+        in.note.map(_.trim).filter(_.nonEmpty)
+      )
       l <- goals
         .links(g.slug)
         .find(l => l.kind == in.kind && l.ref == r)
@@ -834,7 +841,7 @@ final class AgentsHandlers(
       k <- LinkKind
         .parse(kind)
         .toRight(Api.Error(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
-    yield Removed(goals.unlink(g.slug, k, ref.trim))
+    yield Removed(goals.unlink(g.slug, k.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.trim))
 
   private def scheduleKind(kind: String): Either[Api.Error, ScheduleKind] =
     ScheduleKind

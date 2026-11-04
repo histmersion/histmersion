@@ -2,20 +2,19 @@ package com.histmersion.api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
-import com.histmersion.domain.automation.Approval
 import com.histmersion.api.research.Article
 
 object Agents:
 
-  export com.histmersion.domain.automation.Approval.Kind as ApprovalKind
-  export com.histmersion.domain.automation.Approval.Mode as ApprovalMode
-  export com.histmersion.domain.automation.Approval.State as ApprovalState
-  export com.histmersion.domain.automation.Run.State as RunState
-  export com.histmersion.domain.automation.Step.Status as StepStatus
-  export com.histmersion.domain.automation.{AgentRole as Role, Pipeline, ProviderKind, TargetKind}
+  export com.histmersion.api.automation.Approval.Kind as ApprovalKind
+  export com.histmersion.api.automation.Approval.Mode as ApprovalMode
+  export com.histmersion.api.automation.Approval.State as ApprovalState
+  export com.histmersion.api.automation.Run.State as RunState
+  export com.histmersion.api.automation.Step.Status as StepStatus
+  export com.histmersion.api.automation.{AgentRole as Role, Pipeline, ProviderKind, TargetKind}
 
   /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
     * provider.
@@ -289,7 +288,7 @@ object Agents:
       heartbeatAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isWaiting: Boolean = status == com.histmersion.domain.automation.Run.State.WaitingApproval.wire
+    def isWaiting: Boolean = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
 
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)

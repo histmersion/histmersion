@@ -1,8 +1,17 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.domain.automation.agents.{AgentDefinitions, Halt, OutputComparison, RunCtx, StepAgent}
-import com.histmersion.domain.automation.workflows.{PipelineDef, ToolName, WorkflowDefinition, WorkflowId}
-import com.histmersion.domain.automation.{AgentRole, Pipeline, TargetKind}
+import com.histmersion.domain.automation.agents.AgentDefinitions
+import com.histmersion.domain.automation.agents.Halt
+import com.histmersion.domain.automation.agents.OutputComparison
+import com.histmersion.domain.automation.agents.RunCtx
+import com.histmersion.domain.automation.agents.StepAgent
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.ToolName
+import com.histmersion.domain.automation.workflows.WorkflowDefinition
+import com.histmersion.domain.automation.workflows.WorkflowId
+import com.histmersion.api.automation.AgentRole
+import com.histmersion.api.automation.Pipeline
+import com.histmersion.api.automation.TargetKind
 
 /** One of the library's pipelines as the workflow it registers: its identifier, version, target, roles and description
   * are the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents in that role

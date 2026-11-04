@@ -4,7 +4,7 @@ import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Facet, Filter, Hit, SearchHit, SearchResult, Sort}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM

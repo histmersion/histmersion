@@ -1,12 +1,16 @@
 package com.histmersion.server.views
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.views.QueueListing
 import com.histmersion.api.automation.Queue.GoalRef
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Queue.Kind
 import com.histmersion.domain.automation.goals.GoalService
-import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
+import com.histmersion.domain.automation.worklists.QueueScope
+import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.library.acquisition.AcquireCheckService
 import com.histmersion.api.Api
 import com.histmersion.api.library.Acquire

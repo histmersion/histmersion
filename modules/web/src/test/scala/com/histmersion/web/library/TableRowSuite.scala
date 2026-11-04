@@ -1,7 +1,7 @@
 package com.histmersion.web.library
 
 import com.histmersion.api.library.{Hit, SearchHit}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 class TableRowSuite extends munit.FunSuite:

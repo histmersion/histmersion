@@ -2,7 +2,6 @@ package com.histmersion.api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.domain.library.Confidence
 import com.histmersion.api.given
 
 final case class GeoHit(

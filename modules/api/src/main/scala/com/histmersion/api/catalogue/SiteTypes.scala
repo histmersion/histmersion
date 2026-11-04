@@ -328,7 +328,7 @@ object SiteTypes:
       wikidataClass: Option[String],
       p31: List[String] = Nil
   ): Option[String] =
-    if placeKind != com.histmersion.domain.catalogue.Place.Kind.Site && placeKind != com.histmersion.domain.catalogue.Place.Kind.Feature
+    if placeKind != com.histmersion.api.catalogue.Place.Kind.Site && placeKind != com.histmersion.api.catalogue.Place.Kind.Feature
     then None
     else
       stored

@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.{connect, transact}
@@ -15,10 +17,11 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
+import com.histmersion.domain.ManagerPolicy.Next
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.automation.managers.ManagerRepo
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -203,7 +206,10 @@ final class ManagerSupervisor(
     val k = kindOf(m)
     kinds
       .find(_.kind == k)
-      .fold(ReviewSettings.forKind(k, m.config, managerDefaults))(_.settings(m.config, managerDefaults))
+      .fold(
+        ReviewSettings
+          .forKind(k.transformInto[com.histmersion.api.automation.Manager.Kind], m.config, managerDefaults)
+      )(_.settings(m.config, managerDefaults))
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 
@@ -276,7 +282,7 @@ final class ManagerSupervisor(
       item.failures,
       item.state,
       run,
-      st,
+      st.transformInto[com.histmersion.api.automation.Run.State],
       error,
       kind.facts(this, item, run),
       now
@@ -609,7 +615,18 @@ final class ManagerSupervisor(
         .foreach(st =>
           Transactor(ds).transact(
             ManagerRepo
-              .setStatusNote(m.id, ManagerPolicy.statusNote(st, None, 0, m.counts.pending, 0, m.inFlight, None))
+              .setStatusNote(
+                m.id,
+                ManagerPolicy.statusNote(
+                  st.transformInto[com.histmersion.api.automation.Manager.State],
+                  None,
+                  0,
+                  m.counts.pending,
+                  0,
+                  m.inFlight,
+                  None
+                )
+              )
           )
         )
     }
@@ -828,7 +845,7 @@ final class ManagerSupervisor(
   def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
   def parentOf(slug: String): Option[String] = agents.goals.get(slug).flatMap(_.parentSlug)
   def linkGoal(goal: String, kind: Goal.Plans.LinkKind, ref: String, note: Option[String]): Unit =
-    val _ = agents.goals.link(goal, kind, ref, note)
+    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.api.automation.Goal.LinkKind], ref, note)
   def goalLinks(goal: String, kind: Goal.Plans.LinkKind): List[String] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
   def sharedIngestLeft(now: Instant): Option[Int] = agents.autopilot.sharedIngestLeft(now)

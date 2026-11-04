@@ -1,18 +1,21 @@
 package com.histmersion.api
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.domain.library.{Confidence, EditionsPolicy, MatchMethod, MatchOutcome}
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.research.DraftMode
-import com.histmersion.domain.automation.ScheduleKind
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.exchange.EditionsPolicy
+import com.histmersion.api.library.MatchMethod
+import com.histmersion.api.library.MatchOutcome
+import com.histmersion.api.research.DraftMode
+import com.histmersion.api.automation.ScheduleKind
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.automation.Goal
-import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
+import com.histmersion.api.exchange.Bundle
 
 /** Every file of another module that derives a codec or schema imports `com.histmersion.api.VocabularyCodecs.given`:
   * without it Kindlings derives its own instance for a vocabulary field, spelled differently (an enum with parameters
@@ -35,17 +38,17 @@ object VocabularyCodecs:
   given given_Decoder_PlacePrecision: Decoder[Place.Precision] = WireEnum.decoder
   given given_Schema_PlacePrecision: Schema[Place.Precision] = WireEnum.schema
 
-  given given_Encoder_IssueSeverity: Encoder[Issue.Severity] = WireEnum.encoder
-  given given_Decoder_IssueSeverity: Decoder[Issue.Severity] = WireEnum.decoder
-  given given_Schema_IssueSeverity: Schema[Issue.Severity] = WireEnum.schema
+  given given_Encoder_IssueSeverity: Encoder[MergeIssue.Severity] = WireEnum.encoder
+  given given_Decoder_IssueSeverity: Decoder[MergeIssue.Severity] = WireEnum.decoder
+  given given_Schema_IssueSeverity: Schema[MergeIssue.Severity] = WireEnum.schema
 
-  given given_Encoder_IssueKind: Encoder[Issue.Kind] = WireEnum.encoder
-  given given_Decoder_IssueKind: Decoder[Issue.Kind] = WireEnum.decoder
-  given given_Schema_IssueKind: Schema[Issue.Kind] = WireEnum.schema
+  given given_Encoder_IssueKind: Encoder[MergeIssue.Kind] = WireEnum.encoder
+  given given_Decoder_IssueKind: Decoder[MergeIssue.Kind] = WireEnum.decoder
+  given given_Schema_IssueKind: Schema[MergeIssue.Kind] = WireEnum.schema
 
-  given Encoder[DecisionKind] = WireEnum.encoder
-  given Decoder[DecisionKind] = WireEnum.decoder
-  given Schema[DecisionKind] = WireEnum.schema
+  given Encoder[MergeDecision.Kind] = WireEnum.encoder
+  given Decoder[MergeDecision.Kind] = WireEnum.decoder
+  given Schema[MergeDecision.Kind] = WireEnum.schema
 
   given Encoder[MatchOutcome] = WireEnum.encoder
   given Decoder[MatchOutcome] = WireEnum.decoder
@@ -59,9 +62,9 @@ object VocabularyCodecs:
   given given_Decoder_BundleKind: Decoder[Bundle.Kind] = WireEnum.decoder
   given given_Schema_BundleKind: Schema[Bundle.Kind] = WireEnum.schema
 
-  given given_Encoder_IssueDecidedBy: Encoder[Issue.DecidedBy] = WireEnum.encoder
-  given given_Decoder_IssueDecidedBy: Decoder[Issue.DecidedBy] = WireEnum.decoder
-  given given_Schema_IssueDecidedBy: Schema[Issue.DecidedBy] = WireEnum.schema
+  given given_Encoder_IssueDecidedBy: Encoder[MergeIssue.DecidedBy] = WireEnum.encoder
+  given given_Decoder_IssueDecidedBy: Decoder[MergeIssue.DecidedBy] = WireEnum.decoder
+  given given_Schema_IssueDecidedBy: Schema[MergeIssue.DecidedBy] = WireEnum.schema
 
   given Encoder[MatchMethod] = WireEnum.encoder
   given Decoder[MatchMethod] = WireEnum.decoder

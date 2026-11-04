@@ -1,16 +1,16 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.EditionsPolicy
+
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.exchange.{IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.EditionsPolicy
 
 import scala.annotation.tailrec
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
 
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
 final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
@@ -100,7 +100,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
     runs.iterator.flatMap(_.argument(issue, decision)).nextOption()
 
-  override def pairIssue(kind: Issue.Kind): Boolean = runs.exists(_.pairIssue(kind))
+  override def pairIssue(kind: MergeIssue.Kind): Boolean = runs.exists(_.pairIssue(kind))
 
   override def foldPairFirst(
       right: com.histmersion.api.exchange.Bundle.Source,
@@ -112,7 +112,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def foldPair(
       right: com.histmersion.api.exchange.Bundle.Source,
       left: com.histmersion.api.exchange.Bundle.Source,
-      alt: Option[DecisionKind],
+      alt: Option[MergeDecision.Kind],
       folds: PlanFolds
   ): Unit =
     runs.foreach(_.foldPair(right, left, alt, folds))

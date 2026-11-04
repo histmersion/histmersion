@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.SiteTypes
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(

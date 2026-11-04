@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.exchange.BundleEntities
@@ -21,7 +23,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
   * and their old slugs.

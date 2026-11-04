@@ -4,7 +4,7 @@ import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 import com.histmersion.api.personal.{MapZoom, Target}
 import com.histmersion.api.ItemKind
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.web.*
 import com.histmersion.web.map.{Corner, LatLon, MapSurface, ScreenPt}
 import com.histmersion.web.settings.{SettingsStore, StartPlace}

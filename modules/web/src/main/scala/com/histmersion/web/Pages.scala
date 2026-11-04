@@ -1,7 +1,6 @@
 package com.histmersion.web
 
 import com.histmersion.api.Wording
-import com.histmersion.web.library
 import com.histmersion.api.instance.UiNotices.Board
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.codecs.StringAsIsCodec

@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.MergePlanner
@@ -7,7 +9,6 @@ import com.histmersion.util.data.exchange.MergeFollowUps
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a merge leaves on the work lists: a `/review-article` task per merged article (a merged text is not reviewed),
   * and a worklog line.

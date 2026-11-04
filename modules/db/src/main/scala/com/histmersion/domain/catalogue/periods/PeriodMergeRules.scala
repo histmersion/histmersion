@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
@@ -9,7 +11,6 @@ import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats named periods: the ledger names one by its id; a plan knows which of the bundle's periods with no
   * uid here are one here — by id, or by label and an overlapping span.

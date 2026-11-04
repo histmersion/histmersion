@@ -1,9 +1,10 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.data.DataOwner
 import com.histmersion.domain.library.LibraryPlan
 import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats sources: other lines point at them by uid, and the ledger names one by its citekey. */
 object SourceMergeRules extends MergeRules:

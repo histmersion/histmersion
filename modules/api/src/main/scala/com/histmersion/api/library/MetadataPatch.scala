@@ -13,7 +13,7 @@ final case class MetadataPatch(
     year: Option[Int] = None,
     venue: Option[String] = None,
     doi: Option[String] = None,
-    status: Option[com.histmersion.domain.library.Source.Status] = None,
+    status: Option[com.histmersion.api.library.Source.Status] = None,
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     clear: List[MetadataField] = Nil
