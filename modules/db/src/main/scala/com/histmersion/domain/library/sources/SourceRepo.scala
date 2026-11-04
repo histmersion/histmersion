@@ -1,10 +1,14 @@
 package com.histmersion.domain.library.sources
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.catalogue.places.FindingPlacement
-import com.histmersion.domain.library.sources.referrers.{SourceReferrers, SourceRename}
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.histmersion.domain.library.sources.referrers.SourceRename
 
 import com.histmersion.util.database.RangeSql
-import com.histmersion.util.ocr.{Chunk, Chunker}
+import com.histmersion.util.ocr.Chunk
+import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.text.WikiLinks
 
 import com.histmersion.api.{GeoPoint, Write}
@@ -198,7 +202,7 @@ private[sources] object SourceRepo:
         doi = r.doi,
         year = r.year,
         venue = r.venue,
-        status = r.status,
+        status = r.status.transformInto[com.histmersion.api.library.Source.Status],
         topics = r.topics,
         regions = r.regions,
         tags = r.tags,
@@ -226,7 +230,7 @@ private[sources] object SourceRepo:
               case _                  => None,
             f.periodName,
             f.tags,
-            f.confidence,
+            f.confidence.transformInto[Option[com.histmersion.api.library.Confidence]],
             f.significance
           )
         },
@@ -359,7 +363,7 @@ private[sources] object SourceRepo:
 
   /** Rename a source's citekey, in the caller's transaction — all of it happens or none of it does.
     *
-    *   - Refused: an invalid or non-link-shaped new key ([[Rename.validate]]), `old` unknown (or itself an old key —
+    *   - Refused: an invalid or non-link-shaped new key ([[Citekeys.renameTo]]), `old` unknown (or itself an old key —
     *     rename what it points to), `new` already a source, `new` an old key of ANOTHER source, or `new#<n>` finding
     *     ids already taken. Renaming back to a key this source had before is allowed and drops that alias, leaving an
     *     `alias_tombstones` row (V050).
@@ -376,7 +380,11 @@ private[sources] object SourceRepo:
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
   def rename(oldCk: String, newRaw: String, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
-    Rename.validate(oldCk, newRaw).flatMap(validated => renameIn(oldCk, validated.value, referrers))
+    Citekeys
+      .renameTo(oldCk, newRaw)
+      .left
+      .map(Write.invalid)
+      .flatMap(validated => renameIn(oldCk, validated.value, referrers))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
     * source was renamed on the other side (`BundleImport`).

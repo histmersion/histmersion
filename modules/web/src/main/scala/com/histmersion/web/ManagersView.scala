@@ -15,7 +15,7 @@ import com.histmersion.api.automation.{
   Stalls
 }
 import com.histmersion.api.views.AutopilotStatus
-import com.histmersion.domain.automation.Goal
+import com.histmersion.api.automation.Goal
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's state — with what the
   * supervisor derived: starved, at capacity, idle — its items, runs in flight and last event) and one window per

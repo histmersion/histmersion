@@ -75,4 +75,4 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
     assertEquals(ReviewState.parse(" Majors-Open "), Some(ReviewState.MajorsOpen))
-    assertEquals(Goal.Stages.all.map(_._1), com.histmersion.domain.automation.Goal.Status.all)
+    assertEquals(Goal.Stages.all.map(_._1), com.histmersion.api.automation.Goal.Status.all)

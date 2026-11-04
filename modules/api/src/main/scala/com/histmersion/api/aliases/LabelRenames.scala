@@ -1,7 +1,7 @@
 package com.histmersion.api.aliases
 import com.histmersion.api.Write
 import com.histmersion.api.given
-import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
 
 object LabelRenames:

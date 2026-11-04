@@ -9,7 +9,7 @@ final case class NeighborRow(
     kind: String,
     citekey: String,
     title: Option[String],
-    status: Option[com.histmersion.domain.library.Source.Status] = None,
+    status: Option[com.histmersion.api.library.Source.Status] = None,
     target: NeighborTarget = NeighborTarget.Source
 ) derives KindlingsCodecAsObject,
       KindlingsSchema

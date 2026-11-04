@@ -2,8 +2,7 @@ package com.histmersion.util.data.exchange
 
 import scala.annotation.tailrec
 import com.histmersion.api.given
-import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.exchange.Bundle
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md
   * §7.3): a foreign row is the local row with the same uid, or no row. Pure; the importer gathers the local state and

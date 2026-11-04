@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.automation.GoalsMarkdown
 
 import cats.syntax.all.*
@@ -10,7 +12,6 @@ import com.histmersion.api.automation.Agents.RunRequest
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown}
 import com.histmersion.domain.automation.Goal
-import com.histmersion.util.data.exchange.Bundle
 
 object GoalsCmd:
 

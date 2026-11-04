@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import com.histmersion.domain.library.Confidence
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given

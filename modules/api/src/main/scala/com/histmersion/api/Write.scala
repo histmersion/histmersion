@@ -16,6 +16,9 @@ object Write:
   val CodePrecondition = "precondition_failed"
   val CodeInvalid = "invalid"
 
+  /** A request the server refuses for a value it does not accept, with the reason. */
+  def invalid(message: String): Api.Error = Api.Error(message, Some(CodeInvalid))
+
   def notFound(citekey: String): Api.Error = Api.Error(s"No source '$citekey'", Some(CodeNotFound))
 
   def applyList(current: List[String], p: ListPatch): List[String] =

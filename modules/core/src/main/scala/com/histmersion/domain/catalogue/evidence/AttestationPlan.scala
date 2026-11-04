@@ -1,17 +1,19 @@
 package com.histmersion.domain.catalogue.evidence
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.exchange.{IssueCondition, IssueDetail, IssueField, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.AttestationFix
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.{PairQuestions, PlanFolds, PlanRun}
+import com.histmersion.util.data.exchange.PairQuestions
+import com.histmersion.util.data.exchange.PlanFolds
+import com.histmersion.util.data.exchange.PlanRun
 import com.histmersion.util.text.Anchor
-import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** How a merge plan treats attestations: they travel with the sources they quote. When a pair of sources that are one
   * keeps one OCR body, the attestations that point into the other are found again in it (re-anchored) — under each
@@ -21,11 +23,11 @@ import com.histmersion.util.data.exchange.Issue
 final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   import AttestationPlan.*
 
-  private val km = DecisionKind
+  private val km = MergeDecision.Kind
 
   // per pair and per alternative of the body question (the body issue's decision, or None when there is no
   // question): the attestations tried against the body it keeps
-  private val anchors = scala.collection.mutable.Map.empty[UUID, Map[Option[DecisionKind], List[AnchorTry]]]
+  private val anchors = scala.collection.mutable.Map.empty[UUID, Map[Option[MergeDecision.Kind], List[AnchorTry]]]
   private val attLine =
     scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Attestation]
   private val droppedUids = scala.collection.mutable.LinkedHashSet.empty[UUID] // bundle uids left out for good
@@ -60,7 +62,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       bodyIssue: Option[String],
       q: PairQuestions
   ): Unit =
-    val alternatives: List[(Option[DecisionKind], Option[String], Option[IssueCondition])] = bodyIssue match
+    val alternatives: List[(Option[MergeDecision.Kind], Option[String], Option[IssueCondition])] = bodyIssue match
       case Some(b) =>
         List(
           (Some(km.KeepLeft), l.bodySha256, Some(IssueCondition(b, km.KeepLeft))),
@@ -84,9 +86,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
             case Some(a) =>
               Some(AnchorTry(t, foreign, Some(a), body.flatMap(TextAnchor.chunkOf(_, a, in.chunkChars)), None))
             case None =>
-              val tag = alt.fold("")(DecisionKind.wireOf)
+              val tag = alt.fold("")(MergeDecision.Kind.wireOf)
               val id = MergePlanner.issueId(
-                Issue.Kind.AttestationUnanchored,
+                MergeIssue.Kind.AttestationUnanchored,
                 Bundle.Kind.Attestation,
                 List(t.uid),
                 List(l.uid),
@@ -103,11 +105,11 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
               q.ask(
                 MergeIssue(
                   id,
-                  Issue.Kind.AttestationUnanchored,
-                  Issue.Severity.Blocking,
+                  MergeIssue.Kind.AttestationUnanchored,
+                  MergeIssue.Severity.Blocking,
                   Bundle.Kind.Attestation,
                   s"$whose attestation on ${l.citekey}: its quote is not in the body the merge keeps" +
-                    alt.fold("")(k => s" (if the body is ${DecisionKind.wireOf(k)})"),
+                    alt.fold("")(k => s" (if the body is ${MergeDecision.Kind.wireOf(k)})"),
                   if foreign then Some(MergeIssue.Detail.side(l)) else Some(att),
                   if foreign then Some(att) else Some(MergeIssue.Detail.side(r)),
                   List(if t.quote.exists(_.nonEmpty) then
@@ -141,13 +143,13 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       alt -> tries
     }.toMap
 
-  override def pairIssue(kind: Issue.Kind): Boolean = kind == Issue.Kind.AttestationUnanchored
+  override def pairIssue(kind: MergeIssue.Kind): Boolean = kind == MergeIssue.Kind.AttestationUnanchored
 
   // attestations: re-anchored into the body kept, or as decided; one already here is one
   override def foldPair(
       r: com.histmersion.api.exchange.Bundle.Source,
       l: com.histmersion.api.exchange.Bundle.Source,
-      alt: Option[DecisionKind],
+      alt: Option[MergeDecision.Kind],
       f: PlanFolds
   ): Unit =
     val tries = anchors.get(r.uid).flatMap(_.get(alt)).getOrElse(Nil)

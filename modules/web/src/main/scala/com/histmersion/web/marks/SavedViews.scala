@@ -2,7 +2,7 @@ package com.histmersion.web.marks
 
 import com.histmersion.api.personal.{Bookmark, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.web.*
 import com.histmersion.web.map.TheMap
 import com.raquo.laminar.api.L.*

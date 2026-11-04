@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.collections
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.media.covers.CoverChoice
@@ -277,7 +279,10 @@ object CollectionsService:
               doi = doi,
               year = item.year.map(_.value),
               venue = item.publisher,
-              status = Some(com.histmersion.domain.library.Source.Status.Unassessed),
+              status = Some(
+                com.histmersion.domain.library.Source.Status.Unassessed
+                  .transformInto[com.histmersion.api.library.Source.Status]
+              ),
               tags = item.tags,
               summary = summary,
               provenance = Some("calibre"),

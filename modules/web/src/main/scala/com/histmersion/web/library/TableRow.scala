@@ -3,7 +3,7 @@ package com.histmersion.web.library
 import com.histmersion.api.{Wording, YearFmt}
 import com.histmersion.api.library.{Hit, Label}
 import com.histmersion.web.{ArticleLink, SourceLink}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** One row of a Library table, as it reads: the item's key (a citekey or a slug), its title and the line under it (a

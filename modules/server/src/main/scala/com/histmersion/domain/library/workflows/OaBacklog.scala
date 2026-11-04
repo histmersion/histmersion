@@ -1,12 +1,19 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Goal.Plans.LinkKind
-import com.histmersion.domain.IngestBacklog.{Entry, Failure, Lane, Placement, RepairAction, RepairFacts}
+import com.histmersion.domain.IngestBacklog.Entry
+import com.histmersion.domain.IngestBacklog.Failure
+import com.histmersion.domain.IngestBacklog.Lane
+import com.histmersion.domain.IngestBacklog.Placement
+import com.histmersion.domain.IngestBacklog.RepairAction
+import com.histmersion.domain.IngestBacklog.RepairFacts
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.api.library.RepairAcquire.*

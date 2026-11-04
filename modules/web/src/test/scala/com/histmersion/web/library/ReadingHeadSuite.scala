@@ -2,9 +2,9 @@ package com.histmersion.web.library
 
 import com.histmersion.api.library.SearchHit
 import com.histmersion.api.media.MediaThumb
-import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.media.MediaRole
 import com.histmersion.web.map.GeoBounds
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 class ReadingHeadSuite extends munit.FunSuite:

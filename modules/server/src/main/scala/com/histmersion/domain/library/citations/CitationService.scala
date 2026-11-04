@@ -13,7 +13,7 @@ import com.histmersion.api.library.{
   NeighborRow,
   NeighborTarget
 }
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.

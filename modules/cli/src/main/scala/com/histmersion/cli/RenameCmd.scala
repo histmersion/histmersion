@@ -15,9 +15,8 @@ import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 
-/** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The new key is
-  * checked HERE with the same pure rule the server applies ([[Rename.validate]]), so a typo is a usage error before
-  * anything is sent.
+/** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The server
+  * judges the new key and answers why it refuses one.
   */
 object RenameCmd:
 

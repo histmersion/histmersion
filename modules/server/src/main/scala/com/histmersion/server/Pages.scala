@@ -1,10 +1,11 @@
 package com.histmersion.server
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.{HtmlAtoms, Plural, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
-import com.histmersion.server.ArticleHtml
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
 import com.histmersion.api.library.Label
 import com.histmersion.api.media.AssetLinks
@@ -95,7 +96,7 @@ object Pages:
       chips(ChipField.Author, r.authors),
       r.year.fold("n.d.")(_.toString),
       p.venue.filter(_.trim.nonEmpty).fold("")(esc),
-      statusBadge(r.status),
+      statusBadge(r.status.transformInto[com.histmersion.api.library.Source.Status]),
       esc(period)
     ).filter(_.nonEmpty).mkString(" · ")
     val ident = r.doi.filter(_.nonEmpty).fold("Citekey")(_ => "DOI")
@@ -146,7 +147,9 @@ object Pages:
   def citation(c: Citation): String = c match
     case Citation.ToSource(r, kind) =>
       s"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${esc(r.title)}</i> """ +
-        s"""${statusBadge(r.status)} <span class="ident">${identifier(r)}</span></li>"""
+        s"""${statusBadge(
+            r.status.transformInto[com.histmersion.api.library.Source.Status]
+          )} <span class="ident">${identifier(r)}</span></li>"""
     case Citation.ToArticle(a, kind) =>
       s"""<li>${kindLabel(kind.getOrElse("article"))}${articleRef(a)}</li>"""
     case Citation.Unresolved(id, kind) =>
@@ -255,15 +258,43 @@ object Pages:
     val numbered = numbers.toList.sortBy(_._2).flatMap { (ck, n) =>
       byCk
         .get(ck)
-        .map(c => CitedEntry(Some(n), ck, c.doi, c.authors, c.year, c.title, c.status))
+        .map(c =>
+          CitedEntry(
+            Some(n),
+            ck,
+            c.doi,
+            c.authors,
+            c.year,
+            c.title,
+            c.status.transformInto[Option[com.histmersion.api.library.Source.Status]]
+          )
+        )
         .orElse(links(ck).collect { case r: Source.Ref =>
-          CitedEntry(Some(n), ck, r.doi, r.authors, r.year, Some(r.title), Some(r.status))
+          CitedEntry(
+            Some(n),
+            ck,
+            r.doi,
+            r.authors,
+            r.year,
+            Some(r.title),
+            Some(r.status.transformInto[com.histmersion.api.library.Source.Status])
+          )
         })
     }
     val rest = cited
       .filterNot(c => numbers.contains(c.citekey))
       .sortBy(_.citekey)
-      .map(c => CitedEntry(None, c.citekey, c.doi, c.authors, c.year, c.title, c.status))
+      .map(c =>
+        CitedEntry(
+          None,
+          c.citekey,
+          c.doi,
+          c.authors,
+          c.year,
+          c.title,
+          c.status.transformInto[Option[com.histmersion.api.library.Source.Status]]
+        )
+      )
     numbered ++ rest
 
   def sourcesCited(entries: List[CitedEntry]): String =

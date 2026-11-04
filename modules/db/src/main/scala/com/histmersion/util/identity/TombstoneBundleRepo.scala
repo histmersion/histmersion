@@ -1,12 +1,13 @@
 package com.histmersion.util.identity
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the tombstones: the records deleted here, read as the bundle's lines by uid (the import
   * writes them first, `BundleImport.Writer.tombstones`, as only it knows which rows its plan deletes).

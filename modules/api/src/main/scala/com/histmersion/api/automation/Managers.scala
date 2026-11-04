@@ -8,9 +8,9 @@ import com.histmersion.api.research.Article
 
 object Managers:
 
-  export com.histmersion.domain.automation.Manager.Kind as Kind
-  export com.histmersion.domain.automation.Manager.State as State
-  export com.histmersion.domain.automation.ItemStatus
+  export com.histmersion.api.automation.Manager.Kind as Kind
+  export com.histmersion.api.automation.Manager.State as State
+  export com.histmersion.api.automation.ItemStatus
 
   enum ItemOrigin(val wire: String):
     case Selection extends ItemOrigin("selection")

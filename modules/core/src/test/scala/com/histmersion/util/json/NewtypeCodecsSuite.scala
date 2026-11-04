@@ -1,4 +1,5 @@
 package com.histmersion.util.json
+import com.histmersion.api.jobs.JobInfo
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Decoder, Encoder, Json}
@@ -8,18 +9,24 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 import com.histmersion.{Latitude, Longitude, Offset, PageSize, UserId, Year}
-import com.histmersion.domain.library.{ArchiveId, ArxivId, AuthorName, Doi, Isbn, Pmcid, Pmid, Title}
+import com.histmersion.domain.library.ArchiveId
+import com.histmersion.domain.library.ArxivId
+import com.histmersion.domain.library.AuthorName
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.Isbn
+import com.histmersion.domain.library.Pmcid
+import com.histmersion.domain.library.Pmid
+import com.histmersion.domain.library.Title
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.Licence
-import com.histmersion.domain.automation.Goal
-import com.histmersion.domain.automation.Run
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Run
 import com.histmersion.domain.catalogue.Event
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.catalogue.places.Wikidata
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.domain.media.Asset
 import com.histmersion.domain.research.Article
-import com.histmersion.util.jobs.Job
 import com.histmersion.util.plugins.Plugin
 
 class NewtypeCodecsSuite extends munit.FunSuite:
@@ -42,7 +49,7 @@ class NewtypeCodecsSuite extends munit.FunSuite:
     roundTrip(Goal.Slug("bronze-age.collapse"), "bronze-age.collapse")
     roundTrip(Event.Id("uluburun_shipwreck"), "uluburun_shipwreck")
     roundTrip(Place.Id("geonames_2911611"), "geonames_2911611")
-    roundTrip(Job.Id(jobText), jobText)
+    roundTrip(JobInfo.Id(jobText), jobText)
     roundTrip(Run.Id(jobText), jobText)
     roundTrip(ArxivId("2101.00001"), "2101.00001")
     roundTrip(Pmid("12345678"), "12345678")
@@ -81,7 +88,9 @@ class NewtypeCodecsSuite extends munit.FunSuite:
     assert(decode[Goal.Slug]("\"-x\"").isLeft)
     assert(decode[Event.Id]("\"\"").isLeft)
     assert(decode[Place.Id]("\"2911611\"").isLeft && decode[Place.Id]("\"geonames_\"").isLeft)
-    assert(decode[Job.Id]("\"not-a-uuid\"").isLeft && decode[Run.Id]("\"0B3F6A4E-2C1D-4E5F-8A9B-0C1D2E3F4A5B\"").isLeft)
+    assert(
+      decode[JobInfo.Id]("\"not-a-uuid\"").isLeft && decode[Run.Id]("\"0B3F6A4E-2C1D-4E5F-8A9B-0C1D2E3F4A5B\"").isLeft
+    )
     assert(decode[Plugin.Id]("\"Oa_Unpaywall\"").isLeft)
     assert(decode[Source.Uid]("\"x\"").isLeft)
     assert(decode[Doi]("\"doi:10.1/x\"").isLeft && decode[Latitude]("91").isLeft)

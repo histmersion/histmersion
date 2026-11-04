@@ -1,14 +1,19 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.domain.automation.managers.{ManagerContext, ManagerDefaultsViews, ManagerKindDefinition}
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.managers.ManagerDefaultsViews
+import com.histmersion.domain.automation.managers.ManagerKindDefinition
 
 import com.histmersion.api.Plural
 import com.histmersion.api.library.{Acquire, CandidateSweep}
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.domain.{IngestBacklog, ManagerPolicy, WatchManagerDefaults}
-import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.domain.IngestBacklog
+import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.WatchManagerDefaults
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 

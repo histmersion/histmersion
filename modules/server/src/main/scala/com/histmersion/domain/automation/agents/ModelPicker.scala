@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.server.agents.{ClaudeCode, PlanPools}
@@ -8,7 +10,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.ModelChains.*
-import com.histmersion.domain.automation.agents.{ModelSettingsRepo, PlanQuotaRepo}
 
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -88,7 +89,7 @@ final class ModelPicker(
       case Some(ms) =>
         parseModels(ms, known()).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
       case None =>
-        parseChain(cfg.role(role), known())
+        parseChain(cfg.role(role.transformInto[com.histmersion.api.automation.AgentRole]), known())
           .map(_ -> SettingSource.Config)
           .left
           .map(m => s"agents.roles.${role.wire}: $m")

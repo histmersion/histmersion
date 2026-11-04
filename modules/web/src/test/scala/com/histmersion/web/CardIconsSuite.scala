@@ -1,13 +1,13 @@
 package com.histmersion.web
 
-import com.histmersion.domain.library.Confidence
-import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.media.MediaRole
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.views.PlaceDetail
-import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site

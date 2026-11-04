@@ -1,10 +1,9 @@
 package com.histmersion.api
 
-import com.histmersion.domain.library.Confidence
-import com.histmersion.WireEnumValues
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Label
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 class DomainSuite extends munit.FunSuite:

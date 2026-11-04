@@ -182,16 +182,14 @@ lazy val values = projectMatrix
   .in(file("modules/values"))
   .settings(
     name := "histmersion-values",
-    description := "The newtypes and shared vocabularies of every layer, on Iron alone (JVM and Scala.js)"
+    description := "The model's newtypes and vocabularies the server-side modules share, on Iron alone (JVM)"
   )
   .settings(commonDeps)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
   .jvmPlatform(scalaVersions = Seq(scala3))
-  .jsPlatform(scalaVersions = Seq(scala3))
 
 lazy val api = projectMatrix
   .in(file("modules/api"))
-  .dependsOn(values)
   .settings(
     name := "histmersion-api",
     description := "The wire contract: records, Tapir endpoints, circe codecs and schemas, Markdown (JVM and Scala.js)"
@@ -234,7 +232,7 @@ lazy val config = project
 
 lazy val files = project
   .in(file("modules/files"))
-  .dependsOn(api.jvm(scala3) % "compile->compile;test->test")
+  .dependsOn(values.jvm(scala3), api.jvm(scala3) % "compile->compile;test->test")
   .settings(
     name := "histmersion-files",
     description := "The local files client and server exchange or keep: bundles, merge files, the Markdown mirror"
@@ -567,6 +565,8 @@ lazy val chimneyIronTests = project
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(config, core.jvm(scala3) % "compile->compile;test->test")
+  // the store's rows (the model's vocabularies) into the api's records where a repository answers one: compile time only
+  .dependsOn(chimneyIron % Provided)
   .settings(
     name := "histmersion-db",
     description := "The store: Magnum repositories over Postgres/PostGIS, Flyway migrations, the seed importer"
@@ -585,6 +585,7 @@ lazy val db = project
       Seq(out)
     }.taskValue,
     libraryDependencies ++= Seq(
+      "io.scalaland" %% "chimney" % V.chimney,
       "com.augustnagro" %% "magnum" % V.magnum,
       "org.postgresql" % "postgresql" % V.postgres,
       "com.zaxxer" % "HikariCP" % V.hikari,

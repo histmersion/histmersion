@@ -140,8 +140,8 @@ object Filter:
     val status = Param(
       "status",
       "status",
-      s"ANY matches — ${com.histmersion.domain.library.Source.Status.values.map(_.wire).mkString("|")}",
-      s"Any of ${com.histmersion.domain.library.Source.Status.values.map(_.wire).mkString("|")}"
+      s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}",
+      s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"
     )
     val yearFrom = Param("yearFrom", "yearFrom", "Earliest publication year (inclusive)", "Earliest publication year")
     val yearTo = Param("yearTo", "yearTo", "Latest publication year (inclusive)", "Latest publication year")

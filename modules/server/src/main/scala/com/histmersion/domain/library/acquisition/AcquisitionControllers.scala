@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.sources.SourceService
@@ -15,7 +17,6 @@ import com.histmersion.domain.library.acquisition.WorkLookup
 import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.library.Acquire.Ident
 
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
@@ -48,7 +49,6 @@ import com.histmersion.api.library.{
   WikirefsResult,
   WorkRef
 }
-import com.histmersion.api.library.of
 import com.histmersion.api.Api
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
@@ -173,7 +173,7 @@ final class AcquisitionControllers(
         }
 
   def meta(id: String): Either[Api.Error, WorkRef] =
-    Acquire.parseIdent(id).left.map(err).flatMap {
+    Ident.parse(id).left.map(err).flatMap {
       case Ident.Doi(doi) => discovery.meta(doi).left.map(err).map(mark(_, sources.doiIndex))
       case Ident.Arxiv(a) =>
         discovery.meta(arxivDoi(a)).left.map(err).map(mark(_, sources.doiIndex))
@@ -302,7 +302,7 @@ final class AcquisitionControllers(
         yield ck -> d
         val applied = decision.flatMap {
           case (ck, Right(status)) =>
-            setStatus(ck, status).toOption
+            setStatus(ck, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
               .map(_ => status.wire)
           case (_, Left(_)) => None
         }
@@ -352,7 +352,11 @@ final class AcquisitionControllers(
             scribe.warn(s"acquire: Retraction Watch refresh failed — $e")
             rwError.set(Some(e))
           case Right(csv) =>
-            val n = assessments.replaceRetractionWatch(Acquire.parseRetractionWatch(csv))
+            val n = assessments.replaceRetractionWatch(
+              Acquire
+                .parseRetractionWatch(csv)
+                .flatMap(r => Ident.doi(r.doi).map(Acquire.RetractionRow(_, r.reason, r.date, r.nature)))
+            )
             scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
       catch
         case e: Throwable =>
@@ -411,13 +415,13 @@ final class AcquisitionControllers(
     * answers with a manual drop-in.
     */
   private def ingestNow(req: Ingest.Request, path: IngestPath): Either[Api.Error, Ingest.Report] =
-    Acquire.parseIdent(req.id).left.map(err).flatMap { ident =>
+    Ident.parse(req.id).left.map(err).flatMap { ident =>
       val steps = List.newBuilder[Ingest.Step]
 
       val (doi, arxiv) = ident match
-        case Ident.Doi(d)     => (Some(d), req.arxiv.flatMap(Acquire.normalizeArxiv))
+        case Ident.Doi(d)     => (Some(d), req.arxiv.flatMap(Ident.arxiv))
         case Ident.Arxiv(a)   => (Some(arxivDoi(a)), Some(a))
-        case Ident.Citekey(k) => (sources.load(k).flatMap(_.doi), req.arxiv.flatMap(Acquire.normalizeArxiv))
+        case Ident.Citekey(k) => (sources.load(k).flatMap(_.doi), req.arxiv.flatMap(Ident.arxiv))
 
       val work = doi.flatMap(discovery.meta(_).toOption)
       work match
@@ -451,7 +455,11 @@ final class AcquisitionControllers(
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
-        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.value, steps, req.refetch, path))
+        Citekey
+          .parse(citekey.get)
+          .left
+          .map(Write.invalid)
+          .flatMap(ck => ingestWith(doi, arxiv, work, ck.value, steps, req.refetch, path))
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
@@ -609,7 +617,7 @@ final class AcquisitionControllers(
             val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
-              _ <- setStatus(citekey, status).toOption
+              _ <- setStatus(citekey, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
             yield status.wire
             steps += Ingest.Step("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
             a.modify(_.applied).setTo(applied)
@@ -677,7 +685,7 @@ final class AcquisitionControllers(
       .getOrElse(
         stored(Acquire.citekey(item.creator, item.year, item.title), item.creator, item.year, item.title)
       )
-    Citekey.of(rawCitekey).flatMap { validCk =>
+    Citekey.parse(rawCitekey).left.map(Write.invalid).flatMap { validCk =>
       val citekey: String = validCk.value
       steps += Ingest.Step(
         "metadata",
@@ -747,7 +755,13 @@ final class AcquisitionControllers(
       citekey: String,
       status: com.histmersion.domain.library.Source.Status
   ): Either[Api.Error, String] =
-    sources.patch(citekey, Source.Patch(metadata = Some(MetadataPatch(status = Some(status)))), Caller.Local)
+    sources.patch(
+      citekey,
+      Source.Patch(metadata =
+        Some(MetadataPatch(status = Some(status.transformInto[com.histmersion.api.library.Source.Status])))
+      ),
+      Caller.Local
+    )
 
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
 
@@ -798,7 +812,7 @@ final class AcquisitionControllers(
     * whichever of the two the caller happened to give us.
     */
   private def target(id: String): Either[Api.Error, Target] =
-    Acquire.parseIdent(id).left.map(err).map {
+    Ident.parse(id).left.map(err).map {
       case Ident.Doi(doi) =>
         Target(Some(doi), sources.doiIndex.get(doi))
       case Ident.Arxiv(a) =>

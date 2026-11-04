@@ -9,12 +9,13 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.api.{BBox, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.media.MediaRole
 import com.augustnagro.magnum.DbCodec
-import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.Param
+import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, SearchHit, Sort}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
 

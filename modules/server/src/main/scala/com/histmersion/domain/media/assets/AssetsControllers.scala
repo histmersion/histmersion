@@ -18,7 +18,6 @@ import com.histmersion.api.media.{
   MediaList,
   MediaThumb
 }
-import com.histmersion.api.library.of
 
 /** The pictures over REST and MCP: a source's figures listed, read, uploaded, described and patched (plan §1.8, §1.6);
   * the media list, its facets, one picture, its file and thumbnail, the map feed (#1446); the cards' pictures of a
@@ -52,7 +51,7 @@ final class AssetsControllers(
   /** Add figures to an existing source (the host-side seed path). */
   def putFigures(citekey: String, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
     maintenance.guard("put_assets")(
-      Citekey.of(citekey).flatMap { _ =>
+      Citekey.parse(citekey).left.map(Write.invalid).flatMap { _ =>
         if !sources.exists(citekey) then Left(Write.notFound(citekey))
         else decode(in).map(stored => AssetsStored(citekey, assets.addFigures(citekey, stored)))
       }

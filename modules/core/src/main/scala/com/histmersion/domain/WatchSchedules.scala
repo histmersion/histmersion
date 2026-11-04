@@ -4,8 +4,8 @@ import com.histmersion.api.automation.Goal.Plans.GoalSchedule
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
-import com.histmersion.domain.automation.ScheduleKind
-import com.histmersion.domain.automation.Manager
+import com.histmersion.api.automation.ScheduleKind
+import com.histmersion.api.automation.Manager
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)): the pure half of
   * moving a `goal_schedules` row into its goal's `watch:<goal>` manager, and of showing a watcher as the schedules the

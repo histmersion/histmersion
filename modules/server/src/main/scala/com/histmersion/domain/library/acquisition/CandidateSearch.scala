@@ -47,7 +47,7 @@ final class CandidateSearch(
     yield CandidateWatch(goal.slug, Candidates.WatchKind.Query.wire, query, i.name)
     val cited = (refs(LinkKind.Source) ++ refs(LinkKind.Article).flatMap(articles.cited)).distinct
       .take(math.max(0, c.sources.value))
-    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(Acquire.normalizeDoi).map(ck -> _))
+    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(Ident.doi).map(ck -> _))
     val citing = withDoi.map((ck, doi) => CandidateWatch(goal.slug, Candidates.WatchKind.Citing.wire, doi, "openalex"))
     q ++ citing
 
@@ -108,7 +108,7 @@ final class CandidateSearch(
       // known already: the corpus, the acquisition list (open or done)
       val corpus = sources.doiIndex.keySet
       val queued = queues.list(Queue.Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text)).toSet
-      val (fresh, skipped) = Candidates.dedupe(found, corpus ++ queued)
+      val (fresh, skipped) = CandidateDedupe.dedupe(found, corpus ++ queued)
       val earlier = candidates.dois(g.slug)
       val again = fresh.count((k, _, _) => earlier.contains(k))
       val added =

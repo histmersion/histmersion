@@ -1,13 +1,13 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.EditionsPolicy
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.util.data.exchange.MergeResolutionsFile
 import com.histmersion.api.exchange.{
   MergeApplyJob,
@@ -76,7 +76,7 @@ object MergeCmd:
     */
   def withTexts(r: MergeResolutions): Either[Cli.Error, MergeResolutions] =
     val read = r.resolve.map { x =>
-      MergeDecision.parse(x.decision).toOption.filter(_.kind == DecisionKind.File).flatMap(_.argument) match
+      MergeDecision.parse(x.decision).toOption.filter(_.kind == MergeDecision.Kind.File).flatMap(_.argument) match
         case None => Right(x)
         // the resolution file carries the text itself (`texts:`, written by the web review screen)
         case Some(_) if x.text.isDefined => Right(x)

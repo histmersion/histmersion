@@ -1,11 +1,11 @@
 package com.histmersion.api.automation
+import com.histmersion.api.exchange.MergeIssue
 import sttp.tapir.*
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
-import com.histmersion.util.data.exchange.Issue
 
 /** The facet counts travel in the [[FacetsHeader]] response header, so the JSON body stays the plain array older
   * clients read.
@@ -24,7 +24,7 @@ object ListFilters:
 
   def one(v: Option[String]): Option[String] = v.map(_.trim).filter(_.nonEmpty)
 
-  export com.histmersion.domain.automation.Approval.DecidedBy as DecidedBy
+  export com.histmersion.api.automation.Approval.DecidedBy as DecidedBy
 
   final case class ApprovalFilter(
       state: Option[String] = None,

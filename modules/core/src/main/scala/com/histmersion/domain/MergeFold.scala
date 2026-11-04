@@ -1,14 +1,14 @@
 package com.histmersion.domain
 
+import com.histmersion.api.exchange.MergeDecision
+
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
 import com.histmersion.util.text.Fingerprint
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
-import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.automation.Goal
-import com.histmersion.util.data.exchange.Issue
 import com.histmersion.api.exchange.Bundle
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
@@ -68,16 +68,21 @@ object MergeFold:
     * ([[keepLocalSchedules]]), the run cap ours unless we have none, and the plan as [[planOutcome]] says —
     * `planDecision` answers a [[IssueKind.GoalPlanDiffers]].
     */
-  def foldGoal(l: Bundle.Goal, r: Bundle.Goal, from: String, planDecision: Option[DecisionKind] = None): Bundle.Goal =
+  def foldGoal(
+      l: Bundle.Goal,
+      r: Bundle.Goal,
+      from: String,
+      planDecision: Option[MergeDecision.Kind] = None
+  ): Bundle.Goal =
     def rank(s: String) = Goal.Status.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")
       case (a, b)                                        => a.orElse(b)
     val (plan, approved) = planOutcome(l, r) match
-      case PlanOutcome.Theirs                                                  => (r.plan, r.planApprovedAt)
-      case PlanOutcome.Differ if planDecision.contains(DecisionKind.KeepRight) => (r.plan, r.planApprovedAt)
-      case _                                                                   => (l.plan, l.planApprovedAt)
+      case PlanOutcome.Theirs                                                        => (r.plan, r.planApprovedAt)
+      case PlanOutcome.Differ if planDecision.contains(MergeDecision.Kind.KeepRight) => (r.plan, r.planApprovedAt)
+      case _                                                                         => (l.plan, l.planApprovedAt)
     keepLocalSchedules(
       l.copy(
         status = if rank(r.status) > rank(l.status) then r.status else l.status,

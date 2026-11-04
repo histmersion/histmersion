@@ -13,7 +13,7 @@ import com.histmersion.api.library.{
   NeighborRow,
   NeighborTarget
 }
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.

@@ -2,7 +2,7 @@ package com.histmersion.api.library
 import scala.annotation.tailrec
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 

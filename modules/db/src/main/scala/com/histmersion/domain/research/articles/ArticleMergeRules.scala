@@ -1,9 +1,10 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.domain.research.ResearchPlan
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats articles: other lines point at them by uid, the ledger names one by its slug, and an article the
   * merge writes links the bundle's sources by the citekeys they have here.

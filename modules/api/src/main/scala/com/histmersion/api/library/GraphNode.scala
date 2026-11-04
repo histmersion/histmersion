@@ -8,7 +8,7 @@ final case class GraphNode(
     id: String,
     title: Option[String] = None,
     year: Option[Int] = None,
-    status: Option[com.histmersion.domain.library.Source.Status] = None,
+    status: Option[com.histmersion.api.library.Source.Status] = None,
     depth: Int = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema

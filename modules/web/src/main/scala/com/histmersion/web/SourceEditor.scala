@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, MetadataPatch}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,

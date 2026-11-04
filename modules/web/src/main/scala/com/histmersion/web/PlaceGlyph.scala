@@ -37,7 +37,7 @@ object PlaceGlyph:
     */
   def labelHtml(
       label: String,
-      kind: String = com.histmersion.domain.catalogue.Place.Kind.Region,
+      kind: String = com.histmersion.api.catalogue.Place.Kind.Region,
       hidden: Boolean = false
   ): String =
     val (note, title) =
@@ -57,7 +57,7 @@ object PlaceGlyph:
       lat: Double,
       lon: Double,
       label: String,
-      kind: String = com.histmersion.domain.catalogue.Place.Kind.Region,
+      kind: String = com.histmersion.api.catalogue.Place.Kind.Region,
       wrapClass: String = "hd-area-point-wrap",
       hidden: Boolean = false
   ): DomMarker =

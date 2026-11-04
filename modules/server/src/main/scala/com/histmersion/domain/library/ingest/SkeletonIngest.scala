@@ -1,11 +1,13 @@
 package com.histmersion.domain.library.ingest
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.MetadataPatch
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** The synchronous, metadata-only half of an acquisition.
   *

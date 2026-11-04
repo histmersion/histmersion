@@ -1,8 +1,9 @@
 package com.histmersion.domain.automation.worklists
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.MergeRules
-import com.histmersion.util.data.exchange.Bundle
 
 /** How a merge treats the work lists' items: the ledger names one by the start of its text. */
 object QueueItemMergeRules extends MergeRules:

@@ -1,11 +1,13 @@
 package com.histmersion.server
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Label
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
 
@@ -76,11 +78,12 @@ object HtmlRender:
     */
   def statusBadge(status: Source.Status): String =
     s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
-        status
-      )} (${status.wire})">${Wording.status(status)}</span>"""
+        status.transformInto[com.histmersion.api.library.Source.Status]
+      )} (${status.wire})">${Wording.status.transformInto[com.histmersion.api.library.Source.Status](status)}</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
-  def confidenceBadge(c: Confidence): String = HtmlAtoms.confidenceBadge(c)
+  def confidenceBadge(c: Confidence): String =
+    HtmlAtoms.confidenceBadge(c.transformInto[com.histmersion.api.library.Confidence])
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 

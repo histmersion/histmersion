@@ -1,16 +1,22 @@
 package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.approvals.ApprovalChecks
-import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.managers.ManagerKindDefinition
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
-import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
+import com.histmersion.domain.AutopilotPolicy
+import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.AutopilotPolicy.DraftFacts
+import com.histmersion.domain.AutopilotPolicy.PlannedFacts
+import com.histmersion.domain.AutopilotPolicy.Verdict
 import com.histmersion.api.automation.Goal.Plans.DraftMode
-import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
-import com.histmersion.domain.{ManagerDefaults, SeedPlanDefaults}
+import com.histmersion.domain.ManagerDefaults
+import com.histmersion.domain.SeedPlanDefaults
 import io.scalaland.chimney.dsl.*
 
 import java.time.Instant

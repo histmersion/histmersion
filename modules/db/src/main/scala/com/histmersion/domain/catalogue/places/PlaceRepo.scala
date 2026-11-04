@@ -1,17 +1,21 @@
 package com.histmersion.domain.catalogue.places
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.given
 
-import com.histmersion.util.database.{LikePattern, RangeSql}
+import com.histmersion.util.database.LikePattern
+import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.{Dataset, SpatialHierarchyResult, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.Param
+import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period, SiteTypes}
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.Api
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
@@ -308,7 +312,7 @@ private[places] object PlaceRepo:
         hasBoundary = r.hasBoundary,
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
-        locationPrecision = r.precision,
+        locationPrecision = r.precision.transformInto[com.histmersion.api.catalogue.Place.Precision],
         siteType = siteTypeOf(id),
         record = recordOf(id)
       )

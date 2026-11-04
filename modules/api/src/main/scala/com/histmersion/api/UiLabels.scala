@@ -1,12 +1,12 @@
 package com.histmersion.api
 
-import com.histmersion.domain.automation.Pipeline
+import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.jobs.JobState
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.automation.Manager
-import com.histmersion.domain.automation.Run
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Manager
+import com.histmersion.api.automation.Run
+import com.histmersion.api.library.Source
 
 /** The label the UI shows for an identifier of any of the vocabularies — job types, wait codes, strategies, job kinds,
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.

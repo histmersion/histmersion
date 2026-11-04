@@ -1,9 +1,15 @@
 package com.histmersion.domain.library.sources
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Jsonb, Sql}
+import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
-import com.histmersion.util.data.exchange.{BlobSink, BundleFormat, BundleScope, ImportAbort}
+import com.histmersion.util.data.exchange.BlobSink
+import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.data.exchange.BundleScope
+import com.histmersion.util.data.exchange.ImportAbort
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
 
@@ -54,7 +60,7 @@ private[sources] object SourceBundleRepo:
         range(r.pNull, r.pLo, r.pHi),
         r.periodName,
         r.tags,
-        r.confidence,
+        r.confidence.transformInto[Option[com.histmersion.api.library.Confidence]],
         r.significance,
         r.updatedAt
       )
@@ -112,7 +118,7 @@ private[sources] object SourceBundleRepo:
       r.doi,
       r.year,
       r.venue,
-      r.status,
+      r.status.transformInto[com.histmersion.api.library.Source.Status],
       r.topics,
       r.regions,
       r.tags,

@@ -1,8 +1,8 @@
 package com.histmersion.web
 
 import com.histmersion.api.library.{GraphLink, GraphNode}
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 class GraphPanelSuite extends munit.FunSuite:
 

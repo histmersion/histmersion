@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.Bundle
+
 import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -13,7 +15,6 @@ import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.SeedResult
 import com.histmersion.api.research.ArticleMarkdown
-import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.research.Article
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).

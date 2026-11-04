@@ -10,7 +10,6 @@ import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.Caller
 import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.media.assets.AssetsControllers
-import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.library.Citekey
@@ -21,7 +20,6 @@ import java.time.{Clock, LocalDate, ZoneOffset}
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport}
 import com.histmersion.api.library.{NoteImport, PassageResult, SeedResult, TocEntry}
 import com.histmersion.api.media.AssetLinks
-import com.histmersion.api.library.of
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 
@@ -77,7 +75,7 @@ final class SourcesControllers(
     */
   def put(citekey: String, in: Source.Put, strict: Boolean = false): Either[Api.Error, Source.WithFindings] =
     maintenance.guard("put_source"):
-      Citekey.of(citekey).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
+      Citekey.parse(citekey).left.map(Write.invalid).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
         Source.Write
           .applyPut(ck, in, sources.aliasesOf(ck))
           .left
@@ -145,7 +143,8 @@ final class SourcesControllers(
       case Some(parsed) =>
         val ck = parsed.citekey
         if ck.isEmpty then Left(Api.Error("note has no citekey (none in the frontmatter, none supplied)"))
-        else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
+        else if Citekey.parse(ck).isLeft then
+          Citekey.parse(ck).left.map(Write.invalid).map(_ => SeedResult(0, Nil, 0, Nil))
         else if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if !req.force && req.mtime.exists(m => SeedImport.isStale(sources.updatedAtMillis, ck, m))
         then Right(SeedResult(0, Nil, 0, List(ck)))

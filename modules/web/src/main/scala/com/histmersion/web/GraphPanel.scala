@@ -8,8 +8,8 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.{GraphNode, Label}
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].

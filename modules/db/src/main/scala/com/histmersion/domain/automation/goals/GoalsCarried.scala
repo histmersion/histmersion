@@ -1,12 +1,13 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the goals: the goals (with their links and schedules) and their old slugs.
   *

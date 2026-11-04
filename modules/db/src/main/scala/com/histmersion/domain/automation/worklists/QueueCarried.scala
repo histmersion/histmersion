@@ -1,11 +1,12 @@
 package com.histmersion.domain.automation.worklists
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the work lists: their items, written after every goal (rank 50). */
 object QueueCarried:

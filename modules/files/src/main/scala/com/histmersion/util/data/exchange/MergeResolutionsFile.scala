@@ -5,7 +5,7 @@ import com.histmersion.api.given
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import scala.jdk.CollectionConverters.*
-import com.histmersion.domain.library.EditionsPolicy
+import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the

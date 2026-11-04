@@ -1,8 +1,9 @@
 package com.histmersion.api.catalogue
+import com.histmersion.api.{Ascii, WireEnumValues}
 
 import com.histmersion.api.OpenSide
 import com.histmersion.api.given
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.Api
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.StrictJson
@@ -29,6 +30,86 @@ final case class Place(
 
 object Place:
 
+  /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
+    * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
+    * people or a civic tribe — the Ubii, the Athenian tribe Aiantis: a group of persons that a gazetteer places at a
+    * representative point, never an area (Pleiades files them as regions; `lint --rule place-kind` moves them).
+    */
+  object Kind:
+    val Region = "region"
+    val Polity = "polity"
+    val Site = "site"
+    val Feature = "feature"
+    val People = "people"
+    val all: List[String] = List(Region, Polity, Site, Feature, People)
+
+    /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when
+      * nothing recognisable is there, so the caller's default wins.
+      */
+    def parse(s: String): Option[String] =
+      val t = s.trim.toLowerCase
+      if t.isEmpty then None
+      else if all.contains(t) then Some(t)
+      else if t.contains("people") || t.contains("tribe") then Some(People)
+      else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
+        || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
+      then Some(Site)
+      else if t.contains("kingdom") || t.contains("empire") || t.contains("polity") || t.contains("state")
+        || t.contains("dynasty") || t.contains("country") || t.contains("nation")
+      then Some(Polity)
+      else if t.contains("region") || t.contains("continent") || t.contains("province")
+        || t.contains("territory") || t.contains("area")
+      then Some(Region)
+      else if t.contains("river") || t.contains("mountain") || t.contains("island") || t.contains("lake")
+        || t.contains("feature") || t.contains("pass") || t.contains("valley")
+      then Some(Feature)
+      else None
+
+  /** How exact a place's POINT is (V077). Pleiades gives a place whose only location is a square of the Barrington
+    * Atlas grid the centre of that square as its representative point: Thessalia (the late Roman province) at 37.5 N
+    * 22.5 E — in the Peloponnese — and Viennensis and Tarraconensis both at 42.5 N 2.5 W. Such a point says "somewhere
+    * in this square", not "here" ([[GridCell]]).
+    *
+    * Told from the coordinates alone ([[LocationPrecision.of]]), because the seed keeps only the representative point:
+    * a Pleiades point that is the centre of a 5°, 1° or ½° cell. On the live corpus (2026-10-09) 2 426 Pleiades points
+    * are, and 2 363 of them are "rough" in Pleiades' own locations dump; no precise point of any size sits exactly on a
+    * centre at five decimals. Only Pleiades rows: a Wikidata coordinate in whole minutes (37°15′ = 37.25) is coarse,
+    * but it is not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
+    * `PlaceCleanupSuite`.
+    */
+  enum Precision:
+    case Stated, GridCell
+
+    def wire: String = this match
+      case Stated   => "stated"
+      case GridCell => "grid-cell"
+
+  object Precision:
+    /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
+    val CellsMicro: List[Long] = List(5000000L, 1000000L, 500000L)
+
+    /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
+      * Pure.
+      */
+    def gridCentre(lon: Double, lat: Double): Boolean =
+      val x = math.round(lon * 1e6)
+      val y = math.round(lat * 1e6)
+      CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2)
+
+    /** The precision of the point of place `placeId`. */
+    def of(placeId: String, lon: Double, lat: Double): Precision =
+      if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
+
+    /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
+    val Approximate: String = "approximate (atlas grid square)"
+
+    def parse(s: String): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
+
+    given WireEnumValues[Precision]:
+      def all: Array[Precision] = Precision.values
+      def wire(e: Precision): String = e.wire
+      def fromWire(s: String): Option[Precision] = parse(s)
+
   final case class Add(
       label: String,
       kind: String,
@@ -45,7 +126,7 @@ object Place:
     given Schema[Add] = KindlingsSchema
       .derived[Add]
       .schema
-      .modify(_.kind)(_.description(s"one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}"))
+      .modify(_.kind)(_.description(s"one of ${com.histmersion.api.catalogue.Place.Kind.all.mkString(", ")}"))
       .modify(_.source)(_.description("where the coordinates come from (a gazetteer id, a map, a publication)"))
     given Codec.AsObject[Add] = StrictJson.codec(KindlingsCodecAsObject.derived[Add])
 
@@ -68,7 +149,7 @@ object Place:
     def hasBoundary: Boolean
     def descriptions: List[Description]
     def timeBasis: TimeBasis
-    def locationPrecision: com.histmersion.domain.catalogue.Place.Precision
+    def locationPrecision: com.histmersion.api.catalogue.Place.Precision
     def siteType: Option[String]
     def record: Record
 
@@ -80,8 +161,8 @@ object Place:
         .orElse(Option.when(geometry.isDefined && Shape.isPeople(place.kind))(Shape.PeopleNote))
 
     def locationNote: Option[String] =
-      Option.when(locationPrecision == com.histmersion.domain.catalogue.Place.Precision.GridCell)(
-        com.histmersion.domain.catalogue.Place.Precision.Approximate
+      Option.when(locationPrecision == com.histmersion.api.catalogue.Place.Precision.GridCell)(
+        com.histmersion.api.catalogue.Place.Precision.Approximate
       )
 
     def shapeNotes: List[String] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
@@ -165,9 +246,9 @@ object Place:
       for
         _ <- Either.cond(label.nonEmpty, (), invalid("the label is empty"))
         _ <- Either.cond(
-          com.histmersion.domain.catalogue.Place.Kind.all.contains(kind),
+          com.histmersion.api.catalogue.Place.Kind.all.contains(kind),
           (),
-          invalid(s"kind '$kind' is not one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}")
+          invalid(s"kind '$kind' is not one of ${com.histmersion.api.catalogue.Place.Kind.all.mkString(", ")}")
         )
         _ <- Either.cond(id != LocalPrefix, (), invalid(s"'$label' gives no id — pass one (`id`)"))
         _ <- Either.cond(
@@ -245,8 +326,8 @@ object Place:
       descriptions: List[Description] = Nil,
       timeBasis: TimeBasis = TimeBasis.Dated,
       /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
-      locationPrecision: com.histmersion.domain.catalogue.Place.Precision =
-        com.histmersion.domain.catalogue.Place.Precision.Stated,
+      locationPrecision: com.histmersion.api.catalogue.Place.Precision =
+        com.histmersion.api.catalogue.Place.Precision.Stated,
       siteType: Option[String] = None,
       record: Record = Record()
   ) extends Card
@@ -448,7 +529,7 @@ object Place:
     given Schema[OverrideSet] = KindlingsSchema
       .derived[OverrideSet]
       .schema
-      .modify(_.kind)(_.description(s"one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}"))
+      .modify(_.kind)(_.description(s"one of ${com.histmersion.api.catalogue.Place.Kind.all.mkString(", ")}"))
       .modify(_.reason)(
         _.description("why: the evidence the decision rests on (required with a point: where the point comes from)")
       )
@@ -497,9 +578,9 @@ object Place:
                 case _ => Left(invalid("a point needs both pointLat and pointLon"))
           _ <- kind.fold(Right(()))(k =>
             Either.cond(
-              com.histmersion.domain.catalogue.Place.Kind.all.contains(k),
+              com.histmersion.api.catalogue.Place.Kind.all.contains(k),
               (),
-              invalid(s"kind '$k' is not one of ${com.histmersion.domain.catalogue.Place.Kind.all.mkString(", ")}")
+              invalid(s"kind '$k' is not one of ${com.histmersion.api.catalogue.Place.Kind.all.mkString(", ")}")
             )
           )
           _ <- period match
@@ -611,13 +692,13 @@ object Place:
 
   object Shape:
     def isArea(kind: String): Boolean =
-      kind == com.histmersion.domain.catalogue.Place.Kind.Region || kind == com.histmersion.domain.catalogue.Place.Kind.Polity
+      kind == com.histmersion.api.catalogue.Place.Kind.Region || kind == com.histmersion.api.catalogue.Place.Kind.Polity
 
     def pointOnlyArea(kind: String, hasBoundary: Boolean): Boolean = isArea(kind) && !hasBoundary
 
     val NoBoundaryNote: String = "point only — boundary not yet available"
 
-    def isPeople(kind: String): Boolean = kind == com.histmersion.domain.catalogue.Place.Kind.People
+    def isPeople(kind: String): Boolean = kind == com.histmersion.api.catalogue.Place.Kind.People
 
     val PeopleNote: String = "a people or tribe — placed at a representative point, not an area"
 
@@ -660,7 +741,7 @@ object Place:
     given Schema[TimeBasis] = WireEnum.schema
 
     def of(kind: String, modern: Boolean, imported: Boolean, undated: Boolean, hasGeometry: Boolean): TimeBasis =
-      if !imported && (kind == com.histmersion.domain.catalogue.Place.Kind.Feature || (modern && kind == com.histmersion.domain.catalogue.Place.Kind.Region))
+      if !imported && (kind == com.histmersion.api.catalogue.Place.Kind.Feature || (modern && kind == com.histmersion.api.catalogue.Place.Kind.Region))
       then Timeless
       else if modern then Modern
       else if undated && !hasGeometry then Grouping

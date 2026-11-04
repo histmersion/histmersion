@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.api.aliases.LabelRename
@@ -17,7 +19,6 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
-import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.catalogue.EventGeo
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,

@@ -1,9 +1,10 @@
 package com.histmersion.api.automation
+import com.histmersion.api.WireEnumValues
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.StrictJson
 import com.histmersion.api.research.Coverage
@@ -25,6 +26,33 @@ final case class Goal(
       KindlingsSchema
 
 object Goal:
+
+  /** The stages of a research goal, as the store and the wire spell them. */
+  object Status:
+    val Planned = "planned"
+    val Seeding = "seeding"
+    val Compiled = "compiled"
+    val Reviewed = "reviewed"
+    val Done = "done"
+    val all: scala.List[String] = scala.List(Planned, Seeding, Compiled, Reviewed, Done)
+
+  /** What a goal is linked to. */
+  enum LinkKind(val wire: String):
+    case Source extends LinkKind("source")
+    case Article extends LinkKind("article")
+    case Query extends LinkKind("query")
+    case QueueItem extends LinkKind("queue-item")
+
+  object LinkKind:
+
+    /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
+    val SearchQuery: LinkKind = Query
+
+    def parse(s: String): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
+    given WireEnumValues[LinkKind]:
+      def all: Array[LinkKind] = LinkKind.values
+      def wire(e: LinkKind): String = e.wire
+      def fromWire(s: String): Option[LinkKind] = parse(s)
   given Schema[Goal] = summon[KindlingsSchema[Goal]].schema
 
   final case class Deleted(
@@ -106,9 +134,9 @@ object Goal:
     object Plan:
       given Schema[Plan] = summon[KindlingsSchema[Plan]].schema
 
-    export com.histmersion.domain.automation.Goal.LinkKind as LinkKind
-    export com.histmersion.domain.research.DraftMode
-    export com.histmersion.domain.automation.ScheduleKind
+    export com.histmersion.api.automation.Goal.LinkKind as LinkKind
+    export com.histmersion.api.research.DraftMode
+    export com.histmersion.api.automation.ScheduleKind
 
     final case class ArticleDraft(
         slug: String,
@@ -203,11 +231,11 @@ object Goal:
 
   object Stages:
     val all: scala.List[(String, String)] = scala.List(
-      com.histmersion.domain.automation.Goal.Status.Planned -> "created; nothing works on it yet",
-      com.histmersion.domain.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles",
-      com.histmersion.domain.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet",
-      com.histmersion.domain.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel",
-      com.histmersion.domain.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"
+      com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet",
+      com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles",
+      com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet",
+      com.histmersion.api.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel",
+      com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"
     )
 
     def meaning(status: String): Option[String] = all.collectFirst { case (s, m) if s == status => m }

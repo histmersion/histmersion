@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.aliases.AliasKinds
 
 import cats.syntax.all.*
@@ -7,7 +9,6 @@ import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.aliases.{Aliases, LabelRenames}
 import com.histmersion.api.exchange.MergeMarkdown
-import com.histmersion.util.data.exchange.Bundle
 
 /** `histmersion article|events|goals rename <old> <new>` — a new slug or id; the old one keeps resolving (an alias).
   * The label is checked here with the server's own rule ([[LabelRenames]]).

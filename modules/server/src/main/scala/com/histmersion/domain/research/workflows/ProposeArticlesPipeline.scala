@@ -1,8 +1,16 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
+import io.scalaland.chimney.dsl.*
+
+import com.histmersion.domain.automation.agents.AnswerSchemas
+import com.histmersion.domain.automation.agents.Checked
+import com.histmersion.domain.automation.agents.Halt
+import com.histmersion.domain.automation.agents.Prompt
+import com.histmersion.domain.automation.agents.RunCtx
+import com.histmersion.domain.automation.agents.StepAgent
 import com.histmersion.domain.automation.approvals.AutoApprovals
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*

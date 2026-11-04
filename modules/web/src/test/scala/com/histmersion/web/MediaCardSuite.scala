@@ -1,12 +1,12 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.media.MediaRole
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.media.{MediaCount, MediaGeoHit, MediaProvider, MediaThumb}
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
-import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.library.Source
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first picture with its
   * credit and licence, an event element previews an event, the layer's filter menus and popup. Pure.

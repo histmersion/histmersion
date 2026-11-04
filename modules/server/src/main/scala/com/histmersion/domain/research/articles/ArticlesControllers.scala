@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.domain.research.Slug
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.research.BacklinksMarkdown
@@ -407,10 +409,11 @@ final class ArticlesControllers(
   def put(slug: String, in: Article.Put, strict: Boolean = false): Either[Api.Error, Article.View] =
     maintenance.guard("put_article"):
       // an OLD slug follows the alias: the put replaces the renamed article
-      Articles
-        .applyPut(
-          Articles.slugOf(slug).fold(_ => slug, s => current(AliasKinds.ArticleRecords, s)),
-          in.copy(reasons = canonicalReasons(in.reasons))
+      Slug
+        .parse(slug)
+        .flatMap(s =>
+          Articles
+            .applyPut(current(AliasKinds.ArticleRecords, s.value), in.copy(reasons = canonicalReasons(in.reasons)))
         )
         .left
         .map(m => Api.Error(m, Some(Write.CodeInvalid)))
@@ -424,8 +427,9 @@ final class ArticlesControllers(
     */
   def patch(slug: String, p: Article.Patch, strict: Boolean = false): Either[Api.Error, Article.View] =
     maintenance.guard("patch_article"):
-      Articles
-        .slugOf(slug)
+      Slug
+        .parse(slug)
+        .map(_.value)
         .left
         .map(m => Api.Error(m, Some(Write.CodeInvalid)))
         .map(current(AliasKinds.ArticleRecords, _))
@@ -457,9 +461,9 @@ final class ArticlesControllers(
     maintenance.guard("rename_article"):
       val from = current(AliasKinds.ArticleRecords, norm(slug))
       for
-        to <- LabelRenames.validate(com.histmersion.util.data.exchange.Bundle.Kind.Article, from, req.to)
+        to <- LabelRenames.validate(com.histmersion.api.exchange.Bundle.Kind.Article, from, req.to)
         rewritten <- store.rename(from, to, Caller.Local)
-      yield LabelRenamed(com.histmersion.util.data.exchange.Bundle.Kind.Article, from, to, rewritten)
+      yield LabelRenamed(com.histmersion.api.exchange.Bundle.Kind.Article, from, to, rewritten)
 
   // ── the mirror, the versions, the slugs, a note imported ────────────────────────────────────
 
@@ -504,8 +508,9 @@ final class ArticlesControllers(
     ArticleNote.parse(req.text, fallbackSlug, fallbackKind) match
       case None         => Left(Api.Error("no YAML frontmatter in the article note"))
       case Some(parsed) =>
-        Articles
-          .slugOf(parsed.slug)
+        Slug
+          .parse(parsed.slug)
+          .map(_.value)
           .left
           .map(m => Api.Error(m, Some(Write.CodeInvalid)))
           .flatMap { s =>

@@ -1,19 +1,19 @@
 package com.histmersion.domain
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.util.data.exchange.{
-  BundleFormat,
-  BundlePlan,
-  Diff3,
-  PairQuestions,
-  PlanFolds,
-  PlanMerge,
-  PlanQuestions,
-  PlanRelabels,
-  PlanRules,
-  PlanRuns,
-  SourceFate,
-  SourcePair
-}
+import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.data.exchange.BundlePlan
+import com.histmersion.util.data.exchange.Diff3
+import com.histmersion.util.data.exchange.PairQuestions
+import com.histmersion.util.data.exchange.PlanFolds
+import com.histmersion.util.data.exchange.PlanMerge
+import com.histmersion.util.data.exchange.PlanQuestions
+import com.histmersion.util.data.exchange.PlanRelabels
+import com.histmersion.util.data.exchange.PlanRules
+import com.histmersion.util.data.exchange.PlanRuns
+import com.histmersion.util.data.exchange.SourceFate
+import com.histmersion.util.data.exchange.SourcePair
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Plural
 import com.histmersion.api.exchange.{
@@ -35,16 +35,16 @@ import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.ArticleOutcome
-import com.histmersion.util.text.{Anchor, MinHash}
+import com.histmersion.util.text.Anchor
+import com.histmersion.util.text.MinHash
 import com.histmersion.api.text.SafeName
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.{EditionsPolicy, MatchOutcome}
+import com.histmersion.api.exchange.EditionsPolicy
+import com.histmersion.api.library.MatchOutcome
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered
@@ -305,17 +305,17 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
-  def letter(kind: Issue.Kind, entity: Bundle.Kind): String = kind match
-    case Issue.Kind.BodyDiffers   => "O"
-    case Issue.Kind.AliasConflict => "L"
-    case _                        => entity.issueLetter
+  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): String = kind match
+    case MergeIssue.Kind.BodyDiffers   => "O"
+    case MergeIssue.Kind.AliasConflict => "L"
+    case _                             => entity.issueLetter
 
   /** `<letter>-<8 hex>`: sha256 of the kind, the sorted bundle uids, the sorted local uids, the two revs and anything
     * else that tells the issue apart (an alias). The same records unchanged → the same id; either side changed → a new
     * id, and the old resolution goes stale. Pure.
     */
   def issueId(
-      kind: Issue.Kind,
+      kind: MergeIssue.Kind,
       entity: Bundle.Kind,
       right: List[UUID],
       left: List[UUID],
@@ -324,7 +324,7 @@ object MergePlanner:
       extra: String = ""
   ): String =
     val text = List(
-      Issue.Kind.wireOf(kind),
+      MergeIssue.Kind.wireOf(kind),
       right.map(_.toString).sorted.mkString(","),
       left.map(_.toString).sorted.mkString(","),
       rightRev,
@@ -386,7 +386,7 @@ object MergePlanner:
   // ── the plan ────────────────────────────────────────────────────────────────────────────────
 
   /** An issue before resolutions, with the decision kinds an import can carry out itself. */
-  final private case class Draft(issue: MergeIssue, importable: Set[DecisionKind])
+  final private case class Draft(issue: MergeIssue, importable: Set[MergeDecision.Kind])
 
   /** Whether an issue applies, given the decisions of the issues it is conditional on. */
   private enum Standing:
@@ -452,14 +452,14 @@ object MergePlanner:
     val pairs: List[(SourcePair, Option[IssueCondition])] = fes.sources.flatMap(s =>
       fates(s.uid) match
         case SourceFate.Auto(p)    => Some(p -> None)
-        case SourceFate.Gate(p, g) => Some(p -> Some(IssueCondition(g, DecisionKind.Map)))
+        case SourceFate.Gate(p, g) => Some(p -> Some(IssueCondition(g, MergeDecision.Kind.Map)))
         case _                     => None
     )
 
     // ── the drafts: every issue, conditional ones included ──
     val drafts = List.newBuilder[Draft]
     def add(d: Draft): Unit = drafts += d
-    val km = DecisionKind
+    val km = MergeDecision.Kind
     val lr = List(km.KeepLeft, km.KeepRight)
     val info = List.newBuilder[String]
     run.notices.foreach(info += _)
@@ -470,7 +470,7 @@ object MergePlanner:
       def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
       def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
-      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
+      def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
       def info(line: String): Unit = noted += line
 
     // whether a pair is one work, the fields of a pair, a citekey taken: as the sources' rules ask
@@ -485,13 +485,14 @@ object MergePlanner:
         def conflict(target: UUID, cond: Option[IssueCondition]): Option[Draft] =
           Option.when(o != target) {
             val src = fes.sources.find(_.uid == a.sourceUid)
-            val id = issueId(Issue.Kind.AliasConflict, Bundle.Kind.Source, List(a.sourceUid), List(o), "", "", a.alias)
+            val id =
+              issueId(MergeIssue.Kind.AliasConflict, Bundle.Kind.Source, List(a.sourceUid), List(o), "", "", a.alias)
             aliasIssues += id -> a.alias
             Draft(
               MergeIssue(
                 id,
-                Issue.Kind.AliasConflict,
-                Issue.Severity.Blocking,
+                MergeIssue.Kind.AliasConflict,
+                MergeIssue.Severity.Blocking,
                 Bundle.Kind.Source,
                 s"old citekey ${a.alias} names ${src.fold(a.sourceUid.toString)(_.citekey)} in the bundle, " +
                   s"but ${sourcesByUid.get(o).fold(o.toString)(_.citekey)} here" + (if asCitekey then " (its citekey)"
@@ -604,17 +605,17 @@ object MergePlanner:
         Option.when(!r.tombstone)(IssueSide(rawRevs.get(r.foreignUid).map(_.label).getOrElse(r.label), r.foreignUid))
       def conflictIssue(
           title: String,
-          opts: List[DecisionKind],
-          importable: Set[DecisionKind],
+          opts: List[MergeDecision.Kind],
+          importable: Set[MergeDecision.Kind],
           detail: Option[IssueDetail] = None
       ): Unit =
-        val kind = if r.tombstone then Issue.Kind.DeletedThereChangedHere else Issue.Kind.ChangedBothSides
+        val kind = if r.tombstone then MergeIssue.Kind.DeletedThereChangedHere else MergeIssue.Kind.ChangedBothSides
         add(
           Draft(
             MergeIssue(
               issueId(kind, r.kind, List(r.foreignUid), List(r.uid), r.foreignRev, r.localRev.getOrElse("")),
               kind,
-              Issue.Severity.Blocking,
+              MergeIssue.Severity.Blocking,
               r.kind,
               title,
               left,
@@ -681,7 +682,7 @@ object MergePlanner:
         label: A => String,
         owner: A => Option[UUID],
         what: String,
-        options: List[DecisionKind] = lr,
+        options: List[MergeDecision.Kind] = lr,
         merge: (A, UUID) => Option[Merges] = (_: A, _: UUID) => None,
         detailOf: (A, UUID) => Option[IssueDetail] = (_: A, _: UUID) => None
     ): Unit =
@@ -696,15 +697,15 @@ object MergePlanner:
                 Draft(
                   MergeIssue(
                     issueId(
-                      Issue.Kind.LabelTaken,
+                      MergeIssue.Kind.LabelTaken,
                       kind,
                       List(f),
                       List(o),
                       rawRevs.get(f).map(_.rev).getOrElse(""),
                       localRev(o)
                     ),
-                    Issue.Kind.LabelTaken,
-                    Issue.Severity.Blocking,
+                    MergeIssue.Kind.LabelTaken,
+                    MergeIssue.Severity.Blocking,
                     kind,
                     s"here that $what belongs to a different record",
                     Some(IssueSide(l, o)),
@@ -734,7 +735,7 @@ object MergePlanner:
         label: A => String,
         owner: A => Option[UUID],
         what: String,
-        options: List[DecisionKind],
+        options: List[MergeDecision.Kind],
         merge: (A, UUID) => Option[Merges],
         detailOf: (A, UUID) => Option[IssueDetail]
     ): Unit = labelTaken(kind, rows, uid, label, owner, what, options, merge, detailOf)
@@ -751,7 +752,7 @@ object MergePlanner:
       def writesInitially(u: UUID): Boolean = writtenBefore(u)
       def merged(foreign: UUID): Boolean = merges.contains(foreign)
       def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit = merges(foreign) = here -> Merges.Contributed(how)
-      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
+      def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
       def info(line: String): Unit = noted += line
       def labelTaken[A](
           kind: Bundle.Kind,
@@ -760,7 +761,7 @@ object MergePlanner:
           label: A => String,
           owner: A => Option[UUID],
           what: String,
-          options: List[DecisionKind],
+          options: List[MergeDecision.Kind],
           merge: (A, UUID) => Option[PlanMerge],
           detailOf: (A, UUID) => Option[IssueDetail]
       ): Unit =
@@ -825,9 +826,9 @@ object MergePlanner:
         val f = bundleUidOf(a.uid)
         def blocking(title: String, base: Option[String]) =
           MergeIssue(
-            issueId(Issue.Kind.ArticleDiverged, Bundle.Kind.Article, List(f), List(o), rightRev(f), localRev(o)),
-            Issue.Kind.ArticleDiverged,
-            Issue.Severity.Blocking,
+            issueId(MergeIssue.Kind.ArticleDiverged, Bundle.Kind.Article, List(f), List(o), rightRev(f), localRev(o)),
+            MergeIssue.Kind.ArticleDiverged,
+            MergeIssue.Severity.Blocking,
             Bundle.Kind.Article,
             title,
             Some(IssueSide(a.slug, o, mine.map(m => s"\"${m.title}\" · ${m.body.length} characters").toList)),
@@ -840,9 +841,16 @@ object MergePlanner:
           add(
             Draft(
               MergeIssue(
-                issueId(Issue.Kind.ArticleDiverged, Bundle.Kind.Article, List(f), List(o), rightRev(f), localRev(o)),
-                Issue.Kind.ArticleDiverged,
-                Issue.Severity.Default,
+                issueId(
+                  MergeIssue.Kind.ArticleDiverged,
+                  Bundle.Kind.Article,
+                  List(f),
+                  List(o),
+                  rightRev(f),
+                  localRev(o)
+                ),
+                MergeIssue.Kind.ArticleDiverged,
+                MergeIssue.Severity.Default,
                 Bundle.Kind.Article,
                 "the same text was written on both sides",
                 Some(IssueSide(a.slug, o)),
@@ -885,14 +893,14 @@ object MergePlanner:
         r <- localized.goals.find(_.uid == toLocal(f))
         if MergeFold.planOutcome(l, r) == MergeFold.PlanOutcome.Differ
       do
-        val id = issueId(Issue.Kind.GoalPlanDiffers, Bundle.Kind.Goal, List(f), List(o), rightRev(f), localRev(o))
+        val id = issueId(MergeIssue.Kind.GoalPlanDiffers, Bundle.Kind.Goal, List(f), List(o), rightRev(f), localRev(o))
         goalPlanIssue(f) = id
         add(
           Draft(
             MergeIssue(
               id,
-              Issue.Kind.GoalPlanDiffers,
-              Issue.Severity.Blocking,
+              MergeIssue.Kind.GoalPlanDiffers,
+              MergeIssue.Severity.Blocking,
               Bundle.Kind.Goal,
               s"goal ${l.slug}: two different approved plans, and neither is known to be the newer",
               Some(IssueSide(l.slug, o, l.planApprovedAt.map(a => s"approved $a").toList)),
@@ -955,7 +963,7 @@ object MergePlanner:
               case km.RenameRight | km.RenameLeft => run.citekeyArgument(i, dec).getOrElse(Right(()))
               case _                              => Right(())
             if !i.options.contains(dec.kind) then
-              errors += s"$id: ${dec.wire} is not a decision for this issue (${i.options.map(DecisionKind.wireOf).mkString(" | ")})"
+              errors += s"$id: ${dec.wire} is not a decision for this issue (${i.options.map(MergeDecision.Kind.wireOf).mkString(" | ")})"
               None
             else
               argOk match
@@ -965,19 +973,24 @@ object MergePlanner:
       .toMap
     // the decision in force for an issue, and who made it: a resolution, a policy, an earlier apply,
     // the default
-    def decisionOf(i: MergeIssue): Option[(MergeDecision, Issue.DecidedBy)] =
+    def decisionOf(i: MergeIssue): Option[(MergeDecision, MergeIssue.DecidedBy)] =
       chosen
         .get(i.id)
-        .map(_ -> Issue.DecidedBy.Resolution)
+        .map(_ -> MergeIssue.DecidedBy.Resolution)
         .orElse(
           Option
-            .when(i.kind == Issue.Kind.YearDiffers && policy.editions.contains(EditionsPolicy.Merge))(i.suggested)
+            .when(i.kind == MergeIssue.Kind.YearDiffers && policy.editions.contains(EditionsPolicy.Merge))(i.suggested)
             .flatten
-            .map(_ -> Issue.DecidedBy.Policy)
+            .map(_ -> MergeIssue.DecidedBy.Policy)
         )
-        .orElse(in.remembered.get(i.id).filter(d => i.options.contains(d.kind)).map(_ -> Issue.DecidedBy.Remembered))
         .orElse(
-          Option.when(i.severity == Issue.Severity.Default)(i.suggested).flatten.map(_ -> Issue.DecidedBy.Default)
+          in.remembered.get(i.id).filter(d => i.options.contains(d.kind)).map(_ -> MergeIssue.DecidedBy.Remembered)
+        )
+        .orElse(
+          Option
+            .when(i.severity == MergeIssue.Severity.Default)(i.suggested)
+            .flatten
+            .map(_ -> MergeIssue.DecidedBy.Default)
         )
     // an issue conditional on another applies when that one is decided its way; conditions chain (an
     // attestation's question under the body question under the same-work question)
@@ -997,10 +1010,10 @@ object MergePlanner:
                   // the other alternative of a DEFAULT stays listed (conditional): overriding a default
                   // is a decision too, and it must not reveal an issue that was not listed
                   decisionOf(byId(c.issue).issue) match
-                    case None                               => Standing.Conditional
-                    case Some((d, _)) if d.kind == c.when   => Standing.Live
-                    case Some((_, Issue.DecidedBy.Default)) => Standing.Conditional
-                    case Some(_)                            => Standing.Dropped
+                    case None                                    => Standing.Conditional
+                    case Some((d, _)) if d.kind == c.when        => Standing.Live
+                    case Some((_, MergeIssue.DecidedBy.Default)) => Standing.Conditional
+                    case Some(_)                                 => Standing.Dropped
           standings(id) = s
           s
     val live: List[Draft] = all.flatMap { d =>
@@ -1014,7 +1027,7 @@ object MergePlanner:
       val c = byId(id).issue.condition.get
       val now = if standingOf(c.issue, Set.empty) == Standing.Dropped then "does not apply"
       else s"is ${decisionOf(byId(c.issue).issue).fold("open")(_._1.wire)}"
-      errors += s"$id: applies only if ${c.issue} = ${DecisionKind.wireOf(c.when)}, and ${c.issue} $now"
+      errors += s"$id: applies only if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}, and ${c.issue} $now"
     }
     val decided: List[Draft] = live.map { d =>
       val i = d.issue
@@ -1027,7 +1040,7 @@ object MergePlanner:
     /** The decision in force for an issue that applies. */
     def decisionIn(id: String): Option[MergeDecision] = unconditional.get(id).flatMap(_.decision)
     val gateDecision: Map[String, MergeDecision] =
-      issues.filter(_.kind == Issue.Kind.SameWork).flatMap(i => i.decision.map(i.id -> _)).toMap
+      issues.filter(_.kind == MergeIssue.Kind.SameWork).flatMap(i => i.decision.map(i.id -> _)).toMap
 
     // ── the folds: what merge apply writes, as decided now ──
     // a bundle uid → (the uid here, kind); replacement lines by their final uid, built once the
@@ -1062,7 +1075,7 @@ object MergePlanner:
 
     // the citekey each source of the bundle will have here (`[[citekey]]` links follow it)
     val finalCitekey = scala.collection.mutable.Map.empty[UUID, String]
-    val collisionDecided = issues.filter(i => i.kind == Issue.Kind.CitekeyCollision && i.condition.isEmpty)
+    val collisionDecided = issues.filter(i => i.kind == MergeIssue.Kind.CitekeyCollision && i.condition.isEmpty)
     val renameRight: Map[UUID, String] = collisionDecided
       .flatMap(i => i.decision.filter(_.kind == km.RenameRight).flatMap(_.argument).zip(i.right.map(_.uid)).map(_.swap))
       .toMap
@@ -1169,7 +1182,7 @@ object MergePlanner:
     unconditional.values.toList.sortBy(_.id).foreach { i =>
       (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
         case (
-              Issue.Kind.ArticleDiverged | Issue.Kind.ChangedBothSides,
+              MergeIssue.Kind.ArticleDiverged | MergeIssue.Kind.ChangedBothSides,
               Bundle.Kind.Article,
               Some(d),
               Some(f),
@@ -1335,8 +1348,8 @@ object MergePlanner:
     // ── final row decisions ──
     val issueOfRow: Map[UUID, MergeIssue] = unconditional.values
       .filter(i =>
-        i.kind == Issue.Kind.ChangedBothSides || i.kind == Issue.Kind.DeletedThereChangedHere ||
-          i.kind == Issue.Kind.LabelTaken || i.kind == Issue.Kind.ArticleDiverged
+        i.kind == MergeIssue.Kind.ChangedBothSides || i.kind == MergeIssue.Kind.DeletedThereChangedHere ||
+          i.kind == MergeIssue.Kind.LabelTaken || i.kind == MergeIssue.Kind.ArticleDiverged
       )
       .flatMap(i => i.right.map(_.uid).orElse(i.left.map(_.uid)).map(toLocal).map(_ -> i))
       .toMap
@@ -1377,10 +1390,11 @@ object MergePlanner:
         issueOfRow.get(r0.uid).flatMap(i => i.decision.map(i -> _)) match
           case Some((i, d)) =>
             (i.kind, d.kind) match
-              case (Issue.Kind.ChangedBothSides, km.KeepLeft)  => r.copy(decision = Decision.Kept)
-              case (Issue.Kind.ChangedBothSides, km.KeepRight) => r.copy(decision = Decision.FastForward)
-              case (Issue.Kind.LabelTaken | Issue.Kind.ArticleDiverged, km.KeepLeft) => r.copy(decision = Decision.Skip)
-              case _                                                                 => r
+              case (MergeIssue.Kind.ChangedBothSides, km.KeepLeft)  => r.copy(decision = Decision.Kept)
+              case (MergeIssue.Kind.ChangedBothSides, km.KeepRight) => r.copy(decision = Decision.FastForward)
+              case (MergeIssue.Kind.LabelTaken | MergeIssue.Kind.ArticleDiverged, km.KeepLeft) =>
+                r.copy(decision = Decision.Skip)
+              case _ => r
           case None => r
     }
 
@@ -1546,7 +1560,8 @@ object MergePlanner:
       reviews = reviews.toList,
       remember = issues
         .filter(i =>
-          i.condition.isEmpty && i.decidedBy.exists(b => b == Issue.DecidedBy.Resolution || b == Issue.DecidedBy.Policy)
+          i.condition.isEmpty && i.decidedBy
+            .exists(b => b == MergeIssue.DecidedBy.Resolution || b == MergeIssue.DecidedBy.Policy)
         )
         .flatMap(i => i.decision.map(i.id -> _)),
       touch = (foldMap.values.map(_._1) ++ merges.values.map(_._1) ++ articleLine.keys).toSet,
@@ -1596,7 +1611,7 @@ object MergePlanner:
       needsApply.result().distinct,
       issues
         .filter(i =>
-          i.kind == Issue.Kind.AliasConflict && i.condition.isEmpty && i.decision.exists(_.kind == km.KeepLeft)
+          i.kind == MergeIssue.Kind.AliasConflict && i.condition.isEmpty && i.decision.exists(_.kind == km.KeepLeft)
         )
         .flatMap(i => aliasOf.get(i.id))
         .toSet ++ droppedAliases.map(_.alias),

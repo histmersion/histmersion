@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.autopilot
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.managers.ManagerLight
 
 import com.histmersion.domain.automation.agents.*
@@ -423,7 +425,12 @@ final class AutopilotService(
     }
     val caps = cfg.approvals.auto
     def rule(k: Agents.ApprovalKind, cap: String) =
-      ApprovalRule(k.wire, if cfg.approvals.checked(k) then "checked" else "person", cap) match
+      ApprovalRule(
+        k.wire,
+        if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then "checked"
+        else "person",
+        cap
+      ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
           r.copy(mode = "auto (in the run, unchecked)")
         case r => r

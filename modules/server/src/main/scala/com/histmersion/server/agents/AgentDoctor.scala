@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.*
@@ -141,7 +143,9 @@ final class AgentDoctor(
   // ── the HTTP providers ─────────────────────────────────────────────────────────────────────────
 
   private def http(k: ProviderKind, models: List[ModelRef], online: Boolean): (List[DoctorCheck], List[String]) =
-    val p = cfg.provider(k).getOrElse(throw IllegalStateException(s"${k.wire} has no HTTP config"))
+    val p = cfg
+      .provider(k.transformInto[com.histmersion.domain.automation.ProviderKind])
+      .getOrElse(throw IllegalStateException(s"${k.wire} has no HTTP config"))
     val used = models.nonEmpty
     val keyName = k match
       case ProviderKind.Anthropic => "ANTHROPIC_API_KEY"

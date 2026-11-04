@@ -1,15 +1,18 @@
 package com.histmersion.domain.catalogue.places
+import com.histmersion.api.exchange.MergeIssue
+import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.exchange.{IssueDetail, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
-import com.histmersion.util.data.exchange.DecisionKind
+import com.histmersion.util.data.exchange.PlanFolds
+import com.histmersion.util.data.exchange.PlanMerge
+import com.histmersion.util.data.exchange.PlanQuestions
+import com.histmersion.util.data.exchange.PlanRun
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** How a merge plan treats places of this collection's own: one the bundle renamed is renamed here too — unless its new
   * id is a different place's here, then ours keeps its id and what the bundle points at the new id points at ours; one
@@ -19,7 +22,7 @@ import com.histmersion.util.data.exchange.Issue
 final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   import PlacePlan.*
 
-  private val km = DecisionKind
+  private val km = MergeDecision.Kind
   private val lr = List(km.KeepLeft, km.KeepRight)
   private val localPlace = in.local.places.map(p => p.uid -> p).toMap
   private val placeLine =
@@ -73,7 +76,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
         case Some(o) if samePlace(o, p) => q.merge(f, o.uid, SamePlace)
         case Some(o)                    =>
           val id = MergePlanner.issueId(
-            Issue.Kind.PlaceDiffers,
+            MergeIssue.Kind.PlaceDiffers,
             Bundle.Kind.Place,
             List(f),
             List(o.uid),
@@ -83,8 +86,8 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
           q.ask(
             MergeIssue(
               id,
-              Issue.Kind.PlaceDiffers,
-              Issue.Severity.Blocking,
+              MergeIssue.Kind.PlaceDiffers,
+              MergeIssue.Severity.Blocking,
               Bundle.Kind.Place,
               s"place ${p.id} was added on both sides, " +
                 (if o.geom != p.geom then "with different geometries" else "with different time spans"),
@@ -108,7 +111,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   // a place added on both sides under one id: ours stays, or theirs wins
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
-      case (Issue.Kind.PlaceDiffers, Bundle.Kind.Place, Some(d), Some(f), Some(o)) =>
+      case (MergeIssue.Kind.PlaceDiffers, Bundle.Kind.Place, Some(d), Some(f), Some(o)) =>
         folds.fold(f, o, Bundle.Kind.Place)
         folds.count(_.modify(_.placesMerged).using(_ + 1))
         if d.kind == km.KeepRight then

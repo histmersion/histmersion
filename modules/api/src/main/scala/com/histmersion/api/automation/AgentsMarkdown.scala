@@ -1,5 +1,4 @@
 package com.histmersion.api.automation
-import com.histmersion.api.automation.GoalsMarkdown
 import com.histmersion.api.{Markdown, Paging, Plural}
 import com.histmersion.api.given
 import com.histmersion.api.research.Article

@@ -1,7 +1,6 @@
 package com.histmersion.api
 
 import sttp.tapir.Schema
-import com.histmersion.WireEnumValues
 import com.histmersion.api.catalogue.GeoTime
 
 enum GeoPick:

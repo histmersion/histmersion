@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.assets
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.exchange.BundleEntities
@@ -21,7 +23,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a bundle carries of the figures: each asset's line stamped with its rev, its bytes a blob; an import writes the
   * metadata of an asset whose bytes are here already among the rows, the rest as their bytes arrive.

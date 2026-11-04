@@ -1,16 +1,15 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.exchange.{IssueDetail, MergeDecision, MergeIssue}
 import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.util.data.exchange.DecisionKind
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
   * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two
@@ -20,7 +19,7 @@ import com.histmersion.util.data.exchange.Issue
 final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   import EventPlan.*
 
-  private val km = DecisionKind
+  private val km = MergeDecision.Kind
   private val localEvent = in.local.events.map(e => e.uid -> e).toMap
   private val eventLine =
     scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Event]
@@ -98,7 +97,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
-      case (Issue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), Some(o))
+      case (MergeIssue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), Some(o))
           if d.kind == km.KeepRight && localEvent.contains(o) =>
         folds.fold(f, o, Bundle.Kind.Event)
         eventLine(o) = es =>
@@ -107,7 +106,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
             localEvent(o)
           )
         folds.count(_.modify(_.eventsMerged).using(_ + 1))
-      case (Issue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
+      case (MergeIssue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
         d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).copy(id = eid))
       case _ => ()
 

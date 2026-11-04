@@ -1,10 +1,13 @@
 package com.histmersion.domain.automation.goals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -12,16 +15,17 @@ import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, Pipeli
 import com.histmersion.api.automation.Goal.Plans.{LinkKind, Plan}
 import com.histmersion.domain.PlanGoal.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.domain.automation.workflows.AutomationHost
-import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
+import com.histmersion.domain.automation.worklists.QueueScope
+import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.domain.automation.worklists.WorkListControllers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import javax.sql.DataSource
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.AgentsMarkdown
-import com.histmersion.domain.automation.Goal
+import com.histmersion.api.automation.Goal
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up

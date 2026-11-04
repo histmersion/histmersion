@@ -1,4 +1,4 @@
-package com.histmersion.api
+package com.histmersion.values
 
 import com.histmersion.domain.catalogue.AttestationTarget
 

@@ -1,11 +1,11 @@
 package com.histmersion.web
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaGeoHit
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
 
 /** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every

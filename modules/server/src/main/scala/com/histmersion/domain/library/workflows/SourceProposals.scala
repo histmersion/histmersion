@@ -1,15 +1,18 @@
 package com.histmersion.domain.library.workflows
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.automation.Agents.ApprovalState
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.AgentProposals
-import com.histmersion.domain.AgentProposals.{Proposal, Route}
+import com.histmersion.domain.AgentProposals.Proposal
+import com.histmersion.domain.AgentProposals.Route
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Approvals
 import io.circe.syntax.*
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Source
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
@@ -42,9 +45,9 @@ final class SourceProposals(
       runId,
       p.kind,
       p.citekey,
-      p.status,
-      now,
-      p.edgeKind,
+      p.status.transformInto[Option[com.histmersion.api.library.Source.Status]],
+      now.transformInto[Option[com.histmersion.api.library.Source.Status]],
+      p.edgeKind.transformInto[Option[com.histmersion.api.library.Edge.Kind]],
       p.target,
       com.histmersion.util.database.Jsonb.write(p),
       state,
@@ -55,7 +58,12 @@ final class SourceProposals(
   def propose(runId: Option[String], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
-    AgentProposals.route(p, now, cfg.approvals.statusMode, cfg.approvals.edgeMode) match
+    AgentProposals.route(
+      p,
+      now.transformInto[Option[com.histmersion.api.library.Source.Status]],
+      cfg.approvals.statusMode,
+      cfg.approvals.edgeMode
+    ) match
       case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
       case Route.Apply     =>
         apply(p) match

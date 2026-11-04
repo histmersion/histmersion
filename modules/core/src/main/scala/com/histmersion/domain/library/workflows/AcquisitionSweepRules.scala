@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.domain.library.acquisition.Ident
+
 import scala.annotation.tailrec
 import com.histmersion.api.library.{Acquire, WorkRef}
 import com.histmersion.api.given
@@ -32,7 +34,7 @@ object AcquisitionSweepRules:
     val seen = scala.collection.mutable.LinkedHashMap.empty[String, Candidate] // insertion-ordered dedupe
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
-      w.doi.flatMap(Acquire.normalizeDoi) match
+      w.doi.flatMap(Ident.doi) match
         case None                          => skipped("no DOI") += 1
         case Some(_) if w.isRetracted      => skipped("retracted") += 1
         case Some(_) if w.inDb             => skipped("in the corpus") += 1
@@ -80,7 +82,7 @@ object AcquisitionSweepRules:
       last: Boolean
   ): Either[List[String], (List[(Candidate, String)], List[String])] =
     val byDoi = offered.map(c => c.doi -> c).toMap
-    val parsed = r.picks.map(p => (p, Acquire.normalizeDoi(Option(p.doi).getOrElse("")).flatMap(byDoi.get)))
+    val parsed = r.picks.map(p => (p, Ident.doi(Option(p.doi).getOrElse("")).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) => s"'${p.doi}' is not one of the listed candidates" }
     val kept = parsed.collect { case (p, Some(c)) => (c, Option(p.why).map(_.trim).getOrElse("")) }.distinctBy(_._1.doi)
     if problems.nonEmpty && !last then Left(problems)

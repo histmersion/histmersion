@@ -1,7 +1,7 @@
 package com.histmersion.api.catalogue
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.WireEnumValues
+import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{LatinFold, WireEnum}
 import com.histmersion.api.given
 
@@ -188,7 +188,7 @@ object Geocode:
       else to.filter(_ < p.start).map(p.start - _).orElse(from.filter(_ > p.end).map(_ - p.end)).getOrElse(0L)
 
   private def broad(kind: String) =
-    kind == com.histmersion.domain.catalogue.Place.Kind.Region || kind == com.histmersion.domain.catalogue.Place.Kind.Polity
+    kind == com.histmersion.api.catalogue.Place.Kind.Region || kind == com.histmersion.api.catalogue.Place.Kind.Polity
 
   def tierOf(importSource: Option[String]): Int = Gazetteer.rank(Place.Match("", importSource))
 
@@ -196,14 +196,14 @@ object Geocode:
 
   private def kindRank(kind: String, hint: KindHint): Int = hint match
     case KindHint.Site =>
-      if kind == com.histmersion.domain.catalogue.Place.Kind.Site then 0
-      else if kind == com.histmersion.domain.catalogue.Place.Kind.Feature then 1
+      if kind == com.histmersion.api.catalogue.Place.Kind.Site then 0
+      else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then 1
       else 2
     case KindHint.Water =>
-      if kind == com.histmersion.domain.catalogue.Place.Kind.Feature then 0
-      else if kind == com.histmersion.domain.catalogue.Place.Kind.Site then 1
+      if kind == com.histmersion.api.catalogue.Place.Kind.Feature then 0
+      else if kind == com.histmersion.api.catalogue.Place.Kind.Site then 1
       else 2
-    case _ => if broad(kind) then 0 else if kind == com.histmersion.domain.catalogue.Place.Kind.Feature then 1 else 2
+    case _ => if broad(kind) then 0 else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then 1 else 2
 
   private def timeRank(c: Candidate, at: Option[Period]): (Int, Long) = at match
     case None    => if c.undated then (0, 0L) else (1, -c.span)

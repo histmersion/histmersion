@@ -59,10 +59,10 @@ object EventScale:
 
   def ofPlaceKind(placeKind: String): Option[String] =
     placeKind.trim.toLowerCase match
-      case com.histmersion.domain.catalogue.Place.Kind.Site | com.histmersion.domain.catalogue.Place.Kind.Feature =>
+      case com.histmersion.api.catalogue.Place.Kind.Site | com.histmersion.api.catalogue.Place.Kind.Feature =>
         Some(Local)
-      case com.histmersion.domain.catalogue.Place.Kind.Region | com.histmersion.domain.catalogue.Place.Kind.Polity |
-          com.histmersion.domain.catalogue.Place.Kind.People =>
+      case com.histmersion.api.catalogue.Place.Kind.Region | com.histmersion.api.catalogue.Place.Kind.Polity |
+          com.histmersion.api.catalogue.Place.Kind.People =>
         Some(Regional)
       case _ => None
 

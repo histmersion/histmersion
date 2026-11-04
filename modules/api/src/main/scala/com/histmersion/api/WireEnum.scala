@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.{Schema, Validator}
-import com.histmersion.WireEnumValues
 
 object WireEnum:
   def encoder[E <: reflect.Enum](using values: WireEnumValues[E]): Encoder[E] =

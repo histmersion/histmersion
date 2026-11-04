@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.{Write, YearFmt}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule}
@@ -114,11 +116,15 @@ object GoalService:
         ref: String,
         note: Option[String]
     ): Boolean =
-      db.transact(GoalLinkRepo.link(goal, kind, ref, note))
+      db.transact(
+        GoalLinkRepo.link(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref, note)
+      )
     def unlink(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: String): Boolean =
-      db.transact(GoalLinkRepo.unlink(goal, kind, ref))
+      db.transact(
+        GoalLinkRepo.unlink(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref)
+      )
     def refs(goal: String, kind: com.histmersion.domain.automation.Goal.LinkKind): List[String] =
-      db.read(GoalLinkRepo.refsIn(goal, kind))
+      db.read(GoalLinkRepo.refsIn(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind]))
     def linkCounts(): Map[(String, String), Int] = db.read(GoalLinkRepo.linkCounts())
     def planned(): Set[String] = db.read(GoalLinkRepo.planned())
     def planAndBudget(goal: String): Option[(Option[String], Option[BigDecimal])] =
@@ -133,9 +139,20 @@ object GoalService:
         enabled: Boolean,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
-    ): Unit = db.transact(GoalLinkRepo.setSchedule(goal, kind, cron, enabled, budgetUsd, next))
+    ): Unit = db.transact(
+      GoalLinkRepo.setSchedule(
+        goal,
+        kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind],
+        cron,
+        enabled,
+        budgetUsd,
+        next
+      )
+    )
     def removeSchedule(goal: String, kind: ScheduleKind): Boolean =
-      db.transact(GoalLinkRepo.removeSchedule(goal, kind))
+      db.transact(
+        GoalLinkRepo.removeSchedule(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind])
+      )
     def scheduleGoals(): List[String] = db.read(GoalLinkRepo.scheduleGoals())
     def takeSchedulesIn(goal: String)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSchedulesIn(goal)
 
@@ -297,7 +314,7 @@ object GoalService:
         .toList
         .map(l =>
           GoalLink(
-            l.kind,
+            l.kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind],
             l.ref,
             l.note,
             targets.title(l.kind, l.ref),
@@ -358,7 +375,7 @@ object GoalService:
     private def view(r: GoalScheduleRecord): GoalSchedule =
       GoalSchedule(
         r.goal,
-        r.kind,
+        r.kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind],
         r.cron,
         r.enabled,
         r.budgetUsd.map(_.toDouble),

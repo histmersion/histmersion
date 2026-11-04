@@ -3,7 +3,7 @@ package com.histmersion.api
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.views.PlaceDetail
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** The point-only seed regions (2026-10-09): which points are only an atlas grid square's centre. */
 class PlaceCleanupSuite extends munit.FunSuite:

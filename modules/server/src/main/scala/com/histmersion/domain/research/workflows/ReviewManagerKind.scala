@@ -1,17 +1,23 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition, ManagerSupervisor}
-import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.managers.ManagerKindDefinition
+import com.histmersion.domain.automation.managers.ManagerSupervisor
+import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.domain.automation.worklists.QueueScope
 
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.domain.*
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
+import com.histmersion.domain.ManagerPolicy.Next
+import com.histmersion.domain.ManagerPolicy.ReviewSettings
+import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts
 import com.histmersion.config.{AgentsConfig, ResearchAgentsConfig, ReviewManagerConfig}
-import com.histmersion.domain.{ManagerDefaults, ReviewManagerDefaults}
+import com.histmersion.domain.ManagerDefaults
+import com.histmersion.domain.ReviewManagerDefaults
 import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
@@ -89,7 +95,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item.failures,
       item.state,
       run,
-      st,
+      st.transformInto[com.histmersion.api.automation.Run.State],
       error,
       facts,
       task,

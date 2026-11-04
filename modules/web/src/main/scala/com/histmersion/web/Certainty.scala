@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.ConfidenceStyle
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 
 /** How sure the map's dots for some findings are (#1946): a STATED confidence, or [[Certainty.Unstated]] — a finding
   * that states none. An unstated one is drawn in its own neutral look (its period colour turned grey, a dashed edge, a

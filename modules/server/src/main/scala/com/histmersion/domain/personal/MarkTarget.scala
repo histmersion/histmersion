@@ -1,8 +1,14 @@
 package com.histmersion.domain.personal
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.api.personal.{ItemKey as WireKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
-import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid}
+import com.histmersion.domain.Described
+import com.histmersion.domain.ItemKey
+import com.histmersion.domain.ItemKind
+import com.histmersion.domain.ItemRef
+import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.domain.library.Title
 
@@ -56,10 +62,30 @@ enum MarkTarget:
   def wire: Target = this match
     case Item(r)                         => Target(kind, Some(WireKey(r.key.value)))
     case Point(lat, lon, zoom, from, to) =>
-      Target(MarkKind.Point, lat = Some(lat), lon = Some(lon), zoom = zoom, from = from, to = to)
+      Target(
+        MarkKind.Point,
+        lat = Some(lat.transformInto[com.histmersion.api.catalogue.Latitude.T]),
+        lon = Some(lon.transformInto[com.histmersion.api.catalogue.Longitude.T]),
+        zoom = zoom,
+        from = from.transformInto[Option[com.histmersion.api.catalogue.Year]],
+        to = to.transformInto[Option[com.histmersion.api.catalogue.Year]]
+      )
     case View(state, lat, lon, zoom, from, to) =>
-      Target(MarkKind.View, lat = lat, lon = lon, zoom = zoom, from = from, to = to, view = state)
-    case Span(from, to) => Target(MarkKind.Period, from = Some(from), to = Some(to))
+      Target(
+        MarkKind.View,
+        lat = lat.transformInto[Option[com.histmersion.api.catalogue.Latitude]],
+        lon = lon.transformInto[Option[com.histmersion.api.catalogue.Longitude]],
+        zoom = zoom,
+        from = from.transformInto[Option[com.histmersion.api.catalogue.Year]],
+        to = to.transformInto[Option[com.histmersion.api.catalogue.Year]],
+        view = state
+      )
+    case Span(from, to) =>
+      Target(
+        MarkKind.Period,
+        from = Some(from.transformInto[com.histmersion.api.catalogue.Year.T]),
+        to = Some(to.transformInto[com.histmersion.api.catalogue.Year.T])
+      )
 
 object MarkTarget:
 

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
@@ -12,7 +14,6 @@ import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.util.data.exchange.Bundle
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of

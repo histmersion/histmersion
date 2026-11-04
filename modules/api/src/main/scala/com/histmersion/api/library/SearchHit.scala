@@ -8,7 +8,7 @@ final case class SearchHit(
     citekey: String,
     title: String,
     year: Option[Int],
-    status: com.histmersion.domain.library.Source.Status,
+    status: com.histmersion.api.library.Source.Status,
     topics: List[String],
     regions: List[String],
     periodStart: Option[Long],

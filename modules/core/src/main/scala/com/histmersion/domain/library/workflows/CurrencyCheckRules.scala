@@ -4,8 +4,8 @@ import com.histmersion.api.library.{Acquire, FollowupRow}
 import com.histmersion.api.given
 
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Edge
 
 /** The pure rules of a currency check (docs/research-embedded-agents.md §14): what it makes of the papers citing a
   * source, and the acquisition item a disagreeing paper outside the corpus becomes.

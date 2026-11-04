@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.Slug
+
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
 
 import com.histmersion.api.research.Articles
@@ -30,10 +32,11 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def runTarget(p: Pipeline, raw: String): Option[Either[Api.Error, String]] =
     p.targetKind match
       case TargetKind.Source => Some(h.library.sources.get(raw, body = false).map(_.source.citekey))
-      case TargetKind.Article if p == Pipeline.CompileArticle => Some(Articles.slugOf(raw).left.map(Api.Error(_)))
-      case TargetKind.Article                                 => Some(h.research.articles.get(raw).map(_.article.slug))
-      case TargetKind.Goal                                    => Some(h.goals.get(raw.trim).map(_.slug))
-      case TargetKind.Manager                                 => None
+      case TargetKind.Article if p == Pipeline.CompileArticle =>
+        Some(Slug.parse(raw).map(_.value).left.map(Api.Error(_)))
+      case TargetKind.Article => Some(h.research.articles.get(raw).map(_.article.slug))
+      case TargetKind.Goal    => Some(h.goals.get(raw.trim).map(_.slug))
+      case TargetKind.Manager => None
 
   def runOptions(p: Pipeline, req: RunRequest, target: String, roundsCap: Int): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>

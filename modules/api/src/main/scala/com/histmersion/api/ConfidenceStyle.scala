@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 
 object ConfidenceStyle:
 

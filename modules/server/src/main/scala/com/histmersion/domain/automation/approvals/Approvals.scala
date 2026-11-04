@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.approvals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.api.{Paging, Plural, Write}
@@ -118,7 +120,8 @@ final class Approvals(
           a.hintEffect.toRight("the approval carries no readable action").flatMap(applyHint) match
             case Right(w) => store.settle(a.id, ApprovalState.Approved, s"applied: $w".take(1000))
             case Left(m)  => store.settle(a.id, ApprovalState.Failed, m.take(1000))
-        case (Decision.Approve, k) if effects.subjectKinds(k) =>
+        case (Decision.Approve, k)
+            if effects.subjectKinds(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) =>
           effects.applySubject(a) match
             case Right(w) => store.settle(a.id, ApprovalState.Approved, s"applied: $w")
             case Left(m)  => store.settle(a.id, ApprovalState.Failed, m.take(1000))

@@ -8,7 +8,7 @@ import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Bucket, TimeHistogram}
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
   * `overlap`, the `unlocated` leaf, samples and the depth clamp. No database.

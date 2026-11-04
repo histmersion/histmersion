@@ -1,11 +1,13 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.Bundle
+
+import com.histmersion.api.exchange.MergeDecision
+
 import com.histmersion.api.exchange.IssueDetail
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.util.data.exchange.DecisionKind
 
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
 
 /** What a kind's rules of a plan can ask and add while the plan collects its questions about the rows, before any is
   * decided: besides a pair's questions, the bundle's lines as they came and in this collection's terms, which lines
@@ -42,7 +44,7 @@ trait PlanQuestions extends PairQuestions:
       label: A => String,
       owner: A => Option[UUID],
       what: String,
-      options: List[DecisionKind],
+      options: List[MergeDecision.Kind],
       merge: (A, UUID) => Option[PlanMerge],
       detailOf: (A, UUID) => Option[IssueDetail]
   ): Unit

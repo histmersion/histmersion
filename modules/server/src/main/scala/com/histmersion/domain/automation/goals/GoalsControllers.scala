@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.Api
 import com.histmersion.api.automation.{Goal, GoalsExport}
 import com.histmersion.api.Write
@@ -8,7 +10,6 @@ import com.histmersion.api.automation.Goal.Plans.{GoalView, LinkKind, Plan}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.util.data.exchange.Bundle
 
 /** The goals' operations as REST, MCP and the CLI reach them: list, read, put, patch, delete and rename a goal, and the
   * `meta/GOALS.md` export. An old slug (V053) answers as the goal it was renamed to, and a write to one goes there

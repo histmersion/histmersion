@@ -1,5 +1,4 @@
 package com.histmersion.api.aliases
-import com.histmersion.api.aliases.AliasKind
 import com.histmersion.api.given
 
 object Aliases:

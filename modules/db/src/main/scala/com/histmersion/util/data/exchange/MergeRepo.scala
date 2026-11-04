@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.api.exchange.Bundle
+
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
   MergeApplyResult,
@@ -21,7 +23,6 @@ import com.histmersion.util.data.exchange.BundlePlan.Ledger
 
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):

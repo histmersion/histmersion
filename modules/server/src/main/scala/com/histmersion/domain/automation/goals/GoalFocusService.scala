@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import io.scalaland.chimney.dsl.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.*
@@ -11,10 +13,11 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.api.automation.Autopilot.*
-import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
+import com.histmersion.domain.GoalFocus.Facts
+import com.histmersion.domain.GoalFocus.Plan
+import com.histmersion.domain.GoalFocus.Work
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.automation.goals.FocusRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -83,7 +86,9 @@ final class GoalFocusService(
   private def byPerson(kind: Option[String], autoApprove: Option[String]): Boolean =
     kind.flatMap(ApprovalKind.parse) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
-        !autoApprove.flatMap(_.toBooleanOption).getOrElse(cfg.approvals.checked(k))
+        !autoApprove
+          .flatMap(_.toBooleanOption)
+          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.api.automation.Approval.Kind]))
       case _ => true
 
   final private case class Read(

@@ -20,9 +20,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-import com.histmersion.domain.AgentProposals.{Proposal, ProposalAnswer}
-import com.histmersion.WireEnumValues
-import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.AgentProposals.Proposal
+import com.histmersion.domain.AgentProposals.ProposalAnswer
+import com.histmersion.api.WireEnumValues
+import com.histmersion.api.automation.Approval
 import com.histmersion.api.research.Article
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the

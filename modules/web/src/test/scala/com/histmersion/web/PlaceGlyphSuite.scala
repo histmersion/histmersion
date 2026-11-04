@@ -4,7 +4,7 @@ package com.histmersion.web
   * "no boundary yet" — never a dot like a site — hidden when zoomed far out; and a chosen place is named by its label
   * and kind in every chip, never by its id.
   */
-import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place
 class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a polygon is an area; a point region or polity is a label; a point site is a dot"):

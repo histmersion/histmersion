@@ -1,13 +1,13 @@
 package com.histmersion.api
+import com.histmersion.api.jobs.JobInfo
 
-import com.histmersion.domain.automation.Pipeline
+import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.Label
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.automation.Manager
-import com.histmersion.domain.automation.Run
-import com.histmersion.domain.library.Source
-import com.histmersion.util.jobs.Job
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Manager
+import com.histmersion.api.automation.Run
+import com.histmersion.api.library.Source
 
 object Wording:
 
@@ -138,7 +138,7 @@ object Wording:
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
-  def jobKind(k: Job.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
+  def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
 
   def jobKindOf(wire: String): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
 

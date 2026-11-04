@@ -44,7 +44,7 @@ object TileDecode:
       SitePoint(
         Some(id),
         str(p, P.Label).getOrElse(""),
-        str(p, P.Kind).getOrElse(com.histmersion.domain.catalogue.Place.Kind.Site),
+        str(p, P.Kind).getOrElse(com.histmersion.api.catalogue.Place.Kind.Site),
         str(p, P.SiteType),
         str(p, P.Basis),
         f.at.lat,
