@@ -56,6 +56,12 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(groups.exists(r => r.head.endsWith("/Code.scala") && r(3) == "single-logical-group" && r(5).contains("Iron-constraint")),"Newtype/constraint/companion group lost")
     require(groups.exists(r => r.head.endsWith("/Unrelated.scala") && r(3).startsWith("multiple-logical-groups")),"Unrelated declarations merged")
     val visibility = table("visibility-candidates.tsv").map(r => r.head -> r).toMap
+    val crossings = table("dependency-crossings.tsv")
+    require(crossings.exists(r => r(5).endsWith("Consumer.read().") && r(6).endsWith("low/Contract#read().") && r(10).startsWith("configured-contract")),"Configured contract member not recognized")
+    require(crossings.exists(r => r(5).endsWith("Gateway.back().") && r(10) == "forbidden-direction"),"Public contract incorrectly waived forbidden direction")
+    require(crossings.exists(r => r(5).endsWith("Gateway.permitted().") && r(10) == "configured-crossing-permit"),"Exact crossing permit missed")
+    require(crossings.exists(r => r(5).endsWith("Consumer.inferred().") && r(6).endsWith("low/Internal#") && r(7) == "declared-or-inferred-signature" && r(10) == "allowed-direction; contract-review"),"Inferred dependency not checked")
+    require(crossings.exists(r => r(5).endsWith("Consumer.aliased().") && r(6).endsWith("low/Internal#") && r(7).contains("alias=")),"Alias-hidden crossing missed")
     require(visibility("com/histmersion/inventoryfixture/visibility/HiddenRepo.")(8) == "feature-restricted","Feature privacy missed")
     require(visibility("com/histmersion/inventoryfixture/visibility/BroadRepo.")(8) == "broader-than-feature","Broad package privacy accepted")
     require(visibility("com/histmersion/inventoryfixture/visibility/Envelope.NestedRow#")(8) == "feature-restricted","Enclosing privacy lost")
@@ -69,6 +75,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     run("absent-service",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-service.conf") ++ List(source),1)
     run("absent-visibility",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-visibility.conf") ++ List(source),1)
     run("absent-property",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-property.conf") ++ List(source),1)
+    run("absent-contract",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-contract.conf") ++ List(source),1)
     Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)
   }
 }
