@@ -12,7 +12,7 @@ import com.histmersion.api.exchange.Bundle
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
   */
-object QueueBundleRepo:
+private[worklists] object QueueBundleRepo:
 
   def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
     (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,

@@ -32,6 +32,14 @@ The three exact entry-function permissions in `capabilities.conf` permit console
 
 ## Migration readiness
 
+### Repository visibility
+
+`repository-visibility.conf` inventories the twelve configured exact repository symbols across production and test SemanticDB. Run with `--auto-classpath --auto-classpath-roots target/out --files modules` after ordinary production and test compilation. The report in `refactor-audit/repository-visibility/` records every resolved reference with its AST, outside consumer files, source coverage and a checklist. Counts include member and parameter references; they are not independent operations. Reflection and inferred public-type escapes still require review and compiler validation.
+
+`repository-visibility-apply.conf` permits only the reviewed bundle repositories. It verifies that the entire source file set and content hashes match the inventory before constructing patches, and refuses targets with outside consumers. It adds `private[goals]` to GoalBundleRepo and `private[worklists]` to QueueBundleRepo. Compile all production and tests, then run `repository-visibility-check.conf` on both files. Missing approved declarations fail check mode. Fresh inventory reports the two as private and the remaining ten as blocked.
+
+The fixture under `repository-fixture/src/main/scala` covers renamed imports, child-package access, method references, an outside consumer and a same-named unrelated object. Compile with SemanticDB into `target/repository-fixture`, inventory with `repository-fixture.conf`, apply `repository-fixture-apply.conf` using Scalafix `--out-from`/`--out-to`, and compare with `repository-fixture/expected/Repositories.scala`. Compile the output and check with `repository-fixture-check.conf`. `repository-fixture-reject.conf` must reject the exposed repository before writing; applying an old application manifest after a source change must also fail.
+
 The 43-goal register is encoded in `migration.conf`, based on the user's `docs/refactor-goals.md` in the main checkout (read only). Historical counts and checkmarks are not completion evidence. Run the readiness entry point:
 
 ```text

@@ -17,7 +17,7 @@ import com.histmersion.api.exchange.Bundle
   * import's steps that write them: the renames the other side made, the goals with their parents, links and schedules,
   * their old slugs.
   */
-object GoalBundleRepo:
+private[goals] object GoalBundleRepo:
 
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
