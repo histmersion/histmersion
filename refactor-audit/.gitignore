@@ -40,6 +40,8 @@ derivations/*.tsv
 schema-derives/*.tsv
 schema-derives/adapter.txt
 models/positions.tsv
+models/position-roles.tsv
+models/model-contract-candidates.tsv
 models/leaves.tsv
 models/types.tsv
 models/newtype-constraints.tsv

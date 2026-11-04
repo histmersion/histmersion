@@ -11,7 +11,7 @@ object ModelInventory {
     layers: Map[String,String] = Map.empty,
     pureConstraints: List[String] = List("io/github/iltotore/iron/constraint/any.Pure#"),
     nonPureConstraints: List[String] = List("io/github/iltotore/iron/constraint/numeric.Greater#"),
-    clientModules: List[String] = List("api","web","cli","plugin-api"))
+    clientModules: List[String] = List("api","web","cli","plugin-api"), boundaryOwners: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -21,6 +21,7 @@ object ModelInventory {
   case class Leaf(position: String, route: String, status: String, symbol: String, detail: String)
   case class TypeRow(symbol: String, path: String, line: Int, kind: String, name: String, owner: String, parameters: String, definition: String, ast: String, signature: String)
   case class Use(target: String, path: String, line: Int, owner: String, syntax: String)
+  case class Role(position: String, category: String, declaration: String, enclosingType: String, visibility: String)
   val primitives = Set("scala/Boolean#", "scala/Byte#", "scala/Short#", "scala/Int#", "scala/Long#", "scala/Float#", "scala/Double#", "scala/Char#", "java/lang/String#", "scala/Predef.String#")
   def sources(roots: List[String]): Set[String] = roots.flatMap { root =>
     val stream = Files.walk(Paths.get(root).toAbsolutePath.normalize)
@@ -43,6 +44,7 @@ class ModelInventory(val policy: ModelInventory.Policy) extends SemanticRule("Mo
   private case class Info(signature: Signature, opaque: Boolean, parameter: Boolean)
   private val symbols = new java.util.concurrent.ConcurrentHashMap[String,Info]()
   private val pending = new ConcurrentLinkedQueue[(SemanticType,String,String,String)]()
+  private val roles = new ConcurrentLinkedQueue[Role]()
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("ModelInventory")(Policy()).andThen { p =>
     if (p.roots.isEmpty || p.report.isEmpty) Configured.error("ModelInventory requires roots and report") else {
       require(p.pureConstraints.intersect(p.nonPureConstraints).isEmpty,"Conflicting constraint classification policy")
@@ -155,6 +157,37 @@ class ModelInventory(val policy: ModelInventory.Policy) extends SemanticRule("Mo
       val visibility = info.fold("unknown")(i => if (i.isPrivate || i.isPrivateThis || i.isPrivateWithin) "private" else if (i.isProtected || i.isProtectedThis || i.isProtectedWithin) "protected" else "public")
       positions.add(Position(id,path,sourceModule,scope,n.pos.startLine+1,kind,owner(n),key(s,path),n.value,visibility,
         declared.fold("<inferred>")(_.syntax),declared.fold(n.structure)(_.structure),info.fold("<missing>")(_.signature.toString)))
+      val context = parents(n)
+      val method = context.collectFirst { case d: Defn.Def => d.name.symbol; case d: Decl.Def => d.name.symbol }
+      val enclosingType = context.collectFirst {
+        case d: Defn.Class => (d.name.symbol,d.mods.exists(_.is[Mod.Case]),false)
+        case d: Defn.Trait => (d.name.symbol,false,true)
+        case d: Defn.Enum => (d.name.symbol,false,false)
+        case d: Defn.Object => (d.name.symbol,false,false)
+      }
+      val access = context.flatMap {
+        case d: Defn.Class => d.mods
+        case d: Defn.Trait => d.mods
+        case d: Defn.Object => d.mods
+        case d: Defn.Enum => d.mods
+        case d: Defn.Def => d.mods
+        case d: Decl.Def => d.mods
+        case d: Defn.Val => d.mods
+        case d: Defn.Var => d.mods
+        case d: Term.Param => d.mods
+        case _ => Nil
+      }.exists(m => m.is[Mod.Private] || m.is[Mod.Protected])
+      val declaration = method.map(key(_,path)).getOrElse(key(s,path))
+      val category = if(test == "test") "test-position" else if(local) "local-position"
+        else if(Set("alias-definition","type-bound")(kind)) "type-definition"
+        else if(policy.boundaryOwners.contains(declaration)) "configured-boundary"
+        else if(enclosingType.exists(_._2) && Set("constructor-parameter","value")(kind) && method.isEmpty) "record-field"
+        else if(kind == "constructor-parameter") "other-constructor-review"
+        else if(access || visibility == "private" || visibility == "protected") "non-public-member-review"
+        else if(enclosingType.exists(_._3) && Set("parameter","return","value")(kind)) "trait-contract"
+        else if(Set("parameter","return")(kind)) "public-method-review"
+        else "member-value-review"
+      roles.add(Role(id,category,declaration,enclosingType.map(t => key(t._1,path)).getOrElse(""),if(access) "enclosing-access-restriction" else visibility))
       info.map(_.signature) match {
         case Some(ValueSignature(t)) => pending.add((t,id,"value",path))
         case Some(MethodSignature(_,_,t)) => pending.add((t,id,"result",path))
@@ -253,6 +286,10 @@ class ModelInventory(val policy: ModelInventory.Policy) extends SemanticRule("Mo
     write("uses.tsv","target\tpath\tline\towner\tsyntax",us.map(u => u.productIterator.map(_.toString).toList))
     write("sources.tsv","path\tsha256",files.asScala.toList.sorted.map { case(p,h) => List(p,h) })
     val byId = ps.map(p => p.id -> p).toMap
+    val roleRows = roles.asScala.toList.sortBy(_.position)
+    require(roleRows.map(_.position).toSet == byId.keySet,"Missing primitive-role context")
+    require(policy.boundaryOwners.forall(s => roleRows.exists(_.declaration == s)),"Configured boundary is absent; reconcile its identity")
+    val roleById = roleRows.map(r => r.position -> r).toMap
     val primitive = ls.filter(_.status == "primitive")
     val unresolved = ls.filter(_.status == "unresolved")
     val grouped = primitive.groupBy(l => (byId(l.position).name,l.symbol)).toList.sortBy(_._1)
@@ -262,6 +299,14 @@ class ModelInventory(val policy: ModelInventory.Policy) extends SemanticRule("Mo
       List(name,base,proposed,"unreviewed-name-hypothesis",rows.map(_.position).distinct.sorted.mkString("; "),existing.mkString("; "),"Meaning, units, owner, constraints and phantom parameters require review; equal names/types do not prove equivalence")
     })
     val candidates = primitive.filter(l => byId(l.position).scope == "production/member" && byId(l.position).kind != "alias-definition")
+    write("position-roles.tsv","position\tcategory\tdeclaration\tenclosing-type\tvisibility",roleRows.map(r => r.productIterator.map(_.toString).toList))
+    write("primitive-role-counts.tsv","category\tmodule\tpositions\tprimitive-leaves",primitive.groupBy(l => (roleById(l.position).category,byId(l.position).module)).toList.sortBy(_._1).map {
+      case((role,m),rows) => List(role,m,rows.map(_.position).distinct.size.toString,rows.size.toString)
+    })
+    write("model-contract-candidates.tsv","position\tcategory\tmodule\towner\tname\troute\tprimitive\tstatus",primitive.filter(l => Set("record-field","trait-contract")(roleById(l.position).category)).map { l =>
+      val p = byId(l.position)
+      List(p.id,roleById(p.id).category,p.module,p.owner,p.name,l.route,l.symbol,"assign-purpose-type-owner-and-layer; not-a-confirmed-violation")
+    })
     write("model-candidates.tsv","position\tmodule\tlayer-hint\towner\tname\tkind\troute\tprimitive\tproposed-type\tstatus",candidates.map { l =>
       val p = byId(l.position)
       List(p.id,p.module,policy.layers.getOrElse(p.module,"unclassified"),p.owner,p.name,p.kind,l.route,l.symbol,
@@ -307,6 +352,7 @@ class ModelInventory(val policy: ModelInventory.Policy) extends SemanticRule("Mo
       s"${ts.count(_.kind == "iron-newtype")} Iron companions; ${ts.count(_.kind == "opaque")} opaque definitions; ${ts.count(_.kind == "alias")} aliases; ${grouped.size} unreviewed name/base proposals.","",
       s"${candidates.size} primitive leaves in ${candidates.map(_.position).distinct.size} production member positions (excluding alias definitions). See model-candidates.tsv; module layer hints are configuration, not verified ownership.","",
       "All main/test sources are scanned; member and local positions are reported separately. Counts include mechanisms and intentional wire/storage primitives: these are inventory candidates, not confirmed violations.",
+      "position-roles.tsv distinguishes record fields, trait contracts, other constructors, non-public members, locals, tests and explicitly configured boundaries. model-contract-candidates.tsv prioritizes production record fields and trait contracts without deleting other candidates. Roles describe declaration context, not business meaning or permission to keep a primitive.",
       "Declared and inferred symbol signatures are traversed, including container/function/tuple type arguments and transparent aliases. Opaque and Iron types are recorded as existing newtypes. Abstract types, missing metadata and unsupported semantic forms remain explicit unresolved entries.",
       "newtype-constraints.tsv inventories direct Iron parents, base types and constraint symbols. Pure and known non-Pure identities are configured; transparent parameterless aliases are expanded. Generic/external unresolved constraints remain explicit. Client constraint matches require authority review; inherited newtype definitions still need further analysis.",
       "Uses are resolved symbol references, not whole-program data-flow proofs. Proposal groups share a name and base type only; no equivalence or exemption is approved automatically. Review units, purpose, ownership, constraints, layers and phantom type parameters before migration.",
