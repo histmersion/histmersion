@@ -31,7 +31,7 @@ object PluginTree:
   /** Writes the tree under `root`, removing what it no longer holds from the directories it owns. */
   def write(root: Path, roster: AgentRoster): Unit =
     tree(roster) match
-      case Left(m)  => System.err.println(s"cannot generate the plugin: $m"); sys.exit(1)
+      case Left(m)  => scribe.error(s"cannot generate the plugin: $m"); sys.exit(1)
       case Right(t) =>
         Owned.map(root.resolve).filter(Files.exists(_)).foreach { d =>
           val all = Files.walk(d)
@@ -51,4 +51,4 @@ object PluginTree:
           Files.createDirectories(f.getParent)
           Files.writeString(f, text, UTF_8)
         }
-        System.err.println(s"wrote ${t.size} file(s) under $root")
+        scribe.info(s"wrote ${t.size} file(s) under $root")

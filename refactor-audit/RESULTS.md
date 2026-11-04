@@ -4,6 +4,12 @@ Baseline: `6e1b5387`. Production compiler repairs have now been applied through 
 
 ## Current checkpoint
 
+The launcher batch moves three diagnostic calls to scribe and replaces eleven raw console references in resolver/relink implementations with supplied output callbacks. Four raw stream references now live at their two entry functions. Three exact entry-function console permissions cover those four references and the server entry's three existing help/error/self-check references. This is both a code repair and an explicit policy change, not seventeen code fixes. No other capability permission changes.
+
+Capability findings are 228 (console 0); structural findings remain 46. Ordinary SemanticDB covers all 2,355 production files. All 32 capability source guards pass, including a lifecycle violation on an entry with console permission. Production and aggregate test compilation pass. All 24 resolver tests pass; selected server suites pass 24/25, including the new JSON/digest/error-channel regressions. PluginTreeSuite's existing generated-tree consistency assertion fails on extra local Scalafix skill files and `.DS_Store` files; these were preserved. The rule's check mode finds no remaining rewrites. This snapshot-scoped syntactic recipe is not a general symbol-safe migration rule.
+
+The following paragraphs record earlier batches.
+
 The stderr batch redirected 24 resolved calls in 12 CLI files to narrow operations at the existing permitted Cli boundary. Capability findings fell from 269 to 245, with console findings 41 → 17; no other category changed and no permission was broadened. The remaining console findings are outside the CLI module.
 
 Production and aggregate test compilation pass, as do all 234 CLI tests. Executable before/after fixtures preserve dynamic Console.err versus process System.err, receiver-before-argument evaluation when System.err is replaced, String overload selection, blank lines, carriage returns and flush counts. Method references and non-string overloads remain unsupported. Check mode rejects the original fixture, passes the compiled output and reports zero remaining or unsupported application cases. The real progress renderer has byte-exact regression coverage, including exceptions and single evaluation.
@@ -18,13 +24,13 @@ The readiness matrix accounts for all 43 goals. Its command parses all 3,125 Sca
 
 After this batch, production and aggregate test compilation pass. All 25 tests in ContractSnapshotSuite, AgentsSettingsSuite and AiProvidersSuite pass, with snapshot files unchanged. The snapshot test exposed an API/domain role membership mismatch in AgentDefinitions; a scoped Scalafix boundary conversion fixed it. Live database tests were not run for this rename batch.
 
-Production compilation passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 27 guarded capability source assertions pass, including the output boundaries and a remaining server console violation. It reports 245 policy findings, down from the compiling checkpoint's 432.
+Production compilation passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 32 guarded capability source assertions pass. It reports 228 policy findings, down from the compiling checkpoint's 432; the launcher permissions above contribute to that reduction.
 
 | Configured check | Findings across all normally compiled main files |
 |---|---:|
 | Environment | 8 |
 | System properties | 12 |
-| Console output | 17 |
+| Console output | 0 |
 | Clock | 103 |
 | Process lifecycle | 11 |
 | Filesystem | 67 |
@@ -33,7 +39,7 @@ Production compilation passes with normal SemanticDB, including server and CLI. 
 | Process execution/dependency | 7 |
 | Repository factory dependency | 0 |
 | Repository transaction lifecycle | 19 |
-| Total | 245 |
+| Total | 228 |
 
 The transaction count includes one known helper-call witness: `QueryRepo.run -> QueryRepo.exec -> Connection.setAutoCommit`. These are source-reference/call-site counts, not independent business operations. Repository helpers are followed across files, aliases and recursive paths; dynamic dispatch and callback targets are not fully modeled. Chained capability dependencies are deduplicated. A discovered cross-file local-symbol collision was reproduced in a failing regression fixture and corrected before retaining these results.
 

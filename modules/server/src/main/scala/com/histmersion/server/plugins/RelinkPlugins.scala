@@ -44,7 +44,7 @@ import scala.util.control.NonFatal
   * learn what it contributes and on what terms: that runs the plugin's code, in this short-lived JVM, as installing it
   * will.
   */
-@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList))
+@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList, s => System.out.println(s), s => System.err.println(s)))
 
 object RelinkPlugins:
 
@@ -54,28 +54,27 @@ object RelinkPlugins:
       |       pluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
-  def exitCode(args: List[String]): Int =
-    try run(args)
+  def exitCode(args: List[String], stdout: String => Unit, stderr: String => Unit): Int = try run(args, stdout, stderr)
     catch
       case NonFatal(e) =>
-        System.err.println(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        stderr(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
-  private def run(args: List[String]): Int = args match
-    case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))
-    case cmd :: rest                   => run(cmd, rest, Nil)
-    case Nil                           => System.err.println(Usage); 1
+  private def run(args: List[String], stdout: String => Unit, stderr: String => Unit): Int = args match
+    case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)), stdout, stderr)
+    case cmd :: rest                   => run(cmd, rest, Nil, stdout, stderr)
+    case Nil                           => stderr(Usage); 1
 
-  private def run(cmd: String, args: List[String], deps: List[Path]): Int =
+  private def run(cmd: String, args: List[String], deps: List[Path], stdout: String => Unit, stderr: String => Unit): Int =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd, args) match
       case ("describe", jars) if jars.nonEmpty =>
-        System.out.println(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
+        stdout(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
         0
       case ("check", kit :: jars) =>
         val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
-        lines.foreach(l => System.out.println(l))
-        problems.foreach(p => System.out.println(s"refused: $p"))
+        lines.foreach(l => stdout(l))
+        problems.foreach(p => stdout(s"refused: $p"))
         if problems.isEmpty then 0 else 2
       case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
         val described = jars.map(j => describe(Path.of(j), loader))
@@ -90,16 +89,16 @@ object RelinkPlugins:
         )
         writePluginSet(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
-        System.out.println(set.digest)
+        stdout(set.digest)
         0
       case ("kit-manifest", kit :: version :: commit :: graalvm :: Nil) =>
         val m = kitManifest(Path.of(kit), version, Option(commit).filter(c => c != "-" && c.nonEmpty), graalvm)
         val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
         val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
-        System.out.println(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
+        stdout(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
         0
       case _ =>
-        System.err.println(Usage)
+        stderr(Usage)
         1
 
   // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────
