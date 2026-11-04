@@ -1,7 +1,7 @@
 repository	action	production-outside-files	test-outside-files	references
-com/histmersion/domain/automation/agents/AgentRepo.	blocked	1	19	1095
+com/histmersion/domain/automation/agents/AgentRepo.	blocked	1	18	1095
 com/histmersion/domain/automation/agents/LeaseRepo.	blocked	0	1	43
-com/histmersion/domain/automation/agents/ModelSettingsRepo.	blocked	0	1	53
+com/histmersion/domain/automation/agents/ModelSettingsRepo.	private	0	0	53
 com/histmersion/domain/automation/agents/PlanQuotaRepo.	blocked	1	2	122
 com/histmersion/domain/automation/autopilot/AutopilotRepo.	blocked	0	3	156
 com/histmersion/domain/automation/goals/FocusRepo.	blocked	3	1	206

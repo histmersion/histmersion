@@ -8,7 +8,7 @@ import com.histmersion.util.database.given
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
   * `agent_steps`, the one place tokens and cost are written. Stateless.
   */
-object ModelSettingsRepo:
+private[agents] object ModelSettingsRepo:
 
   /** A saved chain: the role and its models (`provider:model`, first choice first). */
   def chains(using DbCon): Map[String, List[String]] =
