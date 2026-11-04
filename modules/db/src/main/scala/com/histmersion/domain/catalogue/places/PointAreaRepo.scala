@@ -121,7 +121,7 @@ private[places] object PointAreaRepo:
     * per-row cascades find nothing left to do): finding matches, names, links, descriptions, types, footprints,
     * relations on either side, aliases, overrides (V080: the callers never pass an overridden place, the statement
     * keeps the cascade idle); an event naming one keeps its row and loses its place (`SET NULL`). Returns the places
-    * deleted. Shared with the importer's prune ([[GazetteerRepo.Session.prune]]).
+    * deleted. Shared with the importer's prune ([[GazetteerImport.Session.prune]]).
     */
   private[places] def deletePlacesIn(ids: List[String])(using DbCon): Int =
     if ids.isEmpty then 0
@@ -140,7 +140,7 @@ private[places] object PointAreaRepo:
       sql"DELETE FROM places WHERE id = ANY($ids::text[])".update.run()
 
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
-    * ([[GazetteerRepo.Session.prune]]).
+    * ([[GazetteerImport.Session.prune]]).
     */
   private[places] def ofSourceIn(source: String, kinds: List[String])(using DbCon): List[String] =
     sql"""SELECT p.id FROM places p

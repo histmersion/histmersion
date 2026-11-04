@@ -97,7 +97,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     * a site's as much as a state's.
     */
   private def load(source: String, version: String, rs: List[GazRecord]): Gazetteer.LoadCounts =
-    connect(ds)(GazetteerRepo.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
+    connect(ds)(GazetteerImport.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
 
   private val Patones = rec(
     wd("Q999500001"),

@@ -1,6 +1,6 @@
 # Project-wide rule measurements
 
-28 source modules; 3127 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
+28 source modules; 3128 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
 
 Counts are matches within each rule's stated scope, not proof of all 43 architectural goals. Relationship counts and rewrite-plan nodes must not be added to diagnostic counts. CLI-only rows outside cli are not applicable. Zero is never a claim that an unimplemented goal is covered.
 
@@ -19,7 +19,7 @@ Counts are matches within each rule's stated scope, not proof of all 43 architec
 | capability/config-load | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/process | 7 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/repo-factory | 0 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/repo-transaction | 22 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/repo-transaction | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | structure/bucket | 0 | unknown | incomparable | production; configured structural scope |
 | structure/handlers | 0 | unknown | incomparable | production; configured structural scope |
 | structure/object-main | 0 | unknown | incomparable | production; configured structural scope |

@@ -18,7 +18,7 @@ import com.augustnagro.magnum.DbCon
   *   2. the caller's connection comes from the DataSource of the dedicated **`histmersion_query`** role (migration
   *      V011) — SELECT and nothing else, `default_transaction_read_only = on` baked in. This is what actually stops a
   *      superuser-only `pg_read_file()`; the transaction settings never could.
-  *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` here, so `WITH x AS (DELETE …) SELECT …` — the
+  *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` in the caller's Transactor scope, so `WITH x AS (DELETE …) SELECT …` — the
   *      classic blacklist escape — still fails on a database where layer 2 could not be provisioned. `maxRows` bounds
   *      the rows, `maxCellChars` bounds one cell.
   *
@@ -30,36 +30,15 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
-  def run(
-      statement: String,
-      timeoutMs: Int,
-      maxRows: Int,
-      maxCellChars: Int
-  )(using DbCon): Either[String, QueryResult] =
-    com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, timeoutMs, maxRows, maxCellChars))
+  def run(statement: String, maxRows: Int, maxCellChars: Int)(using DbCon): Either[String, QueryResult] =
+    com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, maxRows, maxCellChars))
 
-  /** On the caller's connection, in a read-only transaction of its own that is always rolled back (the connection's
-    * auto-commit is restored afterwards).
-    */
-  private def exec(
-      text: String,
-      timeoutMs: Int,
-      maxRows: Int,
-      maxCellChars: Int
-  )(using con: DbCon): Either[String, QueryResult] =
+  private def exec(text: String, maxRows: Int, maxCellChars: Int)(using con: DbCon): Either[String, QueryResult] =
     val c: Connection = con.connection
-    val autoCommit = c.getAutoCommit
     try
-      c.setAutoCommit(false)
-      c.setReadOnly(true)
       val st = c.createStatement()
       try
-        // first statements of the transaction: the read-only mode and the timeout. Both take
-        // integers from config, so neither can carry user text.
-        val _readOnly = st.execute("SET TRANSACTION READ ONLY")
-        val _timeout = st.execute(s"SET LOCAL statement_timeout = ${math.max(1, timeoutMs)}")
-        val _ = (_readOnly, _timeout)
-        st.setMaxRows(math.max(1, maxRows) + 1) // one extra row = "there was more"
+        st.setMaxRows(math.max(1, maxRows) + 1)
         val started = System.nanoTime()
         val hasRs = st.execute(text)
         val elapsed = (System.nanoTime() - started) / 1000000L
@@ -70,16 +49,9 @@ private[search] object QueryRepo:
         else Right(read(st.getResultSet, maxRows, maxCellChars, elapsed))
       finally st.close()
     catch case e: SQLException => Left(message(e))
-    finally
-      try c.rollback()
-      catch case _: SQLException => ()
-      try
-        c.setReadOnly(false)
-        c.setAutoCommit(autoCommit)
-      catch case _: SQLException => ()
 
   /** Postgres's own words, with the driver's stack noise stripped. */
-  private def message(e: SQLException): String =
+  def message(e: SQLException): String =
     Option(e.getMessage)
       .map(_.linesIterator.take(3).mkString(" ").trim)
       .filter(_.nonEmpty)

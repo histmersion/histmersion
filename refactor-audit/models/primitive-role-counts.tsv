@@ -5,7 +5,7 @@ local-position	cli	1132	1171
 local-position	config	165	176
 local-position	console	2	2
 local-position	core	1599	1771
-local-position	db	1296	1439
+local-position	db	1291	1434
 local-position	files	178	193
 local-position	plugin-api	13	17
 local-position	plugin-fixtures/hello-ai	4	4
@@ -19,7 +19,7 @@ local-position	plugins/events	65	68
 local-position	plugins/fetchers	39	39
 local-position	plugins/gazetteers	42	43
 local-position	plugins/media	267	309
-local-position	server	4663	5133
+local-position	server	4669	5139
 local-position	upstreams	209	225
 local-position	values	20	20
 local-position	web	2621	2763
@@ -63,7 +63,7 @@ non-public-member-review	plugins/events	9	10
 non-public-member-review	plugins/fetchers	12	14
 non-public-member-review	plugins/gazetteers	17	18
 non-public-member-review	plugins/media	34	37
-non-public-member-review	server	2320	2560
+non-public-member-review	server	2327	2567
 non-public-member-review	upstreams	77	81
 non-public-member-review	values	6	6
 non-public-member-review	web	994	1105
@@ -72,7 +72,7 @@ other-constructor-review	cli	37	38
 other-constructor-review	config	20	20
 other-constructor-review	console	2	3
 other-constructor-review	core	124	124
-other-constructor-review	db	30	30
+other-constructor-review	db	29	29
 other-constructor-review	files	8	8
 other-constructor-review	plugin-api	17	17
 other-constructor-review	plugin-fixtures/hello	1	1
@@ -87,7 +87,7 @@ other-constructor-review	plugins/events	1	1
 other-constructor-review	plugins/fetchers	5	5
 other-constructor-review	plugins/gazetteers	2	2
 other-constructor-review	plugins/media	13	13
-other-constructor-review	server	219	283
+other-constructor-review	server	220	284
 other-constructor-review	upstreams	2	2
 other-constructor-review	values	22	22
 other-constructor-review	web	173	181
@@ -97,7 +97,7 @@ public-method-review	cli	467	496
 public-method-review	config	151	165
 public-method-review	console	1	1
 public-method-review	core	1163	1293
-public-method-review	db	769	851
+public-method-review	db	770	852
 public-method-review	files	168	180
 public-method-review	plugin-api	81	88
 public-method-review	plugin-fixtures/hello	6	6
@@ -145,7 +145,7 @@ test-position	chimney-iron-tests	26	27
 test-position	cli	349	372
 test-position	config	51	61
 test-position	core	1083	1190
-test-position	db	1685	1937
+test-position	db	1627	1853
 test-position	files	85	98
 test-position	plugin-api	93	114
 test-position	plugin-host	117	152
@@ -158,7 +158,7 @@ test-position	plugins/events	32	44
 test-position	plugins/fetchers	21	26
 test-position	plugins/gazetteers	62	69
 test-position	plugins/media	73	91
-test-position	server	8446	9445
+test-position	server	8504	9529
 test-position	upstreams	20	20
 test-position	values	7	7
 test-position	web	610	672
@@ -167,7 +167,7 @@ trait-contract	cli	10	15
 trait-contract	config	4	4
 trait-contract	console	5	5
 trait-contract	core	42	44
-trait-contract	db	20	22
+trait-contract	db	21	23
 trait-contract	plugin-api	91	106
 trait-contract	plugin-fixtures/hello	2	2
 trait-contract	plugin-host	14	15

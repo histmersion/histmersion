@@ -20,5 +20,6 @@ object QueryService:
 
   final private class Implementation(queries: Transactor, schema: Transactor) extends QueryService:
     def run(statement: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int): Either[String, QueryResult] =
-      queries.read(QueryRepo.run(statement, timeoutMs, maxRows, maxCellChars))
+      try queries.readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
+      catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
     def tables: List[SchemaTable] = schema.read(QueryRepo.tables)

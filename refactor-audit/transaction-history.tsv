@@ -2,3 +2,9 @@ event-id	finding-id	event	reason	evidence
 TX-E0001	TX-0001	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md
 TX-E0002	TX-0002	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md
 TX-E0003	TX-0003	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md
+TX-E0004	TX-0001	treatment-assigned	Design resolved into a guarded targeted Scalafix batch; original manual/design classification retained in history	transaction-repair/plan.tsv
+TX-E0005	TX-0002	treatment-assigned	Design resolved into a guarded targeted Scalafix batch; original manual/design classification retained in history	transaction-repair/plan.tsv
+TX-E0006	TX-0003	treatment-assigned	Design resolved into a guarded targeted Scalafix batch; original manual/design classification retained in history	transaction-repair/plan.tsv
+TX-E0007	TX-0001	verified-fixed	Service selects read-only rollback scope; compile, lifecycle, real database tests and identity comparison pass	transaction-repair/README.md
+TX-E0008	TX-0002	verified-fixed	Feature import orchestration selects transactions; repository borrows DbCon; dry-run/prune/sweep database checks pass	transaction-repair/README.md
+TX-E0009	TX-0003	verified-fixed	Job selects autocommit capability; repository no longer changes connection mode; real maintenance HTTP checks pass	transaction-repair/README.md

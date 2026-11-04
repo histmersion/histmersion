@@ -37,7 +37,8 @@ object SearchFixtures:
       maxRows: Int,
       maxCellChars: Int
   ): Either[String, QueryResult] =
-    connect(ds)(QueryRepo.run(statement, timeoutMs, maxRows, maxCellChars))
+    try _root_.com.histmersion.util.database.Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
+    catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)
   def periodsQuery(
       unit: String,
