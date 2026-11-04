@@ -1,0 +1,10 @@
+PASS
+occurrences=231
+anchors=190
+ambiguous-occurrences=79
+new=0
+absent-not-verified-fixed=0
+reopened=0
+multiplicity-changes=0
+Tests, permission occurrences, dynamic dispatch and callback effects are not covered by this gate.
+Identical replacements with the same owner/path/symbol/AST cannot be distinguished; duplicate anchors have no per-occurrence identity claim.

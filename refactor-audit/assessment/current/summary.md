@@ -19,7 +19,7 @@ Counts are matches within each rule's stated scope, not proof of all 43 architec
 | capability/config-load | 0 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/process | 7 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/repo-factory | 0 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/repo-transaction | 19 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/repo-transaction | 22 | unknown | incomparable | production; configured symbol/owner policy |
 | structure/bucket | 0 | unknown | incomparable | production; configured structural scope |
 | structure/handlers | 0 | unknown | incomparable | production; configured structural scope |
 | structure/object-main | 0 | unknown | incomparable | production; configured structural scope |
