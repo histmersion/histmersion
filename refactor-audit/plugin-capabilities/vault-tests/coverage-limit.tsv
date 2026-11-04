@@ -1,0 +1,2 @@
+class	test	status	reason	source
+com.histmersion.plugins.vaults.VaultsSuite	keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)	skipped	Opt-in installed-tool integration test; not exercised in this baseline	modules/plugin-vaults/src/test/scala/com/histmersion/plugins/vaults/VaultsSuite.scala:534

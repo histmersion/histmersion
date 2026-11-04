@@ -1,0 +1,8 @@
+PASS: complete source traversal; every frozen plugin finding has resolved AST evidence
+source-files=3132
+confirmed-occurrences=25
+confirmed-anchors=23
+production-references=356
+test-references=208
+References include declarations/imports and are not additional violations.
+No dynamic-dispatch, reflection or complete transitive effect claim; no detector precision/recall claim.

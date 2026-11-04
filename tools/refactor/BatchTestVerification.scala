@@ -6,7 +6,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
 
 object BatchTestVerification {
-  case class Policy(phase: String = "baseline", module: String = "server", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "")
+  case class Policy(phase: String = "baseline", module: String = "server", artifact: String = "", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "")
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -20,7 +20,7 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
     val out = Paths.get(policy.report); Files.createDirectories(out)
     val snapshot = out.resolve(policy.phase + ".tsv")
     require(policy.phase != "baseline" || !Files.exists(snapshot), "Never overwrite the test baseline")
-    val log = Paths.get("target/batch-test-verification", out.getParent.getFileName.toString, policy.phase + ".log")
+    val log = Paths.get("target/batch-test-verification", out.getParent.getFileName.toString + "-" + out.getFileName.toString, policy.phase + ".log")
     Files.createDirectories(log.getParent)
     val start = System.currentTimeMillis()
     val command = s"${policy.module}/testOnly ${policy.suites.map("*" + _).mkString(" ")}"
@@ -28,7 +28,7 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
     val exit = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(log.toFile).start().waitFor()
     val stream = Files.walk(Paths.get("target/out"))
     val reports = try stream.iterator.asScala.filter(p => p.toString.endsWith(".xml") && p.getParent.getFileName.toString == "test-reports" &&
-      p.getParent.getParent.getFileName.toString == "histmersion-" + policy.module).toList finally stream.close()
+      p.getParent.getParent.getFileName.toString == "histmersion-" + (if(policy.artifact.isEmpty) policy.module else policy.artifact)).toList finally stream.close()
     val factory = DocumentBuilderFactory.newInstance(); factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
     val parser = factory.newDocumentBuilder()
     val seen = scala.collection.mutable.Set.empty[String]
