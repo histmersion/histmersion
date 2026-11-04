@@ -8,7 +8,4 @@ import sttp.tapir.Schema
 final case class CollectionUpdateOne(
     citekey: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionUpdateOne:
-  given Schema[CollectionUpdateOne] = summon[KindlingsSchema[CollectionUpdateOne]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

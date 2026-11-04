@@ -35,6 +35,4 @@ final case class UiConfig(
     mapStart: MapStartConfig = MapStartConfig(),
     setupDue: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object UiConfig:
-  given Schema[UiConfig] = summon[KindlingsSchema[UiConfig]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

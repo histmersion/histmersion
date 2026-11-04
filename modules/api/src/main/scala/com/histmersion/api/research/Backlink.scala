@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class Backlink(kind: String, id: String, title: Option[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object Backlink:
-  given Schema[Backlink] = summon[KindlingsSchema[Backlink]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

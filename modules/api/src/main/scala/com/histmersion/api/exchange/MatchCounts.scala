@@ -14,6 +14,4 @@ final case class MatchCounts(
     unmatched: Int = 0,
     deletedHere: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MatchCounts:
-  given Schema[MatchCounts] = summon[KindlingsSchema[MatchCounts]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

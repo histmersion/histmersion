@@ -14,14 +14,11 @@ final case class ReadMark(
     readAt: Option[String] = None,
     openedAt: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object ReadMark:
-  given Schema[ReadMark] = summon[KindlingsSchema[ReadMark]].schema
+
 
   final case class Set(kind: ItemKind, id: ItemKey, read: Boolean, title: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object Set:
-    given Schema[Set] = summon[KindlingsSchema[Set]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

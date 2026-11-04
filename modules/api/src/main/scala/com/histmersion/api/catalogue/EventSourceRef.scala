@@ -11,6 +11,4 @@ final case class EventSourceRef(
     via: String = "citekey",
     quote: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventSourceRef:
-  given Schema[EventSourceRef] = summon[KindlingsSchema[EventSourceRef]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

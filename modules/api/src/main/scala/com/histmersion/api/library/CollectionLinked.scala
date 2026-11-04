@@ -10,7 +10,4 @@ final case class CollectionLinked(
     id: String,
     title: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionLinked:
-  given Schema[CollectionLinked] = summon[KindlingsSchema[CollectionLinked]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

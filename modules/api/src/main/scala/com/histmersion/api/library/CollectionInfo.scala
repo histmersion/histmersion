@@ -15,7 +15,4 @@ final case class CollectionInfo(
     reachable: Boolean,
     problem: Option[String]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionInfo:
-  given Schema[CollectionInfo] = summon[KindlingsSchema[CollectionInfo]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

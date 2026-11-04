@@ -6,9 +6,8 @@ import com.histmersion.api.given
 
 object AgentScheduler:
 
-  final case class StrategyLine(name: String, describe: String = "") derives KindlingsCodecAsObject, KindlingsSchema
-  object StrategyLine:
-    given Schema[StrategyLine] = summon[KindlingsSchema[StrategyLine]].schema
+  final case class StrategyLine(name: String, describe: String = "") derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Started(
       item: Long,
@@ -19,9 +18,8 @@ object AgentScheduler:
       goal: Option[String] = None,
       why: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Started:
-    given Schema[Started] = summon[KindlingsSchema[Started]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Waiting(
       item: Long,
@@ -37,13 +35,11 @@ object AgentScheduler:
       behind: List[String] = Nil,
       position: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Waiting:
-    given Schema[Waiting] = summon[KindlingsSchema[Waiting]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class PoolUse(pool: String, used: Int = 0, cap: Int = 0) derives KindlingsCodecAsObject, KindlingsSchema
-  object PoolUse:
-    given Schema[PoolUse] = summon[KindlingsSchema[PoolUse]].schema
+
+  final case class PoolUse(pool: String, used: Int = 0, cap: Int = 0) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class TypeLine(
       jobType: String,
@@ -53,9 +49,8 @@ object AgentScheduler:
       recent: Int = 0,
       waiting: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object TypeLine:
-    given Schema[TypeLine] = summon[KindlingsSchema[TypeLine]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SchedulerStatus(
       strategy: String,
@@ -75,15 +70,13 @@ object AgentScheduler:
       settings: List[String] = Nil,
       changes: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object SchedulerStatus:
-    given Schema[SchedulerStatus] = summon[KindlingsSchema[SchedulerStatus]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SchedulerSet(strategy: String, by: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object SchedulerSet:
-    given Schema[SchedulerSet] = summon[KindlingsSchema[SchedulerSet]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class WhyInfo(
       item: Long,
@@ -98,9 +91,8 @@ object AgentScheduler:
       run: Option[String] = None,
       approval: Option[Long] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object WhyInfo:
-    given Schema[WhyInfo] = summon[KindlingsSchema[WhyInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   object Code:
     val Person = "person"

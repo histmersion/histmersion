@@ -24,23 +24,20 @@ final case class Coverage(
     eventLeads: List[ArticleEventLead] = Nil,
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def capped: Boolean = checked < total
   def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
-  given Schema[Coverage] = summon[KindlingsSchema[Coverage]].schema
 
-  final case class Drift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
-  object Drift:
-    given Schema[Drift] = summon[KindlingsSchema[Drift]].schema
 
-  final case class Edge(from: String, kind: String, to: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Edge:
-    given Schema[Edge] = summon[KindlingsSchema[Edge]].schema
+  final case class Drift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Entry(source: Source, reason: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema
-  object Entry:
-    given Schema[Entry] = summon[KindlingsSchema[Entry]].schema
+
+  final case class Edge(from: String, kind: String, to: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
+  final case class Entry(source: Source, reason: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Reason(citekey: String, reason: String) derives KindlingsCodecAsObject
   object Reason:
@@ -79,6 +76,4 @@ object Coverage:
       status: com.histmersion.api.library.Source.Status,
       authors: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Source:
-    given Schema[Source] = summon[KindlingsSchema[Source]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

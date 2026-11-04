@@ -11,6 +11,4 @@ final case class EventEdge(
     citekey: String,
     note: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventEdge:
-  given Schema[EventEdge] = summon[KindlingsSchema[EventEdge]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

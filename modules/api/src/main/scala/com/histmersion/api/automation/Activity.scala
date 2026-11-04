@@ -59,20 +59,17 @@ object Activity:
       target: Option[String] = None,
       targetKind: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def entryKind: Option[EntryKind] = EntryKind.parse(kind)
-  object Entry:
-    given Schema[Entry] = summon[KindlingsSchema[Entry]].schema
 
-  final case class Counts(running: Int = 0, problemsWeek: Int = 0) derives KindlingsCodecAsObject, KindlingsSchema
-  object Counts:
-    given Schema[Counts] = summon[KindlingsSchema[Counts]].schema
+
+  final case class Counts(running: Int = 0, problemsWeek: Int = 0) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Page(entries: List[Entry], next: Option[String] = None, counts: Counts = Counts())
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Page:
-    given Schema[Page] = summon[KindlingsSchema[Page]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   val MaxLimit = 200
   val DefaultLimit = 30

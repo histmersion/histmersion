@@ -4,6 +4,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class InstanceLabel(label: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema
-object InstanceLabel:
-  given Schema[InstanceLabel] = summon[KindlingsSchema[InstanceLabel]].schema
+final case class InstanceLabel(label: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

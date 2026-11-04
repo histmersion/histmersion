@@ -19,6 +19,4 @@ final case class CalibreGap(
     /** None where the server does not say (an older server, the push metadata): the push then tries. */
     storedOriginal: Option[Boolean] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CalibreGap:
-  given Schema[CalibreGap] = summon[KindlingsSchema[CalibreGap]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

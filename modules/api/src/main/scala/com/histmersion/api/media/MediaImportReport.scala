@@ -24,10 +24,10 @@ final case class MediaImportReport(
     batches: Int = 0,
     samples: List[MediaSample] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaImportReport:
-  given Schema[MediaImportReport] = summon[KindlingsSchema[MediaImportReport]].schema
+
 
   def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
     def add(x: List[MediaCount], y: List[MediaCount]) =

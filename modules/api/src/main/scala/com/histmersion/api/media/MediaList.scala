@@ -11,9 +11,9 @@ final case class MediaList(
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, items.size)
 object MediaList:
-  given Schema[MediaList] = summon[KindlingsSchema[MediaList]].schema
+
   def of(total: Int, rows: List[MediaItem], offset: Int): MediaList =
     MediaList(total, rows, offset, OffsetPage(total, offset, rows.size).next)

@@ -11,9 +11,9 @@ final case class Facet(
     id: Option[String] = None,
     contested: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
-  given Schema[Facet] = summon[KindlingsSchema[Facet]].schema
+
 
   enum Field:
     case Tags, Authors, Places, Topics, Status, Provenance

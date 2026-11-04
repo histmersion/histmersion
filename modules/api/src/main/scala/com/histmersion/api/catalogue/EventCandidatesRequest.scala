@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class EventCandidatesRequest(all: Boolean = false, event: Option[String] = None, limit: Option[Int] = None)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventCandidatesRequest:
-  given Schema[EventCandidatesRequest] = summon[KindlingsSchema[EventCandidatesRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

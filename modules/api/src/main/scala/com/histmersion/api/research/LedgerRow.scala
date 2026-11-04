@@ -17,6 +17,4 @@ final case class LedgerRow(
     decision: String,
     recordedAt: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object LedgerRow:
-  given Schema[LedgerRow] = summon[KindlingsSchema[LedgerRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

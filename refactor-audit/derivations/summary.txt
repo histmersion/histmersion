@@ -1,0 +1,13 @@
+files=3126
+class=531
+derived-call=221
+other-given=455
+schema-bridge=521
+104	hearth/kindlings/tapirschemaderivation/KindlingsSchemaCompanionCompat#derived().
+47	hearth/kindlings/circederivation/KindlingsCodecAsObjectCompanionCompat#derived().
+42	com/augustnagro/magnum/DbCodec.derived().
+16	sttp/ai/core/agent/ResponseSchema.derived().
+4	com/histmersion/api/library/MetadataPatch.derived.
+3	local92
+3	com/histmersion/api/StrictJson.codec().(derived)
+2	local10

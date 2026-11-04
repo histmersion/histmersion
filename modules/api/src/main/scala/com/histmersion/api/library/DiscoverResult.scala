@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class DiscoverResult(query: String, count: Int, works: List[WorkRef])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object DiscoverResult:
-  given Schema[DiscoverResult] = summon[KindlingsSchema[DiscoverResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

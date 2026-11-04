@@ -23,17 +23,14 @@ object Queue:
       createdBy: Option[String] = None,
       closedBy: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QueueItem:
-    given Schema[QueueItem] = summon[KindlingsSchema[QueueItem]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema
-  object ItemGoals:
-    given Schema[ItemGoals] = summon[KindlingsSchema[ItemGoals]].schema
 
-  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object GoalRef:
-    given Schema[GoalRef] = summon[KindlingsSchema[GoalRef]].schema
+  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
+  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class QueueAdd(
       text: String,
@@ -43,9 +40,9 @@ object Queue:
       createdAt: Option[String] = None,
       goal: Option[String] = None,
       job: Option[String] = None
-  ) derives KindlingsSchema
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object QueueAdd:
-    given Schema[QueueAdd] = summon[KindlingsSchema[QueueAdd]].schema
+
 
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
@@ -56,21 +53,19 @@ object Queue:
       reason: Option[String] = None,
       goal: Option[String] = None,
       closedBy: Option[String] = None
-  ) derives KindlingsSchema
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object QueuePatch:
-    given Schema[QueuePatch] = summon[KindlingsSchema[QueuePatch]].schema
+
 
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
-  final case class QueueImport(text: String, replace: Boolean = true) derives KindlingsCodecAsObject, KindlingsSchema
-  object QueueImport:
-    given Schema[QueueImport] = summon[KindlingsSchema[QueueImport]].schema
+  final case class QueueImport(text: String, replace: Boolean = true) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class QueueImported(list: String, items: Int, notes: Int, replaced: Int)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QueueImported:
-    given Schema[QueueImported] = summon[KindlingsSchema[QueueImported]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum Kind(val label: String, val file: String, val checkboxes: Boolean):
     case Acquire extends Kind("acquire", "ACQUIRE.md", true)

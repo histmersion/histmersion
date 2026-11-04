@@ -30,10 +30,10 @@ final case class CatalogRecord(
     datingMethod: Option[String] = None,
     raw: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def key: (String, String) = (provider, providerId)
 object CatalogRecord:
-  given Schema[CatalogRecord] = summon[KindlingsSchema[CatalogRecord]].schema
+
 
   def eventId(r: CatalogRecord): String = eventId(r.provider, r.providerId)
 

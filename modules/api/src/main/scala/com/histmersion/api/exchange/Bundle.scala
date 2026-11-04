@@ -194,9 +194,8 @@ object Bundle:
       rev: String = ""
   ) derives KindlingsCodecAsObject
 
-  final case class Blobs(count: Int, bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
-  object Blobs:
-    given Schema[Blobs] = summon[KindlingsSchema[Blobs]].schema
+  final case class Blobs(count: Int, bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Correction(
       targetKind: String,
@@ -321,9 +320,8 @@ object Bundle:
 
   final case class FileInfo(path: String, lines: Int, bytes: Long, sha256: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object FileInfo:
-    given Schema[FileInfo] = summon[KindlingsSchema[FileInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   object Files:
     val Edges = "entities/edges.ndjson"
@@ -431,14 +429,12 @@ object Bundle:
       issues: List[MergeIssue] = Nil,
       planHash: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def changed: Int = counts.map(_.changed).sum
-  object ImportResult:
-    given Schema[ImportResult] = summon[KindlingsSchema[ImportResult]].schema
 
-  final case class Instance(id: UUID, label: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object Instance:
-    given Schema[Instance] = summon[KindlingsSchema[Instance]].schema
+
+  final case class Instance(id: UUID, label: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class KindCounts(
       kind: com.histmersion.api.exchange.Bundle.Kind,
@@ -451,10 +447,9 @@ object Bundle:
       skippedDeleted: Int = 0,
       held: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def changed: Int = inserted + updated + deleted
-  object KindCounts:
-    given Schema[KindCounts] = summon[KindlingsSchema[KindCounts]].schema
+
 
   final case class Manifest(
       format: String,
@@ -468,9 +463,8 @@ object Bundle:
       blobs: Blobs,
       reference: Reference
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Manifest:
-    given Schema[Manifest] = summon[KindlingsSchema[Manifest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Period(
       uid: UUID,
@@ -535,9 +529,8 @@ object Bundle:
 
   final case class Reference(places: Int, placesDigest: String, periods: Int, periodsDigest: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Reference:
-    given Schema[Reference] = summon[KindlingsSchema[Reference]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SiteType(placeId: String, siteType: Option[String], checkedAt: Option[String])
       derives KindlingsCodecAsObject
@@ -582,9 +575,8 @@ object Bundle:
 
   final case class Upload(sha256: String, bytes: Long, manifest: Option[Manifest], problems: List[String])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Upload:
-    given Schema[Upload] = summon[KindlingsSchema[Upload]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class VerifyResult(
       ok: Boolean,
@@ -592,6 +584,4 @@ object Bundle:
       blobsChecked: Int,
       problems: List[String]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object VerifyResult:
-    given Schema[VerifyResult] = summon[KindlingsSchema[VerifyResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

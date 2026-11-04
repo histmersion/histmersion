@@ -17,6 +17,4 @@ final case class MergeInfo(
     ledgerRows: Int = 0,
     redirects: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeInfo:
-  given Schema[MergeInfo] = summon[KindlingsSchema[MergeInfo]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

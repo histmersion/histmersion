@@ -151,6 +151,4 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
 
 object AgentSchemaSuite:
-  final case class Titled(title: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Titled:
-    given Schema[Titled] = summon[KindlingsSchema[Titled]].schema
+  final case class Titled(title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

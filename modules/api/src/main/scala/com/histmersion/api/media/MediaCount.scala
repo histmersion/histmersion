@@ -6,9 +6,9 @@ import com.histmersion.api.given
 
 final case class MediaCount(key: String, n: Int, allowed: Boolean = true)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object MediaCount:
-  given Schema[MediaCount] = summon[KindlingsSchema[MediaCount]].schema
+
 
   def of(keys: List[String], allowed: String => Boolean = _ => true): List[MediaCount] =
     keys

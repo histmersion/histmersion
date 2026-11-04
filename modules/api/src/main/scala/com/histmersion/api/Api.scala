@@ -1460,9 +1460,9 @@ object Api:
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))
 
-  final case class Error(message: String, code: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class Error(message: String, code: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
   object Error:
-    given Schema[Error] = summon[KindlingsSchema[Error]].schema
+
 
     /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
       * `Matchable`), so the value is checked with a type test.

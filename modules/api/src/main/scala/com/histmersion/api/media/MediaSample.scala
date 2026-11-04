@@ -14,7 +14,4 @@ final case class MediaSample(
     basis: String,
     url: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaSample:
-  given Schema[MediaSample] = summon[KindlingsSchema[MediaSample]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

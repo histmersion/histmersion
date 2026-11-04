@@ -8,6 +8,4 @@ import com.histmersion.api.given
 
 final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: String, mergeId: Option[UUID])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object UidRedirect:
-  given Schema[UidRedirect] = summon[KindlingsSchema[UidRedirect]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

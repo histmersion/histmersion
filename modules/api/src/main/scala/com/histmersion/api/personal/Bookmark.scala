@@ -17,16 +17,15 @@ final case class Bookmark(
     createdAt: String = "",
     updatedAt: String = ""
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def name: String = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
 
 object Bookmark:
-  given Schema[Bookmark] = summon[KindlingsSchema[Bookmark]].schema
 
-  final case class Edit(label: Option[Label] = None) derives KindlingsCodecAsObject, KindlingsSchema
 
-  object Edit:
-    given Schema[Edit] = summon[KindlingsSchema[Edit]].schema
+  final case class Edit(label: Option[Label] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
 
   type Id = Id.T
 
@@ -51,7 +50,4 @@ object Bookmark:
 
   final case class New(target: Target, label: Option[Label] = None, title: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object New:
-    given Schema[New] = summon[KindlingsSchema[New]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

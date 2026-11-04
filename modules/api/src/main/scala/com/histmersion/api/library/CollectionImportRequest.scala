@@ -16,7 +16,4 @@ final case class CollectionImportRequest(
     cover: Boolean = true,
     acquireItem: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionImportRequest:
-  given Schema[CollectionImportRequest] = summon[KindlingsSchema[CollectionImportRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -14,7 +14,4 @@ final case class CollectionUpdateRow(
     changes: List[CollectionFieldChange],
     reason: Option[String]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionUpdateRow:
-  given Schema[CollectionUpdateRow] = summon[KindlingsSchema[CollectionUpdateRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

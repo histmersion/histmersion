@@ -8,7 +8,4 @@ final case class AgentStateDeleted(
     key: String,
     deleted: Boolean
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object AgentStateDeleted:
-  given Schema[AgentStateDeleted] = summon[KindlingsSchema[AgentStateDeleted]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

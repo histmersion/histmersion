@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class ArchiveSearchResult(query: String, count: Int, items: List[ArchiveItem])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ArchiveSearchResult:
-  given Schema[ArchiveSearchResult] = summon[KindlingsSchema[ArchiveSearchResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -9,7 +9,4 @@ final case class CollectionLinkRequest(
     citekey: String,
     id: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionLinkRequest:
-  given Schema[CollectionLinkRequest] = summon[KindlingsSchema[CollectionLinkRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

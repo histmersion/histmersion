@@ -51,14 +51,13 @@ object ConfigEdit:
       restartable: Boolean = false,
       setupDue: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
     def field(key: String): Option[Field] =
       val full = if key.startsWith("histmersion.") then key else s"histmersion.$key"
       fields.find(_.key == full)
 
-  object Page:
-    given Schema[Page] = summon[KindlingsSchema[Page]].schema
+
 
   final case class Change(key: String, value: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
 
@@ -68,10 +67,9 @@ object ConfigEdit:
       literalConsent: Boolean = false,
       reload: Boolean = true
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Write:
-    given Schema[Write] = summon[KindlingsSchema[Write]].schema
+
 
   final case class RestartNote(key: String, why: String) derives KindlingsCodecAsObject, KindlingsSchema
 
@@ -87,15 +85,13 @@ object ConfigEdit:
       reload: Option[ReloadReport] = None,
       restartable: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Written:
-    given Schema[Written] = summon[KindlingsSchema[Written]].schema
 
-  final case class Restart(accepted: Boolean, message: String) derives KindlingsCodecAsObject, KindlingsSchema
 
-  object Restart:
-    given Schema[Restart] = summon[KindlingsSchema[Restart]].schema
+  final case class Restart(accepted: Boolean, message: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
 
   val CodeChanged = "settings_changed"
 

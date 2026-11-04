@@ -12,6 +12,4 @@ final case class WikirefsResult(
     arxiv: List[String],
     known: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object WikirefsResult:
-  given Schema[WikirefsResult] = summon[KindlingsSchema[WikirefsResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -17,9 +17,8 @@ object PersonalTools:
 
   final case class BookmarksInput(kind: Option[String] = None, query: Option[String] = None, limit: Option[Int] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object BookmarksInput:
-    given Schema[BookmarksInput] = summon[KindlingsSchema[BookmarksInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class NotesInput(
       id: Option[String] = None,
@@ -28,9 +27,8 @@ object PersonalTools:
       query: Option[String] = None,
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object NotesInput:
-    given Schema[NotesInput] = summon[KindlingsSchema[NotesInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   def apply(personal: PersonalControllers) =
     val bookmarks =

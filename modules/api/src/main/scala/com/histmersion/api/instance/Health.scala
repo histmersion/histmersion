@@ -11,6 +11,4 @@ final case class Health(
     converter: Option[String] = None,
     warnings: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object Health:
-  given Schema[Health] = summon[KindlingsSchema[Health]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

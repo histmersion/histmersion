@@ -21,8 +21,8 @@ final case class EventPatch(
     participants: Option[List[EventParticipant]] = None,
     scale: Option[String] = None,
     wikidata: Option[String] = None
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 object EventPatch:
-  given Schema[EventPatch] = summon[KindlingsSchema[EventPatch]].schema
+
 
   given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])

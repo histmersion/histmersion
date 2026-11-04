@@ -10,6 +10,4 @@ final case class IssueHunk(
     left: List[String] = Nil,
     right: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object IssueHunk:
-  given Schema[IssueHunk] = summon[KindlingsSchema[IssueHunk]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

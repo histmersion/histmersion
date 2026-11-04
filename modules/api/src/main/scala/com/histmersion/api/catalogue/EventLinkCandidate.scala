@@ -14,7 +14,7 @@ final case class EventLinkCandidate(
     passages: List[EventPassage] = Nil,
     reasons: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object EventLinkCandidate:
 
   /** Where a candidate link between an event and a source stands. */
@@ -23,4 +23,3 @@ object EventLinkCandidate:
     val Confirmed = "confirmed"
     val Rejected = "rejected"
     val all: List[String] = List(Proposed, Confirmed, Rejected)
-  given Schema[EventLinkCandidate] = summon[KindlingsSchema[EventLinkCandidate]].schema

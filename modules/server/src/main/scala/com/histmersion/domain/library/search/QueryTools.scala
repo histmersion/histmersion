@@ -18,9 +18,8 @@ object QueryTools:
       .schema
       .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
-  final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema
-  object SchemaInput:
-    given Schema[SchemaInput] = summon[KindlingsSchema[SchemaInput]].schema
+  final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   def apply(queries: QueryControllers) =
     val query =

@@ -7,7 +7,7 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
 final case class EventLinksRequest(recompute: Boolean = false, confirm: List[String] = Nil, reject: List[String] = Nil)
-    derives KindlingsSchema
+    derives KindlingsSchema, com.histmersion.api.json.Schema
 object EventLinksRequest:
-  given Schema[EventLinksRequest] = summon[KindlingsSchema[EventLinksRequest]].schema
+
   given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])

@@ -15,19 +15,18 @@ final case class AssetLink(
     xywh: Option[String] = None,
     notes: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object AssetLink:
-  given Schema[AssetLink] = summon[KindlingsSchema[AssetLink]].schema
+
 
   final case class Deleted(
       id: Long,
       deleted: Boolean
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Deleted:
-    given Schema[Deleted] = summon[KindlingsSchema[Deleted]].schema
+
 
   final case class List(
       total: Int,
@@ -35,11 +34,11 @@ object AssetLink:
       offset: Int = 0,
       next: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, links.size)
 
   object List:
-    given Schema[List] = summon[KindlingsSchema[List]].schema
+
     def of(total: Int, rows: scala.List[AssetLink], offset: Int): List =
       List(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
@@ -52,7 +51,4 @@ object AssetLink:
       xywh: Option[String] = None,
       notes: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object Put:
-    given Schema[Put] = summon[KindlingsSchema[Put]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

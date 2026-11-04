@@ -5,6 +5,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class EdgesResolved(resolved: Int) derives KindlingsCodecAsObject, KindlingsSchema
-object EdgesResolved:
-  given Schema[EdgesResolved] = summon[KindlingsSchema[EdgesResolved]].schema
+final case class EdgesResolved(resolved: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

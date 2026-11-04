@@ -11,7 +11,4 @@ final case class AgentStateEntry(
     value: String,
     updatedAt: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object AgentStateEntry:
-  given Schema[AgentStateEntry] = summon[KindlingsSchema[AgentStateEntry]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

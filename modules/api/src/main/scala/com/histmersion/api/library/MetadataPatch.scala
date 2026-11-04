@@ -17,9 +17,9 @@ final case class MetadataPatch(
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     clear: List[MetadataField] = Nil
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 object MetadataPatch:
-  given Schema[MetadataPatch] = summon[KindlingsSchema[MetadataPatch]].schema
+
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 

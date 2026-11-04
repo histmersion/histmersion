@@ -10,6 +10,4 @@ final case class EventParticipant(
     role: String = "participant",
     citekey: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventParticipant:
-  given Schema[EventParticipant] = summon[KindlingsSchema[EventParticipant]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

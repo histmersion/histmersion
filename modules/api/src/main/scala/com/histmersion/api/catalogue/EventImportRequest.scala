@@ -15,6 +15,4 @@ final case class EventImportRequest(
     minMagnitude: Option[Double] = None,
     refresh: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventImportRequest:
-  given Schema[EventImportRequest] = summon[KindlingsSchema[EventImportRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

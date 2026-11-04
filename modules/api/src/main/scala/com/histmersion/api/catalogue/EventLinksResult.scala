@@ -10,6 +10,4 @@ final case class EventLinksResult(
     refused: List[String] = Nil,
     rejected: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventLinksResult:
-  given Schema[EventLinksResult] = summon[KindlingsSchema[EventLinksResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

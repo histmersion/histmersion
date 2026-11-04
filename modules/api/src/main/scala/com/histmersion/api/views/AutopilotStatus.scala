@@ -37,7 +37,7 @@ final case class AutopilotStatus(
     /** Absent from an older server. */
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
 
   /** The automation's part of the page. */
   def engine: Autopilot.EngineStatus = Autopilot.EngineStatus(
@@ -73,5 +73,3 @@ final case class AutopilotStatus(
       beforeBacklog = upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}"),
       afterBacklog = acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList
     )
-object AutopilotStatus:
-  given Schema[AutopilotStatus] = summon[KindlingsSchema[AutopilotStatus]].schema

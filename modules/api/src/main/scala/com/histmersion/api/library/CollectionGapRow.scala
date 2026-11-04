@@ -23,7 +23,4 @@ final case class CollectionGapRow(
     original: String,
     counted: Boolean
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionGapRow:
-  given Schema[CollectionGapRow] = summon[KindlingsSchema[CollectionGapRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

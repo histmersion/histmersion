@@ -17,6 +17,4 @@ final case class ArchiveItem(
     lendingOnly: Boolean = false,
     files: List[ArchiveFile] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ArchiveItem:
-  given Schema[ArchiveItem] = summon[KindlingsSchema[ArchiveItem]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

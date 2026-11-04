@@ -35,9 +35,8 @@ object EnrichSource:
 
   final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object StatedPeriod:
-    given Schema[StatedPeriod] = summon[KindlingsSchema[StatedPeriod]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Classification(
       summary: String,
@@ -87,13 +86,11 @@ object EnrichSource:
       )
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
-  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject, KindlingsSchema
-  object Findings:
-    given Schema[Findings] = summon[KindlingsSchema[Findings]].schema
+  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Notes(notes: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Notes:
-    given Schema[Notes] = summon[KindlingsSchema[Notes]].schema
+
+  final case class Notes(notes: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
 

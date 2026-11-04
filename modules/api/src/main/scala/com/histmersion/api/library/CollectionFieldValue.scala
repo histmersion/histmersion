@@ -9,7 +9,4 @@ final case class CollectionFieldValue(
     name: String,
     value: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionFieldValue:
-  given Schema[CollectionFieldValue] = summon[KindlingsSchema[CollectionFieldValue]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

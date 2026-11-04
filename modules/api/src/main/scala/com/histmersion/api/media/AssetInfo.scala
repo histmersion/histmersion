@@ -12,6 +12,4 @@ final case class AssetInfo(
     width: Option[Int] = None,
     height: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object AssetInfo:
-  given Schema[AssetInfo] = summon[KindlingsSchema[AssetInfo]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -194,10 +194,9 @@ object Basemap:
       tiles: Long,
       fetchedAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Focus:
-    given Schema[Focus] = summon[KindlingsSchema[Focus]].schema
+
 
   enum Layer(val wire: String, val title: String):
     case Vector extends Layer("vector", "coast, water and land cover")
@@ -241,12 +240,11 @@ object Basemap:
       onDemand: Option[OnDemand] = None,
       focus: List[Focus] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def deepest: Option[Int] =
       (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
 
-  object LayerInfo:
-    given Schema[LayerInfo] = summon[KindlingsSchema[LayerInfo]].schema
+
 
   final case class OnDemand(
       enabled: Boolean,
@@ -257,22 +255,19 @@ object Basemap:
       maxBytes: Long,
       offlineUntil: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object OnDemand:
-    given Schema[OnDemand] = summon[KindlingsSchema[OnDemand]].schema
 
-  final case class Region(name: String, bbox: String) derives KindlingsCodecAsObject, KindlingsSchema
 
-  object Region:
-    given Schema[Region] = summon[KindlingsSchema[Region]].schema
+  final case class Region(name: String, bbox: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
 
   final case class RemoveQuery(layer: String = "all", focus: Option[String] = None, cache: Boolean = false)
 
-  final case class Removed(removed: List[String], bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class Removed(removed: List[String], bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Removed:
-    given Schema[Removed] = summon[KindlingsSchema[Removed]].schema
+
 
   final case class Status(
       available: Boolean,
@@ -287,15 +282,11 @@ object Basemap:
       mapMaxZoom: Int = 16,
       regions: List[Region] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
 
-  object Status:
-    given Schema[Status] = summon[KindlingsSchema[Status]].schema
+
 
   final case class StyleState(id: String, name: String, missing: List[String] = Nil)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object StyleState:
-    given Schema[StyleState] = summon[KindlingsSchema[StyleState]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

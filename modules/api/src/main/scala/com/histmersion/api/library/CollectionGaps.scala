@@ -13,7 +13,4 @@ final case class CollectionGaps(
     total: Int,
     gaps: List[CollectionGapRow]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionGaps:
-  given Schema[CollectionGaps] = summon[KindlingsSchema[CollectionGaps]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

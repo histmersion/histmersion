@@ -17,9 +17,9 @@ final case class PluginSet(
     linkedAt: Option[String] = None,
     dependencies: Option[List[PluginFile]] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object PluginSet:
-  given Schema[PluginSet] = summon[KindlingsSchema[PluginSet]].schema
+
 
   val Resource = "META-INF/histmersion/plugin-set.json"
 

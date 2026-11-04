@@ -12,6 +12,4 @@ final case class CandidateList(
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CandidateList:
-  given Schema[CandidateList] = summon[KindlingsSchema[CandidateList]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

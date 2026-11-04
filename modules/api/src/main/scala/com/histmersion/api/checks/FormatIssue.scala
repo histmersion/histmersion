@@ -14,6 +14,4 @@ final case class FormatIssue(
     message: String,
     fix: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FormatIssue:
-  given Schema[FormatIssue] = summon[KindlingsSchema[FormatIssue]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

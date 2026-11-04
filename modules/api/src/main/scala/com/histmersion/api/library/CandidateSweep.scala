@@ -15,10 +15,8 @@ final case class CandidateSweep(
     dryRun: Boolean = false,
     notes: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object CandidateSweep:
-  given Schema[CandidateSweep] = summon[KindlingsSchema[CandidateSweep]].schema
 
-  final case class Request(goal: String, dryRun: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+
+  final case class Request(goal: String, dryRun: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

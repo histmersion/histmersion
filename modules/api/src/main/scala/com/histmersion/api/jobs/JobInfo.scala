@@ -19,7 +19,7 @@ final case class JobInfo(
     acquireItem: Option[Int] = None,
     detail: Option[JobDetail] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = state == JobState.Done
@@ -32,5 +32,3 @@ object JobInfo:
   /** A job's id as the wire names it; the server checks it is one. */
   type Id = Id.T
   object Id extends RefinedType[String, Pure]
-
-  given Schema[JobInfo] = summon[KindlingsSchema[JobInfo]].schema

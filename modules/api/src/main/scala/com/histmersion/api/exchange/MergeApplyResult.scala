@@ -22,7 +22,5 @@ final case class MergeApplyResult(
     issues: List[MergeIssue] = Nil,
     notes: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def changed: Int = counts.map(_.changed).sum
-object MergeApplyResult:
-  given Schema[MergeApplyResult] = summon[KindlingsSchema[MergeApplyResult]].schema

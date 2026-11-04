@@ -9,6 +9,4 @@ final case class MergeSession(
     resolutions: MergeResolutions = MergeResolutions(),
     updatedAt: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeSession:
-  given Schema[MergeSession] = summon[KindlingsSchema[MergeSession]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

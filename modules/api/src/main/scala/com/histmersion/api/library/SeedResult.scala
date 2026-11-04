@@ -10,6 +10,4 @@ final case class SeedResult(
     edgesResolved: Int,
     skipped: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object SeedResult:
-  given Schema[SeedResult] = summon[KindlingsSchema[SeedResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

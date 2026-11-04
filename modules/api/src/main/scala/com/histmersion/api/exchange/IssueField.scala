@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class IssueField(field: String, left: Option[String], right: Option[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object IssueField:
-  given Schema[IssueField] = summon[KindlingsSchema[IssueField]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

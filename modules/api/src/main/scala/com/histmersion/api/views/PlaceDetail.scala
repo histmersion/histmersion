@@ -27,6 +27,4 @@ final case class PlaceDetail(
     media: List[MediaThumb] = Nil,
     siteType: Option[String] = None,
     record: com.histmersion.api.catalogue.Place.Record = com.histmersion.api.catalogue.Place.Record()
-) extends com.histmersion.api.catalogue.Place.Card derives KindlingsCodecAsObject, KindlingsSchema
-object PlaceDetail:
-  given Schema[PlaceDetail] = summon[KindlingsSchema[PlaceDetail]].schema
+) extends com.histmersion.api.catalogue.Place.Card derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

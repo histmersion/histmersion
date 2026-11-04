@@ -25,6 +25,4 @@ final case class MergeTally(
     placesMerged: Int = 0,
     periodsMerged: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeTally:
-  given Schema[MergeTally] = summon[KindlingsSchema[MergeTally]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

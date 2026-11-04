@@ -19,13 +19,13 @@ final case class Target(
     to: Option[Year] = None,
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def itemKey: Option[String] = Option.when(kind.isItem)(id.map(_.value)).flatten
 
   def identity: Option[String] = itemKey.map(k => s"${kind.wire}:$k")
 
 object Target:
-  given Schema[Target] = summon[KindlingsSchema[Target]].schema
+
 
   def item(kind: ItemKind, key: String): Target = Target(kind, Some(ItemKey(key.trim)))
 

@@ -23,7 +23,7 @@ final case class Filter(
     title: Option[String] = None,
     goal: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
 
   def isEmpty: Boolean =
     q.forall(_.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
@@ -35,7 +35,7 @@ final case class Filter(
   def hasFindingCriteria: Boolean = period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty
 
 object Filter:
-  given Schema[Filter] = summon[KindlingsSchema[Filter]].schema
+
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
   val Earliest: Long = -1000000000L

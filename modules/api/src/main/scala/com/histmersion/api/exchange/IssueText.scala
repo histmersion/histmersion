@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class IssueText(base: Option[String], left: String, right: String, hunks: List[IssueHunk] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object IssueText:
-  given Schema[IssueText] = summon[KindlingsSchema[IssueText]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

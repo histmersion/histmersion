@@ -28,13 +28,12 @@ object UiNotices:
       seen: Option[String] = None,
       fresh: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Counter:
-    given Schema[Counter] = summon[KindlingsSchema[Counter]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
       derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: String =
@@ -44,18 +43,15 @@ object UiNotices:
       else if running > 0 then s"Agents working · ${runs(running)}"
       else if queued > 0 then s"Agents working · $queued waiting"
       else "Agents on · nothing to do"
-  object AgentsGlance:
-    given Schema[AgentsGlance] = summon[KindlingsSchema[AgentsGlance]].schema
+
 
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Counters:
-    given Schema[Counters] = summon[KindlingsSchema[Counters]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object SeenMark:
-    given Schema[SeenMark] = summon[KindlingsSchema[SeenMark]].schema
+
+  final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   def fresh(latest: Option[String], seen: Option[String]): Boolean =
     latest.exists(l => seen.forall(s => l > s))

@@ -8,9 +8,9 @@ import com.histmersion.api.given
 
 final case class AgentStatePut(
     value: String
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 
 object AgentStatePut:
-  given Schema[AgentStatePut] = summon[KindlingsSchema[AgentStatePut]].schema
+
 
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])

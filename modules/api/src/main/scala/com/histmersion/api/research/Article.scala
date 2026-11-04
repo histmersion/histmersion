@@ -238,9 +238,8 @@ object Article:
         (if critiques.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
         (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
 
-  final case class Deleted(slug: String, deleted: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
-  object Deleted:
-    given Schema[Deleted] = summon[KindlingsSchema[Deleted]].schema
+  final case class Deleted(slug: String, deleted: Boolean) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   object Edits:
 
@@ -309,11 +308,10 @@ object Article:
 
     final case class EditResult(index: Int, op: Op, anchor: String, text: String, problem: Option[String] = None)
         derives KindlingsCodecAsObject,
-          KindlingsSchema:
+          KindlingsSchema, com.histmersion.api.json.Schema:
       def applied: Boolean = problem.isEmpty
       def label: String = s"edit $index (${op.wire} \"$anchor\")"
-    object EditResult:
-      given Schema[EditResult] = summon[KindlingsSchema[EditResult]].schema
+
 
     final case class Applied(body: String, results: scala.List[EditResult]):
       def problems: scala.List[String] = results.flatMap(r => r.problem.map(p => s"${r.label}: $p"))
@@ -431,10 +429,9 @@ object Article:
         wordsAfter: Int,
         body: String
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema:
+          KindlingsSchema, com.histmersion.api.json.Schema:
       def clean: Boolean = problems.isEmpty
-    object ArticleCheck:
-      given Schema[ArticleCheck] = summon[KindlingsSchema[ArticleCheck]].schema
+
 
     def markdown(c: ArticleCheck): String =
       val edits =
@@ -541,9 +538,8 @@ object Article:
       force: Boolean = false,
       strict: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Import:
-    given Schema[Import] = summon[KindlingsSchema[Import]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum Kind:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
@@ -562,9 +558,8 @@ object Article:
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema
 
-  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-  object KindCount:
-    given Schema[KindCount] = summon[KindlingsSchema[KindCount]].schema
+  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Link(targetKind: String, target: String)
 
@@ -705,10 +700,10 @@ object Article:
       next: Option[Int] = None,
       kinds: scala.List[KindCount] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, articles.size)
   object List:
-    given Schema[List] = summon[KindlingsSchema[List]].schema
+
     def of(total: Int, rows: scala.List[Summary], offset: Int, kinds: scala.List[KindCount] = Nil): List =
       List(total, rows, offset, OffsetPage(total, offset, rows.size).next, kinds)
 
@@ -729,11 +724,11 @@ object Article:
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil,
       critiqueReasons: scala.List[CritiqueReason] = Nil
-  ) derives KindlingsSchema:
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema:
     def onlyCritiques: Boolean =
       critiqueReasons.nonEmpty && copy(critiqueReasons = Nil, ifUpdatedAt = None) == Patch()
   object Patch:
-    given Schema[Patch] = summon[KindlingsSchema[Patch]].schema
+
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
@@ -749,10 +744,9 @@ object Article:
         missed: scala.List[String] = Nil,
         sample: scala.List[String] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema:
+          KindlingsSchema, com.histmersion.api.json.Schema:
       def recall: Double = if cited == 0 then 1.0 else citedIn.toDouble / cited
-    object FilterProposal:
-      given Schema[FilterProposal] = summon[KindlingsSchema[FilterProposal]].schema
+
 
     final case class ProposedArticle(
         slug: String,
@@ -764,9 +758,8 @@ object Article:
         overlap: Double = 0,
         overlapWith: Option[String] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object ProposedArticle:
-      given Schema[ProposedArticle] = summon[KindlingsSchema[ProposedArticle]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     final case class ArticlePlan(
         goal: String,
@@ -774,10 +767,9 @@ object Article:
         articles: scala.List[ProposedArticle] = Nil,
         dropped: scala.List[String] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema:
+          KindlingsSchema, com.histmersion.api.json.Schema:
       def isEmpty: Boolean = articles.isEmpty
-    object ArticlePlan:
-      given Schema[ArticlePlan] = summon[KindlingsSchema[ArticlePlan]].schema
+
 
     def filterLine(f: Filter): String = f.line
 
@@ -811,9 +803,9 @@ object Article:
       periodEnd: Option[Long] = None,
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil
-  ) derives KindlingsSchema
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Put:
-    given Schema[Put] = summon[KindlingsSchema[Put]].schema
+
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
@@ -841,9 +833,9 @@ object Article:
       goals: scala.List[ReviewGoal] = Nil,
       approvals: scala.List[ReviewApproval] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object ReviewView:
-    given Schema[ReviewView] = summon[KindlingsSchema[ReviewView]].schema
+
 
     def reviewerName(wire: String): String = wire match
       case "rules"       => "rules reviewer"
@@ -905,9 +897,8 @@ object Article:
       updatedAt: Option[String] = None,
       uid: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Row:
-    given Schema[Row] = summon[KindlingsSchema[Row]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Summary(
       slug: String,
@@ -921,9 +912,8 @@ object Article:
       updatedAt: Option[String] = None,
       review: Option[ReviewBadge] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Summary:
-    given Schema[Summary] = summon[KindlingsSchema[Summary]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Version(
       id: Long,
@@ -933,9 +923,8 @@ object Article:
       createdAt: String,
       wordCount: Int
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Version:
-    given Schema[Version] = summon[KindlingsSchema[Version]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class VersionFull(
       id: Long,
@@ -945,9 +934,8 @@ object Article:
       updatedAt: String,
       createdAt: String
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object VersionFull:
-    given Schema[VersionFull] = summon[KindlingsSchema[VersionFull]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class View(
       article: Row,
@@ -956,6 +944,4 @@ object Article:
       formatting: scala.List[FormatIssue] = Nil,
       coverage: Option[com.histmersion.api.research.Coverage] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object View:
-    given Schema[View] = summon[KindlingsSchema[View]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

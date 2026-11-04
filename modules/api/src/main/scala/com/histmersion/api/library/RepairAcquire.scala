@@ -10,9 +10,8 @@ object RepairAcquire:
 
   final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RepairRequest:
-    given Schema[RepairRequest] = summon[KindlingsSchema[RepairRequest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RepairRow(
       item: Int,
@@ -23,9 +22,8 @@ object RepairAcquire:
       detail: String = "",
       backlogItem: Option[Long] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RepairRow:
-    given Schema[RepairRow] = summon[KindlingsSchema[RepairRow]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RepairResult(
       dryRun: Boolean,
@@ -37,9 +35,8 @@ object RepairAcquire:
       backlog: Int = 0,
       backlogDays: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RepairResult:
-    given Schema[RepairResult] = summon[KindlingsSchema[RepairResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   val Move = "move"
   val Remove = "remove"

@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class EventRederiveRequest(provider: Option[String] = None, dryRun: Boolean = false)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventRederiveRequest:
-  given Schema[EventRederiveRequest] = summon[KindlingsSchema[EventRederiveRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

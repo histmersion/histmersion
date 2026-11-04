@@ -16,9 +16,8 @@ import com.histmersion.api.given
   */
 object Query:
 
-  final case class QueryRequest(sql: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object QueryRequest:
-    given Schema[QueryRequest] = summon[KindlingsSchema[QueryRequest]].schema
+  final case class QueryRequest(sql: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class QueryResult(
       columns: List[String],
@@ -27,25 +26,21 @@ object Query:
       truncated: Boolean,
       elapsedMs: Long
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QueryResult:
-    given Schema[QueryResult] = summon[KindlingsSchema[QueryResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SchemaColumn(name: String, dataType: String, nullable: Boolean)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object SchemaColumn:
-    given Schema[SchemaColumn] = summon[KindlingsSchema[SchemaColumn]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object SchemaTable:
-    given Schema[SchemaTable] = summon[KindlingsSchema[SchemaTable]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema
-  object SchemaTables:
-    given Schema[SchemaTables] = summon[KindlingsSchema[SchemaTables]].schema
+
+  final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   private val Forbidden = Set(
     "SET",

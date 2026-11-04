@@ -17,13 +17,11 @@ object Stalls:
       why: String = "",
       action: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Stall:
-    given Schema[Stall] = summon[KindlingsSchema[Stall]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class ReasonCount(code: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-  object ReasonCount:
-    given Schema[ReasonCount] = summon[KindlingsSchema[ReasonCount]].schema
+
+  final case class ReasonCount(code: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class StallReport(
       days: Int,
@@ -32,9 +30,8 @@ object Stalls:
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object StallReport:
-    given Schema[StallReport] = summon[KindlingsSchema[StallReport]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   object Code:
     val Drain = "drain"

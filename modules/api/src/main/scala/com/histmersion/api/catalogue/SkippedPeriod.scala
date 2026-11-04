@@ -6,9 +6,9 @@ import com.histmersion.api.given
 
 final case class SkippedPeriod(id: String, label: String, reason: Period.Skip, detail: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object SkippedPeriod:
-  given Schema[SkippedPeriod] = summon[KindlingsSchema[SkippedPeriod]].schema
+
 
   /** The period presets an init job skipped (the first of them), in its detail. */
   val Skipped: com.histmersion.api.jobs.JobDetail.Field[List[SkippedPeriod]] =

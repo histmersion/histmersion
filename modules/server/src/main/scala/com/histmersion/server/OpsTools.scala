@@ -194,6 +194,4 @@ object OpsTools:
         _.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)")
       )
 
-  final case class BackupsInput() derives KindlingsCodecAsObject, KindlingsSchema
-  object BackupsInput:
-    given Schema[BackupsInput] = summon[KindlingsSchema[BackupsInput]].schema
+  final case class BackupsInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

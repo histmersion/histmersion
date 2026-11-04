@@ -19,7 +19,4 @@ final case class AssetDetail(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object AssetDetail:
-  given Schema[AssetDetail] = summon[KindlingsSchema[AssetDetail]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

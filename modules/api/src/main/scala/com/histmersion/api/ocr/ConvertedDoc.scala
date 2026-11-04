@@ -10,6 +10,4 @@ final case class ConvertedDoc(
     images: List[ConvertedImage] = Nil,
     filename: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ConvertedDoc:
-  given Schema[ConvertedDoc] = summon[KindlingsSchema[ConvertedDoc]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

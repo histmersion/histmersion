@@ -10,7 +10,4 @@ final case class CollectionRecordView(
     authors: List[String],
     year: Option[Int]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionRecordView:
-  given Schema[CollectionRecordView] = summon[KindlingsSchema[CollectionRecordView]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

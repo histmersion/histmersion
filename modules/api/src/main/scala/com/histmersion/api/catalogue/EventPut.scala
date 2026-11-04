@@ -20,8 +20,8 @@ final case class EventPut(
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
     scale: Option[String] = None
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 object EventPut:
-  given Schema[EventPut] = summon[KindlingsSchema[EventPut]].schema
+
 
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])

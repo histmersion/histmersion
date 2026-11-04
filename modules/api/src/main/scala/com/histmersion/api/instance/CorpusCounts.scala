@@ -14,6 +14,4 @@ final case class CorpusCounts(
     periods: Int,
     presets: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CorpusCounts:
-  given Schema[CorpusCounts] = summon[KindlingsSchema[CorpusCounts]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

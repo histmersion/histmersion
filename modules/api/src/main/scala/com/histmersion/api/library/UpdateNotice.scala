@@ -7,6 +7,4 @@ import com.histmersion.api.given
 /** A Crossref `update-to` entry. */
 final case class UpdateNotice(kind: Option[String], label: Option[String], doi: Option[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object UpdateNotice:
-  given Schema[UpdateNotice] = summon[KindlingsSchema[UpdateNotice]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

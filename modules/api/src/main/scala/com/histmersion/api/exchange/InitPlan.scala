@@ -10,11 +10,11 @@ final case class InitPlan(
     fetch: List[String] = Nil,
     check: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def isEmpty: Boolean = !gazetteer && !periodPresets && fetch.isEmpty
 
 object InitPlan:
-  given Schema[InitPlan] = summon[KindlingsSchema[InitPlan]].schema
+
 
   /** What an init job imports, in its detail. */
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =

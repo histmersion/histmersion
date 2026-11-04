@@ -14,6 +14,4 @@ final case class BuildStamp(
     licence: Option[String] = None,
     sourceUrl: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object BuildStamp:
-  given Schema[BuildStamp] = summon[KindlingsSchema[BuildStamp]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

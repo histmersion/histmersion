@@ -10,6 +10,4 @@ object Version:
   /** The SPDX id of the licence the program is distributed under. */
   val licence: String = "AGPL-3.0-or-later"
 
-  final case class Info(name: String, version: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Info:
-    given Schema[Info] = summon[KindlingsSchema[Info]].schema
+  final case class Info(name: String, version: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

@@ -10,7 +10,4 @@ final case class CollectionFieldChange(
     from: String,
     to: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionFieldChange:
-  given Schema[CollectionFieldChange] = summon[KindlingsSchema[CollectionFieldChange]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

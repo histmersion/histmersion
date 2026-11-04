@@ -25,7 +25,7 @@ final case class MergeIssue(
     decidedBy: Option[MergeIssue.DecidedBy] = None,
     detail: Option[IssueDetail] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def open: Boolean = severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty
 object MergeIssue:
 
@@ -144,7 +144,7 @@ object MergeIssue:
       def all: Array[DecidedBy] = DecidedBy.values
       def wire(e: DecidedBy): String = Ascii.lower(e.toString)
       def fromWire(s: String): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
-  given Schema[MergeIssue] = summon[KindlingsSchema[MergeIssue]].schema
+
 
   object Detail:
 

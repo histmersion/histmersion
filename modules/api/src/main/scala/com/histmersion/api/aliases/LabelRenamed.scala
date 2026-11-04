@@ -8,6 +8,4 @@ import com.histmersion.api.exchange.Bundle
 
 final case class LabelRenamed(entity: Bundle.Kind, from: String, to: String, rewritten: List[String] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object LabelRenamed:
-  given Schema[LabelRenamed] = summon[KindlingsSchema[LabelRenamed]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

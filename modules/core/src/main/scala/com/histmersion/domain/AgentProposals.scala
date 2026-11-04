@@ -35,7 +35,7 @@ object AgentProposals:
       evidence: String = "",
       quote: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
     def describe: String = kind match
       case Approval.Kind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
@@ -53,8 +53,7 @@ object AgentProposals:
         yield com.histmersion.api.library.Edge.Input(t, k)).toList)))
       case _ => com.histmersion.api.library.Source.Patch()
 
-  object Proposal:
-    given Schema[Proposal] = summon[KindlingsSchema[Proposal]].schema
+
 
   /** What becomes of a proposal. */
   enum Route:

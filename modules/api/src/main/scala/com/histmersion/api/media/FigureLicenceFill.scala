@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class FigureLicenceFill(candidates: Int, updated: Int, applied: Boolean, bySource: List[MediaCount] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FigureLicenceFill:
-  given Schema[FigureLicenceFill] = summon[KindlingsSchema[FigureLicenceFill]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

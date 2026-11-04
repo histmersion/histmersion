@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class CoverageSearch(query: String, total: Int, cited: List[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CoverageSearch:
-  given Schema[CoverageSearch] = summon[KindlingsSchema[CoverageSearch]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

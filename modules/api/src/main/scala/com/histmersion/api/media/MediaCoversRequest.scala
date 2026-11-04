@@ -13,7 +13,4 @@ final case class MediaCoversRequest(
     illustrations: Boolean = true,
     isbn: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaCoversRequest:
-  given Schema[MediaCoversRequest] = summon[KindlingsSchema[MediaCoversRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

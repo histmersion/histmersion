@@ -4,6 +4,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CalibreGaps(count: Int, gaps: List[CalibreGap]) derives KindlingsCodecAsObject, KindlingsSchema
-object CalibreGaps:
-  given Schema[CalibreGaps] = summon[KindlingsSchema[CalibreGaps]].schema
+final case class CalibreGaps(count: Int, gaps: List[CalibreGap]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

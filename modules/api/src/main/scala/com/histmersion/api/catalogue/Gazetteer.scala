@@ -304,9 +304,8 @@ object Gazetteer:
       url: Option[String] = None,
       built: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Extract:
-    given Schema[Extract] = summon[KindlingsSchema[Extract]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** `Tgn`: the Getty Thesaurus of Geographic Names. */
   enum Kind:
@@ -347,7 +346,7 @@ object Gazetteer:
       linksChanged: Long = 0,
       pointAreasSkipped: Long = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       copy(
         records = records + o.records,
@@ -384,12 +383,10 @@ object Gazetteer:
         (if pointAreasSkipped > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places"
          else "") +
         (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
-  object LoadCounts:
-    given Schema[LoadCounts] = summon[KindlingsSchema[LoadCounts]].schema
 
-  final case class Manifest(extracts: List[Extract]) derives KindlingsCodecAsObject, KindlingsSchema
-  object Manifest:
-    given Schema[Manifest] = summon[KindlingsSchema[Manifest]].schema
+
+  final case class Manifest(extracts: List[Extract]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class SourceInfo(
       key: String,
@@ -408,6 +405,4 @@ object Gazetteer:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object SourceInfo:
-    given Schema[SourceInfo] = summon[KindlingsSchema[SourceInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

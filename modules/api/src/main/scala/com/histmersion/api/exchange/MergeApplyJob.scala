@@ -18,9 +18,9 @@ final case class MergeApplyJob(
     result: Option[MergeApplyResult] = None,
     error: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object MergeApplyJob:
-  given Schema[MergeApplyJob] = summon[KindlingsSchema[MergeApplyJob]].schema
+
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind.value
 

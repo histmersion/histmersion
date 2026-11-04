@@ -10,6 +10,4 @@ final case class FollowupsRequest(
     limit: Option[Int] = None,
     apply: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FollowupsRequest:
-  given Schema[FollowupsRequest] = summon[KindlingsSchema[FollowupsRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

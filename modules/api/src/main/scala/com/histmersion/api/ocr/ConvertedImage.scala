@@ -13,6 +13,4 @@ final case class ConvertedImage(
     height: Option[Int] = None,
     sha256: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ConvertedImage:
-  given Schema[ConvertedImage] = summon[KindlingsSchema[ConvertedImage]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

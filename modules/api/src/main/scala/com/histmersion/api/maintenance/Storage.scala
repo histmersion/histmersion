@@ -138,9 +138,8 @@ object Storage:
       volume: Option[String] = None,
       host: String = "server"
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Entry:
-    given Schema[Entry] = summon[KindlingsSchema[Entry]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Report(
       measuring: Boolean = false,
@@ -155,10 +154,7 @@ object Storage:
       hints: List[String] = Nil,
       problems: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Report:
-    given Schema[Report] = summon[KindlingsSchema[Report]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Volume(id: String, totalBytes: Long, freeBytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
-  object Volume:
-    given Schema[Volume] = summon[KindlingsSchema[Volume]].schema
+
+  final case class Volume(id: String, totalBytes: Long, freeBytes: Long) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

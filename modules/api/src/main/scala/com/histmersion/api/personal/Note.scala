@@ -17,15 +17,14 @@ final case class Note(
     createdAt: String = "",
     updatedAt: String = ""
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object Note:
-  given Schema[Note] = summon[KindlingsSchema[Note]].schema
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
 
-  object Edit:
-    given Schema[Edit] = summon[KindlingsSchema[Edit]].schema
+  final case class Edit(text: Text, ifUpdatedAt: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+
 
   type Id = Id.T
 
@@ -36,10 +35,9 @@ object Note:
 
   final case class New(target: Target, text: Text, title: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object New:
-    given Schema[New] = summon[KindlingsSchema[New]].schema
+
 
   type Text = Text.T
 

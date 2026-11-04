@@ -11,9 +11,9 @@ import io.circe.{Decoder, Encoder}
 
 final case class DeleteBlocker(kind: DeleteBlocker.Kind, id: String, title: Option[String] = None)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object DeleteBlocker:
-  given Schema[DeleteBlocker] = summon[KindlingsSchema[DeleteBlocker]].schema
+
 
   enum Kind(val wire: String, val label: String):
     case Article extends Kind("article", "cited by article")

@@ -12,6 +12,4 @@ final case class RefRow(
     raw: Option[String] = None,
     citekey: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RefRow:
-  given Schema[RefRow] = summon[KindlingsSchema[RefRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

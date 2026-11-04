@@ -9,6 +9,4 @@ final case class MergeImportRequest(
     resolutions: MergeResolutions = MergeResolutions(),
     dryRun: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeImportRequest:
-  given Schema[MergeImportRequest] = summon[KindlingsSchema[MergeImportRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

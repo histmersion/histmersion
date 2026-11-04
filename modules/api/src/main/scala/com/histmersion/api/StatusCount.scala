@@ -5,6 +5,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 
-final case class StatusCount(status: Source.Status, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-object StatusCount:
-  given Schema[StatusCount] = summon[KindlingsSchema[StatusCount]].schema
+final case class StatusCount(status: Source.Status, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

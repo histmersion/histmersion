@@ -14,9 +14,9 @@ final case class ArticleEventLead(
     findingsNear: Int,
     provider: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object ArticleEventLead:
-  given Schema[ArticleEventLead] = summon[KindlingsSchema[ArticleEventLead]].schema
+
 
   def mentioned(body: String, names: List[String]): Boolean =
     val b = body.toLowerCase(java.util.Locale.ROOT)

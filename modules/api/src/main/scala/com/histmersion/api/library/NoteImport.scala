@@ -14,6 +14,4 @@ final case class NoteImport(
     force: Boolean = false,
     assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object NoteImport:
-  given Schema[NoteImport] = summon[KindlingsSchema[NoteImport]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

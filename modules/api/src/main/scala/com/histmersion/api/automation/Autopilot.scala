@@ -6,15 +6,13 @@ import com.histmersion.api.given
 
 object Autopilot:
 
-  final case class AutopilotSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object AutopilotSet:
-    given Schema[AutopilotSet] = summon[KindlingsSchema[AutopilotSet]].schema
+  final case class AutopilotSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerBrief(id: String, kind: String, state: String, note: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerBrief:
-    given Schema[ManagerBrief] = summon[KindlingsSchema[ManagerBrief]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class GoalProgress(
       slug: String,
@@ -30,15 +28,13 @@ object Autopilot:
       open: Int = 0,
       etaDays: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object GoalProgress:
-    given Schema[GoalProgress] = summon[KindlingsSchema[GoalProgress]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ApprovalRule(kind: String, mode: String, cap: String = "")
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ApprovalRule:
-    given Schema[ApprovalRule] = summon[KindlingsSchema[ApprovalRule]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class FocusGoal(
       slug: String,
@@ -54,15 +50,13 @@ object Autopilot:
       doneLast7: Int = 0,
       etaDays: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object FocusGoal:
-    given Schema[FocusGoal] = summon[KindlingsSchema[FocusGoal]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class FocusWaiting(slug: String, code: String, why: String = "", pinned: Boolean = false)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object FocusWaiting:
-    given Schema[FocusWaiting] = summon[KindlingsSchema[FocusWaiting]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class FocusInfo(
       on: Boolean,
@@ -76,9 +70,8 @@ object Autopilot:
       note: Option[String] = None,
       changes: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object FocusInfo:
-    given Schema[FocusInfo] = summon[KindlingsSchema[FocusInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class FocusSet(
       action: String,
@@ -86,9 +79,9 @@ object Autopilot:
       value: Option[Int] = None,
       by: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object FocusSet:
-    given Schema[FocusSet] = summon[KindlingsSchema[FocusSet]].schema
+
     val Actions = List("pin", "unpin", "priority", "max")
 
   final case class DrainInfo(
@@ -98,13 +91,11 @@ object Autopilot:
       drainedAt: Option[String] = None,
       inFlight: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object DrainInfo:
-    given Schema[DrainInfo] = summon[KindlingsSchema[DrainInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class DrainSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object DrainSet:
-    given Schema[DrainSet] = summon[KindlingsSchema[DrainSet]].schema
+
+  final case class DrainSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** The autopilot as the automation knows it: the switches, the approvals' rules, the caps, the goals' progress, the
     * focus and the drain. The page the server answers (`AutopilotStatus`) adds what the library knows of its upstreams

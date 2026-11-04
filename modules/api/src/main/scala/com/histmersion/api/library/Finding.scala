@@ -70,9 +70,8 @@ object Finding:
       why: List[String],
       places: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Match:
-    given Schema[Match] = summon[KindlingsSchema[Match]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Row(
       claim: String,
@@ -87,6 +86,4 @@ object Finding:
       significance: Option[String] = None,
       uid: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Row:
-    given Schema[Row] = summon[KindlingsSchema[Row]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
