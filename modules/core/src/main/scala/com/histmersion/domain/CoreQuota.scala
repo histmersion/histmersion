@@ -100,7 +100,7 @@ object CoreQuota:
   /** `s` on `now`'s day: a new day starts with no tokens spent; a block and the recent slots stay. */
   def onDay(s: State, now: Instant): State =
     val today = day(now)
-    if s.day == today then s else s.copy(day = today, lookupTokens = 0, searchTokens = 0)
+    if s.day == today then s else s.modify(_.day).setTo(today).modify(_.lookupTokens).setTo(0).modify(_.searchTokens).setTo(0)
 
   /** May a call for `purpose` go out at `now`? Counts it when it may (the reservation is made before the call is sent,
     * so callers on several threads never overspend together).
@@ -129,7 +129,7 @@ object CoreQuota:
               case Purpose.Search => s.modify(_.searchTokens).using(_ + cost)
             Right(
               Grant(
-                spent.copy(block = None, recent = (inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),
+                spent.modify(_.block).setTo(None).modify(_.recent).setTo((inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),
                 waitMs
               )
             )
@@ -153,7 +153,7 @@ object CoreQuota:
       case Some(b) => Some(s.block.filter(_.until.isAfter(b.until)).getOrElse(b))
       case None    => s.block
     val known = window.limit.isDefined || window.remaining.isDefined
-    s.copy(block = block, window = if known then Some(window) else s.window)
+    s.modify(_.block).setTo(block).modify(_.window).setTo(if known then Some(window) else s.window)
 
   private val CoreTime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
 

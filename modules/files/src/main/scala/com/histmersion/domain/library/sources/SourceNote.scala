@@ -89,10 +89,8 @@ object SourceNote:
     extractYaml(text).map { y =>
       val m = parse(y)
       val src = toSource(m, fallbackCitekey)
-      src.copy(
-        edges = edgesOf(src.citekey, m, text),
-        notes = bodyOf(text),
-        topics = withLinkedTopics(src.topics, src.citekey, text)
+      src.modify(
+        _.edges).setTo(edgesOf(src.citekey, m, text)).modify(_.notes).setTo(bodyOf(text)).modify(_.topics).setTo(withLinkedTopics(src.topics, src.citekey, text)
       )
     }
 

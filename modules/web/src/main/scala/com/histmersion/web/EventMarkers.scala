@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
@@ -39,7 +41,7 @@ object EventMarkers:
       0,
       0,
       0,
-      filter.copy(period = Some(Period(tiles._1, tiles._2)), limit = Filter().limit, offset = 0, sort = Filter().sort),
+      filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort),
       kind = kind,
       tier = tier,
       context = Some(true),

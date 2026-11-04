@@ -136,7 +136,7 @@ object ReviewManagerPolicy:
           state.pairsBefore,
           f.openPairs
         )
-        val st = state.copy(history = state.history :+ mark, before = None, pairsBefore = None)
+        val st = state.modify(_.history).setTo(state.history :+ mark).modify(_.before).setTo(None).modify(_.pairsBefore).setTo(None)
         val churn = f.onlyMissingCritiques && pairsStalled(st.history, s.noProgressRuns)
         val pairs = f.openPairs.fold("")(n => s", ${Plural.count(n, "open critique pair")}")
         def stop(why: String) =

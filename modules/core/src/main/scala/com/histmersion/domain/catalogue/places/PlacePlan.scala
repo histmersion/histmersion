@@ -172,18 +172,11 @@ object PlacePlan:
       l: com.histmersion.api.exchange.Bundle.Place,
       r: com.histmersion.api.exchange.Bundle.Place
   ): com.histmersion.api.exchange.Bundle.Place =
-    l.copy(
-      names = (l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
-        .sortBy(n => (n.name, n.lang.getOrElse(""))),
-      relations = (l.relations ++ r.relations.filterNot(x =>
+    l.modify(
+      _.names).setTo((l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
+        .sortBy(n => (n.name, n.lang.getOrElse("")))).modify(_.relations).setTo((l.relations ++ r.relations.filterNot(x =>
         l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)
       ))
-        .sortBy(x => (x.parentId, x.kind)),
-      links =
-        (l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
-          .sortBy(x => (x.scheme, x.externalId)),
-      types = (l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel),
-      source = l.source.orElse(r.source),
-      properties = l.properties.orElse(r.properties),
-      rev = ""
+        .sortBy(x => (x.parentId, x.kind))).modify(_.links).setTo((l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
+          .sortBy(x => (x.scheme, x.externalId))).modify(_.types).setTo((l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel)).modify(_.source).setTo(l.source.orElse(r.source)).modify(_.properties).setTo(l.properties.orElse(r.properties)).modify(_.rev).setTo(""
     )

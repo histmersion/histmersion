@@ -635,7 +635,7 @@ object MapView:
     time match
       case GeoTime.At(y)                  => q.modify(_.asOf).setTo(Some(y))
       case GeoTime.Within(lo, hi, latest) =>
-        q.copy(from = Some(lo), to = Some(hi), pick = Some((if latest then GeoPick.Latest else GeoPick.Earliest).wire))
+        q.modify(_.from).setTo(Some(lo)).modify(_.to).setTo(Some(hi)).modify(_.pick).setTo(Some((if latest then GeoPick.Latest else GeoPick.Earliest).wire))
       case GeoTime.Always => q
 
   /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback always draws the

@@ -214,16 +214,13 @@ final class AcquireRecheckService(
       stopped match
         case Some((j, plan)) =>
           startJob(plan, by, Some(j.id)).map(job =>
-            base.copy(
-              due = todo.size,
-              allowance = todo.size,
-              job = Some(job),
-              note = Some(s"resumes job ${j.id} (${j.error.getOrElse("stopped")}): the items it checked are skipped")
+            base.modify(
+              _.due).setTo(todo.size).modify(_.allowance).setTo(todo.size).modify(_.job).setTo(Some(job)).modify(_.note).setTo(Some(s"resumes job ${j.id} (${j.error.getOrElse("stopped")}): the items it checked are skipped")
             )
           )
         case None =>
           startJob(JobPlan(all = true, 0, now), by, None).map(job =>
-            base.copy(due = todo.size, allowance = todo.size, job = Some(job))
+            base.modify(_.due).setTo(todo.size).modify(_.allowance).setTo(todo.size).modify(_.job).setTo(Some(job))
           )
     else
       val s = settings
@@ -241,7 +238,7 @@ final class AcquireRecheckService(
       if upTo <= 1 then pass(in, now).toRight(passBusy)
       else
         startJob(JobPlan(all = false, upTo, now), by, None).map(job =>
-          base.copy(due = dueNow.size, allowance = upTo, job = Some(job))
+          base.modify(_.due).setTo(dueNow.size).modify(_.allowance).setTo(upTo).modify(_.job).setTo(Some(job))
         )
 
   // ── the job ────────────────────────────────────────────────────────────────────────────────────
@@ -404,24 +401,17 @@ final class AcquireRecheckService(
             into
           )
         } ++ (if in.id.isDefined then noDoi else Nil)
-      base.copy(rows = rows, note = capNote)
+      base.modify(_.rows).setTo(rows).modify(_.note).setTo(capNote)
     else if !up.connected && picks.nonEmpty then
       val closed = closes.flatMap((f, ck) => close(f, ck, gen, now))
-      base.copy(
-        closed = closed.size,
-        rows = closed,
-        note = Some("the acquisition toolset is not connected: nothing tried")
+      base.modify(
+        _.closed).setTo(closed.size).modify(_.rows).setTo(closed).modify(_.note).setTo(Some("the acquisition toolset is not connected: nothing tried")
       )
     else
       val closed = closes.flatMap((f, ck) => close(f, ck, gen, now))
       val outs = picks.map(f => attempt(f, gen, now).row)
-      val r = base.copy(
-        closed = closed.size,
-        fetched = outs.count(_.action == Fetched),
-        noCopy = outs.count(_.action == NoCopy),
-        failed = outs.count(_.action == Failed),
-        rows = closed ++ outs ++ (if in.id.isDefined then noDoi else Nil),
-        note = capNote
+      val r = base.modify(
+        _.closed).setTo(closed.size).modify(_.fetched).setTo(outs.count(_.action == Fetched)).modify(_.noCopy).setTo(outs.count(_.action == NoCopy)).modify(_.failed).setTo(outs.count(_.action == Failed)).modify(_.rows).setTo(closed ++ outs ++ (if in.id.isDefined then noDoi else Nil)).modify(_.note).setTo(capNote
       )
       if r.closed + r.fetched + r.noCopy + r.failed > 0 then
         val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")

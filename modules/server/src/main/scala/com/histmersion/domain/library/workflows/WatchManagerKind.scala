@@ -201,7 +201,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                     budgetUsd = m.config.budgetUsd
                   ),
                   p =>
-                    if autoOn then p.copy(autoIngest = Option.when(allowed > 0)(allowed), oaBacklog = Some(true))
+                    if autoOn then p.modify(_.autoIngest).setTo(Option.when(allowed > 0)(allowed)).modify(_.oaBacklog).setTo(Some(true))
                     else p,
                   item.state,
                   s"${item.kind}$auto",

@@ -359,7 +359,7 @@ object MergePlanner:
     es.modify(_.goals)
       .setTo(es.goals.map { g =>
         val links = g.links.map(_.map(k => label(k).filter(_ != k.ref).fold(k)(r => k.copy(ref = r))))
-        if links == g.links then g else g.copy(links = links, rev = "")
+        if links == g.links then g else g.modify(_.links).setTo(links).modify(_.rev).setTo("")
       })
 
   // ── sketches and bodies ─────────────────────────────────────────────────────────────────────
@@ -1033,7 +1033,7 @@ object MergePlanner:
     val decided: List[Draft] = live.map { d =>
       val i = d.issue
       val dec = decisionOf(i)
-      d.modify(_.issue).setTo(i.copy(decision = dec.map(_._1), decidedBy = dec.map(_._2)))
+      d.modify(_.issue).setTo(i.modify(_.decision).setTo(dec.map(_._1)).modify(_.decidedBy).setTo(dec.map(_._2)))
     }
     val issues = decided.map(_.issue)
     val unconditional: Map[String, MergeIssue] = issues.filter(_.condition.isEmpty).map(i => i.id -> i).toMap
@@ -1149,7 +1149,7 @@ object MergePlanner:
       articleLine(o) = es =>
         val theirs = articleIn(es, o)
         val b = body.getOrElse(rewrite(theirs.body))
-        if theirsWins then theirs.copy(uid = loc.uid, origin = loc.origin, slug = loc.slug, body = b, rev = "")
+        if theirsWins then theirs.modify(_.uid).setTo(loc.uid).modify(_.origin).setTo(loc.origin).modify(_.slug).setTo(loc.slug).modify(_.body).setTo(b).modify(_.rev).setTo("")
         else MergeFold.foldArticle(loc, theirs, b)
       snapshots += o
       versions += ExtraVersion(o, raw.body, raw.summary, raw.updatedAt)
@@ -1206,10 +1206,10 @@ object MergePlanner:
                 overrides(f) = Decision.Kept
                 val copyUid = UUID.nameUUIDFromBytes(s"merge-both:$f".getBytes(java.nio.charset.StandardCharsets.UTF_8))
                 copies += (es =>
-                  articleIn(es, o).copy(uid = copyUid, slug = slug, body = rewrite(rawArticle(f).body), rev = "")
+                  articleIn(es, o).modify(_.uid).setTo(copyUid).modify(_.slug).setTo(slug).modify(_.body).setTo(rewrite(rawArticle(f).body)).modify(_.rev).setTo("")
                 )
               else
-                articleLine(f) = es => articleIn(es, f).copy(slug = slug, body = rewrite(rawArticle(f).body), rev = "")
+                articleLine(f) = es => articleIn(es, f).modify(_.slug).setTo(slug).modify(_.body).setTo(rewrite(rawArticle(f).body)).modify(_.rev).setTo("")
               reviews += slug
               tally = tally.modify(_.articlesBoth).using(_ + 1)
             case _ => ()
@@ -1227,7 +1227,7 @@ object MergePlanner:
           val raw = rawArticle(r.foreignUid)
           val b = rewrite(raw.body)
           if b != raw.body then
-            articleLine(r.uid) = es => articleIn(es, r.uid).copy(body = b, rev = "")
+            articleLine(r.uid) = es => articleIn(es, r.uid).modify(_.body).setTo(b).modify(_.rev).setTo("")
             versions += ExtraVersion(r.uid, raw.body, raw.summary, raw.updatedAt)
         }
 
@@ -1367,11 +1367,8 @@ object MergePlanner:
       val owner = ownerSource(r0.foreignUid, r0.kind)
       val uid = if r0.tombstone then r0.uid else foldUids.getOrElse(r0.foreignUid, r0.uid)
       val loc = if r0.tombstone then r0.localizedRev else finalRevs.get(uid).map(_.rev).getOrElse(r0.localizedRev)
-      val r = r0.copy(
-        uid = uid,
-        localizedRev = loc,
-        localRev = localRevs.get(uid).map(_.rev),
-        label = if r0.tombstone then r0.label else finalRevs.get(uid).map(_.label).getOrElse(r0.label)
+      val r = r0.modify(
+        _.uid).setTo(uid).modify(_.localizedRev).setTo(loc).modify(_.localRev).setTo(localRevs.get(uid).map(_.rev)).modify(_.label).setTo(if r0.tombstone then r0.label else finalRevs.get(uid).map(_.label).getOrElse(r0.label)
       )
       def foldDecision =
         if r.localRev.contains(loc) && !edgesGrow(uid) then Decision.Unchanged else Decision.FastForward

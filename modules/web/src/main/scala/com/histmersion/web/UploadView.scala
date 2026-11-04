@@ -108,13 +108,8 @@ object UploadView:
       else mine
     val authors =
       if d.authors.isEmpty || prev.exists(_.authors == d.authors) then from.authors else d.authors
-    d.copy(
-      citekey = keep(_.citekey),
-      title = keep(_.title),
-      authors = authors,
-      year = keep(_.year),
-      doi = keep(_.doi),
-      forItem = Some(item)
+    d.modify(
+      _.citekey).setTo(keep(_.citekey)).modify(_.title).setTo(keep(_.title)).modify(_.authors).setTo(authors).modify(_.year).setTo(keep(_.year)).modify(_.doi).setTo(keep(_.doi)).modify(_.forItem).setTo(Some(item)
     )
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
@@ -172,9 +167,8 @@ object UploadView:
     accepted.set(None)
     errors.update(_.filterNot(_._1 == Field.File))
     draft.update(d =>
-      d.copy(
-        fileName = Some(f.name),
-        citekey = if d.citekey.trim.isEmpty then suggestCitekey(f.name).getOrElse("") else d.citekey
+      d.modify(
+        _.fileName).setTo(Some(f.name)).modify(_.citekey).setTo(if d.citekey.trim.isEmpty then suggestCitekey(f.name).getOrElse("") else d.citekey
       )
     )
 

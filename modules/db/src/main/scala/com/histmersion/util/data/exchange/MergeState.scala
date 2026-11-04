@@ -167,7 +167,7 @@ object MergeState:
                   d.modify(_.place)
                     .setTo(
                       d.place
-                        .map(x => x.copy(leftGeometry = conv(x.leftGeometry), rightGeometry = conv(x.rightGeometry)))
+                        .map(x => x.modify(_.leftGeometry).setTo(conv(x.leftGeometry)).modify(_.rightGeometry).setTo(conv(x.rightGeometry)))
                     )
                 )
               )

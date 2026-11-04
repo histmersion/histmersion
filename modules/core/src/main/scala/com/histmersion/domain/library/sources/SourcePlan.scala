@@ -509,35 +509,12 @@ object SourcePlan:
       if l.status == r.status || r.status == Source.Status.Unassessed then l.status
       else if l.status == Source.Status.Unassessed then r.status
       else pick(MergeIssue.Kind.StatusDiffers, l.status, l.status, r.status)
-    l.copy(
-      citekey = citekey,
-      title = pick(MergeIssue.Kind.TitleDiffers, MergeFold.richer(l.title, r.title), l.title, r.title),
-      authors = pick(MergeIssue.Kind.AuthorsDiffers, richerAuthors(l.authors, r.authors), l.authors, r.authors),
-      doi = pick(MergeIssue.Kind.DoiDiffers, l.doi.orElse(r.doi), l.doi.orElse(r.doi), r.doi.orElse(l.doi)),
-      year = pick(MergeIssue.Kind.YearDiffers, l.year.orElse(r.year), l.year.orElse(r.year), r.year.orElse(l.year)),
-      venue = (trimmed(l.venue), trimmed(r.venue)) match
+    l.modify(
+      _.citekey).setTo(citekey).modify(_.title).setTo(pick(MergeIssue.Kind.TitleDiffers, MergeFold.richer(l.title, r.title), l.title, r.title)).modify(_.authors).setTo(pick(MergeIssue.Kind.AuthorsDiffers, richerAuthors(l.authors, r.authors), l.authors, r.authors)).modify(_.doi).setTo(pick(MergeIssue.Kind.DoiDiffers, l.doi.orElse(r.doi), l.doi.orElse(r.doi), r.doi.orElse(l.doi))).modify(_.year).setTo(pick(MergeIssue.Kind.YearDiffers, l.year.orElse(r.year), l.year.orElse(r.year), r.year.orElse(l.year))).modify(_.venue).setTo((trimmed(l.venue), trimmed(r.venue)) match
         case (Some(a), Some(b)) if MergeText.fingerprint(a) == MergeText.fingerprint(b) => Some(MergeFold.richer(a, b))
-        case (a, b)                                                                     => a.orElse(b),
-      status = status,
-      topics = MergeFold.unionNames(l.topics, r.topics),
-      regions = MergeFold.unionNames(l.regions, r.regions),
-      tags = MergeFold.unionTags(l.tags, r.tags),
-      period = period,
-      summary = prose(MergeIssue.Kind.SummaryDiffers, l.summary, r.summary),
-      notes = prose(MergeIssue.Kind.NotesDiffers, l.notes, r.notes),
-      provenance = l.provenance.orElse(r.provenance),
-      citedByCount =
-        l.citedByCount.zip(r.citedByCount).map((a, b) => math.max(a, b)).orElse(l.citedByCount).orElse(r.citedByCount),
-      influentialCitations = l.influentialCitations
+        case (a, b)                                                                     => a.orElse(b)).modify(_.status).setTo(status).modify(_.topics).setTo(MergeFold.unionNames(l.topics, r.topics)).modify(_.regions).setTo(MergeFold.unionNames(l.regions, r.regions)).modify(_.tags).setTo(MergeFold.unionTags(l.tags, r.tags)).modify(_.period).setTo(period).modify(_.summary).setTo(prose(MergeIssue.Kind.SummaryDiffers, l.summary, r.summary)).modify(_.notes).setTo(prose(MergeIssue.Kind.NotesDiffers, l.notes, r.notes)).modify(_.provenance).setTo(l.provenance.orElse(r.provenance)).modify(_.citedByCount).setTo(l.citedByCount.zip(r.citedByCount).map((a, b) => math.max(a, b)).orElse(l.citedByCount).orElse(r.citedByCount)).modify(_.influentialCitations).setTo(l.influentialCitations
         .zip(r.influentialCitations)
         .map((a, b) => math.max(a, b))
         .orElse(l.influentialCitations)
-        .orElse(r.influentialCitations),
-      addedDate = if r.addedDate < l.addedDate then r.addedDate else l.addedDate,
-      bodySha256 = if keepRightBody then r.bodySha256 else l.bodySha256.orElse(r.bodySha256),
-      originalSha256 =
-        if keepRightBody then r.originalSha256.orElse(l.originalSha256) else l.originalSha256.orElse(r.originalSha256),
-      originalExt = if keepRightBody then r.originalExt.orElse(l.originalExt) else l.originalExt.orElse(r.originalExt),
-      isbns = Option(MergeFold.unionNames(l.isbns.getOrElse(Nil), r.isbns.getOrElse(Nil)).sorted).filter(_.nonEmpty),
-      rev = ""
+        .orElse(r.influentialCitations)).modify(_.addedDate).setTo(if r.addedDate < l.addedDate then r.addedDate else l.addedDate).modify(_.bodySha256).setTo(if keepRightBody then r.bodySha256 else l.bodySha256.orElse(r.bodySha256)).modify(_.originalSha256).setTo(if keepRightBody then r.originalSha256.orElse(l.originalSha256) else l.originalSha256.orElse(r.originalSha256)).modify(_.originalExt).setTo(if keepRightBody then r.originalExt.orElse(l.originalExt) else l.originalExt.orElse(r.originalExt)).modify(_.isbns).setTo(Option(MergeFold.unionNames(l.isbns.getOrElse(Nil), r.isbns.getOrElse(Nil)).sorted).filter(_.nonEmpty)).modify(_.rev).setTo(""
     )

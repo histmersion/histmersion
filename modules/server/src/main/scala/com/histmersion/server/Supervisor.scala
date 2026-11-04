@@ -172,10 +172,9 @@ object Supervisor:
       server = cfg.server.modify(_.host).setTo(explicitBind.filter(_.nonEmpty).getOrElse("127.0.0.1")),
       db = cfg.db.modify(_.url).setTo(s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort}/$dbName"),
       converter =
-        cfg.converter.copy(url = s"http://127.0.0.1:${cfg.runtime.converterPort}", spoolDir = l.uploads.toString),
-      backups = cfg.backups.copy(
-        dir = if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir,
-        pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)
+        cfg.converter.modify(_.url).setTo(s"http://127.0.0.1:${cfg.runtime.converterPort}").modify(_.spoolDir).setTo(l.uploads.toString),
+      backups = cfg.backups.modify(
+        _.dir).setTo(if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir).modify(_.pgBinDir).setTo(Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)
       ),
       bundles = cfg.bundles
         .modify(_.dir)

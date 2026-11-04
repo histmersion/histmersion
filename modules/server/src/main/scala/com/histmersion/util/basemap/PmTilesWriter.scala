@@ -63,20 +63,8 @@ final class PmTilesWriter(out: Reservation):
     data.write(meta)
     data.write(leaves)
     data.close()
-    val header = template.copy(
-      rootOffset = PmTiles.HeaderBytes.toLong,
-      rootLength = root.length.toLong,
-      metadataOffset = metaOffset,
-      metadataLength = meta.length.toLong,
-      leafOffset = leafOffset,
-      leafLength = leaves.length.toLong,
-      dataOffset = dataOffset,
-      dataLength = dataLength,
-      addressedTiles = addressed,
-      tileEntries = entries.size.toLong,
-      tileContents = seen.size.toLong,
-      clustered = true,
-      internalCompression = ic
+    val header = template.modify(
+      _.rootOffset).setTo(PmTiles.HeaderBytes.toLong).modify(_.rootLength).setTo(root.length.toLong).modify(_.metadataOffset).setTo(metaOffset).modify(_.metadataLength).setTo(meta.length.toLong).modify(_.leafOffset).setTo(leafOffset).modify(_.leafLength).setTo(leaves.length.toLong).modify(_.dataOffset).setTo(dataOffset).modify(_.dataLength).setTo(dataLength).modify(_.addressedTiles).setTo(addressed).modify(_.tileEntries).setTo(entries.size.toLong).modify(_.tileContents).setTo(seen.size.toLong).modify(_.clustered).setTo(true).modify(_.internalCompression).setTo(ic
     )
     out.writeAt(ByteOffset.applyUnsafe(0L), PmTiles.encodeHeader(header) ++ root)
     out.commit().fold(e => throw IOException(e.message), _.size.value)

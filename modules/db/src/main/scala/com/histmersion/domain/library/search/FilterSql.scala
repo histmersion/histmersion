@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.search
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -258,7 +260,7 @@ object FilterSql:
   /** The filter with every finding-level criterion removed — what is left is what a SOURCE must satisfy on its own:
     * `q`, authors, topics, status, publication years.
     */
-  def sourceOnly(f: Filter): Filter = f.copy(tags = Nil, places = Nil, period = None, bbox = None)
+  def sourceOnly(f: Filter): Filter = f.modify(_.tags).setTo(Nil).modify(_.places).setTo(Nil).modify(_.period).setTo(None).modify(_.bbox).setTo(None)
 
   /** Source-level predicate for a query whose row is a FINDING (its source joined in as `s`). */
   def sourceWhere(f: Filter): Sql = where(sourceOnly(f))

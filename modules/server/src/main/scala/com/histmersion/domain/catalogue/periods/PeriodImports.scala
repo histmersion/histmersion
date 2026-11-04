@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{Dataset, PeriodODataset}
 import com.histmersion.api.catalogue.PeriodO
 import com.histmersion.api.catalogue.Period
@@ -26,7 +28,7 @@ final class PeriodImports(
       val _ = periods.retainPresets(d.presets.keys.toList)
       val removed = if replace then periods.deleteSeedExcept(ids) else 0
       d.version.foreach(periods.setSeedVersion(PeriodImports.SeedName, _))
-      r.copy(presets = periods.presetCount(), removed = removed)
+      r.modify(_.presets).setTo(periods.presetCount()).modify(_.removed).setTo(removed)
     }
 
   /** Is the bundled seed newer than the one last applied here? */

@@ -62,3 +62,32 @@ The project assessment measures production and test copies in every source
 module. Its count regression gate does not yet prevent exchanging an old
 violation for a new one at another site; an identity-based debt check remains
 required by the migration goal.
+
+## Second batch and final detector refinement
+
+The second detector refinement adds source offsets to occurrence identity.
+All 19 original fixture classifications remain unchanged, and two identical
+copies on one line must now produce two distinct findings. The whole-project
+operation scan still finds 244 production copies and now finds 1587 test copies,
+matching the rewrite planner. The reconciled pre-first-batch occurrence baseline
+is 442 (198 rewritten plus 244 remaining); the original 441-group baseline above
+is preserved. Both allowed detector-refinement rounds are now used.
+
+The multi-field rewrite has 136 eligible calls. It preserves named-argument
+source order through chained lenses. It requires immutable constructor fields,
+no explicit parents, and no executable constructor statements. Constructors
+with observable work are deferred because multiple lens updates would execute
+that work more than once. Generic updates, folds, inaccessible fields, custom
+copy/modify methods and comments in argument separators remain deferred too.
+New frozen fixtures cover reversed named arguments, nested rewrites, exactly-once
+receiver evaluation, constructor effects, mutable fields and inherited records.
+Both the original and multi-field fixture suites passed before application.
+Whole-project production and test compilation passed after the generated-token
+handling was corrected for parenthesized arguments and match-expression commas.
+Both shapes now have frozen cross-file fixtures, checked against expected ASTs,
+compiled output and idempotence. Core (709), files (59) and plugin-host (39)
+tests passed. The full assessment then passed and measured 108 production
+copies, exactly 136 fewer than the second batch's 244-occurrence baseline.
+The two batches removed 334 of the reconciled 442 production occurrences
+(75.6% of this family). Test copies remain separately counted at 1587; they
+are not included in that production percentage or silently exempted.

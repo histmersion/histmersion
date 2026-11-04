@@ -1,5 +1,7 @@
 package com.histmersion.api.research
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.WireEnumValues
@@ -726,7 +728,7 @@ object Article:
       critiqueReasons: scala.List[CritiqueReason] = Nil
   ) derives KindlingsSchema, com.histmersion.api.json.Schema:
     def onlyCritiques: Boolean =
-      critiqueReasons.nonEmpty && copy(critiqueReasons = Nil, ifUpdatedAt = None) == Patch()
+      critiqueReasons.nonEmpty && this.modify(_.critiqueReasons).setTo(Nil).modify(_.ifUpdatedAt).setTo(None) == Patch()
   object Patch:
 
 

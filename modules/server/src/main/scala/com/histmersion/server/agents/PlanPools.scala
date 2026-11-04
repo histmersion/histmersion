@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.*
@@ -481,7 +483,7 @@ object PlanPools:
     */
   def probeReadings(run: CliProcess.Run, now: Long, cooldownMinutes: Int): Either[String, List[Reading]] =
     val o = ClaudeCode.parse(run.lines)
-    if o.readings.nonEmpty then Right(o.readings.map(_.copy(source = Source.Probe, observedAt = now)))
+    if o.readings.nonEmpty then Right(o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(now)))
     else
       o.result.flatMap(ClaudeCode.usageLimit) match
         case Some(l) =>

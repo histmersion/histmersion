@@ -304,16 +304,8 @@ object FindingPlan:
       case (Some(a), Some(b)) => Some(if caution(b) < caution(a) then b else a)
       case (a, b)             => a.orElse(b)
     val point = if l.lon.isDefined && l.lat.isDefined then (l.lon, l.lat) else (r.lon, r.lat)
-    l.copy(
-      region = text(l.region).orElse(text(r.region)),
-      lon = point._1,
-      lat = point._2,
-      period = period,
-      periodName = if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName),
-      tags = MergeFold.unionTags(l.tags, r.tags),
-      confidence = conf,
-      significance = l.significance.orElse(r.significance),
-      rev = ""
+    l.modify(
+      _.region).setTo(text(l.region).orElse(text(r.region))).modify(_.lon).setTo(point._1).modify(_.lat).setTo(point._2).modify(_.period).setTo(period).modify(_.periodName).setTo(if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName)).modify(_.tags).setTo(MergeFold.unionTags(l.tags, r.tags)).modify(_.confidence).setTo(conf).modify(_.significance).setTo(l.significance.orElse(r.significance)).modify(_.rev).setTo(""
     )
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */

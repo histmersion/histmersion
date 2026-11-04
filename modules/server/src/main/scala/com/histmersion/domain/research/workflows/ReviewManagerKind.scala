@@ -362,7 +362,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                   rounds = Some(rounds)
                 ),
                 identity,
-                item.state.copy(before = Some(before), pairsBefore = pairs),
+                item.state.modify(_.before).setTo(Some(before)).modify(_.pairsBefore).setTo(pairs),
                 s"review-article fix, $rounds rounds; $before open MAJOR(s)${pairs
                     .fold("")(n => s", $n open critique pair(s)")}",
                 out

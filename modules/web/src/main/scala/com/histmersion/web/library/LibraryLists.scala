@@ -1,5 +1,7 @@
 package com.histmersion.web.library
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Api
 import com.histmersion.api.library.{Filter, Hit}
 import com.histmersion.web.{ApiClient, Latest, LibrarySection, UiState}
@@ -58,7 +60,7 @@ object LibraryLists:
 
   private def readSources(f: Filter, offset: Int): Unit =
     sources.update(_.copy(loading = true, error = None))
-    val page = f.copy(sort = sort.sort, limit = Layout.libraryPage, offset = offset)
+    val page = f.modify(_.sort).setTo(sort.sort).modify(_.limit).setTo(Layout.libraryPage).modify(_.offset).setTo(offset)
     latestSources(ApiClient.sources(page))(
       r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
       m => sources.update(_.copy(loading = false, loaded = true, error = Some(m)))
@@ -66,7 +68,7 @@ object LibraryLists:
 
   private def readArticles(f: Filter, offset: Int): Unit =
     articles.update(_.copy(loading = true, error = None))
-    val page = f.copy(limit = Layout.libraryPage, offset = offset)
+    val page = f.modify(_.limit).setTo(Layout.libraryPage).modify(_.offset).setTo(offset)
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
       r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
       m => articles.update(_.copy(loading = false, loaded = true, error = Some(m)))

@@ -193,7 +193,7 @@ object Ops:
       val (head, body) = FileFormat.splitFrontmatter(raw)
       c.lintMarkdown(FormatCheck(body, FormatField.Body, fix)).map { r =>
         r.text.filter(t => fix && t != body).foreach(t => java.nio.file.Files.writeString(p, head + t))
-        r.copy(subject = p.getFileName.toString, text = None)
+        r.modify(_.subject).setTo(p.getFileName.toString).modify(_.text).setTo(None)
       }
 
   def lint(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =

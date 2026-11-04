@@ -182,10 +182,10 @@ object NoteService:
         case None                                               => Left(Note.EditRefused.Missing)
         case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(Note.EditRefused.Changed(n.updatedAt))
         case Some(_)                                            =>
-          changed(user, id)(_.copy(text = text, updatedAt = at))
+          changed(user, id)(_.modify(_.text).setTo(text).modify(_.updatedAt).setTo(at))
           get(user, id).toRight(Note.EditRefused.Missing)
 
     def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
       val found = get(user, id)
-      found.foreach(_ => changed(user, id)(_.copy(deletedAt = Some(at), updatedAt = at)))
+      found.foreach(_ => changed(user, id)(_.modify(_.deletedAt).setTo(Some(at)).modify(_.updatedAt).setTo(at)))
       found

@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Plural
 
 import com.histmersion.api.automation.Managers.*
@@ -143,13 +145,8 @@ object GoalFocus:
     val byGoal = work.flatMap((gs, w) => gs.distinct.map(_ -> w)).groupMap(_._1)(_._2)
     goals.map { g =>
       val arts = articles.getOrElse(g.slug, Nil)
-      g.copy(
-        sources = sources.getOrElse(g.slug, 0),
-        articles = arts.size,
-        unreviewed = arts.count(a => !passed(a)),
-        compileOpen = compileOpen.getOrElse(g.slug, 0),
-        work = byGoal.getOrElse(g.slug, Nil).sortBy(_.itemId),
-        lastStop = lastStops.get(g.slug)
+      g.modify(
+        _.sources).setTo(sources.getOrElse(g.slug, 0)).modify(_.articles).setTo(arts.size).modify(_.unreviewed).setTo(arts.count(a => !passed(a))).modify(_.compileOpen).setTo(compileOpen.getOrElse(g.slug, 0)).modify(_.work).setTo(byGoal.getOrElse(g.slug, Nil).sortBy(_.itemId)).modify(_.lastStop).setTo(lastStops.get(g.slug)
       )
     }
 

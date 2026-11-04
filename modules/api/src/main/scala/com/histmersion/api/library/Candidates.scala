@@ -1,4 +1,6 @@
 package com.histmersion.api.library
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.{ACursor, Json}
 import com.histmersion.api.given
 
@@ -29,15 +31,8 @@ object Candidates:
   final case class Found(key: String, work: WorkRef, by: String)
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
-    a.copy(
-      title = a.title.orElse(b.title),
-      year = a.year.orElse(b.year),
-      authors = if a.authors.nonEmpty then a.authors else b.authors,
-      venue = a.venue.orElse(b.venue),
-      isOa = a.isOa || b.isOa,
-      abstractText = a.abstractText.orElse(b.abstractText),
-      arxivId = a.arxivId.orElse(b.arxivId),
-      openalexId = a.openalexId.orElse(b.openalexId)
+    a.modify(
+      _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(a.isOa || b.isOa).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
     )
 
   private def str(c: ACursor, k: String): Option[String] = c.get[String](k).toOption.map(_.trim).filter(_.nonEmpty)

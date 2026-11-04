@@ -499,7 +499,7 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (q, region, unit, f0, json) => (c: Client) =>
-      val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty), places = f0.places ++ region.toList)
+      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty)).modify(_.places).setTo(f0.places ++ region.toList)
       c.aggregate(Api.AggregateQuery.time(f, unit))
         .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, unit.getOrElse("sources"))))
     }

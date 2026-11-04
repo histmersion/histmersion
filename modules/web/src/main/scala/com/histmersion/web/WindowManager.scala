@@ -256,7 +256,7 @@ object WindowManager:
 
   private def restore(wid: Int): Unit =
     nextZ += 1
-    windows.update(_.map(w => if w.id == wid then w.copy(minimized = false, z = nextZ) else w))
+    windows.update(_.map(w => if w.id == wid then w.modify(_.minimized).setTo(false).modify(_.z).setTo(nextZ) else w))
 
   private def minimize(wid: Int): Unit =
     windows.update(_.map(w => if w.id == wid then w.modify(_.minimized).setTo(true) else w))
@@ -371,7 +371,7 @@ object WindowManager:
           dragWin.filter(_ == wid).foreach { _ =>
             val nx = math.max(0, ev.clientX - dragOx)
             val ny = math.max(0, ev.clientY - dragOy)
-            windows.update(_.map(ww => if ww.id == wid then ww.copy(x = nx, y = ny) else ww))
+            windows.update(_.map(ww => if ww.id == wid then ww.modify(_.x).setTo(nx).modify(_.y).setTo(ny) else ww))
           }
         },
         onPointerUp --> { ev =>
@@ -442,7 +442,7 @@ object WindowManager:
           resizeWin.filter(_ == wid).foreach { _ =>
             val nw = math.max(Layout.windowMinWidth.value, resizeOw + (ev.clientX - resizeOx))
             val nh = math.max(Layout.windowMinHeight.value, resizeOh + (ev.clientY - resizeOy))
-            windows.update(_.map(ww => if ww.id == wid then ww.copy(w = nw, h = nh) else ww))
+            windows.update(_.map(ww => if ww.id == wid then ww.modify(_.w).setTo(nw).modify(_.h).setTo(nh) else ww))
           }
         },
         onPointerUp --> { ev =>

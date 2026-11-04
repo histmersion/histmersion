@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
@@ -206,7 +208,7 @@ final class EnrichSourcePipeline(
       case Right(_)                                           => Right(Patched(fs.size, fields, proposal))
       case Left(e) if e.code.contains(Write.CodePrecondition) =>
         load(ck).flatMap { fresh =>
-          val again = fresh.copy(windows = Nil, head = "")
+          val again = fresh.modify(_.windows).setTo(Nil).modify(_.head).setTo("")
           val existing = fresh.existingClaims.map(AgentVerify.normalise).toSet
           val (p2, fields2, proposal2) = patch(
             again,

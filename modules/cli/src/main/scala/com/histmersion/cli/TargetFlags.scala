@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.personal.{MapZoom, Target, ViewState}
@@ -50,11 +52,6 @@ object TargetFlags:
       zoom = r.zoom.map(MapZoom(_))
     yield
       val base = if kind.isItem then Target.item(kind, r.id.getOrElse("")) else Target(kind)
-      base.copy(
-        lat = lat,
-        lon = lon,
-        zoom = zoom,
-        from = r.from.map(Year(_)),
-        to = r.to.map(Year(_)),
-        view = r.view.map(ViewState(_))
+      base.modify(
+        _.lat).setTo(lat).modify(_.lon).setTo(lon).modify(_.zoom).setTo(zoom).modify(_.from).setTo(r.from.map(Year(_))).modify(_.to).setTo(r.to.map(Year(_))).modify(_.view).setTo(r.view.map(ViewState(_))
       )

@@ -44,16 +44,8 @@ object ArticlePatches:
       val tags =
         if tagsAdd.isEmpty && tagsRemove.isEmpty && tagsReplace.isEmpty then base.tags
         else Some(ListPatch(csv(tagsAdd), csv(tagsRemove), tagsReplace.map(csv1)))
-      base.copy(
-        title = title.orElse(base.title),
-        summary = summary.orElse(base.summary),
-        kind = kind.orElse(base.kind),
-        body = body.orElse(base.body),
-        append = app.orElse(base.append),
-        tags = tags,
-        regions = regions.map(csv1).orElse(base.regions),
-        period = per.orElse(base.period),
-        ifUpdatedAt = ifUpdatedAt.orElse(base.ifUpdatedAt)
+      base.modify(
+        _.title).setTo(title.orElse(base.title)).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.kind).setTo(kind.orElse(base.kind)).modify(_.body).setTo(body.orElse(base.body)).modify(_.append).setTo(app.orElse(base.append)).modify(_.tags).setTo(tags).modify(_.regions).setTo(regions.map(csv1).orElse(base.regions)).modify(_.period).setTo(per.orElse(base.period)).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
       )
 
   /** The `--filter-*` flags as given; [[withCoverage]] turns them into the patch's `filter`. */
@@ -105,7 +97,7 @@ object ArticlePatches:
             )
           )
         else p.filter
-      p.copy(filter = filter, reasons = if rs.isEmpty then p.reasons else p.reasons ++ rs)
+      p.modify(_.filter).setTo(filter).modify(_.reasons).setTo(if rs.isEmpty then p.reasons else p.reasons ++ rs)
 
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.

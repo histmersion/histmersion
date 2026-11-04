@@ -2,7 +2,7 @@ category	classification	count
 candidate	broader-than-feature	10
 candidate	feature-restricted	206
 candidate	public	263
-consumer-production	inside-expected-feature	24056
-consumer-production	outside-expected-feature	7123
+consumer-production	inside-expected-feature	24048
+consumer-production	outside-expected-feature	7121
 consumer-test	inside-expected-feature	3100
 consumer-test	outside-expected-feature	4821

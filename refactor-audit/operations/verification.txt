@@ -1,5 +1,6 @@
 PASS
-19 exact classified occurrences
+19 original classified occurrences plus 2 identical same-line copies
+distinct source offsets preserve separate occurrences
 case-class and unrelated copies distinguished
 fold callback allocations separated from one-time seed
 Iron accessor separated from ordinary value members

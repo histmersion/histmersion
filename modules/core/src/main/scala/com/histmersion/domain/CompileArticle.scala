@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.research.Articles
 import com.histmersion.api.given
 
@@ -340,9 +342,8 @@ object CompileArticle:
     val stated = Option(a.reasons)
       .getOrElse(Nil)
       .map(r =>
-        r.copy(
-          citekey = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""),
-          reason = Option(r.reason).map(_.trim).getOrElse("")
+        r.modify(
+          _.citekey).setTo(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")).modify(_.reason).setTo(Option(r.reason).map(_.trim).getOrElse("")
         )
       )
     val reasonProblems = stated.flatMap { r =>

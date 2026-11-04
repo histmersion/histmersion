@@ -513,27 +513,11 @@ object Source:
         _ <- supersededEdgeCheck(newStatus, newEdges)
       yield
         def cleared(f: MetadataField) = meta.clear.contains(f)
-        existing.copy(
-          title = meta.title.getOrElse(existing.title),
-          authors = meta.authors.getOrElse(existing.authors),
-          year = if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year),
-          venue = if cleared(MetadataField.Venue) then None
-          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v))),
-          doi = if cleared(MetadataField.Doi) then None
-          else meta.doi.fold(existing.doi)(d => blankToNone(Some(d))),
-          status = newStatus,
-          summary = patch.summary.orElse(existing.summary),
-          ocrMarkdown = patch.body.orElse(existing.ocrMarkdown),
-          notes = patch.notes.orElse(existing.notes),
-          topics = patch.topics.getOrElse(existing.topics),
-          regions = patch.regions.getOrElse(existing.regions),
-          tags = patch.tags.fold(existing.tags)(applyList(existing.tags, _)),
-          period = period,
-          findings = fs,
-          edges = newEdges,
-          provenance = if cleared(MetadataField.Provenance) then None
-          else meta.provenance.orElse(existing.provenance),
-          calibreId = if cleared(MetadataField.CalibreId) then None
+        existing.modify(
+          _.title).setTo(meta.title.getOrElse(existing.title)).modify(_.authors).setTo(meta.authors.getOrElse(existing.authors)).modify(_.year).setTo(if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year)).modify(_.venue).setTo(if cleared(MetadataField.Venue) then None
+          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v)))).modify(_.doi).setTo(if cleared(MetadataField.Doi) then None
+          else meta.doi.fold(existing.doi)(d => blankToNone(Some(d)))).modify(_.status).setTo(newStatus).modify(_.summary).setTo(patch.summary.orElse(existing.summary)).modify(_.ocrMarkdown).setTo(patch.body.orElse(existing.ocrMarkdown)).modify(_.notes).setTo(patch.notes.orElse(existing.notes)).modify(_.topics).setTo(patch.topics.getOrElse(existing.topics)).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(applyList(existing.tags, _))).modify(_.period).setTo(period).modify(_.findings).setTo(fs).modify(_.edges).setTo(newEdges).modify(_.provenance).setTo(if cleared(MetadataField.Provenance) then None
+          else meta.provenance.orElse(existing.provenance)).modify(_.calibreId).setTo(if cleared(MetadataField.CalibreId) then None
           else meta.calibreId.map(_.trim).orElse(existing.calibreId)
         )
 

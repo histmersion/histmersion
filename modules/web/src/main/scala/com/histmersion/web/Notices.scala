@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.histmersion.api.instance.UiNotices.{Board, Counter, Counters}
 import com.histmersion.web.ui.Layout
@@ -37,7 +39,7 @@ object Notices:
   /** A counter once its window showed the items up to `at`. */
   def seenAt(c: Counter, at: String): Counter =
     val s = UiNotices.advance(c.seen, at)
-    c.copy(seen = Some(s), fresh = UiNotices.fresh(c.latest, Some(s)))
+    c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(UiNotices.fresh(c.latest, Some(s)))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
   def anyFresh(cs: Map[String, Counter], shown: Board => Boolean): Boolean =

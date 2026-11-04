@@ -22,7 +22,8 @@ class OperationInventoryVerification extends SyntacticRule("OperationInventoryVe
     val args = List("--scala-version","3.10.0","--sourceroot",".","--classpath","target/operation-fixture-classes","--files",source)
     run("positive",cli ++ List("--config","tools/refactor/operation-fixture/inspect.conf") ++ args)
     val rows = Files.readAllLines(Paths.get("target/operation-fixture-report/occurrences.tsv"),UTF_8).asScala.drop(1).map(_.split("\t",-1).toList).toList
-    val counts = rows.groupBy(r => (r.head,r(1))).view.mapValues(_.size).toMap
+    val originalRows = rows.filterNot(_(2).endsWith("/Duplicates.scala"))
+    val counts = originalRows.groupBy(r => (r.head,r(1))).view.mapValues(_.size).toMap
     val expected = Map(
       ("copy","case-class-copy") -> 3, ("copy","non-case-class-copy") -> 1,
       ("fold","visible-allocation-review") -> 3, ("fold","no-visible-allocation; indirect-effects-unresolved") -> 2,
@@ -30,11 +31,14 @@ class OperationInventoryVerification extends SyntacticRule("OperationInventoryVe
       ("given-instance","instance-body-review") -> 4,
       ("derivation-call","kindlings-derived") -> 1, ("derivation-call","other-derived-review") -> 1)
     require(counts == expected,s"Operation classifications differ: $counts")
+    val duplicates = rows.filter(_(2).endsWith("/Duplicates.scala"))
+    require(duplicates.size == 2 && duplicates.forall(r => r.head == "copy" && r(1) == "case-class-copy"),"Same-line copies must each be counted")
+    require(duplicates.map(_(4)).distinct.size == 1 && duplicates.map(_(10)).distinct.size == 1 && duplicates.map(_(13)).distinct.size == 2,"Identical same-line expressions require distinct source offsets")
     require(rows.exists(r => r.head == "fold" && r(5).endsWith("Examples.seedOnly().") && r(1).startsWith("no-visible")),"One-time seed allocation counted as callback allocation")
     require(rows.exists(r => r.head == "fold" && r(5).endsWith("Examples.constructing().") && r(1) == "visible-allocation-review"),"Case-class apply in callback missed")
     run("negative",cli ++ List("--config","tools/refactor/operation-fixture/reject.conf") ++ args,1)
     require(rows.exists(r => r.head == "given-instance" && r(6).contains("textInt")),"Template-style given missed")
     require(rows.exists(r => r.head == "copy" && r(5).endsWith("Examples.returned().") && r(1) == "case-class-copy"),"Method-result copy missed")
-    Files.write(report,List("PASS","19 exact classified occurrences","case-class and unrelated copies distinguished","fold callback allocations separated from one-time seed","Iron accessor separated from ordinary value members","Kindlings derivation and unrelated derived method distinguished","Alias and template-style givens inventoried","false classification rejected").asJava,UTF_8)
+    Files.write(report,List("PASS","19 original classified occurrences plus 2 identical same-line copies","distinct source offsets preserve separate occurrences","case-class and unrelated copies distinguished","fold callback allocations separated from one-time seed","Iron accessor separated from ordinary value members","Kindlings derivation and unrelated derived method distinguished","Alias and template-style givens inventoried","false classification rejected").asJava,UTF_8)
   }
 }

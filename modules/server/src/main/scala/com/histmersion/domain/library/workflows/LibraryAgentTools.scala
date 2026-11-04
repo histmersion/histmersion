@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 
@@ -144,7 +146,7 @@ object LibraryAgentTools:
     */
   def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: Int, max: Int): String =
     val shown = if maxRows > 0 && r.rows.size > maxRows then
-      r.copy(rows = r.rows.take(maxRows), rowCount = maxRows, truncated = true)
+      r.modify(_.rows).setTo(r.rows.take(maxRows)).modify(_.rowCount).setTo(maxRows).modify(_.truncated).setTo(true)
     else r
     val more = if shown.rows.size < r.rows.size then
       s"\n\n_…${r.rows.size - shown.rows.size}${

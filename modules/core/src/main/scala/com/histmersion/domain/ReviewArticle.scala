@@ -1096,7 +1096,7 @@ object ReviewArticle:
   )
 
   private def recordedMinor(f: Finding, why: String): Finding =
-    f.copy(severity = Severity.Minor, problem = s"${f.problem.trim} (recorded minor: $why)")
+    f.modify(_.severity).setTo(Severity.Minor).modify(_.problem).setTo(s"${f.problem.trim} (recorded minor: $why)")
 
   /** GRADE hedges and contest words: a sentence carrying one already qualifies its claim. */
   private val Hedge =
@@ -1435,10 +1435,8 @@ object ReviewArticle:
           val why =
             s"[[${p.src.citekey}]] and [[${p.dst.citekey}]] are still not cited in one paragraph, and no reason is stored"
           (
-            c.copy(
-              fixed = false,
-              note =
-                s"$why (code's check)${Option(c.note).filter(_.trim.nonEmpty).fold("")(n => s"; the reviewer: $n")}"
+            c.modify(
+              _.fixed).setTo(false).modify(_.note).setTo(s"$why (code's check)${Option(c.note).filter(_.trim.nonEmpty).fold("")(n => s"; the reviewer: $n")}"
                   .take(300)
             ),
             Some(s"${c.id}: checked as fixed, but $why — recorded not fixed")

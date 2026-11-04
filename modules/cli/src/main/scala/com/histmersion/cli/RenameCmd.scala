@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SourcesMarkdown
@@ -24,7 +26,7 @@ object RenameCmd:
   final case class Args(oldCitekey: String, newCitekey: String, json: Boolean)
 
   val args: Opts[Args] =
-    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = a.newCitekey.trim))
+    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.modify(_.oldCitekey).setTo(a.oldCitekey.trim).modify(_.newCitekey).setTo(a.newCitekey.trim))
 
   def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
