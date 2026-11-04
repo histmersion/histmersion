@@ -113,6 +113,32 @@ and coverage report both matter.
 
 ## Compiler repair rules
 
+### CLI stdout boundary batch
+
+`CliOutputBoundary.scala` matches semantic `Predef.print`/`println` references in
+CLI production sources, excluding the configured exact boundary owner. It replaces
+only the callable reference, preserving argument syntax, overloads and callbacks.
+Selected receivers must resolve to the Predef singleton; potentially effectful
+receivers are left unchanged and recorded as unsupported. This rule does not
+rewrite imports, stderr, printf, arbitrary PrintStreams or server diagnostics.
+
+Use `cli-output.conf` for inspection, `cli-output-apply.conf` for application and
+`cli-output-check.conf` for idempotence, with ordinary semantic options and
+`--files modules/cli/src/main`. The TSV and summary distinguish supported rewrites
+from unsupported cases. Check mode fails on remaining supported matches; it does
+not certify unsupported cases as compliant. The independent capability audit
+continues to detect raw console access.
+
+`AddCliOutput.scala` adds the three package-private methods at the existing Cli
+boundary and the real OutputSuite regression via AST patches. No new permission
+is required. After recompiling, run `cli/testOnly *` and the full capability audit.
+The executable input/expected fixtures in `cli-output-fixtures/` assert exact
+stdout and stderr bytes and evaluation behavior. Run the input with SemanticDB,
+apply `cli-output-fixtures.conf` to a separate output directory, compare with
+expected source, then compile/run the result with fresh SemanticDB.
+`cli-output-fixtures-check.conf` fails on the original and passes on the result,
+while retaining and reporting the effectful-receiver case.
+
 ### Controller rename batch
 
 `RenameControllers.scala` uses the exact configured class/companion symbols. It

@@ -29,6 +29,10 @@ import sttp.client4.*
   */
 object Cli:
 
+  private[cli] def writeLine(value: Any): Unit = scala.Predef.println(value)
+  private[cli] def writeLine(): Unit = scala.Predef.println()
+  private[cli] def write(value: Any): Unit = scala.Predef.print(value)
+
   private val serverOpt =
     Opts
       .option[String]("server", "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)")

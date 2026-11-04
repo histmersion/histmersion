@@ -12,13 +12,13 @@ object AgentStateCmd:
 
   private val list = Opts.subcommand("list", "List all agent state keys") {
     Opts.unit.map(_ =>
-      (c: Client) => c.agentStateList().map(entries => println(AgentStateMarkdown.agentStateList(entries)))
+      (c: Client) => c.agentStateList().map(entries => com.histmersion.cli.Cli.writeLine(AgentStateMarkdown.agentStateList(entries)))
     )
   }
 
   private val get = Opts.subcommand("get", "Get one agent state entry") {
     Opts.argument[String]("key").map { key => (c: Client) =>
-      c.agentStateGet(key).map(e => println(AgentStateMarkdown.agentState(e)))
+      c.agentStateGet(key).map(e => com.histmersion.cli.Cli.writeLine(AgentStateMarkdown.agentState(e)))
     }
   }
 
@@ -27,7 +27,7 @@ object AgentStateCmd:
       .mapN { (key, valueStr) => (c: Client) =>
         io.circe.parser.parse(valueStr) match
           case Right(_) =>
-            c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(AgentStateMarkdown.agentState(e)))
+            c.agentStateSet(key, AgentStatePut(valueStr)).map(e => com.histmersion.cli.Cli.writeLine(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
             Left(Cli.Error(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
       }

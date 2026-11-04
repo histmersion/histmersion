@@ -51,7 +51,7 @@ object BundleCmd:
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
             e => Left(Cli.Error(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
-            m => Right(println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
+            m => Right(com.histmersion.cli.Cli.writeLine(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
           )
     }
   }
@@ -100,7 +100,7 @@ object BundleCmd:
   ) {
     Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
       label => (c: Client) =>
-        label.fold(c.instance)(l => c.setInstance(Some(l))).map(i => println(BundleMarkdown.instance(i)))
+        label.fold(c.instance)(l => c.setInstance(Some(l))).map(i => com.histmersion.cli.Cli.writeLine(BundleMarkdown.instance(i)))
     }
   }
 

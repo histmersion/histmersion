@@ -22,13 +22,13 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
         c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, offset))
-          .map(r => println(AttestationsMarkdown.attestationList(r)))
+          .map(r => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestationList(r)))
       }
   }
 
   private val showCmd = Opts.subcommand("show", "One attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.getAttestation(id).map(a => println(AttestationsMarkdown.attestation(a)))
+      c.getAttestation(id).map(a => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestation(a)))
     }
   }
 
@@ -44,13 +44,13 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
         c.createAttestation(Attestation.Put(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
-          .map(a => println(AttestationsMarkdown.attestation(a)))
+          .map(a => com.histmersion.cli.Cli.writeLine(AttestationsMarkdown.attestation(a)))
       }
   }
 
   private val rmCmd = Opts.subcommand("rm", "Delete an attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAttestation(id).map(d => println(s"Deleted attestation #${d.id}."))
+      c.deleteAttestation(id).map(d => com.histmersion.cli.Cli.writeLine(s"Deleted attestation #${d.id}."))
     }
   }
 

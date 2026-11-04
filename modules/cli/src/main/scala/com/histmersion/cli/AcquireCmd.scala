@@ -75,7 +75,7 @@ object AcquireCmd:
           if json then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
           else
             Console.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
-            pollRetractions(client, 0).map(r => println(AcquireMarkdown.retractionsUpdate(r)))
+            pollRetractions(client, 0).map(r => com.histmersion.cli.Cli.writeLine(AcquireMarkdown.retractionsUpdate(r)))
         }
       }
     }

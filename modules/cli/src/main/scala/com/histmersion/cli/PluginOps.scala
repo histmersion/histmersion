@@ -21,7 +21,7 @@ final class PluginOps(
     install: LocalInstall,
     cfg: CliPluginsConfig,
     run: Runner = Runner.System,
-    out: String => Unit = s => println(s),
+    out: String => Unit = s => com.histmersion.cli.Cli.writeLine(s),
     confirm: String => Boolean = PluginOps.ask
 ):
 

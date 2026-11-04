@@ -133,7 +133,7 @@ object EventsCmd:
       for
         p <- patch
         d <- c.patchEvent(id, p)
-      yield println(d.markdown)
+      yield com.histmersion.cli.Cli.writeLine(d.markdown)
     }
   }
 
@@ -141,13 +141,13 @@ object EventsCmd:
 
   /** Follow a job, then print what it left (an import's report). */
   private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[Cli.Error, Unit] =
-    println(
+    com.histmersion.cli.Cli.writeLine(
       s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
     if noWait then Right(())
     else
       IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-        done.detail.flatMap(EventImportReport.Detail.of).foreach(r => println(EventImportReport.markdown(r)))
+        done.detail.flatMap(EventImportReport.Detail.of).foreach(r => com.histmersion.cli.Cli.writeLine(EventImportReport.markdown(r)))
       }
 
   private val importCmd = Opts.subcommand(
@@ -196,13 +196,13 @@ object EventsCmd:
     )
       .mapN { (p, dry, noWait) => (c: Client) =>
         c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
-          println(
+          com.histmersion.cli.Cli.writeLine(
             s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else
             IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => println(EventRederiveReport.markdown(r)))
+              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => com.histmersion.cli.Cli.writeLine(EventRederiveReport.markdown(r)))
             }
         }
       }
@@ -219,7 +219,7 @@ object EventsCmd:
       Opts.option[Int]("limit", "At most this many").orNone
     )
       .mapN { (st, ev, limit) => (c: Client) =>
-        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => println(Corrections.markdown(l)))
+        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => com.histmersion.cli.Cli.writeLine(Corrections.markdown(l)))
       }
   }
 
@@ -230,7 +230,7 @@ object EventsCmd:
     Opts.unit.map { _ => (c: Client) =>
       c.call(EventsApi.catalogues)(())
         .map(cs =>
-          println(
+          com.histmersion.cli.Cli.writeLine(
             cs.map(i =>
               s"- **${i.id}** — ${i.title} (${i.home})\n  - licence: ${i.licence}\n  - cite as: ${i.citation}"
             ).mkString("\n")
@@ -253,8 +253,8 @@ object EventsCmd:
       .mapN { (id, re, confirm, reject) => (c: Client) =>
         if re || confirm.nonEmpty || reject.nonEmpty then
           c.call(EventsApi.applyLinks)((id, EventLinksRequest(re, confirm, reject)))
-            .map(r => println(EventLinksMarkdown.result(r)))
-        else c.call(EventsApi.links)(id).map(l => println(EventLinksMarkdown.list(l)))
+            .map(r => com.histmersion.cli.Cli.writeLine(EventLinksMarkdown.result(r)))
+        else c.call(EventsApi.links)(id).map(l => com.histmersion.cli.Cli.writeLine(EventLinksMarkdown.list(l)))
       }
   }
 
@@ -286,7 +286,7 @@ object EventsCmd:
     )
       .mapN { (kind, tier, area, f) => (c: Client) =>
         c.call(EventsApi.leads)(Api.EventQuery(f, kind = kind, tier = tier, area = area))
-          .map(l => println(EventLeads.markdown(l)))
+          .map(l => com.histmersion.cli.Cli.writeLine(EventLeads.markdown(l)))
       }
   }
 

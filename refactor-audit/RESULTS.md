@@ -4,19 +4,23 @@ Baseline: `6e1b5387`. Production compiler repairs have now been applied through 
 
 ## Current checkpoint
 
+The stdout batch redirected 163 symbol-resolved `Predef.print`/`println` references across 23 CLI files to three package-private methods on the existing permitted `Cli` owner. No capability permissions were added or broadened. Console findings fell from 204 to 41 and total capability findings from 432 to 269; all other category counts are unchanged. Stderr/progress handling and non-CLI diagnostics remain for subsequent batches.
+
+Production and aggregate test compilation pass. All 233 CLI tests pass, including a new byte-exact output regression covering stdout/stderr isolation, blank lines, null, Unicode, callbacks, Markdown/JSON rendering and exactly-once argument evaluation/rendering. The executable fixture passes before and after rewriting, its output matches the expected source, and check mode rejects the original fixture but accepts the compiled result. An effectful receiver remains unchanged and is reported as unsupported. Application check mode reports zero supported rewrites and zero unsupported cases.
+
 The first repair batch renamed AgentsHandlers and ManagersHandlers to Controllers: 137 semantic declaration/reference patches across 48 files, two guarded file moves and comment-token link updates. The four Handlers declaration findings are gone. Aliases and unrelated names are preserved; the compiled rewrite fixture matches its expected output and a second semantic pass has zero matches. The original fixture is correctly rejected by check mode.
 
 The readiness matrix accounts for all 43 goals. Its command parses all 3,125 Scala source/test files, runs two structural fixture files and passes all 24 structural source assertions. It now reports 46 structural findings (34 primitive roles, 12 repository visibility), down from 50. G10's exact production-package constraint is measured; 42 goals remain partial/unmeasured, so readiness intentionally fails.
 
 After this batch, production and aggregate test compilation pass. All 25 tests in ContractSnapshotSuite, AgentsSettingsSuite and AiProvidersSuite pass, with snapshot files unchanged. The snapshot test exposed an API/domain role membership mismatch in AgentDefinitions; a scoped Scalafix boundary conversion fixed it. Live database tests were not run for this rename batch.
 
-Production compilation now passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 21 guarded capability source assertions pass. It reports the same 432 policy findings as the earlier provisional inventory. Compiler repair enables trustworthy measurement; it does not remove those architectural violations.
+Production compilation passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 24 guarded capability source assertions pass, including the new output boundary and a remaining stderr violation. It reports 269 policy findings, down from the compiling checkpoint's 432.
 
 | Configured check | Findings across all normally compiled main files |
 |---|---:|
 | Environment | 8 |
 | System properties | 12 |
-| Console output | 204 |
+| Console output | 41 |
 | Clock | 103 |
 | Process lifecycle | 11 |
 | Filesystem | 67 |
@@ -25,7 +29,7 @@ Production compilation now passes with normal SemanticDB, including server and C
 | Process execution/dependency | 7 |
 | Repository factory dependency | 0 |
 | Repository transaction lifecycle | 19 |
-| Total | 432 |
+| Total | 269 |
 
 The transaction count includes one known helper-call witness: `QueryRepo.run -> QueryRepo.exec -> Connection.setAutoCommit`. These are source-reference/call-site counts, not independent business operations. Repository helpers are followed across files, aliases and recursive paths; dynamic dispatch and callback targets are not fully modeled. Chained capability dependencies are deduplicated. A discovered cross-file local-symbol collision was reproduced in a failing regression fixture and corrected before retaining these results.
 
@@ -35,7 +39,7 @@ The ordinary audit exits 1 because violations remain, including the indirect rep
 
 Aggregate `Test/compile` now passes across the repository. Core's 817 tests pass across the initial run and the successful rerun of the two repaired suites. Compiler repairs and test updates use Scalafix AST patches; production and test repair check modes verify idempotence. Database integration tests have only been compiled, not executed against a live database.
 
-The complete CLI suite passes (232 tests), the files suite passes (73 tests), and the selected server suites pass (43 tests: PersonalTypes, PersonalControllers, VocabularyWire, AgentsSettings and Pages). The server regression rejects invalid/non-finite coordinates while accepting coordinate limits. CLI tests assert wire-input preservation instead of obsolete client-side validation; domain validation remains covered in core. The full server runtime suite and native builds were not run. `git diff --check` passes.
+At the compiler-repair checkpoint, the complete CLI suite passed (232 tests), the files suite passed (73 tests), and the selected server suites passed (43 tests: PersonalTypes, PersonalControllers, VocabularyWire, AgentsSettings and Pages). The server regression rejects invalid/non-finite coordinates while accepting coordinate limits. CLI tests assert wire-input preservation instead of obsolete client-side validation; domain validation remains covered in core. The full server runtime suite and native builds were not run. `git diff --check` passes.
 
 ## Historical initial run
 

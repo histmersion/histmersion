@@ -21,7 +21,7 @@ object CandidatesCmd:
       Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone
     )
       .mapN { (goal, state, limit, offset) => (c: Client) =>
-        c.call(AcquireApi.candidates)((goal, state, limit, offset)).map(l => println(CandidatesMarkdown.list(l)))
+        c.call(AcquireApi.candidates)((goal, state, limit, offset)).map(l => com.histmersion.cli.Cli.writeLine(CandidatesMarkdown.list(l)))
       }
 
   private val sweepCmd = Opts.subcommand(
@@ -31,7 +31,7 @@ object CandidatesCmd:
     (Opts.argument[String]("goal"), Opts.flag("dry-run", "Read, store nothing (no candidates, no watermarks)").orFalse)
       .mapN { (goal, dry) => (c: Client) =>
         c.call(AcquireApi.sweepCandidates)(CandidateSweep.Request(goal, dry))
-          .map(s => println(CandidatesMarkdown.sweep(s)))
+          .map(s => com.histmersion.cli.Cli.writeLine(CandidatesMarkdown.sweep(s)))
       }
   }
 
@@ -43,7 +43,7 @@ object CandidatesCmd:
       )
         .mapN { (ids, as) => (c: Client) =>
           c.call(AcquireApi.markCandidates)(CandidateMark(ids.toList, as))
-            .map(m => println(CandidatesMarkdown.marked(m)))
+            .map(m => com.histmersion.cli.Cli.writeLine(CandidatesMarkdown.marked(m)))
         }
     }
 
