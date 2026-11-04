@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters.DecidedBy
 import com.histmersion.domain.AgentProposals.Proposal
@@ -40,7 +42,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       assert(propose(s, edge, None).isDefined, "another change")
       assertEquals(a(s).payload(first.id).flatMap(com.histmersion.util.database.Jsonb.read[Proposal]), Some(status))
       assert(before(s, status))
-      assert(!before(s, status.copy(citekey = "zz2020_z")))
+      assert(!before(s, status.modify(_.citekey).setTo("zz2020_z")))
       val auto = propose(s, status, None, ApprovalState.Approved, Some("applied automatically")).get
       assertEquals(
         (auto.state, auto.result, auto.decidedAt.isDefined),

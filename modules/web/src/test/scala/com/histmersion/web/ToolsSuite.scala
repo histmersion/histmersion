@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Source
 
 import sttp.model.Method
@@ -220,8 +222,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.what(init), Some("bundled gazetteer, bundled period presets, fetch periodo"))
     assertEquals(JobsView.what(job("a", JobState.Running)), None) // an OCR job's subject is its citekey
     assertEquals(JobsView.skippedLine(init), None)
-    val skipped = init.copy(detail =
-      init.detail.map(
+    val skipped = init.modify(_.detail).setTo(init.detail.map(
         _.set(SkippedPeriod.SkippedCount, 3)
           .set(
             SkippedPeriod.Skipped,
@@ -491,7 +492,7 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("an edit sends only what changed; a blank topic clears it; blank text is refused") {
-    val item = qi(3, "tasks", Some("Chores")).copy(text = "tidy up")
+    val item = qi(3, "tasks", Some("Chores")).modify(_.text).setTo("tidy up")
     assertEquals(QueueView.editPatch(item, "tidy up", "Chores"), Right(None))
     assertEquals(QueueView.editPatch(item, " tidy up \n", " Chores "), Right(None))
     assertEquals(
@@ -499,7 +500,7 @@ class ToolsSuite extends munit.FunSuite:
       Right(Some(Queue.QueuePatch(text = Some("tidy up well"))))
     )
     assertEquals(QueueView.editPatch(item, "tidy up", ""), Right(Some(Queue.QueuePatch(topic = Some("")))))
-    assertEquals(QueueView.editPatch(item.copy(topic = None), "tidy up", "  "), Right(None))
+    assertEquals(QueueView.editPatch(item.modify(_.topic).setTo(None), "tidy up", "  "), Right(None))
     assertEquals(QueueView.editPatch(item, "tidy up", "Later"), Right(Some(Queue.QueuePatch(topic = Some("Later")))))
     assert(QueueView.editPatch(item, "   ", "Chores").isLeft)
   }
@@ -540,11 +541,11 @@ class ToolsSuite extends munit.FunSuite:
   test("an upload started from an item names it as acquireItem; a plain upload names none") {
     val item = qi(515, "acquire", Some("linear_b"))
     val d = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
-    assertEquals(UploadView.validate(d.copy(forItem = Some(item))).map(_.acquireItem), Right(Some(515)))
+    assertEquals(UploadView.validate(d.modify(_.forItem).setTo(Some(item))).map(_.acquireItem), Right(Some(515)))
     assertEquals(UploadView.validate(d).map(_.acquireItem), Right(None))
     // otherwise the link changes nothing the form sends
     assertEquals(
-      UploadView.validate(d.copy(forItem = Some(item))).map(_.copy(acquireItem = None)),
+      UploadView.validate(d.modify(_.forItem).setTo(Some(item))).map(_.modify(_.acquireItem).setTo(None)),
       UploadView.validate(d)
     )
   }
@@ -690,7 +691,7 @@ class ToolsSuite extends munit.FunSuite:
         forItem = Some(item)
       )
     )
-    val becks = QueueItemRef.uploadDraft(item.copy(id = 528, text = Becks))
+    val becks = QueueItemRef.uploadDraft(item.modify(_.id).setTo(528).modify(_.text).setTo(Becks))
     assertEquals((becks.year, becks.doi, becks.citekey), ("", "", "becks_troia"))
     // a filled-in form still needs its file, and nothing else
     assertEquals(

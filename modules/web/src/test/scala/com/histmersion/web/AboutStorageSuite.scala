@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{ServiceState, TableSize}
 import com.histmersion.api.backup.BackupsUsage
 import com.histmersion.api.instance.{About, BuildStamp, Health}
@@ -75,7 +77,7 @@ class AboutStorageSuite extends munit.FunSuite:
   )
 
   test("Storage: the total, each location nested under the one it is inside, missing ones left out"):
-    val s = AboutView.sections(about.copy(storage = Storage.withHints(report)))
+    val s = AboutView.sections(about.modify(_.storage).setTo(Storage.withHints(report)))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Storage", "Disk space"))
     val rows = s.find(_.title == "Storage").get.rows
     assertEquals(
@@ -99,12 +101,12 @@ class AboutStorageSuite extends munit.FunSuite:
     )
 
   test("Disk space: each volume with a badge, and what to delete when it runs low"):
-    val s = AboutView.sections(about.copy(storage = Storage.withHints(report)))
+    val s = AboutView.sections(about.modify(_.storage).setTo(Storage.withHints(report)))
     val rows = s.find(_.title == "Disk space").get.rows
     assertEquals((rows.head.label, rows.head.value, rows.head.state), (vol, "5.0 GB free", Some(ServiceState.Down)))
     assert(rows(1).value.startsWith(s"Low disk space on $vol"), rows)
     assert(rows(1).value.contains("backups 28.0 GB (lower backups.keep (now 5)"), rows)
-    val roomy = AboutView.storage(report.copy(volumes = List(Storage.Volume(vol, 994 * GB, 500 * GB))))
+    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(vol, 994 * GB, 500 * GB))))
     assertEquals(roomy.last.rows.map(_.state), List(Some(ServiceState.Ok)))
 
   test("measuring: the window says so; an older server's About has no Storage section"):
@@ -112,5 +114,5 @@ class AboutStorageSuite extends munit.FunSuite:
     val m = AboutView.storage(Storage.Report(measuring = true))
     assertEquals(m.map(_.title), List("Storage"))
     assertEquals(m.head.rows, List(AboutView.Row("", "measuring…")))
-    val again = AboutView.storage(report.copy(measuring = true))
+    val again = AboutView.storage(report.modify(_.measuring).setTo(true))
     assertEquals(again.head.rows.head.detail, Some("measured 30 s ago · measuring…"))

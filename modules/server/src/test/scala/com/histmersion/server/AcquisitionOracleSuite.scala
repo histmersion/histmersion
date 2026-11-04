@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.plugins.calibre.{CalibreFixture, CalibrePlugin}
 import com.histmersion.plugin as spi
@@ -61,7 +63,7 @@ class AcquisitionOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-acquisition-oracle").toRealPath()
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s10p", base.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s10p", base.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -408,15 +410,8 @@ class AcquisitionOracleSuite extends DbSuite:
       .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), userText(up, lib, allowUnauthorised))
       .fold(e => fail(e), identity)
     val c = loaded.config
-    val cfg = c.copy(
-      db = base.db.copy(url = scratch.urlOf(s"histmersion_s10p_${name}_test")),
-      backups = c.backups.copy(dir = tmp.resolve(s"$name-backups").toString),
-      bundles = c.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
-      converter = c.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
-      acquire = c.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
-      init = c.init.copy(auto = false),
-      runtime = c.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
-      basemap = c.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
+    val cfg = c.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(c.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
     )
     val core = com.histmersion.domain.library.acquisition.CoreBudget()
     val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = 1)

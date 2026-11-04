@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -42,7 +44,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(db = base.db.copy(url = testDb.get))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
   private lazy val ds =
     val d = testPool(cfg.db); Migrate.run(d); d
 
@@ -71,7 +73,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       hits: List[WorkRef] = Nil
   ) extends DiscoveryClient:
     def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Right(hits)
-    def meta(doi: String) = Right(work.copy(doi = Some(doi)))
+    def meta(doi: String) = Right(work.modify(_.doi).setTo(Some(doi)))
     def references(doi: String) = Right(("crossref", refs))
     def updates(doi: String) = Right(notices)
 
@@ -296,7 +298,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source("zzacq_kept", Some("10.1038/zzkept"))
-        .copy(status = com.histmersion.api.library.Source.Status.Contested),
+        .modify(_.status).setTo(com.histmersion.api.library.Source.Status.Contested),
       cfg.limits.chunkChars
     )
     val h = handlers()
@@ -319,7 +321,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source("zzacq_retr2", Some("10.1177/zzretracted2"))
-        .copy(status = com.histmersion.api.library.Source.Status.Foundational),
+        .modify(_.status).setTo(com.histmersion.api.library.Source.Status.Foundational),
       cfg.limits.chunkChars
     )
     AcquisitionTesting
@@ -450,7 +452,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
     val gold =
-      FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
+      FakeDiscovery(target.modify(_.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaUrl).setTo(Some("https://press.example.org/a/1")))
     val r = handlers(gold, oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(items.size, 1, items.toString)
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
@@ -485,7 +487,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       List("unpaywall" -> answering(Fetch.Miss("no open-access location")), "oapen" -> answering(Fetch.Refused(why)))
     )
     val open =
-      FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
+      FakeDiscovery(target.modify(_.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaUrl).setTo(Some("https://press.example.org/a/1")))
     val _ = handlers(open, oa = chain).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(items.size, 1, items.toString)
     assert(
@@ -503,12 +505,8 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
-    val gold = target.copy(
-      isOa = true,
-      oaStatus = Some("gold"),
-      oaLicence = Some("cc-by"),
-      oaUrl = Some("https://www.mdpi.com/zz/1/pdf"),
-      oaLocations = List("https://www.mdpi.com/zz/1")
+    val gold = target.modify(
+      _.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaLicence).setTo(Some("cc-by")).modify(_.oaUrl).setTo(Some("https://www.mdpi.com/zz/1/pdf")).modify(_.oaLocations).setTo(List("https://www.mdpi.com/zz/1")
     )
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal = handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request("10.1038/zztest001"))
@@ -537,10 +535,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
     dropItems(); wipe("zzacq_ingested")
-    val _ = handlers(FakeDiscovery(gold.copy(oaStatus = Some("hybrid"))), oa = NoPdf)
+    val _ = handlers(FakeDiscovery(gold.modify(_.oaStatus).setTo(Some("hybrid"))), oa = NoPdf)
       .ingestLegal(Ingest.Request("10.1038/zztest001"))
     val _ =
-      handlers(FakeDiscovery(gold.copy(oaUrl = Some("https://zenodo.org/records/1"), oaLocations = Nil)), oa = NoPdf)
+      handlers(FakeDiscovery(gold.modify(_.oaUrl).setTo(Some("https://zenodo.org/records/1")).modify(_.oaLocations).setTo(Nil)), oa = NoPdf)
         .ingestLegal(Ingest.Request("10.1038/zztest001"))
     assertEquals(items.size, 0)
     // a copy found: nothing to download by hand
@@ -579,7 +577,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss("no open-access location")
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
-    val allowing = cfg.copy(acquire = cfg.acquire.copy(allowUnauthorised = true))
+    val allowing = cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(true))
     val r = handlers(oa = chain, app = allowing)
       .ingest(Ingest.Request("10.1038/zztest001", legalOnly = true))
       .fold(e => fail(e.message), identity)
@@ -744,10 +742,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("calibre gaps lists sources with no calibre_id and non-calibre provenance"):
     wipe("zzacq_gap", "zzacq_incalibre")
-    SourceFixtures.upsert(ds, source("zzacq_gap").copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_gap").modify(_.provenance).setTo(Some("unpaywall")), cfg.limits.chunkChars)
     SourceFixtures.upsert(
       ds,
-      source("zzacq_incalibre").copy(provenance = Some("calibre"), calibreId = Some("1691")),
+      source("zzacq_incalibre").modify(_.provenance).setTo(Some("calibre")).modify(_.calibreId).setTo(Some("1691")),
       cfg.limits.chunkChars
     )
     val g = gaps().gaps(None)
@@ -763,9 +761,9 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("calibre gaps say which originals the server stores — what `calibre sync` downloads for the push"):
     wipe("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
     val spool = java.nio.file.Files.createTempDirectory("zz-spool-")
-    val app = cfg.copy(converter = cfg.converter.copy(spoolDir = spool.toString))
+    val app = cfg.modify(_.converter).setTo(cfg.converter.modify(_.spoolDir).setTo(spool.toString))
     List("zzacq_stored", "zzacq_nofile", "zzacq_nohash").foreach(ck =>
-      SourceFixtures.upsert(ds, source(ck).copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
+      SourceFixtures.upsert(ds, source(ck).modify(_.provenance).setTo(Some("unpaywall")), cfg.limits.chunkChars)
     )
     val (stored, gone) = ("a" * 64, "b" * 64)
     com.augustnagro.magnum.connect(ds):

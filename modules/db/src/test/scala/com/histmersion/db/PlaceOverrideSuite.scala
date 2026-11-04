@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -27,7 +29,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -279,7 +281,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(road, List(Place.Name(road.label)))), Dataset.Seed)
     assertEquals(PlaceFixtures.get(ds, "zzpo_road"), None, "the seed leaves a removed place out")
     assert(
-      PlaceFixtures.addPlace(ds, Place.Input(road.copy(label = "Zzpo Road"), Nil)).isLeft,
+      PlaceFixtures.addPlace(ds, Place.Input(road.modify(_.label).setTo("Zzpo Road"), Nil)).isLeft,
       "nor may a person reuse its id"
     )
     connect(ds)(sql"DELETE FROM place_removals WHERE id = 'zzpo_road'".update.run())

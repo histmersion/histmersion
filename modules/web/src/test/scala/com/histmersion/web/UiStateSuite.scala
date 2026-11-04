@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.raquo.airstream.ownership.ManualOwner
 
@@ -201,8 +203,8 @@ class UiStateSuite extends munit.FunSuite:
       UiState.to := Some(-1100L)
     )()
     val f = UiState.toFilter()
-    assertEquals(UiState.articleQuery().filter, f.copy(limit = ui.Layout.tabFetch))
-    assertEquals(UiState.eventQuery().filter, f.copy(limit = ui.Layout.tabFetch))
+    assertEquals(UiState.articleQuery().filter, f.modify(_.limit).setTo(ui.Layout.tabFetch))
+    assertEquals(UiState.eventQuery().filter, f.modify(_.limit).setTo(ui.Layout.tabFetch))
     assertEquals(UiState.articleQuery().filter.status, List("current"))
     assertEquals(UiState.eventQuery().filter.title, Some("troy"))
     assertEquals(UiState.articleQuery().text, None)

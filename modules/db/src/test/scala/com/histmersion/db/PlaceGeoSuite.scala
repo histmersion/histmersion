@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.config.*
@@ -398,7 +400,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     // a re-import with a new label and shape: every column follows
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(round.copy(place = round.place.copy(label = "Zzs Square", geometry = Some(box(156.5, -39.5, 158.5, -37.5)))))
+      List(round.modify(_.place).setTo(round.place.modify(_.label).setTo("Zzs Square").modify(_.geometry).setTo(Some(box(156.5, -39.5, 158.5, -37.5)))))
     )
     val again = check()
     assertEquals(again("zzs_round")._6, Some(5))
@@ -493,11 +495,11 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     def fp = PlaceFixtures.footprints(ds, "zzq_fp_polity", None).filter(_.role == "extent")
     val first = polity("zzq_fp_polity", "Footprint Kingdom", box(166, -40, 167, -39), -1500, -1200, None)
-    val _ = PlaceFixtures.upsertPlaces(ds, List(first.copy(place = first.place.copy(source = Some("traced by hand")))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(first.modify(_.place).setTo(first.place.modify(_.source).setTo(Some("traced by hand")))))
     assertEquals(fp.map(_.citekey), Vector(Some("traced by hand")))
     val again = polity("zzq_fp_polity", "Footprint Kingdom", box(166, -40, 168, -38), -1500, -1100, None)
     val _ =
-      PlaceFixtures.upsertPlaces(ds, List(again.copy(place = again.place.copy(source = Some("drawn by an AI agent")))))
+      PlaceFixtures.upsertPlaces(ds, List(again.modify(_.place).setTo(again.place.modify(_.source).setTo(Some("drawn by an AI agent")))))
     assertEquals(fp.map(f => (f.citekey, f.period)), Vector((Some("drawn by an AI agent"), Some(Period(-1500, -1100)))))
 
   // #357: generalised outlines ran out to sea; with land loaded a polity is drawn on land only

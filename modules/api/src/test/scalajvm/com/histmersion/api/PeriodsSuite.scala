@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.{
   HistoricalPeriod,
@@ -105,7 +107,7 @@ class PeriodsSuite extends munit.FunSuite:
           .parse(dump)
           .toOption
           .get
-          .copy(authorities = parsed.authorities.map(a => a.copy(periods = a.periods.filterNot(_.id == "p0aaa01"))))
+          .copy(authorities = parsed.authorities.map(a => a.modify(_.periods).setTo(a.periods.filterNot(_.id == "p0aaa01"))))
       )
     )
     assertEquals(rows("p0aaa02").parentId, None)
@@ -417,5 +419,5 @@ class PeriodsSuite extends munit.FunSuite:
     val p = preset("p0ds9qjq7b2", "Bronze Age", -3200, PresetRegion.Aegean)
     assertEquals(PresetMenu.source(p), Some("An authority (2020)"))
     assertEquals(PresetMenu.periodoId(p), Some("p0ds9qjq7b2"))
-    assertEquals(PresetMenu.source(p.copy(authority = Some("Bryce 2005"))), Some("Bryce 2005"))
-    assertEquals(PresetMenu.periodoId(p.copy(authority = Some("Bryce 2005"))), None)
+    assertEquals(PresetMenu.source(p.modify(_.authority).setTo(Some("Bryce 2005"))), Some("Bryce 2005"))
+    assertEquals(PresetMenu.periodoId(p.modify(_.authority).setTo(Some("Bryce 2005"))), None)

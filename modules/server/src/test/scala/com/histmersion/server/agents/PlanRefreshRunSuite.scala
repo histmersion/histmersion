@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 
 import com.histmersion.util.database.Transactor
@@ -46,16 +48,10 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "zzPaid=3/15",
-        roles = b.agents.roles.copy(extractor = s"${Plan.wire} > ${Paid.wire}"),
-        providers = b.agents.providers.copy(codex = b.agents.providers.codex.copy(appServer = false))
-      ),
-      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("zzPaid=3/15").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(s"${Plan.wire} > ${Paid.wire}")).modify(_.providers).setTo(b.agents.providers.modify(_.codex).setTo(b.agents.providers.codex.modify(_.appServer).setTo(false))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -284,9 +280,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     )
     // refresh off: today's behaviour — usable, unknown, nothing read
     connect(ds)(sql"DELETE FROM plan_quota_readings".update.run())
-    val off = baseCfg.copy(agents =
-      baseCfg.agents.copy(quota =
-        baseCfg.agents.quota.copy(claudePlan = baseCfg.agents.quota.claudePlan.copy(refresh = "off"))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.quota).setTo(baseCfg.agents.quota.modify(_.claudePlan).setTo(baseCfg.agents.quota.claudePlan.modify(_.refresh).setTo("off"))
       )
     )
     val reads2 = Reads()
@@ -347,10 +341,8 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
         .left
         .exists(_.startsWith("no login"))
     )
-    val off = baseCfg.copy(agents =
-      baseCfg.agents.copy(quota =
-        baseCfg.agents.quota.copy(
-          claudePlan = baseCfg.agents.quota.claudePlan.copy(refreshEveryMinutes = ScheduledRefresh.Off)
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.quota).setTo(baseCfg.agents.quota.modify(
+          _.claudePlan).setTo(baseCfg.agents.quota.claudePlan.modify(_.refreshEveryMinutes).setTo(ScheduledRefresh.Off)
         )
       )
     )
@@ -424,7 +416,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
 
   test("#989: no login — the pool is unavailable and its models never offered (and nothing is probed)"):
     val reads = Reads(); reads.auth = """{"loggedIn":false}"""; reads.probeOut = List(event(10, 10), Result)
-    val only = baseCfg.copy(agents = baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(extractor = Plan.wire)))
+    val only = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan)), reads, only)
     a.picker.pick(Role.Extractor, None) match
       case Left(PickFailure.Unavailable(m)) => assert(m.contains("unavailable: no login"), m)
@@ -452,9 +444,8 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       .left
       .map(_.getMessage)
     // the polling every poll-seconds never comes around in this test: only the refresh reads
-    val cfg = baseCfg.agents.copy(
-      quota = baseCfg.agents.quota.copy(pollSeconds = 2000000000),
-      providers = baseCfg.agents.providers.copy(codex = baseCfg.agents.providers.codex.copy(appServer = true))
+    val cfg = baseCfg.agents.modify(
+      _.quota).setTo(baseCfg.agents.quota.modify(_.pollSeconds).setTo(2000000000)).modify(_.providers).setTo(baseCfg.agents.providers.modify(_.codex).setTo(baseCfg.agents.providers.codex.modify(_.appServer).setTo(true))
     )
     val pools = PlanPools(ds, cfg, () => Some(home), reads.seams)
     Transactor(ds).transact(
@@ -502,13 +493,10 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
         HttpResponse.BodyHandlers.ofString()
       )
       (r.statusCode, r.body)
-    val keyed = baseCfg.copy(
-      auth = baseCfg.auth.copy(apiKey = "zz-key"),
-      agents = baseCfg.agents.copy(
-        enabled = false,
-        providers = baseCfg.agents.providers.copy(
-          claudeCode = baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString),
-          codex = baseCfg.agents.providers.codex.copy(home = Files.createTempDirectory("hm-codex-none-").toString)
+    val keyed = baseCfg.modify(
+      _.auth).setTo(baseCfg.auth.modify(_.apiKey).setTo("zz-key")).modify(_.agents).setTo(baseCfg.agents.modify(
+        _.enabled).setTo(false).modify(_.providers).setTo(baseCfg.agents.providers.modify(
+          _.claudeCode).setTo(baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString)).modify(_.codex).setTo(baseCfg.agents.providers.codex.modify(_.home).setTo(Files.createTempDirectory("hm-codex-none-").toString)
         )
       )
     )

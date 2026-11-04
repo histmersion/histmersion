@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -129,7 +131,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(frees, Some(now - 20 * H + 86400L * 1000L), "the day limit frees last")
     val fine = List(
       limitState(day, 0, Nil, now),
-      limitState(hour.copy(amount = BigDecimal(100000)), 10, List(Spend(now - 1000, 50000, 0)), now)
+      limitState(hour.modify(_.amount).setTo(BigDecimal(100000)), 10, List(Spend(now - 1000, 50000, 0)), now)
     )
     assertEquals(verdict(fine), (true, None))
     assertEquals(headroom(fine), (Some(40000L), Some(BigDecimal(5))))
@@ -139,7 +141,7 @@ class ModelChainsSuite extends munit.FunSuite:
     val s = limitState(l, 99, List(Spend(1000, 0, BigDecimal("0.2"))), 2000)
     assert(!s.usable)
     assertEquals(s.freesAt, Some(1000 + 3600L * 1000L)) // 0 < 0.1 once the spend leaves
-    assertEquals(verdict(List(s.copy(freesAt = None))), (false, None))
+    assertEquals(verdict(List(s.modify(_.freesAt).setTo((None: _root_.scala.Option[_root_.scala.Long])))), (false, None))
 
   test("Markdown: the chains with the model a call would use, the allowances with use and reset, the doctor"):
     import com.histmersion.api.automation.Agents.*
@@ -200,7 +202,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(md.contains("`claude-code:*` (config, reserve 20%) — **below its reserve** until 2026-10-05T14:00:00Z"), md)
     assert(md.contains("2M tokens/5h: 1900k used, 100k left, reserve 400k — frees 2026-10-05T14:00:00Z"), md)
     val none = AgentsMarkdown.models(
-      m.copy(chains = List(RoleChain("writer", "config", Nil, None, Some("no model"))), allowances = Nil)
+      m.modify(_.chains).setTo(List(RoleChain("writer", "config", Nil, None, Some("no model")))).modify(_.allowances).setTo(Nil)
     )
     assert(none.contains("| writer | — | no model | config |") && none.contains("No allowance"), none)
     val d = DoctorReport(

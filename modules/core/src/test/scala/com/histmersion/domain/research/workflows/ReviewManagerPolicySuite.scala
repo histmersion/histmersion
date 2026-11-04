@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Run.State as RunState
@@ -174,7 +176,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     )
     val l3 = absorb(
       l2,
-      List(sk2.copy(quote = "another passage entirely", where = "elsewhere", problem = "omits X's critique")),
+      List(sk2.modify(_.quote).setTo("another passage entirely").modify(_.where).setTo("elsewhere").modify(_.problem).setTo("omits X's critique")),
       run,
       3
     )._1

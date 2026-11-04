@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.api.StatusCount
 import com.histmersion.config.*
@@ -83,7 +85,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
 
   test("coverage over REST, get_article, the page, the export, MCP; drift; no filter = 404"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -161,7 +163,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         val brief = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
         assertEquals(brief.coverage, None)
         assertEquals(brief.formatting, Nil)
-        assertEquals(brief.copy(formatting = view.formatting, coverage = view.coverage), view)
+        assertEquals(brief.modify(_.formatting).setTo(view.formatting).modify(_.coverage).setTo(view.coverage), view)
 
         // ── the page ──────────────────────────────────────────────────────────────────────────
         val (hs, html) = get(s"$url/article/$Slug?fragment=true")

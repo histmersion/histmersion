@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.domain.library.LibraryPlan
 import com.histmersion.domain.research.ResearchPlan
@@ -169,8 +171,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   test("an id goes stale when a record it is about changes; the resolution is reported, not re-applied"):
     val p0 = plan().plan
     val doi = issue(p0, Issue.Kind.DoiDiffers, "kuhrt1995_near")
-    val changed = foreign.copy(sources =
-      foreign.sources.map(s => if s.uid == uid("w-kuhrt") then s.copy(summary = Some("edited since")) else s)
+    val changed = foreign.modify(_.sources).setTo(foreign.sources.map(s => if s.uid == uid("w-kuhrt") then s.modify(_.summary).setTo(Some("edited since")) else s)
     )
     val p1 = plan(input(changed), resolve(doi.id -> "keep-left")).plan
     val again = issue(p1, Issue.Kind.DoiDiffers, "kuhrt1995_near")
@@ -208,17 +209,15 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   private def shuffled(rnd: scala.util.Random, in: MergePlanner.Input): MergePlanner.Input =
     val f = in.foreign
-    in.copy(
-      foreign = f.copy(
+    in.modify(
+      _.foreign).setTo(f.copy(
         sources = rnd.shuffle(f.sources),
         aliases = rnd.shuffle(f.aliases),
         articles = rnd.shuffle(f.articles),
         events = rnd.shuffle(f.events),
         goals = rnd.shuffle(f.goals),
         tombstones = rnd.shuffle(f.tombstones)
-      ),
-      sources = rnd.shuffle(in.sources),
-      labels = in.labels
+      )).modify(_.sources).setTo(rnd.shuffle(in.sources)).modify(_.labels).setTo(in.labels
     )
 
   test("property: the plan is deterministic, and the same under any order of the input lines"):
@@ -267,8 +266,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val base = plan().plan
     val rnd = scala.util.Random(42L)
     foreign.sources.foreach { s =>
-      val edited = foreign.copy(sources =
-        foreign.sources.map(x => if x.uid == s.uid then x.copy(summary = Some(s"edit ${rnd.nextInt()}")) else x)
+      val edited = foreign.modify(_.sources).setTo(foreign.sources.map(x => if x.uid == s.uid then x.modify(_.summary).setTo(Some(s"edit ${rnd.nextInt()}")) else x)
       )
       val p = plan(input(edited)).plan
       val untouched = base.issues.filterNot(i => i.right.exists(_.uid == s.uid)).map(_.id).toSet
@@ -377,13 +375,11 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   ):
     val workBody = "Kuhrt body, work's OCR"
     val homeBody = "Kuhrt body, home's OCR"
-    val es = foreign.copy(attestations =
-      List(att("t-found", "w-kuhrt", "Kuhrt body", work), att("t-lost", "w-kuhrt", "work's OCR", work))
+    val es = foreign.modify(_.attestations).setTo(List(att("t-found", "w-kuhrt", "Kuhrt body", work), att("t-lost", "w-kuhrt", "work's OCR", work))
     )
     val in0 = input(es)
-    val in = in0.copy(
-      local = in0.local.copy(attestations = List(att("t-home", "h-kuhrt", "home's OCR", home))),
-      bodies = Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody)
+    val in = in0.modify(
+      _.local).setTo(in0.local.modify(_.attestations).setTo(List(att("t-home", "h-kuhrt", "home's OCR", home)))).modify(_.bodies).setTo(Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody)
     )
     val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val body = issue(r0.plan, Issue.Kind.BodyDiffers, "kuhrt1995_near")
@@ -436,8 +432,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     // work's olsen cites a record of the bundle's collection that this collection holds under home's
     // olsen (a redirect from an earlier merge): folding the two would make olsen cite itself
     val earlier = uid("w-olsen-earlier")
-    val es = foreign.copy(edges =
-      List(
+    val es = foreign.modify(_.edges).setTo(List(
         com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), earlier, "superseded_by"),
         com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), uid("w-new"), "references")
       )
@@ -455,8 +450,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val base = "Intro.\n\nMiddle.\n\nEnd."
     val baseSha = BundleFormat.sha256Hex(base)
     val shared = article("shared-art", "zz_shared", base)
-    val theirs = shared.copy(body = "Intro (work).\n\nMiddle.\n\nEnd.")
-    val ours = shared.copy(body = "Intro.\n\nMiddle.\n\nEnd (home).", origin = work)
+    val theirs = shared.modify(_.body).setTo("Intro (work).\n\nMiddle.\n\nEnd.")
+    val ours = shared.modify(_.body).setTo("Intro.\n\nMiddle.\n\nEnd (home).").modify(_.origin).setTo(work)
     val version =
       com.histmersion.api.exchange.Bundle.ArticleVersion(uid("v-base"), work, shared.uid, baseSha, None, At, At)
     val es = foreign.copy(articles = foreign.articles :+ theirs, versions = List(version))
@@ -466,10 +461,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       shared.uid,
       Some(BundleFormat.stamp(shared).rev)
     ))
-    val in = in0.copy(
-      ledger = ledgered,
-      local = in0.local.copy(articles = in0.local.articles :+ ours),
-      articleHistory = Map(shared.uid -> List(baseSha -> base))
+    val in = in0.modify(
+      _.ledger).setTo(ledgered).modify(_.local).setTo(in0.local.modify(_.articles).setTo(in0.local.articles :+ ours)).modify(_.articleHistory).setTo(Map(shared.uid -> List(baseSha -> base))
     )
     val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     assert(!r.plan.issues.exists(_.left.exists(_.label == "zz_shared")), r.plan.issues.mkString("\n"))
@@ -481,9 +474,9 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(r.apply.reviews, List("zz_shared"))
     assert(r.apply.snapshots(shared.uid))
     // both edited the same paragraph: a question, with the number of conflicting regions
-    val clash = es.copy(articles = foreign.articles :+ theirs.copy(body = "Intro.\n\nMiddle.\n\nEnd (work)."))
+    val clash = es.modify(_.articles).setTo(foreign.articles :+ theirs.modify(_.body).setTo("Intro.\n\nMiddle.\n\nEnd (work)."))
     val c = MergePlanner.plan(
-      in.copy(foreign = clash, manifest = manifest(clash)),
+      in.modify(_.foreign).setTo(clash).modify(_.manifest).setTo(manifest(clash)),
       sketches,
       MergeResolutions(),
       cfg,
@@ -494,7 +487,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assert(q.title.contains("1 conflicting region"), q.title)
     // decided file:, the merged text is what is written
     val f = MergePlanner.plan(
-      in.copy(foreign = clash, manifest = manifest(clash)),
+      in.modify(_.foreign).setTo(clash).modify(_.manifest).setTo(manifest(clash)),
       sketches,
       MergeResolutions(List(MergeResolution(q.id, "file:merged.md", Some("By hand.")))),
       cfg,
@@ -543,6 +536,6 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assert(md.contains("`zz_shared`") && md.contains("log entry #590"), md)
     assert(md.contains("0 changes (idempotent)"), md)
     val refused =
-      MergeMarkdown.applied(done.copy(applied = false, mergeId = None, problems = List("the plan is x, not y")))
+      MergeMarkdown.applied(done.modify(_.applied).setTo(false).modify(_.mergeId).setTo(None).modify(_.problems).setTo(List("the plan is x, not y")))
     assert(refused.contains("nothing was written") && refused.contains("the plan is x, not y"), refused)
     assert(!md.contains("_merged") && !md.contains("Kept"), "no identifiers in user-facing text")

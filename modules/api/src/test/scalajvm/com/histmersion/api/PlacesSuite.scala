@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.PlacesMarkdown
 import com.histmersion.api.library.SearchMarkdown
 
@@ -326,7 +328,7 @@ class PlacesSuite extends munit.FunSuite:
     assert(!md.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote), "a polygon has its boundary")
     val point = PlacesMarkdown.place(
       PlaceDetail(
-        hatti.copy(dating = com.histmersion.api.catalogue.Place.Dating.EndOnly, periodStart = None),
+        hatti.modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.EndOnly).modify(_.periodStart).setTo((None: _root_.scala.Option[_root_.scala.Long])),
         Some("""{"type":"Point","coordinates":[34,40]}"""),
         Nil,
         Nil,

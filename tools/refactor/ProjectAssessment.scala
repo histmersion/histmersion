@@ -49,6 +49,17 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
   }
   private val cli = List("scala-cli", "run", "--server=false", "-q", "-S", "2.13.18", "--dep", "ch.epfl.scala:scalafix-cli_2.13.18:0.14.9", "--main-class", "scalafix.cli.Cli", "--")
   override def afterComplete(): Unit = {
+    // Preserve the evidence preceding each measurement, including explicit baseline corrections.
+    if (Files.exists(current) || Files.exists(root.resolve("baseline.tsv"))) {
+      val archive = root.resolve("history").resolve(java.time.Instant.now().toString.replace(':','-'))
+      val preserved = (if (Files.exists(current)) walk(current.toString) else Nil) ++
+        List(root.resolve("baseline.tsv"),root.resolve("baseline-policy.txt")).filter(Files.exists(_))
+      preserved.foreach { source =>
+        val destination = archive.resolve(root.relativize(source))
+        Files.createDirectories(destination.getParent)
+        Files.copy(source,destination)
+      }
+    }
     Files.createDirectories(current)
     write(current.resolve("status.txt"), List("RUNNING", java.time.Instant.now().toString))
     try {

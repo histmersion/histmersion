@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -59,7 +61,7 @@ class AcquireMatchSuite extends munit.FunSuite:
     )
 
   test("a DOI in the item's reason closes it too"):
-    val withReason = item(3, "Kristiansen's Brill volume").copy(reason = Some("doi 10.1163/9789004441385"))
+    val withReason = item(3, "Kristiansen's Brill volume").modify(_.reason).setTo(Some("doi 10.1163/9789004441385"))
     assertEquals(
       AcquireMatch.decide(List(withReason), Some("10.1163/9789004441385"), "x", Nil, 0.6),
       List(Decision.Close(withReason))

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.ManagersMarkdown
 
@@ -50,7 +52,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(
-      ManagersView.itemActionsFor(focus.copy(hold = Some(Hold(reason = "held by a person")))),
+      ManagersView.itemActionsFor(focus.modify(_.hold).setTo(Some(Hold(reason = "held by a person")))),
       List("release", "priority", "skip")
     )
 
@@ -151,7 +153,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assertEquals(
       ManagersView
-        .enqueuedNote(EnqueueKind.Enrich, EnqueueResult("enrich", List(i, i.copy(id = 8)), List("[[x]]: notes"))),
+        .enqueuedNote(EnqueueKind.Enrich, EnqueueResult("enrich", List(i, i.modify(_.id).setTo((8: _root_.scala.Long))), List("[[x]]: notes"))),
       "2 items queued for enrichment; 1 source enriched already"
     )
     assertEquals(

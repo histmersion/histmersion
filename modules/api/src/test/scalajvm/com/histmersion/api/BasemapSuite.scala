@@ -2,6 +2,8 @@ package com.histmersion.api
 
 /** The terrain base map's shared pure parts: layer names, the status as Markdown. */
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.basemap.{Basemap, BasemapApi, BasemapMarkdown, BaseMapSource, BaseStyles}
 class BasemapSuite extends munit.FunSuite:
 
@@ -103,7 +105,7 @@ class BasemapSuite extends munit.FunSuite:
         List(Basemap.Focus("aegean", "/c/terrain-focus/aegean.pmtiles", 430000000, "21.5,35,28.5,41.5", 9, 12, 10299))
     )
     assertEquals(t.deepest, Some(12))
-    assertEquals(t.copy(onDemand = None, focus = Nil).deepest, Some(8))
+    assertEquals(t.modify(_.onDemand).setTo(None).modify(_.focus).setTo(Nil).deepest, Some(8))
     val md = BasemapMarkdown.status(Basemap.Status(available = true, "/c", "x", List(t), Basemap.FetchCommand))
     assert(md.contains("read when a page shows an area, to zoom 12; cached 3 tiles"), md)
     assert(md.contains("focus region `aegean`: zoom 9–12"), md)

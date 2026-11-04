@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
@@ -104,7 +106,7 @@ class BundleFormatSuite extends munit.FunSuite:
     )
     assertNotEquals(BundleFormat.stamp(goal("g")).rev, BundleFormat.stamp(goal("g", notes = Some("n"))).rev)
     // a rev field already set is replaced, never trusted
-    assertEquals(BundleFormat.stamp(goal("g").copy(rev = "bogus")).rev, BundleFormat.stamp(goal("g")).rev)
+    assertEquals(BundleFormat.stamp(goal("g").modify(_.rev).setTo("bogus")).rev, BundleFormat.stamp(goal("g")).rev)
 
   test("decoding a line checks its rev; a tampered line is reported"):
     val line = BundleFormat.stamp(goal("g")).line
@@ -136,7 +138,7 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(BundleFormat.compatible(m, Some("33")), Nil)
     assertEquals(BundleFormat.compatible(m, Some("40")), Nil)
     assert(BundleFormat.compatible(m, Some("32")).exists(_.contains("newer than this server")))
-    assertEquals(BundleFormat.compatible(m.copy(format = "x", formatVersion = 99), Some("33")).size, 2)
+    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo("x").modify(_.formatVersion).setTo(99), Some("33")).size, 2)
 
   test("file checks list every missing, unexpected and differing file"):
     val f = Bundle.FileInfo("entities/goals.ndjson", 1, 10, "a")
@@ -152,7 +154,7 @@ class BundleFormatSuite extends munit.FunSuite:
       Bundle.Blobs(0, 0),
       Bundle.Reference(0, "", 0, "")
     )
-    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.copy(sha256 = "b"), "entities/x.ndjson" -> f))
+    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo("b"), "entities/x.ndjson" -> f))
     assertEquals(ps.size, 3, ps.mkString("\n"))
 
   // ── entities ─────────────────────────────────────────────────────────────────────────────────
@@ -197,5 +199,5 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(md.contains("- source x: clash"), md)
     assert(md.contains("work ("), md)
     assert(
-      BundleMarkdown.importResult(r.copy(problems = Nil, applied = true, counts = Nil)).contains("Nothing to change")
+      BundleMarkdown.importResult(r.modify(_.problems).setTo(Nil).modify(_.applied).setTo(true).modify(_.counts).setTo(Nil)).contains("Nothing to change")
     )

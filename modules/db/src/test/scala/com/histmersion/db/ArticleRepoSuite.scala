@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -26,7 +28,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val slug = "zz_article_sea"
@@ -87,7 +89,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     // back as two tags, and list/get/load disagreed with each other
     reset()
     val tags = List("trade, long-distance", "sea-peoples")
-    val _ = ArticleFixtures.put(ds, article("# T\n\nbody").copy(tags = tags, regions = List("Syria, coast")))
+    val _ = ArticleFixtures.put(ds, article("# T\n\nbody").modify(_.tags).setTo(tags).modify(_.regions).setTo(List("Syria, coast")))
     assertEquals(ArticleFixtures.get(ds, slug).get.tags, tags)
     assertEquals(ArticleFixtures.load(ds, slug).get.regions, List("Syria, coast"))
     assertEquals(
@@ -188,7 +190,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleFixtures.put(
       ds,
       article("# Other\n\nunrelated", "zz_article_other")
-        .copy(title = "Something else", tags = List("other"), summary = Some("nothing here"))
+        .modify(_.title).setTo("Something else").modify(_.tags).setTo(List("other")).modify(_.summary).setTo(Some("nothing here"))
     )
 
     def slugs(q: Option[String] = None, kind: Option[String] = None) =
@@ -215,7 +217,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     reset()
     // a title nothing else in the suite (or in a suite sharing this database) uses: `total` counts
     // every matching row, so a fixture left behind by another test would make this flaky
-    val onlyMine = (b: String, s: String) => article(b, s).copy(title = "zz total marker")
+    val onlyMine = (b: String, s: String) => article(b, s).modify(_.title).setTo("zz total marker")
     val _ = ArticleFixtures.put(ds, onlyMine("# T\n\nbody", slug))
     val _ = ArticleFixtures.put(ds, onlyMine("# T2\n\nbody", "zz_article_other"))
     val r =
@@ -314,7 +316,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     )
     val _ = ArticleFixtures.put(
       ds,
-      article("# T\n\nbody").copy(filter = Some(f), reasons = Map("zz_cov2001_egypt" -> "about Egypt"))
+      article("# T\n\nbody").modify(_.filter).setTo(Some(f)).modify(_.reasons).setTo(Map("zz_cov2001_egypt" -> "about Egypt"))
     )
     val a = ArticleFixtures.load(ds, slug).get
     assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
@@ -347,7 +349,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleFixtures.put(
       ds,
       article("# T\n\nbody")
-        .copy(filter = Some(Article.Filter(tags = List("x"))), reasons = Map("zz_covren2001_old" -> "about Egypt"))
+        .modify(_.filter).setTo(Some(Article.Filter(tags = List("x")))).modify(_.reasons).setTo(Map("zz_covren2001_old" -> "about Egypt"))
     )
     assert(SourceFixtures.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
     assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))

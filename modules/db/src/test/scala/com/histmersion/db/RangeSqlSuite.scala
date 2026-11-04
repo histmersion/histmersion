@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.database.RangeSql
@@ -66,7 +68,7 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
   private val testDb = TestDb.url
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =

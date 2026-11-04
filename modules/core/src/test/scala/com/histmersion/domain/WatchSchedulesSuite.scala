@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -93,8 +95,8 @@ class WatchSchedulesSuite extends munit.FunSuite:
       outcome = Some("currency-check goal tin: …"),
       updatedAt = "2026-10-17T00:00:00Z"
     )
-    val active = view(m.copy(state = State.Active.wire, config = ManagerConfig()), List(it))
+    val active = view(m.modify(_.state).setTo(State.Active.wire).modify(_.config).setTo(ManagerConfig()), List(it))
     assertEquals(active.map(_.kind), List(ScheduleKind.Acquisition, ScheduleKind.Currency))
     assertEquals(active(1).lastRun, Some("run-1"))
     assert(active(1).lastNote.exists(_.contains("currency-check goal tin")), active(1).lastNote)
-    assertEquals(view(m.copy(goal = None), Nil), Nil)
+    assertEquals(view(m.modify(_.goal).setTo(None), Nil), Nil)

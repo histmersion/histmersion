@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.CalibreCliConfig
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -170,7 +172,7 @@ class CalibrePushSuite extends munit.FunSuite:
       gap("zz_local", Some(false)),
       gap("zz_unknown", None),
       gap("zz_cal", Some(true), provenance = "Calibre"),
-      gap("zz_linked", Some(true)).copy(calibreId = Some("12"))
+      gap("zz_linked", Some(true)).modify(_.calibreId).setTo(Some("12"))
     )
     val got = Calibre.classify(gaps, local.get).map(e => e.gap.citekey -> (e.original.label, e.counted))
     assertEquals(

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.TilesApi
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.maptiles.{TileCoord, VectorTileReader}
@@ -31,7 +33,7 @@ class TilesHttpSuite extends munit.FunSuite:
 
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     val ds = com.histmersion.util.database.Db.pool(cfg.db)
     try
       Migrate.run(ds)

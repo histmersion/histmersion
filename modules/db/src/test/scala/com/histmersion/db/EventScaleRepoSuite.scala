@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -31,7 +33,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -104,7 +106,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def geo(): EventGeo.List =
     val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 1000, 0.01)
-    all.copy(events = all.events.filter(_.id.startsWith("zqes")))
+    all.modify(_.events).setTo(all.events.filter(_.id.startsWith("zqes")))
 
   test("V078: the scale column takes local, regional or nothing — and nothing else"):
     val cols = connect(ds)(sql"""SELECT data_type FROM information_schema.columns

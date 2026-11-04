@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -108,7 +110,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base =
     val b = AppConfig.load()
-    b.copy(db = b.db.copy(url = testDb.get), media = b.media.copy(requestIntervalMs = 0))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(b.media.modify(_.requestIntervalMs).setTo(0))
   private lazy val ds =
     val d = testPool(base.db)
     Migrate.run(d)
@@ -116,8 +118,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
 
   /** The config with `allow` as this collection's own allowlist. */
   private def allowing(allow: String): AppConfig =
-    base.copy(media =
-      base.media.copy(collections = base.media.collections.copy(perCollection = Map(Collection -> allow)))
+    base.modify(_.media).setTo(base.media.modify(_.collections).setTo(base.media.collections.modify(_.perCollection).setTo(Map(Collection -> allow)))
     )
 
   private def clean(): Unit = connect(ds):

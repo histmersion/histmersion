@@ -1,0 +1,29 @@
+path	line	expected	snippet
+modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala	74	1	out.copy(tags = existing.tags)
+modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala	299	1	existing.copy(updatedAt = None)
+modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala	362	1	copy(doi = Some("10.1/x"), venue = Some("V"))
+modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala	371	1	existing.copy(calibreId = Some("1805"))
+modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala	86	1	r.copy(lowFreeBytes = GB)
+modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala	99	1	copy(partial = true)
+modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala	101	1	copy(bytes = None, exists = false)
+modules/api/src/test/scalajvm/com/histmersion/api/WordingSuite.scala	100	1	glance.copy(running = 1)
+modules/api/src/test/scalajvm/com/histmersion/api/WordingSuite.scala	104	1	glance.copy(draining = true, running = 0)
+modules/core/src/test/scala/com/histmersion/domain/ManagerPolicySuite.scala	226	1	mcfg.copy(dailyUsd = 5)
+modules/core/src/test/scala/com/histmersion/domain/ManagerPolicySuite.scala	239	1	mcfg.copy(dailyUsd = 5)
+modules/server/src/test/scala/com/histmersion/domain/media/assets/AssetsControllersSuite.scala	34	1	png.copy(base64 = "%%%")
+modules/api/src/test/scalajvm/com/histmersion/api/PeriodsSuite.scala	114	1	parsed.copy(parents = Map(
+modules/files/src/test/scala/com/histmersion/files/PluginKitSuite.scala	69	1	linked.copy(dependencies = None)
+modules/files/src/test/scala/com/histmersion/files/PluginKitSuite.scala	171	1	k.copy(format = KitFormat + 1)
+modules/api/src/test/scalajvm/com/histmersion/api/IngestSuite.scala	253	1	j.copy(status = "done")
+modules/api/src/test/scalajvm/com/histmersion/api/IngestSuite.scala	255	1	j.copy(status = "weird")
+modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala	105	1	mine.copy(state = Some(ApprovalState.Open))
+modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala	118	1	mine.copy(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.GoalPlan))
+modules/db/src/test/scala/com/histmersion/db/FilterSqlSuite.scala	436	1	row.copy(bodyHit = true)
+modules/plugins/media/src/test/scala/com/histmersion/plugins/media/PortalParsersSuite.scala	206	1	recs.head.copy(geography =
+modules/plugins/calibre/src/test/scala/com/histmersion/plugins/calibre/CalibreCollectionSuite.scala	80	1	meta.copy(title = "A renamed book")
+modules/plugins/events/src/test/scala/com/histmersion/plugins/events/CataloguesSuite.scala	100	1	parsed.copy(notBefore =
+modules/core/src/test/scala/com/histmersion/domain/media/figures/FiguresSuite.scala	8	0	copyToArray
+modules/api/src/test/scalajvm/com/histmersion/api/IngestSuite.scala	179	0	copyToArray
+modules/api/src/test/scalajvm/com/histmersion/api/IngestSuite.scala	187	0	copyToArray
+modules/server/src/test/scala/com/histmersion/server/SeedNoteFilesSuite.scala	43	0	copyToArray
+modules/server/src/test/scala/com/histmersion/domain/library/collections/CalibreCommandsSuite.scala	275	0	copyTo

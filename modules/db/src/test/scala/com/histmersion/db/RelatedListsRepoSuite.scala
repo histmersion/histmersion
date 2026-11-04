@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.search.SearchFixtures
@@ -29,7 +31,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val Tag = "zz-rel-tag"

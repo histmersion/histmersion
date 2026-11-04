@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 import com.histmersion.domain.automation.agents.TestRuns
 
@@ -58,17 +60,10 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      acquire = b.acquire.copy(recheck = b.acquire.recheck.copy(enabled = false)),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        maxConcurrentRuns = 20,
-        scheduler = b.agents.scheduler.copy(enabled = false),
-        autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0),
-        roles = b.agents.roles
-          .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.acquire).setTo(b.acquire.modify(_.recheck).setTo(b.acquire.recheck.modify(_.enabled).setTo(false))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.maxConcurrentRuns).setTo(20).modify(_.scheduler).setTo(b.agents.scheduler.modify(_.enabled).setTo(false)).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0)).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
       )
     )
 
@@ -301,10 +296,8 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   test("the shared cap (autopilot on) bounds the drain across watchers; a paused watcher's backlog waits"):
     val (a, h, up) = handlers(
       ScriptedClient(Model),
-      baseCfg.copy(agents =
-        baseCfg.agents.copy(
-          autopilot =
-            baseCfg.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 2, ensureMinutes = 100000)
+      baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(
+          _.autopilot).setTo(baseCfg.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(2).modify(_.ensureMinutes).setTo(100000)
         )
       )
     )

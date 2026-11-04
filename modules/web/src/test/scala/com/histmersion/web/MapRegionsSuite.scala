@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.web.MapRegions.*
 import com.histmersion.api.basemap.Basemap
 
@@ -27,7 +29,7 @@ class MapRegionsSuite extends munit.FunSuite:
     )
 
   test("the default configured region is the whole world, listed once"):
-    val cs = choices(status.copy(bbox = "world"))
+    val cs = choices(status.modify(_.bbox).setTo("world"))
     assertEquals(
       cs.map(c => (c.id, c.bbox)),
       List(("configured", Some("world")), ("argolid", Some("22.5,37.4,23.2,37.9")), (OwnBox, None))

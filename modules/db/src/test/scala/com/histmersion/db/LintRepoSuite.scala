@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceCheckFixtures
@@ -32,7 +34,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -264,8 +266,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     val slug = Prefix + "fmt_article"
     connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())
     ArticleFixtures.put(ds, Article(slug, "Fmt", "concept", "# Fmt\n\nA ** bad line.", Some("a fine summary")))
-    put(source(Prefix + "fmt_note", summary = Some("a **bad summary")).copy(notes = Some("fine notes")))
-    put(source(Prefix + "fmt_clean", summary = Some("clean")).copy(notes = Some("clean")))
+    put(source(Prefix + "fmt_note", summary = Some("a **bad summary")).modify(_.notes).setTo(Some("fine notes")))
+    put(source(Prefix + "fmt_clean", summary = Some("clean")).modify(_.notes).setTo(Some("clean")))
     try
       val art = run(ArticleFormat)
       assertEquals(art.map(_.citekey), List(slug))

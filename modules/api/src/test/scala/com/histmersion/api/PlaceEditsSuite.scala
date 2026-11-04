@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import io.circe.parser.parse
@@ -44,11 +46,8 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId("Ze'elim Gully"), "local_zeelim_gully")
 
   test("a hand-added place becomes a point import row with its label, names, period and source"):
-    val in = add().copy(
-      names = List("Gornij", " Gornji  Grad "),
-      lang = Some("HR"),
-      periodStart = Some(-1300),
-      periodEnd = Some(-1100)
+    val in = add().modify(
+      _.names).setTo(List("Gornij", " Gornji  Grad ")).modify(_.lang).setTo(Some("HR")).modify(_.periodStart).setTo((Some(-1300): _root_.scala.Option[_root_.scala.Long])).modify(_.periodEnd).setTo((Some(-1100): _root_.scala.Option[_root_.scala.Long])
     )
     val r = com.histmersion.api.catalogue.Place.Edits.toInput(in).fold(e => fail(e.message), identity)
     assertEquals(r.place.id, "local_gornji_grad")
@@ -73,7 +72,7 @@ class PlaceEditsSuite extends munit.FunSuite:
 
   test("an explicit id is kept; one end of a period is a single year"):
     val r = com.histmersion.api.catalogue.Place.Edits
-      .toInput(add().copy(id = Some("my.place-1"), periodEnd = Some(-700)))
+      .toInput(add().modify(_.id).setTo(Some("my.place-1")).modify(_.periodEnd).setTo((Some(-700): _root_.scala.Option[_root_.scala.Long])))
       .toOption
       .get
     assertEquals((r.place.id, r.place.period), ("my.place-1", Some(Period(-700, -700))))
@@ -90,9 +89,9 @@ class PlaceEditsSuite extends munit.FunSuite:
     refused(add(lat = Double.NaN), "longitude/latitude")
     refused(add(label = " "), "label is empty")
     refused(add(label = "Ἀθῆναι"), "gives no id")
-    refused(add().copy(id = Some("Bad Id")), "is not a place id")
-    refused(add().copy(periodStart = Some(-100), periodEnd = Some(-200)), "starts (-100) after it ends (-200)")
-    refused(add().copy(lang = Some("??")), "language tag")
+    refused(add().modify(_.id).setTo(Some("Bad Id")), "is not a place id")
+    refused(add().modify(_.periodStart).setTo((Some(-100): _root_.scala.Option[_root_.scala.Long])).modify(_.periodEnd).setTo((Some(-200): _root_.scala.Option[_root_.scala.Long])), "starts (-100) after it ends (-200)")
+    refused(add().modify(_.lang).setTo(Some("??")), "language tag")
 
   test("the CSV export is the supplement's format, quoted where it must be"):
     val csv = com.histmersion.api.catalogue.Place.Edits.csv(
@@ -124,11 +123,11 @@ class PlaceEditsSuite extends munit.FunSuite:
       PlacesMarkdown.placeNameChanged(added),
       "added the name **Lake Kinneret** (en) to **Sea of Galilee** `ne_lake_1` — names added by hand survive every re-seed"
     )
-    assert(PlacesMarkdown.placeNameChanged(added.copy(changed = false)).contains("was already a name added by hand"))
-    assert(PlacesMarkdown.placeNameChanged(added.copy(wasImported = true)).contains("(a name the seed gives)"))
+    assert(PlacesMarkdown.placeNameChanged(added.modify(_.changed).setTo(false)).contains("was already a name added by hand"))
+    assert(PlacesMarkdown.placeNameChanged(added.modify(_.wasImported).setTo(true)).contains("(a name the seed gives)"))
     assert(
       PlacesMarkdown
-        .placeNameChanged(added.copy(added = false))
+        .placeNameChanged(added.modify(_.added).setTo(false))
         .startsWith("removed the name **Lake Kinneret** (en) from")
     )
     assertEquals(PlacesMarkdown.manualPlaceNames(Nil), "_No names added by hand._")
@@ -222,11 +221,11 @@ class PlaceEditsSuite extends munit.FunSuite:
         "re-seed and re-import\n\nfindings matched again: 59 → 0"
     )
     assert(
-      PlacesMarkdown.placeOverrideChanged(set.copy(unlocated = 2)).endsWith("; **2** of them now have no place at all")
+      PlacesMarkdown.placeOverrideChanged(set.modify(_.unlocated).setTo(2)).endsWith("; **2** of them now have no place at all")
     )
     assert(
       PlacesMarkdown
-        .placeOverrideChanged(set.copy(reset = true, kindBefore = "region", kindAfter = "site"))
+        .placeOverrideChanged(set.modify(_.reset).setTo(true).modify(_.kindBefore).setTo("region").modify(_.kindAfter).setTo("site"))
         .startsWith(
           "reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"
         )
@@ -369,7 +368,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     assert(km > 1200 && km < 1400, s"Ctesiphon to the grid square is about 1 300 km, not $km")
     assert(
       !PlacesMarkdown
-        .placeOverrideChanged(moved.copy(latAfter = Some(33.09361), lonAfter = Some(44.58083)))
+        .placeOverrideChanged(moved.modify(_.latAfter).setTo((Some(33.09361): _root_.scala.Option[_root_.scala.Double])).modify(_.lonAfter).setTo((Some(44.58083): _root_.scala.Option[_root_.scala.Double])))
         .contains("→ 33"),
       "an unmoved point is stated once"
     )

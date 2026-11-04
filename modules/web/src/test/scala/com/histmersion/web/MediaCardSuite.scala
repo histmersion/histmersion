@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.media.MediaRole
 import com.histmersion.api.catalogue.EventSummary
@@ -34,7 +36,7 @@ class MediaCardSuite extends munit.FunSuite:
     findings = 3,
     asOf = None,
     links = List(com.histmersion.api.catalogue.Place.Link("pleiades_570491", "commons", "Mycenae", "see_also")),
-    media = List(thumb, thumb.copy(uid = "x", role = MediaRole.LocatorMap))
+    media = List(thumb, thumb.modify(_.uid).setTo("x").modify(_.role).setTo(MediaRole.LocatorMap))
   )
 
   test("a place card shows its first picture; its Commons category is a link"):
@@ -44,7 +46,7 @@ class MediaCardSuite extends munit.FunSuite:
       c.links.contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"),
       c.links.toString
     )
-    assertEquals(Preview.card(mycenae.copy(media = Nil)).media, None)
+    assertEquals(Preview.card(mycenae.modify(_.media).setTo(Nil)).media, None)
 
   test("a source card shows its cover, else its illustration; none when it has neither (#1446)"):
     val src = com.histmersion.api.library.Source.Detail(
@@ -88,15 +90,15 @@ class MediaCardSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      Preview.creditLine(thumb.copy(license = Some("public-domain"), licenseUrl = None))._2,
+      Preview.creditLine(thumb.modify(_.license).setTo(Some("public-domain")).modify(_.licenseUrl).setTo(None))._2,
       Some("public-domain" -> "https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg")
     )
-    assertEquals(Preview.creditLine(thumb.copy(license = None))._2, None)
+    assertEquals(Preview.creditLine(thumb.modify(_.license).setTo(None))._2, None)
 
   test("the picture's stored size reserves its space; an unknown size none"):
     assertEquals(Preview.sizeOf(thumb), Some((330, 267)))
-    assertEquals(Preview.sizeOf(thumb.copy(height = None)), None)
-    assertEquals(Preview.sizeOf(thumb.copy(width = Some(0))), None)
+    assertEquals(Preview.sizeOf(thumb.modify(_.height).setTo(None)), None)
+    assertEquals(Preview.sizeOf(thumb.modify(_.width).setTo(Some(0))), None)
 
   test("an element with data-event previews the event (sources, articles and places first)"):
     assertEquals(

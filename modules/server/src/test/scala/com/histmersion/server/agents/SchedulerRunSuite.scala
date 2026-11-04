@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 
 import com.histmersion.domain.library.workflows.*
@@ -45,9 +47,8 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(enabled = true, prices = "scripted=1/2", roles = b.agents.roles.copy(planner = Model.wire))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.planner).setTo(Model.wire))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -224,7 +225,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       stored.filter(_.state == state).take(limit)
     )
     override def markCandidates(ids: List[Long], state: String) =
-      stored = stored.map(c => if ids.contains(c.id) then c.copy(state = state) else c)
+      stored = stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(state) else c)
       Right(ids.size)
 
   test(

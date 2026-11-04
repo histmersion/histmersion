@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.Migrate
 
@@ -36,7 +38,7 @@ class UpstreamQuotaRepoSuite extends com.histmersion.db.DbSuite:
       Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), "HTTP 429")),
       Some(CoreQuota.Window(Some(25), Some(0), Instant.parse("2026-10-26T18:50:00Z")))
     )
-    transact(ds)(UpstreamQuotaRepo.save(Up, s.copy(recent = Vector(Instant.parse("2026-10-26T18:49:59Z")))))
+    transact(ds)(UpstreamQuotaRepo.save(Up, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))))
     // the recent call slots are not kept
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(Up)), Some(s))
     val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = 1)

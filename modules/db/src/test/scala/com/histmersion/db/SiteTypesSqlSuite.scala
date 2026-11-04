@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.SiteTypesSql
 
 import com.histmersion.config.*
@@ -18,7 +20,7 @@ class SiteTypesSqlSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val cfg = AppConfig.load()
-    testPool(cfg.db.copy(url = testDb.get))
+    testPool(cfg.db.modify(_.url).setTo(testDb.get))
 
   private def sqlType(
       kind: String,

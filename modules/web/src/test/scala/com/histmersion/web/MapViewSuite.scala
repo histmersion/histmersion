@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Confidence
 
@@ -131,7 +133,7 @@ class MapViewSuite extends munit.FunSuite:
   // ── the popup uses the shared atoms ────────────────────────────────────────────────────────────
 
   test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
-    val withDoi = hit(-1200, -1190, Confidence.Medium).copy(doi = Some("10.1/x"))
+    val withDoi = hit(-1200, -1190, Confidence.Medium).modify(_.doi).setTo(Some("10.1/x"))
     val html = MapView.popupHtml(withDoi)
     assert(html.contains(com.histmersion.api.HtmlAtoms.sourceLink("test", Some("10.1/x"), "10.1/x")), html)
     assert(html.contains("conf-badge conf-medium"), html)
@@ -142,13 +144,13 @@ class MapViewSuite extends munit.FunSuite:
   // ── a dot's hover: the source's card, never a bare citekey ──────────────────────────────────────
 
   test("a single finding's dot has no native tooltip; its hover is its source's card") {
-    val one = List(hit(-3000, -2000).copy(citekey = "mathieson2018_genomic", title = "The genomic history"))
+    val one = List(hit(-3000, -2000).modify(_.citekey).setTo("mathieson2018_genomic").modify(_.title).setTo("The genomic history"))
     assertEquals(MapView.markerTitle(one), None)
     assertEquals(MapView.hoverSource(one), Some("mathieson2018_genomic"))
   }
 
   test("coincident findings keep a readable native tooltip and no single source's card") {
-    val three = List(hit(-3000, -2000), hit(-1500, -1400).copy(citekey = "b"), hit(-1200, -1100).copy(citekey = "c"))
+    val three = List(hit(-3000, -2000), hit(-1500, -1400).modify(_.citekey).setTo("b"), hit(-1200, -1100).modify(_.citekey).setTo("c"))
     assertEquals(MapView.markerTitle(three), Some("3 findings here"))
     assertEquals(MapView.hoverSource(three), None)
     assert(!MapView.markerTitle(three).exists(_.contains("test")), "no citekey in it")
@@ -157,14 +159,14 @@ class MapViewSuite extends munit.FunSuite:
   }
 
   test("a single dot is named by its source's title and period; DOI, else citekey, only when untitled") {
-    val pt = hit(-1200, -1190).copy(citekey = "zz2026_x", title = "Zz title")
+    val pt = hit(-1200, -1190).modify(_.citekey).setTo("zz2026_x").modify(_.title).setTo("Zz title")
     assertEquals(MapView.markerLabel(pt), s"Zz title (${Fmt.periodStr(-1200L, -1190L)})")
     assertEquals(MapView.markerLabel(undatedHit.copy(title = "Zz")), "Zz")
     assertEquals(
-      MapView.markerLabel(pt.copy(title = " ", doi = Some("10.1/x"))),
+      MapView.markerLabel(pt.modify(_.title).setTo(" ").modify(_.doi).setTo(Some("10.1/x"))),
       s"10.1/x (${Fmt.periodStr(-1200L, -1190L)})"
     )
-    assertEquals(MapView.markerLabel(pt.copy(title = "")).startsWith("zz2026_x"), true)
+    assertEquals(MapView.markerLabel(pt.modify(_.title).setTo("")).startsWith("zz2026_x"), true)
   }
 
   // markerDiff (#887) is gone: the findings are a PointLayer like every kind, diffed by FadingLayer.plan

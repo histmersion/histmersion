@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, CorpusCounts, Health}
 import com.histmersion.api.jobs.{JobCounts, JobState}
 import com.histmersion.api.library.CorrespondingSource
@@ -61,13 +63,8 @@ class AboutSuite extends munit.FunSuite:
     assert(md.contains("- reference data: 15000 places · 40 periods · 12 presets"), md)
     assert(md.contains("Problems:\n- backups: cannot list /x"), md)
     val bare = AboutMarkdown.render(
-      about.copy(
-        build = BuildStamp("1.2.3"),
-        counts = None,
-        lastBackup = None,
-        lastBackupAgeSeconds = None,
-        problems = Nil,
-        health = Health("ok", "ok", None, Some("ok"))
+      about.modify(
+        _.build).setTo(BuildStamp("1.2.3")).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.problems).setTo(Nil).modify(_.health).setTo(Health("ok", "ok", None, Some("ok"))
       )
     )
     assert(bare.contains("- commit: unknown"), bare)
@@ -84,8 +81,7 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(CorrespondingSource.url(repo, Some("")), repo)
 
   test("histmersion about names the licence and links the source; an older server says unknown"):
-    val src = about.copy(build =
-      about.build.copy(licence = Some("AGPL-3.0-or-later"), sourceUrl = Some("https://example.org/h/tree/abc123def456"))
+    val src = about.modify(_.build).setTo(about.build.modify(_.licence).setTo(Some("AGPL-3.0-or-later")).modify(_.sourceUrl).setTo(Some("https://example.org/h/tree/abc123def456"))
     )
     val md = AboutMarkdown.render(src)
     assert(md.contains("- licence: AGPL-3.0-or-later\n- source: https://example.org/h/tree/abc123def456"), md)
@@ -93,9 +89,9 @@ class AboutSuite extends munit.FunSuite:
     assert(old.contains("- licence: unknown\n- source: unknown"), old)
 
   test("histmersion about says which config file the server read"):
-    val read = AboutMarkdown.render(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+    val read = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
     assert(read.contains("- config file: /c/histmersion.conf (read)"), read)
-    val none = AboutMarkdown.render(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"))))
+    val none = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"))))
     assert(none.contains("- config file: /c/histmersion.conf (not found: defaults and environment only)"), none)
 
   test("an About without configFile (an older server) still decodes"):
@@ -105,9 +101,8 @@ class AboutSuite extends munit.FunSuite:
 
   test("every count agrees with its noun: 1 article, not 1 articles"):
     val one = AboutMarkdown.render(
-      about.copy(counts =
-        about.counts.map(
-          _.copy(sources = 1, findings = 0, articles = 1, events = 1, places = 1, periods = 1, presets = 1)
+      about.modify(_.counts).setTo(about.counts.map(
+          _.modify(_.sources).setTo(1).modify(_.findings).setTo(0).modify(_.articles).setTo(1).modify(_.events).setTo(1).modify(_.places).setTo(1).modify(_.periods).setTo(1).modify(_.presets).setTo(1)
         )
       )
     )

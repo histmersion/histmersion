@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.collections
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
@@ -31,7 +33,7 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
 
   private lazy val scratch =
     val b = AppConfig.load()
-    ScratchDatabases("archive_traffic", b.db.copy(url = testDb.get))
+    ScratchDatabases("archive_traffic", b.db.modify(_.url).setTo(testDb.get))
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def json(s: String): Either[String, HttpAnswer] =
@@ -89,9 +91,8 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
         .fold(e => fail(e), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
-    val app = loaded.config.copy(
-      db = loaded.config.db.copy(url = scratch.urlOf("archive_traffic_run_test")),
-      acquire = loaded.config.acquire.copy(spoolDir = spool.toString)
+    val app = loaded.config.modify(
+      _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(spool.toString)
     )
     val wire = Wire(routes(app.acquire))
     val g: Generation = ServerPlugins.load(loaded, transport = _ => wire)

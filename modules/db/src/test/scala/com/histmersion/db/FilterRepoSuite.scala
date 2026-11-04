@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.findings.FindingFixtures
 import com.histmersion.domain.library.labels.LabelFixtures
 import com.histmersion.domain.library.search.SearchFixtures
@@ -25,7 +27,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     seed(d)
     d
@@ -185,11 +187,11 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
   private val words = AppConfig.load().limits.snippetWords
   private def run(f: Filter) =
-    SearchFixtures.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
+    SearchFixtures.sources(ds, f.modify(_.limit).setTo(if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
   private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
   private def facetMap(field: Facet.Field, prefix: Option[String] = None, f: Filter = own) =
-    LabelFixtures.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
+    LabelFixtures.facets(ds, field, prefix, f.modify(_.limit).setTo(200), 200).map(x => x.value -> x.count).toMap
 
   test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):
     val r = run(Filter(tags = List("sea-peoples"), period = Some(Period(-1300, -1100))))
@@ -248,37 +250,37 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(run(f).total, 3)
-    val page = SearchFixtures.sources(ds, f.copy(limit = 1, sort = Sort.Title), words)
+    val page = SearchFixtures.sources(ds, f.modify(_.limit).setTo(1).modify(_.sort).setTo(Sort.Title), words)
     assertEquals(page.total, 3)
     assertEquals(page.hits.size, 1)
-    val next = SearchFixtures.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
+    val next = SearchFixtures.sources(ds, f.modify(_.limit).setTo(1).modify(_.offset).setTo(1).modify(_.sort).setTo(Sort.Title), words)
     assertEquals(next.total, 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by publication year, newest or oldest first"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
+      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Year), words)),
       List("zzf_gamma", "zzf_alpha", "zzf_beta")
     )
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
+      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Oldest), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
+      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Title), words)),
       List("zzf_alpha", "zzf_gamma", "zzf_beta")
     )
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
+      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Cited), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
     // undated sources sort last on period
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
+      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.PeriodStart), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
@@ -328,7 +330,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
   private def feed(f: Filter) =
     FindingFixtures
-      .findingsFor(ds, f.copy(limit = if f.limit <= 0 then 200 else f.limit))
+      .findingsFor(ds, f.modify(_.limit).setTo(if f.limit <= 0 then 200 else f.limit))
       .filter(_.citekey.startsWith("zzf_"))
 
   test("map feed: a wrapping bbox returns only findings east of 170 or west of -170"):

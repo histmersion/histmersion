@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -212,7 +214,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     val dir = tmp()
     val src = BasemapFixtures.terrainArchive(dir.resolve("planet.pmtiles"), maxZoom = 6)
     val http = BasemapFixtures.LocalRange(src)
-    val tiny = noPause.copy(maxRequestBytes = 200) // many small requests
+    val tiny = noPause.modify(_.maxRequestBytes).setTo((200: _root_.scala.Long)) // many small requests
     val plan =
       BasemapFetch.plan(http, BasemapFetch.Source("fake://t", "t"), aegean, 6, tiny, _ => ()).fold(fail(_), identity)
     assert(plan.requests.size > 3, plan.requests.toString)
@@ -237,7 +239,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     BasemapFetch.download(http, plan, work, tiny, _ => (), _ => Right(())).fold(fail(_), identity)
     assertEquals(http.downloads.get, plan.requests.size)
     // another plan (a deeper zoom) empties the work directory first
-    val deeper = plan.copy(maxZoom = 7)
+    val deeper = plan.modify(_.maxZoom).setTo(7)
     assertEquals(BasemapFetch.prepare(work, BasemapFetch.stateOf(deeper, "")), 0)
 
   test("a build replaced during the download is refused, not mixed"):

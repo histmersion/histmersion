@@ -1,5 +1,7 @@
 package com.histmersion.web.marks
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.personal.*
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.web.Store
@@ -84,5 +86,5 @@ class MarksPureSuite extends munit.FunSuite:
     val id = Note.Id("0190f3c2-1111-7000-8000-000000000002")
     val atPoint =
       Note(id, Target(ItemKind.Point, lat = Some(Latitude(1)), lon = Some(Longitude(2))), Note.Text("x"), "p")
-    val onItem = atPoint.copy(target = src.target)
+    val onItem = atPoint.modify(_.target).setTo(src.target)
     assertEquals(NoteMarkers.placed(List(atPoint, onItem)), List(atPoint))

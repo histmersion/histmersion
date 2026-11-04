@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.agents.*
 
 import com.histmersion.domain.automation.agents.*
@@ -108,15 +110,10 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "echo=1/2; limited=1/2",
-        roles = b.agents.roles.copy(extractor = "hello-ai:echo")
-      ),
-      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("echo=1/2; limited=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo("hello-ai:echo")
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -179,8 +176,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(got.source.notes.exists(_.contains("tin by sea")), got.source.notes.toString)
 
   test("a chain passes over a plugin model whose plan reports its limit, to the chain's next model"):
-    val cfg = baseCfg.copy(agents =
-      baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(extractor = "hello-ai:limited > hello-ai:echo"))
+    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo("hello-ai:limited > hello-ai:echo"))
     )
     val (a, h) = handlers(generation(), cfg)
     val run = startAndRun(a, h)

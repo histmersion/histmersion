@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.CoreQuota
 
 import java.time.{Instant, LocalDate}
@@ -18,7 +20,7 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
       Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), "HTTP 429")),
       Some(CoreQuota.Window(Some(25), Some(3), Instant.parse("2026-10-26T18:50:00Z")))
     )
-    s.quotas.save("zq", st.copy(recent = Vector(Instant.parse("2026-10-26T18:49:59Z"))))
+    s.quotas.save("zq", st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z"))))
     assertEquals(s.quotas.load("zq"), Some(st))
     val next = CoreQuota.State(LocalDate.of(2026, 10, 27), 0, 0, None, None)
     s.quotas.save("zq", next)

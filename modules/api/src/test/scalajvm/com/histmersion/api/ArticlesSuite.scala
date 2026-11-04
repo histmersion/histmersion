@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.{Article, ArticleMarkdown, Articles, Backlink, CitedSource}
 import com.histmersion.api.library.Source
@@ -105,7 +107,7 @@ class ArticlesSuite extends munit.FunSuite:
   test("ArticlePut.of round-trips a stored article back into writer form"):
     assertEquals(
       Articles.applyPut(existing.slug, Article.Put.of(existing)).toOption.get.copy(updatedAt = None),
-      existing.copy(updatedAt = None)
+      existing.modify(_.updatedAt).setTo(None)
     )
 
   // ── the Markdown surface (MCP, CLI and — through flexmark — the HTML page) ───────────────────
@@ -216,7 +218,7 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("patch_article with section targets the append under the right heading"):
     val body = "# Sea Peoples\n\n## Evidence\n\nData.\n\n## Disagreements\n\nOld."
-    val ex = existing.copy(body = body)
+    val ex = existing.modify(_.body).setTo(body)
     val p = Article.Patch(append = Some("Fresh dispute."), section = Some("## Disagreements"))
     val a = Articles.applyPatch(ex, p).toOption.get
     val disIdx = a.body.indexOf("## Disagreements")

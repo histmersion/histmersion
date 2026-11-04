@@ -8,7 +8,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 object CopyToLens {
   case class Policy(mode: String = "inspect", declarations: String = "", manifest: String = "", report: String = "target/copy-to-lens",
-    modules: List[String] = List("api","core","db","files","server","cli","web","plugin-host"), tests: Boolean = false, multiple: Boolean = false)
+    modules: List[String] = List("api","core","db","files","server","cli","web","plugin-host"), tests: Boolean = false, multiple: Boolean = false,
+    deferredOwners: Map[String,String] = Map.empty)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -49,6 +50,15 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
     new CopyToLens(p)
   }
   private def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
+  private def numericContext(t: Type): Option[String] = t match {
+    case Type.Name(n) if Set("Long","Double","Float","Short","Byte")(n) => Some("_root_.scala." + n)
+    case Type.Apply(container, args) if args.size == 1 =>
+      val containers = Map("Option" -> "_root_.scala.Option", "List" -> "_root_.scala.collection.immutable.List",
+        "Vector" -> "_root_.scala.collection.immutable.Vector", "Seq" -> "_root_.scala.collection.immutable.Seq",
+        "Set" -> "_root_.scala.collection.immutable.Set")
+      for(prefix <- containers.get(container.syntax); value <- numericContext(args.head)) yield prefix + "[" + value + "]"
+    case _ => None
+  }
   private def name(t: Term): Option[Name] = t match {
     case s: Term.Select => Some(s.name)
     case n: Term.Name => Some(n)
@@ -70,6 +80,7 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         }).headOption
         case _ => None
       }
+      val classOwner = if(n.symbol.isNone) receiverOwner.getOrElse("") else n.symbol.owner.value
       val cls = local.get(n.symbol.owner.value).orElse(indexed.get(n.symbol.owner.value)).orElse(
         if(n.symbol.isNone) receiverOwner.flatMap(s => local.get(s).orElse(indexed.get(s))) else None)
       val args = a.argClause.values
@@ -98,6 +109,7 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         case _ => false
       }
       val reason = if(cls.isEmpty) "unresolved-or-non-case-class-owner"
+        else if(policy.deferredOwners.contains(classOwner)) "configured-optics-limitation:" + policy.deferredOwners(classOwner)
         else if(!policy.tests && path.contains("/src/test/")) "test-deferred"
         else if(policy.modules.nonEmpty && !policy.modules.contains(module)) "module-optics-dependency-review"
         else if(cls.get.tparams.nonEmpty) "generic-copy-type-change-review"
@@ -106,6 +118,7 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         else if(inFold) "accumulator-algorithm-review"
         else if(a.fun.is[Term.ApplyType]) "explicit-type-arguments"
         else if(assignment.isEmpty && !multi) "multi-field-positional-or-empty-copy"
+        else if(assignments.exists(v => Set("at","index","atOrElse","each","eachWhere","when","eachLeft","eachRight")(v.lhs.syntax))) "reserved-optics-field-review"
         else if(multi && !pureConstructor) "multi-field-constructor-effects-review"
         else if(!assignments.forall(v => cls.get.ctor.paramss.flatten.exists(p => p.name.value == v.lhs.syntax && !p.mods.exists(m => m.is[Mod.Private] || m.is[Mod.Protected])))) "field-access-review"
         else if(separators.flatten.exists(_.is[Token.Comment])) "argument-comment-review"
@@ -116,7 +129,10 @@ class CopyToLens(val policy: CopyToLens.Policy) extends SemanticRule("CopyToLens
         val replacement = if(a.fun.is[Term.Name]) "this.modify" else "modify"
         (Patch.replaceTree(n,replacement) + assignments.zipWithIndex.map { case(v,i) =>
           val prefix = if(i == 0) "_." else ").modify(_."
-          Patch.removeTokens(separators(i)) + Patch.addLeft(starts(i),prefix + v.lhs.syntax + ").setTo(")
+          val context = cls.get.ctor.paramss.flatten.find(_.name.value == v.lhs.syntax).flatMap(_.decltpe).flatMap(numericContext)
+          val before = prefix + v.lhs.syntax + ").setTo(" + context.fold("")(_ => "(")
+          val last = v.tokens.reverse.dropWhile(t => t.is[Token.Space] || t.is[Token.Tab] || t.is[Token.LF] || t.is[Token.CR] || t.is[Token.Comma]).head
+          Patch.removeTokens(separators(i)) + Patch.addLeft(starts(i),before) + context.fold(Patch.empty)(t => Patch.addRight(last,": " + t + ")"))
         }.asPatch).atomic
       } else if(reason == "eligible" && policy.mode == "check") Patch.lint(Diagnostic("remaining",reason,a.pos))
       else Patch.empty

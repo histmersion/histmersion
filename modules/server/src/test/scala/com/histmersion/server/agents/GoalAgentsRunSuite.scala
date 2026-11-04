@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 import com.histmersion.domain.automation.agents.TestRuns
 
@@ -78,7 +80,7 @@ final class StubUpstream extends AgentUpstream:
     Right(
       sweepFinds
         .getOrElse(goal, Nil)
-        .map(c => c.copy(state = Option(marked.get(c.id)).getOrElse(c.state)))
+        .map(c => c.modify(_.state).setTo(Option(marked.get(c.id)).getOrElse(c.state)))
         .filter(_.state == state)
         .take(limit)
     )
@@ -107,13 +109,10 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        roles = b.agents.roles
-          .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
       )
     )
 
@@ -412,9 +411,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     c.scripts += Seq(
       text(draftJson(onlyCk, reasons = s"""{"citekey":"$Ck2","reason":"Its isotope study dates a later trade."}"""))
     )
-    val auto = baseCfg.copy(
-      agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articlePublish = "auto")),
-      researchAgents = baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
+    val auto = baseCfg.modify(
+      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
@@ -485,8 +483,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val (a, h, _) =
       handlers(
         c,
-        baseCfg.copy(researchAgents =
-          baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
+        baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
         )
       )
     seed(h)
@@ -515,9 +512,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   test("compile-article: with article-publish = auto the run does not wait (still never overwrites a slug)"):
     val c = ScriptedClient(Model)
     compileScripts(c, draftJson(newBody))
-    val auto = baseCfg.copy(
-      agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articlePublish = "auto")),
-      researchAgents = baseCfg.researchAgents.copy(compile = baseCfg.researchAgents.compile.copy(review = false))
+    val auto = baseCfg.modify(
+      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
@@ -543,7 +539,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(a.startRun(RunRequest("plan-goal", "zzagent-nope")).isLeft)
     assert(a.startRun(RunRequest("enrich-source", Ck, goal = Some("zzagent-nope"))).isLeft)
-    val noWriter = baseCfg.copy(agents = baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(writer = "")))
+    val noWriter = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.writer).setTo("")))
     val (b, _, _) = handlers(c, noWriter)
     assert(
       b.startRun(RunRequest("compile-article", Slug, title = Some("x"), topics = List("t")))

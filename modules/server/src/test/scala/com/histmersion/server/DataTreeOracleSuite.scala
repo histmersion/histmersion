@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.settings.ConfigSource
@@ -132,28 +134,14 @@ class DataTreeOracleSuite extends DbSuite:
     )
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), 5))
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
-    val cfg = base.copy(
-      basemap = base.basemap.copy(
-        requestGapMs = 0,
-        bbox = "22,35,29,41",
-        vector = base.basemap.vector.copy(
-          url = "fake://v/{build}",
-          maxZoom = 4,
-          onDemand = base.basemap.vector.onDemand.copy(enabled = true, maxZoom = 5, requestsPerSecond = 1000)
-        ),
-        terrain = base.basemap.terrain.copy(
-          url = "fake://t",
-          maxZoom = 3,
-          onDemand = base.basemap.terrain.onDemand.copy(maxZoom = 5, requestsPerSecond = 1000),
-          focusRegions = List("crete 23,34.8,26.5,35.7")
-        ),
-        labels =
-          base.basemap.labels.copy(url = "fake://ne/{file}.geojson", files = List("ranges", "rivers"), maxZoom = 6),
-        bathymetry = base.basemap.bathymetry.copy(
-          url = "fake://sea/{z}/{x}/{y}.png",
-          maxZoom = 3,
-          requestGapMs = 0,
-          onDemand = base.basemap.bathymetry.onDemand.copy(enabled = true, maxZoom = 3, requestsPerSecond = 1000)
+    val cfg = base.modify(
+      _.basemap).setTo(base.basemap.modify(
+        _.requestGapMs).setTo(0).modify(_.bbox).setTo("22,35,29,41").modify(_.vector).setTo(base.basemap.vector.modify(
+          _.url).setTo("fake://v/{build}").modify(_.maxZoom).setTo(4).modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(true).modify(_.maxZoom).setTo(5).modify(_.requestsPerSecond).setTo((1000: _root_.scala.Double))
+        )).modify(_.terrain).setTo(base.basemap.terrain.modify(
+          _.url).setTo("fake://t").modify(_.maxZoom).setTo(3).modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.maxZoom).setTo(5).modify(_.requestsPerSecond).setTo((1000: _root_.scala.Double))).modify(_.focusRegions).setTo(List("crete 23,34.8,26.5,35.7")
+        )).modify(_.labels).setTo(base.basemap.labels.modify(_.url).setTo("fake://ne/{file}.geojson").modify(_.files).setTo(List("ranges", "rivers")).modify(_.maxZoom).setTo(6)).modify(_.bathymetry).setTo(base.basemap.bathymetry.modify(
+          _.url).setTo("fake://sea/{z}/{x}/{y}.png").modify(_.maxZoom).setTo(3).modify(_.requestGapMs).setTo(0).modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(true).modify(_.maxZoom).setTo(3).modify(_.requestsPerSecond).setTo((1000: _root_.scala.Double))
         )
       )
     )

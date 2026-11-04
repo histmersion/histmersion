@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.config.*
@@ -69,10 +71,10 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     val p = com.histmersion.api.catalogue.Place.Summary("x", "Anatolia", Place.Kind.Region, None, None, None, "")
     val d = PlaceDetail(p, None, Nil, Nil, 0, Some(-2500L), timeBasis = Findings)
     assert(d.datedByFindings)
-    assert(!d.copy(asOf = None).datedByFindings)
-    assert(!d.copy(timeBasis = Dated).datedByFindings)
+    assert(!d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long])).datedByFindings)
+    assert(!d.modify(_.timeBasis).setTo(Dated).datedByFindings)
     assert(PlacesMarkdown.place(d).contains(FindingsNote), PlacesMarkdown.place(d))
-    assert(!PlacesMarkdown.place(d.copy(asOf = None)).contains(FindingsNote))
+    assert(!PlacesMarkdown.place(d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long]))).contains(FindingsNote))
 
   test("places.modern-from is configured, 1500 by default"):
     assertEquals(AppConfig.load().places.modernFrom, 1500L)

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
@@ -49,7 +51,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
 
   stest("the presets are the rows filed under a heading; the search finds by label, region and either bound") { s =>
     val p = s.periods
-    p.write(tree :+ hp("zzr_other", 100, 200).copy(preset = Some(PresetRegion.Aegean)), Dataset.Seed)
+    p.write(tree :+ hp("zzr_other", 100, 200).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
     assertEquals(
       p.search(PeriodSearch(Some("ZZR"))).filter(_.preset.isDefined).map(x => x.id -> x.preset),
       List("zzr_other" -> Some(PresetRegion.Aegean))
@@ -70,10 +72,10 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
 
   stest("an upsert without a preset keeps the stored one; retainPresets takes the others off the menu") { s =>
     val p = s.periods
-    p.write(tree :+ hp("zzr_other", 100, 200).copy(preset = Some(PresetRegion.Aegean)), Dataset.Seed)
+    p.write(tree :+ hp("zzr_other", 100, 200).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
     p.write(List(hp("zzr_other", 100, 200)), Dataset.Seed)
     assertEquals(p.get("zzr_other").flatMap(_.preset), Some(PresetRegion.Aegean))
-    p.write(List(hp("zzr_root", -3000, -1000).copy(preset = Some(PresetRegion.Iran))), Dataset.Seed)
+    p.write(List(hp("zzr_root", -3000, -1000).modify(_.preset).setTo(Some(PresetRegion.Iran))), Dataset.Seed)
     assertEquals(p.retainPresets(List("zzr_root")), 1)
     assertEquals(p.get("zzr_other").map(x => (x.preset, x.label)), Some((None, "ZZR_OTHER")))
     assertEquals(p.get("zzr_root").flatMap(_.preset), Some(PresetRegion.Iran))

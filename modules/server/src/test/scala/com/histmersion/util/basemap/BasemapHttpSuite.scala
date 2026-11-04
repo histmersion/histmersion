@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -31,17 +33,14 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
 
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.copy(
-      db = base.db.copy(url = testDb.get),
-      auth = base.auth.copy(apiKey = "k3y"),
-      basemap = base.basemap.copy(
+    val cfg = base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("k3y")).modify(_.basemap).setTo(base.basemap.copy(
         dir = dir.toString,
-        terrain = base.basemap.terrain.copy(onDemand =
-          base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled)
+        terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(onDemand && base.basemap.terrain.onDemand.enabled)
         ),
         // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
-        vector = base.basemap.vector.copy(onDemand = base.basemap.vector.onDemand.copy(enabled = false)),
-        bathymetry = base.basemap.bathymetry.copy(onDemand = base.basemap.bathymetry.onDemand.copy(enabled = false))
+        vector = base.basemap.vector.modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(false)),
+        bathymetry = base.basemap.bathymetry.modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(false))
       )
     )
     supervised {

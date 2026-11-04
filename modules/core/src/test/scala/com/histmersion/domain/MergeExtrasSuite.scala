@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.EventPlan
 import com.histmersion.domain.catalogue.places.PlacePlan
 import com.histmersion.domain.catalogue.CataloguePlan
@@ -91,12 +93,10 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("places: a new one is inserted; the same id with the same geometry here is one place, ours kept"):
     val fresh = place("w-p1", "zz_hattusa", "Hattusa")
     val same = place("w-p2", "zz_kanesh", "Kanesh")
-    val ours = same.copy(
-      uid = uid("h-p2"),
-      origin = home,
-      names = List(com.histmersion.api.exchange.Bundle.PlaceName("Kültepe", Some("tr"), None))
+    val ours = same.modify(
+      _.uid).setTo(uid("h-p2")).modify(_.origin).setTo(home).modify(_.names).setTo(List(com.histmersion.api.exchange.Bundle.PlaceName("Kültepe", Some("tr"), None))
     )
-    val r = run(foreign.copy(places = List(fresh, same)), in => in.copy(local = in.local.copy(places = List(ours))))
+    val r = run(foreign.modify(_.places).setTo(List(fresh, same)), in => in.modify(_.local).setTo(in.local.modify(_.places).setTo(List(ours))))
     assertEquals(r.rows.find(_.foreignUid == fresh.uid).map(_.decision), Some(Decision.Insert))
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Place, same.uid, ours.uid)), r.apply.folds.toString)
     // the fold carries the bundle's name ours lacked: written as ours, both names
@@ -111,17 +111,17 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("places: one id, two geometries is a question with both on the map; keep-right takes the bundle's"):
     val theirs = place("w-p3", "zz_ugarit", "Ugarit", Some(PointB))
     val ours = place("h-p3", "zz_ugarit", "Ugarit", Some(PointA), home)
-    val in: MergePlanner.Input => MergePlanner.Input = i => i.copy(local = i.local.copy(places = List(ours)))
-    val p = run(foreign.copy(places = List(theirs)), in).plan
+    val in: MergePlanner.Input => MergePlanner.Input = i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours)))
+    val p = run(foreign.modify(_.places).setTo(List(theirs)), in).plan
     val q = p.issues.find(_.kind == Issue.Kind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
     assert(q.id.startsWith("P-") && q.open, q.toString)
     assertEquals(
       q.detail.flatMap(_.place).map(x => (x.leftGeometry, x.rightGeometry)),
       Some((Some(PointA), Some(PointB)))
     )
-    val kept = run(foreign.copy(places = List(theirs)), in, resolve(q.id -> "keep-left"))
+    val kept = run(foreign.modify(_.places).setTo(List(theirs)), in, resolve(q.id -> "keep-left"))
     assertEquals(kept.rows.find(_.foreignUid == theirs.uid).map(_.decision), Some(Decision.Kept))
-    val right = run(foreign.copy(places = List(theirs)), in, resolve(q.id -> "keep-right"))
+    val right = run(foreign.modify(_.places).setTo(List(theirs)), in, resolve(q.id -> "keep-right"))
     assertEquals(
       right.rows.find(_.foreignUid == theirs.uid).map(r => (r.uid, r.decision)),
       Some((ours.uid, Decision.FastForward))
@@ -134,7 +134,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val ev = event("w-ev-troy", "zz_troy_fire", "Troy burns").copy(placeId = Some("work_troy"))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
-      i => i.copy(local = i.local.copy(places = List(ours)), placeMatches = Map(theirs.uid -> "pleiades_550595"))
+      i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours))).modify(_.placeMatches).setTo(Map(theirs.uid -> "pleiades_550595"))
     )
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Place, theirs.uid, ours.uid)))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("pleiades_550595"))
@@ -151,7 +151,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   // bundle's events naming the new id pointed at nothing
   test("renamedPlaces: one of ours under a new id; whether that id is another place's here; a redirected one is not"):
     val ours = place("h-p6", "zz_old_site", "Site", origin = home)
-    val theirs = ours.copy(id = "zz_new_site")
+    val theirs = ours.modify(_.id).setTo("zz_new_site")
     val other = place("h-p7", "zz_new_site", "Another site", origin = home)
     assertEquals(PlacePlan.renamedPlaces(List(theirs), List(ours), Set.empty), List((theirs, "zz_old_site", false)))
     assertEquals(
@@ -163,11 +163,11 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("places: a rename over there is followed — the new id is written, events keep pointing at it"):
     val ours = place("h-p8", "zz_old_site", "Site", origin = home)
-    val theirs = ours.copy(id = "zz_new_site")
+    val theirs = ours.modify(_.id).setTo("zz_new_site")
     val ev = event("w-ev-site", "zz_at_site", "At the site").copy(placeId = Some("zz_new_site"))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
-      i => i.copy(local = i.local.copy(places = List(ours)))
+      i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours)))
     )
     assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_new_site"))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_new_site"))
@@ -181,11 +181,11 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("places: a rename over there onto an id another place has here keeps ours, and points the bundle at it"):
     val ours = place("h-p9", "zz_old_site", "Site", origin = home)
     val other = place("h-p10", "zz_new_site", "Another site", Some(PointB), origin = home)
-    val theirs = ours.copy(id = "zz_new_site")
+    val theirs = ours.modify(_.id).setTo("zz_new_site")
     val ev = event("w-ev-site2", "zz_at_site2", "At the site").copy(placeId = Some("zz_new_site"))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
-      i => i.copy(local = i.local.copy(places = List(ours, other)))
+      i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours, other)))
     )
     assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_old_site"))
     assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_old_site"))
@@ -201,13 +201,13 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val differ = period("w-n2", "zz_iron", "Iron Age", -1200, -550)
     val other = period("w-n3", "work_mba", "Middle Bronze Age", -2000, -1600)
     val local = List(
-      same.copy(uid = uid("h-n1"), origin = home),
+      same.modify(_.uid).setTo(uid("h-n1")).modify(_.origin).setTo(home),
       period("h-n2", "zz_iron", "Iron Age", -1150, -586, home),
       period("h-n3", "periodo_mba", "Middle Bronze Age", -2100, -1550, home)
     )
     val r = run(
-      foreign.copy(periods = List(same, differ, other)),
-      i => i.copy(local = i.local.copy(periods = local), periodMatches = Map(other.uid -> "periodo_mba"))
+      foreign.modify(_.periods).setTo(List(same, differ, other)),
+      i => i.modify(_.local).setTo(i.local.modify(_.periods).setTo(local)).modify(_.periodMatches).setTo(Map(other.uid -> "periodo_mba"))
     )
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Period, same.uid, uid("h-n1"))))
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Period, other.uid, uid("h-n3"))))
@@ -221,23 +221,23 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val theirs =
       event("w-ev-k", "work_kadesh", "Battle of Kadesh", from = -1274, to = -1274).copy(placeId = Some("zz_kadesh"))
     val ours = event("h-ev-k", "kadesh_1274", "battle of  Kadesh", home, -1275, -1274).copy(placeId = Some("zz_kadesh"))
-    val elsewhere = theirs.copy(uid = uid("w-ev-k2"), id = "work_kadesh2", placeId = Some("zz_other"))
+    val elsewhere = theirs.modify(_.uid).setTo(uid("w-ev-k2")).modify(_.id).setTo("work_kadesh2").modify(_.placeId).setTo(Some("zz_other"))
     val in: MergePlanner.Input => MergePlanner.Input =
-      i => i.copy(local = i.local.copy(events = i.local.events :+ ours), places = Set("zz_kadesh", "zz_other"))
-    val r = run(foreign.copy(events = List(theirs)), in)
+      i => i.modify(_.local).setTo(i.local.modify(_.events).setTo(i.local.events :+ ours)).modify(_.places).setTo(Set("zz_kadesh", "zz_other"))
+    val r = run(foreign.modify(_.events).setTo(List(theirs)), in)
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Event, theirs.uid, ours.uid)), r.apply.folds.toString)
     assertEquals(r.localized.events.find(_.uid == ours.uid).map(_.id), Some("kadesh_1274"))
     assert(r.plan.info.exists(_.contains("same label, dates and place")), r.plan.info.mkString("\n"))
     // another place: two events
-    val r2 = run(foreign.copy(events = List(elsewhere)), in)
+    val r2 = run(foreign.modify(_.events).setTo(List(elsewhere)), in)
     assertEquals(r2.rows.find(_.foreignUid == elsewhere.uid).map(_.decision), Some(Decision.Insert))
 
   test("MergeFold.sameEventAcrossIds: label fingerprint, a shared year, one place (or none on both)"):
     val a = event("a", "a", "Fall of Hattusa", from = -1190, to = -1180)
-    assert(EventPlan.sameEventAcrossIds(a, a.copy(id = "b", label = "fall of HATTUSA")))
-    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", notBefore = Some(-1100), notAfter = Some(-1050))))
-    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", placeId = Some("x"))))
-    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", label = "Sack of Hattusa")))
+    assert(EventPlan.sameEventAcrossIds(a, a.modify(_.id).setTo("b").modify(_.label).setTo("fall of HATTUSA")))
+    assert(!EventPlan.sameEventAcrossIds(a, a.modify(_.id).setTo("b").modify(_.notBefore).setTo((Some(-1100): _root_.scala.Option[_root_.scala.Long])).modify(_.notAfter).setTo((Some(-1050): _root_.scala.Option[_root_.scala.Long]))))
+    assert(!EventPlan.sameEventAcrossIds(a, a.modify(_.id).setTo("b").modify(_.placeId).setTo(Some("x"))))
+    assert(!EventPlan.sameEventAcrossIds(a, a.modify(_.id).setTo("b").modify(_.label).setTo("Sack of Hattusa")))
 
   // ── goals (#881) ──────────────────────────────────────────────────────────────────────────────
 
@@ -246,28 +246,28 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("MergeFold.planOutcome: equal or one-sided is no question; the later approval wins; else a question"):
     val g = goal("g", "g", "G")
-    assertEquals(MergeFold.planOutcome(g.copy(plan = Some(planA)), g), MergeFold.PlanOutcome.Ours)
-    assertEquals(MergeFold.planOutcome(g, g.copy(plan = Some(planA))), MergeFold.PlanOutcome.Theirs)
+    assertEquals(MergeFold.planOutcome(g.modify(_.plan).setTo(Some(planA)), g), MergeFold.PlanOutcome.Ours)
+    assertEquals(MergeFold.planOutcome(g, g.modify(_.plan).setTo(Some(planA))), MergeFold.PlanOutcome.Theirs)
     assertEquals(
-      MergeFold.planOutcome(g.copy(plan = Some(planA)), g.copy(plan = Some(planA))),
+      MergeFold.planOutcome(g.modify(_.plan).setTo(Some(planA)), g.modify(_.plan).setTo(Some(planA))),
       MergeFold.PlanOutcome.Ours
     )
     assertEquals(
       MergeFold.planOutcome(
-        g.copy(plan = Some(planA), planApprovedAt = Some("2026-01-01")),
-        g.copy(plan = Some(planB), planApprovedAt = Some("2026-02-01"))
+        g.modify(_.plan).setTo(Some(planA)).modify(_.planApprovedAt).setTo(Some("2026-01-01")),
+        g.modify(_.plan).setTo(Some(planB)).modify(_.planApprovedAt).setTo(Some("2026-02-01"))
       ),
       MergeFold.PlanOutcome.Theirs
     )
     assertEquals(
       MergeFold.planOutcome(
-        g.copy(plan = Some(planA), planApprovedAt = Some("2026-03-01")),
-        g.copy(plan = Some(planB), planApprovedAt = Some("2026-02-01"))
+        g.modify(_.plan).setTo(Some(planA)).modify(_.planApprovedAt).setTo(Some("2026-03-01")),
+        g.modify(_.plan).setTo(Some(planB)).modify(_.planApprovedAt).setTo(Some("2026-02-01"))
       ),
       MergeFold.PlanOutcome.Ours
     )
     assertEquals(
-      MergeFold.planOutcome(g.copy(plan = Some(planA)), g.copy(plan = Some(planB), planApprovedAt = Some("x"))),
+      MergeFold.planOutcome(g.modify(_.plan).setTo(Some(planA)), g.modify(_.plan).setTo(Some(planB)).modify(_.planApprovedAt).setTo(Some("x"))),
       MergeFold.PlanOutcome.Differ
     )
 
@@ -278,14 +278,13 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       links = Some(List(com.histmersion.api.exchange.Bundle.GoalLink("source", "a2001_x", Some(uid("s-a")), None, At))),
       schedules = Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule("currency", "@weekly", true, None)))
     )
-    val r = l.copy(
-      links = Some(
+    val r = l.modify(
+      _.links).setTo(Some(
         List(
           com.histmersion.api.exchange.Bundle.GoalLink("source", "a2001_old", Some(uid("s-a")), Some("theirs"), At),
           com.histmersion.api.exchange.Bundle.GoalLink("query", "hittite storm god", None, None, At)
         )
-      ),
-      schedules = Some(
+      )).modify(_.schedules).setTo(Some(
         List(
           com.histmersion.api.exchange.Bundle.GoalSchedule("currency", "@daily", false, Some(1.5)),
           com.histmersion.api.exchange.Bundle.GoalSchedule("acquisition", "@monthly", true, None)
@@ -304,17 +303,16 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     "goals: two plans of one goal with neither newer ask; keep-right takes theirs; schedule differences are reported"
   ):
     val g0 =
-      localGoal.copy(
-        plan = Some(planA),
-        schedules = Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule("currency", "@weekly", true, None)))
+      localGoal.modify(
+        _.plan).setTo(Some(planA)).modify(_.schedules).setTo(Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule("currency", "@weekly", true, None)))
       )
     val theirs = goal("w-goal", "zz_goal_both", "Goal created at work").copy(
       plan = Some(planB),
       schedules = Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule("currency", "@daily", true, None))),
       links = Some(List(com.histmersion.api.exchange.Bundle.GoalLink("query", "ahhiyawa", None, None, At)))
     )
-    val es = foreign.copy(goals = List(theirs))
-    val in: MergePlanner.Input => MergePlanner.Input = i => i.copy(local = i.local.copy(goals = List(goalHere, g0)))
+    val es = foreign.modify(_.goals).setTo(List(theirs))
+    val in: MergePlanner.Input => MergePlanner.Input = i => i.modify(_.local).setTo(i.local.modify(_.goals).setTo(List(goalHere, g0)))
     val p = run(es, in).plan
     val q = p.issues.find(_.kind == Issue.Kind.GoalPlanDiffers).getOrElse(fail(p.issues.mkString("\n")))
     assert(q.id.startsWith("G-") && q.open, q.toString)
@@ -326,10 +324,10 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     assertEquals(folded.schedules.map(_.map(_.cron)), Some(List("@weekly")))
     assertEquals(folded.links.map(_.map(_.ref)), Some(List("ahhiyawa")))
     // the later approval decides by itself
-    val newer = es.copy(goals = List(theirs.copy(planApprovedAt = Some("2026-05-01"))))
+    val newer = es.modify(_.goals).setTo(List(theirs.modify(_.planApprovedAt).setTo(Some("2026-05-01"))))
     val auto = run(
       newer,
-      i => i.copy(local = i.local.copy(goals = List(goalHere, g0.copy(planApprovedAt = Some("2026-04-01")))))
+      i => i.modify(_.local).setTo(i.local.modify(_.goals).setTo(List(goalHere, g0.modify(_.planApprovedAt).setTo(Some("2026-04-01")))))
     )
     assert(!auto.plan.issues.exists(_.kind == Issue.Kind.GoalPlanDiffers))
     assertEquals(auto.localized.goals.find(_.uid == g0.uid).flatMap(_.plan), Some(planB))
@@ -343,7 +341,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
         )
       )
     )
-    val r = run(foreign.copy(goals = List(linked)))
+    val r = run(foreign.modify(_.goals).setTo(List(linked)))
     assertEquals(
       r.localized.goals.find(_.uid == linked.uid).flatMap(_.links).map(_.map(l => (l.ref, l.refUid))),
       Some(List(("guterbock1997_hittite", Some(uid("h-guterbock")))))
@@ -354,7 +352,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("old article slugs travel; one that names another article here is left out and said"):
     val ok = com.histmersion.api.exchange.Bundle.ArticleAlias("bronze_collapse_old", uid("w-bac"), At)
     val taken = com.histmersion.api.exchange.Bundle.ArticleAlias("zz_same_text", uid("w-bac"), At)
-    val r = run(foreign.copy(articleAliases = List(ok, taken)))
+    val r = run(foreign.modify(_.articleAliases).setTo(List(ok, taken)))
     assertEquals(r.localized.articleAliases.map(_.alias), List("bronze_collapse_old"))
     assert(r.notes.exists(_.contains("old slug zz_same_text")), r.notes.mkString("\n"))
 
@@ -387,12 +385,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val r = run(
       es,
       i =>
-        i.copy(labels =
-          i.labels.copy(
-            events = Map("zz_ev_taken" -> other),
-            goals = Map("zz_goal_taken" -> other),
-            places = Map("zz_place_taken" -> other),
-            placeAliases = Map("zz_place_old_here" -> other)
+        i.modify(_.labels).setTo(i.labels.modify(
+            _.events).setTo(Map("zz_ev_taken" -> other)).modify(_.goals).setTo(Map("zz_goal_taken" -> other)).modify(_.places).setTo(Map("zz_place_taken" -> other)).modify(_.placeAliases).setTo(Map("zz_place_old_here" -> other)
           )
         )
     )
@@ -407,8 +401,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     ).foreach(n => assert(r.notes.exists(_.contains(n)), s"$n: ${r.notes.mkString("\n")}"))
     // an old label that already names THIS record here is kept (a re-import of the same rename)
     val again = run(
-      es.copy(eventAliases = List(com.histmersion.api.exchange.Bundle.EventAlias("zz_ev_mine", ev.uid, At))),
-      i => i.copy(labels = i.labels.copy(eventAliases = Map("zz_ev_mine" -> ev.uid)))
+      es.modify(_.eventAliases).setTo(List(com.histmersion.api.exchange.Bundle.EventAlias("zz_ev_mine", ev.uid, At))),
+      i => i.modify(_.labels).setTo(i.labels.modify(_.eventAliases).setTo(Map("zz_ev_mine" -> ev.uid)))
     )
     assertEquals(again.localized.eventAliases.map(_.alias), List("zz_ev_mine"))
 
@@ -420,7 +414,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
         places = List(theirs),
         placeAliases = List(com.histmersion.api.exchange.Bundle.PlaceAlias("work_troy_old", theirs.uid, At))
       ),
-      i => i.copy(local = i.local.copy(places = List(ours)), placeMatches = Map(theirs.uid -> "pleiades_550596"))
+      i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours))).modify(_.placeMatches).setTo(Map(theirs.uid -> "pleiades_550596"))
     )
     assertEquals(r.localized.placeAliases.map(a => (a.alias, a.placeUid)), List(("work_troy_old", ours.uid)))
 

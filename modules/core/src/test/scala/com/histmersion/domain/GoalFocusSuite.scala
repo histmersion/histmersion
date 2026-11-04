@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -68,7 +70,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("a1x", Some("a1"), created = "2026-10-03T00:00:00Z"),
       g("b2", Some("root-b"), created = "2026-10-04T00:00:00Z")
     )
-      .map(f => if f.slug.startsWith("root") then f.copy(work = Nil, status = Goal.Status.Compiled) else f)
+      .map(f => if f.slug.startsWith("root") then f.modify(_.work).setTo(Nil).modify(_.status).setTo(Goal.Status.Compiled) else f)
     // a1 has an unfinished sub-goal: it is not a candidate (its own articles wait); a1x is the oldest leaf
     val p = select(goals, s3)
     assertEquals(active(p), List("b1", "b2", "a1x"), p.active.map(_.why))
@@ -84,7 +86,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("x2", Some("x"), created = "2026-10-21T00:00:00Z"),
       g("y1", Some("y"), created = "2026-01-01T00:00:00Z")
     )
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("x1", "x2"))
     assert(p.active(1).why.contains("a sibling of x1 (active)"), p.active(1).why)
 
@@ -94,7 +96,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("k", Some("p"), created = "2026-10-22T00:00:00Z"),
       g("other", created = "2026-01-01T00:00:00Z")
     )
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("p", "k"))
     assert(p.active(1).why.contains("a sub-goal of p (active)"), p.active(1).why)
 
@@ -106,7 +108,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("b"),
       g("a")
     )
-    val p = select(goals, s3.copy(max = 5))
+    val p = select(goals, s3.modify(_.max).setTo(5))
     assertEquals(active(p), List("prio", "more", "old", "a", "b"))
     assert(p.active.head.why.contains("priority 5"), p.active.head.why)
 
@@ -117,21 +119,21 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("pins are always active, even past the cap; then the cap is full"):
     val goals = List(g("review", articles = 1, unreviewed = 1), g("p1", pinned = true), g("p2", pinned = true))
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("p1", "p2"))
     assert(p.active.forall(_.pinned) && p.active.head.why.startsWith("pinned by a person"), p.active)
     assertEquals(p.queue.map(_.slug), List("review"))
-    assertEquals(active(select(goals, s3.copy(max = 1))), List("p1", "p2"), "pins past the cap")
+    assertEquals(active(select(goals, s3.modify(_.max).setTo(1))), List("p1", "p2"), "pins past the cap")
 
   test("no cap (max 0): every candidate is active"):
-    assertEquals(select((1 to 12).toList.map(i => g(s"g$i")), s3.copy(max = 0)).active.size, 12)
+    assertEquals(select((1 to 12).toList.map(i => g(s"g$i")), s3.modify(_.max).setTo(0)).active.size, 12)
 
   // ── the active set holds; what frees a slot ────────────────────────────────────────────────────
 
   test("an active goal keeps its slot while it has work, even when a better candidate appears"):
     val goals =
       List(g("kept1", sources = 5, active = true), g("kept2", sources = 4, active = true), g("better", sources = 9))
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("kept1", "kept2"))
     assert(p.active.head.why.startsWith("active, kept until it is reviewed"), p.active.head.why)
     assertEquals(p.joined, Nil)
@@ -142,13 +144,13 @@ class GoalFocusSuite extends munit.FunSuite:
       g("pin", sources = 0, pinned = true, active = true),
       g("toreview", articles = 2, unreviewed = 2)
     )
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p).toSet, Set("pin", "toreview"))
     assertEquals(p.left, List("gathering" -> "gave its slot to toreview, which has articles to review"))
     assert(p.active.find(_.slug == "toreview").get.why.contains("took the slot of gathering"))
     // a ready goal does not preempt
     assertEquals(
-      active(select(List(g("gathering", active = true), g("ready", sources = 5)), s3.copy(max = 1))),
+      active(select(List(g("gathering", active = true), g("ready", sources = 5)), s3.modify(_.max).setTo(1))),
       List("gathering")
     )
 
@@ -158,7 +160,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("a", active = true),
       g("next", sources = 4)
     )
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("a", "next"))
     assertEquals(p.left, List("done" -> "it is reviewed"))
     assertEquals(p.joined, List("next"))
@@ -169,7 +171,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("idle", active = true, work = Nil),
       g("next")
     )
-    val p = select(goals, s3.copy(max = 1))
+    val p = select(goals, s3.modify(_.max).setTo(1))
     assertEquals(active(p), List("next"))
     assertEquals(p.left.toMap.get("stuck"), Some("stuck: its last item stopped — stopped: too many runs (task #12)"))
     assert(p.left.toMap.apply("idle").startsWith("idle"), p.left)
@@ -180,15 +182,15 @@ class GoalFocusSuite extends munit.FunSuite:
     val auto = Work(6, ArticleCompile, "active", "y", approval = Some(42))
     val goals =
       List(g("byperson", active = true, work = List(person)), g("byauto", active = true, work = List(auto)), g("next"))
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("byauto", "next"))
     assertEquals(p.left, List("byperson" -> "waits for a person: approval #41"))
     // a proposal behind a plan that waits for a person waits for that person too; behind a pending plan it is fine
-    val behind = select(List(g("p", work = List(person.copy(target = "p"), w(9, ProposeArticles)))), s3)
+    val behind = select(List(g("p", work = List(person.modify(_.target).setTo("p"), w(9, ProposeArticles)))), s3)
     assertEquals(behind.waiting, List(("p", Code.Person, "waits for a person: approval #41")))
     assertEquals(active(select(List(g("p", work = List(w(8, PlanGoalItem), w(9, ProposeArticles)))), s3)), List("p"))
     // a person's hold, or a paused manager
-    val held = select(List(g("h", work = List(w(1).copy(personHeld = true)))), s3)
+    val held = select(List(g("h", work = List(w(1).modify(_.personHeld).setTo(true)))), s3)
     assertEquals(held.waiting.map(_._2), List(Code.Held))
 
   test("a parent with unfinished sub-goals takes a slot only for its plan"):
@@ -204,7 +206,7 @@ class GoalFocusSuite extends munit.FunSuite:
     // its sub-goals finished: it compiles its own synthesis
     val synth = select(
       g("p", sources = 4, work = List(w(2, ProposeArticles))) :: kids.map(
-        _.copy(status = Goal.Status.Reviewed, work = Nil)
+        _.modify(_.status).setTo(Goal.Status.Reviewed).modify(_.work).setTo(Nil)
       ),
       s3
     )
@@ -212,11 +214,11 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("enough goal plans already wait for a person: a goal whose next step is one more plan waits"):
     val plan = g("needsplan", work = List(w(1, PlanGoalItem)))
-    val s = s3.copy(plansByPerson = true, openPersonPlans = 3)
+    val s = s3.modify(_.plansByPerson).setTo(true).modify(_.openPersonPlans).setTo(3)
     assertEquals(select(List(plan), s).waiting.map(_._2), List(Code.Plans))
-    assertEquals(active(select(List(plan), s.copy(openPersonPlans = 2))), List("needsplan"))
-    assertEquals(active(select(List(plan.copy(active = true)), s)), List("needsplan"), "an active one keeps its slot")
-    assertEquals(active(select(List(plan), s.copy(plansByPerson = false))), List("needsplan"), "plans decided by code")
+    assertEquals(active(select(List(plan), s.modify(_.openPersonPlans).setTo(2))), List("needsplan"))
+    assertEquals(active(select(List(plan.modify(_.active).setTo(true)), s)), List("needsplan"), "an active one keeps its slot")
+    assertEquals(active(select(List(plan), s.modify(_.plansByPerson).setTo(false))), List("needsplan"), "plans decided by code")
 
   test("the cap lowered: the worst active goals go back to the queue first"):
     val goals = List(
@@ -224,7 +226,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g("c", compile = 1, active = true),
       g("x", sources = 1, active = true)
     )
-    val p = select(goals, s3.copy(max = 2))
+    val p = select(goals, s3.modify(_.max).setTo(2))
     assertEquals(active(p), List("r", "c"))
     assertEquals(p.left.map(_._1), List("x"))
     assert(p.left.head._2.contains("cap of 2"), p.left)
@@ -394,7 +396,7 @@ class GoalFocusSuite extends munit.FunSuite:
     assert(md.contains("- 2 goals person: d, e — e.g. waits for a person: approval #1"), md)
     assert(
       AutopilotMarkdown
-        .focus(f.copy(on = false, maxFrom = "person", note = Some("the autopilot is off")))
+        .focus(f.modify(_.on).setTo(false).modify(_.maxFrom).setTo("person").modify(_.note).setTo(Some("the autopilot is off")))
         .contains("not in force (set by a person)")
     )
 
@@ -407,4 +409,4 @@ class GoalFocusSuite extends munit.FunSuite:
       AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"),
       AutopilotMarkdown.status(st)
     )
-    assert(!AutopilotMarkdown.status(st.copy(goalPlansWait = None)).contains("goal plans wait"))
+    assert(!AutopilotMarkdown.status(st.modify(_.goalPlansWait).setTo(None)).contains("goal plans wait"))

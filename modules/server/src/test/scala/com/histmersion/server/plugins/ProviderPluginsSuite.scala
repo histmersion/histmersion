@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -419,7 +421,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     assertEquals(r.rights.map(_.licence.family), Right(com.histmersion.domain.Licence.Family.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
-    assertEquals(PluginMedia.record(it.copy(rights = Left("not open access"))).rights, Left("not open access"))
+    assertEquals(PluginMedia.record(it.modify(_.rights).setTo(Left("not open access"))).rights, Left("not open access"))
 
   test("a plugin's failure is a value, never an exception through the import"):
     assertEquals(
@@ -449,22 +451,22 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     assertEquals(r.timeSpan, com.histmersion.api.TimeSpan(Some(-1200L), None, None, Some(-1200L)))
     assertEquals(
-      PluginEvents.record("x", ok.copy(wikidata = Some(WikidataId("not-an-item")))).map(_.warnings),
+      PluginEvents.record("x", ok.modify(_.wikidata).setTo(Some(WikidataId("not-an-item")))).map(_.warnings),
       Right(List("q-1: catalogue 'x': Wikidata id 'not-an-item' is not a Wikidata item (Q and its number), left out"))
     )
-    assertEquals(PluginEvents.record("x", ok.copy(id = " ")), Left("a record without an id"))
-    assertEquals(PluginEvents.record("x", ok.copy(label = "")), Left("q-1: no label"))
-    assert(PluginEvents.record("x", ok.copy(historicity = "certain")).left.exists(_.contains("historicity 'certain'")))
+    assertEquals(PluginEvents.record("x", ok.modify(_.id).setTo(" ")), Left("a record without an id"))
+    assertEquals(PluginEvents.record("x", ok.modify(_.label).setTo("")), Left("q-1: no label"))
+    assert(PluginEvents.record("x", ok.modify(_.historicity).setTo("certain")).left.exists(_.contains("historicity 'certain'")))
     assertEquals(
-      PluginEvents.record("x", ok.copy(notBefore = Some(Year(-1000)), notAfter = Some(Year(-1200)))),
+      PluginEvents.record("x", ok.modify(_.notBefore).setTo(Some(Year(-1000))).modify(_.notAfter).setTo(Some(Year(-1200)))),
       Left("q-1: its dating runs backwards")
     )
     assertEquals(
-      PluginEvents.record("x", ok.copy(lat = Some(Latitude(95.0)))).map(c => (c.record.lat, c.warnings.head)),
+      PluginEvents.record("x", ok.modify(_.lat).setTo(Some(Latitude(95.0)))).map(c => (c.record.lat, c.warnings.head)),
       Right((None, "q-1: catalogue 'x': latitude 95.0 is not between -90 and 90, left out"))
     )
     assertEquals(
-      PluginEvents.record("x", ok.copy(lon = None)).map(c => (c.record.lat, c.record.lon, c.warnings)),
+      PluginEvents.record("x", ok.modify(_.lon).setTo(None)).map(c => (c.record.lat, c.record.lon, c.warnings)),
       Right((None, None, List("q-1: catalogue 'x': a position needs both latitude and longitude, left out")))
     )
 
@@ -496,19 +498,19 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(d.timeSpan, TimeSpan(Some(-1050L), None, None, Some(-950L)))
     assertEquals((d.central, d.plusMinus), (Some(-1000L), Some(50L)))
     // a span the record gives is the record's; only the limits touch it
-    val spanned = base.copy(timeSpan = TimeSpan(Some(-1200L), None, None, Some(-1100L)))
+    val spanned = base.modify(_.timeSpan).setTo(TimeSpan(Some(-1200L), None, None, Some(-1100L)))
     assertEquals(PluginEvents.derive(spanned, now).timeSpan, spanned.timeSpan)
     // the present and the catalogue's floor hold every point, the central year stays as stated
-    val future = base.copy(central = Some(2020L), plusMinus = Some(10L))
+    val future = base.modify(_.central).setTo((Some(2020L): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10L): _root_.scala.Option[_root_.scala.Long]))
     assertEquals(PluginEvents.derive(future, now).timeSpan, TimeSpan(Some(2010L), None, None, Some(2026L)))
     assertEquals(PluginEvents.derive(future, now).central, Some(2020L))
-    val early = spanned.copy(timeSpan = TimeSpan(Some(-3500L), Some(-3100L), Some(-2950L), Some(-2900L)))
+    val early = spanned.modify(_.timeSpan).setTo(TimeSpan(Some(-3500L), Some(-3100L), Some(-2950L), Some(-2900L)))
     assertEquals(
       PluginEvents.derive(early, CatalogDating.Limits(2026, Some(-3000L))).timeSpan,
       TimeSpan(Some(-3000L), Some(-3000L), Some(-2950L), Some(-2900L))
     )
     // undated and no stated year: nothing invented
-    assertEquals(PluginEvents.derive(base.copy(central = None), now).timeSpan, TimeSpan())
+    assertEquals(PluginEvents.derive(base.modify(_.central).setTo((None: _root_.scala.Option[_root_.scala.Long])), now).timeSpan, TimeSpan())
     // derived once, derived again: the same record (what makes rederive a no-op after an import)
     List(base, spanned, future, early).foreach { r =>
       val l = CatalogDating.Limits(2026, Some(-3000L))

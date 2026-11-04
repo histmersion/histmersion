@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.assets.AssetFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -30,7 +32,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -305,7 +307,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
             c,
             grid,
             EventFixtures.listWhere(f, PlaceScope.empty, None, None, None, None),
-            EventFixtures.listWhere(f.copy(period = None), PlaceScope.empty, None, None, None, None)
+            EventFixtures.listWhere(f.modify(_.period).setTo(None), PlaceScope.empty, None, None, None, None)
           )
       )
         .filter(_.key.startsWith("zztile"))

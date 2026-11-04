@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.api.instance.UiNotices.Counters
@@ -51,7 +53,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("counts, news, marking read without the key, and the mark only moving forward"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "s3cret"))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("s3cret"))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}/api"

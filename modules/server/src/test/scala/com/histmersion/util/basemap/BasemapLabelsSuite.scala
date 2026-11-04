@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -102,9 +104,9 @@ class BasemapLabelsSuite extends munit.FunSuite:
     val b = BBox.parse("20,35,30,42").get
     val pt = BasemapLabels.Label("peak", List("name" -> "A"), 25, 38, 6)
     assert(BasemapLabels.within(pt, b))
-    assert(BasemapLabels.within(pt.copy(lon = 30.5), b), "within the margin")
-    assert(!BasemapLabels.within(pt.copy(lon = 40), b))
-    val river = pt.copy(kind = "river", lon = 50, line = Vector(Vector((50.0, 50.0), (29.0, 41.0))))
+    assert(BasemapLabels.within(pt.modify(_.lon).setTo((30.5: _root_.scala.Double)), b), "within the margin")
+    assert(!BasemapLabels.within(pt.modify(_.lon).setTo((40: _root_.scala.Double)), b))
+    val river = pt.modify(_.kind).setTo("river").modify(_.lon).setTo((50: _root_.scala.Double)).modify(_.line).setTo(Vector(Vector((50.0, 50.0), (29.0, 41.0))))
     assert(BasemapLabels.within(river, b))
 
   test("rivers: simplified to about a pixel, clipped to each tile they cross, relative to its corner"):
@@ -147,7 +149,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
     )
     assert(
       !BasemapLabels.inTile(olympus, 5, 8) && BasemapLabels.inTile(olympus, 6, 8) && BasemapLabels.inTile(
-        olympus.copy(minZoom = 12),
+        olympus.modify(_.minZoom).setTo(12),
         8,
         8
       )

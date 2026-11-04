@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.catalogue.{EventPatch, Period}
@@ -71,7 +73,7 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(out.notes, existing.notes)
     assertEquals(out.summary, existing.summary)
     assertEquals(out.edges, existing.edges)
-    assertEquals(out.copy(tags = existing.tags), existing) // nothing else moved at all
+    assertEquals(out.modify(_.tags).setTo(existing.tags), existing) // nothing else moved at all
 
   test("an empty patch is the identity"):
     assertEquals(Source.Write.applyPatch(existing, Source.Patch()), Right(existing))
@@ -296,7 +298,7 @@ class WriteSuite extends munit.FunSuite:
 
   test("put: SourcePut.of round-trips a source through applyPut"):
     val out = Source.Write.applyPut(ck, Source.Put.of(existing)).toOption.get
-    assertEquals(out, existing.copy(updatedAt = None))
+    assertEquals(out, existing.modify(_.updatedAt).setTo(None))
 
   // ── period bounds must stay inside the representable window ──────────────────────────────────
 
@@ -368,7 +370,7 @@ class WriteSuite extends munit.FunSuite:
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):
     import io.circe.parser.decode
-    val ex = existing.copy(calibreId = Some("1805"))
+    val ex = existing.modify(_.calibreId).setTo(Some("1805"))
     val p = decode[Source.Patch](
       """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}"""
     ).toOption.get

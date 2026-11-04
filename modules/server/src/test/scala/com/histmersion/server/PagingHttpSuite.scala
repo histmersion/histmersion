@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -37,7 +39,7 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")

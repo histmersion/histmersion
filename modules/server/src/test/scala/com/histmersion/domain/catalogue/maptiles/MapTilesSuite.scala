@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.{Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
 
@@ -21,17 +23,17 @@ class MapTilesSuite extends munit.FunSuite:
     assertNotEquals(MapTiles.key(TileLayer.Sites, c, q(), v.updated("places", 4L)), k)
     assertEquals(MapTiles.key(TileLayer.Sites, c, q(), v.updated("media", 9L)), k)
     // another layer's options and a filter's paging do not split a tile
-    assertEquals(MapTiles.key(TileLayer.Sites, c, q().copy(provider = Some("met"), tier = Some("attested")), v), k)
+    assertEquals(MapTiles.key(TileLayer.Sites, c, q().modify(_.provider).setTo(Some("met")).modify(_.tier).setTo(Some("attested")), v), k)
     val ev = q(layer = "events")
     assertEquals(
-      MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(limit = 50, offset = 10)), v),
+      MapTiles.key(TileLayer.Events, c, ev.modify(_.filter).setTo(ev.filter.modify(_.limit).setTo(50).modify(_.offset).setTo(10)), v),
       MapTiles.key(TileLayer.Events, c, ev, v)
     )
     assertNotEquals(
-      MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(tags = List("x"))), v),
+      MapTiles.key(TileLayer.Events, c, ev.modify(_.filter).setTo(ev.filter.modify(_.tags).setTo(List("x"))), v),
       MapTiles.key(TileLayer.Events, c, ev, v)
     )
-    assertNotEquals(MapTiles.key(TileLayer.Sites, c, q().copy(siteType = Some("burial")), v), k)
+    assertNotEquals(MapTiles.key(TileLayer.Sites, c, q().modify(_.siteType).setTo(Some("burial")), v), k)
 
   test("an ETag is the key's, quoted; If-None-Match names it, weak or in a list"):
     val t = MapTiles.etag("a")

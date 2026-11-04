@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.AcquireRecheck.*
 
 import java.time.Instant
@@ -102,12 +104,12 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assertEquals(allowance(settings, 0, Some(Shared(left = 2, cap = 60, backlogPending = 5, fetchedToday = 0))), 0)
     assertEquals(
-      allowance(settings.copy(sharePercent = 0), 0, Some(Shared(60, 60, 0, 0))),
+      allowance(settings.modify(_.sharePercent).setTo(0), 0, Some(Shared(60, 60, 0, 0))),
       0,
       "no share: nothing under a shared cap"
     )
     assertEquals(
-      allowance(settings.copy(sharePercent = 100, perPass = 100), 0, Some(Shared(60, 60, 0, 0))),
+      allowance(settings.modify(_.sharePercent).setTo(100).modify(_.perPass).setTo(100), 0, Some(Shared(60, 60, 0, 0))),
       40,
       "the day's cap still holds"
     )

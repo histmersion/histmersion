@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.Json
 import io.circe.syntax.*
 
@@ -108,7 +110,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     assertEquals(MergeIssue.Detail.clip(Some("abcdef"), 4), Some("abc…"))
 
   test("a source pair, field by field: the OCR body by its hash prefix"):
-    val fs = MergeIssue.Detail.sourceFields(source(List("A")), source(List("A", "B")).copy(bodySha256 = None))
+    val fs = MergeIssue.Detail.sourceFields(source(List("A")), source(List("A", "B")).modify(_.bodySha256).setTo(None))
     assertEquals(
       fs.map(_.field),
       List(
@@ -145,7 +147,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(MergeIssue.Detail.eventSpan(event(U1, None).copy(notBefore = None, notAfter = None)), None)
+    assertEquals(MergeIssue.Detail.eventSpan(event(U1, None).modify(_.notBefore).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.notAfter).setTo((None: _root_.scala.Option[_root_.scala.Long]))), None)
 
   test("a place pair: its span and names, and both periods as spans"):
     val d = MergeIssue.Detail.placeDetail(

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.augustnagro.magnum.*
@@ -46,19 +48,15 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      server = b.server.copy(host = "127.0.0.1"),
-      converter = b.converter.copy(spoolDir = Files.createTempDirectory("histmersion-autoenrich").toString),
-      agents = b.agents.copy(
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-autoenrich").toString)).modify(_.agents).setTo(b.agents.copy(
         enabled = true,
         autoEnrich = true,
         prices = "zzautoenrich=0/0",
-        roles = b.agents.roles.copy(extractor = "local:zzautoenrich"),
+        roles = b.agents.roles.modify(_.extractor).setTo("local:zzautoenrich"),
         // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
-        managers = b.agents.managers.copy(enabled = false)
-      ),
-      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
+        managers = b.agents.managers.modify(_.enabled).setTo(false)
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -124,7 +122,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test(
     "managers on (phase 2): the ingest hands the source to the enrich manager — an item, no run — and says it is paused"
   ):
-    val on = baseCfg.copy(agents = baseCfg.agents.copy(managers = baseCfg.agents.managers.copy(enabled = true)))
+    val on = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(true)))
     withHandlers(on) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil, "the manager starts it, not the ingest")
@@ -148,13 +146,13 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     }
 
   test("switch off, or agents off: nothing queued and nothing said"):
-    val off = baseCfg.copy(agents = baseCfg.agents.copy(autoEnrich = false))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(false))
     withHandlers(off) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
       assert(!job.progress.exists(_.contains("enrichment")), job.progress)
     }
-    val disabled = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false))
+    val disabled = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
     withHandlers(disabled) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
@@ -181,7 +179,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     }
 
   test("a chain with no model that can run is a note on the job — the ingest is done all the same"):
-    val unpriced = baseCfg.copy(agents = baseCfg.agents.copy(prices = ""))
+    val unpriced = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(""))
     withHandlers(unpriced) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)

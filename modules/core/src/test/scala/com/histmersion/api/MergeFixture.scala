@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -135,10 +137,10 @@ object MergeFixture:
   // ── the shared history: a source and a goal both sides got from an earlier import ──
   val sharedOriginal: Bundle.Source =
     src("shared", "zzshared2001_alpha", "Alpha", List("Doe, John"), Some(2001), summary = Some("as imported"))
-  val sharedThere: Bundle.Source = sharedOriginal.copy(summary = Some("edited at work"))
-  val sharedHere: Bundle.Source = sharedOriginal.copy(summary = Some("edited at home"))
+  val sharedThere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some("edited at work"))
+  val sharedHere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some("edited at home"))
   val goalOriginal: Bundle.Goal = goal("goal-shared", "zz_shared_goal", "Shared goal")
-  val goalHere: Bundle.Goal = goalOriginal.copy(notes = Some("edited at home"))
+  val goalHere: Bundle.Goal = goalOriginal.modify(_.notes).setTo(Some("edited at home"))
 
   /** The bundle from work. */
   val foreign: BundleEntities = BundleEntities(

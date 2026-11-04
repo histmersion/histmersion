@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.worklists.QueueRows
 
 import com.histmersion.util.database.Transactor
@@ -59,7 +61,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
-  private lazy val admin = testPool(cfg.db.copy(url = testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
   private val tmp = Files.createTempDirectory("histmersion-bundle-suite")
 
   // ── fresh databases ────────────────────────────────────────────────────────────────────────
@@ -83,7 +85,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
-  private lazy val scratch = ScratchDatabases("histmersion_bundle", cfg.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_bundle", cfg.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -197,7 +199,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(G1, A1, "superseded_by"))))
     val _ = SourceFixtures.rename(ds, B0, B1)
     // a finding dropped by a later write leaves a tombstone
-    SourceFixtures.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
+    SourceFixtures.load(ds, A1).foreach(s => put(ds, s.modify(_.findings).setTo(s.findings.filterNot(_.id == s"$A1#3"))))
     val _ =
       com.histmersion.domain.library.acquisition.AcquisitionFixtures.putAssessment(
         ds,
@@ -534,7 +536,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     }
     val (m1, m2) = (manifestOf(first), manifestOf(second))
-    assertEquals(m2.copy(instance = m1.instance, bundleId = m1.bundleId), m1)
+    assertEquals(m2.modify(_.instance).setTo(m1.instance).modify(_.bundleId).setTo(m1.bundleId), m1)
     assertNotEquals(m2.instance.id, m1.instance.id)
     // what is derived, re-derived; what is local, local
     assert(count(b, s"SELECT count(*)::int FROM source_chunks WHERE citekey = '$A1'") > 0)
@@ -576,7 +578,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val out = java.io.ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
     val _ =
-      w.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(m.copy(files = m.files.filterNot(f => gone(f.path)))))
+      w.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(m.modify(_.files).setTo(m.files.filterNot(f => gone(f.path)))))
     entries(bundle).tail.filterNot(e => gone(e._1)).foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
     w.finish()
     out.toByteArray

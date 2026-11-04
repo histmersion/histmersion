@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.QueryAccess
 
 import com.histmersion.config.{DbConfig, QueryConfig}
@@ -59,7 +61,7 @@ abstract class DbSuite extends munit.FunSuite:
       exec(s"CREATE DATABASE $t")
       made += t
       // its own pool, closed before it is copied: a template must have no session
-      val p = Db.pool(cfg.copy(url = urlOf(t)))
+      val p = Db.pool(cfg.modify(_.url).setTo(urlOf(t)))
       try Migrate.run(p)
       finally p.close()
       t
@@ -70,7 +72,7 @@ abstract class DbSuite extends munit.FunSuite:
       exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
       copyOf(template, name, attempts = 50)
       made += name
-      val ds = testPool(cfg.copy(url = urlOf(name)))
+      val ds = testPool(cfg.modify(_.url).setTo(urlOf(name)))
       renew(ds)
       ds
 

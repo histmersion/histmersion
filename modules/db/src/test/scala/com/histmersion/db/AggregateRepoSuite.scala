@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -19,7 +21,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   /** A source dated −1300…−1200 with one Anatolian finding at −1250 (the §1.7 acceptance shape). */
@@ -146,7 +148,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceFixtures.upsert(ds, _, 4000))
 
   /** The window to bucket travels in the filter's `period` (as the handler sets it). */
-  private def win(from: Long, to: Long, f: Filter = Filter()): Filter = f.copy(period = Some(Period(from, to)))
+  private def win(from: Long, to: Long, f: Filter = Filter()): Filter = f.modify(_.period).setTo(Some(Period(from, to)))
 
   test("unit=sources: one row per matching source, undated sources dropped from the histogram"):
     seed()

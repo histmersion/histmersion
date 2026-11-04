@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.*
@@ -29,8 +31,8 @@ class GoalsViewSuite extends munit.FunSuite:
 
   test("the open plan of a goal"):
     val open = ApprovalInfo(1, Some("r"), "goal-plan", "", subject = Some("a"))
-    val done = open.copy(id = 2, state = "approved")
-    val other = open.copy(id = 3, subject = Some("b"))
+    val done = open.modify(_.id).setTo((2: _root_.scala.Long)).modify(_.state).setTo("approved")
+    val other = open.modify(_.id).setTo((3: _root_.scala.Long)).modify(_.subject).setTo(Some("b"))
     val edge = ApprovalInfo(4, None, "edge", "a2020_b")
     assertEquals(GoalsView.pendingPlan(List(edge, done, other, open), "a").map(_.id), Some(1L))
     assertEquals(GoalsView.pendingPlan(List(done, edge), "a"), None)

@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.{LibraryState, LibraryStoreSuite}
@@ -71,10 +73,10 @@ class SourcesControllersSuite extends munit.FunSuite:
     val c = controllers()
     assertEquals(c.put("Not A Key", put).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(
-      c.put("zqa1990_walls", put.copy(notes = Some("<div>")), strict = true).left.map(_.message),
+      c.put("zqa1990_walls", put.modify(_.notes).setTo(Some("<div>")), strict = true).left.map(_.message),
       Left("refused (strict)")
     )
-    val written = c.put("zqa1990_walls", put.copy(notes = Some("<div>"))).toOption.get
+    val written = c.put("zqa1990_walls", put.modify(_.notes).setTo(Some("<div>"))).toOption.get
     assertEquals(written.formatting.size, 1)
 
   test("an old citekey is followed by every read and write; a section that is not one, passages of no source"):
@@ -93,7 +95,7 @@ class SourcesControllersSuite extends munit.FunSuite:
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):
     val c = controllers()
-    val _ = c.put("zqa1990_walls", put.copy(notes = Some("two  spaces")))
+    val _ = c.put("zqa1990_walls", put.modify(_.notes).setTo(Some("two  spaces")))
     assertEquals(c.fix("zqa1990_walls").map(_.fixed), Right(List("notes: double space")))
     assertEquals(c.get("zqa1990_walls").map(_.source.notes), Right(Some("two spaces")))
     assertEquals(

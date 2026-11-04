@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.SearchedCollection
 import com.histmersion.domain.media.imports.MediaStore
 import com.histmersion.domain.media.imports.CollectionImport
@@ -107,7 +109,7 @@ class CollectionsSuite extends munit.FunSuite:
       store: CollStore = CollStore(facts, named),
       conv: ThumbConverter = ThumbConverter()
   ): MediaImportReport =
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.copy(requestIntervalMs = col.conf.requestIntervalMs))
+    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(col.conf.requestIntervalMs))
     CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = false, store)
 
   // ── the Met ──────────────────────────────────────────────────────────────────────────────────
@@ -199,7 +201,7 @@ class CollectionsSuite extends munit.FunSuite:
   test("a place whose search fails is not recorded as asked (the next run asks again)"):
     val store = CollStore(facts, named)
     val http = FakeMediaHttp(_ => Right(HttpAnswer(500, Map.empty, Array.emptyByteArray)))
-    val c = cfg.copy(maxRetries = 0)
+    val c = cfg.modify(_.maxRetries).setTo(0)
     val (polite, _) = FakeMediaHttp.polite(http, c)
     val r = CollectionImport(FakeMediaHttp.builtin("met"), polite, c, ThumbConverter()).run(
       List(target(mycenae)),

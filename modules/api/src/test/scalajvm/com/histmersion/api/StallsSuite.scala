@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Stalls.*
 import com.histmersion.api.automation.StallsMarkdown
 
@@ -19,40 +21,40 @@ class StallsSuite extends munit.FunSuite:
   test("the first reason that holds is named, with its action"):
     def code(x: Facts) = classify(x)._1
     val base = f()
-    assertEquals(code(base.copy(draining = true, approvals = List(1L -> "goal-plan"))), Code.Drain)
+    assertEquals(code(base.modify(_.draining).setTo(true).modify(_.approvals).setTo(List(1L -> "goal-plan"))), Code.Drain)
     val (c, why, action) =
-      classify(base.copy(approvals = List(7L -> "goal-plan", 3L -> "goal-plan", 9L -> "article-publish")))
+      classify(base.modify(_.approvals).setTo(List(7L -> "goal-plan", 3L -> "goal-plan", 9L -> "article-publish")))
     assertEquals(c, Code.Person)
     assert(why.contains("3 open approvals (goal-plan 2, article-publish 1; oldest #3)"), why)
     assert(action.contains("decide-all approve --subject g"), action)
-    assertEquals(code(base.copy(personHeld = 2)), Code.Held)
-    assertEquals(code(base.copy(paused = List("seed:g"))), Code.Paused)
+    assertEquals(code(base.modify(_.personHeld).setTo(2)), Code.Held)
+    assertEquals(code(base.modify(_.paused).setTo(List("seed:g"))), Code.Paused)
     assertEquals(
-      code(base.copy(waits = List(SchedWait("blocked", "budget: today's agent spend reached …")))),
+      code(base.modify(_.waits).setTo(List(SchedWait("blocked", "budget: today's agent spend reached …")))),
       Code.Budget
     )
     assertEquals(
-      code(base.copy(waits = List(SchedWait("blocked", "starved: reviewer chain below its plan floor")))),
+      code(base.modify(_.waits).setTo(List(SchedWait("blocked", "starved: reviewer chain below its plan floor")))),
       Code.Quota
     )
-    assertEquals(code(base.copy(waits = List(SchedWait("pool", "plan pool chatgpt-plan …")))), Code.Quota)
-    val q = classify(base.copy(waits = List(SchedWait("capacity", "no place free", 12))))
+    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait("pool", "plan pool chatgpt-plan …")))), Code.Quota)
+    val q = classify(base.modify(_.waits).setTo(List(SchedWait("capacity", "no place free", 12))))
     assert(q._1 == Code.Queue && q._2.contains("#12") && q._3.contains("focus priority g"), q)
-    assertEquals(code(base.copy(waits = List(SchedWait("blocked", "its goal's plan comes first")))), Code.Blocked)
-    assertEquals(code(base.copy(running = 1)), Code.Running)
-    assertEquals(code(base.copy(lastStop = Some("stopped: 3 failed runs"))), Code.Failed)
-    assertEquals(code(base.copy(noCandidates = true)), Code.NoCandidates)
+    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait("blocked", "its goal's plan comes first")))), Code.Blocked)
+    assertEquals(code(base.modify(_.running).setTo(1)), Code.Running)
+    assertEquals(code(base.modify(_.lastStop).setTo(Some("stopped: 3 failed runs"))), Code.Failed)
+    assertEquals(code(base.modify(_.noCandidates).setTo(true)), Code.NoCandidates)
     assertEquals(
-      code(base.copy(noCandidates = true, sources = 2)),
+      code(base.modify(_.noCandidates).setTo(true).modify(_.sources).setTo(2)),
       Code.Idle,
       "it has sources: not a candidates problem"
     )
     assert(classify(base)._2.startsWith("nothing open"))
-    assert(classify(base.copy(open = 2))._2.contains("none due yet"))
+    assert(classify(base.modify(_.open).setTo(2))._2.contains("none due yet"))
 
   test("the report: only the stalled, the longest idle first (never first of all), counts per reason"):
     val r = report(
-      List(f("a", Some(4)), f("b", None), f("c", Some(9)), f("d", Some(1)), f("e", Some(4)).copy(running = 1)),
+      List(f("a", Some(4)), f("b", None), f("c", Some(9)), f("d", Some(1)), f("e", Some(4)).modify(_.running).setTo(1)),
       3,
       "now"
     )

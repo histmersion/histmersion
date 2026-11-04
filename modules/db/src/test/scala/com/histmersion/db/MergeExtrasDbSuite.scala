@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -50,7 +52,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
-  private lazy val admin = testPool(cfg.db.copy(url = testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
   private val tmp = Files.createTempDirectory("histmersion-merge-extras")
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -66,7 +68,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
-  private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()

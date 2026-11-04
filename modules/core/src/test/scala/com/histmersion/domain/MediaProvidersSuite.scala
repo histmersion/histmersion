@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.catalogue.places.Wikidata
@@ -126,4 +128,4 @@ class MediaProvidersSuite extends munit.FunSuite:
     assert(md.contains("**Not stored**\n- licence cc-by-nc not allowed for wikimedia-commons: 1"), md)
     assert(md.contains("**Failed**\n- x: y"), md)
     assert(!md.contains("**Stored:**"), "a dry run stores nothing")
-    assert(MediaMarkdown.mediaImportReport(r.copy(dryRun = false, stored = 2)).contains("**Stored:** 2 new"))
+    assert(MediaMarkdown.mediaImportReport(r.modify(_.dryRun).setTo(false).modify(_.stored).setTo(2)).contains("**Stored:** 2 new"))

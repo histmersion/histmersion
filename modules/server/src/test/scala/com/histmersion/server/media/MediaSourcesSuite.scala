@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.media.imports.ImportFixtures
@@ -54,10 +56,8 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      media =
-        base.media.copy(requestIntervalMs = 0, importBatch = 1, covers = base.media.covers.copy(requestIntervalMs = 0))
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(0).modify(_.importBatch).setTo(1).modify(_.covers).setTo(base.media.covers.modify(_.requestIntervalMs).setTo(0))
     )
   private lazy val ds =
     val d = testPool(cfg.db)

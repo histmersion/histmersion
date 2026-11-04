@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
@@ -23,7 +25,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val ck = "zz_write_source"
@@ -78,7 +80,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
 
   test("put is idempotent and replaces everything under the citekey"):
     val _ = fresh()
-    val s2 = seedSource().copy(tags = List("only"), findings = Nil, summary = None)
+    val s2 = seedSource().modify(_.tags).setTo(List("only")).modify(_.findings).setTo(Nil).modify(_.summary).setTo(None)
     val _ = SourceFixtures.put(ds, s2, 4000)
     val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.tags, List("only"))

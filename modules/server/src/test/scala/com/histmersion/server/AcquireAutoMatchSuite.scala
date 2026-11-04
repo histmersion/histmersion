@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.config.*
@@ -57,9 +59,8 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-automatch").toString)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-automatch").toString)
     )
 
   private def clean(): Unit =

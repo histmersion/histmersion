@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.{ConverterClient, ConverterState, HttpConverterClient}
 
 import com.histmersion.config.AppConfig
@@ -18,7 +20,7 @@ class ConverterClientSuite extends munit.FunSuite:
   private def pc(pages: Int, scanned: Int = 0) = Some(ConverterClient.PageCount(pages, scanned))
 
   test("the timeout is the configured one, or pages × seconds-per-page when that is longer"):
-    val c = base.copy(timeoutSeconds = 600, secondsPerPage = 2, secondsPerPageQuality = 8, secondsPerScannedPage = 15)
+    val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
       ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10), quality = false),
       Duration.ofSeconds(600)
@@ -34,7 +36,7 @@ class ConverterClientSuite extends munit.FunSuite:
     assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = true), Duration.ofSeconds(600))
 
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
-    val c = base.copy(timeoutSeconds = 600, secondsPerPage = 2, secondsPerPageQuality = 8, secondsPerScannedPage = 15)
+    val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
       ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(155, scanned = 155), quality = false),
       Duration.ofSeconds(2325)
@@ -73,7 +75,7 @@ class ConverterClientSuite extends munit.FunSuite:
     val file = Files.createTempFile("book", ".pdf")
     try
       HttpConverterClient(
-        ConverterWiring.settings(base.copy(url = url, timeoutSeconds = 1, secondsPerPage = 3)),
+        ConverterWiring.settings(base.modify(_.url).setTo(url).modify(_.timeoutSeconds).setTo(1).modify(_.secondsPerPage).setTo(3)),
         ConverterWiring.http()
       )
         .convert(OfflineConverter.blob(file), "book.pdf", quality = false)

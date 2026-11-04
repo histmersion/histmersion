@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.{MatchCounts, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.DecisionKind
@@ -17,8 +19,7 @@ class PlanRunsSuite extends munit.FunSuite:
 
   final private class Named(name: String, answers: Boolean) extends PlanRun:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-      es.copy(aliases =
-        es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(name, uid(name), "2026-01-01T00:00:00.000000Z")
+      es.modify(_.aliases).setTo(es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(name, uid(name), "2026-01-01T00:00:00.000000Z")
       )
     override def notices: List[String] = List(s"$name notice")
     override def ownerSource(foreign: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
@@ -41,7 +42,7 @@ class PlanRunsSuite extends munit.FunSuite:
       seen += s"$name fold"
       answers && name == "c"
     override def renamed(source: UUID, citekey: String): Unit = seen += s"$name renamed $citekey"
-    override def planned(plan: MergePlan): MergePlan = plan.copy(info = plan.info :+ name)
+    override def planned(plan: MergePlan): MergePlan = plan.modify(_.info).setTo(plan.info :+ name)
 
   private val seen = scala.collection.mutable.ListBuffer.empty[String]
 

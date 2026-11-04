@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.Paging
 import com.histmersion.config.*
@@ -20,7 +22,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
-  private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }
+  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)) }
   private lazy val ds = testPool(cfg.db)
   private val tag = s"zzlh${System.nanoTime().toHexString.takeRight(8)}"
 

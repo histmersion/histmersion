@@ -1,5 +1,7 @@
 package com.histmersion.files
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
@@ -149,13 +151,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
     assertEquals(BundleFormat.decodeLine[Bundle.Event](plain.line, stamped = true).map(_.names), Right(None))
     val gvp = BundleFormat.stamp(
       event(
-        _.copy(
-          catalogue = Some("gvp"),
-          names = Some(List("Thera", "Santorini")),
-          wikidata = Some("Q1"),
-          central = Some(-1560),
-          plusMinus = Some(10),
-          datingMethod = Some("radiocarbon")
+        _.modify(
+          _.catalogue).setTo(Some("gvp")).modify(_.names).setTo(Some(List("Thera", "Santorini"))).modify(_.wikidata).setTo(Some("Q1")).modify(_.central).setTo((Some(-1560): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10): _root_.scala.Option[_root_.scala.Long])).modify(_.datingMethod).setTo(Some("radiocarbon")
         )
       )
     )
@@ -233,7 +230,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     ).foreach(f => assertEquals(BundleFormat.lines(payloads(f)), 1, f))
     val (back, problems) = BundleEntities.decode(payloads)
     assertEquals(problems, Nil)
-    assertEquals(back.copy(events = Nil), es.copy(events = Nil))
+    assertEquals(back.modify(_.events).setTo(Nil), es.modify(_.events).setTo(Nil))
     // the newest of them is the bundle's asOf (the next --since)
     assertEquals(es.asOf, Some("2026-10-06T00:00:00.000000Z"))
     // a bundle written before these files existed: they read as empty

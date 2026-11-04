@@ -1,0 +1,4 @@
+event-id	finding-id	event	reason	evidence
+TX-E0001	TX-0001	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md
+TX-E0002	TX-0002	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md
+TX-E0003	TX-0003	confirmed	Assign persistent ID to previously reviewed boundary; not a newly introduced regression	transaction-migration.md

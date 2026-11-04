@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.domain.catalogue.events.*
@@ -103,11 +105,11 @@ class EventLinksSuite extends munit.FunSuite:
     )
     assertEquals(l.actions.map(_.kind), List("discover", "acquire", "goal"))
     assertEquals(l.actions.head.command, "histmersion discover search \"Eruption of Santorini\" --not-in-db")
-    val withProposed = EventLeads.of(f.copy(proposed = 2)).get
+    val withProposed = EventLeads.of(f.modify(_.proposed).setTo(2)).get
     assert(withProposed.text.contains("2 sources possibly discuss it (unconfirmed)"))
     assertEquals(withProposed.actions.last.command, "histmersion events links gvp_13879")
-    assertEquals(EventLeads.of(f.copy(tier = EventTier.Attested)), None)
-    assertEquals(EventLeads.of(f.copy(attesting = 1)), None)
+    assertEquals(EventLeads.of(f.modify(_.tier).setTo(EventTier.Attested)), None)
+    assertEquals(EventLeads.of(f.modify(_.attesting).setTo(1)), None)
     assertEquals(EventLeads.size(None, Some(7.25)), Some("M 7.3"))
 
   test("an article names an event by any of its names, ignoring case; short names do not count"):

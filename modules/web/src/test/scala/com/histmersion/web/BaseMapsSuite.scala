@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.web.map.*
 import com.histmersion.api.basemap.Basemap
@@ -110,7 +112,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
     // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
     BaseMaps
-      .plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.copy(mapLanguage = "de"), local = false, soft = false)
+      .plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.modify(_.mapLanguage).setTo("de"), local = false, soft = false)
       ._1 match
       case BaseMapSpec.Vector(_, _, "de", _, _, false, _) => ()
       case other                                          => fail(other.toString)
@@ -134,7 +136,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(std.attribution.contains("OpenStreetMap") && !std.attribution.contains("Humanitarian"))
     assert(BaseMaps.raster(BaseMap.Muted, ui).attribution.contains("Humanitarian"))
     assert(BaseMaps.raster(BaseMap.Dark, ui).dark)
-    assert(!BaseMaps.raster(BaseMap.Dark, ui.copy(tilesTone = "dark")).dark, "dark tiles already")
+    assert(!BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo("dark")).dark, "dark tiles already")
     assertEquals(
       BaseMaps.plan(BaseMap.Muted, None, MapPrefs(), ui, local = false, soft = false)._2,
       None,

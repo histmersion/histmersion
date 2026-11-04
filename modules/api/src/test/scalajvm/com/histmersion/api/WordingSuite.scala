@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
@@ -97,12 +99,12 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.Drain, "Finish current work, then pause")
     val glance = UiNotices.AgentsGlance(running = 3, queued = 12, on = true)
     assertEquals(glance.wording, "Agents working · 3 runs")
-    assertEquals((glance.copy(running = 1)).wording, "Agents working · 1 run")
-    assertEquals((glance.copy(running = 0)).wording, "Agents working · 12 waiting")
-    assertEquals((glance.copy(running = 0, queued = 0)).wording, "Agents on · nothing to do")
-    assertEquals((glance.copy(draining = true)).wording, "Agents finishing current work · 3 runs")
-    assertEquals((glance.copy(draining = true, running = 0)).wording, "Agents paused")
-    assertEquals((glance.copy(on = false)).wording, "Agents paused")
+    assertEquals((glance.modify(_.running).setTo(1)).wording, "Agents working · 1 run")
+    assertEquals((glance.modify(_.running).setTo(0)).wording, "Agents working · 12 waiting")
+    assertEquals((glance.modify(_.running).setTo(0).modify(_.queued).setTo(0)).wording, "Agents on · nothing to do")
+    assertEquals((glance.modify(_.draining).setTo(true)).wording, "Agents finishing current work · 3 runs")
+    assertEquals((glance.modify(_.draining).setTo(true).modify(_.running).setTo(0)).wording, "Agents paused")
+    assertEquals((glance.modify(_.on).setTo(false)).wording, "Agents paused")
     assertEquals(Wording.decisions(0), None)
     assertEquals(Wording.decisions(1), Some("1 needs your decision"))
     assertEquals(Wording.decisions(2), Some("2 need your decision"))

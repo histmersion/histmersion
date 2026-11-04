@@ -1,5 +1,7 @@
 package com.histmersion.web.setup
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
@@ -25,13 +27,8 @@ class SetupPlanSuite extends munit.FunSuite:
     assertEquals(SetupPlan.changes(before, before), List("setup.completed" -> Some("true")))
 
   test("what was chosen is written; only what differs, and always the mark"):
-    val c = before.copy(
-      email = "someone@example.org",
-      finders = before.finders + ("arxiv" -> false),
-      area = Some("-12,20,90,62"),
-      agents = true,
-      calibre = "~/Books",
-      start = MapStartConfig("place", 37, 30, 5, "Anatolia")
+    val c = before.modify(
+      _.email).setTo("someone@example.org").modify(_.finders).setTo(before.finders + ("arxiv" -> false)).modify(_.area).setTo(Some("-12,20,90,62")).modify(_.agents).setTo(true).modify(_.calibre).setTo("~/Books").modify(_.start).setTo(MapStartConfig("place", 37, 30, 5, "Anatolia")
     )
     val ch = SetupPlan.changes(c, before).toMap
     assertEquals(ch("acquire.contact-email"), Some("someone@example.org"))
@@ -48,11 +45,11 @@ class SetupPlanSuite extends munit.FunSuite:
       SetupPlan.downloads(before),
       List(SetupDownload.Map("world"), SetupDownload.Boundaries, SetupDownload.Events)
     )
-    assertEquals(SetupPlan.downloads(before.copy(area = None, boundaries = false, events = false)), Nil)
-    assert(SetupPlan.downloads(before.copy(pictures = true, morePlaces = true)).contains(SetupDownload.MorePlaces))
+    assertEquals(SetupPlan.downloads(before.modify(_.area).setTo(None).modify(_.boundaries).setTo(false).modify(_.events).setTo(false)), Nil)
+    assert(SetupPlan.downloads(before.modify(_.pictures).setTo(true).modify(_.morePlaces).setTo(true)).contains(SetupDownload.MorePlaces))
     val areas = List(MapArea("The whole world", "world", 8.8))
     assertEquals(SetupPlan.mapGb(before, areas), 8.8)
-    assertEquals(SetupPlan.mapGb(before.copy(area = None), areas), 0.0)
+    assertEquals(SetupPlan.mapGb(before.modify(_.area).setTo(None), areas), 0.0)
 
   test("the areas offered and the choices the settings say now"):
     val page = ConfigEdit.Page(sections =

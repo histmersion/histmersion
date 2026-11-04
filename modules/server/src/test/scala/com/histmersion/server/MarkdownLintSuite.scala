@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import MarkdownLint.Context
@@ -175,7 +177,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     val md = "Cline [[cline2014_year]] and [[no_such_page]]; see drews1993_end too.\n"
     assertEquals(rules(md), Nil)
     val ctx =
-      article.copy(resolves = Some(Set("cline2014_year")), isCitekey = Some(Set("drews1993_end", "cline2014_year")))
+      article.modify(_.resolves).setTo(Some(Set("cline2014_year"))).modify(_.isCitekey).setTo(Some(Set("drews1993_end", "cline2014_year")))
     assertEquals(rules(md, ctx), List(FormatRule.WikilinkUnresolved, FormatRule.BareCitekey))
 
   test("example 4: a YAML frontmatter block pasted into the body renders as a rule and a heading"):

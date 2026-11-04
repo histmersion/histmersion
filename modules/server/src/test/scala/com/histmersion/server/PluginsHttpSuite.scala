@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.pluginhost.{Generation, HostServices, PluginHost}
 
 import ox.supervised
@@ -44,7 +46,7 @@ class PluginsHttpSuite extends munit.FunSuite:
 
   test("about and config list the plugins; a secret shows as its reference, never as its value"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = generation()).start()
       try

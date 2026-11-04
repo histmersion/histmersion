@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
@@ -50,7 +52,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("lint · queue · query · schema over HTTP"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -158,7 +160,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
   // goals, their links and the linked queue items' state.
   test("GET /api/export/goals renders the goal tree with its links and queue-item state"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -223,7 +225,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
   // tools/list is the authority — every tool it advertises must be documented, with the right count.
   test("every MCP tool the server advertises is documented in the docs and the plugin README, with the right count"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val req = HttpRequest
@@ -265,7 +267,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the MCP tool list advertises lint, queue and query"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}/mcp"
@@ -285,7 +287,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("POST /api/articles/{slug}/check and the check_edits MCP tool dry-run edits, writing nothing"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"

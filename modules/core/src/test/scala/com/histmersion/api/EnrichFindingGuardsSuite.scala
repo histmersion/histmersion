@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -99,7 +101,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     var asked = List.empty[(String, Geocode.KindHint, Option[Period])] // records the calls for the assertion
     val g = FindingGuards(0.5, 500, Nil, (n, k, at) => { asked = asked :+ (n, k, at); true })
     val f = finding("A ship carried copper.", cargo, Some(" Uluburun "), Some(StatedYear(1320, "BCE")))
-      .copy(placeKind = Some("site"))
+      .modify(_.placeKind).setTo(Some("site"))
     assert(check(List(f), g).isRight)
     assertEquals(asked, List(("Uluburun", Geocode.KindHint.Site, Some(Period(-1320, -1320)))))
 

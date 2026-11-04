@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.imports.ImportFixtures
@@ -87,11 +89,9 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      media = base.media.copy(
-        requestIntervalMs = 0,
-        aic = base.media.aic.copy(apiUrl = s"$providerUrl/api", imageUrl = s"$providerUrl/iiif", requestIntervalMs = 0)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(
+        _.requestIntervalMs).setTo(0).modify(_.aic).setTo(base.media.aic.modify(_.apiUrl).setTo(s"$providerUrl/api").modify(_.imageUrl).setTo(s"$providerUrl/iiif").modify(_.requestIntervalMs).setTo(0)
       )
     )
 

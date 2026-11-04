@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.CatalogueState
@@ -116,7 +118,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
   test("a slug that is not one is refused; a strict write with a formatting error too, a lenient one carries it"):
     val c = controllers()
     assertEquals(c.put("Not A Slug", put).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    val messy = put.copy(body = "<div> never closed\n")
+    val messy = put.modify(_.body).setTo("<div> never closed\n")
     assertEquals(c.put("zr_walls", messy, strict = true).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(c.store.exists("zr_walls"), false)
     val written = c.put("zr_walls", messy).toOption.get
@@ -125,7 +127,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
   test("an old slug is followed by every read and write; the coverage of a filter that returns no source"):
     val c = controllers()
     val _ = c.put("zr_walls", put)
-    val _ = c.put("zr_index", put.copy(title = "Index", kind = "index", body = "- [[zr_walls]]\n", filter = None))
+    val _ = c.put("zr_index", put.modify(_.title).setTo("Index").modify(_.kind).setTo("index").modify(_.body).setTo("- [[zr_walls]]\n").modify(_.filter).setTo(None))
     assertEquals(c.rename("zr_walls", LabelRename("zr_city_walls")).map(_.rewritten), Right(List("zr_index")))
     assertEquals(c.get("ZR_WALLS").map(_.article.slug), Right("zr_city_walls"))
     assertEquals(

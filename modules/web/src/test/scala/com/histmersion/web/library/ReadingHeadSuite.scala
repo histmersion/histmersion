@@ -1,5 +1,7 @@
 package com.histmersion.web.library
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.SearchHit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.media.MediaRole
@@ -62,7 +64,7 @@ class ReadingHeadSuite extends munit.FunSuite:
     assertEquals(h.summary, Some("Several pressures together."))
 
   test("an unknown type is left out, not called unknown"):
-    val paperless = detail.copy(provenance = None, venue = None)
+    val paperless = detail.modify(_.provenance).setTo(None).modify(_.venue).setTo(None)
     assertEquals(ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil)).what, "2014")
     val cover = MediaThumb("u", MediaRole.Cover, "/x.jpg", "credit")
     assertEquals(

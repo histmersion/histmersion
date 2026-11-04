@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.api.catalogue.Attestation
 
@@ -47,7 +49,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     assertEquals((page.total, page.attestations.map(_.id), page.offset), (3, List(second.id), 1))
     assertEquals(a.list(None, None, None, 0, -5).attestations.map(_.id), List(first.id))
     val patched = a.patch(first.id, Attestation.Patch(note = Some("changed"), page = Some("13"))).toOption.get
-    assertEquals(patched, first.copy(note = Some("changed"), page = Some("13")))
+    assertEquals(patched, first.modify(_.note).setTo(Some("changed")).modify(_.page).setTo(Some("13")))
     assert(
       a.patch(third.id + 100, Attestation.Patch(note = Some("x"))).left.exists(_.message.contains("No attestation"))
     )

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.config.*
@@ -73,9 +75,8 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
 
   private def withServer(f: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.copy(
-      db = base.db.copy(url = testDb.get),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-spool0").toString)
+    val cfg = base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-spool0").toString)
     )
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0, NoConverter).start()

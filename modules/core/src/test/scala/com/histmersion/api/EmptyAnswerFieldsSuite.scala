@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -187,7 +189,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val ps = checkSkeptic(a, last = false, _ == "a2019_tin", _ => Some(record), 0.9).left.toOption.get
     assert(ps.contains("no verdict given — PASS, MINOR or MAJOR") && ps.exists(_.contains("no where stated")), ps)
     val (_, ws) = checkSkeptic(
-      a.copy(verdict = "MINOR", findings = List(finding())),
+      a.modify(_.verdict).setTo("MINOR").modify(_.findings).setTo(List(finding())),
       last = false,
       _ == "a2019_tin",
       _ => Some(record),

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
@@ -58,13 +60,13 @@ class PagesSuite extends munit.FunSuite:
     )
 
   test("values from the database are escaped in every attribute and text node"):
-    val evil = cline.copy(citekey = "x\"><script>", doi = Some("\"onmouseover=1"))
+    val evil = cline.modify(_.citekey).setTo("x\"><script>").modify(_.doi).setTo(Some("\"onmouseover=1"))
     val html = HtmlRender.sourceRef(evil, "<b>")
     assert(!html.contains("<script>") && !html.contains("<b>") && !html.contains("\"onmouseover"), html)
 
   test("the readable label is author-year, or the title when there are no authors"):
     assertEquals(HtmlRender.readable(cline), "Cline 2014")
-    assertEquals(HtmlRender.readable(cline.copy(authors = Nil)), cline.title)
+    assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)
 
   test("a chip never shows an underscore, and links the raw value into the web UI"):
     val c = HtmlRender.chip(ChipField.Tag, "sea_peoples")
@@ -245,16 +247,15 @@ class PagesSuite extends munit.FunSuite:
       Some(Confidence.High),
       Some("key_evidence")
     )
-    val html = Pages.source(sourcePage.copy(findings = List(f)), links)
+    val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links)
     assert(html.contains("south caucasus (41.00, 45.00)"), html)
     // Library's reading pane links "All N findings" here
     assert(html.contains("""<h2 id="findings">Findings (1)</h2>"""), html)
     assert(!html.replaceAll("<[^>]*>", "").contains("_"), "no underscore reaches the reader: " + html)
 
   test("Cites / Cited by merge typed edges, unresolved edges and the articles citing the source"):
-    val p = sourcePage.copy(
-      cites = List(Citation.ToSource(drews, "challenges"), Citation.Unresolved("ghost2019_x", "references")),
-      citedBy = List(Citation.ToArticle(topic, None))
+    val p = sourcePage.modify(
+      _.cites).setTo(List(Citation.ToSource(drews, "challenges"), Citation.Unresolved("ghost2019_x", "references"))).modify(_.citedBy).setTo(List(Citation.ToArticle(topic, None))
     )
     val html = Pages.source(p, links)
     assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
@@ -322,7 +323,7 @@ class PagesSuite extends munit.FunSuite:
   )
 
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):
-    val html = Pages.article(articlePage("# The Sea Peoples\n\nText.").copy(review = Some(review)), links)
+    val html = Pages.article(articlePage("# The Sea Peoples\n\nText.").modify(_.review).setTo(Some(review)), links)
     assert(
       html.contains(
         """<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""
@@ -372,5 +373,5 @@ class PagesSuite extends munit.FunSuite:
       ),
       html
     )
-    assertEquals(Pages.reviewHistory(review.copy(rounds = Nil)), "")
+    assertEquals(Pages.reviewHistory(review.modify(_.rounds).setTo(Nil)), "")
     assertEquals(Pages.readableUtc("2026-10-01T10:00"), "2026-10-01T10:00")

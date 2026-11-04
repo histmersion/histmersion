@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.Search
 
@@ -433,7 +435,7 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("sourceWhy reports a body-only text match"):
     val f = Filter(q = Some("Ugarit"))
-    assertEquals(FilterSql.sourceWhy(f, row.copy(bodyHit = true)), List("full text matches 'Ugarit'"))
+    assertEquals(FilterSql.sourceWhy(f, row.modify(_.bodyHit).setTo(true)), List("full text matches 'Ugarit'"))
 
   test("queryTerms reads the websearch syntax the tsquery uses"):
     assertEquals(FilterSql.queryTerms("\"sea peoples\""), List("sea", "peoples"))
@@ -458,7 +460,7 @@ class FilterSqlSuite extends munit.FunSuite:
   test("a value containing a COMMA still explains itself, and still renders comma-joined"):
     // "Stocker, Sharon R." is ONE author and "trade, long-distance" is ONE tag; splitting the
     // column on ',' turned each into two values that matched nothing.
-    val r = row.copy(tags = j("trade, long-distance"), authors = j("Stocker, Sharon R.", "Davis, J."))
+    val r = row.modify(_.tags).setTo(j("trade, long-distance")).modify(_.authors).setTo(j("Stocker, Sharon R.", "Davis, J."))
     assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade, long-distance")), r), List("tag: trade, long-distance"))
     assertEquals(FilterSql.sourceWhy(Filter(authors = List("stocker")), r), List("author: Stocker, Sharon R."))
     // …and a tag that is merely a PIECE of one does not match

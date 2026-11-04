@@ -1,5 +1,7 @@
 package com.histmersion.web.settings
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.instance.MapStartConfig
 import com.histmersion.api.plugins.PluginStatus
@@ -76,7 +78,7 @@ class SettingsWebSuite extends munit.FunSuite:
       )
     )
     assert(StartPlace.describe(c).contains("Anatolia"))
-    assert(StartPlace.describe(c.copy(mode = "last")).startsWith("The first time"))
+    assert(StartPlace.describe(c.modify(_.mode).setTo("last")).startsWith("The first time"))
 
   test("a plugin's state in words"):
     assertEquals(PluginsSection.state(PluginStatus("x", "1", 2, enabled = true, state = "registered")), "Working")

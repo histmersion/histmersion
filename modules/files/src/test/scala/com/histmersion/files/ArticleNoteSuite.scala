@@ -1,5 +1,7 @@
 package com.histmersion.files
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
@@ -152,4 +154,4 @@ class ArticleNoteSuite extends munit.FunSuite:
     // and the round trip stays byte-stable
     assertEquals(ArticleNote.render(back, Some(Article.Coverage.exported(c))), text)
     // an article with none exports exactly as before
-    assert(!ArticleNote.render(a.copy(filter = None, reasons = Map.empty)).contains("filter:"))
+    assert(!ArticleNote.render(a.modify(_.filter).setTo(None).modify(_.reasons).setTo(Map.empty)).contains("filter:"))

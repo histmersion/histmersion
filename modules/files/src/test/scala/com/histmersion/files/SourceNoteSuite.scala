@@ -1,5 +1,7 @@
 package com.histmersion.files
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
 import com.histmersion.api.library.Confidence
@@ -114,7 +116,7 @@ class SourceNoteSuite extends munit.FunSuite:
     assertEquals(back.period, None)
 
   test("superseded_by is exported from the edge and parsed back into it"):
-    val s = source.copy(edges = List(Edge(ck, "reich2018_who", "superseded_by")))
+    val s = source.modify(_.edges).setTo(List(Edge(ck, "reich2018_who", "superseded_by")))
     val back = SourceNote.parseNote(SourceNote.note(s), ck).get
     assert(back.edges.contains(Edge(ck, "reich2018_who", "superseded_by")), back.edges.toString)
 

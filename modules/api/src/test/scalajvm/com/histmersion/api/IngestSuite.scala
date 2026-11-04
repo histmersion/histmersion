@@ -4,6 +4,8 @@ package com.histmersion.api
   * Markdown renderers. No database, no HTTP.
   */
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.SkippedPeriod
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
@@ -250,9 +252,9 @@ class IngestSuite extends munit.FunSuite:
   test("JobInfo exposes the state its status names"):
     val j = JobInfo("i", Ingest.KindIngest, "running", Some("ck"))
     assert(!j.isTerminal && !j.succeeded)
-    assert(j.copy(status = "done").succeeded)
+    assert(j.modify(_.status).setTo("done").succeeded)
     // an unparseable status must not read as success
-    assert(!j.copy(status = "weird").succeeded)
+    assert(!j.modify(_.status).setTo("weird").succeeded)
 
   // ── Markdown ─────────────────────────────────────────────────────────────────────────────────
   test("job Markdown names the status, the citekey and the failure"):
@@ -278,9 +280,9 @@ class IngestSuite extends munit.FunSuite:
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
     )
-    assert(IngestMarkdown.job(j.copy(status = "failed")).contains("42 (left open: the job failed)"))
-    assert(IngestMarkdown.job(j.copy(status = "done")).contains("**acquisition item:** 42\n"))
-    assert(!IngestMarkdown.job(j.copy(acquireItem = None)).contains("acquisition item"))
+    assert(IngestMarkdown.job(j.modify(_.status).setTo("failed")).contains("42 (left open: the job failed)"))
+    assert(IngestMarkdown.job(j.modify(_.status).setTo("done")).contains("**acquisition item:** 42\n"))
+    assert(!IngestMarkdown.job(j.modify(_.acquireItem).setTo(None)).contains("acquisition item"))
 
   test("empty listings say so rather than rendering an empty table"):
     assertEquals(IngestMarkdown.jobs(Vector.empty), "_No jobs._")

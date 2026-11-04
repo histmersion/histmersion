@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.ImportsControllers
 import com.histmersion.server.MediaWiring
 
@@ -126,13 +128,9 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      media = base.media.copy(
-        requestIntervalMs = 0,
-        importBatch = 50,
-        wikidata = base.media.wikidata.copy(apiUrl = s"$providerUrl/wikidata", batch = 50),
-        commons = base.media.commons.copy(apiUrl = s"$providerUrl/commons", batch = 50)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(
+        _.requestIntervalMs).setTo(0).modify(_.importBatch).setTo(50).modify(_.wikidata).setTo(base.media.wikidata.modify(_.apiUrl).setTo(s"$providerUrl/wikidata").modify(_.batch).setTo(50)).modify(_.commons).setTo(base.media.commons.modify(_.apiUrl).setTo(s"$providerUrl/commons").modify(_.batch).setTo(50)
       )
     )
 

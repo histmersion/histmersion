@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.ImportFixtures
 import com.histmersion.server.MediaWiring
 
@@ -122,13 +124,9 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val base = AppConfig.load()
     val m = base.media
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      media = m.copy(
-        requestIntervalMs = 0,
-        commons = m.commons.copy(apiUrl = s"$providerUrl/w/api.php"),
-        pleiades = m.pleiades.copy(apiUrl = providerUrl, requestIntervalMs = 0),
-        openContext = m.openContext.copy(apiUrl = providerUrl, requestIntervalMs = 0)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(m.modify(
+        _.requestIntervalMs).setTo(0).modify(_.commons).setTo(m.commons.modify(_.apiUrl).setTo(s"$providerUrl/w/api.php")).modify(_.pleiades).setTo(m.pleiades.modify(_.apiUrl).setTo(providerUrl).modify(_.requestIntervalMs).setTo(0)).modify(_.openContext).setTo(m.openContext.modify(_.apiUrl).setTo(providerUrl).modify(_.requestIntervalMs).setTo(0)
       )
     )
 

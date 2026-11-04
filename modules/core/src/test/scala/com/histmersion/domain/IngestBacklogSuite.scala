@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -107,16 +109,16 @@ class IngestBacklogSuite extends munit.FunSuite:
   ):
     val f = RepairFacts(7, "10.1/x", isOa = true, "watch:g", watcherExists = true, watcherAutoIngest = true, None)
     assertEquals(repairAction(f), RepairAction.Move)
-    assertEquals(repairAction(f.copy(inCorpus = Some("ck"))), RepairAction.Remove("ck"))
-    assert(repairAction(f.copy(isOa = false)).isInstanceOf[RepairAction.Keep], "a closed work stays on the list")
+    assertEquals(repairAction(f.modify(_.inCorpus).setTo(Some("ck"))), RepairAction.Remove("ck"))
+    assert(repairAction(f.modify(_.isOa).setTo(false)).isInstanceOf[RepairAction.Keep], "a closed work stays on the list")
     assert(
-      repairAction(f.copy(isOa = false, inCorpus = Some("ck"))).isInstanceOf[RepairAction.Keep],
+      repairAction(f.modify(_.isOa).setTo(false).modify(_.inCorpus).setTo(Some("ck"))).isInstanceOf[RepairAction.Keep],
       "closed: never touched"
     )
-    assert(repairAction(f.copy(watcherAutoIngest = false)) match
+    assert(repairAction(f.modify(_.watcherAutoIngest).setTo(false)) match
       case RepairAction.Keep(why) => why.contains("does not auto-ingest")
       case _                      => false)
-    assert(repairAction(f.copy(watcherExists = false)).isInstanceOf[RepairAction.Keep])
+    assert(repairAction(f.modify(_.watcherExists).setTo(false)).isInstanceOf[RepairAction.Keep])
 
   test("the backlog's wire state and its few words"):
     val st =
@@ -142,7 +144,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       ManagersMarkdown.line(info).contains("4 legal open-access works in the ingest backlog (~1 more day"),
       ManagersMarkdown.line(info)
     )
-    assert(!ManagersMarkdown.line(info.copy(backlog = 0)).contains("backlog"))
+    assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(0)).contains("backlog"))
     val r = RepairAcquire.RepairResult(
       dryRun = true,
       moved = 1,

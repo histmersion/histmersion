@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.domain.library.LibraryPlan
 import com.histmersion.domain.research.ResearchPlan
@@ -228,10 +230,9 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   )
 
   private def withFindings: MergePlanner.Input =
-    val in = input(foreign.copy(findings = foreignFindings))
-    in.copy(
-      local = in.local.copy(findings = localFindings),
-      labels = in.labels.copy(findings = localFindings.map(f => f.id -> f.uid).toMap)
+    val in = input(foreign.modify(_.findings).setTo(foreignFindings))
+    in.modify(
+      _.local).setTo(in.local.modify(_.findings).setTo(localFindings)).modify(_.labels).setTo(in.labels.modify(_.findings).setTo(localFindings.map(f => f.id -> f.uid).toMap)
     )
 
   // ── the score's edge cases ───────────────────────────────────────────────────────────────────
@@ -410,13 +411,11 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   private def edgeInput: MergePlanner.Input =
     val es = BundleEntities(sources = edgeForeign, aliases = edgeAliases)
     val in = input(es, edgeHere)
-    in.copy(
-      local = BundleEntities(sources = edgeHere),
-      labels = MergePlanner.Labels(
+    in.modify(
+      _.local).setTo(BundleEntities(sources = edgeHere)).modify(_.labels).setTo(MergePlanner.Labels(
         citekeys = edgeHere.map(s => s.citekey -> s.uid).toMap,
         aliases = Map("zzseeher_old" -> uid("f-alias"))
-      ),
-      ledger = Map.empty
+      )).modify(_.ledger).setTo(Map.empty
     )
 
   private def edgeSketches: Map[String, com.histmersion.util.text.MinHash] =

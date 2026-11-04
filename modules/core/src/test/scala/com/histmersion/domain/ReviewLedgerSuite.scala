@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -52,10 +54,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(nextId(l2, Reviewer.Mechanical), "M1")
 
   test("same: one reviewer only; the quoted passage, or the same where with a similar problem"):
-    assert(same(tinMajor, tinMajor.copy(quote = "Tin reached the Aegean by sea, in ingots", problem = "x")))
-    assert(same(tinMajor, tinMajor.copy(quote = "", problem = "tin is not defined at all")))
-    assert(!same(tinMajor, tinMajor.copy(reviewer = Reviewer.Skeptic)))
-    assert(!same(tinMajor, tinMajor.copy(quote = "", where = "Summary", problem = "a number lacks its unit")))
+    assert(same(tinMajor, tinMajor.modify(_.quote).setTo("Tin reached the Aegean by sea, in ingots").modify(_.problem).setTo("x")))
+    assert(same(tinMajor, tinMajor.modify(_.quote).setTo("").modify(_.problem).setTo("tin is not defined at all")))
+    assert(!same(tinMajor, tinMajor.modify(_.reviewer).setTo(Reviewer.Skeptic)))
+    assert(!same(tinMajor, tinMajor.modify(_.quote).setTo("").modify(_.where).setTo("Summary").modify(_.problem).setTo("a number lacks its unit")))
     // mechanical: same kind, place, problem up to the colon and quote — a coverage count may change
     val cov = f(
       "M1",
@@ -69,10 +71,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(
       same(
         cov,
-        cov.copy(id = "M4", problem = "3 sources the filter returns are neither cited nor given a reason: [[b]]")
+        cov.modify(_.id).setTo("M4").modify(_.problem).setTo("3 sources the filter returns are neither cited nor given a reason: [[b]]")
       )
     )
-    assert(!same(cov, cov.copy(kind = "citation")))
+    assert(!same(cov, cov.modify(_.kind).setTo("citation")))
 
   test("transitions: claimed by the fixer, then fixed by its reviewer; not fixed carries the note"):
     val fixed = Fix("body", Nil, List("R1", "S1"), Nil, Nil, Nil, "", 1, 1)
@@ -139,7 +141,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       "run1",
       2
     )
-    val (back, ids) = absorb(l, List(tinMajor.copy(id = "R7"), dateMajor.copy(id = "S9")), "run2", 1)
+    val (back, ids) = absorb(l, List(tinMajor.modify(_.id).setTo("R7"), dateMajor.modify(_.id).setTo("S9")), "run2", 1)
     assertEquals(ids.map(_.id), List("R1", "S1"))
     assertEquals(back.entry("R1").map(e => (e.status, e.reopened, e.closed)), Some((Status.Open, 1, None)))
     assert(back.entry("R1").flatMap(_.notFixed).exists(_.contains("raised again")))
@@ -150,7 +152,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       applyFix(fresh, Fix("b", Nil, Nil, Nil, Nil, Nil, "", 1, 1, wontFix = List(WontFix("C1", "fine"))), "run1", 1)
     assertEquals(absorb(declined, List(readerMin), "run2", 1)._1.entry("C1").map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(readerMin.copy(severity = Severity.Major)), "run2", 1)._1.entry("C1").map(_.status),
+      absorb(declined, List(readerMin.modify(_.severity).setTo(Severity.Major)), "run2", 1)._1.entry("C1").map(_.status),
       Some(Status.Open)
     )
 
@@ -168,7 +170,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       f("M2", Reviewer.Mechanical, Severity.Minor, "body", "banned filler — it is worth noting", "", "language")
     val l0 = absorb(Ledger("tin"), List(uncited, filler), "run1", 1)._1
     val dup = f("M1", Reviewer.Mechanical, Severity.Minor, "Summary", "a duplicated heading", "## Summary", "section")
-    val (l1, _) = recheckMechanical(l0, List(filler.copy(id = "M1"), dup.copy(id = "M2")), "run1", 2)
+    val (l1, _) = recheckMechanical(l0, List(filler.modify(_.id).setTo("M1"), dup.modify(_.id).setTo("M2")), "run1", 2)
     assertEquals(
       l1.entries.map(e => (e.id, e.status, e.closed.map(_.by))),
       List(("M1", Status.Fixed, Some("mechanical")), ("M2", Status.Open, None), ("M3", Status.Open, None))
@@ -200,7 +202,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(l.openMajors.map(_.id), List("R1", "S1"))
     // with the other MAJORs fixed, the count alone leaves the article MINOR
-    val onlyCount = l.copy(entries = l.entries.filter(e => e.id == "C2" || e.id == "C1"))
+    val onlyCount = l.modify(_.entries).setTo(l.entries.filter(e => e.id == "C2" || e.id == "C1"))
     assertEquals(onlyCount.verdict, Verdict.Minor)
     assertEquals(taskText(onlyCount, "run2"), None)
 
@@ -233,7 +235,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(declined.entry("C1").map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(count.copy(problem = TermCount.problem(11))), "run2", 1)._1.entry("C1").map(_.status),
+      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(11))), "run2", 1)._1.entry("C1").map(_.status),
       Some(Status.WontFix)
     )
 
@@ -348,7 +350,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           "S1 (Disagreements): the date has no support [raised again after a rejection] (agent run abcdef01)"
       )
     )
-    val one = esc.copy(entries = esc.entries.filterNot(_.id == "S1"))
+    val one = esc.modify(_.entries).setTo(esc.entries.filterNot(_.id == "S1"))
     assert(taskText(one, "abcdef0123").exists(_.contains(": 1 open MAJOR — R1 (Intro)")))
     assertEquals(taskText(fresh.copy(entries = fresh.entries.filterNot(_.major)), "x"), None)
     val long = absorb(

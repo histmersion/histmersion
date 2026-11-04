@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.QueryAccess
 
 import com.histmersion.domain.library.search.SearchFixtures
@@ -25,7 +27,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
-  private lazy val dbCfg = cfg.db.copy(url = testDb.get)
+  private lazy val dbCfg = cfg.db.modify(_.url).setTo(testDb.get)
 
   /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to migrate and to seed
     * the probe row.
@@ -245,7 +247,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
         finally st.close()
       } finally c.close()
     scala.util.Try(admin(s"DROP OWNED BY $role")); admin(s"DROP ROLE IF EXISTS $role")
-    val qc = cfg.query.copy(user = role, password = "probe-pw")
+    val qc = cfg.query.modify(_.user).setTo(role).modify(_.password).setTo("probe-pw")
     try
       assertEquals(QueryAccess.provision(ds, qc), Right(()))
       assertEquals(QueryAccess.provision(ds, qc), Right(()), "idempotent")

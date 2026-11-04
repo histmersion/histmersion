@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota.*
 
@@ -124,7 +126,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   ) = refreshDecision(need, login, enabled, last, 10 * Min, Now, force)
 
   test("#989: a pool paused ONLY because its reading is stale wants a fresh one (49% left, floor 40%, margin 10)"):
-    val rules = Rules0.copy(floors = Floors(Map("seven_day" -> 40)))
+    val rules = Rules0.modify(_.floors).setTo(Floors(Map("seven_day" -> 40)))
     val stale = List(r("seven_day", 51, seen = Old))
     assert(!verdict(stale, held = false, None, rules, Now)._1.usable, "49 < 40 + 10: paused on the stale reading")
     assertEquals(refreshNeed(stale, held = false, None, rules, Now), Some(RefreshNeed.StaleOnly))

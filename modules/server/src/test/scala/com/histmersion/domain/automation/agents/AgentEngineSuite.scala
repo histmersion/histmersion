@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.agents.*
 
 import com.histmersion.util.database.Transactor
@@ -73,10 +75,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents =
-        b.agents.copy(enabled = true, prices = "scripted=1/2", roles = b.agents.roles.copy(extractor = Model.wire))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(Model.wire))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -318,7 +318,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("refused up front: agents off, an unpriced model, an unknown pipeline, a missing source"):
     val c = ScriptedClient(Model)
-    val (off, h) = handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(enabled = false)))
+    val (off, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false)))
     seed(h)
     assert(off.startRun(RunRequest("enrich-source", Ck)).left.exists(_.message.contains("off")))
     val (a, _) = handlers(c)
@@ -473,7 +473,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.decide(id, "reject", DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
     assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
-    val p2 = p.copy(status = Some(Source.Status.Debunked))
+    val p2 = p.modify(_.status).setTo(Some(Source.Status.Debunked))
     val id2 = TestRuns.proposals(a, h).propose(None, p2) match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
@@ -495,7 +495,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("approvals configured auto are applied at once and recorded already approved"):
     val c = ScriptedClient(Model)
-    val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = AgentApprovalsConfig("auto", "manual", "manual")))
+    val auto = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(AgentApprovalsConfig("auto", "manual", "manual")))
     val (a, h) = handlers(c, auto); seed(h)
     val o = TestRuns
       .proposals(a, h)
@@ -528,7 +528,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // not again within prune-every-minutes, and never with keep-messages-days = 0
     assertEquals(a.engine.pruneTrace(), 0)
     val (keepAll, _) =
-      handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(trace = baseCfg.agents.trace.copy(keepMessagesDays = 0))))
+      handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.trace).setTo(baseCfg.agents.trace.modify(_.keepMessagesDays).setTo(0))))
     assertEquals(keepAll.engine.pruneTrace(force = true), 0)
 
   // #882: a blocking approval decided after the step opened it but BEFORE the run reached `waiting`.
@@ -590,7 +590,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
   private lazy val evalCfg =
-    baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4", autoEnrich = true))
+    baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("scripted=1/2; haiku-sim=3/4").modify(_.autoEnrich).setTo(true))
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
@@ -707,8 +707,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
-    val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
+    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
@@ -754,8 +754,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
-    val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
+    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     val notesOnly = new PipelineDef:
@@ -898,11 +898,9 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsControllers, String) =
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
-    val cfg = evalCfg.copy(agents =
-      evalCfg.agents.copy(
-        roles = evalCfg.agents.roles.copy(extractor = Plan.wire),
-        step = evalCfg.agents.step.copy(maxTokens = stepCap)
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
+    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(
+        _.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)).modify(_.step).setTo(evalCfg.agents.step.modify(_.maxTokens).setTo(stepCap)
       )
     )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
@@ -994,7 +992,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       "2 × (10k + 1k + 29k) = 80k budget tokens"
     )
     // counted in full (weight 1) the same run pauses before its second step
-    val full = evalCfg.copy(agents = evalCfg.agents.copy(budgets = evalCfg.agents.budgets.copy(cacheReadWeight = 1.0)))
+    val full = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.budgets).setTo(evalCfg.agents.budgets.modify(_.cacheReadWeight).setTo((1.0: _root_.scala.Double))))
     val c2 = ScriptedClient(Model)
     c2.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     clean(); beforeEach(null)

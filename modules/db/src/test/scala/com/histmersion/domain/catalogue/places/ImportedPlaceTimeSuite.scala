@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.database.given
@@ -44,7 +46,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -196,9 +198,9 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     // still ranks before time, so the time rule is compared at one tier
     val cands = connect(ds)(PlaceFixtures.candidates(Geocode.key("Zzpt Kingdom of Patones"), None))
     assertEquals(cands.find(_.id == PatonesId).map(c => (c.from, c.to)), Some((Some(1469L), Some(1769L))))
-    val ranked = Geocode.rank(cands.map(_.copy(tier = 0)), KindHint.Unknown, Some(Period(-4664, -3153)), 4)
+    val ranked = Geocode.rank(cands.map(_.modify(_.tier).setTo(0)), KindHint.Unknown, Some(Period(-4664, -3153)), 4)
     assertEquals(ranked.head.id, "geonames_999500002", "outside its window the dated place ranks after the undated one")
-    val inside = Geocode.rank(cands.map(_.copy(tier = 0)), KindHint.Unknown, Some(Period(1600, 1650)), 4)
+    val inside = Geocode.rank(cands.map(_.modify(_.tier).setTo(0)), KindHint.Unknown, Some(Period(1600, 1650)), 4)
     assertEquals(inside.head.id, PatonesId)
     assertEquals(at(Period(1600, 1650)), Some(PatonesId))
     assertEquals(PlaceFixtures.get(ds, "geonames_999500002").map(_.place.dating), Some(Place.Dating.Unknown))
@@ -276,8 +278,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   test(
     "descriptions: per source and language; a re-run changes nothing; a new version updates only descriptions and dates"
   ):
-    val v1 = Patones.copy(descriptions =
-      List(
+    val v1 = Patones.modify(_.descriptions).setTo(List(
         GazDescription("former country in Modern Day Spain", "en"),
         GazDescription("microestado de Europa (siglo VIII-1769)", "es")
       )
@@ -290,9 +291,8 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       List("en" -> "former country in Modern Day Spain", "es" -> "microestado de Europa (siglo VIII-1769)")
     )
     assertEquals(d.descriptions.map(_.source).distinct, List("wikidata"))
-    val v2 = v1.copy(
-      span = Span(None, Some(1750)),
-      descriptions = List(GazDescription("former microstate in Spain", "en"), v1.descriptions(1))
+    val v2 = v1.modify(
+      _.span).setTo(Span(None, Some(1750))).modify(_.descriptions).setTo(List(GazDescription("former microstate in Spain", "en"), v1.descriptions(1))
     )
     val c = load("wikidata", "v2", List(v2))
     assertEquals((c.created, c.placesChanged, c.descriptionsAdded, c.descriptionsRemoved), (0L, 1L, 0L, 0L))

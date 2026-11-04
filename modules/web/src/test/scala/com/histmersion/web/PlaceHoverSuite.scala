@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{ServiceState, Wording}
 
 import scala.collection.mutable
@@ -86,7 +88,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(bare.facts, Nil)
     // CE years too
     assertEquals(
-      Preview.card(d.copy(place = summary("x", "X", "polity", Some(-30), Some(476)))).byline,
+      Preview.card(d.modify(_.place).setTo(summary("x", "X", "polity", Some(-30), Some(476)))).byline,
       "Polity · 30 BCE–476 CE"
     )
   }
@@ -182,7 +184,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(row("Store", "period presets").value, "12") // #904: presets counted apart from all periods
     assertEquals(row("Server", "config file").value, "none")
     val withFile =
-      AboutView.sections(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+      AboutView.sections(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
     val cf = withFile.head.rows.find(_.label == "config file").get
     assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
   }
@@ -208,7 +210,7 @@ class PlaceHoverSuite extends munit.FunSuite:
       ),
       List("histmersion.plugins.helo configures no plugin in this binary — ignored")
     )
-    val s = AboutView.sections(about.copy(plugins = report))
+    val s = AboutView.sections(about.modify(_.plugins).setTo(report))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))
     val rows = s.find(_.title == "Plugins").get.rows
     def row(id: String) = rows.find(_.label == Wording.plugin(id)).get
@@ -231,13 +233,8 @@ class PlaceHoverSuite extends munit.FunSuite:
   }
 
   test("#718: an unknown converter wording renders as unknown with its text; missing parts are said") {
-    val odd = about.copy(
-      health = about.health.copy(converter = Some("calibrating flux")),
-      counts = None,
-      lastBackup = None,
-      lastBackupAgeSeconds = None,
-      build = BuildStamp("1.2.3"),
-      problems = List("store counts: connection refused")
+    val odd = about.modify(
+      _.health).setTo(about.health.modify(_.converter).setTo(Some("calibrating flux"))).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.build).setTo(BuildStamp("1.2.3")).modify(_.problems).setTo(List("store counts: connection refused")
     )
     val s = AboutView.sections(odd)
     val conv = s.find(_.title == "Health").get.rows.find(_.label == "converter").get

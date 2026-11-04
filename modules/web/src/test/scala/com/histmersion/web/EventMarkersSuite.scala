@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
   Correction,
@@ -98,7 +100,7 @@ class EventMarkersSuite extends munit.FunSuite:
       h
     )
     assert(h.contains("hd-badge hd-badge--circle"), h)
-    val plain = fort.copy(siteType = None, label = "Zz plain")
+    val plain = fort.modify(_.siteType).setTo(None).modify(_.label).setTo("Zz plain")
     val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)")
     assert(u.contains(Glyphs.badge("alert-mark")) && !u.contains("data-site-type"), u)
     assertEquals(
@@ -239,14 +241,10 @@ class EventMarkersSuite extends munit.FunSuite:
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
-  private val hekla = eruption.copy(
-    id = "gvp_12724",
-    label = "Eruption of Hekla",
-    timeSpan = TimeSpan(Some(-2251), None, None, Some(2026)),
-    precision = EventPrecision.Imprecise,
-    dating = Some("250 CE ± 2500 (tephrochronology)")
+  private val hekla = eruption.modify(
+    _.id).setTo("gvp_12724").modify(_.label).setTo("Eruption of Hekla").modify(_.timeSpan).setTo(TimeSpan(Some(-2251), None, None, Some(2026))).modify(_.precision).setTo(EventPrecision.Imprecise).modify(_.dating).setTo(Some("250 CE ± 2500 (tephrochronology)")
   )
-  private val approx = eruption.copy(id = "zz_a", precision = EventPrecision.Approximate)
+  private val approx = eruption.modify(_.id).setTo("zz_a").modify(_.precision).setTo(EventPrecision.Approximate)
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
     assert(!PointKinds.Events.keep(hekla))

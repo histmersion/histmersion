@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.data.diagnostics.{StorageCache, StorageFigures}
@@ -38,17 +40,9 @@ class StorageProbeSuite extends munit.FunSuite:
   /** A config whose every directory is under `d` (the defaults left empty resolve under `d` too). */
   private def config(d: Path, bundled: Boolean = false): AppConfig =
     val base = AppConfig.load()
-    base.copy(
-      runtime = base.runtime
-        .copy(enabled = bundled, home = d.resolve("install").toString, dataDir = d.resolve("data").toString),
-      backups = base.backups.copy(dir = d.resolve("data/backups").toString, keep = 3),
-      converter = base.converter.copy(spoolDir = d.resolve("data/uploads").toString),
-      bundles = base.bundles.copy(dir = d.resolve("data/bundles").toString),
-      acquire = base.acquire.copy(spoolDir = ""),
-      corpus = base.corpus.copy(dir = ""),
-      basemap = base.basemap.copy(dir = ""),
-      places = base.places.copy(sources = base.places.sources.copy(dir = "", lpfDir = "")),
-      agents = base.agents.copy(runtimes = base.agents.runtimes.copy(dir = ""))
+    base.modify(
+      _.runtime).setTo(base.runtime
+        .modify(_.enabled).setTo(bundled).modify(_.home).setTo(d.resolve("install").toString).modify(_.dataDir).setTo(d.resolve("data").toString)).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(d.resolve("data/backups").toString).modify(_.keep).setTo(3)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(d.resolve("data/uploads").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(d.resolve("data/bundles").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo("")).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo("")).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo("")).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo("").modify(_.lpfDir).setTo(""))).modify(_.agents).setTo(base.agents.modify(_.runtimes).setTo(base.agents.runtimes.modify(_.dir).setTo(""))
     )
 
   private def env(d: Path): String => Option[String] =

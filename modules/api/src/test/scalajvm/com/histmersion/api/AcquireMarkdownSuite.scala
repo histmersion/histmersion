@@ -4,6 +4,8 @@ package com.histmersion.api
   * cheap to pin: empty results, the `--apply` hints, and the safety notices that must never silently disappear.
   */
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.{
   Acquire,
   AcquireMarkdown,
@@ -37,7 +39,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
   )
 
   test("discover renders a table and flags what is already stored"):
-    val md = AcquireMarkdown.discover(DiscoverResult("steppe", 2, List(work, work.copy(inDb = true))))
+    val md = AcquireMarkdown.discover(DiscoverResult("steppe", 2, List(work, work.modify(_.inDb).setTo(true))))
     assert(md.contains("| citekey | title | year | authors | cited | doi | notes |"))
     assert(md.contains("haak2015_massive"))
     assert(md.contains("in db"))
@@ -60,16 +62,16 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(!old.contains("| original |"), old)
 
   test("a retracted work is marked in the single-work view"):
-    val md = AcquireMarkdown.work(work.copy(isRetracted = true))
+    val md = AcquireMarkdown.work(work.modify(_.isRetracted).setTo(true))
     assert(md.contains("RETRACTED"))
     assert(md.contains("**Citekey (proposed):** `haak2015_massive`"))
 
   test("the single-work view tells 'no free copy' from 'nobody said' (#599)"):
     assert(AcquireMarkdown.work(work).contains("**Access:** open access (green)"))
-    val closed = AcquireMarkdown.work(work.copy(isOa = false, oaStatus = Some("closed")))
+    val closed = AcquireMarkdown.work(work.modify(_.isOa).setTo(false).modify(_.oaStatus).setTo(Some("closed")))
     assert(closed.contains("**Access:** no OA copy known"), closed)
     // a Crossref-only record carries no access information at all
-    val unknown = AcquireMarkdown.work(work.copy(isOa = false, oaStatus = None))
+    val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(false).modify(_.oaStatus).setTo(None))
     assert(unknown.contains("OA status unknown"), unknown)
     assert(!unknown.contains("no OA copy known"), unknown)
 
@@ -86,7 +88,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     val md = AcquireMarkdown.refs(r)
     assert(md.contains("1 of 2 resolve to stored sources; re-run with `--apply`"), md)
     assert(!md.contains("Lambda") && !md.contains("$"), md)
-    assert(AcquireMarkdown.refs(r.copy(edgesAdded = 3)).contains("3 `references` edge(s) written"))
+    assert(AcquireMarkdown.refs(r.modify(_.edgesAdded).setTo(3)).contains("3 `references` edge(s) written"))
 
   test("an assessment shows the verdict, the notices and whether it was applied"):
     val a = Assessment(
@@ -110,7 +112,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("Re-run with `--apply`"))
     assert(
       AcquireMarkdown
-        .assessment(a.copy(applied = Some("retracted")))
+        .assessment(a.modify(_.applied).setTo(Some("retracted")))
         .contains("Stored `status` set to **retracted**")
     )
 
@@ -183,5 +185,5 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(ing.contains("CURRENT"))
 
   test("pipes in a title cannot break the table"):
-    val md = AcquireMarkdown.discover(DiscoverResult("q", 1, List(work.copy(title = Some("A | B")))))
+    val md = AcquireMarkdown.discover(DiscoverResult("q", 1, List(work.modify(_.title).setTo(Some("A | B")))))
     assert(md.contains("A \\| B"), md)

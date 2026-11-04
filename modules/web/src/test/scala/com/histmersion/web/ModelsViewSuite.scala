@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.ModelChains.*
 
@@ -29,12 +31,12 @@ class ModelsViewSuite extends munit.FunSuite:
   test("the used share of a limit, clamped; a chained model's state"):
     val l = LimitStatus("1k tokens/1h", Measure.Tokens, "1h", 1000, 250, 750, 0, usable = true)
     assertEquals(ModelsView.usedPct(l), 25)
-    assertEquals(ModelsView.usedPct(l.copy(used = 5000)), 100)
+    assertEquals(ModelsView.usedPct(l.modify(_.used).setTo((5000: _root_.scala.Double))), 100)
     assertEquals(ModelsView.entryState(ChainEntry("local:a", ready = true, usable = true)), "is-usable")
     assertEquals(ModelsView.entryState(ChainEntry("local:a", ready = true, usable = false)), "is-paused")
     assertEquals(ModelsView.entryState(ChainEntry("local:a", ready = false, usable = false)), "is-unready")
     assertEquals(
-      ModelsView.limitsText(AllowanceStatus("local:a", "saved", 0, List(l, l.copy(limit = "5 usd/1d")), usable = true)),
+      ModelsView.limitsText(AllowanceStatus("local:a", "saved", 0, List(l, l.modify(_.limit).setTo("5 usd/1d")), usable = true)),
       "1k tokens/1h, 5 usd/1d"
     )
 
@@ -66,7 +68,7 @@ class ModelsViewSuite extends munit.FunSuite:
       "run"
     )
     assertEquals(ModelsView.windowBar(w), (62, 75))
-    assertEquals(ModelsView.windowBar(w.copy(usedPct = 130)), (100, 75))
+    assertEquals(ModelsView.windowBar(w.modify(_.usedPct).setTo((130: _root_.scala.Double))), (100, 75))
     assertEquals(ModelsView.ageText(90), "90 s ago")
     assertEquals(ModelsView.ageText(600), "10 min ago")
     assertEquals(ModelsView.ageText(7200), "2 h ago")

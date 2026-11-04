@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.Caller
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger, Status}
@@ -30,7 +32,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
       val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), "run-1", 1)), task = Some(7))
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
-      val again = l.copy(task = None)
+      val again = l.modify(_.task).setTo(None)
       s.ledgers.put(again)
       assertEquals(s.ledgers.get(Walls), Right(Some(again)))
       intercept[Exception](s.ledgers.put(Ledger("zr_nothing")))

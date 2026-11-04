@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.api.automation.Agents.Role
@@ -177,7 +179,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(tree("claude-code/histmersion/.mcp.json").contains("http://127.0.0.1:18000/mcp\""))
     assert(tree("claude-code/.claude-plugin/marketplace.json").contains("\"histmersion-local\""))
     assert(!tree.values.exists(_.contains("{{tool:")), "no placeholder survives")
-    val noMod = AgentGenerator.claudeCode(d, Settings.copy(claudeMod = false))
+    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(false))
     assert(!noMod.keys.exists(_.contains("quota-guard")))
 
   test("Codex: everything off in the base, one profile per role with its prompt and tools"):
@@ -229,7 +231,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val base = AgentGenerator.codexBase(Settings)
     assert(base.contains("[skills]\ninclude_instructions = false\n\n[skills.bundled]\nenabled = false"), base)
     assert(!base.contains("tool_output_token_limit"), "0: the model's own limit")
-    val limited = AgentGenerator.codexBase(Settings.copy(codexToolOutputTokens = 6000))
+    val limited = AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(6000))
     assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
     assert(
       limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"),
@@ -237,7 +239,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
 
   test("Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither"):
-    val lean = Settings.copy(codexLeanBase = true, codexToolOutputTokens = 6000)
+    val lean = Settings.modify(_.codexLeanBase).setTo(true).modify(_.codexToolOutputTokens).setTo(6000)
     val tree = AgentGenerator.codex(d, lean)
     val base = tree("codex/home/config.toml")
     assert(base.contains("\nmodel_instructions_file = \"base-instructions.md\"\n"), base)
@@ -263,7 +265,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
     assert(file.length < 1600, s"${file.length} characters")
     assertEquals(
-      AgentGenerator.codexBaseInstructions(d, Settings.copy(codexLeanBase = true)).contains("@exec"),
+      AgentGenerator.codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(true)).contains("@exec"),
       false,
       "no output limit: no budget line"
     )
@@ -274,7 +276,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("agents.providers.codex.base-instructions: lean by default, builtin by config"):
     val c = com.histmersion.config.AppConfig.load().agents.providers.codex
     assertEquals((c.baseInstructions, c.leanBase), ("lean", true))
-    assert(!c.copy(baseInstructions = " Builtin ").leanBase && c.copy(baseInstructions = "lean").leanBase)
+    assert(!c.modify(_.baseInstructions).setTo(" Builtin ").leanBase && c.modify(_.baseInstructions).setTo("lean").leanBase)
 
   test("TOML strings hold any text"):
     assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")

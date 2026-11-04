@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -40,7 +42,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -201,13 +203,13 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(event.corrections.size, 2, "the card lists them")
 
   test("corrections: retired once the catalogue agrees; flagged when it changes to something else"):
-    val agrees = reimport(upstream0.copy(label = "Hekla 3 (Zqcr)"))
+    val agrees = reimport(upstream0.modify(_.label).setTo("Hekla 3 (Zqcr)"))
     assertEquals(agrees.corrections, Correction.Counts(kept = 1, retired = 1))
     assertEquals(corrections.find(_.field == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
     val changed =
-      upstream0.copy(label = "Hekla 3 (Zqcr)", description = Some("Confirmed Eruption at Zqcr; area: SW flank"))
+      upstream0.modify(_.label).setTo("Hekla 3 (Zqcr)").modify(_.description).setTo(Some("Confirmed Eruption at Zqcr; area: SW flank"))
     val c = reimport(changed)
     assertEquals(c.corrections, Correction.Counts(conflicts = 1))
     assertEquals(event.event.description, Some("my note"))
@@ -224,7 +226,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     assert(lint.exists((id, detail) => id == Id && detail.startsWith("description:")), lint.toString)
     // still a conflict on the next import (the catalogue unchanged since), and back to active if it reverts
     assertEquals(reimport(changed).corrections, Correction.Counts(conflicts = 1))
-    assertEquals(reimport(upstream0.copy(label = "Hekla 3 (Zqcr)")).corrections, Correction.Counts(kept = 1))
+    assertEquals(reimport(upstream0.modify(_.label).setTo("Hekla 3 (Zqcr)")).corrections, Correction.Counts(kept = 1))
     // setting the field to the catalogue's value takes the catalogue's: the correction goes
     assert(EventFixtures.patch(ds, Id, EventPatch(description = Some("Confirmed Eruption at Zqcr"))).isRight)
     assertEquals(corrections.filter(_.field == EventFields.Description), Nil)
@@ -236,7 +238,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       (event.event.central, event.event.plusMinus, event.event.precision),
       (None, None, EventPrecision.Precise)
     )
-    val _ = reimport(upstream0.copy(label = "Hekla 3 (Zqcr)"))
+    val _ = reimport(upstream0.modify(_.label).setTo("Hekla 3 (Zqcr)"))
     assertEquals(
       (event.event.timeSpan, event.event.central),
       (mine, None),

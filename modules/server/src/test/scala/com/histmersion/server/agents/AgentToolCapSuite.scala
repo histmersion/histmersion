@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.automation.agents.Toolbox
@@ -37,7 +39,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.copy(db = b.db.copy(url = testDb.get))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get))
   private lazy val deps =
     val ds = testPool(cfg.db)
     Migrate.run(ds)

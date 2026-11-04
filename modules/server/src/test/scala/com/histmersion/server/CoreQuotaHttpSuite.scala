@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.library.acquisition.CoreBudget
@@ -23,7 +25,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
 
   test("the budget is kept in the server's database, read back by the next server, and shown by about"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     import com.augustnagro.magnum.*
     val clean = com.histmersion.util.database.Db.pool(cfg.db)
     try {

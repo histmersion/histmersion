@@ -1,5 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.TableSize
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -21,7 +23,7 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private def count(table: String): Int =

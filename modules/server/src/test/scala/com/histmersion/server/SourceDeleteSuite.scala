@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.citations.CitationFixtures
@@ -51,10 +53,8 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      converter = b.converter.copy(spoolDir = spool.toString),
-      acquire = b.acquire.copy(spoolDir = acquire.toString)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(spool.toString)).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(acquire.toString)
     )
   private lazy val deps =
     val ds = testPool(cfg.db)

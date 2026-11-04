@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Goal, GoalsExport}
 
@@ -221,14 +223,13 @@ class GoalsExportSuite extends munit.FunSuite:
     assert(out.endsWith("_No goals._\n"), out)
 
   test("deterministic: the order rows and links arrive in does not change the file"):
-    val shuffled = scala.util.Random(906).shuffle(views).map(v => v.copy(links = v.links.reverse))
+    val shuffled = scala.util.Random(906).shuffle(views).map(v => v.modify(_.links).setTo(v.links.reverse))
     assertEquals(GoalsExport.render(shuffled, status), GoalsExport.render(views, status))
 
   test("values that change on their own (updated_at, a schedule's next/last firing) are left out"):
     val ticked = views.map { v =>
-      v.copy(
-        goal = v.goal.copy(updatedAt = Some("2027-01-01 00:00:00+00")),
-        schedules = v.schedules.map(
+      v.modify(
+        _.goal).setTo(v.goal.modify(_.updatedAt).setTo(Some("2027-01-01 00:00:00+00"))).modify(_.schedules).setTo(v.schedules.map(
           _.copy(
             nextRunAt = Some("2027-01-01T06:00:00Z"),
             lastRunAt = Some("2026-12-31T06:00:00Z"),

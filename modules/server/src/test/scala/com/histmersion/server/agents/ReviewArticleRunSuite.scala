@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.TestRuns
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -147,13 +149,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        roles =
-          b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(Model.wire).modify(_.coldReader).setTo(Model.wire).modify(_.skeptic).setTo(Model.wire).modify(_.fixer).setTo(Model.wire)
       )
     )
 
@@ -787,7 +785,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     assert(a.startRun(RunRequest("review-article", "zzagent_nope")).isLeft)
     assert(a.startRun(RunRequest("review-article", Slug, rounds = Some(99))).left.exists(_.message.contains("rounds")))
-    val noSkeptic = baseCfg.copy(agents = baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(skeptic = "")))
+    val noSkeptic = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo("")))
     val (b, _) = handlers(c, noSkeptic)
     assert(b.startRun(RunRequest("review-article", Slug)).left.exists(_.message.contains("skeptic")))
 
@@ -970,8 +968,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
       c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
       c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
-      val cfg = baseCfg.copy(researchAgents =
-        baseCfg.researchAgents.copy(review = baseCfg.researchAgents.review.copy(finalPanel = mode))
+      val cfg = baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(mode))
       )
       val (a, h) = handlers(c, cfg); seed(h)
       (start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2))), c)
@@ -1219,7 +1216,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   // ── #992: dry runs, a role's own model, compare ──────────────────────────────────────────────────
 
   private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
-  private lazy val evalCfg = baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4"))
+  private lazy val evalCfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("scripted=1/2; haiku-sim=3/4"))
 
   private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
@@ -1459,7 +1456,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("#1840: on the last attempt an answer without verified spot-checks is kept, with a warning on the run"):
     val c = PanelClient(Model)
-    val cfg = baseCfg.copy(agents = baseCfg.agents.copy(step = baseCfg.agents.step.copy(maxRetries = 0)))
+    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.step).setTo(baseCfg.agents.step.modify(_.maxRetries).setTo(0)))
     c.add("rules", Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
@@ -1533,8 +1530,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     * answer carries one (the spot-checks are not what these tests are about).
     */
   private lazy val oneSpot =
-    baseCfg.copy(researchAgents =
-      baseCfg.researchAgents.copy(review = baseCfg.researchAgents.review.copy(spotChecks = 1))
+    baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.spotChecks).setTo(1))
     )
 
   private def states(h: ServerWiring): List[(String, String)] =
