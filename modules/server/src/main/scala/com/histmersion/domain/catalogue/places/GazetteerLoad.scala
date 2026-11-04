@@ -28,7 +28,7 @@ import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
   *     dataset (`lpf:<file name>`), its version the file's sha256; its title, citation, licence and time span come from
   *     the file or a `<file>.meta.json` beside it.
   *
-  * Each source is read in batches into [[GazetteerRepo.Session]] on one connection; `apply = false` is a dry run that
+  * Each source is read in batches into [[GazetteerImport.Session]] on one connection; `apply = false` is a dry run that
   * rolls every batch back and reports what it would have done. After a real run the source is recorded in
   * `gazetteer_sources` and `finding_places` is re-materialised.
   */
@@ -293,7 +293,7 @@ object GazetteerLoad:
       label: String
   )(feed: Batcher => Unit): (Gazetteer.LoadCounts, Span) =
     db.read:
-      val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
+      val session = GazetteerImport.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
       val pruned = session.prune(s.batch)
       if pruned > 0 then note(s"$key: $pruned point-only area place(s) removed")
       var batches = 0 // progress

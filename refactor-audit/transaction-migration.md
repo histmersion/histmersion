@@ -1,6 +1,8 @@
 # Transaction ownership batch
 
-Status: required work, not an accepted exception or boy-scout deferral.
+Status: this planning record is preserved. TX-0001–TX-0003 were subsequently
+repaired and verified together; see `transaction-repair/README.md` and the
+append-only `transaction-history.tsv`. The following describes the pre-repair state.
 
 Source review confirms three different ownership problems behind the current
 19 transaction diagnostics. Diagnostics include a transitive call witness and

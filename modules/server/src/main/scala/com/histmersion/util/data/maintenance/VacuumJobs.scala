@@ -61,7 +61,7 @@ final class VacuumJobs(
           progress(s"${Vacuum.describe(VacuumPlan(plan.analyze, List(table)))} (${i + 1}/${plan.tables.size})")
           val before = transactor.read(VacuumRepo.state(table))
           val started = System.nanoTime()
-          scala.util.Try(transactor.read(VacuumRepo.vacuum(table, plan.analyze))).toEither match
+          scala.util.Try(transactor.autocommit(VacuumRepo.vacuum(table, plan.analyze))).toEither match
             case Left(e)  => outcome(Some(s"$table: ${e.getMessage}"))
             case Right(_) =>
               val after = transactor.read(VacuumRepo.state(table))

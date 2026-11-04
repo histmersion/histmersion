@@ -11,6 +11,7 @@ production	core	public	invariant-obligation-review	232
 production	db	private	invariant-obligation-review	1
 production	db	public	invariant-obligation-review	159
 production	db	qualified-private:GazetteerRepo	invariant-obligation-review	1
+production	db	qualified-private:Transactor	invariant-obligation-review	1
 production	files	public	invariant-obligation-review	17
 production	plugin-api	private	invariant-obligation-review	2
 production	plugin-api	public	invariant-obligation-review	39
@@ -31,6 +32,7 @@ production	plugins/gazetteers	public	invariant-obligation-review	4
 production	plugins/media	public	invariant-obligation-review	36
 production	server	private	invariant-obligation-review	5
 production	server	public	invariant-obligation-review	633
+production	server	qualified-private:GazetteerImport	invariant-obligation-review	1
 production	server	qualified-private:automation	invariant-obligation-review	1
 production	server	qualified-private:hot	invariant-obligation-review	2
 production	upstreams	public	invariant-obligation-review	29
@@ -42,7 +44,7 @@ test	chimney-iron-tests	public	invariant-obligation-review	18
 test	cli	public	invariant-obligation-review	38
 test	config	public	invariant-obligation-review	11
 test	core	public	invariant-obligation-review	95
-test	db	public	invariant-obligation-review	71
+test	db	public	invariant-obligation-review	69
 test	files	public	invariant-obligation-review	10
 test	plugin-api	public	invariant-obligation-review	10
 test	plugin-host	public	invariant-obligation-review	22
@@ -55,7 +57,7 @@ test	plugins/events	public	invariant-obligation-review	2
 test	plugins/fetchers	public	invariant-obligation-review	2
 test	plugins/gazetteers	public	invariant-obligation-review	4
 test	plugins/media	public	invariant-obligation-review	6
-test	server	public	invariant-obligation-review	430
+test	server	public	invariant-obligation-review	432
 test	upstreams	public	invariant-obligation-review	7
 test	values	public	invariant-obligation-review	6
 test	web	public	invariant-obligation-review	100

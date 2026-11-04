@@ -95,3 +95,15 @@ The enforcement suite additionally verifies stale detector rejection, rejected
 unreviewed additions during adoption, successful reviewed-only adoption, refused
 event overwrite, and rejection of an unrelated regression after adoption. The
 original baseline remains byte-for-byte unchanged throughout.
+# Transaction repair correction
+
+The `corrections/transaction-repair` event preserves the old and new source assertion
+files and their policy contracts. Only the repaired QueryRepo helper assertion
+changes from positive to negative. The recorder verifies the old policy hash by
+reconstructing that single row; detector logic and permission configuration are
+unchanged. Positive helper-mediated enforcement fixtures remain required.
+
+The history gate checks the correction's predecessor, exact current contract,
+assertion hashes and frozen baseline hash. Repaired diagnostic IDs remain in the
+original baseline/adoption and are linked to verified boundary fixes in
+`../transaction-repair/resolved-identities.tsv`; they are not deleted or forgiven.

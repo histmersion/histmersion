@@ -11,7 +11,7 @@ production	console	nested-owner-review	2
 production	console	top-level-owner-review	2
 production	core	nested-owner-review	310
 production	core	top-level-owner-review	152
-production	db	nested-owner-review	59
+production	db	nested-owner-review	60
 production	db	top-level-owner-review	271
 production	files	nested-owner-review	19
 production	files	top-level-owner-review	16
@@ -44,8 +44,8 @@ production	plugins/gazetteers	nested-owner-review	1
 production	plugins/gazetteers	top-level-owner-review	11
 production	plugins/media	nested-owner-review	21
 production	plugins/media	top-level-owner-review	44
-production	server	nested-owner-review	434
-production	server	top-level-owner-review	825
+production	server	nested-owner-review	435
+production	server	top-level-owner-review	826
 production	upstreams	nested-owner-review	10
 production	upstreams	top-level-owner-review	33
 production	values	nested-owner-review	68
@@ -60,8 +60,8 @@ test	cli	top-level-owner-review	33
 test	config	top-level-owner-review	11
 test	core	nested-owner-review	6
 test	core	top-level-owner-review	95
-test	db	nested-owner-review	6
-test	db	top-level-owner-review	94
+test	db	nested-owner-review	5
+test	db	top-level-owner-review	92
 test	files	top-level-owner-review	10
 test	plugin-api	nested-owner-review	13
 test	plugin-api	top-level-owner-review	10
@@ -82,8 +82,8 @@ test	plugins/fetchers	top-level-owner-review	2
 test	plugins/gazetteers	top-level-owner-review	4
 test	plugins/media	nested-owner-review	1
 test	plugins/media	top-level-owner-review	5
-test	server	nested-owner-review	144
-test	server	top-level-owner-review	382
+test	server	nested-owner-review	145
+test	server	top-level-owner-review	384
 test	upstreams	top-level-owner-review	7
 test	values	top-level-owner-review	6
 test	web	nested-owner-review	8

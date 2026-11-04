@@ -1,0 +1,2 @@
+PASS
+12 files exactly match the compiled AST preview; old test paths removed.

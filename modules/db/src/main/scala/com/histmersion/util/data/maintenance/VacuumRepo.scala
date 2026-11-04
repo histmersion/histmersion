@@ -32,7 +32,6 @@ object VacuumRepo:
     */
   def vacuum(table: String, analyze: Boolean)(using con: DbCon): Unit =
     val c = con.connection
-    c.setAutoCommit(true)
     val st = c.createStatement()
     try { val _ = st.execute(Vacuum.statement(table, analyze)) }
     finally st.close()

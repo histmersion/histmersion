@@ -1,5 +1,41 @@
 # Priority-family status
 
+## Transaction repair checkpoint
+
+TX-0001–TX-0003 are now verified fixed by a single guarded targeted Scalafix batch.
+Project-wide production capability coverage is 2,358/2,358 files (one new feature
+orchestrator); repository transaction diagnostics fall from 22 to zero, factory
+diagnostics remain zero, and all 209 other capability occurrences retain their
+identities and multiplicities. Two SQL expressions remain unresolved. No new
+supported production capability identities appeared. This is bounded coverage,
+not a claim of complete transaction recall or a test capability baseline.
+
+The same 62 selected real-database test identities pass before and after, without
+failures or skips. Production/test compilation and transaction lifecycle fixtures
+pass. See `transaction-repair/README.md`, `transaction-findings.tsv`, and the
+append-only `transaction-history.tsv`. The baseline retains the repaired findings.
+One source assertion correction is recorded with both versions and policy contracts.
+
+The final integrated assessment passes on 3,128 source/test files. The capability
+identity gate retains 209 occurrences in 175 anchors, of which 65 occurrences have
+ambiguous identity; new/reopened identities and multiplicity changes are zero.
+Its 15 absent anchors map to the 22 occurrences verified by the transaction batch.
+Tests and unsupported capability flows remain outside this regression claim.
+
+Primitive member candidates now number 30,322 leaves in 28,149 production positions
+(both up nine after the signature split). Full-inventory unresolved leaves are
+46,650. No primitive fixes or semantic equivalence approvals are claimed. The old
+counts below remain the preceding checkpoint; the increase is not hidden by resetting
+the denominator. Module build inventory completes again; type-crossing candidate
+counts changed and still require identity/adjudication work. Aggregate baseline
+comparisons remain explicitly policy-incomparable rather than being recaptured.
+
+Capability classification, module isolation history, and primitive/newtype semantic
+grouping remain required work. Their previous evidence below is preserved, not
+silently replaced by the transaction batch. Copy automation stays paused.
+
+## Prior measurement checkpoints
+
 Checkpoint after the completed current-batch assessment. Figures below are fresh
 measurements with the same limitations as their preceding baseline. All four families
 retain required work independently of the copy rewrite's progress.

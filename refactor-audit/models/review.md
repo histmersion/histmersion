@@ -31,8 +31,8 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | run | java/lang/String# | 108 | 95 | api, cli, core, db, plugin-host, plugin-testkit, plugin-vaults, plugins/calibre, server |
 | headers | java/lang/String# | 108 | 53 | core, plugin-api, plugin-host, plugin-testkit, plugins/ai-http, plugins/fetchers, plugins/media, server |
 | raw | java/lang/String# | 99 | 99 | api, cli, config, core, db, files, plugin-api, plugin-resolver, plugins/calibre, plugins/media, server, upstreams, values, web |
+| ids | java/lang/String# | 98 | 84 | api, cli, core, db, files, plugin-api, plugin-host, plugins/calibre, plugins/media, server, upstreams, web |
 | id | scala/Long# | 98 | 98 | api, cli, core, db, plugins/media, server, web |
-| ids | java/lang/String# | 97 | 83 | api, cli, core, db, files, plugin-api, plugin-host, plugins/calibre, plugins/media, server, upstreams, web |
 | provider | java/lang/String# | 93 | 93 | api, db, plugin-host, plugin-testkit, plugins/media, server, web |
 | offset | scala/Int# | 88 | 88 | api, core, db, server, web |
 | authors | java/lang/String# | 87 | 84 | api, cli, core, db, plugin-api, plugins/calibre, server, upstreams, web |
@@ -57,11 +57,11 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | to | scala/Long# | 64 | 64 | api, cli, db, plugin-host, plugins/events, server, web |
 | from | scala/Long# | 64 | 64 | api, cli, db, plugin-host, plugins/events, server, web |
 | total | scala/Int# | 64 | 64 | api, cli, core, server, web |
+| source | java/lang/String# | 63 | 61 | api, cli, config, core, db, files, plugin-api, plugin-testkit, plugins/fetchers, server, web |
 | uid | java/lang/String# | 63 | 63 | api, cli, db, server |
 | query | java/lang/String# | 63 | 63 | api, cli, core, plugins/calibre, plugins/events, plugins/media, server, upstreams, web |
 | role | java/lang/String# | 63 | 63 | api, core, db, plugin-api, plugins/ai-http, plugins/media, server, values, web |
 | placeId | java/lang/String# | 63 | 60 | api, core, db, server, values |
-| source | java/lang/String# | 62 | 60 | api, cli, config, core, db, files, plugin-api, plugin-testkit, plugins/fetchers, server, web |
 | q | java/lang/String# | 62 | 62 | api, cli, core, db, plugin-host, server, web |
 | state | java/lang/String# | 61 | 61 | api, cli, core, db, server, values, web |
 | sha256 | java/lang/String# | 60 | 60 | api, cli, core, db, files, plugin-resolver, server |

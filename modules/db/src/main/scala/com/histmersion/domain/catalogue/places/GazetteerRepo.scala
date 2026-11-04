@@ -1,12 +1,10 @@
 package com.histmersion.domain.catalogue.places
 
-import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
-import scala.annotation.tailrec
 import com.histmersion.api.Span
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -137,110 +135,52 @@ private[places] object GazetteerRepo:
 
   // ── one import session ─────────────────────────────────────────────────────────────────────────
 
-  /** Start an import of `source` at `version` on the caller's connection (an empty `gaz_seen`). `windowYears` is
-    * `places.sources.open-start-window-years`: the window before a known end that stands for an unknown start
-    * ([[Gazetteer.validity]]). `pointAreaKinds` is `places.sources.point-area-kinds`: a GeoNames/Wikidata record of one
-    * of them with only a point joins a place its ids name but never becomes one ([[Gazetteer.dropsPointArea]]).
-    */
   def session(
       source: String,
       version: String,
-      apply: Boolean,
       windowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
       pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet
   )(using con: DbCon): Session =
     val _ = sql"CREATE TEMP TABLE IF NOT EXISTS gaz_seen (ref text PRIMARY KEY)".update.run()
     val _ = sql"TRUNCATE gaz_seen".update.run()
-    Session(source, version, apply, windowYears, pointAreaKinds)
+    Session(source, version, windowYears, pointAreaKinds)
 
-  /** An import of one source on ONE connection ([[session]]). `apply = false` rolls every batch back. */
   final class Session private[GazetteerRepo] (
       source: String,
       version: String,
-      apply: Boolean,
       windowYears: Int,
       pointAreaKinds: Set[String]
   )(using con: DbCon):
-    private val jdbc = con.connection
 
-    /** One batch, in its own transaction. */
-    def batch(records: List[GazRecord]): Gazetteer.LoadCounts =
-      @tailrec def dedupe(
-          rest: List[GazRecord],
-          ok: Vector[GazRecord],
-          d: List[String]
-      ): (Vector[GazRecord], List[String]) =
-        rest match
-          case Nil                                    => (ok, d)
-          case r :: tail if ok.exists(_.ref == r.ref) => dedupe(tail, ok, d :+ s"${r.ref}: repeated")
-          case r :: tail                              => dedupe(tail, ok :+ r, d)
-      val (uniq, dup) = dedupe(records, Vector.empty, Nil)
-      val rs = uniq.toList
-      jdbc.setAutoCommit(false)
-      val counts =
-        try
-          val c = write(rs)
-          if apply then jdbc.commit() else jdbc.rollback()
-          c
-        catch
-          case e: Throwable =>
-            jdbc.rollback()
-            throw e
-        finally jdbc.setAutoCommit(true)
-      val refs = rs.map(_.ref)
+    def writeBatch(records: List[GazRecord]): Gazetteer.LoadCounts = write(records)
+
+    def recordSeen(records: List[GazRecord]): Unit =
+      val refs = records.map(_.ref)
       val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
-      counts.modify(_.skipped).setTo((dup ++ counts.skipped).take(20))
 
-    /** Before the first batch of a real run: remove the places this source made for areas known only by a point
-      * ([[Gazetteer.dropsPointArea]]) — every one, in transactions of `batch` places, so that no record of ANY batch
-      * joins a place a later batch would remove (its names would go with it). A dry run removes nothing here; its
-      * batches count those places as they meet their records. Returns the places removed.
-      */
-    def prune(batch: Int): Long =
-      if !apply || pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then 0L
-      else
-        val ids = PointAreaRepo.ofSourceIn(source, pointAreaKinds.toList.sorted)
-        ids.grouped(math.max(1, batch)).foldLeft(0L) { (n, chunk) =>
-          jdbc.setAutoCommit(false)
-          try
-            val d = PointAreaRepo.deletePlacesIn(chunk)
-            jdbc.commit()
-            n + d
-          catch
-            case e: Throwable =>
-              jdbc.rollback()
-              throw e
-          finally jdbc.setAutoCommit(true)
-        }
+    def pruneCandidates: List[String] =
+      if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil
+      else PointAreaRepo.ofSourceIn(source, pointAreaKinds.toList.sorted)
 
-    /** Remove what the source no longer says: the rows of records this run has not seen. Run once, after the last
-      * batch, and only when the whole source was read.
-      */
+    def deletePruneChunk(ids: List[String]): Int = PointAreaRepo.deletePlacesIn(ids)
+
     def sweep(): Gazetteer.LoadCounts =
-      jdbc.setAutoCommit(false)
-      try
-        val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
-                          AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = n.import_ref)""".update.run()
-        val links = sql"""DELETE FROM place_links l WHERE l.import_source = $source
-                          AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = l.import_ref)""".update.run()
-        val descs = sql"""DELETE FROM place_descriptions d WHERE d.import_source = $source
-                          AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = d.import_ref)""".update.run()
-        val places = sql"""DELETE FROM places p WHERE p.import_source = $source
-                           AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = p.import_ref)""".update.run()
-        if apply then jdbc.commit() else jdbc.rollback()
-        Gazetteer.LoadCounts(
-          source,
-          version,
-          namesRemoved = names,
-          linksRemoved = links,
-          placesRemoved = places,
-          descriptionsRemoved = descs
-        )
-      catch
-        case e: Throwable =>
-          jdbc.rollback()
-          throw e
-      finally jdbc.setAutoCommit(true)
+      val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
+                        AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = n.import_ref)""".update.run()
+      val links = sql"""DELETE FROM place_links l WHERE l.import_source = $source
+                        AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = l.import_ref)""".update.run()
+      val descs = sql"""DELETE FROM place_descriptions d WHERE d.import_source = $source
+                        AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = d.import_ref)""".update.run()
+      val places = sql"""DELETE FROM places p WHERE p.import_source = $source
+                         AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = p.import_ref)""".update.run()
+      Gazetteer.LoadCounts(
+        source,
+        version,
+        namesRemoved = names,
+        linksRemoved = links,
+        placesRemoved = places,
+        descriptionsRemoved = descs
+      )
 
     private def write(rs: List[GazRecord]): Gazetteer.LoadCounts =
       if rs.isEmpty then Gazetteer.LoadCounts(source, version)
