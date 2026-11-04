@@ -24,6 +24,14 @@ object GoodService:
   final class InMemory extends Base:
     def read(): String = "memory"
 
+trait QualifiedService:
+  def read(): String
+object QualifiedService:
+  final private[QualifiedService] class Implementation extends QualifiedService:
+    def read(): String = "stored"
+  final class InMemory extends QualifiedService:
+    def read(): String = "memory"
+
 enum Status:
   case Active, Done
   case Failed(reason: String)

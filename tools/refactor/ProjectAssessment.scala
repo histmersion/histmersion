@@ -31,6 +31,15 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
   private def table(name: String): List[List[String]] = lines(current.resolve(name)).drop(1).map(_.split("\t", -1).toList)
   private def module(path: String): String = path.split("/modules/").last.stripPrefix("modules/").split("/src/").head
   private def sourceFiles: List[Path] = walk("modules").filter(p => p.toString.endsWith(".scala") && (p.toString.contains("/src/main/") || p.toString.contains("/src/test/")))
+  private def generated(p: Path): Boolean = p.iterator.asScala.exists(s => Set("target",".scala-build",".bsp")(s.toString))
+  private def policyInputs: List[Path] = walk("tools/refactor").filter { p =>
+    !generated(p) && (List(".scala",".conf",".tsv").exists(p.toString.endsWith) || p.getFileName.toString == "objects.md")
+  }
+  private def resourceInputs: List[Path] =
+    List(Paths.get("build.sbt"),Paths.get("docs/research-domain-model/objects.md")) ++
+      walk("project").filter(p => !generated(p) && List(".scala",".sbt").exists(p.toString.endsWith)) ++
+      walk("modules").filter(p => p.toString.contains("/src/") && p.toString.contains("/resources/") &&
+        (p.toString.endsWith(".conf") || p.toString.contains("/architecture/") && p.toString.endsWith(".tsv")))
   private def fingerprint(paths: List[Path]): String = hash(paths.sortBy(_.toString).map(p => p.toString + "\t" + hash(Files.readString(p))).mkString("\n"))
   private def run(label: String, args: List[String]): Unit = {
     println("Assessment: " + label)
@@ -44,8 +53,9 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
     write(current.resolve("status.txt"), List("RUNNING", java.time.Instant.now().toString))
     try {
       val before = fingerprint(sourceFiles)
-      val policyFiles = walk("tools/refactor").filter(p => p.getParent == Paths.get("tools/refactor") && (p.toString.endsWith(".scala") || p.toString.endsWith(".conf")))
-      val policyHash = fingerprint(policyFiles)
+      val policyHash = fingerprint(policyInputs)
+      val resourcesHash = fingerprint(resourceInputs)
+      require(policyInputs.contains(Paths.get("tools/refactor/model-fixture/expected-primitives.tsv")),"Golden fixture expectations missing from policy fingerprint")
       if (policy.compile) run("compile", List("sbt", "--server", "-batch", "set every scalafmtOnCompile := false", "set ThisBuild / scalacOptions += \"-Xsemanticdb\"", "compile", "Test/compile"))
       run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/SchemaVerification.scala"))
       run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ModelInventoryVerification.scala"))
@@ -56,7 +66,8 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
       run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
       require(before == fingerprint(sourceFiles), "Application sources changed during assessment")
-      require(policyHash == fingerprint(policyFiles), "Rule/configuration changed during assessment")
+      require(policyHash == fingerprint(policyInputs), "Rule/configuration/fixture changed during assessment")
+      require(resourcesHash == fingerprint(resourceInputs), "Build/configuration/object-plan/ledger inputs changed during assessment")
       run("inventory-coverage", cli ++ List("--config", "tools/refactor/inventory-coverage.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/InventoryCoverage.scala"))
       val modules = sourceFiles.map(p => module(p.toString)).distinct.sorted
       val scopes = scala.collection.mutable.LinkedHashMap.empty[String, String]
@@ -105,7 +116,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
         val n = counts((id,"ALL")); val old = if (comparable) previous.get((id,"ALL")) else None
         s"| $id | $n | ${old.fold("unknown")(_.toString)} | ${old.fold("incomparable")(v => (n-v).toString)} | $scope |"
       })
-      write(current.resolve("fingerprints.txt"), List("sources=" + before, "policy=" + policyHash))
+      write(current.resolve("fingerprints.txt"), List("sources=" + before, "policy=" + policyHash, "resources=" + resourcesHash))
       val legacyPath = Paths.get("modules/server/src/test/resources/architecture/contracts.tsv")
       val legacy = lines(legacyPath).filterNot(s => s.startsWith("#") || s.trim.isEmpty).map(_.split("\\\\t|\\t", -1).toList)
       require(legacy.forall(_.size == 4), "Unknown historical contract ledger format")
