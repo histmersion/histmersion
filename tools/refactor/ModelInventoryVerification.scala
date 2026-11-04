@@ -43,11 +43,19 @@ class ModelInventoryVerification extends SyntacticRule("ModelInventoryVerificati
       require(leaves.exists(l => positions(l.head)(8) == name && l(2) == "newtype"),"Missing existing newtype: " + name)
     }
     require(positions.values.exists(p => p(8) == "localCount" && p(3) == "production/local"),"Local scope lost")
+    val roles = rows("position-roles.tsv").map(r => r.head -> r(1)).toMap
+    def hasRole(name: String, kind: String, role: String): Boolean = positions.values.exists(p => p(8) == name && p(5) == kind && roles(p.head) == role)
+    require(hasRole("title","constructor-parameter","record-field"),"Record field role lost")
+    require(hasRole("pageSize","parameter","trait-contract"),"Public trait contract role lost")
+    require(hasRole("localCount","value","local-position"),"Local variable promoted to model contract")
+    require(hasRole("rawId","parameter","configured-boundary"),"Configured parse boundary lost")
+    require(hasRole("rawCount","parameter","non-public-member-review"),"Private helper parameter promoted to public contract")
     val parameterization = rows("parameterization.tsv")
     require(parameterization.exists(r => r.head == "modelinventoryfixture/PageSize#" && r(2).isEmpty),"PageSize phantom candidate lost")
     require(parameterization.exists(r => r.head == "modelinventoryfixture/Page#" && r(2).nonEmpty),"Page representation use lost")
     require(rows("uses.tsv").exists(r => r.head == "modelinventoryfixture/Record#title." && r(3) == "modelinventoryfixture/Operations.lookup()."),"Resolved consumer edge lost")
     run("negative",cli ++ List("--config","tools/refactor/model-fixture/reject.conf") ++ args,1)
+    run("absent-boundary",cli ++ List("--config","tools/refactor/model-fixture/reject-boundary.conf") ++ args,1)
     run("coverage-rejection",cli ++ List("--config","tools/refactor/model-fixture/inspect.conf") ++ args.dropRight(1) ++ List(source + "/Models.scala"),1)
     Files.write(report,List("PASS",s"${expected.size} exact primitive occurrences", "opaque/Iron and cross-file alias classification", "shadowed primitive names excluded", "nested, inferred, union, by-name, repeated and singleton types", "phantom-vs-represented type parameter evidence", "resolved consumer relationship", "negative assertion and missing-file coverage rejected").asJava,UTF_8)
   }
