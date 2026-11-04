@@ -48,6 +48,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       val policyHash = fingerprint(policyFiles)
       if (policy.compile) run("compile", List("sbt", "--server", "-batch", "set every scalafmtOnCompile := false", "set ThisBuild / scalacOptions += \"-Xsemanticdb\"", "compile", "Test/compile"))
       run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/SchemaVerification.scala"))
+      run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ModelInventoryVerification.scala"))
       run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
       run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
       require(before == fingerprint(sourceFiles), "Application sources changed during assessment")

@@ -5,6 +5,22 @@ Run commands from the `contracts3-scalafix` worktree root.
 
 ## Project-wide measurement and bulk rewrite gates
 
+### Primitive and existing-type inventory
+
+The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
+
+`positions.tsv` records fields, constructor/method/lambda parameters, return values, vals/vars, givens, aliases and type bounds, including inferred symbol signatures. `leaves.tsv` follows nested type arguments, transparent aliases, functions, tuples, unions, by-name/repeated types and singleton primitives. A cross-file symbol catalogue resolves project declarations before classification. Opaque and Iron types are distinguished from their primitive representation; custom types named String or Int are not primitives. Unit and bottom/top types are not model-value primitive candidates.
+
+`types.tsv` catalogs existing classes, traits, enums, objects, aliases, opaque types and Iron companions, with ownership, generic parameters, AST and signatures. `uses.tsv` gives resolved symbol consumers. Global occurrence IDs use semantic symbols; local/anonymous IDs are scoped to a file and source position and are not stable across edits.
+
+`model-candidates.tsv` selects production members for review; local variables, lambdas, tests and alias definitions remain available in the full inventory. Module-to-layer hints are configured in `models.conf` and do not establish correct ownership. `proposals.tsv` suggests names and existing same-named types, without approving equivalence. Purpose, units, constraints, boundaries and owner must still be assigned. Do not edit generated proposals as an approval registry: reviewed mappings belong in a separate versioned configuration before rewrites are enabled.
+
+`pagination-review.tsv` collects potential page size, page number, offset, cursor and limit concepts. `parameterization.tsv` records whether existing generic parameters occur in constructor positions; absence is a phantom-role review prompt, not proof that a phantom is appropriate. `review.md` gives the largest production-member groups. No type merge or primitive replacement is performed.
+
+Missing metadata, external definitions and unsupported semantic forms remain in `unresolved.tsv` and `unresolved-symbols.tsv`. An external container's explicit type arguments are still inspected even when its definition is unavailable. Therefore primitive counts are discovered occurrences, not a claim that all external aliases have been expanded or all occurrences are violations. Coverage requires the complete file set and unchanged source hashes; any source change or fixture mismatch fails the run. Check both the process exit status and `status.txt` before trusting reports.
+
+`ModelInventoryVerification.scala` compiles two fixtures and checks the exact multiset of 34 primitive occurrences, existing newtypes across files, lookalikes, phantom/represented parameters and a resolved consumer edge. Deliberately wrong expectations and an omitted source file must fail. All application sources remain unchanged.
+
 ```text
 scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/assessment.conf --scala-version 3.10.0 --files tools/refactor/ProjectAssessment.scala
 ```
