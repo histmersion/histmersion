@@ -35,12 +35,12 @@ class FeatureOwners(val policy: FeatureOwners.Policy) extends SemanticRule("Feat
   private val mappings = policy.moves.flatMap(m => m.names.map(n => (m.oldPackage + "." + n, m.newPackage + "." + n)))
   private val symbols = mappings.flatMap { case (a,b) => List(a.replace('.', '/') + "." -> b, a.replace('.', '/') + "#" -> b) }.toMap
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("FeatureOwners")(Policy()).andThen { p =>
-    if (!Set("inspect", "apply", "check")(p.mode) || p.moves.isEmpty ||
+    if (!Set("inspect", "apply", "check", "measure")(p.mode) || p.moves.isEmpty ||
       p.moves.map(_.from).distinct.size != p.moves.size || p.moves.map(_.to).distinct.size != p.moves.size ||
       p.moves.exists(m => m.from == m.to || m.oldPackage == m.newPackage || m.names.isEmpty || !m.from.contains("/src/test/") || !m.to.contains("/src/test/")))
       Configured.error("Require unique test-file moves, explicit packages, declarations and inspect/apply/check mode")
     else {
-      if (p.mode != "check") p.moves.foreach { m =>
+      if (Set("inspect", "apply")(p.mode)) p.moves.foreach { m =>
         require(Files.isRegularFile(path(m.from)), s"Missing source: ${m.from}")
         require(!Files.exists(path(m.to)), s"Destination collision: ${m.to}")
       }
@@ -133,10 +133,10 @@ class FeatureOwners(val policy: FeatureOwners.Policy) extends SemanticRule("Feat
   override def afterComplete(): Unit = {
     val expected = sources(policy.roots)
     require(files.asScala.map(_._1).toSet == expected, "Incomplete source coverage")
-    if (policy.mode != "check") require(policy.moves.forall(m => declarations.asScala.count(_ == m.from) == 1), "Every move must be visited exactly once")
+    if (Set("inspect", "apply")(policy.mode)) require(policy.moves.forall(m => declarations.asScala.count(_ == m.from) == 1), "Every move must be visited exactly once")
     val out = path(policy.report)
     Files.createDirectories(out)
-    if (policy.mode == "inspect") {
+    if (policy.mode == "inspect" || policy.mode == "measure") {
       Files.write(out.resolve("sources.tsv"), ("path\tsha256" :: files.asScala.toList.sortBy(_._1).map { case (f,h) => f + "\t" + h }).asJava, UTF_8)
       Files.writeString(out.resolve("policy.txt"), policy.moves.toString)
       def esc(s: String) = s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")

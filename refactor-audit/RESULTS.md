@@ -4,6 +4,12 @@ Baseline: `6e1b5387`. Application and test changes use Scalafix. The current bui
 
 ## Current checkpoint
 
+The unified `assessment.conf` entry point now measures 25 developed, scoped metrics across 28 source modules after production/test compilation. It validates 31/31 capability source expectations and 28/28 structural expectations plus structural fixtures, and records per-rule/module baseline deltas. Current diagnostic counts remain 228 capability and 42 structural; no application code changed in this batch. The zero gate deliberately rejected the 103 clock matches, and the final per-module no-regression run passed. Measurement success does not mean architectural readiness or zero violations.
+
+The broader historical ledger records 2,818 occurrences; derivation, copy, layer, unwrap and primitive families account for 2,688 (95.4%). These historical heuristic counts need fresh semantic confirmation before becoming the migration denominator. The bulk plan targets at least 90% automatic repairs and prioritizes whole transformation families, starting with derivations. See `assessment/current/summary.md`, `assessment/current/automation-backlog.md` and `bulk-automation-plan.md`.
+
+Previous checkpoint:
+
 The configurable FeatureOwners batch relocated five files/six declarations and repaired 238 resolved references across 24 test files. Its check covers 3,126 source/test files with zero old-owner references. AgentRepo's outside test consumers fell from 18 to 14 and PlanQuotaRepo's from two to one. QueueRows now belongs to worklists, eliminating QueueRepo's only outside consumer; QueueRepo is private[worklists]. Structural findings are 42 (34 primitive roles, eight repository visibility), with 28/28 source guards. All nine repositories from the preceding checkpoint have an explicit classification and next transformation in `repository-batches.md`.
 
 Full production and aggregate test compilation pass. QueueServiceInMemorySuite passes 19 tests; AgentEngineSuite, PlanQuotaRunSuite, PluginAiRunSuite and ProbeRetrySuite are discovered but ignored without a test database. This is no claim of database behavior verification. The rewrite fixtures preserve aliases and lookalikes, match expected output and compile with -source:future. Enforcement rejects ten original fixture references and accepts the compiled output. Existing destinations, changed ownership policy and stale source fingerprints are rejected before patching.

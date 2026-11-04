@@ -28,6 +28,13 @@ feature-owners/policy.txt
 feature-owners/references.tsv
 owner-fixture/
 owner-fixture-output/
+assessment/current/*.log
+assessment/current/capabilities/
+assessment/current/structure/
+assessment/current/repositories/
+assessment/current/owners/
+assessment/current/fixture-verification/
+assessment/current/*.tsv
 controller-renames-check.tsv*
 repair-fixtures/
 files.txt

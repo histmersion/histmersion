@@ -28,7 +28,7 @@ object CapabilityAccess {
       repositoryOwners: List[String] = Nil, repositorySuffixes: List[String] = List("Repo"),
       report: String = "", verifyFixtures: Boolean = false, expectedFiles: List[String] = Nil,
       sourceRoots: List[String] = Nil, sourcePathContains: String = "/src/main/", bestEffort: Boolean = false,
-      examples: List[Example] = Nil)
+      examples: List[Example] = Nil, measureOnly: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -125,6 +125,7 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val path = relative(doc.input)
+    if (policy.sourceRoots.nonEmpty && !path.contains(policy.sourcePathContains)) return Patch.empty
     files.add(path)
     val lines = doc.input.text.linesIterator.toVector
     policy.examples.filter(e => Paths.get(e.path).toAbsolutePath.normalize == Paths.get(path).toAbsolutePath.normalize).foreach { e =>
@@ -178,7 +179,8 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
       }.toMap
       fixtureExpectations.add(path -> expected)
       Patch.empty
-    } else hits.map(h => Patch.lint(Diagnostic(h.id, s"${h.message}\nowner: ${h.owner}\nsymbol: ${h.symbol}", h.position, severity = LintSeverity.Error))).asPatch
+    } else if (policy.measureOnly) Patch.empty
+    else hits.map(h => Patch.lint(Diagnostic(h.id, s"${h.message}\nowner: ${h.owner}\nsymbol: ${h.symbol}", h.position, severity = LintSeverity.Error))).asPatch
   }
 
   override def afterComplete(): Unit = {
@@ -232,6 +234,7 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
     if (policy.report.nonEmpty) {
       val out = Paths.get(policy.report)
       Files.createDirectories(out)
+      Files.write(out.resolve("rules.txt"), policy.bans.map(_.id).asJava, UTF_8)
       def escaped(s: String): String = s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
       val hits = records.asScala.toList.sortBy(h => (h.path, h.line, h.column, h.id))
       val rows = "id\tpath\tline\tcolumn\towner\tsymbol\tsource\tast\tcall-chain" :: hits.map(h =>
@@ -271,6 +274,6 @@ class CapabilityAccess(val policy: CapabilityAccess.Policy) extends SemanticRule
     if (policy.verifyFixtures) require(files.size > 0, "No fixtures analyzed")
     require(missing.isEmpty, s"Incomplete semantic coverage: ${missing.size} expected sources were not analyzed; see missing-files.txt")
     if (!policy.verifyFixtures) require(!policy.bestEffort, "Best-effort compiler evidence is provisional and cannot pass migration verification; inspect compiler errors and unresolved.tsv")
-    if (!policy.verifyFixtures) require(indirect.isEmpty, s"${indirect.size} indirect repository capability violations; see findings.tsv call-chain column")
+    if (!policy.verifyFixtures && !policy.measureOnly) require(indirect.isEmpty, s"${indirect.size} indirect repository capability violations; see findings.tsv call-chain column")
   }
 }
