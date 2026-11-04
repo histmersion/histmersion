@@ -96,3 +96,5 @@ best-effort-fixtures/
 capabilities-best-effort/
 !capability-history/observations/*/findings.tsv
 !transaction-sample/findings.tsv
+!transaction-round1/findings.tsv
+!transaction-mode-fixture/findings.tsv

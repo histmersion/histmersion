@@ -4,6 +4,14 @@ Checkpoint after the completed current-batch assessment. Figures below are fresh
 measurements with the same limitations as their preceding baseline. All four families
 retain required work independently of the copy rewrite's progress.
 
+Subsequent targeted transaction refinement 1/2 measures 231 capability diagnostics,
+including 22 transaction diagnostics, and three unresolved SQL expressions across
+the same 2,357 production files. All 28 frozen source assertions now pass. Its three
+added occurrences were already present in TX-0001; they are not code regressions or
+fixes. The table below preserves the preceding integrated-assessment checkpoint.
+History policy adoption remains pending; see transaction-round1.md. Do not treat the
+preceding integrated pass as a pass under the changed detector version.
+
 | Family | Production evidence | Test evidence | Confirmed outstanding / verified fixes | Confidence and unresolved work |
 |---|---|---|---|---|
 | Transaction ownership | 19 configured diagnostics, including a helper witness; three reviewed ownership problems | Direct callers identified; no project-wide test transaction baseline | TX-0001–TX-0003 outstanding; no transaction fixes | Direct references and known-source helper paths; callbacks, dispatch and external helpers unresolved. Nineteen diagnostics are not nineteen boundaries. |
