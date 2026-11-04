@@ -15,10 +15,14 @@ These figures use different units and must not be summed. Accepted exceptions re
 unestablished as a reconciled inventory; configured permissions and old suppression
 ledgers are evidence to review, not an inferred exception approval.
 
-New regressions are **unknown** until identity-based comparison exists. Current count
-gates can miss a new violation replacing an old one at the same aggregate count.
-The transaction ledger assigns stable boundary IDs; automatic diagnostic-to-ID matching,
-history for the other families and identity-based regression enforcement remain next work.
+Capability/transaction evidence now has a conservative identity gate, documented in
+`capability-history/README.md`: 228 diagnostics, 188 anchors, 77 occurrences with
+ambiguous identity. Equal-count replacement and reappearance are rejected; line-only
+movement passes. This is evidence tracking, not blanket confirmation of every match.
+New architectural violations remain unknown outside supported anchors and detector scope.
+The transaction ledger assigns stable boundary IDs; automatic diagnostic-to-boundary
+matching, classification/treatment events, permission occurrences and history for the
+other families remain required work. Aggregate counts alone still do not protect them.
 
 For each family, first reconcile existing evidence into confirmed/candidate/unresolved/
 accepted classes and assign treatment without expanding detection indefinitely. At most
