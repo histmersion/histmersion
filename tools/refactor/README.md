@@ -18,6 +18,8 @@ Additional inventories run as part of the same assessment:
 
 Detailed reports live under `refactor-audit/{operations,architecture,build,resources}/`. Large raw TSVs and logs are ignored; summaries, counts and verification outcomes are versioned. To run one inventory independently, use the Scalafix CLI with its `*-inventory.conf` (operations uses `operations.conf`). Architecture and operation scans require `--sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules`; build/resource inventories run on their own rule file. Run the full assessment before accepting combined evidence as current.
 
+`architecture/type-ownership.tsv` inventories every class, trait, object, enum and alias, including already-nested declarations. `ArchitectureInventory.propertyOwners` maps exact child symbols to approved companion object symbols. Configured matches and violations are distinct from unreviewed ownership. Missing children or owner objects fail the scan. Same-package/module prefix candidates are hypotheses only: service components and coincidental names receive no automatic ownership decision. Namespace-only owners and unprefixed properties are supported. Counts separate production and test declarations by module.
+
 ### Primitive and existing-type inventory
 
 The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
