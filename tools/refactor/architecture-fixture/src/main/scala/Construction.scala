@@ -12,3 +12,8 @@ object Construction:
   def fromFactory(value: Int): Plain = PlainFactory(value)
   def update(value: Plain): Plain = value.copy(value = 2)
   def delegated(value: String): Either[String, RecordAlias] = Record.from(value)
+  def ordinary(value: String): String = value.substring(1)
+  def callback(f: Int => Int): Int = f(1)
+  def infix(a: Int, b: Int): Int = a + b
+  def unary(a: Int): Int = -a
+  def repeated(): List[Plain] = List(Plain(1), Plain(1))
