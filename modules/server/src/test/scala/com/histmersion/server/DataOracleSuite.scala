@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.automation.worklists.QueueRows
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceFixtures

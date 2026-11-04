@@ -9,7 +9,7 @@ import com.augustnagro.magnum.transact
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Goal.Plans.LinkKind
-import com.histmersion.db.QueueRows
+import com.histmersion.domain.automation.worklists.{QueueRows}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.workflows.WatchManagerKind

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ScriptedClient
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.*

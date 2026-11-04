@@ -6,7 +6,8 @@ import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{QueueRows, TestDb}
+import com.histmersion.domain.automation.worklists.{QueueRows}
+import com.histmersion.db.{TestDb}
 import com.histmersion.util.database.{Db, Migrate}
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.Queue

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.TestRuns
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.LeaseRepo
@@ -14,7 +16,7 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.db.QueueRows
+import com.histmersion.domain.automation.worklists.{QueueRows}
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.managers.ManagerRepo

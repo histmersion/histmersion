@@ -1,4 +1,6 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.automation.agents
+
+import com.histmersion.server.agents.*
 
 import com.histmersion.domain.library.workflows.*
 

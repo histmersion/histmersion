@@ -4,6 +4,14 @@ Baseline: `6e1b5387`. Application and test changes use Scalafix. The current bui
 
 ## Current checkpoint
 
+The configurable FeatureOwners batch relocated five files/six declarations and repaired 238 resolved references across 24 test files. Its check covers 3,126 source/test files with zero old-owner references. AgentRepo's outside test consumers fell from 18 to 14 and PlanQuotaRepo's from two to one. QueueRows now belongs to worklists, eliminating QueueRepo's only outside consumer; QueueRepo is private[worklists]. Structural findings are 42 (34 primitive roles, eight repository visibility), with 28/28 source guards. All nine repositories from the preceding checkpoint have an explicit classification and next transformation in `repository-batches.md`.
+
+Full production and aggregate test compilation pass. QueueServiceInMemorySuite passes 19 tests; AgentEngineSuite, PlanQuotaRunSuite, PluginAiRunSuite and ProbeRetrySuite are discovered but ignored without a test database. This is no claim of database behavior verification. The rewrite fixtures preserve aliases and lookalikes, match expected output and compile with -source:future. Enforcement rejects ten original fixture references and accepts the compiled output. Existing destinations, changed ownership policy and stale source fingerprints are rejected before patching.
+
+Final capability measurement remains 228 findings over 2,356/2,356 production files with 31/31 source guards. All four migrated repositories pass visibility enforcement. Capability enforcement still fails for known violations, and migration readiness still fails on 42 partial/unmeasured goals; neither is reported as a passing migration gate.
+
+Previous checkpoint:
+
 ModelSettingsRepo is now private to agents. Its only outside consumer, ModelChainRunSuite, moved into that feature through Scalafix, preserving every test body and adding imports for its four shared helpers. Full production and aggregate test compilation pass. The suite is discovered under its new package but is ignored without HISTMERSION_TEST_DB_URL; database behavior has not been rerun. Structural findings are 43 (34 primitive roles, nine repository visibility), with 27/27 source guards and complete source coverage. The global readiness check still fails on 42 partial/unmeasured goals.
 
 For the historical automation oracle run, select both `com.histmersion.server.agents.*` and `com.histmersion.domain.automation.agents.ModelChainRunSuite`. Its resource filename remains ModelChainRunSuite.txt. This scoped package/file recipe preserves test bodies; it is not a general suite migration rule. LeaseRepo's repository test extraction remains next.

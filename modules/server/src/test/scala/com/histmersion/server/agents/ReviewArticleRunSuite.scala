@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.TestRuns
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.automation.agents.{AgentsControllers, LlmCall, LlmClient}

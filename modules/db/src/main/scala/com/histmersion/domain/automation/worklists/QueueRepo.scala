@@ -14,7 +14,7 @@ import com.augustnagro.magnum.*
   * All the shape lives in the pure [[com.histmersion.api.automation.Queue]] parser and renderer. Timestamps go out as
   * the same UTC ISO-8601 strings the rest of the wire uses.
   */
-object QueueRepo:
+private[worklists] object QueueRepo:
 
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated column lists). `to_char`
     * normalises to UTC so the value is stable whatever the session TZ is.

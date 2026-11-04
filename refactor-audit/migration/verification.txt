@@ -1,2 +1,2 @@
-examples=27/27
+examples=28/28
 failures=0
