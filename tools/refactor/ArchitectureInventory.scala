@@ -16,6 +16,8 @@ object ArchitectureInventory {
     objects: String = "docs/research-domain-model/objects.md", expectedObjects: Int = 645,
     requiredServices: List[String] = Nil, visibilityScopes: Map[String,String] = Map.empty,
     propertyOwners: Map[String,String] = Map.empty,
+    dependencyDirections: Map[String,List[String]] = Map.empty, publicContracts: List[String] = Nil,
+    crossingPermits: Map[String,List[String]] = Map.empty, projectPackage: String = "com.histmersion",
     databasePrefixes: List[String] = List("com/histmersion/util/database/", "com/augustnagro/magnum/", "java/sql/", "javax/sql/"), visibilityTargets: List[Target] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
@@ -289,6 +291,46 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       }
     })
     val refsByNamespace = allRefs.groupBy(r => namespace(r.target))
+    require(policy.publicContracts.forall(bySymbol.contains),"Missing configured public contract")
+    require(policy.crossingPermits.forall { case(owner,targets) => bySymbol.contains(owner) && targets.nonEmpty && targets.forall(bySymbol.contains) },"Missing configured crossing permit owner or target")
+    val regions = policy.dependencyDirections.keySet
+    require(policy.dependencyDirections.values.flatten.forall(regions),"Unknown permitted dependency region")
+    def region(pkg: String): Option[String] = regions.filter(p => pkg == p || pkg.startsWith(p + ".")).toList.sortBy(p => -p.length).headOption
+    val contractCache = scala.collection.mutable.Map.empty[String,Boolean]
+    def contract(target: String): Boolean = contractCache.getOrElseUpdate(target, {
+      var current = Symbol(target)
+      var approved = false
+      while(!current.isNone && !approved) {
+        approved = policy.publicContracts.contains(current.value)
+        current = current.owner
+      }
+      approved
+    })
+    val crossingRows = allRefs.flatMap { r =>
+      val targetPackage = namespace(r.target).stripSuffix("/").replace('/','.')
+      val projectTarget = targetPackage == policy.projectPackage || targetPackage.startsWith(policy.projectPackage + ".")
+      if(r.target.nonEmpty && (!projectTarget || r.pkg == targetPackage)) Nil else {
+        val from = region(r.pkg)
+        val to = region(targetPackage)
+        val direction = if(r.target.isEmpty || r.pkg.isEmpty) "unresolved-reference"
+          else if(from.isEmpty || to.isEmpty) "unclassified-direction"
+          else if(from == to) "same-region; feature-contract-review"
+          else if(policy.dependencyDirections(from.get).contains(to.get)) "allowed-direction; contract-review"
+          else "forbidden-direction"
+        val permit = policy.crossingPermits.getOrElse(r.owner,Nil).contains(r.target)
+        val approved = r.target.nonEmpty && contract(r.target)
+        val status = if(permit) "configured-crossing-permit"
+          else if(direction == "forbidden-direction" || direction == "unresolved-reference") direction
+          else if(approved) "configured-contract; " + direction.stripSuffix("; contract-review").stripSuffix("; feature-contract-review")
+          else direction
+        List(List(r.path,r.line.toString,if(r.path.contains("/src/test/")) "test" else "production",r.pkg,targetPackage,
+          r.owner,r.target,r.shape,from.getOrElse(""),to.getOrElse(""),status,module(r.path)))
+      }
+    }.distinct.sortBy(r => (r.head,r(1).toInt,r(6),r(7)))
+    write("dependency-crossings.tsv","path\tline\tscope\tfrom-package\tto-package\towner\ttarget\tevidence-kind\tfrom-region\tto-region\tstatus\tmodule",crossingRows)
+    write("dependency-crossing-counts.tsv","scope\tmodule\tfrom-region\tto-region\tstatus\tcount",crossingRows.groupBy(r => (r(2),r(11),r(8),r(9),r(10))).toList.sortBy(_._1).map {
+      case((scope,module,from,to,status),rs) => List(scope,module,from,to,status,rs.size.toString)
+    })
     val consumerRows = privateCandidates.flatMap { d =>
       val expected = visibilityScopes.getOrElse(d.symbol,d.pkg)
       refsByNamespace.getOrElse(namespace(d.symbol),Nil).filter(_.target.startsWith(d.symbol)).map { r =>
