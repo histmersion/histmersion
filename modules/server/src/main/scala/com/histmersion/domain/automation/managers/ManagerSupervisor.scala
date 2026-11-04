@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -352,7 +354,9 @@ final class ManagerSupervisor(
     * already (approved automatically, say).
     */
   def approvalFacts(run: String, kind: com.histmersion.domain.automation.Approval.Kind, none: String): StepFacts =
-    agents.approvalStore.approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind])).lastOption match
+    agents.approvalStore
+      .approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
+      .lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
         StepFacts.Waiting(a.id, s"approval #${a.id} waits for a person")
@@ -589,7 +593,15 @@ final class ManagerSupervisor(
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
       )
       val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending)
-      val base = ManagerPolicy.statusNote(com.histmersion.domain.automation.Manager.State.Active, starved, if full then 0 else 1, pending, waits.size, agents.managerStore.running(m.id), blocked)
+      val base = ManagerPolicy.statusNote(
+        com.histmersion.domain.automation.Manager.State.Active,
+        starved,
+        if full then 0 else 1,
+        pending,
+        waits.size,
+        agents.managerStore.running(m.id),
+        blocked
+      )
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
         case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.take(200)}"
         case None    => base
@@ -678,7 +690,9 @@ final class ManagerSupervisor(
   ): Option[String] =
     val roles = pipelineOf(item.kind).roles
     val req =
-      req0.copy(modelFor = m.config.models.getOrElse(Nil).filter(o => Role.parse(o.role).exists(roles.contains)))
+      req0
+        .modify(_.modelFor)
+        .setTo(m.config.models.getOrElse(Nil).filter(o => Role.parse(o.role).exists(roles.contains)))
     agents.prepare(req, None) match
       case Left(e) =>
         val note = s"not started: ${e.message}".take(500)

@@ -24,7 +24,7 @@ class OperationInventoryVerification extends SyntacticRule("OperationInventoryVe
     val rows = Files.readAllLines(Paths.get("target/operation-fixture-report/occurrences.tsv"),UTF_8).asScala.drop(1).map(_.split("\t",-1).toList).toList
     val counts = rows.groupBy(r => (r.head,r(1))).view.mapValues(_.size).toMap
     val expected = Map(
-      ("copy","case-class-copy") -> 2, ("copy","non-case-class-copy") -> 1,
+      ("copy","case-class-copy") -> 3, ("copy","non-case-class-copy") -> 1,
       ("fold","visible-allocation-review") -> 3, ("fold","no-visible-allocation; indirect-effects-unresolved") -> 2,
       ("unwrap","project-value-member-review") -> 3, ("unwrap","iron-accessor") -> 1,
       ("given-instance","instance-body-review") -> 4,
@@ -34,6 +34,7 @@ class OperationInventoryVerification extends SyntacticRule("OperationInventoryVe
     require(rows.exists(r => r.head == "fold" && r(5).endsWith("Examples.constructing().") && r(1) == "visible-allocation-review"),"Case-class apply in callback missed")
     run("negative",cli ++ List("--config","tools/refactor/operation-fixture/reject.conf") ++ args,1)
     require(rows.exists(r => r.head == "given-instance" && r(6).contains("textInt")),"Template-style given missed")
-    Files.write(report,List("PASS","18 exact classified occurrences","case-class and unrelated copies distinguished","fold callback allocations separated from one-time seed","Iron accessor separated from ordinary value members","Kindlings derivation and unrelated derived method distinguished","Alias and template-style givens inventoried","false classification rejected").asJava,UTF_8)
+    require(rows.exists(r => r.head == "copy" && r(5).endsWith("Examples.returned().") && r(1) == "case-class-copy"),"Method-result copy missed")
+    Files.write(report,List("PASS","19 exact classified occurrences","case-class and unrelated copies distinguished","fold callback allocations separated from one-time seed","Iron accessor separated from ordinary value members","Kindlings derivation and unrelated derived method distinguished","Alias and template-style givens inventoried","false classification rejected").asJava,UTF_8)
   }
 }

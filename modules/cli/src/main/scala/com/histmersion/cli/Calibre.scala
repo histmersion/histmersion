@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Plural
 import com.histmersion.api.library.{Acquire, CalibreGap}
 import com.histmersion.config.CalibreCliConfig
@@ -124,7 +126,8 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     yield Calibre.planAll(linked, books.map(b => b.id -> b).toMap).map { e =>
       e.outcome match
         case UpdateOutcome.Change(cs) if apply =>
-          e.copy(outcome = write(e.calibreId, cs).fold(UpdateOutcome.Failed(cs, _), _ => UpdateOutcome.Applied(cs)))
+          e.modify(_.outcome)
+            .setTo(write(e.calibreId, cs).fold(UpdateOutcome.Failed(cs, _), _ => UpdateOutcome.Applied(cs)))
         case _ => e
     }
 

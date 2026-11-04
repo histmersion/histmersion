@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.ui.SidebarTab
@@ -239,7 +241,7 @@ object App:
     // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
     // The sources used to be asked for only once the findings had arrived — a whole round trip and
     // the findings' query added to every list refresh; the list still renders once all are in.
-    val sourceFilter = f.copy(limit = config.pageSize)
+    val sourceFilter = f.modify(_.limit).setTo(config.pageSize)
     val pointsF = ApiClient.findings(Api.FindingsQuery.of(f))
     val sourcesF = ApiClient.sources(sourceFilter)
     val totalF =

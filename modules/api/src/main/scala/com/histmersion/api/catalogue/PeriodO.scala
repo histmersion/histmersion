@@ -1,4 +1,6 @@
 package com.histmersion.api.catalogue
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.ACursor
 import com.histmersion.api.{PeriodODataset, Years}
 import com.histmersion.api.given
@@ -205,7 +207,7 @@ object PeriodO:
       if !out.contains(r.id) then
         val parent = r.parentId.flatMap(byId.get)
         parent match
-          case Some(p) if path.contains(p.id) => out(r.id) = r.copy(parentId = None)
+          case Some(p) if path.contains(p.id) => out(r.id) = r.modify(_.parentId).setTo(None)
           case Some(p)                        =>
             visit(p, path + r.id)
             if !out.contains(r.id) then out(r.id) = r

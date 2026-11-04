@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.scheduler
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, ManagerSupervisor}
 
@@ -403,7 +405,7 @@ final class SchedulerService(
                                 code = AgentScheduler.Code.Paused,
                                 why = s"its manager ${m.id} is ${m.state}: it starts nothing"
                               )
-                            case None => base.copy(why = "not looked at yet: the next pass decides it")
+                            case None => base.modify(_.why).setTo("not looked at yet: the next pass decides it")
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>

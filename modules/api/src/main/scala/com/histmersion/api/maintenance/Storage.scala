@@ -1,5 +1,7 @@
 package com.histmersion.api.maintenance
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Plural
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
@@ -55,7 +57,7 @@ object Storage:
 
   def addLocal(r: Storage.Report, local: List[Storage.Entry], volumes: List[Storage.Volume]): Storage.Report =
     val known = r.entries.flatMap(_.path).toSet
-    val add = local.filterNot(e => e.path.exists(known.contains)).map(_.copy(host = "cli"))
+    val add = local.filterNot(e => e.path.exists(known.contains)).map(_.modify(_.host).setTo("cli"))
     if add.isEmpty then r
     else
       withHints(
@@ -65,7 +67,7 @@ object Storage:
         )
       )
 
-  def withHints(r: Storage.Report): Storage.Report = r.copy(hints = hints(r))
+  def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Storage.Report, e: Storage.Entry): List[String] =
     val files = e.files.filter(_ => e.bytes.isDefined && e.path.isDefined).map(n => Plural.count(n, "file")).toList
@@ -138,8 +140,8 @@ object Storage:
       volume: Option[String] = None,
       host: String = "server"
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class Report(
       measuring: Boolean = false,
@@ -154,7 +156,10 @@ object Storage:
       hints: List[String] = Nil,
       problems: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
-
-  final case class Volume(id: String, totalBytes: Long, freeBytes: Long) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Volume(id: String, totalBytes: Long, freeBytes: Long)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

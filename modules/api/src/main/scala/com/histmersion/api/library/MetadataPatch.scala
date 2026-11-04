@@ -1,4 +1,6 @@
 package com.histmersion.api.library
+import hearth.kindlings.optics.syntax.*
+
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -17,9 +19,9 @@ final case class MetadataPatch(
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     clear: List[MetadataField] = Nil
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 object MetadataPatch:
-
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 
@@ -41,7 +43,7 @@ object MetadataPatch:
           else
             derived
               .decodeJson(Json.fromJsonObject(o.filter((_, v) => !v.isNull)))
-              .map(m => m.copy(clear = (m.clear ++ cleared).distinct))
+              .map(m => m.modify(_.clear).setTo((m.clear ++ cleared).distinct))
     }),
     Encoder.AsObject.instance(m => derived.encodeObject(m).filter((_, v) => !v.isNull))
   )

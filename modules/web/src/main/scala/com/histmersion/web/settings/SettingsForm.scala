@@ -1,5 +1,7 @@
 package com.histmersion.web.settings
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
@@ -36,7 +38,9 @@ object SettingsForm:
           case Some(Right(p)) =>
             items.flatMap(i =>
               p.field(i.key)
-                .map(f => SettingControl(f.copy(default = f.default.orElse(i.fallback)), draft, i.name, i.help))
+                .map(f =>
+                  SettingControl(f.modify(_.default).setTo(f.default.orElse(i.fallback)), draft, i.name, i.help)
+                )
             )
         },
         extra

@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Plural
 
 import com.histmersion.api.automation.Managers.*
@@ -166,7 +168,7 @@ object ReviewManagerPolicy:
               (if s.cooldownMinutes > 0 then s" after a ${s.cooldownMinutes}-minute cooldown" else "")
           )
       case Run.State.Cancelled =>
-        Next.Stop("stopped: its run was cancelled", None, state.copy(before = None))
+        Next.Stop("stopped: its run was cancelled", None, state.modify(_.before).setTo(None))
       case _ => // failed (or anything else terminal)
         val n = failures + 1
         val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
@@ -176,7 +178,7 @@ object ReviewManagerPolicy:
             Some(
               s"review manager stopped [[$slug]] after ${Plural.count(n, "failed run")}$why (agent run ${run.take(8)})"
             ),
-            state.copy(before = None)
+            state.modify(_.before).setTo(None)
           )
         else
           Next.Retry(

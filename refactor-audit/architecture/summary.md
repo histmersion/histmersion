@@ -4,12 +4,12 @@ Full source and test coverage. Candidate inventories preserve declarations, sign
 
 - files: 3127
 - declarations: 55998
-- references: 802281
-- unresolved-references: 9092
-- signature-type-references: 163150
+- references: 802749
+- unresolved-references: 9067
+- signature-type-references: 163161
 - alias-expanded-references: 6688
 - visibility-candidates: 479
-- visibility-consumer-relationships: 39111
+- visibility-consumer-relationships: 39100
 - services-repositories-controllers: 234
 - comments: 15981
 - top-level-objects: 1373

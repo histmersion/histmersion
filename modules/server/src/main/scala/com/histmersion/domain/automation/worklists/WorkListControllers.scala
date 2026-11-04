@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
@@ -40,7 +42,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
         for
           status <- Queue.statusOf(p.status)
           _ <- Queue.textOf(p.text)
-        yield p.copy(status = status)
+        yield p.modify(_.status).setTo(status)
       checked.left.map(Api.Error(_)).flatMap(c => queues.patch(QueueItemId(id), c).left.map(WorkListControllers.error))
 
   def delete(id: Int): Either[Api.Error, QueueItem] =

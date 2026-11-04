@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Wording
 import com.raquo.laminar.api.L.*
 
@@ -439,7 +441,10 @@ object QueueView:
             placeholder := (if sp.fulfils then "e.g. Author, Title (Publisher, 2024; 10.…) — why it is wanted"
                             else if sp.editable then "what is left to do"
                             else "what was done"),
-            controlled(value <-- draft.signal.map(_.text), onInput.mapToValue --> (v => draft.update(_.copy(text = v))))
+            controlled(
+              value <-- draft.signal.map(_.text),
+              onInput.mapToValue --> (v => draft.update(_.modify(_.text).setTo(v)))
+            )
           )
         )
       ),
@@ -454,7 +459,7 @@ object QueueView:
             placeholder := (if sp.editable then "optional — groups the item" else "optional — today when left empty"),
             controlled(
               value <-- draft.signal.map(_.topic),
-              onInput.mapToValue --> (v => draft.update(_.copy(topic = v)))
+              onInput.mapToValue --> (v => draft.update(_.modify(_.topic).setTo(v)))
             )
           )
         )
@@ -470,7 +475,7 @@ object QueueView:
               placeholder := "optional — why it is wanted",
               controlled(
                 value <-- draft.signal.map(_.reason),
-                onInput.mapToValue --> (v => draft.update(_.copy(reason = v)))
+                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(v)))
               )
             )
           )

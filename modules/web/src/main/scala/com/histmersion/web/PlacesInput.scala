@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.MapStack
 import com.histmersion.api.MapStack
@@ -467,7 +469,9 @@ object PlacesInput:
             learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
             d.geometry.foreach { geoStr =>
               val geo = js.JSON.parse(geoStr)
-              previewSet.set(drawPlace(id, d, geo, previewNames, () => effectiveAsOf).map(_.copy(dashed = true)).toList)
+              previewSet.set(
+                drawPlace(id, d, geo, previewNames, () => effectiveAsOf).map(_.modify(_.dashed).setTo(true)).toList
+              )
               previewShown = true
               GeoBounds.ofGeometry(geo).filter(_.valid).foreach(bb => TheMap.surface.fitBounds(bb, 20, 9))
             }

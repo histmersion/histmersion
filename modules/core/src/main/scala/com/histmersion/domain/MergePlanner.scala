@@ -356,10 +356,11 @@ object MergePlanner:
       case "source"  => k.refUid.flatMap(citekeys.get)
       case "article" => k.refUid.flatMap(slugs.get)
       case _         => None
-    es.copy(goals = es.goals.map { g =>
-      val links = g.links.map(_.map(k => label(k).filter(_ != k.ref).fold(k)(r => k.copy(ref = r))))
-      if links == g.links then g else g.copy(links = links, rev = "")
-    })
+    es.modify(_.goals)
+      .setTo(es.goals.map { g =>
+        val links = g.links.map(_.map(k => label(k).filter(_ != k.ref).fold(k)(r => k.copy(ref = r))))
+        if links == g.links then g else g.copy(links = links, rev = "")
+      })
 
   // ── sketches and bodies ─────────────────────────────────────────────────────────────────────
 
@@ -1032,7 +1033,7 @@ object MergePlanner:
     val decided: List[Draft] = live.map { d =>
       val i = d.issue
       val dec = decisionOf(i)
-      d.copy(issue = i.copy(decision = dec.map(_._1), decidedBy = dec.map(_._2)))
+      d.modify(_.issue).setTo(i.copy(decision = dec.map(_._1), decidedBy = dec.map(_._2)))
     }
     val issues = decided.map(_.issue)
     val unconditional: Map[String, MergeIssue] = issues.filter(_.condition.isEmpty).map(i => i.id -> i).toMap
@@ -1376,24 +1377,24 @@ object MergePlanner:
         if r.localRev.contains(loc) && !edgesGrow(uid) then Decision.Unchanged else Decision.FastForward
       if r0.tombstone then
         issueOfRow.get(r0.uid).flatMap(_.decision).map(_.kind) match
-          case Some(km.KeepLeft)  => r.copy(decision = Decision.Kept)
-          case Some(km.KeepRight) => r.copy(decision = Decision.Delete)
+          case Some(km.KeepLeft)  => r.modify(_.decision).setTo(Decision.Kept)
+          case Some(km.KeepRight) => r.modify(_.decision).setTo(Decision.Delete)
           case _                  => r
-      else if dropped(r0.foreignUid) then r.copy(decision = Decision.Skip)
-      else if overrides.contains(r0.foreignUid) then r.copy(decision = overrides(r0.foreignUid))
-      else if foldUids.contains(r0.foreignUid) then r.copy(decision = foldDecision)
+      else if dropped(r0.foreignUid) then r.modify(_.decision).setTo(Decision.Skip)
+      else if overrides.contains(r0.foreignUid) then r.modify(_.decision).setTo(overrides(r0.foreignUid))
+      else if foldUids.contains(r0.foreignUid) then r.modify(_.decision).setTo(foldDecision)
       else if r0.decision == Decision.Held && owner.exists(o => gateBoth(o) || folding(o)) then
-        r.copy(decision = Decision.Insert)
+        r.modify(_.decision).setTo(Decision.Insert)
       else if r0.decision == Decision.Conflict && merges.get(r0.foreignUid).exists(_._1 == uid) then
-        r.copy(decision = foldDecision)
+        r.modify(_.decision).setTo(foldDecision)
       else
         issueOfRow.get(r0.uid).flatMap(i => i.decision.map(i -> _)) match
           case Some((i, d)) =>
             (i.kind, d.kind) match
-              case (MergeIssue.Kind.ChangedBothSides, km.KeepLeft)  => r.copy(decision = Decision.Kept)
-              case (MergeIssue.Kind.ChangedBothSides, km.KeepRight) => r.copy(decision = Decision.FastForward)
+              case (MergeIssue.Kind.ChangedBothSides, km.KeepLeft)  => r.modify(_.decision).setTo(Decision.Kept)
+              case (MergeIssue.Kind.ChangedBothSides, km.KeepRight) => r.modify(_.decision).setTo(Decision.FastForward)
               case (MergeIssue.Kind.LabelTaken | MergeIssue.Kind.ArticleDiverged, km.KeepLeft) =>
-                r.copy(decision = Decision.Skip)
+                r.modify(_.decision).setTo(Decision.Skip)
               case _ => r
           case None => r
     }
@@ -1402,7 +1403,7 @@ object MergePlanner:
     val refs = finalEs.references
     val decisionOf0 = resolvedRows.map(r => r.uid -> r.decision).toMap
     val cascaded = BundlePlan.cascade(decisionOf0, refs, u => in.tombstoned(u) && !liveHere(u))
-    val rows = resolvedRows.map(r => r.copy(decision = cascaded.getOrElse(r.uid, r.decision)))
+    val rows = resolvedRows.map(r => r.modify(_.decision).setTo(cascaded.getOrElse(r.uid, r.decision)))
     val decisionOfRow = rows.map(r => r.uid -> r.decision).toMap
     def writes(u: UUID): Boolean = decisionOfRow.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val deletingNow = rows.filter(r => r.tombstone && r.decision == Decision.Delete).map(_.uid).toSet

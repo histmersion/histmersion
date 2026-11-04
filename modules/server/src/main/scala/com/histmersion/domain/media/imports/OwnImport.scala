@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.imports
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaSample}
@@ -119,7 +121,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
       rejected = MediaCount.of(counted.rejected.flatMap(c => List.fill(c.n)(c.key)) ++ found.notTaken)
     )
 
-    if dryRun then base.copy(failed = failed.result())
+    if dryRun then base.modify(_.failed).setTo(failed.result())
     else
       val asked = found.asked.toSet -- found.unanswered
       val answered = targets.filter(t => asked(idOf(t)))

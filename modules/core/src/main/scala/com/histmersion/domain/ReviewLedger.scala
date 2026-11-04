@@ -158,7 +158,7 @@ object ReviewLedger:
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
 
   private def update(l: Ledger, id: String)(f: Entry => Entry): Ledger =
-    l.copy(entries = l.entries.map(e => if e.id == id then f(e) else e))
+    l.modify(_.entries).setTo(l.entries.map(e => if e.id == id then f(e) else e))
 
   /** Record a pass's findings (ids per pass, as the reviewers' answers were numbered). A finding the ledger has
     * already: an open one keeps its id (and is no longer "claimed": it was raised again); a fixed one is RE-OPENED (a
@@ -358,7 +358,7 @@ object ReviewLedger:
       if acc.exists(x => AgentVerify.normalise(x.text) == AgentVerify.normalise(t)) then acc
       else acc :+ Lesson(t, source, run, round)
     }
-    l.copy(lessons = all.takeRight(MaxLessons).toList)
+    l.modify(_.lessons).setTo(all.takeRight(MaxLessons).toList)
 
   /** A verification pass, for one reviewer: its checks, then its new findings and its lessons. */
   def applyRecheck(l: Ledger, rc: Recheck, run: String, round: Int): Ledger =
@@ -384,7 +384,7 @@ object ReviewLedger:
       .sortBy(f => (f.reviewer.ordinal, f.id.drop(f.reviewer.prefix.length).toIntOption.getOrElse(0)))
     // a MAJOR the run's final pass deferred is the next run's: it counts as minor in this verdict
     val deferred = run.toList.flatMap(r => l.open.filter(e => e.major && e.deferredIn(r)).map(_.id))
-    val counted = fs.map(f => if deferred.contains(f.id) then f.copy(severity = Severity.Minor) else f)
+    val counted = fs.map(f => if deferred.contains(f.id) then f.modify(_.severity).setTo(Severity.Minor) else f)
     Merged(round, Verdict.of(counted), fs, explainBack, emptySlots, proposals, deferred)
 
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
@@ -429,7 +429,7 @@ object ReviewLedger:
           .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
-        "Open findings:\n" + findingsText(merged(l.copy(entries = open), 0), notes(l)) +
+        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), 0), notes(l)) +
           (if open.exists(_.claimed) then
              "\n(The fixer claims to have fixed: " + open.filter(_.claimed).map(_.id).mkString(", ") + ".)"
            else "")
@@ -518,7 +518,12 @@ object ReviewLedger:
       .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
     val ids = fresh.map(_.id)
-    (after.copy(entries = after.entries.map(e => if ids.contains(e.id) then e.copy(deferred = Some(run)) else e)), ids)
+    (
+      after
+        .modify(_.entries)
+        .setTo(after.entries.map(e => if ids.contains(e.id) then e.modify(_.deferred).setTo(Some(run)) else e)),
+      ids
+    )
 
   /** One closed finding a revision would reopen, and why. */
   final case class Regression(id: String, why: String) derives KindlingsCodecAsObject:

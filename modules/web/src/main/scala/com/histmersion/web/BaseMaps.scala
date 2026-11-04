@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.BBox
 import com.histmersion.web.map.*
@@ -527,7 +529,7 @@ object BaseMaps:
               typ := "checkbox",
               cls := "map-option-names",
               checked <-- UiState.mapOptions.signal.map(_.names.getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.copy(names = Option.when(!on)(false))))
+              onInput.mapToChecked --> (on => setPrefs(_.modify(_.names).setTo(Option.when(!on)(false))))
             ),
             span("Names")
           )
@@ -543,7 +545,9 @@ object BaseMaps:
               languageChoices(defaultLanguage).map((code, name) => option(value := code, name)),
               controlled(
                 value <-- UiState.mapOptions.signal.map(_.language.getOrElse(defaultLanguage)),
-                onChange.mapToValue --> (v => setPrefs(_.copy(language = Option.when(v != defaultLanguage)(v))))
+                onChange.mapToValue --> (v =>
+                  setPrefs(_.modify(_.language).setTo(Option.when(v != defaultLanguage)(v)))
+                )
               )
             )
           )
@@ -559,7 +563,7 @@ object BaseMaps:
               checked <-- UiState.mapOptions.signal
                 .combineWith(why)
                 .map((p, w) => w.isEmpty && p.contours.getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.copy(contours = Option.when(!on)(false))))
+              onInput.mapToChecked --> (on => setPrefs(_.modify(_.contours).setTo(Option.when(!on)(false))))
             ),
             span("Contour lines")
           ),

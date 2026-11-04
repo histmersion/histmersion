@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Api, GeoPick, MapStack, Palette}
@@ -631,7 +633,7 @@ object MapView:
   private[web] def geoQuery(kind: String, time: GeoTime, limit: Int): Api.PlacesGeoQuery =
     val q = Api.PlacesGeoQuery(kind = Some(kind), limit = Some(limit))
     time match
-      case GeoTime.At(y)                  => q.copy(asOf = Some(y))
+      case GeoTime.At(y)                  => q.modify(_.asOf).setTo(Some(y))
       case GeoTime.Within(lo, hi, latest) =>
         q.copy(from = Some(lo), to = Some(hi), pick = Some((if latest then GeoPick.Latest else GeoPick.Earliest).wire))
       case GeoTime.Always => q

@@ -5,6 +5,12 @@ Run commands from the `contracts3-scalafix` worktree root.
 
 ## Project-wide measurement and bulk rewrite gates
 
+The bounded migration goal uses `refactor-audit/migration-rounds.tsv` to retain every original goal while limiting further detector refinement to two rounds per family. Existing fixtures and source regressions are not independent holdouts. Confirmed violations, unresolved candidates, and evidence relationships remain separate; no overall completion percentage is available until the baseline is established. Historical fixes are not added to the new baseline's numerator. Production and test findings remain visible; a production-first batch does not exempt tests.
+
+Record updates are the first batch. The cheap-model source audit selected the frozen `copy-holdout.tsv` without reading detector reports; it has 21 grouped locations, including 21 positive copy occurrences and two legitimate comparison locations. The first run found 19 positives, missed two method-result receivers, and had no false positives. Round one addresses that specific gap. This sample becomes development/regression evidence after refinement; a second independent holdout is required for acceptance. Negative diversity and nonrandom selection limit inference beyond the sampled cases. `Printer.copy` remains unclassified rather than being forced into either label.
+
+`CopyToLens` rewrites resolved, non-generic, single-field case-class updates using token patches, preserving nested edits and argument evaluation. It defers multi-field updates, custom methods, generic type changes, accumulator algorithms, unsupported modules and tests. A source manifest rejects stale class metadata. `CopyVerification` compiles and executes input, expected and rewritten code, checks the expected AST and evaluation order, verifies negative/positive checks, and proves a second application is unchanged. All application edits remain Scalafix-generated.
+
 ### Evidence for all 43 goals
 
 The assessment generates `refactor-audit/inventory/coverage.md` from `inventory-coverage.conf`. Every goal must have an explicit evidence mapping and remaining decision; the generator rejects missing/duplicate goal IDs, missing reports and unknown table columns. G33 (live-data/process integrity) explicitly requires external evidence. This is an evidence index, **not** a claim that all 43 policy detectors are complete. Counts overlap and must not be summed as violations. A zero count is never automatic approval.

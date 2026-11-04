@@ -1,4 +1,6 @@
 package com.histmersion.web
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -96,10 +98,11 @@ object MergeView:
       text: Option[String] = None
   ): MergeResolutions =
     val rest = r.resolve.filterNot(_.issue == issue)
-    r.copy(resolve =
-      (rest ++ decision.map(d => MergeResolution(issue, d.wire, text.filter(_ => d.kind == MergeDecision.Kind.File))))
-        .sortBy(_.issue)
-    )
+    r.modify(_.resolve)
+      .setTo(
+        (rest ++ decision.map(d => MergeResolution(issue, d.wire, text.filter(_ => d.kind == MergeDecision.Kind.File))))
+          .sortBy(_.issue)
+      )
 
   /** The decision a person made for an issue (not a default, a policy or a remembered one). */
   def chosen(r: MergeResolutions, issue: String): Option[MergeDecision] =

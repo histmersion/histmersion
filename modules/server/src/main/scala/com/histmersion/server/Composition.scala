@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.data.maintenance.WriteGate
 
 import com.histmersion.util.ocr.ConverterClient
@@ -70,7 +72,7 @@ object Composition:
 
   private[server] def hotConfig(cfg: AppConfig, configFile: ConfigFileInfo, loaded: Option[LoadedConfig]): HotConfig =
     loaded match
-      case Some(l) => HotConfig(cfg, l.copy(config = cfg))
+      case Some(l) => HotConfig(cfg, l.modify(_.config).setTo(cfg))
       case None    =>
         HotConfig(
           cfg,

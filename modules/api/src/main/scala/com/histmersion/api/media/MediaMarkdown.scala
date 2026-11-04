@@ -1,4 +1,6 @@
 package com.histmersion.api.media
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{OffsetPage, Plural}
 import com.histmersion.api.Markdown.*
 
@@ -145,7 +147,7 @@ object MediaMarkdown:
     s"# `${m.uid}`\n\n$rows$targets$cap"
 
   def mediaFacets(f: MediaFacets): String =
-    s"**Providers:** ${countsLine(f.providers.map(c => c.copy(key = MediaProvider.title(c.key))))}  \n" +
+    s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaProvider.title(c.key))))}  \n" +
       s"**Licences:** ${countsLine(f.licences)}"
 
   def figureLicenceFill(f: FigureLicenceFill): String =

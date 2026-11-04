@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.imports
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite}
 
 import com.histmersion.config.*
@@ -98,9 +100,9 @@ object MediaImporter:
         // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)
         val fetch = Polite(
           http,
-          media.copy(requestIntervalMs =
-            PluginMedia.guard(Right(col.requestIntervalMs)).getOrElse(media.requestIntervalMs)
-          ),
+          media
+            .modify(_.requestIntervalMs)
+            .setTo(PluginMedia.guard(Right(col.requestIntervalMs)).getOrElse(media.requestIntervalMs)),
           refusalBackoffMs = PluginMedia.guard(Right(col.refusalBackoffMs)).getOrElse(Nil)
         )
         val runs: (List[Target], Boolean, Boolean) => MediaImportReport =

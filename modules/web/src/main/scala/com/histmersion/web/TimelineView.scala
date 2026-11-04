@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Api, BBox, Plural}
 import com.histmersion.web.ui.{AggregateBy, AggregateUnit, Layout}
@@ -930,7 +932,7 @@ object TimelineView:
                 if d.kind == DragKind.ZoomDetail then
                   val rect = svg.getBoundingClientRect()
                   val cur = e.clientX - rect.left
-                  dragState.set(Some(d.copy(curX = cur)))
+                  dragState.set(Some(d.modify(_.curX).setTo(cur)))
                   bumpRender()
                   if Math.abs(cur - d.startX) >= 3 then
                     val w = elWidth(detailSvg)

@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.catalogue.places.FindingPlacement
@@ -142,7 +144,7 @@ private[sources] object SourceRepo:
 
     sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
     sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
-    val _ = insertEdges(s.edges.map(_.copy(src = s.citekey)))
+    val _ = insertEdges(s.edges.map(_.modify(_.src).setTo(s.citekey)))
     promote(s.citekey)
     val _ = replaceChunks(s.citekey, s.ocrMarkdown, chunkChars) // FTS index follows every body write
 

@@ -1,5 +1,7 @@
 package com.histmersion.web.settings
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 import com.histmersion.web.ApiClient
 import com.histmersion.web.map.{GeoBounds, LatLon, TheMap}
@@ -70,7 +72,7 @@ object StartPlace:
             value := m.wire,
             controlled(
               checked <-- choice.signal.map(c => MapStartMode.parse(c.mode) == m),
-              onClick.mapTo(m.wire) --> (w => choice.update(_.copy(mode = w)))
+              onClick.mapTo(m.wire) --> (w => choice.update(_.modify(_.mode).setTo(w)))
             )
           ),
           " ",

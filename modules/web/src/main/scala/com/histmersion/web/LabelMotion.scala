@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
 
 /** How a map name MOVES (#1447): pure, so the smoothing is a unit test and [[MapLabels]] only feeds it the clock and
@@ -61,7 +63,7 @@ object LabelMotion:
       * so the easing carries on from there.
       */
     def within(inner: Rect): Motion =
-      if inner.isEmpty || inner.contains(p) then this else copy(p = inner.clamp(p))
+      if inner.isEmpty || inner.contains(p) then this else this.modify(_.p).setTo(inner.clamp(p))
 
     /** At rest at `target`, within [[RestPx]] screen pixels at `scale`. */
     def restsAt(target: Pt, scale: Double): Boolean =

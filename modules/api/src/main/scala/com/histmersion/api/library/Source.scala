@@ -1,4 +1,6 @@
 package com.histmersion.api.library
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.{Ascii, WireEnumValues}
 import com.histmersion.api.catalogue.Period
@@ -61,8 +63,10 @@ object Source:
       def fromWire(s: String): Option[Status] =
         Status.values.find(_.toString.equalsIgnoreCase(s))
 
-  final case class Alias(alias: String, citekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
+  final case class Alias(alias: String, citekey: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class Candidate(
       id: Long,
@@ -80,8 +84,8 @@ object Source:
       firstSeen: String = "",
       lastSeen: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Delete:
 
@@ -175,7 +179,6 @@ object Source:
   final case class DeleteRequest(apply: Boolean = false) derives KindlingsSchema, com.histmersion.api.json.Schema
   object DeleteRequest:
 
-
     given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
 
   final case class Deletion(
@@ -193,11 +196,10 @@ object Source:
       calibreId: Option[String] = None,
       logEntry: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def refused: Boolean = blockers.nonEmpty
     def count(p: DeletePart): Int = counts.find(_.part == p).fold(0)(_.rows)
-
-
 
   final case class Detail(
       citekey: String,
@@ -220,8 +222,8 @@ object Source:
       uid: Option[java.util.UUID] = None,
       origin: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class Graph(
       root: String,
@@ -229,9 +231,8 @@ object Source:
       nodes: List[GraphNode],
       links: List[GraphLink]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Kinds:
     val Book = "book"
@@ -294,9 +295,9 @@ object Source:
       why: List[String] = Nil,
       issue: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Match:
-
 
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
     val Matches: com.histmersion.api.exchange.PlanMatchKind[Match] =
@@ -320,9 +321,9 @@ object Source:
       findings: Option[FindingsPatch] = None,
       edges: Option[EdgesPatch] = None,
       ifUpdatedAt: Option[String] = None
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Patch:
-
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
@@ -347,9 +348,9 @@ object Source:
       calibreId: Option[String] = None,
       findings: List[Finding.Input] = Nil,
       edges: List[Edge.Input] = Nil
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Put:
-
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
@@ -416,8 +417,8 @@ object Source:
       /** Calibre never stores the citekey, but the host-side originals directory is keyed by it. */
       calibreId: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Section:
     val Summary = "summary"
@@ -438,8 +439,8 @@ object Source:
       formatting: List[FormatIssue] = Nil,
       illustration: Option[MediaThumb] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   /** A source's put and patch checked and applied to the stored record: the findings numbered, the edges and the
     * metadata checked, an old citekey in a patch followed to the current one.
@@ -539,8 +540,8 @@ object Source:
     def srcAliased(p: Patch, requested: String, canonical: String): Patch =
       if requested == canonical then p
       else
-        def fix(e: Edge.Input) = if e.src.map(_.trim).contains(requested) then e.copy(src = None) else e
-        p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
+        def fix(e: Edge.Input) = if e.src.map(_.trim).contains(requested) then e.modify(_.src).setTo(None) else e
+        p.modify(_.edges).setTo(p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
     def applyEdges(citekey: String, current: List[Edge], p: EdgesPatch): Either[String, List[Edge]] =
       for
@@ -553,7 +554,7 @@ object Source:
           )
       yield
         val gone = removed.toSet
-        (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
+        (current.map(_.modify(_.src).setTo(citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
 
     private[api] def edgeOf(
         citekey: String,

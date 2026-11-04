@@ -232,7 +232,11 @@ final class AcquireRecheckService(
       val (tried, fetchedToday) = triedToday(now)
       val upTo = math.min(
         dueNow.size,
-        AcquireRecheck.allowance(s.copy(perPass = in.limit.getOrElse(s.perPass)), tried, shared(now, fetchedToday))
+        AcquireRecheck.allowance(
+          s.modify(_.perPass).setTo(in.limit.getOrElse(s.perPass)),
+          tried,
+          shared(now, fetchedToday)
+        )
       )
       if upTo <= 1 then pass(in, now).toRight(passBusy)
       else
@@ -369,7 +373,12 @@ final class AcquireRecheckService(
     val room =
       if in.id.isDefined then 1
       else if in.all then dueNow.size
-      else AcquireRecheck.allowance(s.copy(perPass = in.limit.getOrElse(s.perPass)), tried, shared(now, fetchedToday))
+      else
+        AcquireRecheck.allowance(
+          s.modify(_.perPass).setTo(in.limit.getOrElse(s.perPass)),
+          tried,
+          shared(now, fetchedToday)
+        )
     val picks = dueNow.take(room)
     val withDoi = fs.count(_.action != Action.NoDoi)
     val noDoi = fs.filter(_.action == Action.NoDoi).map(f => RecheckRow(f.item.id, None, NoDoi, "no DOI in its text"))

@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -65,12 +67,14 @@ final class ManagersControllers(
   private def backlogs(): Map[String, (Int, Option[Int])] = kinds.foldLeft(Map.empty)(_ ++ _.backlog())
 
   private def withEffective(m: ManagerInfo, backlog: => Map[String, (Int, Option[Int])]): ManagerInfo =
-    val e = m.copy(effective =
-      kinds
-        .find(_.kind == kindOf(m))
-        .fold(ManagerConfig())(_.defaults(cfg, ManagerDefaultsViews.defaults(mcfg)))
-        .merge(m.config)
-    )
+    val e = m
+      .modify(_.effective)
+      .setTo(
+        kinds
+          .find(_.kind == kindOf(m))
+          .fold(ManagerConfig())(_.defaults(cfg, ManagerDefaultsViews.defaults(mcfg)))
+          .merge(m.config)
+      )
     if kindOf(m) != Kind.Watch then e
     else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
@@ -95,7 +99,7 @@ final class ManagersControllers(
     }
 
   private def withRuns(is: List[ManagerItem]): List[ManagerItem] =
-    is.map(i => i.copy(run = i.runId.flatMap(agents.runs.get(_))))
+    is.map(i => i.modify(_.run).setTo(i.runId.flatMap(agents.runs.get(_))))
 
   /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide; `seed` needs its
     * research area (`goal`; id `seed:<goal>`) and starts with the item that proposes its first articles; `watch` needs
@@ -382,10 +386,10 @@ final class ManagersControllers(
         )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
-        addItem(ReviewId, in.copy(kind = ArticleReview)).map(i => EnqueueResult(ReviewId, List(i)))
+        addItem(ReviewId, in.modify(_.kind).setTo(ArticleReview)).map(i => EnqueueResult(ReviewId, List(i)))
       case Some(EnqueueKind.Extend) =>
         supervisor.ensureDefaults()
-        addItem(ReviewId, in.copy(kind = ArticleExtend)).map(i => EnqueueResult(ReviewId, List(i)))
+        addItem(ReviewId, in.modify(_.kind).setTo(ArticleExtend)).map(i => EnqueueResult(ReviewId, List(i)))
       case Some(EnqueueKind.Seed) =>
         host.goal(in.target.trim).flatMap { g =>
           val id = seedId(g.slug)
@@ -531,7 +535,12 @@ final class ManagersControllers(
       asked <-
         if suggest then
           agents
-            .startRunWith(RunRequest(Pipeline.HintEffect.wire, m.id), Origin.Person, None, _.copy(hint = Some(hint.id)))
+            .startRunWith(
+              RunRequest(Pipeline.HintEffect.wire, m.id),
+              Origin.Person,
+              None,
+              _.modify(_.hint).setTo(Some(hint.id))
+            )
             .map(r => s" — a model reads it for an action (run ${r.id.take(8)}); a person approves what it proposes")
         else Right("")
       _ = agents.managerStore.event(
@@ -570,7 +579,7 @@ final class ManagersControllers(
       e.config
         .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
         .toRight(Api.Error("a config action names the settings it changes"))
-        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.copy(action = a)))
+        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(a)))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
       Left(Api.Error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
@@ -632,7 +641,7 @@ final class ManagersControllers(
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
         val (tags, goals) = Transactor(ds).read(ManagerRepo.articleFacets(i.target))
-        ManagerPolicy.matches(e.copy(targets = Nil), i.target, tags, Nil, goals)
+        ManagerPolicy.matches(e.modify(_.targets).setTo(Nil), i.target, tags, Nil, goals)
       })
     }
     val n = e.action match
@@ -755,7 +764,7 @@ final class ManagersControllers(
       val rest = Sweep.of(m.config).filterNot(_ == sw)
       val _ = agents.managerStore.setConfig(
         m.id,
-        m.config.copy(sweeps = Some(rest.map(_.wire))),
+        m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
         m.cron,
         m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
       )

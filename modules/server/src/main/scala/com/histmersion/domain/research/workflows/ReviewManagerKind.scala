@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.managers.ManagerSupervisor
@@ -103,7 +105,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     ) match
       case Next.Done(outcome, state) =>
         // what its filter returns now: more later makes it stale (phase 2)
-        val withHits = state.copy(filterHits = site.articles.filterTotal(item.target))
+        val withHits = state.modify(_.filterHits).setTo(site.articles.filterTotal(item.target))
         if c.evaluated(item.id, Some(run), ItemStatus.Done, None, None, withHits, Some(outcome)) then
           c.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $outcome")
           out += s"${item.target}: done"
@@ -147,7 +149,12 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
     lazy val progress = c.progress(run)
     item.kind match
-      case InferFilter   => c.approvalFacts(run, com.histmersion.domain.automation.Approval.Kind.ArticleFilter, s"no filter proposed — $progress")
+      case InferFilter =>
+        c.approvalFacts(
+          run,
+          com.histmersion.domain.automation.Approval.Kind.ArticleFilter,
+          s"no filter proposed — $progress"
+        )
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written => StepFacts.Finished(s"extended (${w.why})")
@@ -383,7 +390,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               m,
               item,
               RunRequest(Pipeline.CompileArticle.wire, item.target, budgetUsd = m.config.budgetUsd),
-              _.copy(chainReview = Some(false)),
+              _.modify(_.chainReview).setTo(Some(false)),
               item.state,
               "compile-article (extend; its review follows as an item)",
               out

@@ -62,6 +62,7 @@ architecture/dependency-crossings.tsv
 architecture/model-construction.tsv
 architecture/construction-sites.tsv
 architecture/factory-candidates.tsv
+copy-migration/*/findings.tsv
 architecture/references.tsv
 architecture/type-references.tsv
 architecture/alias-references.tsv

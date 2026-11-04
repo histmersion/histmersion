@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.personal.{ItemKey as WireKey, MapZoom, Target, ViewState}
@@ -40,7 +42,7 @@ enum MarkTarget:
 
   /** The same target, its item's uid as resolved when it was marked. */
   def resolved(uid: Option[ItemUid]): MarkTarget = this match
-    case Item(r) => Item(r.copy(uid = uid))
+    case Item(r) => Item(r.modify(_.uid).setTo(uid))
     case other   => other
 
   /** As a note keeps it: a note on a point does not keep the map's zoom. */
@@ -105,15 +107,21 @@ object MarkTarget:
 
   /** A target the wire sent, once [[Target.check]] passed it: an item's uid is not known yet. */
   def fromWire(t: Target): Option[MarkTarget] =
-        for
-          lat <- t.lat.transformIntoPartial[Option[Latitude]].asOption
-          lon <- t.lon.transformIntoPartial[Option[Longitude]].asOption
-          result <- t.kind match
-            case k if k.isItem => t.id.map(key => Item(ItemRef(itemKind(k), ItemKey(key.value), None)))
-            case MarkKind.Point => lat.zip(lon).map((la, lo) => Point(la, lo, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]]))
-            case MarkKind.View => Some(View(t.view, lat, lon, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]]))
-            case _ => t.from.transformInto[Option[Year]].zip(t.to.transformInto[Option[Year]]).map(Span(_, _))
-        yield result
+    for
+      lat <- t.lat.transformIntoPartial[Option[Latitude]].asOption
+      lon <- t.lon.transformIntoPartial[Option[Longitude]].asOption
+      result <- t.kind match
+        case k if k.isItem  => t.id.map(key => Item(ItemRef(itemKind(k), ItemKey(key.value), None)))
+        case MarkKind.Point =>
+          lat
+            .zip(lon)
+            .map((la, lo) =>
+              Point(la, lo, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]])
+            )
+        case MarkKind.View =>
+          Some(View(t.view, lat, lon, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]]))
+        case _ => t.from.transformInto[Option[Year]].zip(t.to.transformInto[Option[Year]]).map(Span(_, _))
+    yield result
 
   /** A stored row's target; none when the row does not make one (a kind this version does not know). */
   def ofColumns(

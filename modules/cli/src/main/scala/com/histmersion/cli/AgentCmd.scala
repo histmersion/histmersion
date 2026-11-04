@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -16,7 +18,7 @@ object AgentCmd:
   /** How often `--follow` polls. This process's own cadence, not a server tunable. */
   private val PollMs = 2000
 
-  private def models (using console: Console) = Opts.subcommand(
+  private def models(using console: Console) = Opts.subcommand(
     "models",
     "Each step role's model chain, the model its next call would use, and every allowance's use per window"
   ) {
@@ -34,11 +36,13 @@ object AgentCmd:
         }
       }
     val show =
-      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => Cli.out.println(AgentsMarkdown.models(m))))
+      Opts.unit.map(_ =>
+        (c: Client) => c.call(AgentsApi.models)(()).map(m => Cli.out.println(AgentsMarkdown.models(m)))
+      )
     set orElse reset orElse show
   }
 
-  private def allowance (using console: Console) = Opts.subcommand(
+  private def allowance(using console: Console) = Opts.subcommand(
     "allowance",
     "Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config"
   ) {
@@ -74,7 +78,7 @@ object AgentCmd:
       }
   }
 
-  private def generate (using console: Console) = Opts.subcommand(
+  private def generate(using console: Console) = Opts.subcommand(
     "generate",
     "Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk"
   ) {
@@ -88,7 +92,7 @@ object AgentCmd:
     }
   }
 
-  private def quota (using console: Console) = Opts.subcommand(
+  private def quota(using console: Console) = Opts.subcommand(
     "quota",
     "Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances"
   ) {
@@ -150,14 +154,16 @@ object AgentCmd:
         .orNone
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => Cli.out.println(AgentsMarkdown.refreshed(r)))
+            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p))
+              .map(r => Cli.out.println(AgentsMarkdown.refreshed(r)))
         )
     }
-    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => Cli.out.println(AgentsMarkdown.quota(q))))
+    val show =
+      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => Cli.out.println(AgentsMarkdown.quota(q))))
     hold orElse release orElse floors orElse fallthrough orElse refresh orElse show
   }
 
-  private def doctor (using console: Console) = Opts.subcommand(
+  private def doctor(using console: Console) = Opts.subcommand(
     "doctor",
     "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login"
   ) {
@@ -169,7 +175,7 @@ object AgentCmd:
   private[cli] val modelOpt =
     Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
 
-  private def probe (using console: Console) = Opts.subcommand(
+  private def probe(using console: Console) = Opts.subcommand(
     "probe",
     "One live model call with one read-only tool (get_source) and a typed answer, checked against the record"
   ) {
@@ -183,7 +189,7 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: String, last: String)(using console: Console) : Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, id: String, last: String)(using console: Console): Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e)  => Left(e)
       case Right(d) =>
@@ -199,7 +205,7 @@ object AgentCmd:
             Cli.out.println(AgentsMarkdown.run(d, withMessages = false))
             Left(Cli.Error(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
 
-  private def run (using console: Console) = Opts.subcommand(
+  private def run(using console: Console) = Opts.subcommand(
     "run",
     s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind.wire}>").mkString(", ")})"
   ) {
@@ -290,7 +296,7 @@ object AgentCmd:
       }
   }
 
-  private def approvals (using console: Console) = Opts.subcommand(
+  private def approvals(using console: Console) = Opts.subcommand(
     "approvals",
     "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default"
   ) {
@@ -312,7 +318,7 @@ object AgentCmd:
   /** One decision per id, in the order given, each through the same endpoint (and checks) as a single one; a refused id
     * does not stop the rest, and makes the command fail at the end.
     */
-  private def decide(d: Decision, help: String) (using console: Console) = Opts.subcommand(d.wire, help) {
+  private def decide(d: Decision, help: String)(using console: Console) = Opts.subcommand(d.wire, help) {
     (Opts.arguments[Long]("id"), Opts.option[String]("note", "Why — kept with the decision (with every id)").orNone)
       .mapN { (ids, note) => (c: Client) =>
         val failed = ids.toList.flatMap { id =>
@@ -323,32 +329,34 @@ object AgentCmd:
         failed match
           case Nil        => Right(())
           case List(one)  => Left(one)
-          case first :: _ => Left(first.copy(message = s"${failed.size} of ${ids.size} not decided — ${first.message}"))
+          case first :: _ =>
+            Left(first.modify(_.message).setTo(s"${failed.size} of ${ids.size} not decided — ${first.message}"))
       }
   }
 
-  private def runs (using console: Console) = Opts.subcommand("runs", "Agent runs, newest first, filtered on the server") {
-    (ListOpts.runs, Opts.option[Int]("limit", "How many").orNone, beforeOpt("run"), Output.jsonFlag)
-      .mapN { (f, limit, before, json) => (c: Client) =>
-        c.call(AgentsApi.runs)((f, limit, before, None)).map { (rs, page) =>
-          Output.emit(json, rs)(rs =>
-            AgentsMarkdown.runs(
-              rs,
-              page,
-              f.qualifier,
-              PageCmd.older(page, "agent runs", f.options ++ List("limit" -> limit.map(_.toString)))
+  private def runs(using console: Console) =
+    Opts.subcommand("runs", "Agent runs, newest first, filtered on the server") {
+      (ListOpts.runs, Opts.option[Int]("limit", "How many").orNone, beforeOpt("run"), Output.jsonFlag)
+        .mapN { (f, limit, before, json) => (c: Client) =>
+          c.call(AgentsApi.runs)((f, limit, before, None)).map { (rs, page) =>
+            Output.emit(json, rs)(rs =>
+              AgentsMarkdown.runs(
+                rs,
+                page,
+                f.qualifier,
+                PageCmd.older(page, "agent runs", f.options ++ List("limit" -> limit.map(_.toString)))
+              )
             )
-          )
+          }
         }
-      }
-  }
+    }
 
   private def beforeOpt(what: String) =
     Opts
       .option[String]("before", s"The next older page: the id of the last $what shown (the listing prints the command)")
       .orNone
 
-  private def show (using console: Console) = Opts.subcommand(
+  private def show(using console: Console) = Opts.subcommand(
     "show",
     "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)"
   ) {
@@ -363,7 +371,7 @@ object AgentCmd:
       }
   }
 
-  private def compare (using console: Console) = Opts.subcommand(
+  private def compare(using console: Console) = Opts.subcommand(
     "compare",
     "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)"
   ) {
@@ -372,7 +380,7 @@ object AgentCmd:
     }
   }
 
-  private def control(action: String, help: String) (using console: Console) = Opts.subcommand(action, help) {
+  private def control(action: String, help: String)(using console: Console) = Opts.subcommand(action, help) {
     val budget = if action == "resume" then
       (
         Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,
@@ -384,7 +392,7 @@ object AgentCmd:
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "agent",
       "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"

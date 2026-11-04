@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 
 import java.nio.file.Path
@@ -59,4 +61,4 @@ object LocalStorage:
         )
       }
       val volumes = locs.flatMap((_, _, p) => DirSize.volume(p)).distinctBy(_.id)
-      a.copy(storage = Storage.addLocal(a.storage, entries, volumes))
+      a.modify(_.storage).setTo(Storage.addLocal(a.storage, entries, volumes))

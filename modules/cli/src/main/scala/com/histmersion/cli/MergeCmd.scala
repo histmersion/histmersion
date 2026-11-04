@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.EditionsPolicy
 
 import cats.syntax.all.*
@@ -90,11 +92,11 @@ object MergeCmd:
               .toEither
               .left
               .map(e => s"${x.issue}: file:$p — ${e.getMessage}")
-              .map(t => x.copy(text = Some(t)))
+              .map(t => x.modify(_.text).setTo(Some(t)))
     }
     val errors = read.flatMap(_.left.toOption)
     if errors.nonEmpty then Left(Cli.Error(errors.mkString("\n"), exitCode = ExitCode.Usage))
-    else Right(r.copy(resolve = read.flatMap(_.toOption)))
+    else Right(r.modify(_.resolve).setTo(read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
   def upload(c: Client, f: java.io.File): Either[Cli.Error, Bundle.Upload] =
@@ -106,7 +108,7 @@ object MergeCmd:
       else Right(u)
     }
 
-  private def planCmd (using console: Console) = Opts.subcommand(
+  private def planCmd(using console: Console) = Opts.subcommand(
     "plan",
     "Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by"
   ) {
@@ -147,7 +149,7 @@ object MergeCmd:
     }
   }
 
-  private def applyCmd (using console: Console) = Opts.subcommand(
+  private def applyCmd(using console: Console) = Opts.subcommand(
     "apply",
     "Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction"
   ) {
@@ -202,7 +204,7 @@ object MergeCmd:
 
   /** Follow an apply job to its end: the apply takes a backup first, which can outlast the request. */
   @annotation.tailrec
-  def follow(c: Client, j: MergeApplyJob)(using console: Console) : Either[Cli.Error, MergeApplyResult] =
+  def follow(c: Client, j: MergeApplyJob)(using console: Console): Either[Cli.Error, MergeApplyResult] =
     j.state match
       case MergeJobState.Done =>
         j.result.toRight(Cli.Error(s"merge apply ${j.job}: done, but no result", exitCode = ExitCode.Refused))
@@ -227,20 +229,21 @@ object MergeCmd:
             if next.state != MergeJobState.Running then JobFollow.Progress.clear()
             follow(c, next)
 
-  private def listCmd (using console: Console) = Opts.subcommand("list", "The merges this collection took in, newest first") {
-    (Opts.option[Int]("limit", "How many (default 50)").orNone, Output.jsonFlag).mapN { (limit, json) => (c: Client) =>
-      c.merges(limit).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
+  private def listCmd(using console: Console) =
+    Opts.subcommand("list", "The merges this collection took in, newest first") {
+      (Opts.option[Int]("limit", "How many (default 50)").orNone, Output.jsonFlag).mapN { (limit, json) => (c: Client) =>
+        c.merges(limit).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
+      }
     }
-  }
 
-  private def showCmd (using console: Console) =
+  private def showCmd(using console: Console) =
     Opts.subcommand("show", "One merge: its report, the resolutions it was given, the decisions it remembers") {
       (Opts.argument[String]("merge-id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.mergeDetail(id).map(d => Output.emit(json, d)(MergeMarkdown.detail))
       }
     }
 
-  private def ledgerCmd (using console: Console) = Opts.subcommand(
+  private def ledgerCmd(using console: Console) = Opts.subcommand(
     "ledger",
     "The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge)"
   ) {
@@ -254,7 +257,7 @@ object MergeCmd:
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "merge",
       "Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges"

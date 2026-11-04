@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
@@ -368,7 +370,7 @@ object SchedulerPolicy:
                     )
         val done = go(Acc(open, res.room, res.poolUsed, res.managerUsed, res.gatheringUsed, res.recent, Nil, Nil))
         // what is left waits for room: in the order it would start, each behind the one before it
-        val left = order(done.pool, res.copy(recent = done.recent), s)
+        val left = order(done.pool, res.modify(_.recent).setTo(done.recent), s)
         val heads = done.started.map(_._1)
         val capacity = left.zipWithIndex.map { case ((x, _), i) =>
           val ahead = if i == 0 then heads.lastOption else Some(left(i - 1)._1)

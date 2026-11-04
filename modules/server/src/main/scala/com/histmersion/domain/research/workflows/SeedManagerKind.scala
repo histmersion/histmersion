@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
@@ -50,8 +52,13 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
     lazy val progress = c.progress(run)
     item.kind match
-      case ProposeArticles => c.approvalFacts(run, com.histmersion.domain.automation.Approval.Kind.ArticlePlan, s"no article proposed — $progress")
-      case ArticleCompile  =>
+      case ProposeArticles =>
+        c.approvalFacts(
+          run,
+          com.histmersion.domain.automation.Approval.Kind.ArticlePlan,
+          s"no article proposed — $progress"
+        )
+      case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written => StepFacts.Finished(s"compiled (${w.why})")
           case Some(w)              =>
@@ -154,7 +161,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 val free = !c.slugExists(p.slug) && site.articles.get(p.slug).isLeft
                 PlannedFacts(p.slug, free, site.articles.filterReach(p.filter, Nil, 0)._1)
               }
-              val today = c.autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePlan, day)
+              val today = c
+                .autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePlan, day)
                 .filter(_.subject.contains(goal))
                 .map(_.articles.fold(0)(_.articles.size))
                 .sum
@@ -230,7 +238,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 tags = sp.filter.tags,
                 goal = m.goal
               ),
-              _.copy(chainReview = Some(false)),
+              _.modify(_.chainReview).setTo(Some(false)),
               item.state,
               "compile-article (new; its review follows as an item)",
               out
@@ -246,7 +254,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m,
               item,
               RunRequest(Pipeline.PlanGoal.wire, g.slug, budgetUsd = m.config.budgetUsd),
-              p => if leaf then p.copy(subGoals = Some(0)) else p,
+              p => if leaf then p.modify(_.subGoals).setTo(Some(0)) else p,
               item.state,
               s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})",
               out

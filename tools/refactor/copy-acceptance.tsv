@@ -1,0 +1,24 @@
+path	line	expected	guard
+modules/web/src/main/scala/com/histmersion/web/TreeTab.scala	260	1	f.copy(period
+modules/web/src/main/scala/com/histmersion/web/TreeTab.scala	265	1	f.copy(places
+modules/web/src/main/scala/com/histmersion/web/App.scala	242	1	f.copy(limit
+modules/web/src/main/scala/com/histmersion/web/UploadView.scala	109	1	d.copy(
+modules/web/src/main/scala/com/histmersion/web/UploadView.scala	173	1	d.copy(
+modules/core/src/main/scala/com/histmersion/domain/catalogue/maptiles/TileFeatures.scala	77	1	p.copy(props
+modules/core/src/main/scala/com/histmersion/domain/catalogue/places/PlacePlan.scala	57	1	p.copy(id
+modules/core/src/main/scala/com/histmersion/domain/catalogue/places/PlacePlan.scala	118	1	placeIn(es, o).copy(origin
+modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationPlan.scala	167	1	attIn(es, t.uid).copy(
+modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationPlan.scala	172	1	attIn(es, t.uid).copy(
+modules/core/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodPlan.scala	109	1	periodIn(es, o).copy(
+modules/core/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodPlan.scala	129	1	p.copy(parentId
+modules/core/src/main/scala/com/histmersion/domain/MergePlanner.scala	277	1	es.copy(
+modules/core/src/main/scala/com/histmersion/domain/MergePlanner.scala	359	1	es.copy(
+modules/server/src/main/scala/com/histmersion/domain/catalogue/places/ImportRunner.scala	36	1	r.copy(failed
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/GazetteerRepo.scala	190	1	counts.copy(skipped
+modules/web/src/main/scala/com/histmersion/web/TabState.scala	32	1	s.copy(loading
+modules/web/src/main/scala/com/histmersion/web/TabState.scala	41	1	s.copy(
+modules/web/src/main/scala/com/histmersion/web/ApiClient.scala	129	1	req.copy(legalOnly
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/Geocoder.scala	107	1	r.copy(lon
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/LibDirectory.scala	40	0	Files.copy(
+modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	122	0	Files.copy(
+modules/server/src/main/scala/com/histmersion/util/storage/DiskStore.scala	120	0	Files.copy(

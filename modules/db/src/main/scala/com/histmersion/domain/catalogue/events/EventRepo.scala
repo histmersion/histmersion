@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.api.Write
@@ -91,7 +93,7 @@ private[events] object EventRepo:
           .run()
           .collect { case (id, Some(g)) => id -> g }
           .toMap
-    EventGeo.List(items.map((_, g) => g.copy(outline = outlines.get(g.id))), unplaced, imprecise)
+    EventGeo.List(items.map((_, g) => g.modify(_.outline).setTo(outlines.get(g.id))), unplaced, imprecise)
 
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.

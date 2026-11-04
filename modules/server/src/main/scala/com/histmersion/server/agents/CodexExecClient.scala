@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.{AgentDef, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.CodexConfig
@@ -65,7 +67,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
           val lastText = Option
             .when(Files.isRegularFile(last))(Files.readString(last, StandardCharsets.UTF_8))
             .filter(_.trim.nonEmpty)
-          val withLast = o.copy(finalText = lastText.orElse(o.finalText))
+          val withLast = o.modify(_.finalText).setTo(lastText.orElse(o.finalText))
           out.set(Some(withLast))
           FirstCallProbe.report(call.interceptors, None) // one intercepted call for the whole loop: no per-call usage
           if withLast.finalText.isEmpty && withLast.error.isEmpty then
