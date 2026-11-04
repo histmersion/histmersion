@@ -23,7 +23,7 @@ object IngestCmd:
     * [[ExitCode.Refused]].
     */
   def pollJob(c: Client, id: String, waited: Int): Either[Cli.Error, Unit] =
-    JobFollow.job(c.job, id, waited * 1000L).map(j => println(IngestMarkdown.job(j)))
+    JobFollow.job(c.job, id, waited * 1000L).map(j => com.histmersion.cli.Cli.writeLine(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
   def upload(
@@ -63,7 +63,7 @@ object IngestCmd:
           acquireItem
         )
       c.ingest(params, file.toFile).flatMap { a =>
-        println(
+        com.histmersion.cli.Cli.writeLine(
           s"queued job ${a.jobId} for ${a.citekey}" +
             acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
         )
@@ -79,7 +79,7 @@ object IngestCmd:
       )
         .mapN { (ck, quality, noWait) => (c: Client) =>
           c.reocr(ck, quality).flatMap { a =>
-            println(s"queued job ${a.jobId} for ${a.citekey}")
+            com.histmersion.cli.Cli.writeLine(s"queued job ${a.jobId} for ${a.citekey}")
             if noWait then Right(()) else pollJob(c, a.jobId, 0)
           }
         }
@@ -89,7 +89,7 @@ object IngestCmd:
     Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
       Opts
         .argument[String]("citekey")
-        .map(ck => (c: Client) => c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
+        .map(ck => (c: Client) => c.assets(ck).map(rows => com.histmersion.cli.Cli.writeLine(IngestMarkdown.assets(ck, rows.toVector))))
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */

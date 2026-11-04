@@ -26,14 +26,14 @@ object PeriodsCmd:
     )
       .mapN { (q, region, from, to) => (c: Client) =>
         c.periods(q.map(_.trim).filter(_.nonEmpty), region, from, to)
-          .map(ps => println(PeriodsMarkdown.list(ps.toVector)))
+          .map(ps => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.list(ps.toVector)))
       }
   }
 
   private val showCmd =
     Opts.subcommand("show", "One period: its span, authority, what it is part of and its divisions") {
       Opts.argument[String]("id").map { id => (c: Client) =>
-        c.period(id).map(d => println(PeriodsMarkdown.detail(d)))
+        c.period(id).map(d => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.detail(d)))
       }
     }
 
@@ -55,7 +55,7 @@ object PeriodsCmd:
               Left(Cli.Error("--replace applies to the bundled seed, not to --file", exitCode = ExitCode.Usage))
             case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
             case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
-          r.map(x => println(PeriodsMarkdown.imported(x)))
+          r.map(x => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(x)))
         }
     }
 
@@ -71,7 +71,7 @@ object PeriodsCmd:
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
         if !Files.isRegularFile(f) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
-        else c.importPeriods(cols, Files.readString(f), dataset).map(x => println(PeriodsMarkdown.imported(x)))
+        else c.importPeriods(cols, Files.readString(f), dataset).map(x => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(x)))
       }
   }
 
@@ -89,7 +89,7 @@ object PeriodsCmd:
         .orEmpty
     )
       .mapN { (source, cols) => (c: Client) =>
-        c.fetchPeriods(source, cols).map(r => println(PeriodsMarkdown.imported(r)))
+        c.fetchPeriods(source, cols).map(r => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(r)))
       }
   }
 
@@ -110,7 +110,7 @@ object PeriodsCmd:
       )
         .mapN { (fetch, noWait) => (c: Client) =>
           c.init(fetch).flatMap { j =>
-            println(s"init job `${j.id}` started (`histmersion jobs` lists it)")
+            com.histmersion.cli.Cli.writeLine(s"init job `${j.id}` started (`histmersion jobs` lists it)")
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }
         }

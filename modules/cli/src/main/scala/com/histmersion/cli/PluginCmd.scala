@@ -62,7 +62,7 @@ object PluginCmd:
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>
           if rebuild then ops.rebuild(Nil)
-          else Right(println("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
+          else Right(com.histmersion.cli.Cli.writeLine("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
         }
       }
     }
@@ -77,7 +77,7 @@ object PluginCmd:
               .rm(what)
               .flatMap(_ =>
                 if rebuild then ops.rebuild(Nil)
-                else Right(println("the running binary still has it until: histmersion plugin rebuild"))
+                else Right(com.histmersion.cli.Cli.writeLine("the running binary still has it until: histmersion plugin rebuild"))
               )
           )
       }
@@ -87,7 +87,7 @@ object PluginCmd:
     "list",
     "The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each"
   ) {
-    Opts.unit.map(_ => (c: Client) => local(c).map(ops => println(ops.list(running(c)._1).mkString("\n"))))
+    Opts.unit.map(_ => (c: Client) => local(c).map(ops => com.histmersion.cli.Cli.writeLine(ops.list(running(c)._1).mkString("\n"))))
   }
 
   private val status = Opts.subcommand(
@@ -98,7 +98,7 @@ object PluginCmd:
       (c: Client) =>
         local(c).map { ops =>
           val (r, answered) = running(c)
-          println(ops.status(r, answered)._2.mkString("\n"))
+          com.histmersion.cli.Cli.writeLine(ops.status(r, answered)._2.mkString("\n"))
         }
     )
   }
@@ -150,7 +150,7 @@ object PluginCmd:
           dir <- PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k)))
           copied <- PluginAuthoring.publishToMavenLocal(install, dir)
         yield
-          println(if asUrl then dir.toUri.toString else dir.toString)
+          com.histmersion.cli.Cli.writeLine(if asUrl then dir.toUri.toString else dir.toString)
           java.lang.System.err.println(if copied.isEmpty then
             s"Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts are up to date there"
           else
@@ -158,7 +158,7 @@ object PluginCmd:
       else
         PluginAuthoring
           .localRepository(install)
-          .map(i => println(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
+          .map(i => com.histmersion.cli.Cli.writeLine(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
     }
   }
 
@@ -168,11 +168,11 @@ object PluginCmd:
   ) {
     Opts.flag("sources", "The sources jar instead of the jar").orFalse.map { sources => (_: Client) =>
       PluginAuthoring.apiJars(install).flatMap { (jar, src) =>
-        if !sources then Right(println(jar))
+        if !sources then Right(com.histmersion.cli.Cli.writeLine(jar))
         else
           Either.cond(
             Files.isRegularFile(src),
-            println(src),
+            com.histmersion.cli.Cli.writeLine(src),
             Cli.Error(s"no sources jar beside $jar", exitCode = ExitCode.Refused)
           )
       }
@@ -217,10 +217,10 @@ object PluginCmd:
           )
         yield
           if copied.nonEmpty then
-            println(
+            com.histmersion.cli.Cli.writeLine(
               s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
             )
-          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(println)
+          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(com.histmersion.cli.Cli.writeLine)
       }
     }
   }

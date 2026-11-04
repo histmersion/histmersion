@@ -65,7 +65,7 @@ object BasemapCmd:
         c.basemapFetch(
           Basemap.FetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
         ).flatMap { j =>
-          println(
+          com.histmersion.cli.Cli.writeLine(
             s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -94,7 +94,7 @@ object BasemapCmd:
         .orFalse
     ).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => println(BasemapMarkdown.removed(r)))
+      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => com.histmersion.cli.Cli.writeLine(BasemapMarkdown.removed(r)))
     }
   }
 

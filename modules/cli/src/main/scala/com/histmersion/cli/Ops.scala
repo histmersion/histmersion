@@ -292,9 +292,9 @@ object Ops:
     case QueueCmd.Rm(id) =>
       c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
     case QueueCmd.Export(dir) =>
-      writeMeta(c, Path.of(dir)).map(fs => println(s"wrote ${fs.mkString(", ")} to $dir"))
+      writeMeta(c, Path.of(dir)).map(fs => com.histmersion.cli.Cli.writeLine(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
-      readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
+      readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => com.histmersion.cli.Cli.writeLine(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
       c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
         Acquire.Checks.RecheckRequest(dryRun, limit, id, Some("cli"), all)

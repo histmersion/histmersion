@@ -23,4 +23,4 @@ object Output:
 
   /** Print `a` as JSON when `json`, else as its Markdown. */
   def emit[A: Encoder](json: Boolean, a: A)(markdown: A => String): Unit =
-    println(render(json, a)(markdown))
+    com.histmersion.cli.Cli.writeLine(render(json, a)(markdown))

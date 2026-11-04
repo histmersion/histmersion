@@ -60,7 +60,7 @@ object GoalsCmd:
             periodStart = from,
             periodEnd = to
           )
-        ).map(g => println(GoalsMarkdown.goal(g)))
+        ).map(g => com.histmersion.cli.Cli.writeLine(GoalsMarkdown.goal(g)))
       }
   }
 
@@ -77,7 +77,7 @@ object GoalsCmd:
       AgentCmd.followOpt
     ).mapN { (slug, model, budget, fol) => (c: Client) =>
       c.call(AgentsApi.startRun)(RunRequest(Agents.Pipeline.PlanGoal.wire, slug, model, budget))
-        .flatMap(r => if fol then AgentCmd.follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))))
+        .flatMap(r => if fol then AgentCmd.follow(c, r.id, "") else Right(com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r))))
     }
   }
 
@@ -91,7 +91,7 @@ object GoalsCmd:
         Opts.option[Int]("item", "A queue item id").map(i => LinkKind.QueueItem -> i.toString)
     (Opts.argument[String]("slug"), target, Opts.option[String]("note", "Why it is linked").orNone).mapN {
       (slug, t, note) => (c: Client) =>
-        c.call(AgentsApi.addGoalLink)((slug, LinkAdd(t._1, t._2, note))).map(l => println(AgentsMarkdown.linkLine(l)))
+        c.call(AgentsApi.addGoalLink)((slug, LinkAdd(t._1, t._2, note))).map(l => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.linkLine(l)))
     }
   }
 
@@ -104,7 +104,7 @@ object GoalsCmd:
       Opts.argument[String]("ref")
     ).mapN { (slug, kind, ref) => (c: Client) =>
       c.call(AgentsApi.removeGoalLink)((slug, kind, ref))
-        .map(r => println(if r.removed then "unlinked" else "there was no such link"))
+        .map(r => com.histmersion.cli.Cli.writeLine(if r.removed then "unlinked" else "there was no such link"))
     }
   }
 
@@ -131,15 +131,15 @@ object GoalsCmd:
         set match
           case None =>
             c.call(AgentsApi.removeSchedule)((slug, kind))
-              .map(r => println(if r.removed then "removed" else "there was no such schedule"))
+              .map(r => com.histmersion.cli.Cli.writeLine(if r.removed then "removed" else "there was no such schedule"))
           case Some((cron, off, budget)) =>
             c.call(AgentsApi.setSchedule)((slug, kind, ScheduleSet(cron, enabled = !off, budget)))
-              .map(s => println(AgentsMarkdown.scheduleLine(s)))
+              .map(s => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.scheduleLine(s)))
       }
   }
 
   private val schedules = Opts.subcommand("schedules", "Every goal's schedules, the next due first") {
-    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.schedules)(()).map(ss => println(AgentsMarkdown.schedules(ss))))
+    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.schedules)(()).map(ss => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.schedules(ss))))
   }
 
   val command: Opts[Client => Either[Cli.Error, Unit]] =

@@ -136,7 +136,7 @@ object MergeCmd:
             .map(_ => ())
         }
         _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
-        _ = template.foreach(t => println(s"\n→ resolution template written to $t"))
+        _ = template.foreach(t => com.histmersion.cli.Cli.writeLine(s"\n→ resolution template written to $t"))
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
@@ -171,7 +171,7 @@ object MergeCmd:
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
           (), {
-            println(MergeMarkdown.plan(plan))
+            com.histmersion.cli.Cli.writeLine(MergeMarkdown.plan(plan))
             Cli.Error(
               "the merge cannot be applied yet: decide what is open (listed above), then apply again",
               exitCode = ExitCode.Refused
@@ -190,7 +190,7 @@ object MergeCmd:
         )
         job <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
         r <- follow(c, job)
-        _ = println(MergeMarkdown.applied(r))
+        _ = com.histmersion.cli.Cli.writeLine(MergeMarkdown.applied(r))
         _ <- Either.cond(r.applied, (), Cli.Error("the merge was not applied (see above)", exitCode = ExitCode.Refused))
       yield ()
     }

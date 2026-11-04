@@ -19,7 +19,7 @@ object AssetLinksCmd:
       Opts.option[String]("target-id", "Filter by target id").orNone
     )
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
-        c.assetLinks(ck, asset, tt, ti).map(r => println(MediaMarkdown.assetLinkList(r)))
+        c.assetLinks(ck, asset, tt, ti).map(r => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetLinkList(r)))
       }
   }
 
@@ -35,13 +35,13 @@ object AssetLinksCmd:
     )
       .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
         c.createAssetLink(AssetLink.Put(ck, asset, rel, tt, ti, xywh, notes))
-          .map(l => println(MediaMarkdown.assetLink(l)))
+          .map(l => com.histmersion.cli.Cli.writeLine(MediaMarkdown.assetLink(l)))
       }
   }
 
   private val rmCmd = Opts.subcommand("rm", "Delete an asset link by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAssetLink(id).map(d => println(s"Deleted asset link #${d.id}."))
+      c.deleteAssetLink(id).map(d => com.histmersion.cli.Cli.writeLine(s"Deleted asset link #${d.id}."))
     }
   }
 

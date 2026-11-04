@@ -63,3 +63,33 @@ class OutputSuite extends munit.FunSuite:
       }
       .toList
     assertEquals(offenders, Nil, "print through Output.emit / Output.json and take Output.jsonFlag")
+
+  test("CLI output boundary preserves bytes, channels, callbacks and evaluation") {
+    val out = new java.io.ByteArrayOutputStream
+    val err = new java.io.ByteArrayOutputStream
+    val stdout = new java.io.PrintStream(out, true, "UTF-8")
+    val stderr = new java.io.PrintStream(err, true, "UTF-8")
+    var evaluated = 0
+    var rendered = 0
+    def value(): Any = {
+      evaluated += 1
+      new Object {
+        override def toString: String = { rendered += 1; "雪" }
+      }
+    }
+    Console.withOut(stdout) {
+      Console.withErr(stderr) {
+        Cli.write(value())
+        Cli.writeLine()
+        Cli.writeLine(null)
+        List("a", "b").foreach(Cli.writeLine)
+        Output.emit(json = false, "answer")(identity)
+        Output.emit(json = true, "answer")(_ => fail("JSON must not render Markdown"))
+      }
+    }
+    val nl = System.lineSeparator()
+    assertEquals(out.toString("UTF-8"), s"雪${nl}null${nl}a${nl}b${nl}answer${nl}\"answer\"${nl}")
+    assertEquals(err.toString("UTF-8"), "")
+    assertEquals(evaluated, 1)
+    assertEquals(rendered, 1)
+  }

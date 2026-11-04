@@ -264,7 +264,7 @@ object ManagerCmd:
   private val target = Opts.argument[String]("target")
 
   private def itemPatch(c: Client, id: String, t: String, p: ItemPatch) =
-    c.call(ManagersApi.patchItem)((id, t, p)).map(i => println(ManagersMarkdown.item(i)))
+    c.call(ManagersApi.patchItem)((id, t, p)).map(i => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.item(i)))
 
   private val verbs: Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
@@ -289,7 +289,7 @@ object ManagerCmd:
           Opts.option[Long]("before", "Only events older than this id").orNone,
           Opts.option[Int]("limit", "How many").orNone
         ).mapN { (b, lim) => (c, id) =>
-          c.call(ManagersApi.events)((id, b, lim)).map(p => println(ManagersMarkdown.events(p)))
+          c.call(ManagersApi.events)((id, b, lim)).map(p => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.events(p)))
         }
       ) orElse
       verb("pause", "Start no new runs (its runs in flight go on, unless --runs)")(
@@ -297,17 +297,17 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((id, "pause", Some(r))).map(m => println(ManagersMarkdown.line(m)))
+            (c, id) => c.call(ManagersApi.action)((id, "pause", Some(r))).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "resume", None)).map(m => println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, "resume", None)).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "stop", None)).map(m => println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, "stop", None)).map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
@@ -326,7 +326,7 @@ object ManagerCmd:
           .mapN { (text, item, once, suggest) => (c, id) =>
             c.call(ManagersApi.addHint)(
               (id, HintAdd(text, item, Some(once), None, Some("cli"), suggest = Some(suggest)))
-            ).map(h => println(ManagersMarkdown.hint(h)))
+            ).map(h => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.hint(h)))
           }
       ) orElse
       verb(
@@ -336,7 +336,7 @@ object ManagerCmd:
       )(
         (Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone)
           .mapN { (kind, t, p) => (c, id) =>
-            c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => println(ManagersMarkdown.item(i)))
+            c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.item(i)))
           }
       ) orElse
       verb("hold", "Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released")(
@@ -374,7 +374,7 @@ object ManagerCmd:
           .map(t =>
             (c, id) =>
               c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(t))))
-                .map(m => println(ManagersMarkdown.line(m)))
+                .map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("config", s"Replace its settings: key=value pairs (none: back to the server's defaults): $SettingKeys")(
@@ -385,7 +385,7 @@ object ManagerCmd:
             (c, id) =>
               config(kvs)
                 .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
-                .map(m => println(ManagersMarkdown.line(m)))
+                .map(m => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.line(m)))
           )
       )
 
@@ -396,7 +396,7 @@ object ManagerCmd:
     create orElse (
       Opts.argument[String]("id"),
       verbs.orElse(
-        Opts((c: Client, id: String) => c.call(ManagersApi.get)(id).map(d => println(ManagersMarkdown.detail(d))))
+        Opts((c: Client, id: String) => c.call(ManagersApi.get)(id).map(d => com.histmersion.cli.Cli.writeLine(ManagersMarkdown.detail(d))))
       )
     ).mapN((id, f) => (c: Client) => f(c, id))
   }

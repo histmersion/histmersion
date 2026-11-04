@@ -19,7 +19,7 @@ object ConfigCmd:
         located match
           case None    => Left(Cli.Error(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})"))
           case Some(p) =>
-            println(p)
+            com.histmersion.cli.Cli.writeLine(p)
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
               case Left(err) => Left(Cli.Error(err))
               case Right(l)  =>

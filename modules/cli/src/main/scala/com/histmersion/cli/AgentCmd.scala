@@ -23,17 +23,17 @@ object AgentCmd:
       Opts.subcommand("set", "Save a role's chain over the config: the models tried in order, first choice first") {
         (Opts.argument[String]("role"), Opts.arguments[String]("provider:model")).mapN { (role, ms) => (c: Client) =>
           c.call(AgentsApi.setChain)((role, ModelChains.ChainSet(ms.toList)))
-            .map(r => println(AgentsMarkdown.roleChain(r)))
+            .map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.roleChain(r)))
         }
       }
     val reset =
       Opts.subcommand("reset", "Drop a role's saved chain: the server's config (agents.roles.<role>) applies again") {
         Opts.argument[String]("role").map { role => (c: Client) =>
-          c.call(AgentsApi.resetChain)(role).map(r => println(AgentsMarkdown.roleChain(r)))
+          c.call(AgentsApi.resetChain)(role).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.roleChain(r)))
         }
       }
     val show =
-      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => println(AgentsMarkdown.models(m))))
+      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.models(m))))
     set orElse reset orElse show
   }
 
@@ -58,7 +58,7 @@ object AgentCmd:
           else
             c.call(AgentsApi.removeAllowance)(target)
               .map(r =>
-                println(if r.removed then s"The saved allowance of $target is removed."
+                com.histmersion.cli.Cli.writeLine(if r.removed then s"The saved allowance of $target is removed."
                 else s"No saved allowance for $target.")
               )
         else
@@ -68,7 +68,7 @@ object AgentCmd:
             .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
             .flatMap { ls =>
               c.call(AgentsApi.setAllowance)(ModelChains.AllowanceSet(target, ls.map(_.spec), reserve))
-                .map(a => println(AgentsMarkdown.allowance(a)))
+                .map(a => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.allowance(a)))
             }
       }
   }
@@ -83,7 +83,7 @@ object AgentCmd:
         .orEmpty,
       Opts.option[String]("out", "A directory on the server to write to instead of its runtimes directory").orNone
     ).mapN { (rts, out) => (c: Client) =>
-      c.call(AgentsApi.generate)(GenerateRequest(rts, out)).map(r => println(AgentsMarkdown.generated(r)))
+      c.call(AgentsApi.generate)(GenerateRequest(rts, out)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.generated(r)))
     }
   }
 
@@ -98,7 +98,7 @@ object AgentCmd:
         .map(p =>
           (c: Client) =>
             c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(true))))
-              .map(x => println(AgentsMarkdown.pool(x)))
+              .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
         )
     }
     val release = Opts.subcommand("release", "Release a held plan pool") {
@@ -107,7 +107,7 @@ object AgentCmd:
         .map(p =>
           (c: Client) =>
             c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(false))))
-              .map(x => println(AgentsMarkdown.pool(x)))
+              .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
         )
     }
     val floors = Opts.subcommand(
@@ -125,7 +125,7 @@ object AgentCmd:
             case (Some(_), true) => Left(Cli.Error("--reset takes no floors", exitCode = ExitCode.Usage))
             case _               =>
               c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse("")))))
-                .map(x => println(AgentsMarkdown.pool(x)))
+                .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
         }
     }
     val fallthrough = Opts.subcommand(
@@ -136,7 +136,7 @@ object AgentCmd:
         v.trim.toLowerCase match
           case "on" | "off" =>
             c.call(AgentsApi.setFallthrough)((role, PlanQuota.FallthroughSet(v.trim.equalsIgnoreCase("on"))))
-              .map(q => println(AgentsMarkdown.quota(q)))
+              .map(q => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.quota(q)))
           case other => Left(Cli.Error(s"'$other' is neither on nor off", exitCode = ExitCode.Usage))
       }
     }
@@ -149,10 +149,10 @@ object AgentCmd:
         .orNone
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => println(AgentsMarkdown.refreshed(r)))
+            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.refreshed(r)))
         )
     }
-    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => println(AgentsMarkdown.quota(q))))
+    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.quota(q))))
     hold orElse release orElse floors orElse fallthrough orElse refresh orElse show
   }
 
@@ -161,7 +161,7 @@ object AgentCmd:
     "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login"
   ) {
     Opts.flag("offline", "Skip the providers' model listings (no network)").orFalse.map { offline => (c: Client) =>
-      c.call(AgentsApi.doctor)(Some(offline)).map(d => println(AgentsMarkdown.doctor(d)))
+      c.call(AgentsApi.doctor)(Some(offline)).map(d => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.doctor(d)))
     }
   }
 
@@ -173,7 +173,7 @@ object AgentCmd:
     "One live model call with one read-only tool (get_source) and a typed answer, checked against the record"
   ) {
     (Opts.argument[String]("citekey"), modelOpt).mapN { (ck, model) => (c: Client) =>
-      c.call(AgentsApi.probe)(ProbeRequest(ck, model)).map(p => println(AgentsMarkdown.probe(p)))
+      c.call(AgentsApi.probe)(ProbeRequest(ck, model)).map(p => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.probe(p)))
     }
   }
 
@@ -193,9 +193,9 @@ object AgentCmd:
             Thread.sleep(PollMs.toLong)
             follow(c, id, line)
           case Some(RunState.Done) | Some(RunState.Paused) | Some(RunState.WaitingApproval) =>
-            println(AgentsMarkdown.run(d, withMessages = false)); Right(())
+            com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, withMessages = false)); Right(())
           case _ =>
-            println(AgentsMarkdown.run(d, withMessages = false))
+            com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, withMessages = false))
             Left(Cli.Error(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
 
   private val run = Opts.subcommand(
@@ -284,7 +284,7 @@ object AgentCmd:
                 Option.when(ev._1)(true),
                 over
               )
-            ).flatMap(r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))))
+            ).flatMap(r => if fol then follow(c, r.id, "") else Right(com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r))))
           }
       }
   }
@@ -316,7 +316,7 @@ object AgentCmd:
       .mapN { (ids, note) => (c: Client) =>
         val failed = ids.toList.flatMap { id =>
           c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))) match
-            case Right(a) => println(AgentsMarkdown.approvalLine(a)); None
+            case Right(a) => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.approvalLine(a)); None
             case Left(e)  => Console.err.println(s"#$id: ${e.message}"); Some(e)
         }
         failed match
@@ -358,7 +358,7 @@ object AgentCmd:
     )
       .mapN { (id, msgs, fol) => (c: Client) =>
         if fol then follow(c, id, "")
-        else c.call(AgentsApi.run)(id).map(d => println(AgentsMarkdown.run(d, msgs)))
+        else c.call(AgentsApi.run)(id).map(d => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, msgs)))
       }
   }
 
@@ -379,7 +379,7 @@ object AgentCmd:
       ).tupled
     else Opts((Option.empty[Double], Option.empty[Long]))
     (Opts.argument[String]("id"), budget).mapN { (id, b) => (c: Client) =>
-      c.call(AgentsApi.control)((id, action, b._1, b._2)).map(r => println(AgentsMarkdown.runLine(r)))
+      c.call(AgentsApi.control)((id, action, b._1, b._2)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r)))
     }
   }
 

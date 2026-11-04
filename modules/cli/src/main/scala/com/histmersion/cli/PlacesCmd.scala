@@ -35,7 +35,7 @@ object PlacesCmd:
     Opts.option[Long]("as-of", "Signed year the gazetteer is read at (BCE negative, e.g. -1400)").orNone
 
   private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[Long]): Unit =
-    println(PlacesMarkdown.places(rows.toVector, asOf))
+    com.histmersion.cli.Cli.writeLine(PlacesMarkdown.places(rows.toVector, asOf))
 
   private val search = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
     (Opts.argument[String]("query").orNone, asOfOpt, Opts.option[Int]("limit", "Max results").orNone)
@@ -55,15 +55,15 @@ object PlacesCmd:
         for
           d <- c.place(id, asOf)
           tree <- if noTree then Right(Nil) else c.placeTree(id, asOf, depth)
-        yield println(PlacesMarkdown.place(d, tree.toVector))
+        yield com.histmersion.cli.Cli.writeLine(PlacesMarkdown.place(d, tree.toVector))
       }
   }
 
   private val children = Opts.subcommand("children", "What one place contains, as of a year") {
     (Opts.argument[String]("id"), asOfOpt).mapN { (id, asOf) => (c: Client) =>
       c.placeChildren(id, asOf).map { rows =>
-        if rows.isEmpty then println("_No children._")
-        else println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
+        if rows.isEmpty then com.histmersion.cli.Cli.writeLine("_No children._")
+        else com.histmersion.cli.Cli.writeLine(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
       }
     }
   }
@@ -127,7 +127,7 @@ object PlacesCmd:
     )
       .mapN { (file, kind, batch, dataset) => (c: Client) =>
         importFile(c, Path.of(file), kind, batch.getOrElse(defaultBatch), dataset)
-          .map(r => println(PlacesMarkdown.placeImport(r)))
+          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeImport(r)))
       }
   }
 
@@ -201,7 +201,7 @@ object PlacesCmd:
                 fs.foldLeft[Either[Cli.Error, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>
-                      println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
+                      com.histmersion.cli.Cli.writeLine(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
                       if r.failed.isEmpty then retry else retry :+ (f -> kind)
                     }
                   }
@@ -213,20 +213,20 @@ object PlacesCmd:
                   else pass(retry, "re-resolving parents: ")
                 _ <-
                   if noRebuild then Right(())
-                  else c.rebuildPlaces.map(r => println(PlacesMarkdown.placeRebuild(r)))
+                  else c.rebuildPlaces.map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeRebuild(r)))
               yield ()
         }
     }
 
   private val rebuild = Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
-    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(PlacesMarkdown.placeRebuild(r))))
+    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeRebuild(r))))
   }
 
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
   private def started(c: Client, id: String, noWait: Boolean): Either[Cli.Error, Unit] =
-    println(s"job `$id` started (`histmersion jobs $id` follows it)")
+    com.histmersion.cli.Cli.writeLine(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
 
   private val buildHierarchy = Opts.subcommand(
@@ -241,7 +241,7 @@ object PlacesCmd:
             case Some(id) => started(c, id, nw)
             case None     =>
               Right(
-                println(
+                com.histmersion.cli.Cli.writeLine(
                   s"**${r.edgesCreated}** spatial containment edges created " +
                     s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)"
                 )
@@ -259,7 +259,7 @@ object PlacesCmd:
         c.fetchExternalPlaces(source, dryRun).flatMap { r =>
           r.job match
             case Some(id) => started(c, id, nw)
-            case None     => Right(println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
+            case None     => Right(com.histmersion.cli.Cli.writeLine(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
   }
@@ -270,7 +270,7 @@ object PlacesCmd:
     "sources",
     "The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => println(PlacesMarkdown.gazetteerSources(rows))))
+    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.gazetteerSources(rows))))
   }
 
   private val load = Opts.subcommand(
@@ -286,7 +286,7 @@ object PlacesCmd:
     )
       .mapN { (source, apply, noWait) => (c: Client) =>
         c.loadPlaces(source, apply).flatMap { j =>
-          println(
+          com.histmersion.cli.Cli.writeLine(
             s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -305,7 +305,7 @@ object PlacesCmd:
   ) {
     (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
       c.addPlaceName(id, com.histmersion.api.catalogue.Place.NameAdd(name, lang))
-        .map(r => println(PlacesMarkdown.placeNameChanged(r)))
+        .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeNameChanged(r)))
     }
   }
 
@@ -314,7 +314,7 @@ object PlacesCmd:
       (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN {
         (id, name, lang) => (c: Client) =>
           c.removePlaceName(id, com.histmersion.api.catalogue.Place.NameRemove(name, lang))
-            .map(r => println(PlacesMarkdown.placeNameChanged(r)))
+            .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeNameChanged(r)))
       }
     }
 
@@ -329,7 +329,7 @@ object PlacesCmd:
       .mapN { (place, csv) => (c: Client) =>
         c.placeNames(place)
           .map(rows =>
-            print(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
+            com.histmersion.cli.Cli.write(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
             else PlacesMarkdown.manualPlaceNames(rows) + "\n")
           )
       }
@@ -362,7 +362,7 @@ object PlacesCmd:
     )
       .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
         c.addPlace(com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source, id, names, lang, from, to))
-          .map(p => println(PlacesMarkdown.placeAdded(p)))
+          .map(p => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeAdded(p)))
       }
   }
 
@@ -397,7 +397,7 @@ object PlacesCmd:
           id,
           com.histmersion.api.catalogue.Place
             .OverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2))
-        ).map(r => println(PlacesMarkdown.placeOverrideChanged(r)))
+        ).map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeOverrideChanged(r)))
       }
   }
 
@@ -412,7 +412,7 @@ object PlacesCmd:
     )
       .mapN { (id, into, reason) => (c: Client) =>
         c.mergePlace(id, com.histmersion.api.catalogue.Place.MergeIn(into, reason))
-          .map(r => println(PlacesMarkdown.placeGone(r)))
+          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -423,7 +423,7 @@ object PlacesCmd:
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
         c.removePlace(id, com.histmersion.api.catalogue.Place.RemoveIn(reason))
-          .map(r => println(PlacesMarkdown.placeGone(r)))
+          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -432,7 +432,7 @@ object PlacesCmd:
     "The kinds, periods and points set by hand (`places set`), with what each source says"
   ) {
     Opts.option[String]("place", "Only this place's (an id)").orNone.map { place => (c: Client) =>
-      c.placeOverrides(place).map(rows => println(PlacesMarkdown.placeOverrides(rows)))
+      c.placeOverrides(place).map(rows => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeOverrides(rows)))
     }
   }
 
