@@ -94,3 +94,5 @@ migration/missing-files.txt
 migration/input-manifest.tsv
 best-effort-fixtures/
 capabilities-best-effort/
+!capability-history/observations/*/findings.tsv
+!transaction-sample/findings.tsv
