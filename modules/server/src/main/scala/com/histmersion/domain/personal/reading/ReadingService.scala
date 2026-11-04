@@ -109,7 +109,7 @@ object ReadingService:
       val after = state.updateAndGet { s =>
         val m = find(s, user, kind, key).getOrElse(StoredMark(user, r, None, None, None, at, at))
         val kept = change(m).copy(
-          ref = m.ref.copy(uid = r.uid.orElse(m.ref.uid)),
+          ref = m.ref.modify(_.uid).setTo(r.uid.orElse(m.ref.uid)),
           targetLabel = title.orElse(m.targetLabel),
           updatedAt = at
         )
@@ -125,10 +125,12 @@ object ReadingService:
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
-      upsert(user, kind, key, title, at)(m => m.copy(readAt = if read then m.readAt.orElse(Some(at)) else None))
+      upsert(user, kind, key, title, at)(m =>
+        m.modify(_.readAt).setTo(if read then m.readAt.orElse(Some(at)) else None)
+      )
 
     def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime): ReadMark =
-      upsert(user, kind, key, title, at)(_.copy(openedAt = Some(at)))
+      upsert(user, kind, key, title, at)(_.modify(_.openedAt).setTo(Some(at)))
 
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       val read = mine(state.get, user).filter(m => m.ref.kind == kind && m.readAt.isDefined).map(_.ref).toSet

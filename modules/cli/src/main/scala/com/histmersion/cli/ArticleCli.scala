@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.Bundle
 
 import scala.annotation.tailrec
@@ -93,7 +95,7 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: Boolean, skip: Set[String])(using console: Console) : SeedResult =
+  def importAll(c: Client, root: Path, force: Boolean, skip: Set[String])(using console: Console): SeedResult =
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
@@ -103,7 +105,7 @@ object ArticleCli:
         imported: Int,
         failed: List[String],
         skipped: List[String]
-    )(using console: Console) : SeedResult =
+    )(using console: Console): SeedResult =
       rest match
         case Nil               => SeedResult(imported, failed, 0, skipped)
         case (f, kind) :: tail =>
@@ -115,7 +117,7 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path)(using console: Console) : Either[Cli.Error, Int] =
+  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, Int] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
@@ -148,7 +150,7 @@ object ArticleCli:
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────
 
   /** Progress report of an article import (also used by `histmersion seed`). */
-  def report(r: SeedResult)(using console: Console) : Unit =
+  def report(r: SeedResult)(using console: Console): Unit =
     Cli.out.println(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
     r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
@@ -156,7 +158,7 @@ object ArticleCli:
   /** The filter flags are the shared ones: they select SOURCES, and an article is listed when it cites one of them
     * (`--title` is the article's own title). The positional query is the article's own full text.
     */
-  private def list (using console: Console) =
+  private def list(using console: Console) =
     Opts.subcommand("list", "List/search compiled articles (the filter flags select the sources they cite)") {
       (
         Opts.argument[String]("query").orNone,
@@ -171,7 +173,7 @@ object ArticleCli:
       }
     }
 
-  private def get (using console: Console) =
+  private def get(using console: Console) =
     Opts.subcommand("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)") {
       (
         Opts.argument[String]("slug"),
@@ -195,32 +197,33 @@ object ArticleCli:
       .flag("strict", "Refuse the write when the Markdown has a formatting error (default: write, then list them)")
       .orFalse
 
-  private def put (using console: Console) = Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
-    (
-      Opts.argument[String]("file.md"),
-      Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone,
-      strictFlag
-    )
-      .mapN { (file, kind, strict) => (c: Client) =>
-        val p = Path.of(file)
-        if !Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
-        else
-          // an explicit `put` is always deliberate → force past the "newer in DB" guard
-          val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
-          val req = toImport(p, fallback, force = true).copy(strict = strict)
-          c.importArticle(req).map { r =>
-            report(r)
-            // the import answers with counts only: ask for the article's formatting problems by the
-            // slug the note itself declares (as the server parsed it), so the writer sees them now
-            val slug = ArticleNote.parse(req.text, req.slug.getOrElse(""), fallback).map(_.slug).filter(_.nonEmpty)
-            if r.imported > 0 then
-              slug.foreach(s => c.lintArticle(s).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
-          }
-      }
-  }
+  private def put(using console: Console) =
+    Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
+      (
+        Opts.argument[String]("file.md"),
+        Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone,
+        strictFlag
+      )
+        .mapN { (file, kind, strict) => (c: Client) =>
+          val p = Path.of(file)
+          if !Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+          else
+            // an explicit `put` is always deliberate → force past the "newer in DB" guard
+            val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
+            val req = toImport(p, fallback, force = true).modify(_.strict).setTo(strict)
+            c.importArticle(req).map { r =>
+              report(r)
+              // the import answers with counts only: ask for the article's formatting problems by the
+              // slug the note itself declares (as the server parsed it), so the writer sees them now
+              val slug = ArticleNote.parse(req.text, req.slug.getOrElse(""), fallback).map(_.slug).filter(_.nonEmpty)
+              if r.imported > 0 then
+                slug.foreach(s => c.lintArticle(s).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
+            }
+        }
+    }
 
   /** `article lint <slug> [--fix]` — what in the article will not display as written. */
-  private def lint (using console: Console) = Opts.subcommand(
+  private def lint(using console: Console) = Opts.subcommand(
     "lint",
     "Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)"
   ) {
@@ -237,7 +240,7 @@ object ArticleCli:
   /** `article check <slug> (--edits-file f.json | --body-file f.md) [--kind k]` — dry-run a change as the review
     * pipeline checks its fixer's answer: nothing is written.
     */
-  private def check (using console: Console) = Opts.subcommand(
+  private def check(using console: Console) = Opts.subcommand(
     "check",
     "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing"
   ) {
@@ -281,28 +284,30 @@ object ArticleCli:
     }
   }
 
-  private def delete (using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
+  private def delete(using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts
       .argument[String]("slug")
       .map(slug => (c: Client) => c.deleteArticle(slug).map(d => Cli.out.println(s"deleted ${d.slug}")))
   }
 
-  private def exportCmd (using console: Console) = Opts.subcommand("export", "Write each article to <dir>/<kind>/<slug>.md") {
-    Opts.argument[String]("dir").map { dir => (c: Client) =>
-      val out = Path.of(dir)
-      val _ = Files.createDirectories(out)
-      exportAll(c, out).map(_ => ())
-    }
-  }
-
-  private def importCmd (using console: Console) = Opts.subcommand("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)") {
-    (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
-      .mapN { (dir, force) => (c: Client) =>
-        val p = Path.of(dir)
-        if !Files.isDirectory(p) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
-        else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
+  private def exportCmd(using console: Console) =
+    Opts.subcommand("export", "Write each article to <dir>/<kind>/<slug>.md") {
+      Opts.argument[String]("dir").map { dir => (c: Client) =>
+        val out = Path.of(dir)
+        val _ = Files.createDirectories(out)
+        exportAll(c, out).map(_ => ())
       }
-  }
+    }
+
+  private def importCmd(using console: Console) =
+    Opts.subcommand("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)") {
+      (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
+        .mapN { (dir, force) => (c: Client) =>
+          val p = Path.of(dir)
+          if !Files.isDirectory(p) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
+          else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
+        }
+    }
 
   /** The filter flags of `article patch` (#958): any of them REPLACES the article's recorded filter with the one they
     * spell; `--clear-filter` removes it.
@@ -346,7 +351,7 @@ object ArticleCli:
       .orEmpty
 
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
-  private def coverage (using console: Console) = Opts.subcommand(
+  private def coverage(using console: Console) = Opts.subcommand(
     "coverage",
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
@@ -356,7 +361,7 @@ object ArticleCli:
   }
 
   /** `article review <slug>` — where the article stands with the review panel, and its review history. */
-  private def review (using console: Console) = Opts.subcommand(
+  private def review(using console: Console) = Opts.subcommand(
     "review",
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
@@ -365,72 +370,76 @@ object ArticleCli:
     }
   }
 
-  private def patch (using console: Console) = Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
-    (
-      Opts.argument[String]("slug"),
-      Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
-      Opts.option[String]("title", "New title").orNone,
-      Opts.option[String]("summary", "New summary (the one-paragraph lede)").orNone,
-      Opts.option[String]("kind", s"New kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})").orNone,
-      Opts.option[String]("body-file", "File whose Markdown REPLACES the body").orNone,
-      Opts.option[String]("append-file", "File whose Markdown is APPENDED to the body").orNone,
-      Opts.option[String]("tags-add", "Comma-separated tags to add").orNone,
-      Opts.option[String]("tags-remove", "Comma-separated tags to remove").orNone,
-      Opts.option[String]("tags-replace", "Comma-separated tags replacing the current set").orNone,
-      Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
-      Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -1300,-1100)").orNone,
-      Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
-      strictFlag,
-      filterFlags,
-      reasonFlags,
-      critiqueReasonFlags
-    ).mapN {
+  private def patch(using console: Console) =
+    Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
       (
-          slug,
-          json,
-          title,
-          summary,
-          kind,
-          bodyF,
-          appendF,
-          tAdd,
-          tRem,
-          tRep,
-          regions,
-          period,
-          ifUpd,
-          strict,
-          ff,
-          rs,
-          crs
-      ) => (c: Client) =>
-        ArticlePatches
-          .build(json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd)
-          .flatMap(ArticlePatches.withCoverage(_, ff, rs))
-          .flatMap(ArticlePatches.withCritiques(_, crs))
-          .flatMap(p =>
-            c.patchArticle(slug, p, strict).map { v =>
-              Cli.out.println(ArticleMarkdown.article(v))
-              v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
-            }
-          )
+        Opts.argument[String]("slug"),
+        Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
+        Opts.option[String]("title", "New title").orNone,
+        Opts.option[String]("summary", "New summary (the one-paragraph lede)").orNone,
+        Opts.option[String]("kind", s"New kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})").orNone,
+        Opts.option[String]("body-file", "File whose Markdown REPLACES the body").orNone,
+        Opts.option[String]("append-file", "File whose Markdown is APPENDED to the body").orNone,
+        Opts.option[String]("tags-add", "Comma-separated tags to add").orNone,
+        Opts.option[String]("tags-remove", "Comma-separated tags to remove").orNone,
+        Opts.option[String]("tags-replace", "Comma-separated tags replacing the current set").orNone,
+        Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
+        Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -1300,-1100)").orNone,
+        Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
+        strictFlag,
+        filterFlags,
+        reasonFlags,
+        critiqueReasonFlags
+      ).mapN {
+        (
+            slug,
+            json,
+            title,
+            summary,
+            kind,
+            bodyF,
+            appendF,
+            tAdd,
+            tRem,
+            tRep,
+            regions,
+            period,
+            ifUpd,
+            strict,
+            ff,
+            rs,
+            crs
+        ) => (c: Client) =>
+          ArticlePatches
+            .build(json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd)
+            .flatMap(ArticlePatches.withCoverage(_, ff, rs))
+            .flatMap(ArticlePatches.withCritiques(_, crs))
+            .flatMap(p =>
+              c.patchArticle(slug, p, strict).map { v =>
+                Cli.out.println(ArticleMarkdown.article(v))
+                v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
+              }
+            )
+      }
     }
-  }
 
-  private def versions (using console: Console) = Opts.subcommand("versions", "Show the edit history of one article") {
+  private def versions(using console: Console) = Opts.subcommand("versions", "Show the edit history of one article") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.articleVersions(slug).map(vs => Cli.out.println(ArticleMarkdown.versions(slug, vs))))
+      .map(slug =>
+        (c: Client) => c.articleVersions(slug).map(vs => Cli.out.println(ArticleMarkdown.versions(slug, vs)))
+      )
   }
 
-  private def versionCmd (using console: Console) = Opts.subcommand("version", "Show one historical version's full body") {
-    (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-      c.articleVersion(slug, id).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+  private def versionCmd(using console: Console) =
+    Opts.subcommand("version", "Show one historical version's full body") {
+      (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
+        c.articleVersion(slug, id).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+      }
     }
-  }
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "article",
       "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"

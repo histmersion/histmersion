@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -113,7 +115,7 @@ object ArticlePatches:
       .traverse(r =>
         CritiqueReason.parse(r).left.map(m => Cli.Error(s"--critique-reason: $m", exitCode = ExitCode.Usage))
       )
-      .map(rs => if rs.isEmpty then p else p.copy(critiqueReasons = p.critiqueReasons ++ rs))
+      .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
   private def parse(json: Option[String]): Either[Cli.Error, Article.Patch] = json match
     case None    => Right(Article.Patch())

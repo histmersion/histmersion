@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{Plural, Wording}
 import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*
@@ -598,7 +600,7 @@ object ManagersView:
           ),
           Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
-          s.focus.map(f => focusPanel(f, x => st.update(_.map(_.copy(focus = Some(x)))), failure)),
+          s.focus.map(f => focusPanel(f, x => st.update(_.map(_.modify(_.focus).setTo(Some(x)))), failure)),
           ul(
             cls := "job-list autopilot-goals",
             s.goals.map(g =>

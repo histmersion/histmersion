@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
@@ -85,7 +87,7 @@ object MergeResolutionsFile:
         else
           Right(
             MergeResolutions(
-              resolve.map(r => r.copy(text = texts.get(r.issue).orElse(r.text))),
+              resolve.map(r => r.modify(_.text).setTo(texts.get(r.issue).orElse(r.text))),
               MergePolicy(editions),
               bundle
             )

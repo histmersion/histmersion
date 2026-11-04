@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.jobs.JobState
 
 import java.nio.charset.StandardCharsets
@@ -208,7 +210,7 @@ object AcquireRecheck:
       lastFailure: Option[String] = None
   ):
     def add(outcome: Outcome, detail: String): Tally = outcome match
-      case Outcome.Closed  => copy(closed = closed + 1)
+      case Outcome.Closed  => this.modify(_.closed).setTo(closed + 1)
       case Outcome.Fetched => copy(tried = tried + 1, fetched = fetched + 1)
       case Outcome.NoCopy  => copy(tried = tried + 1, noCopy = noCopy + 1)
       case Outcome.Failed  => copy(tried = tried + 1, failed = failed + 1, lastFailure = Some(detail))

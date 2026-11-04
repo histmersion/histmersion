@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
 
 import com.histmersion.domain.automation.agents.{
@@ -255,7 +257,7 @@ final class ReviewArticlePipeline(
         Right(persist(ctx, absorbTargeted(ctx, carry.ledger, r, mech, checks, snap)))
       )
       merged <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r, run = Some(ctx.run.id))))
-    yield State(merged, snap, carry.copy(ledger = ledger), unwritten, targeted = true)
+    yield State(merged, snap, carry.modify(_.ledger).setTo(ledger), unwritten, targeted = true)
 
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
@@ -338,13 +340,16 @@ final class ReviewArticlePipeline(
 
   /** The skeptic's verified not-material rulings, as reasons to store. */
   private def notMaterial(ctx: RunCtx, reports: List[Report]): List[CritiqueReason] =
-    reports.filter(_.reviewer == Reviewer.Skeptic).flatMap(_.notMaterial).map(_.copy(by = Some(by(ctx, "skeptic"))))
+    reports
+      .filter(_.reviewer == Reviewer.Skeptic)
+      .flatMap(_.notMaterial)
+      .map(_.modify(_.by).setTo(Some(by(ctx, "skeptic"))))
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
     (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason)) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
-      .map(_.copy(by = Some(by(ctx, "fixer"))))
+      .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
 
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the carry). A refusal
     * — the edge went meanwhile — is a warning, never a failed run.
@@ -629,9 +634,9 @@ final class ReviewArticlePipeline(
       edited: ReviewLedger.Edited
   ): String =
     val ids = asked.map(_.id).mkString(", ")
-    val toCheck = findingsText(ReviewLedger.merged(l.copy(entries = asked), 0), ReviewLedger.notes(l))
+    val toCheck = findingsText(ReviewLedger.merged(l.modify(_.entries).setTo(asked), 0), ReviewLedger.notes(l))
     val rest = ReviewLedger.promptText(
-      l.copy(entries = l.entries.filterNot(e => asked.exists(_.id == e.id))),
+      l.modify(_.entries).setTo(l.entries.filterNot(e => asked.exists(_.id == e.id))),
       ReviewLedger.OpenStyle.Lines,
       cfg.review.ledgerClosedLines,
       Some(rv)
@@ -879,4 +884,4 @@ final class ReviewArticlePipeline(
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(site.workLists.patch(item.id, p).map(_ => ()))(Right(()))
       }
-    l.copy(task = kept)
+    l.modify(_.task).setTo(kept)

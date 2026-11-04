@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.Title
 
 import java.time.Instant
@@ -31,7 +33,7 @@ object Referable:
     val kinds: Set[ItemKind] = Set(kind)
 
     def put(key: ItemKey, title: Title, uid: Option[ItemUid]): Unit =
-      records.updateAndGet(r => r.copy(live = r.live + (key -> Record(uid, title)))): Unit
+      records.updateAndGet(r => r.modify(_.live).setTo(r.live + (key -> Record(uid, title)))): Unit
 
     def rename(from: ItemKey, to: ItemKey): Unit =
       records.updateAndGet { r =>

@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -256,11 +258,11 @@ final class PluginOps(using console: Console)(
           .filterNot(f => replaced.contains(f) || f == name)
           .flatMap(f => PluginKit.idsOf(f, idx).map(_ -> f))
           .toMap
-        _ <- PluginKit.refusals(jar.copy(file = name), spi, taken) match
+        _ <- PluginKit.refusals(jar.modify(_.file).setTo(name), spi, taken) match
           case Nil      => Right(())
           case problems => Left(err(s"refused:\n${problems.map("  - " + _).mkString("\n")}"))
         _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(err(_)))
-        _ = show(jar.copy(file = name), sha, source, signer, replaced, deps)
+        _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
           o.yes || confirm(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?"),
           (),
@@ -281,7 +283,7 @@ final class PluginOps(using console: Console)(
         resolveInstalled(repos)
         resign()
         Cli.out.println(s"installed $target")
-        jar.copy(file = name)
+        jar.modify(_.file).setTo(name)
     finally deleteTree(work)
 
   private def deleteTree(dir: Path): Unit =

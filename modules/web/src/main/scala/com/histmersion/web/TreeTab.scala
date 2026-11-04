@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Api, Plural}
 import org.scalajs.dom
@@ -257,12 +259,12 @@ object TreeTab:
     val cfg = config.getOrElse(throw new Exception("no config"))
     val f = UiState.toFilter()
     if b.kind == "time" then
-      val narrowed = f.copy(period = for a <- b.start; b2 <- b.end yield Period(a, b2))
+      val narrowed = f.modify(_.period).setTo(for a <- b.start; b2 <- b.end yield Period(a, b2))
       ApiClient.aggregate(
         Api.AggregateQuery.tree("time", narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples))
       )
     else
-      val narrowed = f.copy(places = b.placeId.toList)
+      val narrowed = f.modify(_.places).setTo(b.placeId.toList)
       ApiClient.aggregate(
         Api.AggregateQuery
           .tree("region", narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples))

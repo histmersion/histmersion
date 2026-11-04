@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{ListPatch, Wording, YearFmt, Years}
 import com.raquo.laminar.api.L.*
 
@@ -124,7 +126,7 @@ object SourceEditor:
         tags = tags
       )
       if patch == com.histmersion.api.library.Source.Patch() then Right(None)
-      else Right(Some(patch.copy(ifUpdatedAt = orig.updatedAt)))
+      else Right(Some(patch.modify(_.ifUpdatedAt).setTo(orig.updatedAt)))
 
   /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
     * message about none of them is shown above the buttons.
@@ -263,16 +265,16 @@ object SourceEditor:
         hidden <-- draft.signal.map(_.isEmpty),
         onSubmit.preventDefault --> (_ => if Auth.writableNow then save()),
         p(cls := "muted", "Editing ", SourceLink(ck), " — only what you change is sent."),
-        field("title", Field.Title, textIn(_.title, (d, v) => d.copy(title = v))),
+        field("title", Field.Title, textIn(_.title, (d, v) => d.modify(_.title).setTo(v))),
         div(
           cls := "form-field",
           label("authors"),
-          chips(Facet.Field.Authors, _.authors, (d, v) => d.copy(authors = v), "add an author…"),
+          chips(Facet.Field.Authors, _.authors, (d, v) => d.modify(_.authors).setTo(v), "add an author…"),
           errorFor(Field.Authors)
         ),
         div(
           cls := "form-pair",
-          field("year", Field.Year, textIn(_.year, (d, v) => d.copy(year = v), "e.g. 2007")),
+          field("year", Field.Year, textIn(_.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007")),
           field(
             "status",
             Field.Status,
@@ -280,30 +282,30 @@ object SourceEditor:
               cls := "field",
               controlled(
                 value <-- draft.signal.map(_.fold("")(_.status.wire)),
-                onChange.mapToValue --> (v => edit(_.copy(status = Source.Status.fromString(v))))
+                onChange.mapToValue --> (v => edit(_.modify(_.status).setTo(Source.Status.fromString(v))))
               ),
               Source.Status.values.toList.map(s => option(value := s.wire, Wording.status(s)))
             )
           )
         ),
-        field("venue", Field.Venue, textIn(_.venue, (d, v) => d.copy(venue = v))),
-        field("DOI", Field.Doi, textIn(_.doi, (d, v) => d.copy(doi = v), "10.…")),
+        field("venue", Field.Venue, textIn(_.venue, (d, v) => d.modify(_.venue).setTo(v))),
+        field("DOI", Field.Doi, textIn(_.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…")),
         div(
           cls := "form-field",
           label("topics"),
-          chips(Facet.Field.Topics, _.topics, (d, v) => d.copy(topics = v), "add a topic…"),
+          chips(Facet.Field.Topics, _.topics, (d, v) => d.modify(_.topics).setTo(v), "add a topic…"),
           errorFor(Field.Topics)
         ),
         div(
           cls := "form-field",
           label("regions"),
-          chips(Facet.Field.Places, _.regions, (d, v) => d.copy(regions = v), "add a region…"),
+          chips(Facet.Field.Places, _.regions, (d, v) => d.modify(_.regions).setTo(v), "add a region…"),
           errorFor(Field.Regions)
         ),
         div(
           cls := "form-field",
           label("tags"),
-          chips(Facet.Field.Tags, _.tags, (d, v) => d.copy(tags = v), "add a tag…"),
+          chips(Facet.Field.Tags, _.tags, (d, v) => d.modify(_.tags).setTo(v), "add a tag…"),
           errorFor(Field.Tags)
         ),
         div(
@@ -313,10 +315,14 @@ object SourceEditor:
             cls := "form-pair",
             label(
               "from",
-              textIn(_.periodStart, (d, v) => d.copy(periodStart = v), "e.g. 1300 BCE"),
+              textIn(_.periodStart, (d, v) => d.modify(_.periodStart).setTo(v), "e.g. 1300 BCE"),
               yearEcho(_.periodStart)
             ),
-            label("to", textIn(_.periodEnd, (d, v) => d.copy(periodEnd = v), "e.g. 1100 BCE"), yearEcho(_.periodEnd))
+            label(
+              "to",
+              textIn(_.periodEnd, (d, v) => d.modify(_.periodEnd).setTo(v), "e.g. 1100 BCE"),
+              yearEcho(_.periodEnd)
+            )
           ),
           errorFor(Field.Period)
         ),
@@ -328,7 +334,7 @@ object SourceEditor:
             rows := 5,
             controlled(
               value <-- draft.signal.map(_.fold("")(_.summary)),
-              onInput.mapToValue --> (v => edit(_.copy(summary = v)))
+              onInput.mapToValue --> (v => edit(_.modify(_.summary).setTo(v)))
             )
           )
         ),

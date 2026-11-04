@@ -62,7 +62,7 @@ object SetupPage:
     val working = Var(false)
     val finished = Var(Option.empty[List[(String, Either[String, String])]])
     val start = Var(ui.mapStart)
-    start.signal.changes.foreach(s => choices.update(_.copy(start = s)))(using unsafeWindowOwner)
+    start.signal.changes.foreach(s => choices.update(_.modify(_.start).setTo(s)))(using unsafeWindowOwner)
 
     def load(): Unit =
       ApiClient.settings().onComplete { r =>
@@ -287,7 +287,7 @@ object SetupPage:
               placeholder := "you@example.org",
               controlled(
                 value <-- choices.signal.map(_.email),
-                onInput.mapToValue --> (v => choices.update(_.copy(email = v)))
+                onInput.mapToValue --> (v => choices.update(_.modify(_.email).setTo(v)))
               )
             )
           ),
@@ -327,7 +327,7 @@ object SetupPage:
                     nameAttr := "setup-area",
                     controlled(
                       checked <-- choices.signal.map(_.area == box),
-                      onClick.mapTo(box) --> (b => choices.update(_.copy(area = b)))
+                      onClick.mapTo(box) --> (b => choices.update(_.modify(_.area).setTo(b)))
                     )
                   ),
                   span(
@@ -358,25 +358,25 @@ object SetupPage:
               SetupDownload.Boundaries.label,
               "Borders of states through time, and the periods of the timeline.",
               choices.signal.map(_.boundaries),
-              b => choices.update(_.copy(boundaries = b))
+              b => choices.update(_.modify(_.boundaries).setTo(b))
             ),
             check(
               SetupDownload.Events.label,
               "From the Smithsonian's Global Volcanism Program and NOAA's catalogues.",
               choices.signal.map(_.events),
-              b => choices.update(_.copy(events = b))
+              b => choices.update(_.modify(_.events).setTo(b))
             ),
             check(
               SetupDownload.Pictures.label,
               "Pictures of the places on the map, each with its licence.",
               choices.signal.map(_.pictures),
-              b => choices.update(_.copy(pictures = b))
+              b => choices.update(_.modify(_.pictures).setTo(b))
             ),
             check(
               SetupDownload.MorePlaces.label,
               "Several gigabytes; more modern places to search for.",
               choices.signal.map(_.morePlaces),
-              b => choices.update(_.copy(morePlaces = b))
+              b => choices.update(_.modify(_.morePlaces).setTo(b))
             )
           )
         )
@@ -391,7 +391,7 @@ object SetupPage:
             "Run research agents on this server",
             "They start when the server is next restarted.",
             choices.signal.map(_.agents),
-            b => choices.update(_.copy(agents = b))
+            b => choices.update(_.modify(_.agents).setTo(b))
           )
         )
       case SetupStep.Calibre =>
@@ -411,7 +411,7 @@ object SetupPage:
               placeholder := "~/Calibre Library",
               controlled(
                 value <-- choices.signal.map(_.calibre),
-                onInput.mapToValue --> (v => choices.update(_.copy(calibre = v)))
+                onInput.mapToValue --> (v => choices.update(_.modify(_.calibre).setTo(v)))
               )
             )
           )

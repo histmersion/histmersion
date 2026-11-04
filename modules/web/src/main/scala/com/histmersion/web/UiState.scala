@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.airstream.core.Transaction
 
 import com.raquo.laminar.api.L.*
@@ -336,21 +338,21 @@ object UiState:
     )
     val p = f.period
     val corrected =
-      if p.exists(pp => pp.start > pp.end) then f.copy(period = p.map(pp => Period(pp.end, pp.start)))
+      if p.exists(pp => pp.start > pp.end) then f.modify(_.period).setTo(p.map(pp => Period(pp.end, pp.start)))
       else f
     val y = corrected.years
-    if y.exists(yy => yy.start > yy.end) then corrected.copy(years = y.map(yy => Period(yy.end, yy.start)))
+    if y.exists(yy => yy.start > yy.end) then corrected.modify(_.years).setTo(y.map(yy => Period(yy.end, yy.start)))
     else corrected
 
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the
     * sources it selects.
     */
-  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().copy(limit = ui.Layout.tabFetch))
+  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().modify(_.limit).setTo(ui.Layout.tabFetch))
 
   /** What the Events tab asks for: the global filter, title included — the server lists the events whose source it
     * selects, in its period.
     */
-  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().copy(limit = ui.Layout.tabFetch))
+  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().modify(_.limit).setTo(ui.Layout.tabFetch))
 
   private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match

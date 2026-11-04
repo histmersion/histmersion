@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.imports
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.config.*
@@ -117,7 +119,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       samples = samples.take(cfg.samples.max(0))
     )
 
-    if dryRun then base.copy(failed = failed.result())
+    if dryRun then base.modify(_.failed).setTo(failed.result())
     else persist(base, kept, judged, answered.map(_._1), refresh, store, failed)
 
   private def persist(

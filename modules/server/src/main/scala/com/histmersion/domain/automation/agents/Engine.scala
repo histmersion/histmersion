@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.workflows.Pipelines
@@ -343,7 +345,7 @@ final class Engine(
                     pr => { val _ = ctl.procs.remove(pr) },
                     () => beat(id)
                   )
-                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.copy(status = RunState.Running.wire), this)))
+                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.modify(_.status).setTo(RunState.Running.wire), this)))
             catch
               case _: InterruptedException if ctl.cancel            => Left(Halt.Cancel)
               case _: InterruptedException if ctl.stalled.isDefined => Left(ctl.stalled.get)

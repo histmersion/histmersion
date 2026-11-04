@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.Slug
 
 import com.histmersion.api.aliases.AliasKinds
@@ -108,7 +110,7 @@ final class ArticlesControllers(
                 Caller.Local
               )
               .map(_ => ())
-        write.flatMap(_ => lint(a.slug)).map(_.copy(fixed = done))
+        write.flatMap(_ => lint(a.slug)).map(_.modify(_.fixed).setTo(done))
       }
 
   /** A whole body written by the mechanical pairing repair, guarded by the token it was computed against: whether it
@@ -172,11 +174,14 @@ final class ArticlesControllers(
     val f = resolve(q.filter)
     val list = search.list(f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
     val facts = reviewState.facts(list.articles.map(_.slug))
-    list.copy(articles =
-      list.articles.map(a =>
-        a.copy(review = Some(ArticleReviewStatus.badge(facts.get(a.slug).fold(ArticleReviewStatus.Facts())(_._1))))
+    list
+      .modify(_.articles)
+      .setTo(
+        list.articles.map(a =>
+          a.modify(_.review)
+            .setTo(Some(ArticleReviewStatus.badge(facts.get(a.slug).fold(ArticleReviewStatus.Facts())(_._1))))
+        )
       )
-    )
 
   /** `GET /api/articles/{slug}/review`: the article's review state, its review history from the ledger (the only read
     * that decodes one), the goals linking it and the approvals about it that wait for a person.
@@ -367,10 +372,11 @@ final class ArticlesControllers(
   /** Reasons are stored under the citekey a source has NOW (an old one resolves). */
   private def canonicalReasons(rs: List[Coverage.Reason]): List[Coverage.Reason] =
     rs.map(r =>
-      r.copy(citekey =
-        sources
-          .canonical(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))
-      )
+      r.modify(_.citekey)
+        .setTo(
+          sources
+            .canonical(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))
+        )
     )
 
   // ── links ──────────────────────────────────────────────────────────────────────────────────
@@ -413,7 +419,10 @@ final class ArticlesControllers(
         .parse(slug)
         .flatMap(s =>
           Articles
-            .applyPut(current(AliasKinds.ArticleRecords, s.value), in.copy(reasons = canonicalReasons(in.reasons)))
+            .applyPut(
+              current(AliasKinds.ArticleRecords, s.value),
+              in.modify(_.reasons).setTo(canonicalReasons(in.reasons))
+            )
         )
         .left
         .map(m => Api.Error(m, Some(Write.CodeInvalid)))
@@ -444,7 +453,7 @@ final class ArticlesControllers(
                     .applyPatch(cur, p)
                     .fold(_ => Right(()), next => strictGate(true, formatting(next.body, next.summary)))
                 )
-          gate.flatMap(_ => store.patch(s, p.copy(reasons = canonicalReasons(p.reasons)), Caller.Local))
+          gate.flatMap(_ => store.patch(s, p.modify(_.reasons).setTo(canonicalReasons(p.reasons)), Caller.Local))
         }
         .flatMap(_ => get(slug))
 

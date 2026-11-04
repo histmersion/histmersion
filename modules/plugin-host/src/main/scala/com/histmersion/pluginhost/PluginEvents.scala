@@ -1,5 +1,7 @@
 package com.histmersion.pluginhost
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{BBox, TimeSpan}
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
 import com.histmersion.upstreams.dating.CatalogDating
@@ -38,7 +40,7 @@ object PluginEvents:
     val stated = r.central
       .filter(_ => undated)
       .fold(r)(c => r.copy(timeSpan = timeSpan(CatalogDating.span(Some(CatalogDating.year(c, r.plusMinus)), None))))
-    stated.copy(timeSpan = timeSpan(CatalogDating.clamp(span(stated.timeSpan), limits)))
+    stated.modify(_.timeSpan).setTo(timeSpan(CatalogDating.clamp(span(stated.timeSpan), limits)))
 
   /** Pure: a span as the dating rules read it. */
   def span(ts: TimeSpan): CatalogDating.Span = CatalogDating.Span(ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter)

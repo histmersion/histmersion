@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.VectorStyle
 import com.histmersion.api.VocabularyCodecs.given
@@ -29,8 +31,8 @@ final case class MapPrefs(
   def withSeaDepth(style: VectorStyle, on: Boolean): MapPrefs =
     val v = Option.when(on != MapPrefs.depthByDefault(style))(on)
     style match
-      case VectorStyle.Physical => copy(depthPhysical = v)
-      case VectorStyle.Readable => copy(depthReadable = v)
+      case VectorStyle.Physical => this.modify(_.depthPhysical).setTo(v)
+      case VectorStyle.Readable => this.modify(_.depthReadable).setTo(v)
 
 object MapPrefs:
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless

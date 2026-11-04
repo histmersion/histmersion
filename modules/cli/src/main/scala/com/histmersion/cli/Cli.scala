@@ -40,7 +40,7 @@ object Cli:
   private val tokenOpt =
     Opts.option[String]("token", "API key for authenticated servers (or $HISTMERSION_TOKEN)").orNone
 
-  private def version (using console: Console) = Opts.subcommand("version", "Print the CLI and server versions") {
+  private def version(using console: Console) = Opts.subcommand("version", "Print the CLI and server versions") {
     Opts.unit.map(_ =>
       (c: Client) =>
         Cli.out.println(s"cli    ${Version.name} ${Version.version}")
@@ -48,7 +48,7 @@ object Cli:
     )
   }
 
-  private def health (using console: Console) = Opts.subcommand("health", "Server health (db, schema version)") {
+  private def health(using console: Console) = Opts.subcommand("health", "Server health (db, schema version)") {
     Opts.unit.map(_ =>
       (c: Client) =>
         c.health.map(h =>
@@ -60,7 +60,7 @@ object Cli:
     )
   }
 
-  private def about (using console: Console) = Opts.subcommand(
+  private def about(using console: Console) = Opts.subcommand(
     "about",
     "Server build (version, commit), health, job queue, last backup, store counts and storage on disk"
   ) {
@@ -85,7 +85,7 @@ object Cli:
     )
   }
 
-  private def report(r: SeedResult)(using console: Console) : Unit =
+  private def report(r: SeedResult)(using console: Console): Unit =
     Cli.out.println(
       s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), " +
         s"failed ${r.failed.size}, edges unified ${r.edgesResolved}"
@@ -93,7 +93,7 @@ object Cli:
     r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
 
-  private def seed (using console: Console) = Opts.subcommand(
+  private def seed(using console: Console) = Opts.subcommand(
     "seed",
     "Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)"
   ) {
@@ -113,7 +113,9 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
-  private def hostSeed(c: Client, dir: Path, force: Boolean)(using console: Console) : Either[com.histmersion.cli.Cli.Error, Unit] =
+  private def hostSeed(c: Client, dir: Path, force: Boolean)(using
+      console: Console
+  ): Either[com.histmersion.cli.Cli.Error, Unit] =
     val layout = ArticleCli.WikiLayout.of(dir)
     val files = Notes.markdownFiles(layout.sources)
     val total = files.size
@@ -124,7 +126,7 @@ object Cli:
         imported: Int,
         failed: List[String],
         skipped: List[String]
-    )(using console: Console) : SeedResult =
+    )(using console: Console): SeedResult =
       rest match
         case Nil       => SeedResult(imported, failed, 0, skipped)
         case f :: tail =>
@@ -142,7 +144,7 @@ object Cli:
               loop(tail, number + 1, imported + r.imported, failed ++ r.failed ++ figureFailure, skipped ++ r.skipped)
             case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message}", skipped)
     val acc = loop(files, 1, 0, Nil, Nil)
-    val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+    val done = c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(e.resolved)))
     layout.root.fold(done)(root =>
       done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir))))
     )
@@ -153,17 +155,18 @@ object Cli:
   private val FigureBytes = 8L * 1024 * 1024
   private val FigureCount = 200
 
-  private def put (using console: Console) = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
-    Opts.argument[String]("file.md").map { file => (c: Client) =>
-      val p = Path.of(file)
-      if !Files.isRegularFile(p) then
-        Left(com.histmersion.cli.Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
-      // an explicit `put` is always deliberate → force past the "newer in DB" guard
-      else c.importNote(Notes.toImport(p, force = true)).map(report)
+  private def put(using console: Console) =
+    Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
+      Opts.argument[String]("file.md").map { file => (c: Client) =>
+        val p = Path.of(file)
+        if !Files.isRegularFile(p) then
+          Left(com.histmersion.cli.Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+        // an explicit `put` is always deliberate → force past the "newer in DB" guard
+        else c.importNote(Notes.toImport(p, force = true)).map(report)
+      }
     }
-  }
 
-  private def exportCmd (using console: Console) = Opts.subcommand(
+  private def exportCmd(using console: Console) = Opts.subcommand(
     "export",
     "Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout"
   ) {
@@ -219,7 +222,7 @@ object Cli:
   /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the alias endpoint, or a
     * file that cannot be removed, is reported and does not fail the export.
     */
-  private def pruneRenamed(c: Client, sources: Path)(using console: Console) : Unit =
+  private def pruneRenamed(c: Client, sources: Path)(using console: Console): Unit =
     c.sourceAliases match
       case Left(e)   => Cli.err.println(s"  ! could not list renamed citekeys: ${e.message}")
       case Right(as) =>
@@ -228,7 +231,10 @@ object Cli:
         if removed.nonEmpty then
           Cli.out.println(s"removed ${removed.size} note(s) of renamed citekeys: ${removed.mkString(", ")}")
 
-  private def patch (using console: Console) = Opts.subcommand("patch", "Selectively enrich one source — only the parts you pass are changed") {
+  private def patch(using console: Console) = Opts.subcommand(
+    "patch",
+    "Selectively enrich one source — only the parts you pass are changed"
+  ) {
     (
       Opts.argument[String]("citekey"),
       Opts.option[String]("json", "A whole SourcePatch as JSON (the flags below override its parts)").orNone,
@@ -324,7 +330,7 @@ object Cli:
   /** `--group` / `--depth` / `--as-of` / `--samples` (plan §1.6): the SAME filter, rendered as the nested tree instead
     * of a flat list — WHEN and WHERE the evidence sits, before reading any of it.
     */
-  private def search (using console: Console) = Opts.subcommand(
+  private def search(using console: Console) = Opts.subcommand(
     "search",
     "Search the corpus (websearch syntax: \"phrase\", -not, or): sources with the findings that matched"
   ) {
@@ -346,7 +352,7 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (q, group, depth, asOf, samples, unit, brief, f0, json) => (c: Client) =>
-      val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
+      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
         case None =>
           c.sources(f).map { r =>
@@ -367,7 +373,7 @@ object Cli:
   }
 
   /** The `--group` vocabulary, spelled once (the server parses the same set through `Tree.parseBy`). */
-  private def facets (using console: Console) = Opts.subcommand(
+  private def facets(using console: Console) = Opts.subcommand(
     "facets",
     s"Vocabulary of a dimension (${Facet.Field.all.mkString("|")}) with distinct-source counts"
   ) {
@@ -378,7 +384,7 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (field, prefix, q, f, json) => (c: Client) =>
-      c.facets(field, prefix, f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
+      c.facets(field, prefix, f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty)))
         .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(field, rs.toVector)))
     }
   }
@@ -392,7 +398,7 @@ object Cli:
       after: Option[String],
       sources: Int,
       chunks: Int
-  )(using console: Console) : Either[com.histmersion.cli.Cli.Error, Unit] =
+  )(using console: Console): Either[com.histmersion.cli.Cli.Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -405,11 +411,12 @@ object Cli:
           Cli.out.println(s"reindexed $s source(s) → $ch chunk(s)")
           Right(())
 
-  private def reindex (using console: Console) = Opts.subcommand("reindex", "Rebuild the full-text chunk index for every source") {
-    Opts.unit.map(_ => (c: Client) => reindexLoop(c, None, 0, 0))
-  }
+  private def reindex(using console: Console) =
+    Opts.subcommand("reindex", "Rebuild the full-text chunk index for every source") {
+      Opts.unit.map(_ => (c: Client) => reindexLoop(c, None, 0, 0))
+    }
 
-  private def get (using console: Console) =
+  private def get(using console: Console) =
     Opts.subcommand("get", "Show one source as Markdown (section: summary|findings|notes|toc|body|all)") {
       (
         Opts.argument[String]("citekey"),
@@ -433,7 +440,9 @@ object Cli:
                 exitCode = ExitCode.Usage
               )
             )
-          else c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars)).map(value => Cli.out.println(value))
+          else
+            c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars))
+              .map(value => Cli.out.println(value))
         else
           c.getSource(ck)
             .map(sw =>
@@ -447,7 +456,7 @@ object Cli:
   /** `grep` inside one source's body, server-side (#954): the passages around each match, each with the offset
     * `get --offset` reads on from.
     */
-  private def passages (using console: Console) = Opts.subcommand(
+  private def passages(using console: Console) = Opts.subcommand(
     "passages",
     "Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset"
   ) {
@@ -467,7 +476,7 @@ object Cli:
   /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`, `--from/--to`,
     * `--bbox`, …). `--region` is kept as an alias of `--place`.
     */
-  private def geoWhen (using console: Console) =
+  private def geoWhen(using console: Console) =
     Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
       (
         Opts.option[String]("region", "Region-name substring (alias of --place)").orNone,
@@ -479,7 +488,7 @@ object Cli:
         }
     }
 
-  private def histogram (using console: Console) = Opts.subcommand(
+  private def histogram(using console: Console) = Opts.subcommand(
     "histogram",
     "When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search"
   ) {
@@ -500,7 +509,7 @@ object Cli:
   // The dump is taken by the SERVER (it holds the credentials, §2.5); `--download` then streams the
   // finished archive back here, which is how a dump on a remote server reaches this machine.
 
-  private def backup (using console: Console) =
+  private def backup(using console: Console) =
     Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
       Opts
         .option[String]("download", "Also stream the finished dump into this directory")
@@ -529,13 +538,14 @@ object Cli:
         }
     }
 
-  private def backups (using console: Console) = Opts.subcommand("backups", "List the backups on the server, newest first") {
-    Output.jsonFlag.map(json =>
-      (c: Client) => c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
-    )
-  }
+  private def backups(using console: Console) =
+    Opts.subcommand("backups", "List the backups on the server, newest first") {
+      Output.jsonFlag.map(json =>
+        (c: Client) => c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
+      )
+    }
 
-  private def restore (using console: Console) = Opts.subcommand(
+  private def restore(using console: Console) = Opts.subcommand(
     "restore",
     "Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force"
   ) {
@@ -553,12 +563,12 @@ object Cli:
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted `histmersion restore` can
     * never destroy a database by accident; use `--yes` for that.
     */
-  private[cli] def confirm(question: String)(using console: Console) : Boolean =
+  private[cli] def confirm(question: String)(using console: Console): Boolean =
     Cli.err.print(s"$question [y/N] ")
     Cli.err.flush()
     Option(console.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
-  private def neighbors (using console: Console) = Opts.subcommand(
+  private def neighbors(using console: Console) = Opts.subcommand(
     "neighbors",
     "Typed references to/from a source (references, challenges, refutes, updates, superseded_by)"
   ) {
@@ -571,7 +581,7 @@ object Cli:
     }
   }
 
-  private def graphCmd (using console: Console) =
+  private def graphCmd(using console: Console) =
     Opts.subcommand("graph", "Source dependency graph: BFS traversal returning D3-ready nodes + links") {
       (
         Opts.argument[String]("citekey"),
@@ -582,7 +592,7 @@ object Cli:
       }
     }
 
-  private def contradictionsCmd (using console: Console) = Opts.subcommand(
+  private def contradictionsCmd(using console: Console) = Opts.subcommand(
     "contradictions",
     "Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses"
   ) {
@@ -596,32 +606,34 @@ object Cli:
   }
 
   /** `histmersion maintenance vacuum` (#1445) — VACUUM on the server, as a job. */
-  private def maintenanceCmd (using console: Console) = Opts.subcommand("maintenance", "Database upkeep on the server: vacuum") {
-    Opts.subcommand(
-      "vacuum",
-      "VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics"
-    ) {
-      (
-        Opts.flag("analyze", "VACUUM (ANALYZE): also refresh the planner's statistics").orFalse,
-        Opts
-          .options[String]("table", "A table to vacuum (repeatable; default: config maintenance.vacuum-tables)")
-          .orEmpty,
-        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
-      )
-        .mapN { (analyze, tables, noWait) => (c: Client) =>
-          c.vacuum(Vacuum.Request(analyze, tables)).flatMap { j =>
-            Cli.out.println(
-              s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
-                "(`histmersion jobs` lists it)"
-            )
-            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+  private def maintenanceCmd(using console: Console) =
+    Opts.subcommand("maintenance", "Database upkeep on the server: vacuum") {
+      Opts.subcommand(
+        "vacuum",
+        "VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics"
+      ) {
+        (
+          Opts.flag("analyze", "VACUUM (ANALYZE): also refresh the planner's statistics").orFalse,
+          Opts
+            .options[String]("table", "A table to vacuum (repeatable; default: config maintenance.vacuum-tables)")
+            .orEmpty,
+          Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
+        )
+          .mapN { (analyze, tables, noWait) => (c: Client) =>
+            c.vacuum(Vacuum.Request(analyze, tables)).flatMap { j =>
+              Cli.out.println(
+                s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
+                  "(`histmersion jobs` lists it)"
+              )
+              if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            }
           }
-        }
+      }
     }
-  }
 
-  private[cli] def command
-      (using console: Console) : Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
+  private[cli] def command(using
+      console: Console
+  ): Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,
@@ -650,7 +662,7 @@ object Cli:
       ).tupled
     }
 
-  def run(args: Array[String])(using console: Console) : Unit =
+  def run(args: Array[String])(using console: Console): Unit =
     // #901: a working directory macOS will not let this binary read fails on the first `user.dir`
     // read with a bare stack trace. Only the commands that resolve a local path read it (`ingest
     // <file>`, `export <dir>`, `config path`…) — `search`, `calibre gaps` and the rest never do, so it
@@ -661,7 +673,7 @@ object Cli:
         Cli.err.println(WorkingDir.message)
         sys.exit(3)
 
-  private def runCommand(args: Array[String])(using console: Console) : Unit =
+  private def runCommand(args: Array[String])(using console: Console): Unit =
     command.parse(args.toList, sys.env) match
       case Left(help) =>
         // A8: --help should exit 0, not 1. Decline's Help has an `errors` field — empty means
@@ -675,7 +687,7 @@ object Cli:
         run(Client(url, token)) match
           case Right(())                               => ()
           case Left(e) if WorkingDir.denied(e.message) => Cli.err.println(WorkingDir.message); sys.exit(3)
-          case Left(e) => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
+          case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(message: String, exitCode: Int = ExitCode.Unreachable)

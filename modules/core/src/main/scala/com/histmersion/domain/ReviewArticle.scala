@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{Plural, WireEnum}
 import com.histmersion.api.research.{
   CitedSource,
@@ -430,7 +432,8 @@ object ReviewArticle:
       /** A missing-critique finding's pair of the critique checklist (§6.8). */
       pair: Option[CritiqueRef] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def major: Boolean = severity == Severity.Major
 
     /** One line for a person or a queue item. */
@@ -438,13 +441,11 @@ object ReviewArticle:
       val at = Option(where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
       s"$id ${severity.wire}$at: ${problem.trim}"
 
-
-
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
   final case class Evidence(citekey: String, offset: Option[Int], quote: String, ratio: Double)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for
     * [[Evidence]]), and `tool` — the call of the step that read the source.
@@ -1243,7 +1244,7 @@ object ReviewArticle:
           Right((recordedMinor(g, why), Some(s"${r.wire}: $label — $why; recorded minor")))
         f.pair.flatMap(Critiques.find(rule.pairs, _)) match
           case Some(p) if p.open =>
-            val g = f.copy(pair = Some(p.ref))
+            val g = f.modify(_.pair).setTo(Some(p.ref))
             if !p.criticised.cited then
               minor(g, s"the article does not cite [[${p.criticised.citekey}]], so it states none of its claims")
             else if rule.body.isEmpty then Right((g, None))
@@ -1263,7 +1264,7 @@ object ReviewArticle:
               if p.state == CritiqueState.Addressed then
                 s"${p.ref.wire} is addressed — both sources are cited in one paragraph"
               else s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.getOrElse("").take(160)}\""
-            minor(f.copy(pair = Some(p.ref)), why)
+            minor(f.modify(_.pair).setTo(Some(p.ref)), why)
           case None if f.pair.isEmpty && rule.full && !last =>
             Left(
               s"$label names no pair of the critique checklist (its `pair` is empty): name the pair it is about in " +
@@ -1485,7 +1486,7 @@ object ReviewArticle:
       (f, None)
     else
       (
-        f.copy(severity = Severity.Minor),
+        f.modify(_.severity).setTo(Severity.Minor),
         Some(
           s"${f.reviewer.wire}: \"${f.problem.take(80)}\" is outside the edited passages and not a factual error with evidence — recorded as minor"
         )
@@ -1561,7 +1562,7 @@ object ReviewArticle:
           case i  => acc.updated(i, acc(i).copy(evidence = mergeEvidence(acc(i).evidence, f.evidence)))
       }
       .toList
-      .map(f => if rejectedBefore.exists(sameFinding(_, f)) then f.copy(escalated = true) else f)
+      .map(f => if rejectedBefore.exists(sameFinding(_, f)) then f.modify(_.escalated).setTo(true) else f)
     val verdict = Verdict.worst(reports.map(_.verdict) :+ Verdict.of(kept))
     val cold = reports.find(_.reviewer == Reviewer.ColdReader)
     Merged(
@@ -1964,13 +1965,16 @@ object ReviewArticle:
         val checked = stated.map { r =>
           val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           val removes = Option(r.reason).forall(_.trim.isEmpty)
-          if removes && stored.contains(ck) then Right(r.copy(citekey = ck))
+          if removes && stored.contains(ck) then Right(r.modify(_.citekey).setTo(ck))
           else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
           else if !inFilter(ck) then
             Left(s"reason for [[$ck]]: the filter does not return it — give reasons only for its sources")
           else if citedAfter(ck) then
             Left(s"reason for [[$ck]]: the article cites it — a reason is only for a source it leaves out")
-          else Coverage.Reason.merge(Map.empty, List(r.copy(citekey = ck))).map(_ => r.copy(citekey = ck))
+          else
+            Coverage.Reason
+              .merge(Map.empty, List(r.modify(_.citekey).setTo(ck)))
+              .map(_ => r.modify(_.citekey).setTo(ck))
         }
         val ok = checked.collect { case Right(r) => r }
         val merged = Coverage.Reason.merge(stored, ok).getOrElse(stored)

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.config.*
@@ -167,20 +169,21 @@ object Supervisor:
     cfg.copy(
       // a desktop install is private by default, so the bind address is loopback unless the user
       // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
-      server = cfg.server.copy(host = explicitBind.filter(_.nonEmpty).getOrElse("127.0.0.1")),
-      db = cfg.db.copy(url = s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort}/$dbName"),
+      server = cfg.server.modify(_.host).setTo(explicitBind.filter(_.nonEmpty).getOrElse("127.0.0.1")),
+      db = cfg.db.modify(_.url).setTo(s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort}/$dbName"),
       converter =
         cfg.converter.copy(url = s"http://127.0.0.1:${cfg.runtime.converterPort}", spoolDir = l.uploads.toString),
       backups = cfg.backups.copy(
         dir = if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir,
         pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)
       ),
-      bundles =
-        cfg.bundles.copy(dir = if cfg.bundles.dir == DefaultBundlesDir then l.bundles.toString else cfg.bundles.dir),
+      bundles = cfg.bundles
+        .modify(_.dir)
+        .setTo(if cfg.bundles.dir == DefaultBundlesDir then l.bundles.toString else cfg.bundles.dir),
       // the first-run data ships inside the bundle (scripts/bundle/server.sh copies db/ there)
-      init = cfg.init.copy(dataDir =
-        if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir
-      )
+      init = cfg.init
+        .modify(_.dataDir)
+        .setTo(if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir)
     )
 
   /** `backups.dir`'s reference.conf value — relative, i.e. meaningless for a bundle. */

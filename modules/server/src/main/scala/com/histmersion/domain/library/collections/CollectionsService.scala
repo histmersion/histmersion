@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.collections
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.library.*
@@ -358,7 +360,7 @@ object CollectionsService:
       */
     private def original(ck: String, hint: String): Either[Api.Error, FetchedFile] =
       for
-        o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.copy(message = e.message + hint))
+        o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.modify(_.message).setTo(e.message + hint))
         ext <- Ingest.dispositionExtension(o.disposition).toRight(fail(s"the server did not say what format '$ck' is"))
       yield FetchedFile("original", None, o.bytes, ext)
 

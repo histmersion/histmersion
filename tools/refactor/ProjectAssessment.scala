@@ -60,6 +60,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/SchemaVerification.scala"))
       run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ModelInventoryVerification.scala"))
       run("operation-fixtures", cli ++ List("--rules", "file:tools/refactor/OperationInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/OperationInventoryVerification.scala"))
+      run("copy-fixtures", cli ++ List("--rules", "file:tools/refactor/CopyVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/CopyVerification.scala"))
       run("architecture-fixtures", cli ++ List("--rules", "file:tools/refactor/ArchitectureInventoryVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/ArchitectureInventoryVerification.scala"))
       run("build-inventory", cli ++ List("--config", "tools/refactor/build-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/BuildInventory.scala"))
       run("resource-inventory", cli ++ List("--config", "tools/refactor/resource-inventory.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/ResourceInventory.scala"))
@@ -91,6 +92,10 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       table("console.tsv").foreach(r => hits += (("migration/console-injection", module(r(1)))))
       register("derivation/schema-bridge", "production+tests; semantic plain KindlingsSchema bridges, including deferred shapes")
       table("schema-derives/plan.tsv").foreach(r => hits += (("derivation/schema-bridge", module(r(1)))))
+      List("production","test").foreach { scope =>
+        register("updates/case-class-copy-" + scope,scope + "; resolved case-class copy occurrences, including deferred rewrite shapes")
+        lines(Paths.get("refactor-audit/operations/occurrences.tsv")).drop(1).map(_.split("\t",-1)).filter(r => r(0) == "copy" && r(1) == "case-class-copy" && r(3) == scope).foreach(r => hits += (("updates/case-class-copy-" + scope,module(r(2)))))
+      }
       require(hits.forall { case (id,m) => scopes.contains(id) && modules.contains(m) }, "Unknown measurement/module")
       val counts = scopes.keys.toList.flatMap(id => ("ALL" :: modules).map(m => (id,m) -> hits.count { case (r,mod) => r == id && (m == "ALL" || mod == m) })).toMap
       val baseline = root.resolve("baseline.tsv")

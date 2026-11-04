@@ -1,0 +1,8 @@
+role=independent-acceptance-holdout-after-round-one
+tp=20
+fp=0
+fn=0
+tn=3
+precision=1.0
+recall=1.0
+Independent source audit; 23 grouped locations, not a random population sample. Limited negative diversity. Unclassified dependency-owned Printer.copy excluded explicitly. No population confidence claim.

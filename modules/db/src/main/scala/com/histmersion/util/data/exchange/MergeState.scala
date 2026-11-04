@@ -1,4 +1,6 @@
 package com.histmersion.util.data.exchange
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.MergePlanner.{Input, Labels, LedgerEntry}
@@ -156,17 +158,21 @@ object MergeState:
         .flatMap((h, j) => j.map(h -> _))
         .toMap
       def conv(g: Option[String]) = g.flatMap(json.get)
-      p.copy(issues =
-        p.issues.map(i =>
-          i.copy(detail =
-            i.detail.map(d =>
-              d.copy(place =
-                d.place.map(x => x.copy(leftGeometry = conv(x.leftGeometry), rightGeometry = conv(x.rightGeometry)))
+      p.modify(_.issues)
+        .setTo(
+          p.issues.map(i =>
+            i.modify(_.detail)
+              .setTo(
+                i.detail.map(d =>
+                  d.modify(_.place)
+                    .setTo(
+                      d.place
+                        .map(x => x.copy(leftGeometry = conv(x.leftGeometry), rightGeometry = conv(x.rightGeometry)))
+                    )
+                )
               )
-            )
           )
         )
-      )
 
   /** The uids, among `uids`, of rows that exist here, in the tables of the kinds a line can refer to. */
   private[histmersion] def liveUids(uids: List[UUID], tables: List[TableName])(using DbCon): Set[UUID] =

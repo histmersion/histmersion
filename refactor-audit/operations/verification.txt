@@ -1,5 +1,5 @@
 PASS
-18 exact classified occurrences
+19 exact classified occurrences
 case-class and unrelated copies distinguished
 fold callback allocations separated from one-time seed
 Iron accessor separated from ordinary value members

@@ -107,7 +107,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
           )
         folds.count(_.modify(_.eventsMerged).using(_ + 1))
       case (MergeIssue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
-        d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).copy(id = eid))
+        d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).modify(_.id).setTo(eid))
       case _ => ()
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =

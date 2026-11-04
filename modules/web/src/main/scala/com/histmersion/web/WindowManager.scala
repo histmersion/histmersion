@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -131,7 +133,9 @@ object WindowManager:
     Route.ofItem(key).foreach(Router.retitle(_, title))
     shown
       .get(key)
-      .foreach(wid => windows.update(_.map(w => if w.id == wid && w.title != title then w.copy(title = title) else w)))
+      .foreach(wid =>
+        windows.update(_.map(w => if w.id == wid && w.title != title then w.modify(_.title).setTo(title) else w))
+      )
 
   /** Close the window showing `key`, if one is open. */
   def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin(_))
@@ -159,7 +163,7 @@ object WindowManager:
             contentEl.innerHTML = html
             val titleEl = contentEl.querySelector("h1, h2")
             val title = if titleEl != null then titleEl.textContent.trim else key.initialTitle
-            windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
+            windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))
             // both handlers are delegated on the content root, which outlives its content: wire it once.
             // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
             // click then ran each of them — N fetches of the page for one click (#1949)
@@ -248,14 +252,14 @@ object WindowManager:
 
   private def focus(wid: Int): Unit =
     nextZ += 1
-    windows.update(_.map(w => if w.id == wid then w.copy(z = nextZ) else w))
+    windows.update(_.map(w => if w.id == wid then w.modify(_.z).setTo(nextZ) else w))
 
   private def restore(wid: Int): Unit =
     nextZ += 1
     windows.update(_.map(w => if w.id == wid then w.copy(minimized = false, z = nextZ) else w))
 
   private def minimize(wid: Int): Unit =
-    windows.update(_.map(w => if w.id == wid then w.copy(minimized = true) else w))
+    windows.update(_.map(w => if w.id == wid then w.modify(_.minimized).setTo(true) else w))
 
   /** Close one window. `returnFocus` when a person closed it (Escape, its ✕): the focus goes back to what opened it, if
     * that is still on the page and not inside the window being closed.

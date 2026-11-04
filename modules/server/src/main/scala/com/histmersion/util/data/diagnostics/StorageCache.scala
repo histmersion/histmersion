@@ -1,5 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
+import hearth.kindlings.optics.syntax.*
+
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.maintenance.Storage
@@ -30,7 +32,7 @@ final class StorageCache(
       case Some((at, r)) if clock() - at < ttlMillis() => r
       case Some((_, r))                                =>
         val _ = kick()
-        r.copy(measuring = true)
+        r.modify(_.measuring).setTo(true)
       case None =>
         val f = kick()
         try f.get(math.max(0L, waitMillis), TimeUnit.MILLISECONDS)

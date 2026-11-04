@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -126,7 +128,8 @@ object ApiClient:
     * open-access chain only, whatever the request says: the server may be configured to allow fetchers without the
     * rights holder's authorisation, and the web UI never sets them off.
     */
-  def ingestId(req: Ingest.Request): Future[Ingest.Report] = call(AcquireApi.ingest)(req.copy(legalOnly = true))
+  def ingestId(req: Ingest.Request): Future[Ingest.Report] =
+    call(AcquireApi.ingest)(req.modify(_.legalOnly).setTo(true))
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)

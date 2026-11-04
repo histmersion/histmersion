@@ -98,7 +98,15 @@ class OperationInventory(val policy: OperationInventory.Policy) extends Semantic
           case n: Term.New => "new:" + n.init.tpe.syntax
           case t: Term.Tuple => "tuple:" + t.args.size
         }).distinct else Nil
-        candidates.add(Candidate(family,path,n.pos.startLine+1,owner(n),scoped(n.symbol),scoped(n.symbol.owner),
+        val receiverOwner = receiver.toList.flatMap {
+          case call: Term.Apply => call.fun.symbol.info.toList.flatMap(_.signature match {
+            case MethodSignature(_,_,TypeRef(_,s,_)) => List(scoped(s))
+            case _ => Nil
+          })
+          case _ => Nil
+        }.headOption
+        val resolvedOwner = if(family == "copy" && n.symbol.isNone) receiverOwner.getOrElse("") else scoped(n.symbol.owner)
+        candidates.add(Candidate(family,path,n.pos.startLine+1,owner(n),scoped(n.symbol),resolvedOwner,
           receiver.fold("")(_.syntax),receiver.flatMap(_.symbol.info).fold("<unresolved-expression-type>")(_.signature.toString),
           tree.pos.text,tree.structure,allocations))
       }

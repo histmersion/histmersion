@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.exchange.MergeDecision
 
 import com.histmersion.api.exchange.{Bundle, MergeApplyResult, MergeIssue, MergeResolutions, MergeTally}
@@ -320,7 +322,8 @@ object BundleImporter:
     else if plan.changes == 0 then base.copy(applied = true, replanChanges = Some(0), tally = MergeTally())
     else
       backup() match
-        case Left(e)     => base.copy(problems = List(s"the backup before the merge failed, nothing was written: $e"))
+        case Left(e) =>
+          base.modify(_.problems).setTo(List(s"the backup before the merge failed, nothing was written: $e"))
         case Right(dump) =>
           writeAll(bundle, input, planned, opts, files, kinds)
           val ap = planned.apply

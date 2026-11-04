@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.autopilot
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.managers.ManagerLight
@@ -111,7 +113,7 @@ final class AutopilotService(
         List(s"turned off by $by", s"paused ${Plural.count(ids.size, "manager")} it ran (turning it on resumes them)")
     log(s"autopilot ${if in.on then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
-    status(now).copy(changes = changes)
+    status(now).modify(_.changes).setTo(changes)
 
   // ── the tick ───────────────────────────────────────────────────────────────────────────────────
 
@@ -244,7 +246,7 @@ final class AutopilotService(
           Option.when(
             agents.managerStore.setConfig(
               id,
-              m.config.copy(extendMinNew = Some(n)),
+              m.config.modify(_.extendMinNew).setTo(Some(n)),
               m.cron,
               m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
             )
@@ -432,7 +434,7 @@ final class AutopilotService(
         cap
       ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
-          r.copy(mode = "auto (in the run, unchecked)")
+          r.modify(_.mode).setTo("auto (in the run, unchecked)")
         case r => r
     val st = EngineStatus(
       row.enabled,

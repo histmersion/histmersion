@@ -1,4 +1,6 @@
 package com.histmersion.domain.library.sources
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
 
@@ -77,7 +79,7 @@ object SourceNote:
   def parseFile(p: Path, confineTo: Option[String]): Option[Source] =
     val text = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
-    parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text), confineTo)))
+    parseNote(text, fallbackCitekey).map(src => src.modify(_.ocrMarkdown).setTo(fullText(p, yamlMap(text), confineTo)))
 
   /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. The BODY becomes
     * [[Source.notes]] — the agent-written article about the source — which is what makes [[note]] a true inverse of

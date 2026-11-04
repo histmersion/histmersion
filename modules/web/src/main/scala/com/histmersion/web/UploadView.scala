@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -152,7 +154,7 @@ object UploadView:
 
   /** What is typed in the picker, until it names an item. */
   private val pickText = Var("")
-  private val authors = draft.zoomLazy(_.authors)((d, a) => d.copy(authors = a))
+  private val authors = draft.zoomLazy(_.authors)((d, a) => d.modify(_.authors).setTo(a))
 
   /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen for an earlier form
     * is dropped: it belonged to that one.
@@ -310,12 +312,22 @@ object UploadView:
             div(
               cls := "pane-note muted",
               s"For acquisition item ${item.id} — the OCR job ticks it off as ingested when it succeeds. ",
-              a(href := "#", "don't link it", onClick.preventDefault --> (_ => draft.update(_.copy(forItem = None))))
+              a(
+                href := "#",
+                "don't link it",
+                onClick.preventDefault --> (_ => draft.update(_.modify(_.forItem).setTo(None)))
+              )
             )
           )
         ),
-      textField("citekey", _.citekey, (d, v) => d.copy(citekey = v), "e.g. anthony2007_horse", Some(Field.Citekey)),
-      textField("title", _.title, (d, v) => d.copy(title = v), "optional — read from the document otherwise"),
+      textField(
+        "citekey",
+        _.citekey,
+        (d, v) => d.modify(_.citekey).setTo(v),
+        "e.g. anthony2007_horse",
+        Some(Field.Citekey)
+      ),
+      textField("title", _.title, (d, v) => d.modify(_.title).setTo(v), "optional — read from the document otherwise"),
       div(
         cls := "form-field",
         label("authors"),
@@ -326,23 +338,23 @@ object UploadView:
             placeholder = "add an author…",
             debounceMs = 150,
             getSuggestions = prefix => ApiClient.facets("authors", Some(prefix), Filter()),
-            onChange = vs => draft.update(_.copy(authors = vs))
+            onChange = vs => draft.update(_.modify(_.authors).setTo(vs))
           ),
           authors.signal
         )
       ),
       div(
         cls := "form-pair",
-        textField("year", _.year, (d, v) => d.copy(year = v), "e.g. 2007", Some(Field.Year)),
-        textField("DOI", _.doi, (d, v) => d.copy(doi = v), "10.…", Some(Field.Doi))
+        textField("year", _.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007", Some(Field.Year)),
+        textField("DOI", _.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…", Some(Field.Doi))
       ),
       div(
         cls := "form-checks",
-        checkbox("slower, higher-quality OCR", _.quality, (d, v) => d.copy(quality = v)),
+        checkbox("slower, higher-quality OCR", _.quality, (d, v) => d.modify(_.quality).setTo(v)),
         checkbox(
           "store it even if the same file is already stored under another citekey",
           _.force,
-          (d, v) => d.copy(force = v)
+          (d, v) => d.modify(_.force).setTo(v)
         )
       ),
       fieldError(Field.Form),

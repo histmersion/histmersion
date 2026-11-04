@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.AgentsControllers
@@ -65,13 +67,25 @@ final class OaBacklog(
     IngestBacklog.place(site.sourceStore.citekeyOfDoi(doi), acquire, open.map(_.id), settled) match
       case p @ Placement.InCorpus(ck) =>
         val _ =
-          agents.goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some(s"found again by a watcher sweep: ${
-  w.why
-}".take(500)))
+          agents.goals.link(
+            goal,
+            io.scalaland.chimney.Transformer
+              .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .transform(LinkKind.Source),
+            ck,
+            Some(s"found again by a watcher sweep: ${w.why}".take(500))
+          )
 
         p
       case p @ Placement.JoinAcquire(id) =>
-        val _ = agents.goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(doi))
+        val _ = agents.goals.link(
+          goal,
+          io.scalaland.chimney.Transformer
+            .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+            .transform(LinkKind.QueueItem),
+          id.toString,
+          Some(doi)
+        )
         p
       case p @ Placement.JoinBacklog(id) =>
         open.foreach { i =>
@@ -79,7 +93,7 @@ final class OaBacklog(
           if !st.goals.contains(goal) then
             val _ = agents.managerStore.setItemState(
               i.id,
-              i.state.copy(oa = Some(st.copy(goals = st.goals :+ goal))),
+              i.state.modify(_.oa).setTo(Some(st.modify(_.goals).setTo(st.goals :+ goal))),
               List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
             )
             agents.managerStore.event(
@@ -94,7 +108,7 @@ final class OaBacklog(
         p
       case p @ Placement.SettledBefore(_) => p
       case Placement.New                  =>
-        val st = ItemState(oa = Some(w.copy(goals = (w.goals :+ goal).distinct)))
+        val st = ItemState(oa = Some(w.modify(_.goals).setTo((w.goals :+ goal).distinct)))
         val (id, isNew) =
           agents.managerStore.upsert(managerId, OaIngest, doi, ItemOrigin.Selection, 0, reopen = false, st)
         if isNew then
@@ -230,9 +244,14 @@ final class OaBacklog(
     site.sourceStore.citekeyOfDoi(doi) match
       case Some(ck) =>
         goals.foreach(g =>
-          agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some(s"found by a watcher sweep: ${
-  w.why
-}".take(500)))
+          agents.goals.link(
+            g,
+            io.scalaland.chimney.Transformer
+              .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .transform(LinkKind.Source),
+            ck,
+            Some(s"found by a watcher sweep: ${w.why}".take(500))
+          )
         )
         settle(
           ItemStatus.Done,
@@ -245,9 +264,14 @@ final class OaBacklog(
         upstream().ingestLegal(doi) match
           case Right(r) =>
             goals.foreach(g =>
-              agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), r.citekey, Some(s"ingested from a watcher's backlog: ${
-  w.why
-}".take(500)))
+              agents.goals.link(
+                g,
+                io.scalaland.chimney.Transformer
+                  .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+                  .transform(LinkKind.Source),
+                r.citekey,
+                Some(s"ingested from a watcher's backlog: ${w.why}".take(500))
+              )
             )
             settle(
               ItemStatus.Done,
@@ -325,7 +349,18 @@ final class OaBacklog(
         .toOption
         .map(_.id)
     }
-    id.foreach(i => goals.foreach(g => agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), i.toString, Some(doi))))
+    id.foreach(i =>
+      goals.foreach(g =>
+        agents.goals.link(
+          g,
+          io.scalaland.chimney.Transformer
+            .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+            .transform(LinkKind.QueueItem),
+          i.toString,
+          Some(doi)
+        )
+      )
+    )
     id
 
   // ── the one-shot repair ────────────────────────────────────────────────────────────────────────
@@ -359,7 +394,16 @@ final class OaBacklog(
         case RepairAction.Keep(why)  => RepairRow(item, first.doi, goals, first.managerId, Keep, why)
         case RepairAction.Remove(ck) =>
           if !in.dryRun then
-            goals.foreach(g => agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some("found by a watcher sweep")))
+            goals.foreach(g =>
+              agents.goals.link(
+                g,
+                io.scalaland.chimney.Transformer
+                  .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+                  .transform(LinkKind.Source),
+                ck,
+                Some("found by a watcher sweep")
+              )
+            )
             removeAcquire(item, goals)
           RepairRow(item, first.doi, goals, first.managerId, Remove, s"in the corpus already: [[$ck]]")
         case RepairAction.Move =>
@@ -449,7 +493,7 @@ final class OaBacklog(
       if !st.goals.contains(goal) then
         val _ = agents.managerStore.setItemState(
           i.id,
-          i.state.copy(oa = Some(st.copy(goals = st.goals :+ goal))),
+          i.state.modify(_.oa).setTo(Some(st.modify(_.goals).setTo(st.goals :+ goal))),
           List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
         )
     }

@@ -15,6 +15,8 @@ final case class Total(value: Int)
 final class FileLike:
   def copy(): String = "copied"
 object Examples:
+  def supplied(): Total = Total(1)
+  def returned(): Total = supplied().copy(value = 2)
   def direct(total: Total): Total = total.copy(value = 1)
   def unrelated(file: FileLike): String = file.copy()
   def accessor(total: Total): Int = total.value

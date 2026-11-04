@@ -29,12 +29,22 @@ object Console:
     def println(): Unit
     def flush(): Unit
 
-  def system: Console = Streams(() => System.out, () => System.err, () => scala.io.StdIn.readLine(), prompt => Option(System.console()).flatMap(c => Option(c.readLine(prompt))))
+  def system: Console = Streams(
+    () => System.out,
+    () => System.err,
+    () => scala.io.StdIn.readLine(),
+    prompt => Option(System.console()).flatMap(c => Option(c.readLine(prompt)))
+  )
   def standard: Console = Streams(() => scala.Console.out, () => scala.Console.err, () => scala.io.StdIn.readLine())
   def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => String): Console =
     Streams(() => out, () => err, input, prompt => { err.print(prompt); err.flush(); Option(input()) })
 
-  private final class Streams(stdout: () => java.io.PrintStream, stderr: () => java.io.PrintStream, input: () => String, terminal: String => Option[String] = _ => None) extends Console:
+  final private class Streams(
+      stdout: () => java.io.PrintStream,
+      stderr: () => java.io.PrintStream,
+      input: () => String,
+      terminal: String => Option[String] = _ => None
+  ) extends Console:
     override def readTerminalLine(prompt: String): Option[String] =
       terminal(prompt)
     override def outputFlush(): Unit = stdout().flush()

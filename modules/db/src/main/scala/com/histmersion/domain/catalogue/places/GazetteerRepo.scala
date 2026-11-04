@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
@@ -187,7 +189,7 @@ private[places] object GazetteerRepo:
         finally jdbc.setAutoCommit(true)
       val refs = rs.map(_.ref)
       val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
-      counts.copy(skipped = (dup ++ counts.skipped).take(20))
+      counts.modify(_.skipped).setTo((dup ++ counts.skipped).take(20))
 
     /** Before the first batch of a real run: remove the places this source made for areas known only by a point
       * ([[Gazetteer.dropsPointArea]]) — every one, in transactions of `batch` places, so that no record of ANY batch

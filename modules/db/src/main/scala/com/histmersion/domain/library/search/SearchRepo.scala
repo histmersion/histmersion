@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.search
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -80,7 +82,7 @@ private[search] object SearchRepo:
             byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
               val m = fr.toMatch
               val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-              if why.isEmpty then None else Some(m.copy(why = why))
+              if why.isEmpty then None else Some(m.modify(_.why).setTo(why))
             }
         Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
       }

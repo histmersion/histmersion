@@ -1,0 +1,6 @@
+scope	classification	count	meaning
+production	case-class-copy	441	Policy matches after bounded receiver-result refinement; complete scoped scan
+test	case-class-copy	1585	Operation inventory candidates; test-purpose triage pending; not exempted
+production	unresolved-copy-owner	52	Unresolved evidence; excluded from confirmed denominator
+test	unresolved-copy-owner	97	Unresolved evidence; excluded from confirmed denominator
+production	eligible-first-batch	198	Subset of 441; do not add to baseline total

@@ -1,5 +1,7 @@
 package com.histmersion.pluginhost
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.Attribution
 import com.histmersion.domain.Licence
@@ -22,7 +24,7 @@ object PluginMedia:
       sleep: Long => Unit = ms => Thread.sleep(ms),
       log: HostLog = HostLog.scribe
   ): Polite =
-    Polite(http, media.copy(requestIntervalMs = collection.requestIntervalMs), sleep = sleep, log = log)
+    Polite(http, media.modify(_.requestIntervalMs).setTo(collection.requestIntervalMs), sleep = sleep, log = log)
 
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.

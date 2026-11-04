@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Dataset
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.PluginGazetteers
@@ -33,7 +35,9 @@ object ImportRunner:
       (all, refused) <- ImportRunner.places(source, http)
       result <-
         if dryRun then Right(Place.ImportResult(all.size, 0, 0, ("dry run" :: refused).take(20)))
-        else batchUpsert(all, places, geometry, toleranceKm).map(r => r.copy(failed = (refused ++ r.failed).take(20)))
+        else
+          batchUpsert(all, places, geometry, toleranceKm)
+            .map(r => r.modify(_.failed).setTo((refused ++ r.failed).take(20)))
     yield result
 
   private def batchUpsert(

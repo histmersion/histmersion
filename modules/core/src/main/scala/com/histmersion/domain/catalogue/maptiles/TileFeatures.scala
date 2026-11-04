@@ -3,6 +3,8 @@ package com.histmersion.domain.catalogue.maptiles
 /** A layer's tile features, from its cells and the records of its items ([[com.histmersion.api.catalogue.TileProps]]).
   * Pure.
   */
+import hearth.kindlings.optics.syntax.*
+
 object TileFeatures:
   import com.histmersion.api.catalogue.{EventGeo, SiteTile, TileProps as P}
 
@@ -74,4 +76,4 @@ object TileFeatures:
     val z = P.Zoom -> TileValue.Whole(zoom.toLong)
     cells
       .flatMap(c => if c.isItem then record(c.key).map(feature(c, _)) else Some(cell(c)))
-      .map(p => p.copy(props = z +: p.props))
+      .map(p => p.modify(_.props).setTo(z +: p.props))

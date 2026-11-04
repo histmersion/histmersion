@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.QueryAccess
 
 import com.histmersion.util.data.maintenance.{ReadOnlyPool, WriteGate}
@@ -93,11 +95,11 @@ final class ServerGraph private (
             else
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)
               AppConfig.fromMerged(eff).map(src.adjust) match
-                case Left(e)    => base.copy(errors = List(s"the config does not decode: $e"))
+                case Left(e)    => base.modify(_.errors).setTo(List(s"the config does not decode: $e"))
                 case Right(app) =>
                   val hc = HotConfig(app, next.copy(config = app, merged = eff))
                   graph.reload(hc, applied, drain = math.max(0, app.config.drainSeconds).seconds) match
-                    case Left(e)  => base.copy(errors = List(e))
+                    case Left(e)  => base.modify(_.errors).setTo(List(e))
                     case Right(o) =>
                       base.copy(
                         published = true,

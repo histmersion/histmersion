@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Write
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceKeys, SourceReferrers}
 
@@ -33,12 +35,12 @@ private[sources] object SourceDeleteRepo:
       val d0 = p0.deletion
       if d0.refused then Left(Api.Error(Source.Delete.refusal(d0.citekey, d0.blockers), Some(Write.CodeInvalid)))
       else
-        val p = p0.copy(deletion = d0.copy(files = files(p0)))
+        val p = p0.modify(_.deletion).setTo(d0.modify(_.files).setTo(files(p0)))
         val source = keysOf(p.deletion.citekey, p.keys)
         deleteNow(p, source, referrers)
-        val d = p.deletion.copy(applied = true)
+        val d = p.deletion.modify(_.applied).setTo(true)
         val log = referrers.recorded(source, Source.Delete.logText(d), logTopic)
-        Right(p.copy(deletion = d.copy(logEntry = log)))
+        Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log)))
     }
 
   final private case class Row(citekey: String, title: String, calibreId: Option[String], sha256: Option[String])

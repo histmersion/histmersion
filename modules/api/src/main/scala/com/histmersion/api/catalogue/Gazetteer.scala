@@ -1,4 +1,6 @@
 package com.histmersion.api.catalogue
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
@@ -92,7 +94,7 @@ object Gazetteer:
     PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
 
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
-    if r.span.isEmpty && !ds.span.isEmpty then r.copy(span = ds.span) else r
+    if r.span.isEmpty && !ds.span.isEmpty then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
     ns.map(n => n.copy(name = n.name.trim, lang = n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -304,8 +306,8 @@ object Gazetteer:
       url: Option[String] = None,
       built: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   /** `Tgn`: the Getty Thesaurus of Geographic Names. */
   enum Kind:
@@ -346,7 +348,8 @@ object Gazetteer:
       linksChanged: Long = 0,
       pointAreasSkipped: Long = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       copy(
         records = records + o.records,
@@ -384,9 +387,10 @@ object Gazetteer:
          else "") +
         (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 
-
-  final case class Manifest(extracts: List[Extract]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
+  final case class Manifest(extracts: List[Extract])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class SourceInfo(
       key: String,
@@ -405,4 +409,5 @@ object Gazetteer:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

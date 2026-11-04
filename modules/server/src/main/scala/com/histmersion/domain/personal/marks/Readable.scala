@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal.marks
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.{Offset, PageSize}
 
@@ -26,7 +28,7 @@ object Readable:
       items.updateAndGet(all => (uid, item) :: all.filterNot(_._2.key == item.key)): Unit
 
     def rename(from: ItemKey, to: ItemKey): Unit =
-      items.updateAndGet(_.map((uid, i) => (uid, if i.key == from then i.copy(key = to) else i))): Unit
+      items.updateAndGet(_.map((uid, i) => (uid, if i.key == from then i.modify(_.key).setTo(to) else i))): Unit
 
     def remove(key: ItemKey): Unit = items.updateAndGet(_.filterNot(_._2.key == key)): Unit
 

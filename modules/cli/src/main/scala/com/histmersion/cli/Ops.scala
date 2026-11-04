@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -127,7 +129,9 @@ object Ops:
     * imported areas to remove), because a whole-corpus pass is far longer than one HTTP request.
     */
   @annotation.tailrec
-  private def fixLoop(using console: Console)(
+  private def fixLoop(using
+      console: Console
+  )(
       c: Client,
       rules: List[String],
       sources: Int,
@@ -137,7 +141,7 @@ object Ops:
       placed: Option[Int] = None,
       places: Option[List[String]] = None,
       areas: Int = 0
-  ) : Either[Cli.Error, List[String]] =
+  ): Either[Cli.Error, List[String]] =
     c.lintFix(rules) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -158,8 +162,7 @@ object Ops:
         // under it): stop rather than loop
         val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
         if r.remaining > 0 || moreAreas then
-          Cli.err.print(if moreAreas then
-            s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
+          Cli.err.print(if moreAreas then s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
           else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
           fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
         else
@@ -193,7 +196,7 @@ object Ops:
         r.copy(subject = p.getFileName.toString, text = None)
       }
 
-  def lint(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def lint(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
@@ -215,7 +218,7 @@ object Ops:
           .orNone,
         Output.jsonFlag
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
-        def show(r: FormatReport) (using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
+        def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
         (article, source, file) match
           case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
           case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
@@ -225,26 +228,26 @@ object Ops:
               fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
               rep <- c.lint(rules)
             yield
-              val full = rep.copy(fixed = fixed)
+              val full = rep.modify(_.fixed).setTo(fixed)
               Output.emit(json, full)(Lint.markdown)
       }
     }
 
-  def query(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def query(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
       (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
         c.query(sql).map(r => Output.emit(json, r)(Query.markdown))
       }
     }
 
-  def schema(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def schema(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
       Output.jsonFlag.map { json => (c: Client) =>
         c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown))
       }
     }
 
-  def queue(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def queue(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
     Opts.subcommand(
@@ -277,7 +280,7 @@ object Ops:
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: Boolean)(using console: Console) : Either[Cli.Error, Unit] = cmd match
+  private def run(c: Client, cmd: QueueCmd, json: Boolean)(using console: Console): Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all)
         .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.library.Filter
@@ -76,7 +78,7 @@ final class MapTileService(
     if UndatedCells.total(datedCounts, undatedCounts) <= grid.pointsAt(c) then
       val datedItems = db.read(TileRepo.items(dated, c))
       val shownByFindings = datedItems.filter(_.undated > 0).map(_.key)
-      datedItems.map(_.copy(undated = 0)) ++ undatedSites.items(c, siteType, shownByFindings)
+      datedItems.map(_.modify(_.undated).setTo(0)) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
 
   private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): Array[Byte] =
@@ -101,7 +103,8 @@ final class MapTileService(
           EventSql.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None)
         ).sql(related)
         val cells =
-          if q.withUndated then db.read(TileRepo.eventCellsWithUndated(c, grid, where(f), where(f.copy(period = None))))
+          if q.withUndated then
+            db.read(TileRepo.eventCellsWithUndated(c, grid, where(f), where(f.modify(_.period).setTo(None))))
           else db.read(TileRepo.eventCells(c, grid, where(f)))
         val records = events.geoOf(cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, records.get, TileFeatures.event)

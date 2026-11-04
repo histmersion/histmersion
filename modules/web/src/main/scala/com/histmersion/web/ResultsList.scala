@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.Plural
 import org.scalajs.dom
@@ -218,7 +220,7 @@ object ResultsList:
   private def more(): Unit =
     pageParams.foreach { params =>
       moreLoading.set(true)
-      ApiClient.sources(params.copy(offset = pageHits.length)).onComplete {
+      ApiClient.sources(params.modify(_.offset).setTo(pageHits.length)).onComplete {
         case scala.util.Success(r) =>
           pageTotal = r.total
           pageHits = pageHits ++ r.hits

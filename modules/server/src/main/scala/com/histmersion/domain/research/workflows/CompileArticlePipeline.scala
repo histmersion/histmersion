@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -90,7 +92,14 @@ final class CompileArticlePipeline(
         else
           for
             draft <- draft(ctx, snap, found, ev, extracted)
-            decided <- ctx.approval("approve", ApprovalKind.ArticlePublish, snap.slug, io.scalaland.chimney.Transformer.derive[com.histmersion.domain.automation.Approval.Mode, com.histmersion.api.automation.Approval.Mode].transform(cfg.approvals.publishMode))(
+            decided <- ctx.approval(
+              "approve",
+              ApprovalKind.ArticlePublish,
+              snap.slug,
+              io.scalaland.chimney.Transformer
+                .derive[com.histmersion.domain.automation.Approval.Mode, com.histmersion.api.automation.Approval.Mode]
+                .transform(cfg.approvals.publishMode)
+            )(
               Right(draft.asJson.noSpaces)
             )
             written <- ctx.code[Written]("write")(write(ctx, snap, draft, decided))
@@ -277,7 +286,7 @@ final class CompileArticlePipeline(
             )(Right(Written(written = false, AgentsMarkdown.DryRunNote, None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
-          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.copy(reason = ""))
+          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(""))
           val patch = Article.Patch(
             append = Some(d.text),
             section = d.section,
@@ -325,7 +334,16 @@ final class CompileArticlePipeline(
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
     if w.written then
-      ctx.run.goal.foreach(g => goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Article), d.slug, Some("compiled by an agent run")))
+      ctx.run.goal.foreach(g =>
+        goals.link(
+          g,
+          io.scalaland.chimney.Transformer
+            .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+            .transform(LinkKind.Article),
+          d.slug,
+          Some("compiled by an agent run")
+        )
+      )
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
   private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(site.workLists, ctx, line)

@@ -115,7 +115,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
         folds.fold(f, o, Bundle.Kind.Place)
         folds.count(_.modify(_.placesMerged).using(_ + 1))
         if d.kind == km.KeepRight then
-          placeLine(o) = es => foldPlace(placeIn(es, o).copy(origin = localPlace(o).origin), localPlace(o))
+          placeLine(o) = es => foldPlace(placeIn(es, o).modify(_.origin).setTo(localPlace(o).origin), localPlace(o))
         else folds.keepLocal(f)
       case _ => ()
 
@@ -138,7 +138,7 @@ object PlacePlan:
         .modify(_.places)
         .setTo(
           es.places.map(p =>
-            p.copy(relations = p.relations.map(r => places.get(r.parentId).fold(r)(x => r.copy(parentId = x))))
+            p.modify(_.relations).setTo(p.relations.map(r => places.get(r.parentId).fold(r)(x => r.copy(parentId = x))))
           )
         )
 
