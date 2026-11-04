@@ -16,7 +16,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     val source = "tools/refactor/architecture-fixture/src/main/scala"
     run("compile",List("scala-cli","compile",source,"--server=false","-S","3.10.0","--scalac-option","-source:future",
       "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString,
-      "--compilation-output","target/architecture-fixture-classes"))
+      "--dep","io.github.iltotore::iron:3.4.1","--compilation-output","target/architecture-fixture-classes"))
     val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
     val args = List("--config","tools/refactor/architecture-fixture/inspect.conf","--scala-version","3.10.0","--sourceroot",".","--classpath","target/architecture-fixture-classes","--files")
     run("positive",cli ++ args ++ List(source))
@@ -35,6 +35,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(obligations("behavioral-parity").startsWith("unproven"),"Structure wrongly accepted as behavioral parity")
     val good = table("service-obligations.tsv").filter(_.head == "com/histmersion/inventoryfixture/GoodService#").map(r => r(2) -> r(3)).toMap
     require(List("service-trait","companion-Implementation","private-Implementation","companion-InMemory").forall(c => good(c) == "structural-evidence-present"),"Private indirect implementation rejected: " + good)
+    require(table("service-obligations.tsv").exists(r => r.head == "com/histmersion/inventoryfixture/QualifiedService#" && r(2) == "private-Implementation" && r(3) == "structural-evidence-present"),"Companion-qualified private implementation rejected")
     val plan = table("object-plan.tsv").map(r => r(2) -> r(7)).toMap
     require(plan("`Retained`").startsWith("original-object-present"),"Original object missed")
     require(plan("`Moved`").startsWith("same-name-candidates"),"Relocated name not retained for review")
@@ -44,6 +45,10 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(declarations.count(_(7) == "given-template") == 1,"Template given missing")
     require(declarations.exists(r => r(6) == "Record" && r(7) == "case-class" && r(12).contains("private")),"Constructor visibility lost")
     require(table("references.tsv").exists(r => r(3) == "com/histmersion/inventoryfixture/SampleService#read()." && r(6) == "project-declaration"),"Call edge unresolved")
+    val groups = table("file-groups.tsv")
+    require(groups.exists(r => r.head.endsWith("/Outcome.scala") && r(3) == "single-logical-group" && r(5).contains("sealed-parent")),"Sealed family misclassified")
+    require(groups.exists(r => r.head.endsWith("/Code.scala") && r(3) == "single-logical-group" && r(5).contains("Iron-constraint")),"Newtype/constraint/companion group lost")
+    require(groups.exists(r => r.head.endsWith("/Unrelated.scala") && r(3).startsWith("multiple-logical-groups")),"Unrelated declarations merged")
     run("omitted-file",cli ++ args ++ List(source + "/Services.scala"),1)
     run("absent-service",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-service.conf") ++ List(source),1)
     Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)

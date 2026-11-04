@@ -34,6 +34,10 @@ class ModelInventoryVerification extends SyntacticRule("ModelInventoryVerificati
     require(constraints("modelinventoryfixture/StrictCount.") == "non-Pure-constraint","Known non-Pure constraint missed")
     require(constraints("modelinventoryfixture/AliasedCount.") == "pure","Cross-file Pure alias not resolved")
     require(constraints("modelinventoryfixture/Lookalike.") != "pure","Unrelated Pure accepted")
+    require(constraints("modelinventoryfixture/ExportedPure.") == "pure","Iron exported Pure missed")
+    List("PositiveCount","NonnegativeCount","Latitude","Code","Title","Nonblank").foreach { name =>
+      require(constraints("modelinventoryfixture/" + name + ".") == "non-Pure-constraint","Known constraint missed: " + name)
+    }
     require(rows("newtype-constraints.tsv").exists(r => r.head == "modelinventoryfixture/StrictCount." && r(9) == "client-constraint-review"),"Configured client classification missed")
     List("existingId","existingYear","externalId","externalYear").foreach { name =>
       require(leaves.exists(l => positions(l.head)(8) == name && l(2) == "newtype"),"Missing existing newtype: " + name)

@@ -48,6 +48,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
   private val references = new ConcurrentLinkedQueue[Reference]()
   private val comments = new ConcurrentLinkedQueue[List[String]]()
   private val expressions = new ConcurrentLinkedQueue[List[String]]()
+  private val constraintOwners = new ConcurrentLinkedQueue[(String,String)]()
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("ArchitectureInventory")(Policy()).map { p =>
     require(p.roots.nonEmpty && p.report.nonEmpty)
     Files.createDirectories(Paths.get(p.report)); Files.writeString(Paths.get(p.report,"status.txt"),"RUNNING\n")
@@ -86,6 +87,14 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         case _ => t.symbol
       }
       val bases = template.toList.flatMap(_.inits).map(i => parentSymbol(i.tpe)).filterNot(_.isNone).map(id).distinct
+      n.symbol.info.foreach(_.signature match {
+        case ClassSignature(_,ps,_,_) => ps.foreach {
+          case TypeRef(_,parent,List(_,TypeRef(_,constraint,_))) if Set("io/github/iltotore/iron/RefinedType#","io/github/iltotore/iron/RefinedSubtype#")(parent.value) =>
+            constraintOwners.add(id(constraint) -> id(n.symbol))
+          case _ => ()
+        }
+        case _ => ()
+      })
       definitions.add(Definition(path,t.pos.startLine+1,module(path),pkg(t),id(n.symbol),owner(t),n.value,kind,
         mods.map(_.syntax).mkString(" "),bases,n.symbol.info.fold("<unresolved>")(_.signature.toString),t.pos.text,t.structure,top(t),ctor))
     }
@@ -183,7 +192,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       List(
         row("service-trait",service.kind == "trait",List(service.kind)),
         row("companion-Implementation",actual.nonEmpty,actual.map(_.symbol),"Inherited aliases and unresolved parent symbols need review"),
-        row("private-Implementation",actual.nonEmpty && actual.forall(_.mods.split(" ").contains("private")),actual.map(d => d.symbol + " " + d.mods),"Checks private member declaration; package-private is not companion-private"),
+        row("private-Implementation",actual.nonEmpty && actual.forall(_.mods.split(" ").exists(m => m == "private" || m == "private[" + service.name + "]")),actual.map(d => d.symbol + " " + d.mods),"Accepts lexical or explicitly companion-qualified private; broader package-private requires review"),
         row("companion-InMemory",memory.nonEmpty,memory.map(_.symbol),"A same-named unrelated class does not count"),
         List(service.symbol,service.path,"behavioral-parity","unproven; contract-suite-evidence-required",
           refs.filter(r => r.target == service.symbol && r.path.contains("/src/test/")).map(_.path).distinct.sorted.mkString(";"),
@@ -210,9 +219,32 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         if(companions.nonEmpty) "companion; operation-ownership-review" else "standalone; operation-ownership-review")
     })
     val topTypes = types.filter(_.topLevel)
-    write("file-groups.tsv","path\ttop-level-names\tkinds\tstatus",topTypes.groupBy(_.path).toList.sortBy(_._1).map { case(p,ds) =>
+    val constraints = constraintOwners.asScala.toSet
+    val fileGroups = topTypes.groupBy(_.path).toList.sortBy(_._1).map { case(p,ds) =>
+      val groups = scala.collection.mutable.Map(ds.map(d => d.name -> d.name): _*)
+      val evidence = scala.collection.mutable.ListBuffer.empty[String]
+      def root(name: String): String = if(groups(name) == name) name else root(groups(name))
+      def join(a: String,b: String,reason: String): Unit = {
+        if(root(a) != root(b)) groups(root(a)) = root(b)
+        evidence += reason
+      }
+      ds.filter(_.mods.split(" ").contains("sealed")).foreach { base =>
+        ds.filter(d => d.symbol != base.symbol && inherits(d,base.symbol)).foreach { child =>
+          join(child.name,base.name,"sealed-parent:" + child.symbol + "->" + base.symbol)
+        }
+      }
+      ds.filter(d => d.kind == "alias" && d.name.endsWith("Rule")).foreach { rule =>
+        ds.filter(d => d.name == rule.name.stripSuffix("Rule") && constraints(rule.symbol -> d.symbol)).foreach { owner =>
+          join(rule.name,owner.name,"Iron-constraint:" + rule.symbol + "->" + owner.symbol)
+        }
+      }
+      val logical = groups.keys.toList.groupBy(root).toList.sortBy(_._1).map { case(_,names) => names.sorted.mkString("+") }
       List(p,ds.map(_.name).distinct.sorted.mkString(";"),ds.map(d => d.name + ":" + d.kind).mkString(";"),
-        if(ds.map(_.name).distinct.size <= 1) "single-name-group" else "review-alias-constraints-sealed-hierarchy-or-unrelated")
+        if(logical.size <= 1) "single-logical-group" else "multiple-logical-groups; review-tightly-coupled-helpers",logical.mkString(";"),evidence.sorted.mkString(";"))
+    }
+    write("file-groups.tsv","path\ttop-level-names\tkinds\tstatus\tlogical-groups\tgrouping-evidence",fileGroups)
+    write("file-group-counts.tsv","scope\tstatus\tcount",fileGroups.groupBy(r => (if(r.head.contains("/src/test/")) "test" else "production",r(3))).toList.sortBy(_._1).map {
+      case((s,c),rs) => List(s,c,rs.size.toString)
     })
     val counts = List("files" -> visited.size,"declarations" -> defs.size,"references" -> refs.size,"unresolved-references" -> refs.count(_.target.isEmpty),
       "services-repositories-controllers" -> services.size,"comments" -> comments.size,"top-level-objects" -> objects.size,"object-plan-rows" -> plan.size)
@@ -223,7 +255,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       "Service implementations are linked through resolved parent symbols; a class called InMemory elsewhere is not evidence of service parity. Inherited methods, indirect implementations and behavioral parity require further analysis. Unresolved, generated and external references are retained explicitly.",
       "service-obligations.tsv checks trait shape, companion Implementation/InMemory and private Implementation through resolved transitive inheritance. Required service identities come from configuration; disappearance fails the scan. Other Service names are candidates requiring role confirmation. Behavioral parity is always separately unproven by structural evidence.",
       "Every row of the object plan is reconciled. An absent original object is never marked completed: destination and behavior still need proof. Same-name candidates do not establish conceptual equivalence.",
-      "Comments, string constants, annotations and construction ASTs are review inputs. Multiple file names need companion/alias/sealed-hierarchy grouping before being classified as violations. Visibility, transaction ownership, invariants and layer crossings require the corresponding policy checks.")).asJava,UTF_8)
+      "Comments, string constants, annotations and construction ASTs are review inputs. File groups combine same-named companions/aliases, resolved sealed hierarchies and named Iron constraints proven by parent type arguments. Remaining multiple groups require tightly-coupled-helper review; naming alone grants no constraint exception. Visibility, transaction ownership, invariants and layer crossings require the corresponding policy checks.")).asJava,UTF_8)
     Files.writeString(out.resolve("status.txt"),"COMPLETE_ARCHITECTURE_EVIDENCE_WITH_REVIEW_CASES\n")
   }
 }
