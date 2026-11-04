@@ -1,9 +1,9 @@
 # Primitive and existing-type inventory
 
-3128 files; 28 source modules; 106906 declared/inferred positions; 62139 primitive leaves in 57095 positions; 46650 unresolved leaves.
-125 Iron companions; 2 opaque definitions; 221 aliases; 11474 unreviewed name/base proposals.
+3132 files; 28 source modules; 107108 declared/inferred positions; 62178 primitive leaves in 57125 positions; 46787 unresolved leaves.
+125 Iron companions; 2 opaque definitions; 221 aliases; 11477 unreviewed name/base proposals.
 
-30322 primitive leaves in 28149 production member positions (excluding alias definitions). See model-candidates.tsv; module layer hints are configuration, not verified ownership.
+30347 primitive leaves in 28167 production member positions (excluding alias definitions). See model-candidates.tsv; module layer hints are configuration, not verified ownership.
 
 All main/test sources are scanned; member and local positions are reported separately. Counts include mechanisms and intentional wire/storage primitives: these are inventory candidates, not confirmed violations.
 position-roles.tsv distinguishes record fields, trait contracts, other constructors, non-public members, locals, tests and explicitly configured boundaries. model-contract-candidates.tsv prioritizes production record fields and trait contracts without deleting other candidates. Roles describe declaration context, not business meaning or permission to keep a primitive.

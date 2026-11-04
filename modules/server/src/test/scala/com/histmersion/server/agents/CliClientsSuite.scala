@@ -19,6 +19,10 @@ import java.nio.file.{Files, Path}
   */
 class CliClientsSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val CodexCfg = CodexConfig("codex", "", useApiKey = false, timeoutSeconds = 30, appServer = false)
   private val OcCfg = OpencodeConfig("opencode", timeoutSeconds = 30, chatgptLogin = true)
 

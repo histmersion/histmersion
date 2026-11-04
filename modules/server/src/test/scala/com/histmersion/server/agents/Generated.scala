@@ -7,6 +7,10 @@ object Generated:
   /** Every tool the bundled definitions name by placeholder, plus the agent tools: what a pure test hands the generator
     * as "known" (the HTTP suite checks the placeholders against the live `/mcp`).
     */
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   def known(defs: AgentDefinitions): Set[String] =
     val texts = defs.agents.toOption.toList.flatten.map(_.body) ++
       defs.fragments.toOption.toList.flatMap(_.values) ++

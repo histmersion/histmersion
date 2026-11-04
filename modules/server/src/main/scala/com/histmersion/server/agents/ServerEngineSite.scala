@@ -19,6 +19,9 @@ import scala.collection.immutable.ListMap
   * filter) and the host over the wiring ([[ServerAutomationHost]]).
   */
 final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.time.Clock] = None) extends EngineSite:
+  def stores: com.histmersion.util.storage.Stores = deps.stores
+  def resources: com.histmersion.util.storage.Resources = deps.resources
+  def jvmHome: com.histmersion.util.system.JvmHome = deps.jvmHome
   def config: AppConfig = deps.cfg
   def ds: DataSource = deps.ds
   def queues: QueueService = deps.queues

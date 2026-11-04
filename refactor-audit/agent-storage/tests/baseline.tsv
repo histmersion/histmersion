@@ -1,0 +1,94 @@
+class	test	status	message
+com.histmersion.domain.automation.agents.AgentRosterSuite	a definition whose role no workflow contributes is refused, naming the roles there are	passed	
+com.histmersion.domain.automation.agents.AgentRosterSuite	every bundled definition takes a contributed role	passed	
+com.histmersion.domain.automation.agents.AgentRosterSuite	the roster holds every role a registered pipeline runs, and the probe	passed	
+com.histmersion.server.NativeMetadataSuite	every bundled agent prompt is a resource in the native-image metadata	passed	
+com.histmersion.server.NativeMetadataSuite	every migration is a resource in the native-image metadata	passed	
+com.histmersion.server.NativeMetadataSuite	no legacy split metadata beside it	passed	
+com.histmersion.server.NativeMetadataSuite	reachability-metadata.json is present	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	#958: nobody writes the Not used list or the Method note — the writer and the fixer give reasons	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	Claude Code: the generated agent carries EXACTLY the prompt the engine sends, its tools, and the mod	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	Codex: everything off in the base, one profile per role with its prompt and tools	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	Codex: the base keeps the skills list and big tool outputs out of every request	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	TOML strings hold any text	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	a definition that names a tool an agent cannot have, or misses its name, is refused with why	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	agents.providers.codex.base-instructions: lean by default, builtin by config	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	every pipeline step has a definition that parses, and every bundled file is in the index	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	opencode: deny everything, allow the role's tools; the MCP header reads the run token	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	placeholders render per runtime	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	the fixer answers with edits and dry-runs them; the compile writer may lint its draft	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	the headless prompt: body, includes in order (the guide under its heading), skills inlined	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	the manifest: role, tools, includes, interactive spec	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	the whole tree generates under a server's runtimes dir	passed	
+com.histmersion.server.agents.AgentGeneratorSuite	the writer: atomic per file, stale generated files removed, foreign files (a Codex login) never touched	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	#992 the model that served: the modelUsage entry with the most output, every one as its own call	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	a denied tool and an MCP server that did not connect are named in the failure	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	argv: the generated plugin's agent and role settings; no hooks switch, no slash-command switch, our MCP only	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	argv: without a generated plugin the prompt goes as a file; a web role keeps the web tools	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	environment: no Anthropic key unless use-api-key, no claude.ai connectors, the run token and where to report	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	environment: the configured env is applied — defaults set, "" removes an inherited variable, the fixed ones still win	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	first call probe: an HTTP loop's first response; a CLI's report wins over the whole process's usage	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	first call: the first top-level assistant event's usage, input + cache read + cache write (2.1.294 shapes)	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	jsonInText: a fence wins, else first brace to last; prose and arrays are not answers	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	loopback: 127.x, ::1 and localhost are; 0.0.0.0 and a LAN address are not — and claude-code is refused there	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	mcp config: http to the agent endpoint, the step's run token as the bearer	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	parse: a rejected representative window without unifiedWindows is a refused reading	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	parse: every rate_limit_event window becomes a reading of the Claude plan (§3a P1)	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	parse: of two result events (a backgrounded subagent) the LAST is the answer (§3a)	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	parse: the quota-guard mod's abort is a success with an empty answer and terminal_reason aborted_streaming	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	parse: the trace (text, tool call, tool result), the typed answer, usage with cache tokens counted as input	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	probe environment: the configured env too (the probe stays a minimal call)	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	result: a JSON answer written as text (no structured_output) is still the answer	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	result: a step cut off by max turns is not rescued from its text	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the client end to end: the generated agent and settings, the run token (revoked after), stdin, an empty cwd, readings recorded	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the client on the reference config: the env defaults and --disable-slash-commands reach the CLI, the first call is reported	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the client: a usage limit is ModelLimitReached; no result line is a provider error; a missing executable says how to fix it	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the client: the mod's abort (aborted_streaming, empty answer) ends the step as the plan's limit	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the plan's usage limit is told apart from an error, with its reset time when the CLI gives one	passed	
+com.histmersion.server.agents.ClaudeCodeSuite	the schema handed to --json-schema carries no 2020-12 marker (Claude Code validates draft-07)	passed	
+com.histmersion.server.agents.PlanPoolsSuite	a mod's report: percentUsed and the ISO reset	passed	
+com.histmersion.server.agents.PlanPoolsSuite	codex: a plan whose primary is the 5-hour window and secondary the week	passed	
+com.histmersion.server.agents.PlanPoolsSuite	codex: windows keyed by LENGTH and bucket; a reached limit refused; ordinaryUsageAllowed false is a refusal	passed	
+com.histmersion.server.agents.PlanPoolsSuite	the stub app-server that never answers is a timeout, not a hang	passed	
+com.histmersion.server.agents.PlanPoolsSuite	the stub app-server: initialize, initialized, the read — and nothing else is ever sent	passed	
+com.histmersion.server.agents.PluginTreeSuite	plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)	failure	sbt.internal.worker1.ForkTestMain$ForkError: sbt.internal.worker1.PersistedException: munit.ComparisonFailException: modules/server/src/test/scala/com/histmersion/server/agents/AgentGeneratorSuite.scala:355\n354:      .filterNot(tree.contains)\n355:    assertEquals(extra, Nil, "files in plugin/ the generator does not write")\n356:\nfiles in plugin/ the generator does not write\n=> Obtained\nList(\n  "plugin/skills/.DS_Store",\n  "plugin/skills/scalafix/.DS_Store",\n  "plugin/skills/scalafix/references/pitfalls.md",\n  "plugin/skills/scalafix/references/scalameta-trees.md",\n  "plugin/skills/scalafix/references/patches.md",\n  "plugin/skills/scalafix/references/applying.md",\n  "plugin/skills/scalafix/references/testing.md",\n  "plugin/skills/scalafix/references/exploring.md",\n  "plugin/skills/scalafix/references/semantic-api.md",\n  "plugin/skills/scalafix/scripts/explore.sh",\n  "plugin/skills/scalafix/scripts/TreeOf.scala",\n  "plugin/skills/scalafix/scripts/lib.sh",\n  "plugin/skills/scalafix/scripts/run-rule.sh",\n  "plugin/skills/scalafix/scripts/tree-of.sh",\n  "plugin/skills/scalafix/scripts/TreeExplorer.scala",\n  "plugin/skills/scalafix/SKILL.md"\n)\n=> Diff (- expected, + obtained)\n-Nil\n+List(\n+  "plugin/skills/.DS_Store",\n+  "plugin/skills/scalafix/.DS_Store",\n+  "plugin/skills/scalafix/references/pitfalls.md",\n+  "plugin/skills/scalafix/references/scalameta-trees.md",\n+  "plugin/skills/scalafix/references/patches.md",\n+  "plugin/skills/scalafix/references/applying.md",\n+  "plugin/skills/scalafix/references/testing.md",\n+  "plugin/skills/scalafix/references/exploring.md",\n+  "plugin/skills/scalafix/references/semantic-api.md",\n+  "plugin/skills/scalafix/scripts/explore.sh",\n+  "plugin/skills/scalafix/scripts/TreeOf.scala",\n+  "plugin/skills/scalafix/scripts/lib.sh",\n+  "plugin/skills/scalafix/scripts/run-rule.sh",\n+  "plugin/skills/scalafix/scripts/tree-of.sh",\n+  "plugin/skills/scalafix/scripts/TreeExplorer.scala",\n+  "plugin/skills/scalafix/SKILL.md"\n+)\n\tat munit.FunSuite.assertEquals(FunSuite.scala:12)\n\tat com.histmersion.server.agents.PluginTreeSuite.$init$$$anonfun$17(AgentGeneratorSuite.scala:355)\n
+com.histmersion.server.agents.PluginTreeSuite	the interactive review agents are the hand-written definitions, byte for byte	passed	
+com.histmersion.server.agents.PromptTrimSuite	a marked part reaches only its audience, without its markers or a run of blank lines	passed	
+com.histmersion.server.agents.PromptTrimSuite	each review role's fixed overhead stays under its ceiling (PromptBudget; raise it on purpose)	passed	
+com.histmersion.server.agents.PromptTrimSuite	markers that do not pair up, nest or name an audience are reported	passed	
+com.histmersion.server.agents.PromptTrimSuite	no step prompt carries a marker or the person's CLI mechanics; the person's agents keep them	passed	
+com.histmersion.server.agents.PromptTrimSuite	the review instructions survive: evidence, ledger, verification pass, answer vocabulary	passed	
+com.histmersion.server.agents.PromptTrimSuite	the review roles read narrowly: findings over whole records, passages for quotes, no whole tables (2026-10-16)	passed	
+com.histmersion.server.agents.PromptTrimSuite	the reviewers and the fixer get every rule of the guide, without the writer's procedure	passed	
+com.histmersion.util.storage.DiskStoreSuite	a reservation is invisible until committed, and gone when discarded	passed	
+com.histmersion.util.storage.DiskStoreSuite	a reservation streamed, then overwritten in place at its head, replaces the file at its key whole	passed	
+com.histmersion.util.storage.DiskStoreSuite	a reservation with a suffixed temporary name commits over its key	passed	
+com.histmersion.util.storage.DiskStoreSuite	a scratch store is removed when it closes	passed	
+com.histmersion.util.storage.DiskStoreSuite	a store at a directory is the store the storage gives for a location placed there	passed	
+com.histmersion.util.storage.DiskStoreSuite	a sub-store sees its keys relative to its prefix	passed	
+com.histmersion.util.storage.DiskStoreSuite	a sub-store's touch is the modification time its walk reports	passed	
+com.histmersion.util.storage.DiskStoreSuite	measure: a budget that runs out stops the walk, partial, and is shared by the next walk	passed	
+com.histmersion.util.storage.DiskStoreSuite	measure: the files below the store, by bytes and count; a sub-store not made yet is absent	passed	
+com.histmersion.util.storage.DiskStoreSuite	move, copy, delete, touch	passed	
+com.histmersion.util.storage.DiskStoreSuite	names: what a directory holds directly, by name; none for a missing one	passed	
+com.histmersion.util.storage.DiskStoreSuite	on disk: a key is a path below the root; a symbolic link is written through when asked	passed	
+com.histmersion.util.storage.DiskStoreSuite	on disk: a reservation's suffixed file is the key's name and the suffix, beside it	passed	
+com.histmersion.util.storage.DiskStoreSuite	positional reads, streams and digests	passed	
+com.histmersion.util.storage.DiskStoreSuite	prune: the least recently used first, down to what may be kept; or what is older than a time	passed	
+com.histmersion.util.storage.DiskStoreSuite	put, get, stat, list and walk	passed	
+com.histmersion.util.storage.MemoryStoreSuite	a reservation is invisible until committed, and gone when discarded	passed	
+com.histmersion.util.storage.MemoryStoreSuite	a reservation streamed, then overwritten in place at its head, replaces the file at its key whole	passed	
+com.histmersion.util.storage.MemoryStoreSuite	a reservation with a suffixed temporary name commits over its key	passed	
+com.histmersion.util.storage.MemoryStoreSuite	a sub-store sees its keys relative to its prefix	passed	
+com.histmersion.util.storage.MemoryStoreSuite	a sub-store's touch is the modification time its walk reports	passed	
+com.histmersion.util.storage.MemoryStoreSuite	in memory: nothing is on disk, and each location is one store for everyone holding the storage	passed	
+com.histmersion.util.storage.MemoryStoreSuite	measure: a budget that runs out stops the walk, partial, and is shared by the next walk	passed	
+com.histmersion.util.storage.MemoryStoreSuite	measure: the files below the store, by bytes and count; a sub-store not made yet is absent	passed	
+com.histmersion.util.storage.MemoryStoreSuite	move, copy, delete, touch	passed	
+com.histmersion.util.storage.MemoryStoreSuite	names: what a directory holds directly, by name; none for a missing one	passed	
+com.histmersion.util.storage.MemoryStoreSuite	positional reads, streams and digests	passed	
+com.histmersion.util.storage.MemoryStoreSuite	prune: the least recently used first, down to what may be kept; or what is older than a time	passed	
+com.histmersion.util.storage.MemoryStoreSuite	put, get, stat, list and walk	passed	

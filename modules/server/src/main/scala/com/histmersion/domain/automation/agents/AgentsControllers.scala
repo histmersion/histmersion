@@ -45,7 +45,7 @@ final class AgentsControllers(
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
   def this(site: EngineSite, clientFor: LlmClient.Factory) =
-    this(site, clientFor, CliRuntime(site.config, site.roster, site.userPaths), PlanPools.Seams.Offline)
+    this(site, clientFor, CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome), PlanPools.Seams.Offline)
 
   private def this(site: EngineSite, w: (LlmClient.Factory, CliRuntime)) =
     this(site, w._1, w._2, PlanPools.Seams.Real)
@@ -119,7 +119,7 @@ final class AgentsControllers(
   val tokens: RunTokens = cli.tokens
 
   /** The subscription pools (also what the CLI clients report their readings to). */
-  val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
+  val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)(using site.jvmHome)
   cli.pools = Some(pools)
 
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
@@ -963,7 +963,7 @@ final class AgentsControllers(
 object AgentsControllers:
   /** The server's providers over one [[CliRuntime]]. */
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(site.config, site.roster, site.userPaths)
+    val rt = CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome)
     (LlmClient.factory(rt, site.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken

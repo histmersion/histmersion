@@ -15,6 +15,10 @@ import scala.jdk.CollectionConverters.*
   */
 class AgentGeneratorSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
@@ -296,16 +300,16 @@ class AgentGeneratorSuite extends munit.FunSuite:
     Files.createDirectories(auth.getParent)
     Files.writeString(auth, "{\"never\":\"read\"}")
     val r1 = AgentTrees
-      .write(dir, Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"), List("codex"), "sha1")
+      .write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"), List("codex"), "sha1")
       .toOption
       .get
     assertEquals((r1.files, r1.written, r1.removed), (2, 2, 0))
-    val r2 = AgentTrees.write(dir, Map("codex/home/a.toml" -> "1"), List("codex"), "sha2").toOption.get
+    val r2 = AgentTrees.write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1"), List("codex"), "sha2").toOption.get
     assertEquals((r2.written, r2.removed), (0, 1), "unchanged files are not rewritten; the stale one goes")
     assert(!Files.exists(dir.resolve("codex/home/b.toml")))
     assertEquals(Files.readString(auth), "{\"never\":\"read\"}")
     assert(Files.readString(dir.resolve("manifest.json")).contains("\"definitions\": \"sha2\""))
-    val r3 = AgentTrees.write(dir, Map("claude-code/x" -> "y"), List("claude-code"), "s").toOption.get
+    val r3 = AgentTrees.write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("claude-code/x" -> "y"), List("claude-code"), "s").toOption.get
     assert(Files.isDirectory(dir.resolve("claude-code/login")), "the empty login dir for CLAUDE_CONFIG_DIR")
     assert(Files.exists(dir.resolve("codex/home/a.toml")), "another runtime's files stay")
     assertEquals(r3.removed, 0)
@@ -326,6 +330,10 @@ class AgentGeneratorSuite extends munit.FunSuite:
   */
 class PluginTreeSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val root: Path =
     Iterator
       .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)

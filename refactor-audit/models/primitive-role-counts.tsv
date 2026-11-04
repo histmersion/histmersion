@@ -19,7 +19,7 @@ local-position	plugins/events	65	68
 local-position	plugins/fetchers	39	39
 local-position	plugins/gazetteers	42	43
 local-position	plugins/media	267	309
-local-position	server	4669	5139
+local-position	server	4681	5153
 local-position	upstreams	209	225
 local-position	values	20	20
 local-position	web	2621	2763
@@ -63,7 +63,7 @@ non-public-member-review	plugins/events	9	10
 non-public-member-review	plugins/fetchers	12	14
 non-public-member-review	plugins/gazetteers	17	18
 non-public-member-review	plugins/media	34	37
-non-public-member-review	server	2327	2567
+non-public-member-review	server	2335	2578
 non-public-member-review	upstreams	77	81
 non-public-member-review	values	6	6
 non-public-member-review	web	994	1105
@@ -87,7 +87,7 @@ other-constructor-review	plugins/events	1	1
 other-constructor-review	plugins/fetchers	5	5
 other-constructor-review	plugins/gazetteers	2	2
 other-constructor-review	plugins/media	13	13
-other-constructor-review	server	220	284
+other-constructor-review	server	221	286
 other-constructor-review	upstreams	2	2
 other-constructor-review	values	22	22
 other-constructor-review	web	173	181
@@ -114,7 +114,7 @@ public-method-review	plugins/events	76	80
 public-method-review	plugins/fetchers	30	31
 public-method-review	plugins/gazetteers	16	17
 public-method-review	plugins/media	198	229
-public-method-review	server	2989	3364
+public-method-review	server	2996	3373
 public-method-review	upstreams	162	171
 public-method-review	values	116	117
 public-method-review	web	1831	1963
@@ -174,7 +174,7 @@ trait-contract	plugin-host	14	15
 trait-contract	plugins/ai-http	1	1
 trait-contract	plugins/calibre	4	5
 trait-contract	plugins/gazetteers	6	7
-trait-contract	server	1221	1371
+trait-contract	server	1223	1374
 trait-contract	values	2	2
 trait-contract	web	84	91
 type-definition	api	1	2

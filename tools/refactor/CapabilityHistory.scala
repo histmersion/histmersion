@@ -6,7 +6,7 @@ import scala.jdk.CollectionConverters._
 
 object CapabilityHistory {
   case class Policy(mode: String = "check", report: String = "refactor-audit/assessment/current", ledger: String = "refactor-audit/capability-history",
-    adoption: String = "", evidence: String = "", additions: String = "", reason: String = "", sourceEvidence: String = "", guardCorrection: String = "")
+    adoption: String = "", evidence: String = "", additions: String = "", reason: String = "", sourceEvidence: String = "", guardCorrection: String = "", followingCorrections: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -118,17 +118,30 @@ class CapabilityHistory(val policy: CapabilityHistory.Policy) extends SyntacticR
       require(lines(event.resolve("event.txt")).contains("baseline-sha256=" + hash(Files.readString(baseline))),"Original baseline changed after adoption")
       require(lines(event.resolve("event.txt")).contains("additions-sha256=" + hash(lines(event.resolve("additions.tsv")).mkString("\n"))),"Reviewed additions changed after adoption")
       val adoptedContract = lines(event.resolve("contract.txt"))
-      if(policy.guardCorrection.isEmpty) require(adoptedContract == contract,"Adoption does not cover this detector-policy version")
+      if(policy.guardCorrection.isEmpty) {
+        require(policy.followingCorrections.isEmpty, "Following corrections require a first correction")
+        require(adoptedContract == contract,"Adoption does not cover this detector-policy version")
+      }
       else {
-        val correction = Paths.get(policy.guardCorrection)
+        val chain = policy.guardCorrection :: policy.followingCorrections
+        require(chain.distinct.size == chain.size, "Repeated correction")
+        var previousContract = adoptedContract
+        var previousExamples: Option[String] = None
+        chain.foreach { name =>
+        val correction = Paths.get(name)
         val recorded = lines(correction.resolve("event.txt"))
-        require(lines(correction.resolve("previous-contract.txt")) == adoptedContract, "Guard correction predecessor mismatch")
-        require(lines(correction.resolve("contract.txt")) == contract, "Guard correction does not cover current policy")
+        require(lines(correction.resolve("previous-contract.txt")) == previousContract, "Guard correction predecessor mismatch")
         require(recorded.contains("baseline-sha256=" + hash(Files.readString(baseline))), "Guard correction baseline changed")
         List("before", "after").foreach { phase =>
           require(recorded.contains(phase + "-examples-sha256=" + hash(Files.readString(correction.resolve(phase + "-examples.conf")))), "Guard correction evidence changed")
         }
-        require(Files.readString(correction.resolve("after-examples.conf")) == Files.readString(Paths.get("tools/refactor/capability-source-examples.conf")), "Corrected assertions changed")
+        val beforeExamples = Files.readString(correction.resolve("before-examples.conf"))
+        require(previousExamples.forall(_ == beforeExamples), "Correction assertion chain is discontinuous")
+        previousExamples = Some(Files.readString(correction.resolve("after-examples.conf")))
+        previousContract = lines(correction.resolve("contract.txt"))
+        }
+        require(previousContract == contract, "Correction chain does not cover current policy")
+        require(previousExamples.contains(Files.readString(Paths.get("tools/refactor/capability-source-examples.conf"))), "Corrected assertions changed")
       }
       lines(event.resolve("additions.tsv")).drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1).toInt).toMap
     }.getOrElse {

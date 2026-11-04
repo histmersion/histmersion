@@ -29,6 +29,10 @@ import java.util.concurrent.atomic.AtomicReference
   */
 class ContractSnapshotSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val dir = Path.of("modules/server/src/test/resources/contract")
   private val update = sys.env.get("HISTMERSION_UPDATE_CONTRACT").contains("1")
 
@@ -134,6 +138,10 @@ class ContractSnapshotSuite extends munit.FunSuite:
 
 /** A data source with no database behind it: every connection is refused. */
 private object RefusingDataSource extends javax.sql.DataSource:
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private def refuse = throw java.sql.SQLException("no database in the contract snapshots")
   def getConnection(): java.sql.Connection = refuse
   def getConnection(user: String, password: String): java.sql.Connection = refuse

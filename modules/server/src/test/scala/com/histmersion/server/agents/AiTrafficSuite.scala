@@ -29,6 +29,10 @@ import scala.jdk.CollectionConverters.*
 class AiTrafficSuite extends munit.FunSuite:
 
   /** One scripted answer: a status, its headers, its body. */
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   final private case class Answer(status: Int, body: String, headers: List[(String, String)] = Nil, delayMs: Long = 0)
 
   private def json(body: String, status: Int = 200, headers: List[(String, String)] = Nil): Answer =

@@ -19,7 +19,7 @@ import scala.jdk.CollectionConverters.*
   * login and sessions, and `claude-code/login` an optional CLAUDE_CONFIG_DIR. Login state is only ever created by the
   * vendor's own login command there.
   */
-final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment):
+final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: com.histmersion.util.storage.Stores, clock: java.time.Clock):
 
   private val cfg: AgentsConfig = app.agents
 
@@ -75,7 +75,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
       d <- load(known)
       sha = AgentTrees.sha(d)
       tree = AgentGenerator.tree(d, settings(s"${AgentGenerator.PluginVersion}+${sha.take(12)}"), runtimes)
-      res <- AgentTrees.write(dir, tree, runtimes.map(_.wire), sha)
+      res <- AgentTrees.write(stores.at(com.histmersion.util.storage.Location.AgentHomes, dir), tree, runtimes.map(_.wire), sha)
     yield res
 
 object AgentTrees:
@@ -90,7 +90,7 @@ object AgentTrees:
   /** `~` as the JVM's home directory: what the command-line runtimes still read (their slice gives them the injected
     * environment, §25).
     */
-  def expand(p: String): String = p.replaceFirst("^~", System.getProperty("user.home"))
+  def expand(p: String)(using home: com.histmersion.util.system.JvmHome): String = home.expand(p)
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else
     * `~/Library/Application Support/Histmersion` on macOS, `$XDG_DATA_HOME/histmersion` elsewhere) + `/agents`.
@@ -142,51 +142,5 @@ object AgentTrees:
   /** Write `tree` under `dir`: each file atomically, only when its text changed; a file the previous manifest listed
     * (for one of these runtimes) and this tree does not have is removed.
     */
-  def write(dir: Path, tree: Map[String, String], runtimes: List[String], sha: String): Either[String, GenerateResult] =
-    try
-      Files.createDirectories(dir)
-      val previous: List[String] =
-        val m = dir.resolve(Manifest)
-        if !Files.isRegularFile(m) then Nil
-        else
-          io.circe.parser
-            .parse(Files.readString(m, UTF_8))
-            .toOption
-            .flatMap(_.hcursor.downField("files").as[Map[String, String]].toOption)
-            .map(_.keys.toList)
-            .getOrElse(Nil)
-      var written = 0 // counted while writing; local to this call
-      tree.toList.sortBy(_._1).foreach { (rel, text) =>
-        val target = dir.resolve(rel).normalize
-        require(target.startsWith(dir), s"generated path $rel leaves $dir")
-        val same = Files.isRegularFile(target) && Files.readString(target, UTF_8) == text
-        if !same then
-          Files.createDirectories(target.getParent)
-          val tmp = Files.createTempFile(target.getParent, ".gen-", ".tmp")
-          Files.writeString(tmp, text, UTF_8)
-          Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-          written += 1
-      }
-      val gone = previous.filter(p => runtimes.exists(r => p.startsWith(s"$r/")) && !tree.contains(p))
-      gone.foreach { p =>
-        val _ = Files.deleteIfExists(dir.resolve(p).normalize)
-      }
-      // the empty login directories the vendors' own login commands fill (never this generator)
-      if runtimes.contains(AgentRuntime.ClaudeCode.wire) then {
-        val _ = Files.createDirectories(dir.resolve("claude-code/login"))
-      }
-      val keep = previous.filterNot(p => runtimes.exists(r => p.startsWith(s"$r/")))
-      val files = (keep.flatMap(p =>
-        Option.when(Files.isRegularFile(dir.resolve(p)))(p -> Prompt.sha256(Files.readString(dir.resolve(p), UTF_8)))
-      ) ++
-        tree.toList.map((k, v) => k -> Prompt.sha256(v))).sortBy(_._1)
-      val manifest = Json.obj(
-        "generator" -> AgentGenerator.PluginVersion.asJson,
-        "definitions" -> sha.asJson,
-        "generatedAt" -> java.time.Instant.now().toString.asJson,
-        "runtimes" -> runtimes.asJson,
-        "files" -> Json.obj(files.map((k, v) => k -> v.asJson)*)
-      )
-      Files.writeString(dir.resolve(Manifest), AgentGenerator.pretty(manifest), UTF_8)
-      Right(GenerateResult(dir.toString, runtimes, tree.size, written, gone.size, sha))
-    catch case e: Exception => Left(s"generating into $dir failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+  def write(store: com.histmersion.util.storage.Store, tree: Map[String, String], runtimes: List[String], sha: String)(using java.time.Clock): Either[String, GenerateResult] =
+    AgentTreeWriter.write(store, tree, runtimes, sha)

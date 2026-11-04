@@ -18,6 +18,10 @@ import scala.jdk.CollectionConverters.*
   */
 class AutomationOracleSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val dir = Path.of("modules/server/src/test/resources/oracle/automation")
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 

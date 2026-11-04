@@ -33,6 +33,10 @@ import scala.jdk.CollectionConverters.*
   */
 class ClaudeCodeSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val Cfg = ClaudeCodeConfig(
     command = "claude",
     configDir = "",
@@ -500,6 +504,10 @@ class ClaudeCodeSuite extends munit.FunSuite:
   * docs/research-agent-runtimes.md §3a saw them).
   */
 object ClaudeStreams:
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   val Init =
     """{"type":"system","subtype":"init","model":"claude-sonnet-4-5","apiKeySource":"none","mcp_servers":[{"name":"histmersion","status":"connected"}]}"""
   val Turn1 =

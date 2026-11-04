@@ -25,7 +25,7 @@ final class CliRuntime(
     val app: AppConfig,
     val definitions: AgentDefinitions,
     paths: UserPaths = AgentTrees.NoEnvironment
-):
+)(using stores: com.histmersion.util.storage.Stores, resources: com.histmersion.util.storage.Resources, clock: java.time.Clock, val jvmHome: com.histmersion.util.system.JvmHome):
   val tokens: RunTokens = RunTokens()
   val trees: AgentTrees = AgentTrees(app, definitions, paths)
 
@@ -47,5 +47,5 @@ object CliRuntime:
   /** `roster`: the agent tools the engine's toolbox holds and the contributed roles (what a definition may list and
     * take).
     */
-  def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment): CliRuntime =
+  def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: com.histmersion.util.storage.Stores, resources: com.histmersion.util.storage.Resources, clock: java.time.Clock, jvmHome: com.histmersion.util.system.JvmHome): CliRuntime =
     new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), roster), paths)

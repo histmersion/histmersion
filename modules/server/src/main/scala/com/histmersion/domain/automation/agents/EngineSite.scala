@@ -16,6 +16,9 @@ import scala.collection.immutable.ListMap
   */
 trait EngineSite:
   /** The settings now (a reload switches them). */
+  def stores: com.histmersion.util.storage.Stores
+  def resources: com.histmersion.util.storage.Resources
+  def jvmHome: com.histmersion.util.system.JvmHome
   def config: AppConfig
   def ds: DataSource
   def queues: QueueService

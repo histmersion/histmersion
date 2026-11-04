@@ -15,6 +15,10 @@ class PlanPoolsSuite extends munit.FunSuite:
   /** The read captured on 2026-10-05: the weekly Codex window spent, no 5-hour window on this plan, a second bucket for
     * a fallback model, ordinary usage not allowed, a reset credit on offer.
     */
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   val Captured: String =
     """{"ordinaryUsageAllowed":false,
       | "rateLimits":{"limitId":"codex","limitName":null,"normalModelSlug":null,

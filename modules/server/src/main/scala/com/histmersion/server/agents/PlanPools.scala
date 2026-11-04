@@ -34,7 +34,7 @@ final class PlanPools(
     cfg: => AgentsConfig,
     codexHome: () => Option[java.nio.file.Path],
     seams: PlanPools.Seams = PlanPools.Seams.Real
-) extends PoolSink:
+)(using com.histmersion.util.system.JvmHome) extends PoolSink:
 
   private val slots = ConcurrentHashMap[PoolId, Semaphore]()
   private val lastPoll = AtomicLong(0L)
@@ -459,7 +459,7 @@ object PlanPools:
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
-  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig): Map[String, Option[String]] =
+  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[String, Option[String]] =
     (if cc.useApiKey then Map.empty else Map("ANTHROPIC_API_KEY" -> None, "ANTHROPIC_AUTH_TOKEN" -> None)) ++
       Option(cc.configDir.trim).filter(_.nonEmpty).map(d => "CLAUDE_CONFIG_DIR" -> Some(AgentTrees.expand(d))).toMap
 

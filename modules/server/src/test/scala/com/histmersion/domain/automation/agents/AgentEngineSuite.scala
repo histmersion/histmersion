@@ -40,6 +40,10 @@ import com.histmersion.api.library.Source
   * the next step throw, as an unreachable provider would.
   */
 final class ScriptedClient(val model: ModelRef) extends LlmClient:
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   val scripts: mutable.Queue[Seq[AgentResponse]] = mutable.Queue.empty
   val steps: mutable.ArrayBuffer[Seq[RecordedRequest]] = mutable.ArrayBuffer.empty
   @volatile var fail: Boolean = false
@@ -57,6 +61,10 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   * Skipped without HISTMERSION_TEST_DB_URL.
   */
 class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
+  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
+  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given java.time.Clock = java.time.Clock.systemUTC()
+  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   // a DB suite driving a run pool: never let a hang run for hours (#865)
