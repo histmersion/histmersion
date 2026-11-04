@@ -5,6 +5,19 @@ Run commands from the `contracts3-scalafix` worktree root.
 
 ## Project-wide measurement and bulk rewrite gates
 
+### Evidence for all 43 goals
+
+The assessment generates `refactor-audit/inventory/coverage.md` from `inventory-coverage.conf`. Every goal must have an explicit evidence mapping and remaining decision; the generator rejects missing/duplicate goal IDs, missing reports and unknown table columns. G33 (live-data/process integrity) explicitly requires external evidence. This is an evidence index, **not** a claim that all 43 policy detectors are complete. Counts overlap and must not be summed as violations. A zero count is never automatic approval.
+
+Additional inventories run as part of the same assessment:
+
+- `OperationInventory.scala`: copies, unwraps, folds, derivation calls and given instances, preserving source/AST, semantic owner and receiver signature. Case-class copies are distinguished from unrelated `copy` methods. Fold callback allocations are separated from the one-time seed; indirect effects remain unresolved. Compiled fixtures assert 18 classified occurrences, including template-style givens, and reject a deliberately false classification.
+- `ArchitectureInventory.scala`: declarations, signatures, constructor visibility, references, comments, string constants, annotations, construction ASTs, logical-file review groups and service implementation evidence. Implementations are linked by parent symbols; an unrelated class named `InMemory` is not evidence of parity. All 645 object-plan rows are reconciled against current declarations. Missing originals remain obligations, never completed migrations. Fixtures verify actual implementation edges, lookalikes, constructors, caller references, relocation uncertainty and rejection of incomplete source coverage.
+- `BuildInventory.scala`: evaluated names, descriptions, class directories and Compile/Runtime classpaths for every sbt project. JVM/JS products and sbt hashed artifact paths are matched to evaluated product directories. Configurable forbidden edges and runtime macro dependencies are reported separately. Parser fixtures reject incomplete settings and distinguish project products from same-named external artifacts. Tests and the published plugin contract require separate policy review.
+- `ResourceInventory.scala`: parsed HOCON values and include directives, build ASTs, and every row in the architecture ledgers. Environment substitutions are retained without reading environment values; includes are recorded without fetching them. Nested values, unresolved substitutions, include capture and malformed HOCON rejection have fixtures. Missing ledger source files require relocation/retirement proof.
+
+Detailed reports live under `refactor-audit/{operations,architecture,build,resources}/`. Large raw TSVs and logs are ignored; summaries, counts and verification outcomes are versioned. To run one inventory independently, use the Scalafix CLI with its `*-inventory.conf` (operations uses `operations.conf`). Architecture and operation scans require `--sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules`; build/resource inventories run on their own rule file. Run the full assessment before accepting combined evidence as current.
+
 ### Primitive and existing-type inventory
 
 The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
