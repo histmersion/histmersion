@@ -115,11 +115,11 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       clients: Map[ModelRef, LlmClient],
       reads: Reads,
       cfg: AppConfig = baseCfg
-  ): (AgentsHandlers, ServerWiring) =
+  ): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     (
-      AgentsHandlers(
+      AgentsControllers(
         ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}"),
         CliRuntime(cfg, EngineContributions.roster),
@@ -168,7 +168,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
       )
     )
 
-  private def startAndRun(a: AgentsHandlers): RunInfo =
+  private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get

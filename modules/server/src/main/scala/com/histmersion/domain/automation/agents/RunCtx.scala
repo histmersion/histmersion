@@ -409,7 +409,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           )
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
-          AgentsHandlers.call(client.model) {
+          AgentsControllers.call(client.model) {
             poolSlot.foreach(engine.acquireBeating(run.id, _))
             try client.run(call)
             finally poolSlot.foreach(_.release())

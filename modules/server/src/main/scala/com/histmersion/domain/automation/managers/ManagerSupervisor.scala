@@ -68,7 +68,7 @@ import com.histmersion.api.automation.Goal
 final class ManagerSupervisor(
     ds: DataSource,
     config: => AgentsConfig,
-    agents: AgentsHandlers,
+    agents: AgentsControllers,
     workLists: WorkListControllers,
     kinds: List[ManagerKindDefinition]
 ) extends ManagerContext:

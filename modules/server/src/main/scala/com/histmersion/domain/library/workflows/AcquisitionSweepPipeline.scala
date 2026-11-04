@@ -42,7 +42,7 @@ import com.histmersion.api.library.Candidates
   */
 final class AcquisitionSweepPipeline(
     protected val site: LibrarySite,
-    agents: com.histmersion.domain.automation.agents.AgentsHandlers,
+    agents: com.histmersion.domain.automation.agents.AgentsControllers,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
     backlog: OaBacklog

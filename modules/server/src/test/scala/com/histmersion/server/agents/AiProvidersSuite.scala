@@ -367,7 +367,7 @@ class AiProvidersSuite extends munit.FunSuite:
     // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
     val failing = Wired(List(_ => Left(AiFailure.Error("RuntimeException: Claude API error: Overloaded"))), Right(()))
     assertEquals(
-      AgentsHandlers.attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call())).left.map(_.message),
+      AgentsControllers.attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call())).left.map(_.message),
       Left("the call to gemini:pro failed: RuntimeException: Claude API error: Overloaded")
     )
     val refused = PluginAiClient.client(ref, Wired(Nil, Left("no Gemini key — set GEMINI_KEY")), AiHttp.Offline, true)
@@ -375,7 +375,7 @@ class AiProvidersSuite extends munit.FunSuite:
     // any other provider's error names the model and the exception, as before
     val other = Scripted(List(_ => Left(AiFailure.Error("HTTP 500"))))
     assertEquals(
-      AgentsHandlers.attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call())).left.map(_.message),
+      AgentsControllers.attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call())).left.map(_.message),
       Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")
     )
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -22,7 +22,7 @@ import com.histmersion.api.automation.Agents
 final class DrainService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ):
 
   /** Draining now? */

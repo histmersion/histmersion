@@ -3,7 +3,7 @@ package com.histmersion.server.views
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.api.automation.{AgentMode, Autopilot}
 import com.histmersion.api.views.AutopilotStatus
-import com.histmersion.domain.automation.managers.ManagersHandlers
+import com.histmersion.domain.automation.managers.ManagersControllers
 import io.scalaland.chimney.dsl.*
 
 import java.time.{Clock, Instant}
@@ -15,7 +15,7 @@ import com.histmersion.api.library.Acquire
   * the same moment. What `GET` and `POST /api/agents/autopilot`, its mode and its drain answer.
   */
 final class AutopilotView(
-    managers: ManagersHandlers,
+    managers: ManagersControllers,
     upstreams: Instant => List[UpstreamQuota],
     recheck: Instant => Acquire.Checks.RecheckStatus,
     clock: Clock

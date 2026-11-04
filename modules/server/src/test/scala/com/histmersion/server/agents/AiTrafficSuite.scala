@@ -166,7 +166,7 @@ class AiTrafficSuite extends munit.FunSuite:
        |}
        |$extra""".stripMargin
 
-  /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then `AgentsHandlers.call`.
+  /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then `AgentsControllers.call`.
     */
   private def scenario[A: io.circe.Encoder](
       up: Upstream,
@@ -185,7 +185,7 @@ class AiTrafficSuite extends munit.FunSuite:
       case Left(why)     => sb ++= s"client: refused: $why\n"
       case Right(client) =>
         sb ++= s"client: ${client.model.wire}\n"
-        val outcome = AgentsHandlers.call(client.model)(client.run(c))
+        val outcome = AgentsControllers.call(client.model)(client.run(c))
         sb ++= up.requests
         outcome match
           case Left(Left(limit)) => sb ++= s"engine: plan limit: ${limit.getMessage} (until ${limit.until})\n"

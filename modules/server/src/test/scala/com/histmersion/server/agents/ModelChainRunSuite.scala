@@ -77,11 +77,11 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def enrichScripts(c: ScriptedClient): Unit =
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$finding]}""")), Seq(text(notesJson)))
 
-  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     (
-      AgentsHandlers(
+      AgentsControllers(
         ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
       ),
@@ -148,7 +148,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     run.id
 
-  private def startAndRun(a: AgentsHandlers): RunInfo =
+  private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -350,7 +350,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       val deps = Deps(cfg, ds)
       val a =
-        AgentsHandlers(
+        AgentsControllers(
           ServerEngineSite(deps, ServerWiring(deps))
         ) // the server's own factory: real clients, nothing called
       val d = a.doctor(offline = false)
@@ -387,7 +387,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
       val lan = cfg.copy(server = cfg.server.copy(host = "0.0.0.0"))
-      val ld = AgentsHandlers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = true)
+      val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = true)
       val bind = ld.providers.find(_.provider == "claude-code").get.checks.find(_.name == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
       assert(

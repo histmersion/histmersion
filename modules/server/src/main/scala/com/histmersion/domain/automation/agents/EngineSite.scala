@@ -50,10 +50,10 @@ trait EngineSite:
   def roster: AgentRoster
 
   /** What the domains register into engine `a`. */
-  def contributions(a: AgentsHandlers): Contributions
+  def contributions(a: AgentsControllers): Contributions
 
   /** What approving a proposal about a source or an article does (the domains' effects). */
   def approvalEffects: com.histmersion.domain.automation.approvals.ApprovalEffects
 
   /** What engine `a` asks of the rest of the server. */
-  def host(a: AgentsHandlers): AutomationHost
+  def host(a: AgentsControllers): AutomationHost

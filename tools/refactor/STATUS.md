@@ -4,6 +4,7 @@ Work continues in `contracts3-scalafix`. Main and `contracts2` must remain untou
 Application changes must use Scalafix; no manual application edits or text-replacement scripts.
 
 - Baseline: `6e1b5387`, a snapshot of the unfinished `contracts2` work.
+- Controller rename batch complete: 137 semantic patches across 48 files, two guarded source moves and comment-token link updates. Structural findings are now 46 (34 primitive roles, 12 repository visibility; Handlers = 0). Production and aggregate test compilation pass; all 25 selected contract/agent tests pass without snapshot changes. The contract run also found and fixed an API/domain role membership comparison through Scalafix. Ordinary capability coverage remains 2,355/2,355 with 432 findings and all 21 source expectations passing. Earlier counts below describe the pre-batch checkpoint.
 - `ContractInventory.scala` produces a preliminary AST candidate inventory and G1–G43 checklist.
 - `CapabilityAccess.scala` detects configured direct semantic references and follows repository calls through known helper bodies, with exact-owner permissions and witness chains. Local symbols are keyed by source file; chained dependencies are deduplicated.
 - Two rounds of cheap-model source audits are recorded in `refactor-audit/audited-examples.md`, with definite violations, valid cases and uncertain cases kept separate.

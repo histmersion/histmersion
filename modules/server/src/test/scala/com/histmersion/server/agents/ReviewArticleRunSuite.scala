@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.research.articles.ArticleFixtures
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmCall, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, LlmCall, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -224,10 +224,10 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def ledgerOf(h: ServerWiring): Option[ReviewLedger.Ledger] =
     com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, Slug).toOption.flatten
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
+    (AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -273,7 +273,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assert(h.research.articles.put(Slug, Article.Put("Tin in the Bronze Age", "concept", Body)).isRight)
 
-  private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
+  private def start(a: AgentsControllers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -1219,10 +1219,10 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
   private lazy val evalCfg = baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4"))
 
-  private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, ServerWiring) =
+  private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), f), h)
+    (AgentsControllers(ServerEngineSite(deps, h), f), h)
 
   test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
     val c = PanelClient(Model)

@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.workflows
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.library.acquisition.{AcquireCheckService, CandidateService}
 import com.histmersion.util.database.Transactor
 
@@ -16,7 +16,7 @@ final class AcquisitionWork(
     ds: DataSource,
     transactor: Transactor,
     site: LibrarySite,
-    val agents: AgentsHandlers
+    val agents: AgentsControllers
 ):
 
   /** The acquisition toolset. A `var` because it is built after the library's site (it needs the ingest queue), and

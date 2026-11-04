@@ -1,7 +1,7 @@
 package com.histmersion.server.agents
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.{AgentRoster, AgentsHandlers, EngineSite}
+import com.histmersion.domain.automation.agents.{AgentRoster, AgentsControllers, EngineSite}
 import com.histmersion.domain.automation.approvals.ApprovalEffects
 import com.histmersion.domain.automation.workflows.{AutomationHost, Contributions}
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
@@ -30,10 +30,10 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def digestClock: Option[java.time.Clock] = digestOn
   def aiProviders: () => ListMap[String, AiProvider] = () => deps.plugins.registries.aiProviders
   def roster: AgentRoster = EngineContributions.roster
-  def contributions(a: AgentsHandlers): Contributions = EngineContributions.of(deps, w, a)
+  def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(
     SourceProposalEffect(w.library.sources),
     List(ArticleFilterApproval(w.research.articles, w.research.articleStore))
   )
-  def host(a: AgentsHandlers): AutomationHost =
+  def host(a: AgentsControllers): AutomationHost =
     ServerAutomationHost(w, () => EngineContributions.work(a).acquisition)

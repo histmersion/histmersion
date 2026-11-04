@@ -107,10 +107,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(notesJson))
     )
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
+    (AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -134,7 +134,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .put(Ck, com.histmersion.api.library.Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(body)))
     assert(r.isRight, r)
 
-  private def startAndRun(a: AgentsHandlers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
+  private def startAndRun(a: AgentsControllers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -594,10 +594,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
     (_, ref) => cs.find(_.model == ref).toRight(s"no scripted client for ${ref.wire}")
 
-  private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, ServerWiring) =
+  private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h), f), h)
+    (AgentsControllers(ServerEngineSite(deps, h), f), h)
 
   test("enrich-source dry run: every read and model step runs, nothing is written, each write is recorded on its step"):
     val c = ScriptedClient(Model)
@@ -893,7 +893,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )((n, _) => Right(Checked(n.notes)))
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
-  private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsHandlers, String) =
+  private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsControllers, String) =
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)

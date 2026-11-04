@@ -2,7 +2,7 @@ package com.histmersion.domain.research.workflows
 
 import com.histmersion.api.automation.Agents.Origin
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.{AgentsHandlers, StepAgent}
+import com.histmersion.domain.automation.agents.{AgentsControllers, StepAgent}
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.workflows.{ToolContribution, WorkflowDefinition}
 import com.histmersion.domain.library.workflows.SourceProposals
@@ -12,7 +12,7 @@ import com.histmersion.domain.library.workflows.SourceProposals
   * progress, the seeding manager kind and its agent tools. The review proposes source statuses and edges through the
   * library's `proposals`.
   */
-final class ResearchWorkflows(cfg: () => AppConfig, site: ResearchSite, a: AgentsHandlers, proposals: SourceProposals):
+final class ResearchWorkflows(cfg: () => AppConfig, site: ResearchSite, a: AgentsControllers, proposals: SourceProposals):
 
   val reviewArticle: WorkflowDefinition = ResearchWorkflow(
     ReviewArticlePipeline(site, site.ledgers, cfg().researchAgents, cfg().libraryAgents, proposals, a.definitions),

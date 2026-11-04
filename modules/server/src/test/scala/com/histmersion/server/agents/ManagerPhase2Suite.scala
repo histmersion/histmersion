@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.research.articles.ArticleFixtures
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -72,10 +72,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    (AgentsHandlers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c)), h)
+    (AgentsControllers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)

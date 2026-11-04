@@ -35,7 +35,7 @@ import com.histmersion.api.automation.Goal
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
   * (`run_status`), and see and decide what runs proposed (`list_approvals`, `decide_approval`). Same rule as every
-  * tool: a thin wrapper over [[AgentsHandlers]], Markdown out.
+  * tool: a thin wrapper over [[AgentsControllers]], Markdown out.
   */
 object AgentsTools:
   import com.histmersion.util.mcp.ToolInputs.given
@@ -44,7 +44,7 @@ object AgentsTools:
     * the composition.
     */
   def apply(
-      a: AgentsHandlers,
+      a: AgentsControllers,
       repairAcquire: Boolean => Either[Api.Error, String],
       autopilotPage: Autopilot.EngineStatus => String
   ) =
@@ -456,7 +456,7 @@ object AgentsTools:
     * the role's tools whatever the runtime does. A definition that does not load gets no endpoint (and its steps fail
     * with why).
     */
-  def agentEndpoints(a: AgentsHandlers) =
+  def agentEndpoints(a: AgentsControllers) =
     a.definitions.agentNames.flatMap { n =>
       a.definitions.agent(n) match
         case Right(d) =>

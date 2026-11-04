@@ -5,7 +5,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.domain.automation.approvals.{ApprovalDigestService, Approvals, AutoApprovals}
 import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
-import com.histmersion.domain.automation.managers.{DrainService, ManagersHandlers, ManagerSupervisor, Zero}
+import com.histmersion.domain.automation.managers.{DrainService, ManagersControllers, ManagerSupervisor, Zero}
 import com.histmersion.domain.automation.scheduler.SchedulerService
 import com.histmersion.server.agents.{AgentDoctor, BuiltinAi, ClaudeCode, CliRuntime, Codex, Opencode, PlanPools}
 
@@ -34,7 +34,7 @@ import com.histmersion.api.automation.Goal
   * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider; `planSeams` how the plan
   * pools are read on purpose ([[PlanPools.Seams]]).
   */
-final class AgentsHandlers(
+final class AgentsControllers(
     site: EngineSite,
     clientFor: LlmClient.Factory,
     val cli: CliRuntime,
@@ -53,7 +53,7 @@ final class AgentsHandlers(
   /** The server's own providers ([[LlmClient.factory]]: the ones registered in the pinned plugin generation — the HTTP
     * ones, the CLI runtimes and any plugin's).
     */
-  def this(site: EngineSite) = this(site, AgentsHandlers.serverWiring(site))
+  def this(site: EngineSite) = this(site, AgentsControllers.serverWiring(site))
 
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = site.config.agents
@@ -152,7 +152,7 @@ final class AgentsHandlers(
   engine.onSettled(managers.settled)
 
   /** The operations on the managers (REST, MCP, CLI). */
-  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, site.config.limits, this, managers, host)
+  val managing: ManagersControllers = ManagersControllers(ds, cfg, site.config.limits, this, managers, host)
 
   /** The checked auto approvals the managers' tick runs (article-plan, goal-plan, article-publish). */
   val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, this)
@@ -849,7 +849,7 @@ final class AgentsHandlers(
       .toRight(Api.Error(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — a sweep of the goal's watcher since phase 3
-    * ([[ManagersHandlers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often than
+    * ([[ManagersControllers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often than
     * `agents.scheduler.min-interval-minutes`). Works with agents off: nothing fires until they are on and the watcher
     * is resumed.
     */
@@ -925,7 +925,7 @@ final class AgentsHandlers(
     val t0 = System.nanoTime()
     @annotation.tailrec
     def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
-      AgentsHandlers.attempt(client.model)(client.run(call(user))) match
+      AgentsControllers.attempt(client.model)(client.run(call(user))) match
         case Left(e)    => Left(e)
         case Right(res) =>
           val use = used + LlmClient.usage(res.usage)
@@ -960,7 +960,7 @@ final class AgentsHandlers(
             )
     go(1, ask, Usage.Zero, Nil)
 
-object AgentsHandlers:
+object AgentsControllers:
   /** The server's providers over one [[CliRuntime]]. */
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
     val rt = CliRuntime(site.config, site.roster, site.userPaths)

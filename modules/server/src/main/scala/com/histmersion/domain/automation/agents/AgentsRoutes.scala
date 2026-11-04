@@ -4,10 +4,10 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 import com.histmersion.api.automation.AgentsApi
 
-/** REST wiring of the embedded agents — every route delegates to [[AgentsHandlers]]. */
+/** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:
 
-  def apply(a: AgentsHandlers): List[ServerEndpoint[Any, Identity]] = List(
+  def apply(a: AgentsControllers): List[ServerEndpoint[Any, Identity]] = List(
     AgentsApi.generate.serverLogic[Identity](req => a.generate(req)),
     AgentsApi.quota.serverLogicSuccess[Identity](_ => a.quota),
     AgentsApi.setFallthrough.serverLogic[Identity]((role, in) => a.setFallthrough(role, in)),

@@ -26,7 +26,7 @@ import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
   * data), which proposes the structured action it asks for. Code checks the proposal ([[HintProposals.check]]: an
   * action it knows, targets that are the manager's items, a date that parses, settings that parse; a failing answer
   * goes back with why) and records it as a `hint-effect` approval the run does NOT wait for — NOTHING is applied until
-  * a person approves it (then [[ManagersHandlers.applyProposal]]). Started by a person (`suggest` on a hint).
+  * a person approves it (then [[ManagersControllers.applyProposal]]). Started by a person (`suggest` on a hint).
   *
   * Steps: load · propose · record · close. A DRY run records the approval it would open.
   */

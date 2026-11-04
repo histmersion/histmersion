@@ -132,15 +132,15 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
   override def afterSuite(): Unit = loader.close()
 
-  /** The server's own wiring (`AgentsHandlers(ServerEngineSite(deps, ServerWiring(deps)))`: no scripted factory) over
+  /** The server's own wiring (`AgentsControllers(ServerEngineSite(deps, ServerWiring(deps)))`: no scripted factory) over
     * `g`.
     */
-  private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds, ds, plugins = g)
     val h = ServerWiring(deps)
     (h.agents, h)
 
-  private def startAndRun(a: AgentsHandlers, h: ServerWiring): RunInfo =
+  private def startAndRun(a: AgentsControllers, h: ServerWiring): RunInfo =
     assert(
       h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
     )

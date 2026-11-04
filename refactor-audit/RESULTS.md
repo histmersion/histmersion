@@ -4,7 +4,11 @@ Baseline: `6e1b5387`. Production compiler repairs have now been applied through 
 
 ## Current checkpoint
 
-The readiness matrix now accounts for all 43 goals. Its command parses all 3,125 Scala source/test files, runs two structural fixture files and passes all 24 structural source assertions. It reports 50 structural findings (34 primitive roles, 12 repository visibility, four Handlers declarations). G10's exact production-package constraint is measured; 42 goals remain partial/unmeasured, so readiness intentionally fails.
+The first repair batch renamed AgentsHandlers and ManagersHandlers to Controllers: 137 semantic declaration/reference patches across 48 files, two guarded file moves and comment-token link updates. The four Handlers declaration findings are gone. Aliases and unrelated names are preserved; the compiled rewrite fixture matches its expected output and a second semantic pass has zero matches. The original fixture is correctly rejected by check mode.
+
+The readiness matrix accounts for all 43 goals. Its command parses all 3,125 Scala source/test files, runs two structural fixture files and passes all 24 structural source assertions. It now reports 46 structural findings (34 primitive roles, 12 repository visibility), down from 50. G10's exact production-package constraint is measured; 42 goals remain partial/unmeasured, so readiness intentionally fails.
+
+After this batch, production and aggregate test compilation pass. All 25 tests in ContractSnapshotSuite, AgentsSettingsSuite and AiProvidersSuite pass, with snapshot files unchanged. The snapshot test exposed an API/domain role membership mismatch in AgentDefinitions; a scoped Scalafix boundary conversion fixed it. Live database tests were not run for this rename batch.
 
 Production compilation now passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 21 guarded capability source assertions pass. It reports the same 432 policy findings as the earlier provisional inventory. Compiler repair enables trustworthy measurement; it does not remove those architectural violations.
 

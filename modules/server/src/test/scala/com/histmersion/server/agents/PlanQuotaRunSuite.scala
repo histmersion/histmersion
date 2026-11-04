@@ -81,11 +81,11 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(s"""{"notes":"Tin by sea [[$Ck]]."}"""))
     )
 
-  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
+  private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     (
-      AgentsHandlers(
+      AgentsControllers(
         ServerEngineSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
       ),
@@ -118,7 +118,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Reading("claude", "seven_day", 40, Some(now() + 5 * 86400000L), rejected = false, now(), PlanQuota.Source.Run)
     )
 
-  private def startAndRun(a: AgentsHandlers): RunInfo =
+  private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get

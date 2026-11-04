@@ -6,7 +6,7 @@ import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.workflows.*
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, Engine, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, Engine, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -122,10 +122,10 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     AgentResponse("", Seq(ToolCall("call_1", name, args)), StopReason.ToolUse, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
+    val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -193,7 +193,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         .isRight
     )
 
-  private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
+  private def start(a: AgentsControllers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -205,7 +205,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
 
-  private def runAgain(a: AgentsHandlers, id: String): RunInfo =
+  private def runAgain(a: AgentsControllers, id: String): RunInfo =
     a.engine.execute(id)
     connect(ds)(AgentRepo.get(id)).get
 

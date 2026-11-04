@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.agents.{AgentsControllers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -74,10 +74,10 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    val a = AgentsHandlers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c))
+    val a = AgentsControllers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -97,7 +97,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(a: AgentsHandlers, h: ServerWiring, goal: String = Goal, query: String = Query): Unit =
+  private def seed(a: AgentsControllers, h: ServerWiring, goal: String = Goal, query: String = Query): Unit =
     assert(
       h.goals
         .put(goal, com.histmersion.api.automation.Goal.Put(s"Zz $goal", notes = Some("where the tin came from")))
@@ -131,7 +131,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       )
   private def ck0(d: String) = "zzagent" + d.replaceAll("[^a-z0-9]", "")
 
-  private def watcher(a: AgentsHandlers, goal: String, perDay: Int, auto: Boolean = true): ManagerInfo =
+  private def watcher(a: AgentsControllers, goal: String, perDay: Int, auto: Boolean = true): ManagerInfo =
     val m = a.managing
       .create(
         ManagerCreate(

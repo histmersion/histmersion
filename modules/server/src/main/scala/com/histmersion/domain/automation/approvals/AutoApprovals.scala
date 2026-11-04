@@ -22,7 +22,7 @@ import com.histmersion.api.automation.Goal
   * `goal-plan` (plan-goal), an `article-publish` (compile-article) — is decided by code when its mode says so
   * (`agents.approvals.<kind>`, or the `autoApprove` setting of the manager whose run opened it): [[AutopilotPolicy]]
   * checks it against the corpus as it is NOW and against the day's caps. Approved or rejected, it goes through the very
-  * decision a person's click takes ([[AgentsHandlers.decide]]: a blocking run is woken, an approved plan becomes
+  * decision a person's click takes ([[AgentsControllers.decide]]: a blocking run is woken, an approved plan becomes
   * compile items), with a note that starts `autopilot:` and says why, an `approval` event on the manager, and a worklog
   * line — so a person can audit (and undo) every one. Left (a cap reached, a plan too large for the cap), it waits for
   * a person or the next day; the manager says so once.
@@ -30,7 +30,7 @@ import com.histmersion.api.automation.Goal
 final class AutoApprovals(
     ds: DataSource,
     cfg: => AgentsConfig,
-    agents: AgentsHandlers
+    agents: AgentsControllers
 ) extends ApprovalChecks:
 
   /** The kinds decided here. */
