@@ -15,6 +15,15 @@ object Unrelated:
 trait Wrapper[A]
 final class Wrapped extends Wrapper[SampleService]
 
+trait GoodService:
+  def read(): String
+object GoodService:
+  abstract class Base extends GoodService
+  final private class Implementation extends Base:
+    def read(): String = "stored"
+  final class InMemory extends Base:
+    def read(): String = "memory"
+
 enum Status:
   case Active, Done
   case Failed(reason: String)

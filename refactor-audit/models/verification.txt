@@ -1,5 +1,5 @@
 PASS
-34 exact primitive occurrences
+35 exact primitive occurrences
 opaque/Iron and cross-file alias classification
 shadowed primitive names excluded
 nested, inferred, union, by-name, repeated and singleton types

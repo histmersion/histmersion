@@ -27,6 +27,14 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(service(7).endsWith("SampleService.Implementation#") && service(8).endsWith("SampleService.InMemory#"))
     require(!service(6).contains("Unrelated"),"Name-only InMemory false positive")
     require(!service(6).contains("Wrapped"),"Parent type argument incorrectly treated as implemented parent")
+    val obligations = table("service-obligations.tsv").filter(_.head == "com/histmersion/inventoryfixture/SampleService#").map(r => r(2) -> r(3)).toMap
+    require(obligations("service-trait") == "structural-evidence-present")
+    require(obligations("companion-Implementation") == "structural-evidence-present")
+    require(obligations("companion-InMemory") == "structural-evidence-present")
+    require(obligations("private-Implementation") == "required-shape-missing","Public implementation wrongly accepted")
+    require(obligations("behavioral-parity").startsWith("unproven"),"Structure wrongly accepted as behavioral parity")
+    val good = table("service-obligations.tsv").filter(_.head == "com/histmersion/inventoryfixture/GoodService#").map(r => r(2) -> r(3)).toMap
+    require(List("service-trait","companion-Implementation","private-Implementation","companion-InMemory").forall(c => good(c) == "structural-evidence-present"),"Private indirect implementation rejected: " + good)
     val plan = table("object-plan.tsv").map(r => r(2) -> r(7)).toMap
     require(plan("`Retained`").startsWith("original-object-present"),"Original object missed")
     require(plan("`Moved`").startsWith("same-name-candidates"),"Relocated name not retained for review")
@@ -37,6 +45,7 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(declarations.exists(r => r(6) == "Record" && r(7) == "case-class" && r(12).contains("private")),"Constructor visibility lost")
     require(table("references.tsv").exists(r => r(3) == "com/histmersion/inventoryfixture/SampleService#read()." && r(6) == "project-declaration"),"Call edge unresolved")
     run("omitted-file",cli ++ args ++ List(source + "/Services.scala"),1)
-    Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file rejected").asJava,UTF_8)
+    run("absent-service",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-service.conf") ++ List(source),1)
+    Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)
   }
 }

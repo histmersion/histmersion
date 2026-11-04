@@ -6,3 +6,5 @@ object Constants:
   given String = "fixture"
 trait Bounded:
   type Small <: Int
+
+type Unrestricted = io.github.iltotore.iron.constraint.any.Pure
