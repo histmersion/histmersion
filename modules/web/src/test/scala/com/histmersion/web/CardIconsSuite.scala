@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.media.MediaRole
 import com.histmersion.api.catalogue.SiteTypes
@@ -130,7 +132,7 @@ class CardIconsSuite extends munit.FunSuite:
     )
     assertEquals(Preview.card(fort).icon, Some("castle"))
     assertEquals(
-      Preview.card(fort.copy(place = fort.place.copy(kind = Place.Kind.Polity), siteType = None)).icon,
+      Preview.card(fort.copy(place = fort.place.modify(_.kind).setTo(Place.Kind.Polity), siteType = None)).icon,
       Some("map")
     )
     val art = Article.View(Article.Row("zz", "Zz", "concept", "", None, Nil, Nil, None, None), Nil, Nil)

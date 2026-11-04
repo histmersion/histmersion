@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{TimeSpan, Write}
 import com.histmersion.api.catalogue.{
   EventDating,
@@ -74,15 +76,15 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
     assertEquals(ids(all), List("zz_early", "zz_mid", "zz_late"))
     assertEquals(e.list(all, 1, 1).total, 3)
     assertEquals(ids(all, 1, 1), List("zz_mid"))
-    assertEquals(ids(all.copy(text = Some("ASH"))), List("zz_mid"), "the description, any case")
-    assertEquals(ids(all.copy(text = Some("battle"))), List("zz_early"))
-    assertEquals(ids(all.copy(kind = Some("natural"))), List("zz_mid", "zz_late"))
-    assertEquals(ids(all.copy(kind = Some("human"))), List("zz_early"))
-    assertEquals(ids(all.copy(historicity = Some("Legendary"))), List("zz_early"))
+    assertEquals(ids(all.modify(_.text).setTo(Some("ASH"))), List("zz_mid"), "the description, any case")
+    assertEquals(ids(all.modify(_.text).setTo(Some("battle"))), List("zz_early"))
+    assertEquals(ids(all.modify(_.kind).setTo(Some("natural"))), List("zz_mid", "zz_late"))
+    assertEquals(ids(all.modify(_.kind).setTo(Some("human"))), List("zz_early"))
+    assertEquals(ids(all.modify(_.historicity).setTo(Some("Legendary"))), List("zz_early"))
     assertEquals(ids(EventSelection(Filter(period = Some(Period(-1100, -600))))), List("zz_mid"))
     assertEquals(ids(EventSelection(Filter(title = Some("late")))), List("zz_late"))
-    assertEquals(ids(all.copy(narrow = EventSql.Narrow(tier = Some(EventTier.Attested)))), Nil)
-    assertEquals(ids(all.copy(text = Some("100%"))), Nil, "a % is literal")
+    assertEquals(ids(all.modify(_.narrow).setTo(EventSql.Narrow(tier = Some(EventTier.Attested)))), Nil)
+    assertEquals(ids(all.modify(_.text).setTo(Some("100%"))), Nil, "a % is literal")
   }
 
   stest("the map: placed and well dated drawn, the unplaced and the imprecise counted") { s =>

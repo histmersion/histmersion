@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.backup.BackupsUsage
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
@@ -52,7 +54,7 @@ class StorageSuite extends munit.FunSuite:
       List(
         Storage.Entry("database", "db", "database", None, Some(5L), within = Some("cluster")),
         e("cluster", Some("/d/pg"), 6),
-        e("gone", Some("/nope"), 0).copy(exists = false, bytes = None),
+        e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long])),
         e("logs", Some("/d/logs"), 1)
       )
     )
@@ -83,8 +85,8 @@ class StorageSuite extends munit.FunSuite:
     assert(h.contains("basemap 3.0 GB (histmersion basemap rm"), h)
     assert(h.contains("gazetteer 1.0 GB"), h)
     assert(!h.contains("logs") && !h.contains("originals"), h)
-    assertEquals(Storage.hints(r.copy(lowFreeBytes = GB)), Nil)
-    assertEquals(Storage.hints(r.copy(entries = Nil)), List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB."))
+    assertEquals(Storage.hints(r.modify(_.lowFreeBytes).setTo((GB: _root_.scala.Long))), Nil)
+    assertEquals(Storage.hints(r.modify(_.entries).setTo(Nil)), List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB."))
 
   test("every location with something to do about it says what"):
     assert(Storage.Advice.shrink("backups", 0).exists(_.contains("now 0")))
@@ -96,9 +98,9 @@ class StorageSuite extends munit.FunSuite:
 
   test("sizes: at least for a capped walk, a dash for nothing measured, not there for a missing path"):
     assertEquals(Storage.size(e("a", Some("/a"), 2 * GB)), "2.0 GB")
-    assertEquals(Storage.size(e("a", Some("/a"), 2 * GB).copy(partial = true)), "at least 2.0 GB")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).copy(bytes = None)), "—")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).copy(bytes = None, exists = false)), "not there")
+    assertEquals(Storage.size(e("a", Some("/a"), 2 * GB).modify(_.partial).setTo(true)), "at least 2.0 GB")
+    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long]))), "—")
+    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.exists).setTo(false)), "not there")
 
   test("the CLI's own locations join the report; one the server reports already is not listed twice"):
     val server = Storage.Report(
@@ -193,7 +195,7 @@ class StorageSuite extends munit.FunSuite:
     assert(!md.contains("toolchain"), md)
     assert(md.contains(s"- free space: $vol: 120.0 GB free of 994.0 GB"), md)
     assert(!md.contains("LOW") && !md.contains("Low disk space"), md)
-    val low = Storage.withHints(report.copy(volumes = List(Storage.Volume(vol, 994 * GB, 5 * GB))))
+    val low = Storage.withHints(report.modify(_.volumes).setTo(List(Storage.Volume(vol, 994 * GB, 5 * GB))))
     val lmd = StorageMarkdown.render(low).mkString("\n")
     assert(lmd.contains("5.0 GB free of 994.0 GB — LOW"), lmd)
     assert(lmd.contains("- Low disk space on"), lmd)

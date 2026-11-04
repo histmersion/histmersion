@@ -1,5 +1,7 @@
 package com.histmersion.api.personal
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -18,7 +20,7 @@ class TargetSuite extends munit.FunSuite:
   test("check keeps the fields a kind uses and drops the rest"):
     val messy = Target(ItemKind.Source, Some(ItemKey("  zz_a ")), lat = Some(Latitude(1)), view = Some(ViewState("x")))
     assertEquals(Target.check(messy, ItemKind.Bookmarkable, "bookmark"), Right(Target.item(ItemKind.Source, "zz_a")))
-    assertEquals(Target.check(point.copy(id = Some(ItemKey("x"))), ItemKind.Notable, "note").map(_.id), Right(None))
+    assertEquals(Target.check(point.modify(_.id).setTo(Some(ItemKey("x"))), ItemKind.Notable, "note").map(_.id), Right(None))
     assert(Target.check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, "bookmark").isLeft)
     assert(Target.check(Target(ItemKind.View), ItemKind.Bookmarkable, "bookmark").isLeft)
     assert(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, "note").isLeft)

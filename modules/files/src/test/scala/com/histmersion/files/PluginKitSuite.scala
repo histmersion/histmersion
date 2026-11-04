@@ -1,5 +1,7 @@
 package com.histmersion.files
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import com.histmersion.util.plugins.PluginKit.*
@@ -66,7 +68,7 @@ class PluginKitSuite extends munit.FunSuite:
       statusLines(lib, true).mkString("\n").contains("REBUILD NEEDED: the plugins directory (its jars, POMs or lib/)")
     )
     // a record written before the POMs and lib/ were recorded: the jars alone decide, as they did
-    val old = linked.copy(dependencies = None)
+    val old = linked.modify(_.dependencies).setTo(None)
     assertEquals(status(a, Some(old), Some(old), true, List("a.pom" -> "p2")).verdict, Verdict.UpToDate)
 
   test("statusLines say what to do"):
@@ -119,7 +121,7 @@ class PluginKitSuite extends munit.FunSuite:
       "2026-10-18T00:00:00Z",
       List(PluginDescription("hello", "0.1.0", 1))
     )
-    val i = Index().put(h).put(h.copy(sha256 = "12"))
+    val i = Index().put(h).put(h.modify(_.sha256).setTo("12"))
     assertEquals(i.jars.map(_.sha256), List("12"))
     assertEquals(parseIndex(renderIndex(i)), Right(i))
     assertEquals(idsOf("hello-0.1.0.jar", i), List("hello"))
@@ -168,5 +170,5 @@ class PluginKitSuite extends munit.FunSuite:
     val k =
       KitManifest(KitFormat, "0.1.0", Some("abc"), "25.0.4.1.1", 1, "com.histmersion.server.histmersionServer", files)
     assertEquals(parseKit(renderKit(k)), Right(k))
-    assert(parseKit(renderKit(k.copy(format = KitFormat + 1))).isLeft, "a newer kit format is refused")
+    assert(parseKit(renderKit(k.modify(_.format).setTo(KitFormat + 1))).isLeft, "a newer kit format is refused")
     assertEquals(k.label, "0.1.0 (abc)")

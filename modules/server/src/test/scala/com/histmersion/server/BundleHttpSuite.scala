@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -40,10 +42,8 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      auth = base.auth.copy(apiKey = Key),
-      bundles = base.bundles.copy(dir = work.toString)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(Key)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(work.toString)
     )
 
   private def withServer(body: String => Unit): Unit =
@@ -304,7 +304,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       } finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(s"CREATE DATABASE $name")
-    val own = cfg.copy(db = cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
+    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
     def serve(body: String => Unit): Unit =
       supervised {
         val b = Composition.server(own, "127.0.0.1", 0).start()

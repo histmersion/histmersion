@@ -1,5 +1,7 @@
 package com.histmersion.pluginhost
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.plugin.*
 
@@ -73,7 +75,7 @@ class SpiValuesSuite extends munit.FunSuite:
     )
 
   test("a catalogue record's bad position or Wikidata item is left out with a warning, the rest of the record kept"):
-    val offGlobe = PluginEvents.record("zq", event.copy(lat = Some(Latitude(95.0)))).toOption.get
+    val offGlobe = PluginEvents.record("zq", event.modify(_.lat).setTo(Some(Latitude(95.0)))).toOption.get
     assertEquals((offGlobe.record.lat, offGlobe.record.lon, offGlobe.record.wikidata), (None, None, Some("Q42")))
     assertEquals((offGlobe.record.label, offGlobe.record.timeSpan.notBefore), ("Quake", Some(-1200L)))
     assertEquals(
@@ -83,19 +85,19 @@ class SpiValuesSuite extends munit.FunSuite:
         "q-1: catalogue 'zq': a position needs both latitude and longitude, left out"
       )
     )
-    val noItem = PluginEvents.record("zq", event.copy(wikidata = Some(WikidataId("Troy")))).toOption.get
+    val noItem = PluginEvents.record("zq", event.modify(_.wikidata).setTo(Some(WikidataId("Troy")))).toOption.get
     assertEquals((noItem.record.lat, noItem.record.wikidata), (Some(36.4), None))
     assertEquals(
       noItem.warnings,
       List("q-1: catalogue 'zq': Wikidata id 'Troy' is not a Wikidata item (Q and its number), left out")
     )
-    val half = PluginEvents.record("zq", event.copy(lon = None)).toOption.get
+    val half = PluginEvents.record("zq", event.modify(_.lon).setTo(None)).toOption.get
     assertEquals((half.record.lat, half.record.lon), (None, None))
     assertEquals(half.warnings, List("q-1: catalogue 'zq': a position needs both latitude and longitude, left out"))
 
   test("a catalogue record whose dating is no dating is still refused, naming the catalogue and the value"):
     assertEquals(
-      PluginEvents.record("zq", event.copy(notBefore = Some(Year(-1180)))),
+      PluginEvents.record("zq", event.modify(_.notBefore).setTo(Some(Year(-1180)))),
       Left("q-1: its dating runs backwards")
     )
 
@@ -109,7 +111,7 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.kept(Option.empty[Doi])(SpiValues.doiOf), (None, None))
 
   test("a record the host cannot read at all (built against another SPI) is refused, not thrown"):
-    val legacy = event.copy(notBefore = Some(java.lang.Long.valueOf(-1200L)).asInstanceOf[Option[Year]])
+    val legacy = event.modify(_.notBefore).setTo(Some(java.lang.Long.valueOf(-1200L)).asInstanceOf[Option[Year]])
     val got = PluginEvents.record("zq", legacy)
     assert(
       got.left.exists(w =>
@@ -134,7 +136,7 @@ class SpiValuesSuite extends munit.FunSuite:
       Some(com.histmersion.Period.from(com.histmersion.Year(-500), com.histmersion.Year(-400)).toOption.get)
     )
     assert(rec.rights.isRight)
-    val broken = PluginMedia.record(item.copy(period = Some("1999").asInstanceOf[Option[Period]]))
+    val broken = PluginMedia.record(item.modify(_.period).setTo(Some("1999").asInstanceOf[Option[Period]]))
     assertEquals(broken.period, None)
     assert(broken.rights.left.exists(_.startsWith("k1: a period the host cannot read")), broken.rights.toString)
 

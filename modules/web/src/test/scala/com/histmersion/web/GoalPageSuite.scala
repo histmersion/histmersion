@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.{Goal, Managers}
 import com.histmersion.api.automation.Goal.Plans.{GoalSchedule, GoalView, ScheduleKind}
 
@@ -68,8 +70,8 @@ class GoalPageSuite extends munit.FunSuite:
       Some("checked for new publications 3 days ago · next check in 4 days")
     )
     val watcher = Managers.ManagerInfo("watch:g", "watch", goal = Some("g"), nextTickAt = Some("2026-10-31T13:00:00"))
-    assertEquals(GoalPage.schedule(v.copy(schedules = Nil), Some(watcher), None, now), Some("next check tomorrow"))
-    assertEquals(GoalPage.schedule(v.copy(schedules = Nil), None, None, now), None)
+    assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now), Some("next check tomorrow"))
+    assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), None, None, now), None)
 
   test("a goal is paused when every agent working for it is; its lists and sources are filtered to it"):
     val ms = List(

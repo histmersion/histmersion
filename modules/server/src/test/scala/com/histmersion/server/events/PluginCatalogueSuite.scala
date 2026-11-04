@@ -1,5 +1,7 @@
 package com.histmersion.server.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.CatalogueWiring
 
 import com.histmersion.domain.catalogue.events.*
@@ -70,7 +72,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
               spi.CataloguePage(
                 List(
                   ev("b1", "Zq Battle One", -1200),
-                  ev("bad", "Zq Backwards", -1200).copy(notBefore = Some(spi.Year(-1000)))
+                  ev("bad", "Zq Backwards", -1200).modify(_.notBefore).setTo(Some(spi.Year(-1000)))
                 ),
                 next = Some("p1b")
               )
@@ -93,10 +95,10 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
-  private lazy val cfg = base.copy(media = base.media.copy(requestIntervalMs = 0))
+  private lazy val cfg = base.modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(0))
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM event_catalogue WHERE provider = $Catalogue".update.run()
@@ -193,8 +195,8 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
           spi.CataloguePage(
             List(
               ev("future", Some(2000), Some(2500)), // past the present
-              ev("early", Some(-3500), Some(-2900)).copy(beginBy = Some(spi.Year(-3100))), // before the floor
-              ev("stated", None, None).copy(central = Some(spi.Year(-1000)), plusMinus = Some(50L)), // a year ± only
+              ev("early", Some(-3500), Some(-2900)).modify(_.beginBy).setTo(Some(spi.Year(-3100))), // before the floor
+              ev("stated", None, None).modify(_.central).setTo(Some(spi.Year(-1000))).modify(_.plusMinus).setTo((Some(50L): _root_.scala.Option[_root_.scala.Long])), // a year ± only
               ev("plain", Some(-1200), Some(-1200))
             )
           )

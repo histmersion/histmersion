@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.CoreQuota.*
 
 import java.time.{Instant, LocalDate}
@@ -84,7 +86,7 @@ class CoreQuotaSuite extends munit.FunSuite:
       case Left(Refusal.Paced(ms)) => assertEquals(ms, 51_000L) // the first slot (t0+1 s) leaves the window at t0+61 s
       case other                   => fail(other.toString)
     // with patience, the call waits for its slot (counted now, sent then)
-    val patient = limits.copy(maxWaitSeconds = 60)
+    val patient = limits.modify(_.maxWaitSeconds).setTo(60)
     val g = reserve(three, patient, Purpose.Search, t0.plusSeconds(10)).toOption.get
     assertEquals(g.waitMs, 51_000L)
     assertEquals(g.state.searchTokens, 1)
@@ -92,7 +94,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(62)).isRight)
 
   test("pacing follows CORE's reported window when it is smaller than per-minute"):
-    val roomy = limits.copy(perMinute = 20)
+    val roomy = limits.modify(_.perMinute).setTo(20)
     val window = observe(fresh, roomy, 200, Map("x-ratelimit-limit" -> "2", "x-ratelimit-remaining" -> "2"), t0)
     val two = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
     assert(reserve(two, roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Refusal.Paced]))
@@ -104,7 +106,7 @@ class CoreQuotaSuite extends munit.FunSuite:
   test(
     "the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"
   ):
-    val free = limits.copy(perMinute = 1000)
+    val free = limits.modify(_.perMinute).setTo(1000)
     val searches = (1 to 6).foldLeft(fresh)((s, _) => granted(s, Purpose.Search, l = free))
     assertEquals(
       reserve(searches, free, Purpose.Search, t0).left.toOption,
@@ -123,7 +125,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(reserve(searches, free, Purpose.Search, t0).isLeft)
 
   test("costs are settings: a call costing 3 tokens counts 3"):
-    val dear = limits.copy(perMinute = 1000, searchCost = 3)
+    val dear = limits.modify(_.perMinute).setTo(1000).modify(_.searchCost).setTo(3)
     val s = granted(granted(fresh, Purpose.Search, l = dear), Purpose.Search, l = dear)
     assertEquals(s.searchTokens, 6)
     assert(reserve(s, dear, Purpose.Search, t0).isLeft)

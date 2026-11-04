@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.MediaStore
 import com.histmersion.domain.media.imports.OwnImport
 
@@ -203,8 +205,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val r = run(down, dryRun = true)
     assertEquals(r.items, 0)
     assert(r.failed.exists(_.startsWith("Wikidata Q404…: www.wikidata.org: HTTP 404")), r.failed.toString)
-    val withNc = FakeMediaHttp.cfg.copy(commons =
-      FakeMediaHttp.cfg.commons.copy(licences = "cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa")
+    val withNc = FakeMediaHttp.cfg.modify(_.commons).setTo(FakeMediaHttp.cfg.commons.modify(_.licences).setTo("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa")
     )
     val store = MemStore()
     val r2 = run(provider(), dryRun = false, store, cfg = withNc)
@@ -213,15 +214,14 @@ class WikidataCommonsSuite extends munit.FunSuite:
 
   test("a rendition larger than max-bytes is not stored, and says why"):
     val store = MemStore()
-    val r = run(provider(), dryRun = false, store, cfg = FakeMediaHttp.cfg.copy(maxBytes = 2))
+    val r = run(provider(), dryRun = false, store, cfg = FakeMediaHttp.cfg.modify(_.maxBytes).setTo((2: _root_.scala.Long)))
     assertEquals(r.stored, 0)
     assert(r.failed.exists(_.contains("larger than media.max-bytes")), r.failed.toString)
 
   test(
     "a picture the store cannot write is a line in the report; the others are stored and every target checked (#1491)"
   ):
-    val withNc = FakeMediaHttp.cfg.copy(commons =
-      FakeMediaHttp.cfg.commons.copy(licences = "cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa")
+    val withNc = FakeMediaHttp.cfg.modify(_.commons).setTo(FakeMediaHttp.cfg.commons.modify(_.licences).setTo("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa")
     )
     val store = new MemStore:
       override def save(a: ProviderAsset, first: (String, String)) =

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.EventsMarkdown
 
 import com.histmersion.config.*
@@ -163,7 +165,7 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
     assert(
       EventsMarkdown
-        .event(EventDetail(e.copy(scale = "regional", scaleStated = true)))
+        .event(EventDetail(e.modify(_.scale).setTo("regional").modify(_.scaleStated).setTo(true)))
         .contains("**Scale:** regional (stated)")
     )
 
@@ -192,5 +194,5 @@ class EventScaleSuite extends munit.FunSuite:
     )
     val line = BundleFormat.stamp(ev).line
     assert(!line.contains("scale"), line)
-    assert(BundleFormat.stamp(ev.copy(scale = Some("regional"))).line.contains("\"scale\":\"regional\""))
-    assertNotEquals(BundleFormat.stamp(ev.copy(scale = Some("regional"))).rev, BundleFormat.stamp(ev).rev)
+    assert(BundleFormat.stamp(ev.modify(_.scale).setTo(Some("regional"))).line.contains("\"scale\":\"regional\""))
+    assertNotEquals(BundleFormat.stamp(ev.modify(_.scale).setTo(Some("regional"))).rev, BundleFormat.stamp(ev).rev)

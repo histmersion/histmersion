@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.ListPatch
 import com.histmersion.api.research.{CritiqueReason, CritiqueRef}
 import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataField, MetadataPatch, WorkRef}
@@ -333,16 +335,10 @@ private object EnrichSourceSamples:
       ._1,
     EnrichSource
       .patch(
-        loaded.copy(
-          status = "current",
-          hasSummary = true,
-          hasNotes = true,
-          hasPeriod = true,
-          topics = List("bronze_age"),
-          regions = List("Aegean"),
-          tags = List("tin", "trade")
+        loaded.modify(
+          _.status).setTo("current").modify(_.hasSummary).setTo(true).modify(_.hasNotes).setTo(true).modify(_.hasPeriod).setTo(true).modify(_.topics).setTo(List("bronze_age")).modify(_.regions).setTo(List("Aegean")).modify(_.tags).setTo(List("tin", "trade")
         ),
-        classified.copy(status = Source.Status.Contested),
+        classified.modify(_.status).setTo(Source.Status.Contested),
         Nil,
         None
       )

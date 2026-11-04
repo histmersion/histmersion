@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
 
@@ -70,7 +72,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Left("no dates on the record")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae")), mycenae.copy(period = None), onMap),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae")), mycenae.modify(_.period).setTo(None), onMap),
       Left("the place has no period to compare")
     )
     assertEquals(
@@ -88,7 +90,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     assertEquals(MediaMatch.map(m, mycenae, onMap, 1928), Right("location = mycenae; map of 1880–1880 CE"))
     assertEquals(MediaMatch.map(m, greece, onMap, 1928), Right("location = greece; map of 1880–1880 CE"))
     assertEquals(
-      MediaMatch.map(m.copy(period = DeepTime.span(1950L, 1950L)), greece, onMap, 1928),
+      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(1950L, 1950L)), greece, onMap, 1928),
       Left("made after 1928")
     )
     assertEquals(

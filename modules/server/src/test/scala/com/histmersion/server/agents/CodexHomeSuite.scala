@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.AppConfig
 
 import java.nio.file.{Files, Path}
@@ -82,9 +84,9 @@ class CodexHomeSuite extends munit.FunSuite:
   test("keep-sessions-days 0 and vacuum off change nothing; a failing vacuum is reported, not thrown"):
     val h = home()
     try
-      val off = Codex.Home.retain(h, cfg.copy(keepSessionsDays = 0, vacuum = false), now, _ => fail("vacuum is off"))
+      val off = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0).modify(_.vacuum).setTo(false), now, _ => fail("vacuum is off"))
       assertEquals((off.deleted, off.vacuumed), (0, Nil))
-      val bad = Codex.Home.retain(h, cfg.copy(keepSessionsDays = 0), now, _ => Left("sqlite3: not found"))
+      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0), now, _ => Left("sqlite3: not found"))
       assertEquals(bad.problems.size, 2, bad.toString)
       assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.contains("no Codex home")))
     finally cleanup(h)

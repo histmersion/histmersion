@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.findings
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
@@ -62,7 +64,7 @@ class FindingPlanSuite extends munit.FunSuite:
     val far =
       finding("w#5", "w", "Tarhunna is the storm god of Hatti", lonLat = Some((10.0, 50.0)), region = Some("Bavaria"))
     assert(!FindingPlan.samePlace(lefts.head, far, 50))
-    assert(FindingPlan.samePlace(lefts.head, far.copy(region = Some("anatolia")), 50))
+    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some("anatolia")), 50))
 
   test("finding ids continue after the highest"):
     assertEquals(

@@ -1,6 +1,6 @@
 family	classification	scope	count
 copy	case-class-copy	production	108
-copy	case-class-copy	test	1587
+copy	case-class-copy	test	58
 copy	non-case-class-copy	production	2
 copy	non-case-class-copy	test	1
 copy	unresolved-copy-owner	production	52

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -27,7 +29,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val ck = "zz_assets_source"

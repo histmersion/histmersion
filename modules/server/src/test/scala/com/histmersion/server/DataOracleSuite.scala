@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.worklists.QueueRows
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -68,7 +70,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private val tmp = Files.createTempDirectory("histmersion-data-oracle")
   private lazy val base = AppConfig.load()
   private lazy val chunk = base.limits.chunkChars
-  private lazy val scratch = ScratchDatabases("histmersion_s6o", base.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s6o", base.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -76,16 +78,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   // ── the servers ────────────────────────────────────────────────────────────────────────────
 
   private def cfgFor(name: String): AppConfig =
-    base.copy(
-      db = base.db.copy(url = scratch.urlOf(s"histmersion_s6o_${name}_test")),
-      backups =
-        base.backups.copy(dir = tmp.resolve(s"$name-backups").toString, pgBinDir = pgBinDir.getOrElse(""), keep = 2),
-      bundles = base.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
-      converter = base.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
-      acquire = base.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
-      init = base.init.copy(auto = false),
-      runtime = base.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
-      basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s6o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString).modify(_.pgBinDir).setTo(pgBinDir.getOrElse("")).modify(_.keep).setTo(2)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(base.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
     )
 
   /** The servers' environment: a home and a cache directory of the suite's own (the cache holding a gazetteer folder),

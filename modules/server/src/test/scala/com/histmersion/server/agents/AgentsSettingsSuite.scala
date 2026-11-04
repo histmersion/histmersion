@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.workflows.guards
 
 import com.histmersion.domain.automation.agents.*
@@ -150,7 +152,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assert(!c.checked(com.histmersion.domain.automation.Approval.Kind.Edge))
     assertEquals(c.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(
-      c.copy(articlePublish = "checked").publishMode,
+      c.modify(_.articlePublish).setTo("checked").publishMode,
       com.histmersion.domain.automation.Approval.Mode.Manual,
       "checked: the run waits, the supervisor decides"
     )

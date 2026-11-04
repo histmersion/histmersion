@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.plugins.Plugins
 
 import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, ReservedNames}
@@ -118,7 +120,7 @@ class PluginHostSuite extends munit.FunSuite:
       (id, warn, m) => lines += s"${if warn then "W" else "I"} $id: $m"
     )
   private def services(e: Config = ConfigFactory.empty) =
-    val l = Logs(); (l, l.services.copy(env = e))
+    val l = Logs(); (l, l.services.modify(_.env).setTo(e))
 
   private def build(plugins: List[Plugin], user: String, e: Config = ConfigFactory.empty) =
     val (l, s) = services(e)
@@ -156,9 +158,9 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("check refuses a foreign SPI version, a duplicate id, a non-kebab id and the reserved key"):
     val ok = Plugin.Info("a", "1", 1)
-    assertEquals(PluginHost.check(List(ok, ok.copy(id = "1password")), 1), Map.empty)
+    assertEquals(PluginHost.check(List(ok, ok.modify(_.id).setTo("1password")), 1), Map.empty)
     val errs =
-      PluginHost.check(List(ok, ok, ok.copy(id = "B_x"), ok.copy(id = "c", spiVersion = 2), ok.copy(id = "order")), 1)
+      PluginHost.check(List(ok, ok, ok.modify(_.id).setTo("B_x"), ok.modify(_.id).setTo("c").modify(_.spiVersion).setTo(2), ok.modify(_.id).setTo("order")), 1)
     assertEquals(errs.keySet, Set("a", "B_x", "c", "order"))
     assert(errs("a").contains("claimed by 2 plugins"))
     assert(errs("c").contains("built for SPI 2, this host speaks 1"))

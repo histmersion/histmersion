@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.agents.{RunTranscripts, ServerEngineSite}
 import com.histmersion.domain.automation.agents.{ScriptedClient, TestRuns}
 
@@ -50,15 +52,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "zzA=1/2; zzB=1/2; sonnet=0/0",
-        roles = b.agents.roles.copy(extractor = s"${A.wire} > ${B.wire}")
-      ),
-      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("zzA=1/2; zzB=1/2; sonnet=0/0").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(s"${A.wire} > ${B.wire}")
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -91,7 +88,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h
     )
 
-  private def withAllowances(s: String) = baseCfg.copy(agents = baseCfg.agents.copy(allowances = s))
+  private def withAllowances(s: String) = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.allowances).setTo(s))
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -341,13 +338,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     claude.toFile.setExecutable(true)
     try
-      val cc = baseCfg.agents.providers.claudeCode.copy(command = claude.toString)
-      val cfg = baseCfg.copy(agents =
-        baseCfg.agents.copy(
-          roles = baseCfg.agents.roles.copy(extractor = "local:zzA > local:zzMissing > claude-code:sonnet"),
-          providers = baseCfg.agents.providers.copy(
-            claudeCode = cc,
-            local = baseCfg.agents.providers.local.copy(baseUrl = s"http://127.0.0.1:${stub.getAddress.getPort}/v1")
+      val cc = baseCfg.agents.providers.claudeCode.modify(_.command).setTo(claude.toString)
+      val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(
+          _.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo("local:zzA > local:zzMissing > claude-code:sonnet")).modify(_.providers).setTo(baseCfg.agents.providers.modify(
+            _.claudeCode).setTo(cc).modify(_.local).setTo(baseCfg.agents.providers.local.modify(_.baseUrl).setTo(s"http://127.0.0.1:${stub.getAddress.getPort}/v1")
           )
         )
       )
@@ -389,7 +383,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
-      val lan = cfg.copy(server = cfg.server.copy(host = "0.0.0.0"))
+      val lan = cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo("0.0.0.0"))
       val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = true)
       val bind = ld.providers.find(_.provider == "claude-code").get.checks.find(_.name == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
@@ -426,7 +420,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .flatMap(_.hcursor.downField("result").downField("tools").values)
       .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toSet)
       .getOrElse(Set.empty)
-    val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false)) // settings and tools need no run pool
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false)) // settings and tools need no run pool
     val list = """{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""
     @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for its run tokens
     ox.supervised {

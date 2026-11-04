@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.{GraphLink, GraphNode}
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
@@ -22,7 +24,7 @@ class GraphPanelSuite extends munit.FunSuite:
   }
 
   test("a link to a node the graph does not carry is dropped, not drawn to nowhere") {
-    val broken = g.copy(links = g.links :+ GraphLink("a2020_x", "bronze_age_collapse", "references"))
+    val broken = g.modify(_.links).setTo(g.links :+ GraphLink("a2020_x", "bronze_age_collapse", "references"))
     assertEquals(GraphPanel.indexLinks(broken).size, 2)
   }
 

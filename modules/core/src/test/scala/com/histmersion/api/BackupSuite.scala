@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -220,7 +222,7 @@ class BackupSuite extends munit.FunSuite:
     assert(md.contains("schema version:** 4"), md)
     assert(md.contains("0 → 137"), md)
     assert(md.contains("1 ignored error(s)"), md)
-    assert(!Markdown.restored(r.copy(warnings = Nil)).contains("ignored error"), md)
+    assert(!Markdown.restored(r.modify(_.warnings).setTo(Nil)).contains("ignored error"), md)
 
   test("toPrune: the oldest beyond `keep`, ordered by stamp then same-second suffix, ours only"):
     val names = List(

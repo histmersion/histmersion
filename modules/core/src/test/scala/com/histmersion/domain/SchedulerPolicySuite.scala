@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -159,7 +161,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     assertEquals(ids(d), List(2L, 1L))
     assert(d.started.head._2.contains("gathering"), d.started.head._2)
     // its place is taken already (a gathering run in flight): the strategy decides
-    assertEquals(ids(run(cs, res(1).copy(gatheringUsed = 1), settings(GoalFirst, gathering = 1), now)(ok)), List(1L))
+    assertEquals(ids(run(cs, res(1).modify(_.gatheringUsed).setTo(1), settings(GoalFirst, gathering = 1), now)(ok)), List(1L))
 
   // ── resources ──────────────────────────────────────────────────────────────────────────────────
 
@@ -169,7 +171,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       c(2, pools = List("claude-plan"), goal = Some("b")),
       c(3, block = Some(Block("quota", "reviewer chain below its plan floor")), prio = 99, goal = Some("c"))
     )
-    val r = res(3).copy(poolCap = Map("chatgpt-plan" -> 2, "claude-plan" -> 2), poolUsed = Map("chatgpt-plan" -> 2))
+    val r = res(3).modify(_.poolCap).setTo(Map("chatgpt-plan" -> 2, "claude-plan" -> 2)).modify(_.poolUsed).setTo(Map("chatgpt-plan" -> 2))
     val d = run(cs, r, settings(GoalFirst), now)(ok)
     assertEquals(ids(d), List(2L))
     assertEquals(d.waitOf(1).map(_.code), Some(Code.Pool))
@@ -178,7 +180,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
 
   test("a pool fills within one pass: the second item on it waits"):
     val cs = List(c(1, pools = List("p")), c(2, pools = List("p")), c(3))
-    val d = run(cs, res(3).copy(poolCap = Map("p" -> 1)), settings(GoalFirst), now)(ok)
+    val d = run(cs, res(3).modify(_.poolCap).setTo(Map("p" -> 1)), settings(GoalFirst), now)(ok)
     assertEquals(ids(d).toSet, Set(1L, 3L))
     assertEquals(d.waitOf(2).map(_.code), Some(Code.Pool))
     assertEquals(d.waitOf(2).map(_.behind), Some(List("#1 article-review t1")))
@@ -191,7 +193,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
   test("a manager's own saved maxRuns still caps it"):
     val cs = List(c(1, manager = "review"), c(2, manager = "review"), c(3, manager = "enrich", kind = SourceEnrich))
     val d =
-      run(cs, res(3).copy(managerCap = Map("review" -> 2), managerUsed = Map("review" -> 1)), settings(GoalFirst), now)(
+      run(cs, res(3).modify(_.managerCap).setTo(Map("review" -> 2)).modify(_.managerUsed).setTo(Map("review" -> 1)), settings(GoalFirst), now)(
         ok
       )
     assertEquals(ids(d), List(1L, 3L))
@@ -200,7 +202,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
   test("stop (drain, a budget): nothing starts, everything waits with the reason, in order"):
     val cs = List(c(1, goal = Some("b"), created = day(9)), c(2, goal = Some("a"), created = day(1)))
     val d =
-      run(cs, res(4).copy(stop = Some(Block("drain", "draining: nothing new starts"))), settings(GoalFirst), now)(ok)
+      run(cs, res(4).modify(_.stop).setTo(Some(Block("drain", "draining: nothing new starts"))), settings(GoalFirst), now)(ok)
     assertEquals(d.started, Nil)
     assertEquals(d.waiting.map(x => (x._1.c.id, x._2.code, x._2.position)), List((2L, "drain", 1), (1L, "drain", 2)))
 
@@ -278,4 +280,4 @@ class SchedulerPolicySuite extends munit.FunSuite:
     assertEquals(s.weights, parseTypeMap("review=5, compile=3"))
     assertEquals(s.typePriority, parseTypeMap("review=9, sweep=4"))
     assertEquals(SchedulerPolicy.settings(d, Some("type-balanced")).strategy, TypeBalanced)
-    assertEquals(SchedulerPolicy.settings(d.copy(strategy = "no-such"), Some("nor-this")).strategy, Strategies.all.head)
+    assertEquals(SchedulerPolicy.settings(d.modify(_.strategy).setTo("no-such"), Some("nor-this")).strategy, Strategies.all.head)

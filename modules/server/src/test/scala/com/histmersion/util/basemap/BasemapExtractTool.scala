@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -229,15 +231,8 @@ object BasemapExtractTool:
       )
     )
     val size = w.finish(
-      f.header.copy(
-        maxZoom = maxZoom.min(f.header.maxZoom),
-        minLon = b.minLon,
-        minLat = b.minLat,
-        maxLon = b.maxLon,
-        maxLat = b.maxLat,
-        centerLon = (b.minLon + b.maxLon) / 2,
-        centerLat = (b.minLat + b.maxLat) / 2,
-        centerZoom = maxZoom.min(f.header.maxZoom) / 2
+      f.header.modify(
+        _.maxZoom).setTo(maxZoom.min(f.header.maxZoom)).modify(_.minLon).setTo((b.minLon: _root_.scala.Double)).modify(_.minLat).setTo((b.minLat: _root_.scala.Double)).modify(_.maxLon).setTo((b.maxLon: _root_.scala.Double)).modify(_.maxLat).setTo((b.maxLat: _root_.scala.Double)).modify(_.centerLon).setTo(((b.minLon + b.maxLon) / 2: _root_.scala.Double)).modify(_.centerLat).setTo(((b.minLat + b.maxLat) / 2: _root_.scala.Double)).modify(_.centerZoom).setTo(maxZoom.min(f.header.maxZoom) / 2
       ),
       meta
     )

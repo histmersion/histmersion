@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Dataset
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -27,7 +29,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val repoRoot = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
@@ -44,7 +46,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     d
 
   private def bootstrap(dir: Path, net: String => Either[String, String] = _ => Right(dump)) =
-    val cfg = base.copy(db = base.db.copy(url = testDb.get), init = base.init.copy(dataDir = dir.toString))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(dir.toString))
     Bootstrap(Deps(cfg, ds), net)
 
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */

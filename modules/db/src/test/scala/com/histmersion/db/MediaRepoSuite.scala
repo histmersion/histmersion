@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -40,7 +42,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -389,8 +391,8 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       hits.toString
     )
-    assertEquals(AssetFixtures.geo(ds, q.copy(provider = Some("source")), 1000).filter(_.license.contains(Lic)), Nil)
-    val dated = AssetFixtures.geo(ds, q.copy(from = Some(-1500), to = Some(-1400)), 1000)
+    assertEquals(AssetFixtures.geo(ds, q.modify(_.provider).setTo(Some("source")), 1000).filter(_.license.contains(Lic)), Nil)
+    val dated = AssetFixtures.geo(ds, q.modify(_.from).setTo((Some(-1500): _root_.scala.Option[_root_.scala.Long])).modify(_.to).setTo((Some(-1400): _root_.scala.Option[_root_.scala.Long])), 1000)
     assert(dated.nonEmpty && dated.forall(_.periodStart.exists(_ <= -1400)), "the place's period dates the picture")
     assert(!dated.exists(_.assetName == "Zqmd_image.jpg"), "a place with no dates gives its picture none")
 
@@ -591,7 +593,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val (c2, _) =
       AssetFixtures.save(
         ds,
-        cover.copy(key = "zqmd-2", name = "cover-calibre-zqmd-2.jpg"),
+        cover.modify(_.key).setTo("zqmd-2").modify(_.name).setTo("cover-calibre-zqmd-2.jpg"),
         ("source", "zqmd2022_paper")
       )
     AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", c2, MediaRole.Cover, Some("calibre"))

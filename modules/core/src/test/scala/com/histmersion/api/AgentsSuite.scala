@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -257,9 +259,9 @@ class AgentsSuite extends munit.FunSuite:
       actualModel = Some("claude-haiku-5-5")
     )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
-    assertEquals(s.copy(actualModel = Some("haiku")).modelText, "claude-code:haiku")
-    assertEquals(s.copy(actualModel = None).modelText, "claude-code:haiku")
-    assertEquals(s.copy(model = None).modelText, "claude-haiku-5-5")
+    assertEquals(s.modify(_.actualModel).setTo(Some("haiku")).modelText, "claude-code:haiku")
+    assertEquals(s.modify(_.actualModel).setTo(None).modelText, "claude-code:haiku")
+    assertEquals(s.modify(_.model).setTo(None).modelText, "claude-haiku-5-5")
     assertEquals(StepInfo(1, "load", "code", 1, "done").modelText, "")
 
   test("agent show: an LLM step's tokens carry its first call's input and its turns (V072); older steps show neither"):
@@ -276,7 +278,7 @@ class AgentsSuite extends munit.FunSuite:
     )
     val d = RunDetail(
       RunInfo("r1", "enrich-source", "x2020", "done"),
-      List(s, s.copy(seq = 3, firstCallTokens = None, turns = None)),
+      List(s, s.modify(_.seq).setTo(3).modify(_.firstCallTokens).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(None)),
       Nil
     )
     val md = AgentsMarkdown.run(d, withMessages = false)
@@ -324,5 +326,5 @@ class AgentsSuite extends munit.FunSuite:
       md
     )
     assert(
-      !AgentsMarkdown.run(d.copy(run = r.copy(dryRun = false), steps = Nil), withMessages = false).contains("dry run")
+      !AgentsMarkdown.run(d.modify(_.run).setTo(r.modify(_.dryRun).setTo(false)).modify(_.steps).setTo(Nil), withMessages = false).contains("dry run")
     )

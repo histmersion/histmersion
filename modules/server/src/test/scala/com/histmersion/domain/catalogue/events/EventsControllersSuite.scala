@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -27,9 +29,9 @@ class EventsControllersSuite extends munit.FunSuite:
   private def controllers(gate: WriteGate = WriteGate()) =
     EventsControllers(
       EventService.InMemory(AtomicReference(CatalogueState.empty)),
-      d => d.copy(names = List("from the card")),
+      d => d.modify(_.names).setTo(List("from the card")),
       current,
-      f => f.copy(limit = f.limit.min(2)),
+      f => f.modify(_.limit).setTo(f.limit.min(2)),
       _ => PlaceScope.empty,
       () => (10, 0.01),
       gate

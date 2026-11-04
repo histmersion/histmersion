@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.TestDb
@@ -23,7 +25,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
@@ -139,16 +141,15 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     assert(r.left.exists(_.contains("not pinned yet")), r.toString)
 
   test("the extracts default to the XDG cache directory; the LPF folder stays in the data directory"):
-    val cfg = base.copy(
-      places = base.places.copy(sources = base.places.sources.copy(dir = "", lpfDir = "")),
-      runtime = base.runtime.copy(dataDir = "/data")
+    val cfg = base.modify(
+      _.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo("").modify(_.lpfDir).setTo(""))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo("/data")
     )
     val p = GazetteerPaths.of(cfg, Map("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc").get, "Linux")
     assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
     assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))
     assertEquals(p.legacy, Some(Path.of("/data/gazetteer")), "the old default, adopted from")
     val own = GazetteerPaths.of(
-      cfg.copy(places = cfg.places.copy(sources = cfg.places.sources.copy(dir = "/mine"))),
+      cfg.modify(_.places).setTo(cfg.places.modify(_.sources).setTo(cfg.places.sources.modify(_.dir).setTo("/mine"))),
       Map("HOME" -> "/home/u").get,
       "Linux"
     )
@@ -158,7 +159,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     val s = layout(withFile = false)
     val legacy = Files.createTempDirectory("histmersion-gaz-legacy")
     copyResource("geonames-fixture.ndjson.gz", legacy.resolve("geonames-fixture.ndjson.gz"))
-    val p = s.stores.copy(legacy = Some(Storage.at(Location.GazetteerFolder, legacy)))
+    val p = s.stores.modify(_.legacy).setTo(Some(Storage.at(Location.GazetteerFolder, legacy)))
     val x = GazetteerLoad.manifest(p).toOption.get.extracts.head
     val moved = extractsOf(s).resolve(x.file).toString
     assertEquals(GazetteerLoad.extract(p, x, noNet, 5).map(_.where), Right(moved))

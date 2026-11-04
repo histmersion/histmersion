@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.web.LabelPlacement.*
 
 /** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in its visible
@@ -250,10 +252,10 @@ class LabelPlacementSuite extends munit.FunSuite:
     val near = Box("near", 100 + 40 + 30 + PadPx + 4, 100, 60, 12, rank = 5)
     assertEquals(cull(Seq(big, near), shown = Set("big", "near")), Set("big", "near"), "shown: it stays")
     assertEquals(cull(Seq(big, near), shown = Set("big")), Set("big"), "hidden: it waits until clearly apart")
-    val clear = near.copy(cx = 100 + 40 + 30 + PadPx + AppearPadPx + 1)
+    val clear = near.modify(_.cx).setTo((100 + 40 + 30 + PadPx + AppearPadPx + 1: _root_.scala.Double))
     assertEquals(cull(Seq(big, clear), shown = Set("big")), Set("big", "clear".replace("clear", "near")))
     // two names drifting together then apart: shown, hidden at the touch, back only past the margin
-    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.copy(cx = cx.toDouble))
+    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.modify(_.cx).setTo((cx.toDouble: _root_.scala.Double)))
     var shown = Set("big", "near")
     val trace = (states ++ states.reverse).map { b =>
       shown = cull(Seq(big, b), shown = shown)
@@ -268,7 +270,7 @@ class LabelPlacementSuite extends munit.FunSuite:
     val far = Box("far", 400, 400, 60, 12, rank = 1)
     assertEquals(cull(Seq(small, big, far)), Set("big", "far"))
     // just past the padding: both stay
-    val beside = small.copy(cx = 100 + 40 + 30 + PadPx + 1)
+    val beside = small.modify(_.cx).setTo((100 + 40 + 30 + PadPx + 1: _root_.scala.Double))
     assertEquals(cull(Seq(big, beside)), Set("big", "small"))
 
   test("cull: the answer does not depend on input order, and ties go by key"):

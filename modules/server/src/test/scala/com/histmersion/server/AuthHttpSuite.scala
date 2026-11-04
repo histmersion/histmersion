@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
@@ -52,7 +54,7 @@ class AuthHttpSuite extends munit.FunSuite:
 
   private def withServer(apiKey: String)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = apiKey))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0, converter).start()
       try body(s"http://127.0.0.1:${b.port}")

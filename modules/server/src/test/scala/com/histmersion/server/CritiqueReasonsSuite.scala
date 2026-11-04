@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.augustnagro.magnum.*
@@ -26,7 +28,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.copy(db = b.db.copy(url = testDb.get))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get))
   private lazy val ds = testPool(cfg.db)
   private lazy val h = ServerWiring(Deps(cfg, ds))
 

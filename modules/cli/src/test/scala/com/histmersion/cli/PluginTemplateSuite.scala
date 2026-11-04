@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import java.nio.file.{Files, Path}
 
 /** `histmersion plugin new`: the names it derives, the files it writes and what they say. Whether the project compiles
@@ -72,7 +74,7 @@ class PluginTemplateSuite extends munit.FunSuite:
     )
 
   test("the native-image metadata sits under the published group and artifact, as GraalVM's convention has it"):
-    val files = PluginTemplate.files(request("my-mirror").copy(pkg = ScalaPackage.parse("org.example").toOption.get))
+    val files = PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
     assert(
       files.exists(_.path == "resources/META-INF/native-image/org.example/my-mirror/reachability-metadata.json"),
       files.map(_.path)
@@ -139,7 +141,7 @@ class PluginTemplateSuite extends munit.FunSuite:
     assert(build.contains("four lines"), "the build says where the Histmersion version is repeated")
 
   test("a repository named with --repo is written as given"):
-    val build = file(PluginTemplate.files(request("mirror").copy(repository = remote)), "project.scala")
+    val build = file(PluginTemplate.files(request("mirror").modify(_.repository).setTo(remote)), "project.scala")
     assert(build.contains("\n//> using repository https://repo.example.org/m2/\n") && !build.contains("m2Local"), build)
 
   test("the test file checks the plugin as the server loads it, and the packaging"):
@@ -203,7 +205,7 @@ class PluginTemplateSuite extends munit.FunSuite:
     )
 
   test("the services file names the plugin class in its package"):
-    val files = PluginTemplate.files(request("my-mirror").copy(pkg = ScalaPackage.parse("org.example").toOption.get))
+    val files = PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
     assertEquals(file(files, PluginTemplate.ServicesPath), "org.example.MyMirrorPlugin\n")
     assert(file(files, "MyMirror.scala").contains("package org.example\n"))
 

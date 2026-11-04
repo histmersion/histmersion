@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 
 import com.histmersion.util.database.Transactor
@@ -51,10 +53,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents
-        .copy(enabled = true, autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 0))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents
+        .modify(_.enabled).setTo(true).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(0))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -216,8 +217,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("the caps: per pass, per day; a status line with what is due"):
     val (a, h, up) = setup(
-      baseCfg.copy(acquire =
-        baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = ItemCount(2), perDay = ItemCount(3)))
+      baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(2)).modify(_.perDay).setTo(ItemCount(3)))
       )
     )
     (1 to 5).foreach(i => item(h, s"c$i"))
@@ -235,10 +235,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
 
   test("under the autopilot's shared allowance: the watchers' backlog first, then at most share-percent of it"):
-    val cfg = baseCfg.copy(
-      agents = baseCfg.agents.copy(autopilot = baseCfg.agents.autopilot.copy(ingestPerDay = 8)),
-      acquire = baseCfg.acquire.copy(recheck =
-        baseCfg.acquire.recheck.copy(perPass = ItemCount(10), sharePercent = Percent(25))
+    val cfg = baseCfg.modify(
+      _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(8))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(10)).modify(_.sharePercent).setTo(Percent(25))
       )
     )
     val (a, h, up) = setup(cfg)
@@ -313,7 +311,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
           )
         else Fetch.Miss("no open-access location")
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
-    val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
+    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(true))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
@@ -383,10 +381,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
       Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
 
-  private val tightCfg = baseCfg.copy(
-    agents = baseCfg.agents.copy(autopilot = baseCfg.agents.autopilot.copy(ingestPerDay = 4)),
-    acquire = baseCfg.acquire.copy(recheck =
-      baseCfg.acquire.recheck.copy(perPass = ItemCount(1), perDay = ItemCount(2), sharePercent = Percent(0))
+  private val tightCfg = baseCfg.modify(
+    _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(4))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(1)).modify(_.perDay).setTo(ItemCount(2)).modify(_.sharePercent).setTo(Percent(0))
     )
   )
 
@@ -475,8 +471,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("a person's capped pass of more than one item is a job too; one item answers at once"):
     val (a, h, up) = setup(
-      baseCfg.copy(acquire =
-        baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = ItemCount(3), perDay = ItemCount(40)))
+      baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(3)).modify(_.perDay).setTo(ItemCount(40)))
       )
     )
     (1 to 5).foreach(i => item(h, s"l$i"))
@@ -638,7 +633,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss("no open-access location")
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
-    val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
+    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(true))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))

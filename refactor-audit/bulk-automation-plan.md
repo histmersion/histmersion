@@ -4,7 +4,16 @@ The objective is at least 90% automatic fixes across the agreed policy-violation
 
 The historical `architecture/contracts.tsv` ledger records 2,818 occurrences in 1,277 grouped rows. Its five largest families account for 2,688 occurrences (95.4%): derives 1,042; copy 479; layer 464; unwrap 390; primitive 313. These counts are historical heuristic exceptions, not a fresh, deduplicated semantic baseline. The new project assessment's 270 capability/structural diagnostics measure a different, narrower set and cannot be substituted as the denominator.
 
-## Order of work
+## Current order of work
+
+The overall target is unchanged. [Execution priorities](execution-priorities.md)
+supersede the historical order below: close current batch validation, pause copy
+automation, then prioritize transaction ownership, capability access, module isolation
+and primitive/newtype modeling. Detection is independently valuable without a repair.
+Track every policy family, with stable identities/history and production/test separation;
+large easy categories must not displace architectural risks or hide unsupported cases.
+
+## Historical order (superseded)
 
 1. **Derivation family first.** Resolve derivation library symbols and their target types; group declaration/call AST shapes across the whole project. Identify equivalent supported derives clauses, named-given consumers, already-derived instances and customized instances. Compile expected-output fixtures before applying all eligible instance and caller changes together. Do not rewrite custom instances merely because their type is derivable.
 2. **Primitive types and layer crossings.** Build shared concept/ownership/conversion mappings from the approved architecture. Rewrite signatures, records, construction sites and boundary conversions together. Keep intentional final-type migrations distinct from compile-safe ones, with compiler errors counted as a repair queue. Do not substitute unchecked casts or widen boundaries to make compilation pass.

@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.storage.{ContentDirectory, ContentStore}
@@ -37,7 +39,7 @@ class BundleControllersSuite extends munit.FunSuite:
     )
     assertEquals(BundleControllers.disposition(m), """attachment; filename="histmersion-my-work-20261003091200.hmx"""")
     assertEquals(
-      BundleControllers.disposition(m.copy(instance = m.instance.copy(label = None), asOf = None)),
+      BundleControllers.disposition(m.modify(_.instance).setTo(m.instance.modify(_.label).setTo(None)).modify(_.asOf).setTo(None)),
       """attachment; filename="histmersion-01910000-empty.hmx""""
     )
 

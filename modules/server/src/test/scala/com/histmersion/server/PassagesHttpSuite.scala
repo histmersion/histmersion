@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import ox.supervised
@@ -61,7 +63,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = Key))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(Key))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)

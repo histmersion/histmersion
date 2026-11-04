@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.database.given
@@ -36,7 +38,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -185,7 +187,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close)),
       kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       span = Span(Some(-1650), Some(-1180))
-    ).copy(itemClass = Some("Q1620908"))
+    ).modify(_.itemClass).setTo(Some("Q1620908"))
     val c1 = run("lpf:zzgazwd", "v1", List(w))
     assertEquals(c1.joined, 1L)
     type Item = (String, String, Option[String], Option[Double], Option[Double], Option[Long], Option[Long])
@@ -201,7 +203,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(run("lpf:zzgazwd", "v1", List(w)).unchanged, "a re-run changes nothing")
     // the same version saying something else about the item: only the link changes, and is counted
-    val moved = run("lpf:zzgazwd", "v1", List(w.copy(geometry = pt(31.0, 40.5), itemClass = Some("Q3024240"))))
+    val moved = run("lpf:zzgazwd", "v1", List(w.modify(_.geometry).setTo(pt(31.0, 40.5)).modify(_.itemClass).setTo(Some("Q3024240"))))
     assertEquals((moved.linksChanged, moved.namesChanged, moved.linksAdded), (1L, 0L, 0L))
     assert(!moved.unchanged && moved.describe.contains("links +0 −0 ~1"), moved.describe)
     assertEquals(items().last.take(5), ("wikidata", "Q999000001", Some("Q3024240"), Some(31.0), Some(40.5)))
@@ -343,7 +345,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       kind = com.histmersion.domain.catalogue.Place.Kind.Region,
       span = Span(Some(-1650), Some(-1180)),
       links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close))
-    ).copy(itemClass = Some("Q1620908"))
+    ).modify(_.itemClass).setTo(Some("Q1620908"))
     val alone = rec(wd("Q999000702"), "Zzgaz point region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
     val polity =
       rec(
@@ -353,7 +355,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         span = Span(Some(-900), Some(-700))
       )
     val shaped = rec(wd("Q999000704"), "Zzgaz shaped region", kind = com.histmersion.domain.catalogue.Place.Kind.Region)
-      .copy(geometry = Poly)
+      .modify(_.geometry).setTo(Poly)
     val site = rec(wd("Q999000705"), "Zzgaz town")
     val c = run("wikidata", "v1", List(joined, alone, polity, shaped, site))
     assertEquals((c.created, c.joined, c.pointAreasSkipped), (2L, 1L, 2L), c.describe)

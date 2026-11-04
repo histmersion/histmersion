@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.api.automation.ScheduleKind
 
@@ -11,7 +13,7 @@ import com.histmersion.api.automation.Goal
   */
 abstract class GoalServiceContract extends EngineStoreSuite:
   private def g(s: EngineStores) = s.goals
-  private def bare(s: EngineStores, slug: String) = g(s).get(slug).map(_.copy(updatedAt = None))
+  private def bare(s: EngineStores, slug: String) = g(s).get(slug).map(_.modify(_.updatedAt).setTo(None))
 
   stest("a goal is put, replaced and read back; its sub-goals by slug; a period ending before it starts is refused") {
     s =>

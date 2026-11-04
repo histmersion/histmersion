@@ -1,0 +1,10 @@
+status	count
+accumulator-algorithm-review	78
+argument-comment-review	7
+configured-optics-limitation:kindlings-exported-DraftMode-type-assertion	2
+configured-optics-limitation:kindlings-exported-ScheduleKind-type-assertion	1
+eligible	1532
+generic-copy-type-change-review	17
+module-optics-dependency-review	40
+multi-field-constructor-effects-review	17
+unresolved-or-non-case-class-owner	152

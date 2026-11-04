@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.settings.ConfigSource
@@ -31,7 +33,7 @@ class HotReloadSuite extends DbSuite:
   private val DbB = "histmersion_hotb_test"
 
   private lazy val base = AppConfig.load()
-  private lazy val admin = testPool(base.db.copy(url = testDb.get))
+  private lazy val admin = testPool(base.db.modify(_.url).setTo(testDb.get))
   private def urlOf(name: String) = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
 
   private def exec(ds: DataSource, stmt: String): Unit =

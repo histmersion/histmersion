@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.domain.automation.AgentRole
 
@@ -15,7 +17,7 @@ class AgentRosterSuite extends munit.FunSuite:
 
   test("a definition whose role no workflow contributes is refused, naming the roles there are"):
     val roster = EngineContributions.roster
-    val without = roster.copy(roles = roster.roles.filterNot(_ == AgentRole.Skeptic))
+    val without = roster.modify(_.roles).setTo(roster.roles.filterNot(_ == AgentRole.Skeptic))
     val skeptic = AgentDefinitions(Prompts(""), without).agentNames.map(AgentDefinitions(Prompts(""), without).agent)
     val refused = skeptic.collect { case Left(m) if m.contains("is no contributed workflow's") => m }
     assert(refused.nonEmpty, "the skeptic's definition is refused")

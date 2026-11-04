@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -100,8 +102,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       List((Severity.Minor, "term-count", "9 terms undefined (count only; the individual findings carry the severity)"))
     )
     assertEquals(r.emptySlots, List("disagreement"))
-    assert(checkColdReader(a.copy(explainBack = " "), last = false).isLeft)
-    assert(checkColdReader(a.copy(emptySlots = List("why")), last = false).isLeft)
+    assert(checkColdReader(a.modify(_.explainBack).setTo(" "), last = false).isLeft)
+    assert(checkColdReader(a.modify(_.emptySlots).setTo(List("why")), last = false).isLeft)
 
   test("#1461 cold reader: 'none…' and blank empty slots mean none; prose naming a slot is that slot"):
     val none = "none: question, answer, disagreement and open questions are all stated in the text"
@@ -146,7 +148,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     // a named term the reader marks MAJOR keeps its severity
     val major = checkColdReader(
-      ColdReaderAnswer("MAJOR", "It is about tin.", Nil, named.map(_.copy(severity = "major")), 27, 0),
+      ColdReaderAnswer("MAJOR", "It is about tin.", Nil, named.map(_.modify(_.severity).setTo("major")), 27, 0),
       last = false
     ).toOption.get._1
     assertEquals(major.verdict, Verdict.Major)
@@ -169,11 +171,11 @@ class ReviewArticleSuite extends munit.FunSuite:
       "define each on first use, and add a Glossary"
     )
     assert(TermCount.is(legacy))
-    assert(TermCount.is(legacy.copy(kind = "term-count", problem = TermCount.problem(12))))
-    assert(!TermCount.is(legacy.copy(reviewer = Reviewer.Rules)))
-    assert(!TermCount.is(legacy.copy(problem = "Hittite is undefined")))
-    assert(!TermCount.is(legacy.copy(where = "Intro")))
-    assert(!TermCount.is(legacy.copy(quote = "27 terms")))
+    assert(TermCount.is(legacy.modify(_.kind).setTo("term-count").modify(_.problem).setTo(TermCount.problem(12))))
+    assert(!TermCount.is(legacy.modify(_.reviewer).setTo(Reviewer.Rules)))
+    assert(!TermCount.is(legacy.modify(_.problem).setTo("Hittite is undefined")))
+    assert(!TermCount.is(legacy.modify(_.where).setTo("Intro")))
+    assert(!TermCount.is(legacy.modify(_.quote).setTo("27 terms")))
 
   test("skeptic: proposals are verified — quote in the record, vocabulary, citekeys — the rest dropped"):
     val ok = ProposalAnswer(
@@ -219,13 +221,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     val m = merge(1, List(m1), List(skep, cold, rule), Nil)
     assertEquals(m.verdict, Verdict.Major)
     assertEquals(m.findings.map(_.id), List("M1", "R1", "C1", "S1"))
-    val dup = rule.copy(findings = rule.findings.map(_.copy(where = "body", problem = "banned  FILLER")))
+    val dup = rule.modify(_.findings).setTo(rule.findings.map(_.modify(_.where).setTo("body").modify(_.problem).setTo("banned  FILLER")))
     assertEquals(merge(1, List(m1), List(dup), Nil).findings.map(_.id), List("M1"))
 
   test("merge: a finding the fixer rejected and a reviewer raises again is escalated"):
     val before = Finding("S2", Reviewer.Skeptic, Severity.Major, "date", "Dates", "1320 BCE", "the date is wrong", "")
-    val again = before.copy(id = "S1", problem = "the date has no support")
-    val other = before.copy(id = "S3", reviewer = Reviewer.Rules, problem = "x")
+    val again = before.modify(_.id).setTo("S1").modify(_.problem).setTo("the date has no support")
+    val other = before.modify(_.id).setTo("S3").modify(_.reviewer).setTo(Reviewer.Rules).modify(_.problem).setTo("x")
     val m = merge(
       2,
       Nil,
@@ -243,7 +245,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil
     )
-    val minor = major.copy(verdict = Verdict.Minor, findings = major.findings.map(_.copy(severity = Severity.Minor)))
+    val minor = major.modify(_.verdict).setTo(Verdict.Minor).modify(_.findings).setTo(major.findings.map(_.modify(_.severity).setTo(Severity.Minor)))
     assert(done(minor, 1, 3, fix = true))
     assert(!done(major, 1, 3, fix = true))
     assert(done(major, 1, 3, fix = false))
@@ -457,7 +459,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Article.Edits.Draft.Edits(
         List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].", "\n\n## Not used\n\n- [[knapp2016_tin]] — x"))
       ),
-      corpus.copy(generated = true)
+      corpus.modify(_.generated).setTo(true)
     )
     assert(c.problems.exists(_.startsWith("a hand-written Not used section")), c.problems)
 
@@ -469,7 +471,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       "tin",
       Generated,
       "concept",
-      corpus.copy(isCitekey = ckCov, generated = true),
+      corpus.modify(_.isCitekey).setTo(ckCov).modify(_.generated).setTo(true),
       ckCov,
       record.get,
       0.9,
@@ -568,7 +570,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 = Evidence("knapp2016_tin", None, "one ton of tin", 1.0)
     val dup = rr.findings.head.copy(id = "R9", evidence = List(e2))
-    val m = merge(1, Nil, List(rr, rr.copy(findings = List(dup))), Nil)
+    val m = merge(1, Nil, List(rr, rr.modify(_.findings).setTo(List(dup))), Nil)
     assertEquals(m.findings.map(_.id), List("R1"))
     assertEquals(
       m.findings.head.evidence.map(_.quote),
@@ -588,7 +590,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(fixerTurns(12, merged, 10, 20), 20, "capped")
     assertEquals(fixerTurns(12, merged, 1, 5), 12, "a cap below the agent's own turns never cuts them")
     val readerMinor =
-      merged.copy(findings = List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
+      merged.modify(_.findings).setTo(List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
     assertEquals(fixerTurns(12, readerMinor, 1, 40), 12, "a reader's minor needs no lookup")
 
   test("bookkeeping: the log line"):
@@ -701,7 +703,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Right(List("R1"))
     )
     assert(
-      checkRules(withChecks.copy(checks = Nil), last = false, prior = Some(Prior(List(askedTin), revised, 0.9))).isLeft,
+      checkRules(withChecks.modify(_.checks).setTo(Nil), last = false, prior = Some(Prior(List(askedTin), revised, 0.9))).isLeft,
       "an open finding of its own must be checked"
     )
     assertEquals(
@@ -741,18 +743,18 @@ class ReviewArticleSuite extends munit.FunSuite:
       "a bridge claim",
       ""
     )
-    val outside = inside.copy(quote = "Two dates are argued")
+    val outside = inside.modify(_.quote).setTo("Two dates are argued")
     assertEquals(scope(inside, edited, 0.9), (inside, None))
-    assertEquals(scope(outside.copy(kind = "contradictory", evidence = List(ev)), edited, 0.9)._2, None)
+    assertEquals(scope(outside.modify(_.kind).setTo("contradictory").modify(_.evidence).setTo(List(ev)), edited, 0.9)._2, None)
     val (down, w) = scope(outside, edited, 0.9)
     assertEquals(down.severity, Severity.Minor)
     assert(w.exists(_.contains("\"a bridge claim\" is outside the edited passages")), w)
     assertEquals(
-      scope(outside.copy(kind = "date"), edited, 0.9)._1.severity,
+      scope(outside.modify(_.kind).setTo("date"), edited, 0.9)._1.severity,
       Severity.Minor,
       "a factual kind still needs its evidence"
     )
-    assertEquals(scope(outside.copy(severity = Severity.Minor), edited, 0.9)._2, None)
+    assertEquals(scope(outside.modify(_.severity).setTo(Severity.Minor), edited, 0.9)._2, None)
 
   test("checkRecheck: checks, scoped findings with verified evidence, at most three lessons"):
     val ev = evidenceCheck(isCk, record.get, 0.9)
@@ -784,7 +786,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assertEquals(rc.lessons, List("one", "two", "three"))
     assert(ws.exists(_.contains("\"too short\" is outside the edited passages")), ws)
-    assert(checkRecheck(Reviewer.Rules, a.copy(checks = Nil), prior, "", ev, last = false).isLeft)
+    assert(checkRecheck(Reviewer.Rules, a.modify(_.checks).setTo(Nil), prior, "", ev, last = false).isLeft)
     assert(
       checkRecheck(Reviewer.Rules, RecheckAnswer(), prior, "", ev, last = true).isRight,
       "the last attempt keeps what passed"
@@ -802,7 +804,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       wontFix = List(WontFixAnswer("R1", "wordy, but exact"))
     )
     assertEquals(fix(ok, last = false).map(_._1.wontFix), Right(List(WontFix("R1", "wordy, but exact"))))
-    val bad = ok.copy(wontFix = List(WontFixAnswer("S1", "no"), WontFixAnswer("R9", "x"), WontFixAnswer("R1", " ")))
+    val bad = ok.modify(_.wontFix).setTo(List(WontFixAnswer("S1", "no"), WontFixAnswer("R9", "x"), WontFixAnswer("R1", " ")))
     val ps = fix(bad, last = false).left.toOption.get
     assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
     assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)
@@ -820,7 +822,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       "the reconstructed search returns 94 sources; most are neither cited nor excluded",
       "record the filter"
     )
-    val m = merged.copy(findings = merged.findings :+ cover)
+    val m = merged.modify(_.findings).setTo(merged.findings :+ cover)
     def run(a: FixerAnswer, c: Option[Coverage]) =
       checkFix(a, m, "tin", Good, "concept", corpus, isCk, record.get, 0.9, false, c)
     val base = FixerAnswer(
@@ -840,7 +842,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ),
       missing
     )
-    val declined = base.copy(wontFix = List(WontFixAnswer("R8", "recording the filter is not an edit")))
+    val declined = base.modify(_.wontFix).setTo(List(WontFixAnswer("R8", "recording the filter is not an edit")))
     assertEquals(run(declined, None).map(_._1.wontFix.map(_.id)), Right(List("R8")))
     assert(needsFilter(cover, None) && !needsFilter(cover, Some(cov)) && !needsFilter(merged.findings.head, None))
     // the ledger keeps a declined MAJOR open, and not claimed
@@ -934,7 +936,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(checkSpotChecks(Nil, rule(Nil), spotEv, last = false)._2.head.startsWith("spot-checks: 0 of the 2"))
 
   test("spot-checks: the required ones must be on different sources; a check of one source twice counts once"):
-    val twice = List(spotTin, spotTin.copy(claim = "Two dates are argued"))
+    val twice = List(spotTin, spotTin.modify(_.claim).setTo("Two dates are argued"))
     val (_, ps, _) = checkSpotChecks(twice, rule(List(read("knapp2016_tin"))), spotEv, last = false)
     assert(ps.head.startsWith("spot-checks: 1 of the 2 required"), ps)
     assertEquals(
@@ -946,20 +948,20 @@ class ReviewArticleSuite extends munit.FunSuite:
     val calls = List(read("knapp2016_tin"), read("tin2024_iso"), read("atlantis"))
     def problem(a: SpotCheckAnswer) =
       checkSpotChecks(List(a), rule(calls, required = 1), spotEv, last = false)._2.drop(1).head
-    assert(problem(spotTin.copy(citekey = "atlantis")).contains("the article does not cite it"))
+    assert(problem(spotTin.modify(_.citekey).setTo("atlantis")).contains("the article does not cite it"))
     assert(
-      problem(spotTin.copy(claim = "Tin reached Crete by land in the Iron Age"))
+      problem(spotTin.modify(_.claim).setTo("Tin reached Crete by land in the Iron Age"))
         .contains("the claim is not in the article")
     )
-    assert(problem(spotTin.copy(verdict = "supported")).contains("verdict 'supported' is not one of"))
+    assert(problem(spotTin.modify(_.verdict).setTo("supported")).contains("verdict 'supported' is not one of"))
     assert(
-      problem(spotTin.copy(recordQuote = "The ship carried amber from the Baltic coast"))
+      problem(spotTin.modify(_.recordQuote).setTo("The ship carried amber from the Baltic coast"))
         .contains("the quote is not in the record")
     )
-    assert(problem(spotTin.copy(citekey = "")).contains("no citekey"))
+    assert(problem(spotTin.modify(_.citekey).setTo("")).contains("no citekey"))
 
   test("spot-checks: beyond the required number a failing one is dropped with a warning, not sent back"):
-    val bad = spotIso.copy(recordQuote = "an invented sentence that is in no record")
+    val bad = spotIso.modify(_.recordQuote).setTo("an invented sentence that is in no record")
     val (ok, ps, ws) = checkSpotChecks(
       List(spotTin, bad),
       rule(List(read("knapp2016_tin"), read("tin2024_iso")), required = 1),
@@ -972,7 +974,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("checkRules: spot-checks are enforced only when a rule is given, and land in the report"):
     val a = RulesAnswer("PASS", Nil, "f", spotChecks = List(spotTin, spotIso))
     assert(
-      checkRules(a.copy(spotChecks = Nil), last = false).isRight,
+      checkRules(a.modify(_.spotChecks).setTo(Nil), last = false).isRight,
       "no rule: nothing required (a verification pass, a test)"
     )
     val missing = checkRules(a, last = false, spotEv, spots = Some(rule(Nil)))

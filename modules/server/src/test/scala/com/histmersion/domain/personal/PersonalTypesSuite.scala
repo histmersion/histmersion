@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.personal.{MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemRef, ItemUid, RecordState}
@@ -60,7 +62,7 @@ class PersonalTypesSuite extends munit.FunSuite:
 
   test("a target crosses the wire and the columns unchanged"):
     val targets = List(
-      MarkTarget.Item(ref.copy(uid = None)),
+      MarkTarget.Item(ref.modify(_.uid).setTo(None)),
       MarkTarget.Point(Latitude(37.0), Longitude(22.0), Some(MapZoom(5.0)), Some(Year(-1300)), None),
       MarkTarget.View(Some(ViewState("a=b")), Some(Latitude(1.0)), None, None, None, Some(Year(10))),
       MarkTarget.Span(Year(-1200), Year(-1150))

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.{ApprovalInfo, RunInfo}
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.jobs.JobInfo
@@ -53,7 +55,7 @@ class PagingSuite extends munit.FunSuite:
   test("the older line names the next cursor, and is absent on the last page"):
     val more = Paging.Page(30, Some("abc"), Nil)
     assertEquals(Paging.olderLine(more, c => s"`--before $c`"), Some("Older: `--before abc`"))
-    assertEquals(Paging.olderLine(more.copy(next = None), c => c), None)
+    assertEquals(Paging.olderLine(more.modify(_.next).setTo(None), c => c), None)
 
   test("the jobs, runs and approvals listings head a partial page and say how to go on"):
     val page = Paging.Page(250, Some("j2"), List("done" -> 240, "failed" -> 10))
@@ -65,7 +67,7 @@ class PagingSuite extends munit.FunSuite:
     assertEquals(IngestMarkdown.jobs(Vector.empty, page, Some("failed")), "_No failed jobs._")
 
     val rs = List(RunInfo("r1", "enrich-source", "a2020_b", "done"))
-    val runs = AgentsMarkdown.runs(rs, page.copy(total = 12), None, Some("Older: x"))
+    val runs = AgentsMarkdown.runs(rs, page.modify(_.total).setTo(12), None, Some("Older: x"))
     assert(runs.startsWith("# Agent runs\n\nLatest 1 of 12 runs.\n\n- r1"), runs)
     assert(runs.endsWith("\n\nOlder: x"), runs)
     assertEquals(AgentsMarkdown.runs(rs), "# Agent runs\n\n- " + AgentsMarkdown.runLine(rs.head))

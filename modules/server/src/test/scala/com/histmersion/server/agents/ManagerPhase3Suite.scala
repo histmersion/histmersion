@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 import com.histmersion.domain.automation.agents.TestRuns
 
@@ -48,13 +50,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        roles = b.agents.roles
-          .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
       )
     )
 
@@ -328,7 +327,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
     // agents.scheduler.enabled = false stops every cron
-    val off = baseCfg.copy(agents = baseCfg.agents.copy(scheduler = baseCfg.agents.scheduler.copy(enabled = false)))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(false)))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     assertEquals(b.managers.tick(Instant.parse("2026-12-01T00:00:00Z")).filter(_.contains("cron")), Nil)
 
@@ -511,7 +510,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .addHint(EnrichId, HintAdd("x", effect = Some(HintEffect("skip", List(CkB))), suggest = Some(true)))
         .isLeft
     )
-    val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     val before = Transactor(ds).read(ManagerRepo.hints(EnrichId, live = false)).size
     assert(
@@ -580,6 +579,6 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers)), None)
     assertEquals(
       ManagerPolicy
-        .dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers.copy(dailyUsd = 3))),
+        .dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers.modify(_.dailyUsd).setTo((3: _root_.scala.Double)))),
       Some(3.0)
     )

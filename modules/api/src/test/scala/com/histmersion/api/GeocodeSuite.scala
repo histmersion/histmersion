@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.catalogue.Geocode.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
@@ -150,7 +152,7 @@ class GeocodeSuite extends munit.FunSuite:
     // the live pair (2026-10-09): the late Roman province at the 5° cell's centre 37.5 N 22.5 E — in
     // the Peloponnese — and the region at its real point; both Pleiades, both labelled Thessalia
     val province = c("pleiades_1001895", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.5, lat = 37.5)
-      .copy(gridCell = true)
+      .modify(_.gridCell).setTo(true)
     val region = c("pleiades_1332", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.29543, lat = 39.44387)
     assertEquals(best(List(province, region)), "pleiades_1332")
     assertEquals(best(List(province, region), at = Some(Period(400, 500))), "pleiades_1332")
@@ -188,7 +190,7 @@ class GeocodeSuite extends munit.FunSuite:
       "several overlap: the smaller area, then the id"
     )
     // undated: the longest-lived snapshot, never the 1236-1240 rump (whose shape is the smallest)
-    val rump = snaps.map(s => if s.id.endsWith("1236_1240") then s.copy(area = 0.1) else s)
+    val rump = snaps.map(s => if s.id.endsWith("1236_1240") then s.modify(_.area).setTo((0.1: _root_.scala.Double)) else s)
     assertEquals(best(rump), "cliopatria_kievan_rus_1040_1235")
 
   test("Ur: without a hint the broad entity, with 'site' the city"):
@@ -248,7 +250,7 @@ class GeocodeSuite extends munit.FunSuite:
       Resolution("Albania", "ne_country_alb", "Albania", 19.97, 41.25)
     )
     assert(m.km > 2000 && m.km < 2500, m.km)
-    assert(worthMoving(m, 25) && !worthMoving(m.copy(to = m.to.copy(lon = 45.86, lat = 34.47)), 25))
+    assert(worthMoving(m, 25) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo((45.86: _root_.scala.Double)).modify(_.lat).setTo((34.47: _root_.scala.Double))), 25))
     assertEquals(
       m.describe,
       "heraclides2025_ancient#0: 'Albania' (stored as '[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania') at 34.47 N 45.86 E → Albania [ne_country_alb] at 41.25 N 19.97 E, " +
@@ -295,7 +297,7 @@ class GeocodeSuite extends munit.FunSuite:
   test("tier: a bulk-imported place never outranks a seed place of the same label ('Varna' stays the city)"):
     val city = c("ne_city_varna", "Varna", Place.Kind.Site, dim = 0, area = 0)
     val province =
-      c("geonames_864563", "Varna", Place.Kind.Region, dim = 0, area = 0).copy(tier = tierOf(Some("geonames")))
+      c("geonames_864563", "Varna", Place.Kind.Region, dim = 0, area = 0).modify(_.tier).setTo(tierOf(Some("geonames")))
     assertEquals(
       rank(List(province, city), KindHint.Unknown, None, 4).map(_.id),
       List("ne_city_varna", "geonames_864563")

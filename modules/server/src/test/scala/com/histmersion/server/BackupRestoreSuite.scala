@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -67,7 +69,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     (prefix + "postgres", name, prefix + name)
 
   private def admin(sql: String): Unit =
-    val c = testPool(base.db.copy(url = adminUrl)).getConnection
+    val c = testPool(base.db.modify(_.url).setTo(adminUrl)).getConnection
     try {
       val s = c.createStatement();
       try { val _ = s.execute(sql) }
@@ -75,9 +77,8 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     } finally c.close()
 
   private lazy val cfg: AppConfig =
-    base.copy(
-      db = base.db.copy(url = scratchUrl),
-      backups = base.backups.copy(dir = backupDir.toString, pgBinDir = pgBinDir.get)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratchUrl)).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(backupDir.toString).modify(_.pgBinDir).setTo(pgBinDir.get)
     )
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")

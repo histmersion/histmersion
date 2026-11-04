@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
 import com.histmersion.web.ui.SidebarTab
@@ -79,7 +81,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     val s = TileDecode.site(feature(37, 22, "k" -> "s1", "id" -> "s1", "label" -> "Tower", "u" -> 1)).get
     assert(s.undated)
     assert(PointKinds.Sites.classes(s).contains(MapView.UndatedClass))
-    assert(PointKinds.Sites.zIndex(s) < PointKinds.Sites.zIndex(s.copy(undated = false)))
+    assert(PointKinds.Sites.zIndex(s) < PointKinds.Sites.zIndex(s.modify(_.undated).setTo(false)))
     assertEquals(PointKinds.Sites.member(s).undated, 1)
     assert(!TileDecode.site(feature(37, 22, "id" -> "s2", "label" -> "Dated")).get.undated)
     val c = TileDecode.cell(
@@ -97,7 +99,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     val e = TileDecode.event(feature(40, 26, "id" -> "ev9", "label" -> "Quake", "kind" -> "earthquake")).get
     assert(PointKinds.Events.undated(e))
     assert(PointKinds.Events.classes(e).contains(MapView.UndatedClass))
-    val dated = e.copy(timeSpan = TimeSpan(Some(-1200L), None, None, Some(-1190L)))
+    val dated = e.modify(_.timeSpan).setTo(TimeSpan(Some(-1200L), None, None, Some(-1190L)))
     assert(!PointKinds.Events.undated(dated))
     assert(PointKinds.Events.zIndex(e) < PointKinds.Events.zIndex(dated))
 

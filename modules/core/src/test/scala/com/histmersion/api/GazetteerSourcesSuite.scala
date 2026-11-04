@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -276,7 +278,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val r = GazRecord("x", None, "lpf_d_x", "X", Place.Kind.Site, None, Span.always, Nil, Nil, None, None)
     val ds = LpfDataset(None, None, None, Span(Some(-800L), Some(-300L)))
     assertEquals(Gazetteer.inDataset(r, ds).span, Span(Some(-800L), Some(-300L)))
-    assertEquals(Gazetteer.inDataset(r.copy(span = Span(Some(-500L), None)), ds).span, Span(Some(-500L), None))
+    assertEquals(Gazetteer.inDataset(r.modify(_.span).setTo(Span(Some(-500L), None)), ds).span, Span(Some(-500L), None))
     assertEquals(Gazetteer.inDataset(r, LpfDataset(None, None, None)).span, Span.always)
 
   test("an LPF feature's descriptions (Wikidata's schema:description) are read, trimmed and de-duplicated"):

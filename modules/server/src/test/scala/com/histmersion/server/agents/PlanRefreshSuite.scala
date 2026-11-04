@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ModelPicker
 
 import com.histmersion.config.ClaudeCodeConfig
@@ -61,7 +63,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     assertEquals(after("--system-prompt"), "Reply with one word.", "Claude Code's long system prompt is replaced")
     assertEquals(
-      ClaudeCode.probeArgv(Cfg.copy(extraArgs = " --effort low "), "haiku").takeRight(2),
+      ClaudeCode.probeArgv(Cfg.modify(_.extraArgs).setTo(" --effort low "), "haiku").takeRight(2),
       List("--effort", "low")
     )
 
@@ -207,7 +209,7 @@ class PlanRefreshSuite extends munit.FunSuite:
 
   test("the probe end to end against a FAKE claude: argv, stdin 'quota', capped output, the reading"):
     val fake = FakeCli("claude", List(Init, Answer, Event, Result))
-    val cc = Cfg.copy(command = fake.script.toString)
+    val cc = Cfg.modify(_.command).setTo(fake.script.toString)
     val run = PlanPools
       .runProbe(
         ClaudeCode.probeArgv(cc, "haiku"),

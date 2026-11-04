@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.labels.LabelFixtures
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.SearchFixtures
@@ -29,7 +31,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   // a square over Anatolia, a smaller Late-Bronze-Age polity inside it, and a point site
@@ -192,9 +194,8 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       ds,
       List(Place.Input(west, List(Place.Name("West"))), Place.Input(east, List(Place.Name("East"))))
     )
-    val border = src.copy(
-      citekey = "zzp_border",
-      findings = List(
+    val border = src.modify(
+      _.citekey).setTo("zzp_border").modify(_.findings).setTo(List(
         Finding(
           "zzp_border#0",
           "zzp_border",
@@ -340,8 +341,8 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a put re-materialises: a finding that MOVED lands in its new places"):
     seed()
-    val moved = src.copy(findings = src.findings.map {
-      case f if f.id == "zzp_src#0" => f.copy(geo = Some(GeoPoint(-30.0, 45.0))) // out to the Atlantic
+    val moved = src.modify(_.findings).setTo(src.findings.map {
+      case f if f.id == "zzp_src#0" => f.modify(_.geo).setTo(Some(GeoPoint(-30.0, 45.0))) // out to the Atlantic
       case f                        => f
     })
     val _ = SourceFixtures.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
@@ -356,7 +357,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a finding dropped from the source is deleted; the others keep their places"):
     seed()
-    val fewer = src.copy(findings = src.findings.filter(_.id != "zzp_src#1"))
+    val fewer = src.modify(_.findings).setTo(src.findings.filter(_.id != "zzp_src#1"))
     val _ = SourceFixtures.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(SourceFixtures.load(ds, "zzp_src").get.findings.map(_.id), List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
     assert(PlaceFixtures.placesOf(ds, "zzp_src#0").nonEmpty)

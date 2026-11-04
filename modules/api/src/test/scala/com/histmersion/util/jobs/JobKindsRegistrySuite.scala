@@ -1,4 +1,6 @@
 package com.histmersion.util.jobs
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.jobs.JobInfo
 
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
@@ -29,5 +31,5 @@ class JobKindsRegistrySuite extends munit.FunSuite:
   test("what a job is about: its source first, else the first registered reading of its detail"):
     val job = JobInfo("j", "alpha", "done", detail = Some(JobDetail.Purpose(Some("the map"))))
     assertEquals(kinds.subject(job), Some("the map"))
-    assertEquals(kinds.subject(job.copy(citekey = Some("ck"))), Some("ck"))
-    assertEquals(kinds.subject(job.copy(detail = None)), None)
+    assertEquals(kinds.subject(job.modify(_.citekey).setTo(Some("ck"))), Some("ck"))
+    assertEquals(kinds.subject(job.modify(_.detail).setTo(None)), None)

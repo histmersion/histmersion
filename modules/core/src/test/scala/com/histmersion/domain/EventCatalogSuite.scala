@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -80,9 +82,9 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(EventProviders.keep(erup(-10, 120, Some(3)), t).isLeft)
     assert(EventProviders.keep(erup(-10, 120, Some(4)), t).isRight)
     assert(EventProviders.keep(erup(-10, 120, None), t).isLeft)
-    assertEquals(EventProviders.keep(erup(37, 25, None).copy(lat = None), t), Left("no position"))
+    assertEquals(EventProviders.keep(erup(37, 25, None).modify(_.lat).setTo((None: _root_.scala.Option[_root_.scala.Double])), t), Left("no position"))
     assertEquals(
-      EventProviders.keep(erup(37, 25, Some(5)), t.copy(area = BBox.parse("0,0,10,10"))),
+      EventProviders.keep(erup(37, 25, Some(5)), t.modify(_.area).setTo(BBox.parse("0,0,10,10"))),
       Left("outside --bbox")
     )
 
@@ -216,7 +218,7 @@ class EventCatalogSuite extends munit.FunSuite:
       parts = 1
     )
     val b =
-      a.copy(records = 5, kept = 5, created = 5, merged = 0, byKind = List(EventCount("eruption", 5)), skipped = Nil)
+      a.modify(_.records).setTo(5).modify(_.kept).setTo(5).modify(_.created).setTo(5).modify(_.merged).setTo(0).modify(_.byKind).setTo(List(EventCount("eruption", 5))).modify(_.skipped).setTo(Nil)
     val c = EventImportReport.combine(a, b)
     assertEquals((c.records, c.kept, c.created, c.merged, c.parts), (15, 9, 8, 1, 2))
     assertEquals(c.byKind, List(EventCount("eruption", 9)))
@@ -227,7 +229,7 @@ class EventCatalogSuite extends munit.FunSuite:
 
   test("#6561: a part read under other thresholds is not read in this scope"):
     val world = EventProviders.Thresholds(None, 0, 4, 0.0, 6.5)
-    val window = world.copy(region = Some(BBox(-25, 5, 100, 72)))
+    val window = world.modify(_.region).setTo(Some(BBox(-25, 5, 100, 72)))
     val (w, n) = (EventProviders.scope(world), EventProviders.scope(window))
     assertNotEquals(w, n)
     val recorded = Set(EventProviders.scopedPart("years:-3000..-2000", n), "years:-2000..-1000")

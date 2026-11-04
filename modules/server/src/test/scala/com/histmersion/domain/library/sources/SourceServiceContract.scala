@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.{LibraryStores, LibraryStoreSuite}
@@ -237,7 +239,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
   }
 
   stest("what acquisition reads of the sources: existence, the DOI index, edges routed and counted") { s =>
-    val _ = s.sources.put(source(A, "Walls").copy(doi = Some("10.5555/ZQ.Walls")), Me)
+    val _ = s.sources.put(source(A, "Walls").modify(_.doi).setTo(Some("10.5555/ZQ.Walls")), Me)
     val _ = s.sources.put(source(B, "Cove"), Me)
     assert(s.sources.exists(A))
     assert(!s.sources.exists("zqnone"))
@@ -251,8 +253,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
 
   stest("the citekey of a DOI: case and spaces ignored, the first by citekey of two holders, none for an unknown one") {
     s =>
-      val _ = s.sources.put(source(B, "Cove").copy(doi = Some("10.5555/ZQ.Both")), Me)
-      val _ = s.sources.put(source(A, "Walls").copy(doi = Some("10.5555/zq.both")), Me)
+      val _ = s.sources.put(source(B, "Cove").modify(_.doi).setTo(Some("10.5555/ZQ.Both")), Me)
+      val _ = s.sources.put(source(A, "Walls").modify(_.doi).setTo(Some("10.5555/zq.both")), Me)
       assertEquals(s.sources.citekeyOfDoi(" 10.5555/zq.BOTH "), Some(List(A, B).min))
       assertEquals(s.sources.citekeyOfDoi("10.5555/zq.none"), None)
   }
@@ -283,8 +285,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
   }
 
   stest("the sources not in Calibre yet, a push's metadata, the Calibre id written back") { s =>
-    val _ = s.sources.put(source(A, "Walls").copy(provenance = Some("unpaywall")), Me)
-    val _ = s.sources.put(source(B, "Cove").copy(provenance = Some("calibre")), Me)
+    val _ = s.sources.put(source(A, "Walls").modify(_.provenance).setTo(Some("unpaywall")), Me)
+    val _ = s.sources.put(source(B, "Cove").modify(_.provenance).setTo(Some("calibre")), Me)
     val _ = s.sources.put(source(C, "Kings"), Me)
     assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(A, C))
     assertEquals(s.sources.calibreGaps(Some(1)).map(_.citekey), List(A))

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -42,11 +44,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     // the live gods_and_migrations entries: S24/S31/S7 were fixed in pass 2 and raised again in pass 3
     // (reopened), S35–S37 raised for the first time by the final pass
     val g = live("gods_and_migrations")
-    val before = g.copy(entries =
-      g.entries
+    val before = g.modify(_.entries).setTo(g.entries
         .filterNot(e => Set("S35", "S36", "S37")(e.id))
         .map(e =>
-          if e.reopened > 0 then e.copy(status = Status.Fixed, reopened = e.reopened - 1, notFixed = None) else e
+          if e.reopened > 0 then e.modify(_.status).setTo(Status.Fixed).modify(_.reopened).setTo(e.reopened - 1).modify(_.notFixed).setTo(None) else e
         )
     )
     val after = g // the final pass absorbed: S24/S31/S7 reopened, S35–S37 new
@@ -62,8 +63,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assertEquals(merged(d, 1, run = Some("run-10")).majors.size, 6)
     assertEquals(d.openMajors.size, 6, "still open MAJOR in the ledger: the next run's work")
     // an open minor the final pass raised to MAJOR is new too
-    val minorBefore = before.copy(entries =
-      before.entries :+ after
+    val minorBefore = before.modify(_.entries).setTo(before.entries :+ after
         .entry("S35")
         .get
         .copy(finding = after.entry("S35").get.finding.copy(severity = Severity.Minor))
@@ -72,7 +72,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   test("a run whose only open MAJORs are deferred ends below MAJOR; its backlog item says they are deferred"):
     val g = live("gods_and_migrations")
-    val only = g.copy(entries = g.entries.filter(e => Set("S35", "S36")(e.id)))
+    val only = g.modify(_.entries).setTo(g.entries.filter(e => Set("S35", "S36")(e.id)))
     val (d, _) = deferFinal(Ledger("gods_and_migrations"), only, "run-9", _ => false)
     assertEquals(merged(d, 3, run = Some("run-9")).verdict, Verdict.Minor)
     val task = taskText(d, "run-9").get
@@ -107,7 +107,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assert(finalRegression(fact, Nil, Nil, "The wreck was dated to 1320 BCE by the cargo.", 0.9))
     assert(!finalRegression(fact, Nil, Nil, "Another passage altogether, edited.", 0.9))
     assert(
-      !finalRegression(fact.copy(kind = "lost"), Nil, Nil, "The wreck was dated to 1320 BCE by the cargo.", 0.9),
+      !finalRegression(fact.modify(_.kind).setTo("lost"), Nil, Nil, "The wreck was dated to 1320 BCE by the cargo.", 0.9),
       "a reader's confusion in edited text is a discovery, not a factual regression"
     )
 
@@ -136,7 +136,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assertEquals(ws.size, 1)
     // addressed now: the check stands
     assertEquals(
-      holdPairChecks(checks, a.entries.map(_.finding), List(open.copy(state = CritiqueState.Addressed)))._1
+      holdPairChecks(checks, a.entries.map(_.finding), List(open.modify(_.state).setTo(CritiqueState.Addressed)))._1
         .map(_.fixed),
       List(true, true)
     )
@@ -207,7 +207,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     val g = guard(l, tinBefore, dropped, together, cites, 0.9)
     assertEquals(g.map(_.id), List("S1"))
     // open and set-aside findings are not guarded
-    assertEquals(guard(ledgerWith(pairFixed.copy(status = Status.Open)), tinBefore, split, together, cites, 0.9), Nil)
+    assertEquals(guard(ledgerWith(pairFixed.modify(_.status).setTo(Status.Open)), tinBefore, split, together, cites, 0.9), Nil)
 
   // ── the fixer's guards ─────────────────────────────────────────────────────────────────────────
 
@@ -379,8 +379,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ),
       back
     )
-    val aside = bare.copy(setAside =
-      List(
+    val aside = bare.modify(_.setAside).setTo(List(
         SetAsideAnswer(
           "",
           Some("zz2021_crit>zz2020_new"),
@@ -502,8 +501,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     val twice = applyFix(l, f, "r", 2)
     assertEquals(
       stubborn(
-        twice.copy(entries =
-          twice.entries.map(e => e.copy(finding = e.finding.copy(pair = Some(CritiqueRef("a2000_x", "b2001_y")))))
+        twice.modify(_.entries).setTo(twice.entries.map(e => e.modify(_.finding).setTo(e.finding.modify(_.pair).setTo(Some(CritiqueRef("a2000_x", "b2001_y")))))
         )
       ).map(_.id),
       List("R1", "C2")

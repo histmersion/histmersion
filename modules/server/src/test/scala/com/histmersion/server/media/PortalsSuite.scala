@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.MediaStore
 import com.histmersion.domain.media.imports.CollectionImport
 import com.histmersion.domain.media.imports.OwnImport
@@ -121,7 +123,7 @@ class PortalsSuite extends munit.FunSuite:
       conv: ThumbConverter = ThumbConverter()
   ): MediaImportReport =
     val col = FakeMediaHttp.builtin("opencontext")
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.copy(requestIntervalMs = col.conf.requestIntervalMs))
+    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(col.conf.requestIntervalMs))
     CollectionImport(col, polite, cfg, conv).run(List(target(t)), dryRun, refresh = false, store)
 
   test(
@@ -343,7 +345,7 @@ class PortalsSuite extends munit.FunSuite:
 
   test("Pleiades: a record that does not answer leaves the place not asked (the next run asks again)"):
     val store = plStore()
-    val c = cfg.copy(maxRetries = 0)
+    val c = cfg.modify(_.maxRetries).setTo(0)
     val (polite, _) = FakeMediaHttp.polite(pleiades(Right(HttpAnswer(503, Map.empty, Array.emptyByteArray))), c)
     val r = OwnImport("pleiades", FakeMediaHttp.collection("pleiades"), polite, c)
       .run(List(zygouries), dryRun = false, refresh = false, store)

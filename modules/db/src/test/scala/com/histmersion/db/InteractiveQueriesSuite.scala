@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.findings.FindingFixtures
@@ -36,7 +38,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =

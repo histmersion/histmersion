@@ -1,5 +1,7 @@
 package com.histmersion.server.events
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.server.CatalogueWiring
@@ -91,7 +93,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg = loaded.config
   private lazy val plugins = com.histmersion.server.ServerPlugins.load(loaded)
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 
@@ -130,7 +132,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
     // #6561: a wider region (here: a lower VEI floor) judged differently — every window is read again
     val wider =
-      cfg.copy(events = cfg.events.copy(gvp = cfg.events.gvp.copy(regionMinVei = cfg.events.gvp.regionMinVei + 1)))
+      cfg.modify(_.events).setTo(cfg.events.modify(_.gvp).setTo(cfg.events.gvp.modify(_.regionMinVei).setTo(cfg.events.gvp.regionMinVei + 1)))
     val f2 = http
     val r2 = run(CatalogueWiring(deps(wider), f2), "gvp", dry = false)
     assert(f2.requests.nonEmpty && r2.records > 0, s"thresholds changed: the windows are due again ($r2)")

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.media.MediaProvider
 
 class LightboxSuite extends munit.FunSuite:
@@ -25,7 +27,7 @@ class LightboxSuite extends munit.FunSuite:
 
   test("the attributes are escaped") {
     assert(
-      Lightbox.attrs(item.copy(title = Some("a \"b\" <c>"))).contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
+      Lightbox.attrs(item.modify(_.title).setTo(Some("a \"b\" <c>"))).contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
     )
   }
 
@@ -50,7 +52,7 @@ class LightboxSuite extends munit.FunSuite:
   }
 
   test("the caption names an author the credit leaves out; a bare figure has none") {
-    val c = Lightbox.captionHtml(item.copy(credit = Some("The Met")))
+    val c = Lightbox.captionHtml(item.modify(_.credit).setTo(Some("The Met")))
     assert(c.contains("A. Author · The Met"), c)
     assertEquals(Lightbox.captionHtml(Lightbox.Item("/assets/x.png", "fig")), "")
   }

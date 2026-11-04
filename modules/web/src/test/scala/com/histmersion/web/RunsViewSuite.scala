@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.*
 
 /** The pure parts of the agent runs and approvals windows: what is live, the poll schedule, the filter, the actions a
@@ -136,7 +138,7 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.describe(pub), "publish the new article tin: Tin")
     assertEquals(
       ApprovalsView.describe(
-        pub.copy(article = Some(draft.copy(mode = com.histmersion.api.automation.Goal.Plans.DraftMode.Extend)))
+        pub.modify(_.article).setTo(Some(draft.copy(mode = com.histmersion.api.automation.Goal.Plans.DraftMode.Extend)))
       ),
       "append a section to the article tin"
     )

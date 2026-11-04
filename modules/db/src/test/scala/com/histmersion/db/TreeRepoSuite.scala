@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Tree
 
 import com.histmersion.domain.library.search.SearchFixtures
@@ -32,7 +34,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
@@ -189,7 +191,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a window that excludes the fixture returns no rows"):
     seed()
-    assertEquals(SearchFixtures.treeRows(ds, "sources", filter.copy(period = Some(Period(-500, -200)))).toList, Nil)
+    assertEquals(SearchFixtures.treeRows(ds, "sources", filter.modify(_.period).setTo(Some(Period(-500, -200)))).toList, Nil)
 
   // ── the gazetteer slice ──────────────────────────────────────────────────────────────────────
 

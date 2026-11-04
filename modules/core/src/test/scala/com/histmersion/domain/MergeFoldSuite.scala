@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.EventPlan
 
 import com.histmersion.api.MergeFixture
@@ -30,9 +32,9 @@ class MergeFoldSuite extends munit.FunSuite:
     val g = MergeFold.foldGoal(gl, gr, "work")
     assertEquals(g.status, Goal.Status.Compiled)
     assertEquals(g.notes, Some("home's plan\n\n### From work\n\nwork's plan"))
-    assertEquals(MergeFold.foldGoal(gl, gl.copy(uid = gr.uid), "work").notes, gl.notes)
+    assertEquals(MergeFold.foldGoal(gl, gl.modify(_.uid).setTo(gr.uid), "work").notes, gl.notes)
     val q = Bundle.QueueItem(uid("q1"), home, "tasks", "Find the Kuhrt reprint", None, Queue.Open, None, At, None, At)
-    val qd = q.copy(uid = uid("q2"), text = "find the  kuhrt reprint", status = Queue.Done, doneAt = Some(At))
+    val qd = q.modify(_.uid).setTo(uid("q2")).modify(_.text).setTo("find the  kuhrt reprint").modify(_.status).setTo(Queue.Done).modify(_.doneAt).setTo(Some(At))
     assertEquals(MergeFold.queueKey(q.text), MergeFold.queueKey(qd.text))
     assertEquals(MergeFold.foldQueue(q, qd).status, Queue.Done)
     assertEquals(MergeFold.foldQueue(q, qd).doneAt, Some(At))
@@ -41,7 +43,7 @@ class MergeFoldSuite extends munit.FunSuite:
       .event("e2", "zz_e", "There", work)
       .copy(datings = List(Bundle.EventDating("a2000_x", None, Some(-1200), None, None, Some(-1190), None, None)))
     assert(EventPlan.sameCore(e1, e2))
-    assert(!EventPlan.sameCore(e1, e2.copy(notAfter = Some(-1100))))
+    assert(!EventPlan.sameCore(e1, e2.modify(_.notAfter).setTo((Some(-1100): _root_.scala.Option[_root_.scala.Long]))))
     val e = EventPlan.foldEvent(e1, e2)
     assertEquals(e.label, "Here")
     assertEquals(e.datings.map(_.citekey), List("a2000_x"))

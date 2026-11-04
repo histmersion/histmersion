@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Paging
 
 /** The "next page" command a paged listing prints: the same options, plus `--before`. */
@@ -32,4 +34,4 @@ class PageCmdSuite extends munit.FunSuite:
       PageCmd.older(more, "jobs", List("limit" -> Some("20"))),
       Some("Older: `histmersion jobs --limit 20 --before j20`")
     )
-    assertEquals(PageCmd.older(more.copy(next = None), "jobs", Nil), None)
+    assertEquals(PageCmd.older(more.modify(_.next).setTo(None), "jobs", Nil), None)

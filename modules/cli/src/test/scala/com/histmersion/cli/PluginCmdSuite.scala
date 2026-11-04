@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.sun.net.httpserver.HttpServer
 
@@ -120,8 +122,7 @@ class PluginCmdSuite extends munit.FunSuite:
     try
       val url = s"http://127.0.0.1:${srv.getAddress.getPort}"
       f(
-        e.copy(ops =
-          PluginOps(using consoleFor(s => e.out += s, _ => ()))(LocalInstall(e.home, e.data), cfgRepos(url), confirm = _ => true)
+        e.modify(_.ops).setTo(PluginOps(using consoleFor(s => e.out += s, _ => ()))(LocalInstall(e.home, e.data), cfgRepos(url), confirm = _ => true)
         ),
         repo,
         url
@@ -144,10 +145,10 @@ class PluginCmdSuite extends munit.FunSuite:
       cliBin
     )
     assertEquals(
-      LocalInstall.locate(cfg.copy(installDir = ""), "", env, "Linux", Some(link)).map(_.home),
+      LocalInstall.locate(cfg.modify(_.installDir).setTo(""), "", env, "Linux", Some(link)).map(_.home),
       Right(e.home.toRealPath())
     )
-    val none = LocalInstall.locate(cfg.copy(installDir = e.data.toString), "", env, "Linux", None)
+    val none = LocalInstall.locate(cfg.modify(_.installDir).setTo(e.data.toString), "", env, "Linux", None)
     assert(none.left.exists(_.contains("no Histmersion install with a relink kit")), none)
     assertEquals(LocalInstall.locate(cfg, e.data.toString, env, "Linux", None).map(_.data), Right(e.data))
     assertEquals(

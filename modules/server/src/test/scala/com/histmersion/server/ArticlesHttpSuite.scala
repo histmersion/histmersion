@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
@@ -31,7 +33,7 @@ class ArticlesHttpSuite extends munit.FunSuite:
 
   test("put → get → patch → page → export → delete over HTTP"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"

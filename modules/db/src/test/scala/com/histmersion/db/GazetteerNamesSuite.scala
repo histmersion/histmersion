@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceCheckFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -38,7 +40,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
   private lazy val settings =
@@ -192,7 +194,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assert(names(Galilee).contains(("Kinnereth", "en", true)), names(Galilee))
     val newer = seed.map(in =>
-      if in.place.id == Galilee then in.copy(names = in.names.filterNot(_.name == "Sea of Tiberias")) else in
+      if in.place.id == Galilee then in.modify(_.names).setTo(in.names.filterNot(_.name == "Sea of Tiberias")) else in
     )
     val _ = PlaceFixtures.upsertPlaces(ds, newer)
     val after = names(Galilee)
@@ -238,7 +240,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")
     assertEquals(PlaceFixtures.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
-    val seedId = in.copy(place = in.place.copy(id = Krakow))
+    val seedId = in.modify(_.place).setTo(in.place.modify(_.id).setTo(Krakow))
     assertEquals(
       PlaceFixtures.addPlace(ds, seedId).left.map(_.code),
       Left(Some(Write.CodeInvalid)),

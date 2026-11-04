@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -33,7 +35,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
 

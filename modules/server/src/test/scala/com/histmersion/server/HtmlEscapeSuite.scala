@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.AppConfig
 import ox.supervised
 
@@ -25,7 +27,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
     val base = AppConfig.load()
-    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"

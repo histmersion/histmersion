@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -132,7 +134,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     val q = "The Uluburun ship carried ten tons of copper and one ton of tin."
     def kind(k: Option[String]) =
       checkFindings(
-        Findings(List(finding(q).copy(placeKind = k))),
+        Findings(List(finding(q).modify(_.placeKind).setTo(k))),
         window,
         0.85,
         3000000,
@@ -201,16 +203,16 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(proposal, None)
     assert(fields.contains("1 finding(s)") && !fields.contains("notes"), fields)
     // a tag the source already has is neither re-sent nor reported
-    val (p2, fields2, _) = patch(loaded.copy(tags = List("tin")), classified, Nil, None)
+    val (p2, fields2, _) = patch(loaded.modify(_.tags).setTo(List("tin")), classified, Nil, None)
     assertEquals(p2.tags, None)
     assert(!fields2.contains("tags"), fields2)
 
   test("patch: a status other than current/foundational is proposed to a person, not written"):
     val (p, _, proposal) =
-      patch(loaded, classified.copy(status = Source.Status.Debunked, statusEvidence = "refuted by X"), Nil, None)
+      patch(loaded, classified.modify(_.status).setTo(Source.Status.Debunked).modify(_.statusEvidence).setTo("refuted by X"), Nil, None)
     assertEquals(p.metadata, None)
     assertEquals(proposal, Some("debunked: refuted by X"))
-    val (p2, _, prop2) = patch(loaded.copy(status = "contested"), classified, Nil, None)
+    val (p2, _, prop2) = patch(loaded.modify(_.status).setTo("contested"), classified, Nil, None)
     assertEquals(p2.metadata, None) // never overwrites an assessed status
     assertEquals(prop2, Some("current: cited"))
 
@@ -226,12 +228,12 @@ class EnrichSourceSuite extends munit.FunSuite:
         "Bronze Age Tin: a Review",
         List("Knapp, A. Bernard"),
         Some(2016),
-        w.copy(year = Some(2016))
+        w.modify(_.year).setTo(Some(2016))
       ),
       Nil
     )
     val other =
-      compareMetadata("knapp2016_tin", "Another title", List("Smith, J."), Some(2016), w.copy(year = Some(2016)))
+      compareMetadata("knapp2016_tin", "Another title", List("Smith, J."), Some(2016), w.modify(_.year).setTo(Some(2016)))
     assert(other.exists(_.startsWith("title differs")), other)
     assert(other.exists(_.contains("A. Bernard Knapp is not among")), other)
     assert(

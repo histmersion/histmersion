@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ToolResultCap
 
 import com.histmersion.api.library.Query.QueryResult
@@ -91,7 +93,7 @@ class ToolResultCapSuite extends munit.FunSuite:
         .contains("450+ more rows"),
       "the server's row cap hid more"
     )
-    val few = r.copy(rows = r.rows.take(3), rowCount = 3)
+    val few = r.modify(_.rows).setTo(r.rows.take(3)).modify(_.rowCount).setTo(3)
     assertEquals(
       com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(few, 50, 100000),
       com.histmersion.api.library.Query.markdown(few)

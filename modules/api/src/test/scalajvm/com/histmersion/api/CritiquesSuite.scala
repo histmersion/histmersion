@@ -5,6 +5,8 @@ package com.histmersion.api
   * brief, the generated Method part and the wire forms.
   */
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.research.{
   Coverage,
   CritiquePair,
@@ -212,7 +214,7 @@ class CritiquesSuite extends munit.FunSuite:
       Article.Coverage.method(c).endsWith("; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._"),
       Article.Coverage.method(c)
     )
-    assert(!Article.Coverage.method(c.copy(critiques = Nil)).contains("disagreements checked"))
+    assert(!Article.Coverage.method(c.modify(_.critiques).setTo(Nil)).contains("disagreements checked"))
     val md = Article.Coverage.markdown(c)
     assert(md.contains("### Disagreements checked\n\n3 pairs — 1 addressed, 1 reasoned, 1 open"), md)
     assert(

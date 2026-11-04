@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.pluginhost.{HttpAnswer, Politeness}
 
 import java.time.Instant
@@ -63,7 +65,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("requests to one host are spaced by request-interval-ms; another host is not held up"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}"))
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(requestIntervalMs = 500))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(500))
     p.get("https://a.example/1"); p.get("https://a.example/2"); p.get("https://b.example/1")
     assertEquals(slept.toList, List(500L))
     assertEquals(p.requests, 3)
@@ -87,7 +89,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("a provider that keeps saying 429 is given up on after max-retries, with the reason"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}", Map("retry-after" -> "1"), code = 429))
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(maxRetries = 2))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(2))
     assertEquals(
       p.get("https://commons.wikimedia.org/w/api.php").left.toOption,
       Some("commons.wikimedia.org: HTTP 429 after 2 retries")
@@ -117,7 +119,7 @@ class PolitenessSuite extends munit.FunSuite:
       val code = answers.head; answers = answers.tail
       FakeMediaHttp.json("{}", code = code)
     }
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(requestIntervalMs = 250), List(60000L, 300000L))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(250), List(60000L, 300000L))
     assert(p.get(metUrl(1)).isRight)
     assert(p.get(metUrl(2)).isRight, "the third answer, after two waits")
     assert(p.get(metUrl(3)).isRight)
@@ -138,7 +140,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("the slow-down stops at 16 times the pace; another host keeps its own"):
     val http = FakeMediaHttp(u => FakeMediaHttp.json("{}", code = if u.contains(metHost) then 403 else 200))
-    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(requestIntervalMs = 100), List.fill(6)(1L))
+    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(100), List.fill(6)(1L))
     assert(p.get(metUrl(1)).isLeft)
     assertEquals(p.intervalMs(metHost), 1600L)
     assertEquals(p.intervalMs("images.metmuseum.org"), 100L)

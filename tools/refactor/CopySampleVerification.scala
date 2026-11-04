@@ -5,7 +5,8 @@ import scala.jdk.CollectionConverters._
 import metaconfig.{ConfDecoder,Configured,generic}
 
 object CopySampleVerification {
-  case class Policy(sample: String = "tools/refactor/copy-holdout.tsv", report: String = "refactor-audit/copy-migration", role: String = "development-regression-after-round-one")
+  case class Policy(sample: String = "tools/refactor/copy-holdout.tsv", report: String = "refactor-audit/copy-migration", role: String = "development-regression-after-round-one",
+    limitations: String = "Limited negative diversity. Unclassified dependency-owned Printer.copy excluded explicitly.")
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -37,7 +38,7 @@ class CopySampleVerification(val policy: CopySampleVerification.Policy) extends 
     val recall = tp.toDouble / (tp+fn)
     val out = Paths.get(policy.report); Files.createDirectories(out)
     Files.write(out.resolve("holdout-results.tsv"),("path\tline\texpected\tactual" :: measured.map { case(s,e,a) => List(s.head,s(1),e.toString,a.toString).mkString("\t") }).asJava,UTF_8)
-    Files.writeString(out.resolve("quality.txt"),s"role=${policy.role}\ntp=$tp\nfp=$fp\nfn=$fn\ntn=$tn\nprecision=$precision\nrecall=$recall\nIndependent source audit; ${samples.size} grouped locations, not a random population sample. Limited negative diversity. Unclassified dependency-owned Printer.copy excluded explicitly. No population confidence claim.\n")
+    Files.writeString(out.resolve("quality.txt"),s"role=${policy.role}\ntp=$tp\nfp=$fp\nfn=$fn\ntn=$tn\nprecision=$precision\nrecall=$recall\nIndependent source audit; ${samples.size} grouped locations, not a random population sample. ${policy.limitations} No population confidence claim.\n")
     require(precision >= 0.95 && recall >= 0.95,"Copy detector misses holdout target; do not change the labels to fit")
   }
 }

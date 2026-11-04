@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -24,10 +26,8 @@ class LocalStorageSuite extends munit.FunSuite:
 
   private def config(originals: Path, install: Path): AppConfig =
     val base = AppConfig.load()
-    base.copy(cli =
-      base.cli.copy(
-        calibre = base.cli.calibre.copy(originalsDir = originals.toString),
-        plugins = base.cli.plugins.copy(installDir = install.toString)
+    base.modify(_.cli).setTo(base.cli.modify(
+        _.calibre).setTo(base.cli.calibre.modify(_.originalsDir).setTo(originals.toString)).modify(_.plugins).setTo(base.cli.plugins.modify(_.installDir).setTo(install.toString)
       )
     )
 
@@ -47,7 +47,7 @@ class LocalStorageSuite extends munit.FunSuite:
     val a = LocalStorage.add(
       about,
       "http://127.0.0.1:8000",
-      cfg.copy(runtime = cfg.runtime.copy(dataDir = d.resolve("data").toString)),
+      cfg.modify(_.runtime).setTo(cfg.runtime.modify(_.dataDir).setTo(d.resolve("data").toString)),
       env,
       "Linux",
       None
@@ -58,9 +58,7 @@ class LocalStorageSuite extends munit.FunSuite:
     val md = AboutMarkdown.render(a)
     assert(md.contains("- originals folder (cli.calibre.originals-dir) [on this machine]: 1.2 kB · 1 file"), md)
     // the server reports the install already: not listed twice
-    val known = about.copy(storage =
-      about.storage.copy(entries =
-        about.storage.entries :+
+    val known = about.modify(_.storage).setTo(about.storage.modify(_.entries).setTo(about.storage.entries :+
           Storage.Entry(
             "install",
             "install",

@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -41,7 +43,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     assertEquals(Scheduling.dois(b.text), Set("10.3390/rel10040258"), "the DOI the acquisition list finds it by")
 
   test("diamond counts as gold; no licence, no title: the item says what it knows"):
-    val w = mdpi.copy(oaStatus = Some("Diamond"), oaLicence = None, title = None, authors = Nil, year = None)
+    val w = mdpi.modify(_.oaStatus).setTo(Some("Diamond")).modify(_.oaLicence).setTo(None).modify(_.title).setTo(None).modify(_.authors).setTo(Nil).modify(_.year).setTo(None)
     val text = BrowserDownload.of(w, ck, Refusing).map(_.text).getOrElse(fail("not a browser download"))
     assert(
       text.startsWith(
@@ -52,15 +54,14 @@ class BrowserDownloadSuite extends munit.FunSuite:
 
   test("not a browser download: hybrid, green or bronze; no DOI; no open location on a refusing host; no hosts"):
     List("hybrid", "green", "bronze", "closed").foreach(s =>
-      assertEquals(BrowserDownload.of(mdpi.copy(oaStatus = Some(s)), ck, Refusing), None, s)
+      assertEquals(BrowserDownload.of(mdpi.modify(_.oaStatus).setTo(Some(s)), ck, Refusing), None, s)
     )
-    assertEquals(BrowserDownload.of(mdpi.copy(oaStatus = None), ck, Refusing), None)
-    assertEquals(BrowserDownload.of(mdpi.copy(doi = None), ck, Refusing), None)
+    assertEquals(BrowserDownload.of(mdpi.modify(_.oaStatus).setTo(None), ck, Refusing), None)
+    assertEquals(BrowserDownload.of(mdpi.modify(_.doi).setTo(None), ck, Refusing), None)
     assertEquals(
       BrowserDownload.of(
-        mdpi.copy(
-          oaUrl = Some("https://doi.org/10.3390/rel10040258"),
-          oaLocations = List("https://zenodo.org/records/1")
+        mdpi.modify(
+          _.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.oaLocations).setTo(List("https://zenodo.org/records/1")
         ),
         ck,
         Refusing
@@ -69,7 +70,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     )
     assertEquals(BrowserDownload.of(mdpi, ck, com.histmersion.upstreams.landing.RepositoryLanding.onHost(_, Nil)), None)
     assertEquals(
-      BrowserDownload.of(mdpi.copy(oaUrl = Some("https://notmdpi.com/x")).copy(oaLocations = Nil), ck, Refusing),
+      BrowserDownload.of(mdpi.modify(_.oaUrl).setTo(Some("https://notmdpi.com/x")).copy(oaLocations = Nil), ck, Refusing),
       None,
       "a host matches itself and its subdomains only"
     )

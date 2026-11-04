@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.TimeHistogram
 import com.histmersion.api.research.Article
 
@@ -40,6 +42,6 @@ class ResultsPagingSuite extends munit.FunSuite:
     val time = TimeHistogram(from = -1475, to = -1465, bucket = 10, buckets = Nil, by = "time", total = 285)
     assertEquals(TreeTab.countLine(time, 12, -1475, -1465), "285 sources · 12 periods · 1475 BCE → 1465 BCE")
     assertEquals(
-      TreeTab.countLine(time.copy(by = "region", asOf = Some(-1470)), 1, -1475, -1465),
+      TreeTab.countLine(time.modify(_.by).setTo("region").modify(_.asOf).setTo((Some(-1470): _root_.scala.Option[_root_.scala.Long])), 1, -1475, -1465),
       "285 sources · 1 region · 1475 BCE → 1465 BCE · as of 1470 BCE"
     )

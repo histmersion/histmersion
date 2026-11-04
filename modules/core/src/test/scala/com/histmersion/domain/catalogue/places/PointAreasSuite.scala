@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.*
 
 import com.histmersion.config.*
@@ -26,19 +28,19 @@ class PointAreasSuite extends munit.FunSuite:
     val l = Listed("wikidata_q17167", "Roman Republic", "wikidata", "polity", Dating.Dated, findings = 27)
     assertEquals(l.detail, "Roman Republic (wikidata polity, dated): 27 findings, each also at another place")
     assertEquals(
-      l.copy(alone = 3).detail,
+      l.modify(_.alone).setTo(3).detail,
       "Roman Republic (wikidata polity, dated): 27 findings, 3 of them at no other place"
     )
-    assertEquals(l.copy(findings = 0).detail, "Roman Republic (wikidata polity, dated)")
+    assertEquals(l.modify(_.findings).setTo(0).detail, "Roman Republic (wikidata polity, dated)")
     assertEquals(
-      l.copy(findings = 1).detail,
+      l.modify(_.findings).setTo(1).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, also at another place"
     )
     assertEquals(
-      l.copy(findings = 1, alone = 1).detail,
+      l.modify(_.findings).setTo(1).modify(_.alone).setTo(1).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, at no other place"
     )
-    assert(l.copy(pinned = 1).detail.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
+    assert(l.modify(_.pinned).setTo(1).detail.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
 
   test("report: the true count, the groups and every holder always, the sample fills up to the cap"):
     val groups = List(Group("wikidata", "region", Dating.Undated, 3), Group("geonames", "region", Dating.Undated, 5))

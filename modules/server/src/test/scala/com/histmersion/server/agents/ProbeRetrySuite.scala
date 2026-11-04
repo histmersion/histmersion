@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 
 import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsControllers}
@@ -35,11 +37,8 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0"),
-      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(true).modify(_.prices).setTo("zzProbe=0/0")).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
     )
 
   private lazy val ds = testPool(cfg.db)
@@ -102,7 +101,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,
-      cfg.agents.providers.claudeCode.copy(command = fake.script.toString, timeoutSeconds = 30),
+      cfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString).modify(_.timeoutSeconds).setTo(30),
       rt
     )
     val deps = Deps(cfg, ds)

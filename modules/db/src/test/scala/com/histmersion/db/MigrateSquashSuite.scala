@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
@@ -15,8 +17,8 @@ class MigrateSquashSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
-  private lazy val admin = testPool(cfg.db.copy(url = testDb.get))
-  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.copy(url = testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(testDb.get))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -41,7 +43,7 @@ class MigrateSquashSuite extends com.histmersion.db.DbSuite with Bounded:
     exec(admin, s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(admin, s"CREATE DATABASE $name")
     created += name
-    testPool(cfg.db.copy(url = dbs.urlOf(name)))
+    testPool(cfg.db.modify(_.url).setTo(dbs.urlOf(name)))
 
   /** The history the chain before the squash left: `001` to `top`, each a successful SQL migration. */
   private def oldChain(ds: DataSource, top: Int): Unit =

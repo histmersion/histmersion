@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.assets
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.{MediaSources, MediaState, MediaStoreSuite}
@@ -31,7 +33,7 @@ class AssetsControllersSuite extends munit.FunSuite:
     assertEquals(c.putFigures("zqnew2001_x", List(png)).map(_.stored), Right(1))
     assertEquals(c.putFigures("zqgone2001_x", List(png)).left.map(_.code), Left(Some(Write.CodeNotFound)))
     assert(
-      c.putFigures("zqnew2001_x", List(png.copy(base64 = "%%%"))).left.exists(_.message.contains("not valid base64"))
+      c.putFigures("zqnew2001_x", List(png.modify(_.base64).setTo("%%%"))).left.exists(_.message.contains("not valid base64"))
     )
     assertEquals(c.figures("zqold").map(_.name), List("a.png"))
     assertEquals(c.figure("zqold", "a.png").map(_._2), Right("image/png"))

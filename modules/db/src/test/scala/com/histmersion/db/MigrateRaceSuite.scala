@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -17,7 +19,7 @@ class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
-  private lazy val admin = testPool(cfg.db.copy(url = testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
   private val role = s"histmersion_race_${java.lang.Long.toHexString(System.nanoTime)}"
 
@@ -68,7 +70,7 @@ class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
       exec(admin, s"CREATE DATABASE $n")
       created += n
     }
-    val dss = names.map(n => testPool(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1"))))
+    val dss = names.map(n => testPool(cfg.db.modify(_.url).setTo(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1"))))
     val outcomes = together(2)(i => Migrate.run(dss(i)))
     assert(outcomes.forall(_.isSuccess), outcomes.collect { case scala.util.Failure(e) => e.getMessage })
     assertEquals(outcomes.map(_.get).distinct.size, 1, "both at the same version")

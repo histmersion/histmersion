@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.TestRuns
 
 import com.histmersion.util.database.Transactor
@@ -68,19 +70,14 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        roles =
-          b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire)
-      ),
-      researchAgents = b.researchAgents.copy(
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(Model.wire).modify(_.coldReader).setTo(Model.wire).modify(_.skeptic).setTo(Model.wire).modify(_.fixer).setTo(Model.wire)
+      )).modify(_.researchAgents).setTo(b.researchAgents.copy(
         managers = b.researchAgents.managers
-          .copy(review = b.researchAgents.managers.review.copy(cooldownMinutes = 30, inferFilter = false)),
+          .modify(_.review).setTo(b.researchAgents.managers.review.modify(_.cooldownMinutes).setTo(30).modify(_.inferFilter).setTo(false)),
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
-        review = b.researchAgents.review.copy(spotChecks = 0)
+        review = b.researchAgents.review.modify(_.spotChecks).setTo(0)
       )
     )
 
@@ -316,7 +313,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(QueueRows.list(ds, Queue.Kind.Tasks, all = false).exists(_.text.contains("after 3 failed runs")))
 
   test("capacity: the global cap counts a person's runs; maxRuns; another writer on the article waits"):
-    val (a, h) = handlers(PanelClient(Model), baseCfg.copy(agents = baseCfg.agents.copy(maxConcurrentRuns = 2)));
+    val (a, h) = handlers(PanelClient(Model), baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.maxConcurrentRuns).setTo(2)));
     seed(h, "zzagent_c1", "zzagent_c2", "zzagent_c3")
     activeReview(a, ManagerConfig(maxRuns = Some(2)))
     // a person's run on c1 takes one of the two places and holds c1

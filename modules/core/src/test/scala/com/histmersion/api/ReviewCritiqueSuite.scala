@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -127,7 +129,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       List(Severity.Minor)
     )
     // minors and other kinds pass untouched
-    val other = mc("S2", None).copy(kind = "date")
+    val other = mc("S2", None).modify(_.kind).setTo("date")
     assertEquals(
       checkCritiques(Reviewer.Skeptic, List(other, mc("S3", None, Severity.Minor)), pass1, Nil, last = false)._1,
       List(other, mc("S3", None, Severity.Minor))
@@ -164,7 +166,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       side("old1900_myth", cited = false),
       CritiqueState.Open
     )
-    val (u, _, _) = one(mc("S1", Some("frazer1922_golden>old1900_myth")), pass1.copy(pairs = uncited :: pairs))
+    val (u, _, _) = one(mc("S1", Some("frazer1922_golden>old1900_myth")), pass1.modify(_.pairs).setTo(uncited :: pairs))
     assertEquals(u.map(_.severity), List(Severity.Minor))
     assert(
       u.head.problem.contains("the article does not cite [[old1900_myth]], so it states none of its claims"),
@@ -182,12 +184,12 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       ("frazer1922_golden", "new2010_rites", true)
     )
     assertEquals(
-      one(mc("S1", Some("frazer1922_golden>new2010_rites")), pass1.copy(pairs = older :: pairs))._1.map(_.severity),
+      one(mc("S1", Some("frazer1922_golden>new2010_rites")), pass1.modify(_.pairs).setTo(older :: pairs))._1.map(_.severity),
       List(Severity.Major)
     )
     // no body to check against (a rule without one): the quote is not held
     assertEquals(
-      one(mc("S9", Some("smith1987_dying>frazer1922_golden")), pass1.copy(body = ""))._1.map(_.severity),
+      one(mc("S9", Some("smith1987_dying>frazer1922_golden")), pass1.modify(_.body).setTo(""))._1.map(_.severity),
       List(Severity.Major)
     )
 
@@ -269,9 +271,9 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   test("one finding per pair: the skeptic's kept, a duplicate in either direction and another reviewer's echo dropped"):
     val s1 = mc("S1", Some("smith1987_dying>frazer1922_golden"))
     val s2 = mc("S2", Some("frazer1922_golden>smith1987_dying")) // the reciprocal of the same two sources
-    val r1 = mc("R1", Some("smith1987_dying>frazer1922_golden")).copy(reviewer = Reviewer.Rules)
-    val c1 = mc("C1", Some("brown1999_rites>frazer1922_golden")).copy(reviewer = Reviewer.ColdReader)
-    val other = mc("S3", None).copy(kind = "date")
+    val r1 = mc("R1", Some("smith1987_dying>frazer1922_golden")).modify(_.reviewer).setTo(Reviewer.Rules)
+    val c1 = mc("C1", Some("brown1999_rites>frazer1922_golden")).modify(_.reviewer).setTo(Reviewer.ColdReader)
+    val other = mc("S3", None).modify(_.kind).setTo("date")
     val (kept, ws) =
       onePerPair(List(r1, s1, s2, other, c1), heldBySkeptic = List(CritiqueRef("frazer1922_golden", "brown1999_rites")))
     assertEquals(kept.map(_.id), List("S1", "S3"))
@@ -331,16 +333,15 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(rep.notMaterial.map(_.ref.wire), List("brown1999_rites>frazer1922_golden"))
     assertEquals(rep.verdict, Verdict.Major)
     // a MAJOR verdict whose only MAJOR code records minor (an addressed pair) is corrected, not sent back
-    val onDone = a.copy(
-      findings = a.findings.map(_.copy(pair = Some("lee1990_ritual>frazer1922_golden"))),
-      notMaterial = a.notMaterial :+ NotMaterialAnswer("smith1987_dying>frazer1922_golden", "Off the question.")
+    val onDone = a.modify(
+      _.findings).setTo(a.findings.map(_.modify(_.pair).setTo(Some("lee1990_ritual>frazer1922_golden")))).modify(_.notMaterial).setTo(a.notMaterial :+ NotMaterialAnswer("smith1987_dying>frazer1922_golden", "Off the question.")
     )
     assertEquals(
       checkSkeptic(onDone, last = false, _ => true, _ => None, 0.9, None, Some(pass1)).map(_._1.verdict),
       Right(Verdict.Minor)
     )
     // without the ruling it goes back
-    assert(checkSkeptic(a.copy(notMaterial = Nil), last = false, _ => true, _ => None, 0.9, None, Some(pass1)).isLeft)
+    assert(checkSkeptic(a.modify(_.notMaterial).setTo(Nil), last = false, _ => true, _ => None, 0.9, None, Some(pass1)).isLeft)
     // a re-check: the same MAJOR on an addressed pair is recorded minor (then scoped as before)
     val rc = RecheckAnswer(
       Nil,
@@ -428,7 +429,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val body =
       "Tin [[knapp2016_tin]].\n\n## Disagreements\n\nArgued [[knapp2016_tin]].\n\n## Open questions\n\nOpen [[knapp2016_tin]].\n\n## Not used\n\n- none\n"
     val corpus = BodyCorpus(_ == "knapp2016_tin", _ == "knapp2016_tin", _ => Nil)
-    val m = merged.copy(findings = merged.findings.take(1))
+    val m = merged.modify(_.findings).setTo(merged.findings.take(1))
     val a = FixerAnswer(Nil, Nil, Nil, Nil, "", setAside = List(SetAsideAnswer("S1", None, "Cited for the date only.")))
     val (fix, ws) =
       checkFix(a, m, "tin", body, "concept", corpus, _ => true, _ => None, 0.9, last = false, None, pairs).toOption.get
@@ -436,7 +437,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     // without it the MAJOR is undecided
     assert(
       checkFix(
-        a.copy(setAside = Nil),
+        a.modify(_.setAside).setTo(Nil),
         m,
         "tin",
         body,
@@ -466,7 +467,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     // raised again as a MINOR (its pair now reasoned): stays set aside; raised again MAJOR: re-opened, with why
     assertEquals(
-      absorb(closed, List(e.finding.copy(severity = Severity.Minor)), "run-2", 1)._1.entry("S1").get.status,
+      absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), "run-2", 1)._1.entry("S1").get.status,
       Status.SetAside
     )
     val again = absorb(closed, List(e.finding), "run-2", 1)._1.entry("S1").get

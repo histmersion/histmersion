@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.ocr.ConverterClient
@@ -23,9 +25,8 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
 
   test("a queue-write failure leaves the stored OCR job done, with a bookkeeping warning"):
     val base = AppConfig.load()
-    val cfg = base.copy(
-      db = base.db.copy(url = TestDb.url.get),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("ingest-queue-spool").toString)
+    val cfg = base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(TestDb.url.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("ingest-queue-spool").toString)
     )
     val ds = testPool(cfg.db)
     Migrate.run(ds)

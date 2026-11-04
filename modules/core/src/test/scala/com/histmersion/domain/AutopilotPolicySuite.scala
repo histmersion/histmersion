@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -50,7 +52,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(articlePublish(draft, 3, 0, 10).isInstanceOf[Verdict.Approve])
     assert(articlePublish(draft, 3, 10, 10).isInstanceOf[Verdict.Leave])
     assert(
-      articlePublish(draft.copy(create = false, slugFree = false), 3, 0, 10).isInstanceOf[Verdict.Approve],
+      articlePublish(draft.modify(_.create).setTo(false).modify(_.slugFree).setTo(false), 3, 0, 10).isInstanceOf[Verdict.Approve],
       "an extension"
     )
 
@@ -58,26 +60,26 @@ class AutopilotPolicySuite extends munit.FunSuite:
     def why(d: DraftFacts) = articlePublish(d, 3, 0, 10) match
       case Verdict.Reject(r) => r
       case v                 => fail(v.toString)
-    assert(why(draft.copy(filterRecorded = false)).contains("no coverage filter"))
-    assert(why(draft.copy(hits = Some(1))).contains("returns 1 source(s), fewer than 3"))
-    assert(why(draft.copy(hits = None)).contains("unknown number"))
-    assert(why(draft.copy(problems = List("p1", "p2"))).contains("2 problems: p1; p2"))
-    assert(why(draft.copy(cited = 0)).contains("cites no source"))
-    assert(why(draft.copy(slugFree = false)).contains("slug x is taken"))
+    assert(why(draft.modify(_.filterRecorded).setTo(false)).contains("no coverage filter"))
+    assert(why(draft.modify(_.hits).setTo(Some(1))).contains("returns 1 source(s), fewer than 3"))
+    assert(why(draft.modify(_.hits).setTo(None)).contains("unknown number"))
+    assert(why(draft.modify(_.problems).setTo(List("p1", "p2"))).contains("2 problems: p1; p2"))
+    assert(why(draft.modify(_.cited).setTo(0)).contains("cites no source"))
+    assert(why(draft.modify(_.slugFree).setTo(false)).contains("slug x is taken"))
 
   test(
     "goal-plan: something proposed → approved; sub-goals at the depth limit rejected; nothing rejected; the cap leaves it"
   ):
     val p = GoalPlanFacts("g", subGoals = 3, queries = 4, works = 2, depth = 1)
     assert(goalPlan(p, 2, 0, 5).isInstanceOf[Verdict.Approve])
-    goalPlan(p.copy(depth = 2), 2, 0, 5) match
+    goalPlan(p.modify(_.depth).setTo(2), 2, 0, 5) match
       case Verdict.Reject(r) => assert(r.contains("3 sub-goals") && r.contains("2 level(s) below a root"), r)
       case v                 => fail(v.toString)
     assert(
-      goalPlan(p.copy(subGoals = 0, depth = 2), 2, 0, 5).isInstanceOf[Verdict.Approve],
+      goalPlan(p.modify(_.subGoals).setTo(0).modify(_.depth).setTo(2), 2, 0, 5).isInstanceOf[Verdict.Approve],
       "no sub-goals: fine at any depth"
     )
-    assert(goalPlan(p.copy(subGoals = 0, queries = 0, works = 0), 2, 0, 5).isInstanceOf[Verdict.Reject])
+    assert(goalPlan(p.modify(_.subGoals).setTo(0).modify(_.queries).setTo(0).modify(_.works).setTo(0), 2, 0, 5).isInstanceOf[Verdict.Reject])
     assert(goalPlan(p, 2, 5, 5).isInstanceOf[Verdict.Leave])
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
@@ -100,35 +102,35 @@ class AutopilotPolicySuite extends munit.FunSuite:
     "advance: planned → seeding once managed; → compiled with an article and nothing left; → reviewed when it passed"
   ):
     assertEquals(advance(g), None)
-    assertEquals(advance(g.copy(managed = true)).map(_._1), Some(Goal.Status.Seeding))
-    assertEquals(advance(g.copy(managed = true, articles = 2, compileOpen = true)).map(_._1), Some(Goal.Status.Seeding))
-    assertEquals(advance(g.copy(managed = true, articles = 2)).map(_._1), Some(Goal.Status.Compiled))
+    assertEquals(advance(g.modify(_.managed).setTo(true)).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.modify(_.managed).setTo(true).modify(_.articles).setTo(2).modify(_.compileOpen).setTo(true)).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.modify(_.managed).setTo(true).modify(_.articles).setTo(2)).map(_._1), Some(Goal.Status.Compiled))
     assertEquals(
-      advance(g.copy(status = Goal.Status.Compiled, managed = true, articles = 2, reviewed = true)),
+      advance(g.modify(_.status).setTo(Goal.Status.Compiled).modify(_.managed).setTo(true).modify(_.articles).setTo(2).modify(_.reviewed).setTo(true)),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 
   test("advance: never back, never past done, an unknown status is left"):
-    assertEquals(advance(g.copy(status = Goal.Status.Reviewed, managed = true)), None)
-    assertEquals(advance(g.copy(status = Goal.Status.Done, managed = true, articles = 3, reviewed = true)), None)
-    assertEquals(advance(g.copy(status = "frozen", managed = true)), None)
-    assertEquals(advance(g.copy(status = Goal.Status.Compiled, managed = true, articles = 1, compileOpen = true)), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Reviewed).modify(_.managed).setTo(true)), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Done).modify(_.managed).setTo(true).modify(_.articles).setTo(3).modify(_.reviewed).setTo(true)), None)
+    assertEquals(advance(g.modify(_.status).setTo("frozen").modify(_.managed).setTo(true)), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Compiled).modify(_.managed).setTo(true).modify(_.articles).setTo(1).modify(_.compileOpen).setTo(true)), None)
 
   test("advance: a parent follows its sub-goals"):
     val p =
-      g.copy(status = Goal.Status.Seeding, managed = true, children = List(Goal.Status.Compiled, Goal.Status.Seeding))
+      g.modify(_.status).setTo(Goal.Status.Seeding).modify(_.managed).setTo(true).modify(_.children).setTo(List(Goal.Status.Compiled, Goal.Status.Seeding))
     assertEquals(advance(p), None)
     assertEquals(
-      advance(p.copy(children = List(Goal.Status.Compiled, Goal.Status.Reviewed))).map(_._1),
+      advance(p.modify(_.children).setTo(List(Goal.Status.Compiled, Goal.Status.Reviewed))).map(_._1),
       Some(Goal.Status.Compiled)
     )
     assertEquals(
-      advance(p.copy(children = List(Goal.Status.Reviewed, Goal.Status.Done))).map(_._1),
+      advance(p.modify(_.children).setTo(List(Goal.Status.Reviewed, Goal.Status.Done))).map(_._1),
       Some(Goal.Status.Reviewed),
       "no own article: reviewed when its sub-goals are"
     )
     assertEquals(
-      advance(p.copy(articles = 1, children = List(Goal.Status.Reviewed))).map(_._1),
+      advance(p.modify(_.articles).setTo(1).modify(_.children).setTo(List(Goal.Status.Reviewed))).map(_._1),
       Some(Goal.Status.Compiled),
       "its own article not reviewed yet"
     )
@@ -178,12 +180,8 @@ class AutopilotPolicySuite extends munit.FunSuite:
       )
     )
     val done = ms.map(m =>
-      m.copy(
-        state = if m.id == watchId("a") then "paused" else "active",
-        cron = m.cron.orElse(Some("x")),
-        autoIngest = m.autoIngest.orElse(Some(true)),
-        planItem = true,
-        extendMinNew = Some(3)
+      m.modify(
+        _.state).setTo(if m.id == watchId("a") then "paused" else "active").modify(_.cron).setTo(m.cron.orElse(Some("x"))).modify(_.autoIngest).setTo(m.autoIngest.orElse(Some(true))).modify(_.planItem).setTo(true).modify(_.extendMinNew).setTo(Some(3)
       )
     )
     assertEquals(
@@ -330,23 +328,23 @@ class NextArticleSuite extends munit.FunSuite:
 
   test("the next article: every article done, the seeding manager active, no proposal open, the cooldown over"):
     assert(nextArticle(done, now, 24).exists(_.contains("2 articles are compiled and passed review")))
-    assertEquals(nextArticle(done.copy(unreviewed = 1), now, 24), None, "an article to review")
-    assertEquals(nextArticle(done.copy(compileOpen = 1), now, 24), None, "an article to compile")
+    assertEquals(nextArticle(done.modify(_.unreviewed).setTo(1), now, 24), None, "an article to review")
+    assertEquals(nextArticle(done.modify(_.compileOpen).setTo(1), now, 24), None, "an article to compile")
     assertEquals(
-      nextArticle(done.copy(articles = 0), now, 24),
+      nextArticle(done.modify(_.articles).setTo(0), now, 24),
       None,
       "no article yet: the first proposal is the plan's"
     )
     assertEquals(
-      nextArticle(done.copy(proposeStatus = Some(ItemStatus.Pending.wire)), now, 24),
+      nextArticle(done.modify(_.proposeStatus).setTo(Some(ItemStatus.Pending.wire)), now, 24),
       None,
       "a proposal open"
     )
-    assertEquals(nextArticle(done.copy(proposeSettled = Some(now.minusSeconds(3600))), now, 24), None, "the cooldown")
-    assertEquals(nextArticle(done.copy(seedState = Some(State.Paused.wire)), now, 24), None, "a paused manager")
-    assertEquals(nextArticle(done.copy(status = Goal.Status.Done), now, 24), None, "a person's done")
+    assertEquals(nextArticle(done.modify(_.proposeSettled).setTo(Some(now.minusSeconds(3600))), now, 24), None, "the cooldown")
+    assertEquals(nextArticle(done.modify(_.seedState).setTo(Some(State.Paused.wire)), now, 24), None, "a paused manager")
+    assertEquals(nextArticle(done.modify(_.status).setTo(Goal.Status.Done), now, 24), None, "a person's done")
     assertEquals(nextArticle(done, now, 0), None, "off")
-    assert(nextArticle(done.copy(proposeStatus = None, proposeSettled = None), now, 24).isDefined, "never proposed")
+    assert(nextArticle(done.modify(_.proposeStatus).setTo(None).modify(_.proposeSettled).setTo(None), now, 24).isDefined, "never proposed")
 
   test("unfinished goals: the planned goals neither reviewed nor done"):
     val goals = List(

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.{Autopilot, Managers, PlanQuota}
 import com.histmersion.api.automation.Agents.ApprovalInfo
 
@@ -50,7 +52,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
     val as = List(
       approval(3, "edge", "2026-10-30T10:00:00Z"),
       approval(1, "edge", "2026-10-29T10:00:00Z"),
-      approval(2, "edge", "2026-10-29T10:00:00Z").copy(state = "approved")
+      approval(2, "edge", "2026-10-29T10:00:00Z").modify(_.state).setTo("approved")
     )
     assertEquals(ResearchOverview.oldestFirst(as).map(_.id), List(1L, 3L))
     assertEquals(ResearchOverview.waited(0, 5 * 3600000.0), "5 hours")
@@ -80,10 +82,10 @@ class ResearchOverviewSuite extends munit.FunSuite:
     assertEquals(ResearchOverview.blocker(g, None, ms), Some("waits for 2 of your decisions"))
     assertEquals(
       ResearchOverview
-        .blocker(g.copy(openApprovals = 0), None, List(manager("seed:a", "a", 0, 1, Some("starved: no model")))),
+        .blocker(g.modify(_.openApprovals).setTo(0), None, List(manager("seed:a", "a", 0, 1, Some("starved: no model")))),
       Some("starved: no model")
     )
-    assertEquals(ResearchOverview.blocker(g.copy(openApprovals = 0), None, ms), None)
+    assertEquals(ResearchOverview.blocker(g.modify(_.openApprovals).setTo(0), None, ms), None)
 
   test("the weekly allowance: each plan that reports this week's limit"):
     val w = PlanQuota.WindowStatus("claude", "seven_day", 39, 61, 10, usable = true, stale = false, None, "", 0, "")
@@ -102,6 +104,6 @@ class ResearchOverviewSuite extends munit.FunSuite:
       List(w)
     )
     assertEquals(
-      ResearchOverview.weekly(PlanQuota.QuotaInfo(List(pool, pool.copy(windows = Nil)), Nil, Nil, "")),
+      ResearchOverview.weekly(PlanQuota.QuotaInfo(List(pool, pool.modify(_.windows).setTo(Nil)), Nil, Nil, "")),
       List("Claude plan: 61% of this week's limit left")
     )

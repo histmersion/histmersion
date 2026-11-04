@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.SearchedCollection
 import com.histmersion.domain.media.imports.CollectionImport
 import com.histmersion.domain.media.imports.PlaceFacts
@@ -64,7 +66,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       dryRun: Boolean,
       store: CollStore = CollStore(facts, named)
   ): MediaImportReport =
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.copy(requestIntervalMs = 0))
+    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(0))
     CollectionImport(col, polite, cfg, NoConverter()).run(targets, dryRun, refresh = false, store)
 
   /** The two key-gated plugins switched on, each with the fixture key as a secret reference. */

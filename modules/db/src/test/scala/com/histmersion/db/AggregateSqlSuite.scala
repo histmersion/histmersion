@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.search.SearchFixtures
 
 import com.histmersion.domain.library.search.FilterSql
@@ -21,7 +23,7 @@ class AggregateSqlSuite extends munit.FunSuite:
   private val window = Filter(period = Some(Period(-2000, -1000)))
 
   test("unit=findings: one row per finding, source-level filter joined in"):
-    val s = SearchFixtures.periodsQuery("findings", window.copy(q = Some("collapse"), places = List("Anatolia")))
+    val s = SearchFixtures.periodsQuery("findings", window.modify(_.q).setTo(Some("collapse")).modify(_.places).setTo(List("Anatolia")))
     assert(s.text.startsWith("SELECT lower(f.period), upper(f.period) - 1"), s.text)
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
     assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text) // source-level (FTS)
@@ -44,14 +46,14 @@ class AggregateSqlSuite extends munit.FunSuite:
 
   test("unit=sources: a finding-level criterion requires at least one matching finding"):
     List(
-      window.copy(places = List("Anatolia")),
-      window.copy(tags = List("steppe")),
-      window.copy(bbox = Some(BBox(1, 2, 3, 4)))
+      window.modify(_.places).setTo(List("Anatolia")),
+      window.modify(_.tags).setTo(List("steppe")),
+      window.modify(_.bbox).setTo(Some(BBox(1, 2, 3, 4)))
     )
       .foreach(f => assert(SearchFixtures.periodsQuery("sources", f).text.contains("fp.matched > 0"), f.toString))
 
   test("unit=sources: the tag criterion is evaluated per finding, over findings.tags ∪ sources.tags"):
-    val s = SearchFixtures.periodsQuery("sources", window.copy(tags = List("steppe")))
+    val s = SearchFixtures.periodsQuery("sources", window.modify(_.tags).setTo(List("steppe")))
     assert(
       s.text.contains("FROM findings f WHERE f.citekey = s.citekey AND (EXISTS (SELECT 1 FROM unnest(f.tags)"),
       s.text

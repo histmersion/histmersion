@@ -1,5 +1,7 @@
 package com.histmersion.pluginhost
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.OpenSide
 import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
 import com.histmersion.plugin.*
@@ -46,43 +48,43 @@ class PluginGazetteersSuite extends munit.FunSuite:
 
   test("a place's own source wins over the credit; no credit and no source stores none; an empty label is kept"):
     assertEquals(
-      PluginGazetteers.input(slice.copy(source = Some("its own")), "credit").map(_.place.source),
+      PluginGazetteers.input(slice.modify(_.source).setTo(Some("its own")), "credit").map(_.place.source),
       Right(Some("its own"))
     )
     assertEquals(PluginGazetteers.input(slice, "  ").map(_.place.source), Right(None))
-    assertEquals(PluginGazetteers.input(slice.copy(label = ""), "c").map(_.place.label), Right(""))
+    assertEquals(PluginGazetteers.input(slice.modify(_.label).setTo(""), "c").map(_.place.label), Right(""))
     assertEquals(
-      PluginGazetteers.input(slice.copy(open = Some(GazetteerOpenSide.Start)), "c").map(_.place.open),
+      PluginGazetteers.input(slice.modify(_.open).setTo(Some(GazetteerOpenSide.Start)), "c").map(_.place.open),
       Right(Some(OpenSide.Start))
     )
 
   test("what the store could not keep is refused, naming the place"):
     def refusal(p: GazetteerPlace) = PluginGazetteers.input(p, "c").left.toOption
-    assertEquals(refusal(slice.copy(id = " ")), Some("a place with no id"))
-    assertEquals(refusal(slice.copy(kind = "")), Some("place 'zz_slice_-1650_-1401': no kind"))
-    assertEquals(refusal(slice.copy(label = null)), Some("place 'zz_slice_-1650_-1401': no label"))
+    assertEquals(refusal(slice.modify(_.id).setTo(" ")), Some("a place with no id"))
+    assertEquals(refusal(slice.modify(_.kind).setTo("")), Some("place 'zz_slice_-1650_-1401': no kind"))
+    assertEquals(refusal(slice.modify(_.label).setTo(null)), Some("place 'zz_slice_-1650_-1401': no label"))
     assertEquals(
-      refusal(slice.copy(geometry = Some("POINT(1 2)"))),
+      refusal(slice.modify(_.geometry).setTo(Some("POINT(1 2)"))),
       Some("place 'zz_slice_-1650_-1401': its geometry is not a JSON object")
     )
     assertEquals(
-      refusal(slice.copy(properties = Some("[1]"))),
+      refusal(slice.modify(_.properties).setTo(Some("[1]"))),
       Some("place 'zz_slice_-1650_-1401': its properties is not a JSON object")
     )
     assertEquals(
-      refusal(slice.copy(period = None, open = Some(GazetteerOpenSide.End))),
+      refusal(slice.modify(_.period).setTo(None).modify(_.open).setTo(Some(GazetteerOpenSide.End))),
       Some("place 'zz_slice_-1650_-1401': an open side without a period")
     )
     assertEquals(
-      refusal(slice.copy(relations = List(GazetteerRelation("zz_slice_-1650_-1401", "")))),
+      refusal(slice.modify(_.relations).setTo(List(GazetteerRelation("zz_slice_-1650_-1401", "")))),
       Some("place 'zz_slice_-1650_-1401': a relation without both its places")
     )
     assertEquals(
-      refusal(slice.copy(relations = List(GazetteerRelation("a", "b", kind = " ")))),
+      refusal(slice.modify(_.relations).setTo(List(GazetteerRelation("a", "b", kind = " ")))),
       Some("place 'zz_slice_-1650_-1401': the relation to 'b' has no kind")
     )
     assertEquals(
-      refusal(slice.copy(names = List(GazetteerName(null)))),
+      refusal(slice.modify(_.names).setTo(List(GazetteerName(null)))),
       Some("place 'zz_slice_-1650_-1401': a name that is null")
     )
     assertEquals(refusal(null), Some("a place that is null"))
@@ -95,8 +97,8 @@ class PluginGazetteersSuite extends munit.FunSuite:
   private val offline = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
 
   test("a source's places in its order, the refused ones apart; its failure and what it throws are the import's"):
-    val bad = slice.copy(id = "zz_bad", kind = "")
-    val other = slice.copy(id = "zz_other")
+    val bad = slice.modify(_.id).setTo("zz_bad").modify(_.kind).setTo("")
+    val other = slice.modify(_.id).setTo("zz_other")
     assertEquals(
       PluginGazetteers
         .places(source(Right(List(slice, bad, other))), offline)

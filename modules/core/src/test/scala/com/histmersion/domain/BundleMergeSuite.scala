@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.EventPlan
 
 import com.histmersion.api.given
@@ -109,22 +111,17 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(l.corrections.map(_.targetUid), List(Some(U3)))
 
   test("folding two events keeps one stated dating whole and both sets of names"):
-    val w = event(_.copy(names = Some(List("Thera")), catalogue = None))
+    val w = event(_.modify(_.names).setTo(Some(List("Thera"))).modify(_.catalogue).setTo(None))
     val o = event(
-      _.copy(
-        uid = U2,
-        names = Some(List("Santorini", "Thera")),
-        catalogue = Some("gvp"),
-        central = Some(-1560),
-        plusMinus = Some(10),
-        datingMethod = Some("radiocarbon")
+      _.modify(
+        _.uid).setTo(U2).modify(_.names).setTo(Some(List("Santorini", "Thera"))).modify(_.catalogue).setTo(Some("gvp")).modify(_.central).setTo((Some(-1560): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10): _root_.scala.Option[_root_.scala.Long])).modify(_.datingMethod).setTo(Some("radiocarbon")
       )
     )
     val f = EventPlan.foldEvent(w, o)
     assertEquals(f.names, Some(List("Thera", "Santorini")))
     assertEquals(f.catalogue, Some("gvp"))
     assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(-1560L), Some(10L), Some("radiocarbon")))
-    val w2 = w.copy(plusMinus = Some(50))
+    val w2 = w.modify(_.plusMinus).setTo((Some(50): _root_.scala.Option[_root_.scala.Long]))
     assertEquals(EventPlan.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
 
   import BundlePlan.{Decision, Ledger, Local}

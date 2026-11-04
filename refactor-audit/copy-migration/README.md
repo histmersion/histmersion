@@ -1,5 +1,15 @@
 # Record-update migration
 
+Current checkpoint: copy automation is paused after validation of 1,529 automatic
+test updates across 298 files. Whole-project compilation and rewrite fixtures pass;
+4,509 uncached test identities retain the same 13 failures and 194 skips, with no new
+failing or skipped identities. Full remeasurement reports 58 resolved test copies
+and 97 unresolved test owners. Production remains 334 verified fixes and 107
+confirmed outstanding findings (108 raw, including the documented non-violation).
+The independent test sample still fails recall at 86.96%; no completeness claim.
+See [test audit](test-audit.md) and [execution priorities](../execution-priorities.md).
+The following sections preserve earlier checkpoints and their corrections.
+
 The production baseline is 441 resolved case-class copy line-expression groups, measured
 after the first detector refinement. The first automatic batch selected 198
 occurrences across 86 files in eight modules. The completed whole-project

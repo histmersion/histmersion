@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.citations.CitationFixtures
 
 import com.histmersion.domain.library.findings.FindingFixtures
@@ -20,7 +22,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.modify(_.url).setTo(testDb.get))
     Migrate.run(d); d
 
   private val src = Source(
@@ -67,16 +69,16 @@ class RepoSuite extends com.histmersion.db.DbSuite:
   test("findingsFor (the map feed): period overlap + bbox"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), limit = 10)
-    val hit = FindingFixtures.findingsFor(ds, box.copy(period = Some(Period(-1750, -1750))))
-    val miss = FindingFixtures.findingsFor(ds, box.copy(period = Some(Period(-1000, -900))))
+    val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(-1750, -1750))))
+    val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(-1000, -900))))
     assert(hit.exists(_.citekey == "zz_test_source")); assert(!miss.exists(_.citekey == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
-    SourceFixtures.upsert(ds, src.copy(doi = Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
     val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), period = Some(Period(-1750, -1750)), limit = 10)
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
-    SourceFixtures.upsert(ds, src.copy(doi = None, provenance = Some("calibre")), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Book))
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Unknown))

@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.figures.FigurePick
@@ -56,7 +58,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(FigurePick.choose(scans :+ real, rules).map(_.name), Some("fig-0003-02.png"))
     assertEquals(FigurePick.choose(scans, rules), None, "nothing but page scans: no illustration")
     assertEquals(
-      FigurePick.choose(scans.take(3) :+ real, rules.copy(pageScanMin = 5)).map(_.width),
+      FigurePick.choose(scans.take(3) :+ real, rules.modify(_.pageScanMin).setTo(5)).map(_.width),
       Some(Some(1276)),
       "three big portrait pictures are figures, not a scanned book"
     )
@@ -94,12 +96,8 @@ class SourcePicturesSuite extends munit.FunSuite:
       pending = 900,
       batches = 1
     )
-    val b = a.copy(
-      targets = 20,
-      stored = 1,
-      byLicence = List(MediaCount("CC0-1.0", 1), MediaCount("CC-BY-4.0", 1)),
-      failed = Nil,
-      pending = 880
+    val b = a.modify(
+      _.targets).setTo(20).modify(_.stored).setTo(1).modify(_.byLicence).setTo(List(MediaCount("CC0-1.0", 1), MediaCount("CC-BY-4.0", 1))).modify(_.failed).setTo(Nil).modify(_.pending).setTo(880
     )
     val c = MediaImportReport.combine(a, b)
     assertEquals((c.targets, c.stored, c.batches, c.pending, c.failed), (70, 5, 2, 880, List("x")))
@@ -117,7 +115,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assert(md.contains("3 sources looked at · would link 1 cover and 1 illustration"), md)
     assert(md.contains("[[anthony2007]] — cover from Calibre library: `Calibre id 12`"), md)
     assert(md.contains("- illustration: no figures: 1"), md)
-    assertEquals(MediaCoversReport.combine(r, r.copy(dryRun = false)).covers, 2)
+    assertEquals(MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(false)).covers, 2)
 
   test("roles: a cover shows before an illustration"):
     assert(MediaRole.order(MediaRole.Cover) < MediaRole.order(MediaRole.Illustration))

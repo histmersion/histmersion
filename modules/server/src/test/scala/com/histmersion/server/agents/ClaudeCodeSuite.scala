@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.{
@@ -105,7 +107,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assert(!a.contains("--bare") && !a.contains("--exclude-dynamic-system-prompt-sections"), a)
     assert(
       !ClaudeCode
-        .argv(Ref.copy(disableSlashCommands = false), "sonnet", 4, "{}", Launch, None, Nil, AllTools)
+        .argv(Ref.modify(_.disableSlashCommands).setTo(false), "sonnet", 4, "{}", Launch, None, Nil, AllTools)
         .contains("--disable-slash-commands")
     )
 
@@ -126,8 +128,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     // the person's file: one default off, one variable of the server's own removed, one added — and an
     // attempt to set what the provider owns (the output cap, the run token, an API key) loses
-    val mine = Ref.copy(env =
-      Ref.env ++ Map(
+    val mine = Ref.modify(_.env).setTo(Ref.env ++ Map(
         "CLAUDE_CODE_DISABLE_ARTIFACT" -> None,
         "PATH" -> Some(""),
         "MY_FLAG" -> Some("x"),
@@ -180,7 +181,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(env.get("HISTMERSION_RUN_TOKEN"), "hmrt_1")
     assertEquals(env.get("HISTMERSION_QUOTA_URL"), "http://h/api/agents/quota/claude")
     val keep = new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x"))
-    ClaudeCode.environment(Cfg.copy(useApiKey = true, configDir = "/c/hm"), 10, None, "u", keep)
+    ClaudeCode.environment(Cfg.modify(_.useApiKey).setTo(true).modify(_.configDir).setTo("/c/hm"), 10, None, "u", keep)
     assertEquals(keep.get("ANTHROPIC_API_KEY"), "sk-x")
     assertEquals(keep.get("CLAUDE_CONFIG_DIR"), "/c/hm")
 
@@ -205,7 +206,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.contains("beyond loopback")))
-    assert(ClaudeCode.client(Cfg.copy(allowNonLoopback = true), lan, Sonnet).isRight)
+    assert(ClaudeCode.client(Cfg.modify(_.allowNonLoopback).setTo(true), lan, Sonnet).isRight)
     assert(
       ClaudeCode
         .client(Cfg, CliRuntime(FakeCli.app(dir), EngineContributions.roster), ModelRef(ProviderKind.Local, "x"))
@@ -421,7 +422,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val counting = new AgentInterceptor[Identity]:
       override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
         val _ = calls.incrementAndGet(); next
-    val r = ClaudeCodeClient(Sonnet, Cfg.copy(command = fake.script.toString), rt).run(call(skeptic, List(counting)))
+    val r = ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(fake.script.toString), rt).run(call(skeptic, List(counting)))
     assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
     assertEquals(calls.get, 1, "the interceptors (the LLM-slot semaphore, latency) see the process as one call")
     assertEquals(fake.stdin, "USER <source-text>data</source-text>", "untrusted data on stdin, never in argv")
@@ -446,7 +447,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val fake = FakeCli("claude", List(Init294, First294a, First294b, Tool294, Second294, Success))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val first = FirstCallProbe()
-    val r = ClaudeCodeClient(Sonnet, Ref.copy(command = fake.script.toString, timeoutSeconds = 30), rt)
+    val r = ClaudeCodeClient(Sonnet, Ref.modify(_.command).setTo(fake.script.toString).modify(_.timeoutSeconds).setTo(30), rt)
       .run(call(skeptic, List(first)))
     assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
     assert(fake.args.contains("--disable-slash-commands"), fake.args)
@@ -460,7 +461,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val (rt, skeptic) = runtime(sink)
     val t0 = System.nanoTime()
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.copy(command = fake.script.toString), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(fake.script.toString), rt).run(call(skeptic))
     )
     assert((System.nanoTime() - t0) / 1000000000L < 25, "stopped, not timed out")
     assert(e.getMessage.contains("quota guard") && e.getMessage.contains("floor 25%"), e.getMessage)
@@ -470,7 +471,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val fake = FakeCli("claude", List(Init, Turn1, Aborted))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.copy(command = fake.script.toString), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(fake.script.toString), rt).run(call(skeptic))
     )
     assert(e.getMessage.contains("quota-guard mod"), e.getMessage)
 
@@ -482,16 +483,16 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val f1 = FakeCli("claude", List(lim))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.copy(command = f1.script.toString), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(f1.script.toString), rt).run(call(skeptic))
     )
     assertEquals(e.until, Some(java.time.Instant.ofEpochSecond(1759683600L)))
     val f2 = FakeCli("claude", Nil, code = 3)
     val io = intercept[java.io.IOException](
-      ClaudeCodeClient(Sonnet, Cfg.copy(command = f2.script.toString), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(f2.script.toString), rt).run(call(skeptic))
     )
     assert(io.getMessage.contains("exited 3 without a result"), io.getMessage)
     val missing = intercept[java.io.IOException](
-      ClaudeCodeClient(Sonnet, Cfg.copy(command = "/nonexistent/claude"), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo("/nonexistent/claude"), rt).run(call(skeptic))
     )
     assert(missing.getMessage.contains("HISTMERSION_AGENTS_CLAUDE_COMMAND"), missing.getMessage)
 

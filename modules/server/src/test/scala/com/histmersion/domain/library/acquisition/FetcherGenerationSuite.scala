@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.plugins.{PluginSetting, PluginStatus}
 import com.histmersion.plugin.Access
 
@@ -45,7 +47,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
     assert(gen(ps = List(unpaywall, core("env:CORE_KEY"), vault)) != g)
     assert(gen(coreKey = true) != g)
     assert(gen(contact = false) != g)
-    assert(gen(ps = List(unpaywall.copy(version = "1.1"), core("null"), vault)) != g)
+    assert(gen(ps = List(unpaywall.modify(_.version).setTo("1.1"), core("null"), vault)) != g)
 
   test("a fetcher the config marks unauthorised, and a plugin that registers no legal fetcher, change nothing"):
     val g = gen()
@@ -63,5 +65,5 @@ class FetcherGenerationSuite extends munit.FunSuite:
       gen(p = plan :+ ("stub" -> Access.Unauthorised), ps = List(unpaywall, core("null"), vault, stubPlugin)),
       g
     )
-    assertEquals(gen(ps = List(unpaywall, core("null"), vault.copy(version = "0.2"))), g)
+    assertEquals(gen(ps = List(unpaywall, core("null"), vault.modify(_.version).setTo("0.2"))), g)
     assert(FetcherGeneration.parts(plan, Nil, true, false).head == "unpaywall:open")

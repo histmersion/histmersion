@@ -1,5 +1,7 @@
 package com.histmersion.web.map
 
+import hearth.kindlings.optics.syntax.*
+
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -89,5 +91,5 @@ final class FakeShapes(val id: String) extends ShapeSet:
       drawn.clear()
     shapes.foreach(s => drawn(s.id) = s)
   def restyle(id: String, colour: String, alpha: Double): Unit =
-    drawn.get(id).foreach(s => drawn(id) = s.copy(colour = colour, alpha = alpha))
+    drawn.get(id).foreach(s => drawn(id) = s.modify(_.colour).setTo(colour).modify(_.alpha).setTo((alpha: _root_.scala.Double)))
   def ids: Seq[String] = drawn.keys.toSeq

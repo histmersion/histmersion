@@ -1,5 +1,7 @@
 package com.histmersion.web.map
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.instance.MapStartConfig
 
 class MapStartSuite extends munit.FunSuite:
@@ -15,4 +17,4 @@ class MapStartSuite extends munit.FunSuite:
     assertEquals(MapStart.initial(anatolia, Some("10,20,3")), (LatLon(10, 20), 3.0))
     assertEquals(MapStart.initial(anatolia, None), (LatLon(37, 30), 5.0))
     assertEquals(MapStart.initial(anatolia, Some("junk")), (LatLon(37, 30), 5.0))
-    assertEquals(MapStart.initial(anatolia.copy(mode = "place"), Some("10,20,3")), (LatLon(37, 30), 5.0))
+    assertEquals(MapStart.initial(anatolia.modify(_.mode).setTo("place"), Some("10,20,3")), (LatLon(37, 30), 5.0))

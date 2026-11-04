@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.api.catalogue.Period
@@ -154,7 +156,7 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(SearchMarkdown.searchResults(SearchResult(0, Nil)), "_No matching sources._")
 
   test("a hit with no matched findings renders without a matches: list"):
-    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit.copy(matched = Nil, why = Nil))))
+    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit.modify(_.matched).setTo(Nil).modify(_.why).setTo(Nil))))
     assert(!md.contains("matches:"), md)
     assert(!md.contains("why:"), md)
 

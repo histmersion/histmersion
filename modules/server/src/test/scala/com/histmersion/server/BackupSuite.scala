@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.data.backup.BackupJobs
 import com.histmersion.util.data.maintenance.WriteGate
 
@@ -19,7 +21,7 @@ class BackupSuite extends munit.FunSuite:
 
   private def cfgWith(dir: Path): AppConfig =
     val base = AppConfig.load()
-    base.copy(backups = base.backups.copy(dir = dir.toString))
+    base.modify(_.backups).setTo(base.backups.modify(_.dir).setTo(dir.toString))
 
   private val tmp = FunFixture[Path](
     setup = _ => Files.createTempDirectory("histmersion-backups-test"),
@@ -108,7 +110,7 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a missing pg_dump is a clear, actionable error rather than an exception") { d =>
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = d.resolve("nowhere").toString)))
+    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(d.resolve("nowhere").toString)))
     val err = svc.create(Instant.now())
     assert(err.isLeft, err.toString)
     assert(err.left.exists(_.message.contains("pg_dump")), err.toString)
@@ -129,7 +131,7 @@ class BackupSuite extends munit.FunSuite:
 
     val base = cfgWith(d)
     val svc =
-      BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
+      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(bin.toString).modify(_.timeoutSeconds).setTo(1)))
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -151,7 +153,7 @@ class BackupSuite extends munit.FunSuite:
     Files.writeString(fake, "#!/bin/sh\necho one\necho two >&2\nexit 3\n")
     val _ = fake.toFile.setExecutable(true)
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
+    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(bin.toString)))
     val r = svc.create(Instant.now())
     assert(r.isLeft, r.toString)
     val msg = r.swap.toOption.get.message
@@ -176,7 +178,7 @@ class BackupSuite extends munit.FunSuite:
 
   private def jobs(d: Path, bin: Path, waitS: Int): BackupJobs =
     val base = cfgWith(d)
-    BackupJobs(BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString))), waitS)
+    BackupJobs(BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(bin.toString))), waitS)
 
   private def cleanBin(bin: Path): Unit =
     Files.list(bin).forEach { p =>
@@ -195,7 +197,7 @@ class BackupSuite extends munit.FunSuite:
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
     Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
+    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(bin.toString).modify(_.keep).setTo(3)))
     val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"

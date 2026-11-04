@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.research.{ReviewApproval, ReviewState}
 import com.histmersion.domain.ArticleReviewStatus.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
@@ -22,7 +24,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
   test("an empty ledger and no item is still not reviewed; a cancelled item is no item"):
     assertEquals(badge(Facts(ledger = Some(ledgerFacts))).state, ReviewState.Unreviewed)
     assertEquals(badge(Facts(item = Some(ItemFacts(ItemStatus.Cancelled)))).state, ReviewState.Unreviewed)
-    val reviewed = Some(ledgerFacts.copy(openMajors = 2, findings = 5, runs = 1))
+    val reviewed = Some(ledgerFacts.modify(_.openMajors).setTo(2).modify(_.findings).setTo(5).modify(_.runs).setTo(1))
     assertEquals(badge(Facts(Some(ItemFacts(ItemStatus.Cancelled)), reviewed)).state, ReviewState.MajorsOpen)
 
   test("a pending item that never ran is queued"):

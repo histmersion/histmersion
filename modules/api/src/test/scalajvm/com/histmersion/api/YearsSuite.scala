@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.GoalsMarkdown
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.{HistoricalPeriod, Lpf, Period, PeriodsMarkdown}
@@ -112,7 +114,7 @@ class YearsSuite extends munit.FunSuite:
     )
     assert(GoalsMarkdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), GoalsMarkdown.goal(g))
     assert(!GoalsMarkdown.goal(g).contains("-1200"))
-    val open = g.copy(periodEnd = None)
+    val open = g.modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long]))
     assert(GoalsMarkdown.goal(open).contains("**Period:** from 1200 BCE"), GoalsMarkdown.goal(open))
 
   test("the places and periods views use the same formatter"):

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.catalogue.EventGeo
@@ -60,9 +62,9 @@ class PointKindsSuite extends munit.FunSuite:
     Sample(
       PointKinds.Findings,
       Spot(37.0, 31.0, List(finding)),
-      Some(Spot(37.0, 31.0, List(finding.copy(sourceKind = None))))
+      Some(Spot(37.0, 31.0, List(finding.modify(_.sourceKind).setTo(None))))
     ),
-    Sample(PointKinds.Sites, site, Some(site.copy(siteType = None))),
+    Sample(PointKinds.Sites, site, Some(site.modify(_.siteType).setTo(None))),
     Sample(PointKinds.Events, event, None),
     Sample(PointKinds.Media, picture, None)
   )
@@ -108,7 +110,7 @@ class PointKindsSuite extends munit.FunSuite:
       if k.dot == DotKind.Finding then assertEquals(m.findings.size, 1)
       else assert(m.entry.exists(e => e.kind == k.dot && Glyphs.inner.contains(e.icon)), s"${k.dot}: ${m.entry}")
     }
-    val two = Spot(1, 2, List(finding, finding.copy(citekey = "zz2021_y")))
+    val two = Spot(1, 2, List(finding, finding.modify(_.citekey).setTo("zz2021_y")))
     assertEquals(PointKinds.Findings.member(two).n, 2)
     assertEquals(PointKinds.Findings.inner(two), """<span class="hd-find-count">2</span>""")
     assertEquals(PointKinds.Findings.title(two), Some("2 findings here"))
@@ -120,7 +122,7 @@ class PointKindsSuite extends munit.FunSuite:
     assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event("zz_b")))
     assertEquals(PointKinds.Media.target(picture, None), None)
     assertEquals(
-      PointKinds.Media.target(picture.copy(citekey = Some("zz2019")), None),
+      PointKinds.Media.target(picture.modify(_.citekey).setTo(Some("zz2019")), None),
       Some(Preview.Target.Source("zz2019"))
     )
 
@@ -136,7 +138,7 @@ class PointKindsSuite extends munit.FunSuite:
     assert(pw > ph)
 
   test("findings at one point are one point; the spots keep their order"):
-    val a = finding.copy(lat = Some(1), lon = Some(2))
-    val b = finding.copy(citekey = "b", lat = Some(3), lon = Some(4))
-    val spots = Spot.of(List(a, b, a.copy(citekey = "c"), finding.copy(lat = None)))
+    val a = finding.modify(_.lat).setTo((Some(1): _root_.scala.Option[_root_.scala.Double])).modify(_.lon).setTo((Some(2): _root_.scala.Option[_root_.scala.Double]))
+    val b = finding.modify(_.citekey).setTo("b").modify(_.lat).setTo((Some(3): _root_.scala.Option[_root_.scala.Double])).modify(_.lon).setTo((Some(4): _root_.scala.Option[_root_.scala.Double]))
+    val spots = Spot.of(List(a, b, a.modify(_.citekey).setTo("c"), finding.modify(_.lat).setTo((None: _root_.scala.Option[_root_.scala.Double]))))
     assertEquals(spots.map(s => (s.lat, s.lon, s.items.size)), List((1.0, 2.0, 2), (3.0, 4.0, 1)))

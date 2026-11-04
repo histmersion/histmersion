@@ -1,5 +1,7 @@
 package com.histmersion.domain.activity
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 
@@ -32,7 +34,7 @@ class ActivityRulesSuite extends munit.FunSuite:
     def walk(q: ActivityQuery, acc: List[String]): List[String] =
       val p = ActivityRules.page(entries, q, Activity.Counts())
       p.next match
-        case Some(c) => walk(q.copy(before = Some(ActivityCursor.parse(c).fold(fail(_), identity))), acc ++ keys(p))
+        case Some(c) => walk(q.modify(_.before).setTo(Some(ActivityCursor.parse(c).fold(fail(_), identity))), acc ++ keys(p))
         case None    => acc ++ keys(p)
     for size <- 1 to 4 do
       assertEquals(

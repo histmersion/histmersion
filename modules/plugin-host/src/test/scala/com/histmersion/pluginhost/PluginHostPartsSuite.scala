@@ -1,5 +1,7 @@
 package com.histmersion.pluginhost
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.plugin.*
 
@@ -28,12 +30,12 @@ class PluginHostPartsSuite extends munit.FunSuite:
       Some("no image")
     )
     assertEquals(
-      PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").copy(withheld = Some("human remains"))), allow, "mine"),
+      PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").modify(_.withheld).setTo(Some("human remains"))), allow, "mine"),
       Some("human remains")
     )
     assertEquals(
       PluginMedia.refusal(
-        PluginMedia.record(item("CC0-1.0").copy(rights = Right(MediaRights(Licence("CC0-1.0"))))),
+        PluginMedia.record(item("CC0-1.0").modify(_.rights).setTo(Right(MediaRights(Licence("CC0-1.0"))))),
         allow,
         "mine"
       ),

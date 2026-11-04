@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -131,9 +133,9 @@ class CompareRunsSuite extends munit.FunSuite:
   test("V072: a step's first call is its first attempt's that recorded one, its turns every recorded attempt's"):
     val before = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"))
     val a1 = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"), attempt = 2)
-      .copy(firstCallTokens = Some(6200), turns = Some(7))
+      .modify(_.firstCallTokens).setTo((Some(6200): _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(Some(7))
     val a2 = step(3, "classify", model = Some("claude-code:haiku"), attempt = 3)
-      .copy(firstCallTokens = Some(6900), turns = Some(5))
+      .modify(_.firstCallTokens).setTo((Some(6900): _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(Some(5))
     val s = CompareRuns.stepSide(List(before, a1, a2), billing)
     assertEquals((s.firstCallTokens, s.turns), (Some(6200L), Some(12)))
     val old = CompareRuns.stepSide(List(before), billing)

@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -27,7 +29,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }
+  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)) }
   private lazy val ds = { val d = testPool(cfg.db); Migrate.run(d); d }
   private val Goal = "zzcand-goal"
 
@@ -151,7 +153,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals(ws("crossref"), (Some("2026-10-01"), Some("HTTP 503")), "a failed read skips nothing next time")
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
-    assert(WatchManagerKind.nothingNew(Right(s2.copy(unseen = 0))))
+    assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(0))))
     assert(!WatchManagerKind.nothingNew(Left("not connected")))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.research.workflows.ReviewComparison
 
 import com.histmersion.domain.automation.agents.{CompareRunsViews, OutputComparison}
@@ -95,7 +97,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       usage = Usage(20, 4, 5, 1),
       cost = 0.01,
       attempt = 2
-    ).copy(firstCallTokens = Some(6200), turns = Some(7), output = Some("{}"))
+    ).modify(_.firstCallTokens).setTo((Some(6200): _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(Some(7)).modify(_.output).setTo(Some("{}"))
     val r = CompareRunsViews.run(
       run("a", "enrich-source", "x2020", List(s), dry = true, overrides = List(ModelOverride("writer", "anthropic:y")))
     )
@@ -170,11 +172,11 @@ class CompareRunsViewsSuite extends munit.FunSuite:
   test("V072: the first call and the turns a step recorded are shown; a run before them says nothing"):
     val before = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"))
     val a2 = step(3, "classify", model = Some("claude-code:haiku"), attempt = 3)
-      .copy(firstCallTokens = Some(6900), turns = Some(5))
+      .modify(_.firstCallTokens).setTo((Some(6900): _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(Some(5))
     val md = AgentsMarkdown.compare(
       compare(
         run("a", "enrich-source", "x2020", List(a2)),
-        run("b", "enrich-source", "x2020", List(before.copy(status = "done", error = None)))
+        run("b", "enrich-source", "x2020", List(before.modify(_.status).setTo("done").modify(_.error).setTo(None)))
       )
     )
     val row = md.linesIterator.find(_.startsWith("| classify")).get

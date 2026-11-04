@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.BuiltinMedia
 
 import com.histmersion.config.*
@@ -54,7 +56,7 @@ class MediaOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-media-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -243,16 +245,8 @@ class MediaOracleSuite extends DbSuite:
   // ── the servers ────────────────────────────────────────────────────────────────────────────
 
   private def cfgFor(name: String): AppConfig =
-    base.copy(
-      db = base.db.copy(url = scratch.urlOf(s"histmersion_s9o_${name}_test")),
-      backups = base.backups.copy(dir = tmp.resolve(s"$name-backups").toString),
-      bundles = base.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
-      converter = base.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
-      acquire = base.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
-      init = base.init.copy(auto = false),
-      runtime = base.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
-      basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString),
-      media = base.media.copy(requestIntervalMs = 0)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s9o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(base.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(0)
     )
 
   private def withServer[A](name: String)(body: String => A): A =

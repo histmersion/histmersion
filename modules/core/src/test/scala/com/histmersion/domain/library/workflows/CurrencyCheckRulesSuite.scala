@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -32,11 +34,11 @@ class CurrencyCheckRulesSuite extends munit.FunSuite:
         )
         assert(p.evidence.contains("we refute X"), p.evidence)
       case other => fail(s"expected a proposal, got $other")
-    currencyAction("old2000_y", row.copy(proposedKind = "supersedes")) match
+    currencyAction("old2000_y", row.modify(_.proposedKind).setTo("supersedes")) match
       case CurrencyAction.Propose(p) =>
         assertEquals((p.citekey, p.edgeKind, p.target), ("old2000_y", Some(Edge.Kind.SupersededBy), Some("new2024_x")))
       case other => fail(s"expected a proposal, got $other")
-    assertEquals(currencyAction("old2000_y", row.copy(citekey = None)), CurrencyAction.Fetch(row.copy(citekey = None)))
-    assertEquals(currencyAction("old2000_y", row.copy(proposedKind = "confirms")), CurrencyAction.Ignore)
-    assertEquals(currencyAction("old2000_y", row.copy(proposedKind = "cites")), CurrencyAction.Ignore)
+    assertEquals(currencyAction("old2000_y", row.modify(_.citekey).setTo(None)), CurrencyAction.Fetch(row.modify(_.citekey).setTo(None)))
+    assertEquals(currencyAction("old2000_y", row.modify(_.proposedKind).setTo("confirms")), CurrencyAction.Ignore)
+    assertEquals(currencyAction("old2000_y", row.modify(_.proposedKind).setTo("cites")), CurrencyAction.Ignore)
     assertEquals(currencyAction("new2024_x", row), CurrencyAction.Ignore, "a paper citing itself proposes nothing")

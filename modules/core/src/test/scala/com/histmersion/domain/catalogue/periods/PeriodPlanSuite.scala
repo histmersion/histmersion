@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
@@ -31,6 +33,6 @@ class PeriodPlanSuite extends munit.FunSuite:
 
   test("two records of one period id are the same period when the span and the label's fingerprint agree"):
     val a = period("zz_age", "The Zz Age", -1500, -1000)
-    assert(PeriodPlan.samePeriod(a, a.copy(label = "zz age, the")))
-    assert(!PeriodPlan.samePeriod(a, a.copy(label = "The Zz Era")))
-    assert(!PeriodPlan.samePeriod(a, a.copy(period = Some(Bundle.Range(Some(-1600), Some(-1000))))))
+    assert(PeriodPlan.samePeriod(a, a.modify(_.label).setTo("zz age, the")))
+    assert(!PeriodPlan.samePeriod(a, a.modify(_.label).setTo("The Zz Era")))
+    assert(!PeriodPlan.samePeriod(a, a.modify(_.period).setTo(Some(Bundle.Range(Some(-1600), Some(-1000))))))

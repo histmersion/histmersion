@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.places.Geocoding
 
 import com.histmersion.config.*
@@ -42,7 +44,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-catalogue-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(testDb.get))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -57,15 +59,8 @@ class CatalogueOracleSuite extends DbSuite:
     d
 
   private def cfgFor(name: String): AppConfig =
-    base.copy(
-      db = base.db.copy(url = scratch.urlOf(s"histmersion_s8o_${name}_test")),
-      backups = base.backups.copy(dir = tmp.resolve(s"$name-backups").toString),
-      bundles = base.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
-      converter = base.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
-      acquire = base.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
-      init = base.init.copy(auto = false, dataDir = dataDir.toString),
-      runtime = base.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
-      basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(base.init.modify(_.auto).setTo(false).modify(_.dataDir).setTo(dataDir.toString)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
     )
 
   private def withServer[A](name: String)(body: String => A): A = withServerOn(cfgFor(name))(body)
@@ -995,9 +990,8 @@ class CatalogueOracleSuite extends DbSuite:
       copyFixture(s"lpf/$f", lpf.resolve(f))
     )
     val c = cfgFor("gaz")
-    c.copy(
-      init = c.init.copy(dataDir = d.toString),
-      places = c.places.copy(sources = c.places.sources.copy(dir = extracts.toString, lpfDir = lpf.toString))
+    c.modify(
+      _.init).setTo(c.init.modify(_.dataDir).setTo(d.toString)).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(extracts.toString).modify(_.lpfDir).setTo(lpf.toString))
     )
 
   private def gazetteer(url: String, ds: DataSource): String =

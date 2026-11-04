@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.media.imports.ImportsControllers
 
 import com.histmersion.config.*
@@ -21,7 +23,7 @@ class MediaImportProgressSuite extends munit.FunSuite:
     )
 
   test("progress: failures are counted; an unknown total is left out; a total passed is the count"):
-    val failed = r.copy(failed = List("a", "b"))
+    val failed = r.modify(_.failed).setTo(List("a", "b"))
     assert(ImportsControllers.progressLine(failed, 300, 1).contains(" · 2 failed · "))
     assert(ImportsControllers.progressLine(r, 0, 1).startsWith("100 place(s)/event(s) asked"))
     assert(ImportsControllers.progressLine(r, 40, 1).startsWith("100/100 "))

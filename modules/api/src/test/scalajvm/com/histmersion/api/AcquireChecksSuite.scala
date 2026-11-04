@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
@@ -49,7 +51,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assert(
       AcquireChecksMarkdown
-        .line(s.copy(note = Some("held while the autopilot drains")))
+        .line(s.modify(_.note).setTo(Some("held while the autopilot drains")))
         .endsWith("(held while the autopilot drains)")
     )
     assertEquals(
@@ -68,7 +70,7 @@ class AcquireChecksSuite extends munit.FunSuite:
       md
     )
     assert(md.contains("- acquire re-check: 1 of 3 items with a DOI due"), md)
-    assert(!st.copy(acquireRecheck = None).markdown.contains("re-check"))
+    assert(!st.modify(_.acquireRecheck).setTo(None).markdown.contains("re-check"))
 
   test("a pass's report: the counts and one line per item; a dry run says it asked no fetcher"):
     val r = RecheckResult(

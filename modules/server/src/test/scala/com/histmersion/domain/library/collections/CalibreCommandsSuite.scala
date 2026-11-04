@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.collections
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.config.*
@@ -28,7 +30,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base =
     val b = AppConfig.load()
-    b.copy(db = b.db.copy(url = testDb.get))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get))
   private lazy val scratch = ScratchDatabases("calibre_cmds", base.db)
 
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -65,41 +67,37 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
           sql"UPDATE sources SET sha256 = $sha WHERE citekey = ${s.citekey}".update.run(): Unit
     put(
       source("zzcal_linked", "Bronze Age tin and its trade", List("Stocker, Sharon R."), Some(2019))
-        .copy(
-          doi = Some("10.1/zzcal.1"),
-          topics = List("tin", "trade"),
-          provenance = Some("unpaywall"),
-          calibreId = Some("1"),
-          summary = Some("Tin routes.")
+        .modify(
+          _.doi).setTo(Some("10.1/zzcal.1")).modify(_.topics).setTo(List("tin", "trade")).modify(_.provenance).setTo(Some("unpaywall")).modify(_.calibreId).setTo(Some("1")).modify(_.summary).setTo(Some("Tin routes.")
         ),
       stored = true
     )
     put(
-      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).copy(calibreId = Some("2"))
+      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).modify(_.calibreId).setTo(Some("2"))
     )
     put(
-      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).copy(calibreId = Some("2"))
+      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).modify(_.calibreId).setTo(Some("2"))
     )
-    put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).copy(calibreId = Some("99")))
-    put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).copy(calibreId = Some("3")))
-    put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).copy(calibreId = Some("4")))
-    put(source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020)).copy(calibreId = Some("7")))
+    put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).modify(_.calibreId).setTo(Some("99")))
+    put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).modify(_.calibreId).setTo(Some("3")))
+    put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).modify(_.calibreId).setTo(Some("4")))
+    put(source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020)).modify(_.calibreId).setTo(Some("7")))
     put(
       source("zzcal_stored", "Stored paper", List("Ann Store"), Some(2010))
-        .copy(topics = List("metal"), provenance = Some("unpaywall"), doi = Some("10.1/zzcal.stored")),
+        .modify(_.topics).setTo(List("metal")).modify(_.provenance).setTo(Some("unpaywall")).modify(_.doi).setTo(Some("10.1/zzcal.stored")),
       stored = true
     )
-    put(source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012)).copy(provenance = Some("oa")), stored = true)
-    put(source("zzcal_nofile", "Metadata only", List("No File"), Some(2013)).copy(provenance = Some("openalex")))
-    put(source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014)).copy(provenance = Some("calibre")))
+    put(source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012)).modify(_.provenance).setTo(Some("oa")), stored = true)
+    put(source("zzcal_nofile", "Metadata only", List("No File"), Some(2013)).modify(_.provenance).setTo(Some("openalex")))
+    put(source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014)).modify(_.provenance).setTo(Some("calibre")))
     put(
-      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015)).copy(provenance = Some("calibre")),
+      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015)).modify(_.provenance).setTo(Some("calibre")),
       stored = true
     )
-    put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).copy(provenance = Some("calibre")))
+    put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).modify(_.provenance).setTo(Some("calibre")))
     put(
       source("zzcal2001_collision", "Collision of keys", List("Jane Zzcal"), Some(2001))
-        .copy(provenance = Some("calibre"))
+        .modify(_.provenance).setTo(Some("calibre"))
     )
 
   /** One step of the scenario: a CLI command (with the host-side originals directory or not), or a change made through
@@ -198,10 +196,8 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val home = Files.createDirectories(runDir.resolve("home"))
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("run")
-    val cfg = base.copy(
-      db = base.db.copy(url = scratch.urlOf("calibre_cmds_run_test")),
-      server = base.server.copy(publicUrl = "http://histmersion.test"),
-      converter = base.converter.copy(spoolDir = spool.toString)
+    val cfg = base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_run_test"))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo("http://histmersion.test")).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(spool.toString)
     )
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
@@ -277,9 +273,8 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val home = Files.createDirectories(runDir.resolve("home"))
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("fallback")
-    val cfg = base.copy(
-      db = base.db.copy(url = scratch.urlOf("calibre_cmds_fallback_test")),
-      converter = base.converter.copy(spoolDir = spool.toString)
+    val cfg = base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_fallback_test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(spool.toString)
     )
     seed(ds, spool, cfg.limits.chunkChars)
     val commands = List(

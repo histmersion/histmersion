@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.library.Acquire.{EdgeKinds, Verdicts}
 import com.histmersion.api.library.{Acquire, FollowupRow, RetractionNotice, UpdateNotice, WorkRef}
 import com.histmersion.api.library.Source
@@ -238,7 +240,7 @@ class AcquireSuite extends munit.FunSuite:
       )
     )
     // the DOI link is not repeated as the location; no status says just "open access"; a closed work gets none
-    val doiOnly = w.copy(oaStatus = None, oaUrl = Some("https://doi.org/10.3390/rel10040258"), authors = List("A", "B"))
+    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.authors).setTo(List("A", "B"))
     assert(
       Acquire
         .browserDownloadText(doiOnly, "10.3390/REL10040258", "k")
@@ -246,7 +248,7 @@ class AcquireSuite extends munit.FunSuite:
           t.startsWith("A et al. (2019).") && t.contains("— open access, but") && !t.contains(" at https://doi.org")
         )
     )
-    assertEquals(Acquire.browserDownloadText(w.copy(isOa = false), "10.3390/rel10040258", "k"), None)
+    assertEquals(Acquire.browserDownloadText(w.modify(_.isOa).setTo(false), "10.3390/rel10040258", "k"), None)
 
   test("browserDownloadText: a fetcher's refusal says where to download it and under which licence"):
     val w = WorkRef(

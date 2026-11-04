@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Run.State as RunState
@@ -223,11 +225,11 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(dailyCap(ManagerConfig(), mcfg), None)
     assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(2.0)), mcfg), Some(2.0))
     assertEquals(
-      dailyCap(ManagerConfig(dailyUsd = Some(0.0)), mcfg.copy(dailyUsd = 5)),
+      dailyCap(ManagerConfig(dailyUsd = Some(0.0)), mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double))),
       None,
       "0 on the manager = no cap"
     )
-    assertEquals(dailyCap(ManagerConfig(), mcfg.copy(dailyUsd = 5)), Some(5.0))
+    assertEquals(dailyCap(ManagerConfig(), mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double))), Some(5.0))
     assertEquals(dailyBlock(None, BigDecimal(100)), None)
     assertEquals(dailyBlock(Some(2.0), BigDecimal("1.99")), None)
     assert(
@@ -236,7 +238,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assertEquals(
       ReviewSettings
-        .defaultsFor(com.histmersion.domain.automation.Manager.Kind.Enrich, mcfg.copy(dailyUsd = 5))
+        .defaultsFor(com.histmersion.domain.automation.Manager.Kind.Enrich, mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double)))
         .dailyUsd,
       Some(5.0)
     )

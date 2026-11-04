@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.Plan
 
@@ -21,7 +23,7 @@ class ApprovalsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.evidenceLine(plan), None)
     val status = ApprovalInfo(2, Some("r"), "status-change", "a2020_b", evidence = "a retraction notice")
     assertEquals(ApprovalsView.evidenceLine(status), Some("a retraction notice"))
-    assertEquals(ApprovalsView.evidenceLine(status.copy(evidence = "")), None)
+    assertEquals(ApprovalsView.evidenceLine(status.modify(_.evidence).setTo("")), None)
 
   test("a model's hint action reads as what it does to which manager; the phase 2 kinds read as themselves"):
     import com.histmersion.api.automation.Managers.{HintEffect, HintProposal}

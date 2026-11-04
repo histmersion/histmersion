@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -180,7 +182,7 @@ class EventDatingSuite extends munit.FunSuite:
     // two stored events of one Wikidata item: the best fit, not whichever came last
     val w1 = ev("zz_w1", -1615, -1605, 36.4, 25.4, Some("Q1"))
     val w2 = ev("zz_w2", -1200, -1100, 36.4, 25.4, Some("Q1"))
-    val rw = rec("wikidata", "Q1", -1610, 36.4, 25.4).copy(wikidata = Some("Q1"))
+    val rw = rec("wikidata", "Q1", -1610, 36.4, 25.4).modify(_.wikidata).setTo(Some("Q1"))
     assertEquals(CatalogMerge.place(List(rw), List(w1, w2), tol).head._2.eventId, "zz_w1")
     assertEquals(CatalogMerge.place(List(rw), List(w2, w1), tol).head._2.eventId, "zz_w1")
 

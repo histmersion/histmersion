@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.api.Paging
@@ -117,10 +119,8 @@ class IngestHttpSuite extends munit.FunSuite:
 
   private def cfg =
     val base = AppConfig.load()
-    base.copy(
-      db = base.db.copy(url = testDb.get),
-      server = base.server.copy(publicUrl = "http://histmersion.test"),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-spool").toString)
+    base.modify(
+      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo("http://histmersion.test")).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-spool").toString)
     )
 
   /** Poll until the job leaves queued/running. */

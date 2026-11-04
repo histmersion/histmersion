@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.api.automation.Queue
 
@@ -210,7 +212,7 @@ class QueueSuite extends munit.FunSuite:
   test("a patch changes only what it carries; a blank topic or reason clears it"):
     val cur = QueueItem(7, "acquire", "a book", Some("Books"), Open, Some("for the review"), None, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch()), cur)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some("a better book"))), cur.copy(text = "a better book"))
+    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some("a better book"))), cur.modify(_.text).setTo("a better book"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  Papers "))).topic, Some("Papers"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  "))).topic, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(""))).reason, None)

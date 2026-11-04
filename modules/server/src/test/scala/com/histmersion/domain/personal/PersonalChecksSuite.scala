@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.api.ItemKind
 import com.histmersion.api.personal.{MapZoom, Target}
 import com.histmersion.domain.personal.bookmarks.Bookmark
@@ -19,6 +21,6 @@ class PersonalChecksSuite extends munit.FunSuite:
   test("a target's zoom is one the map has"):
     val view = Target(ItemKind.View)
     assertEquals(MarkTarget.zoomChecked(view), Right(view))
-    assert(MarkTarget.zoomChecked(view.copy(zoom = Some(MapZoom(24.0)))).isRight)
-    assert(MarkTarget.zoomChecked(view.copy(zoom = Some(MapZoom(24.5)))).isLeft)
-    assert(MarkTarget.zoomChecked(view.copy(zoom = Some(MapZoom(-1.0)))).isLeft)
+    assert(MarkTarget.zoomChecked(view.modify(_.zoom).setTo(Some(MapZoom(24.0)))).isRight)
+    assert(MarkTarget.zoomChecked(view.modify(_.zoom).setTo(Some(MapZoom(24.5)))).isLeft)
+    assert(MarkTarget.zoomChecked(view.modify(_.zoom).setTo(Some(MapZoom(-1.0)))).isLeft)

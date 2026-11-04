@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.parser.decode
 import io.circe.syntax.*
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
@@ -38,13 +40,13 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       Article.ReviewView.outcomeLine(rejected),
       "rejected by fixer in run 1, round 2: the record does not bear on it"
     )
-    val open = rejected.copy(outcome = "open", note = "", closedBy = None, closedRound = None, closedRunNumber = None)
+    val open = rejected.modify(_.outcome).setTo("open").modify(_.note).setTo("").modify(_.closedBy).setTo(None).modify(_.closedRound).setTo(None).modify(_.closedRunNumber).setTo(None)
     assertEquals(Article.ReviewView.outcomeLine(open), "open")
     assertEquals(
-      Article.ReviewView.outcomeLine(open.copy(deferred = true, reopened = 2)),
+      Article.ReviewView.outcomeLine(open.modify(_.deferred).setTo(true).modify(_.reopened).setTo(2)),
       "open (left for the next run) (reopened 2 times)"
     )
-    assertEquals(Article.ReviewView.outcomeLine(open.copy(outcome = "wont-fix")), "won't fix")
+    assertEquals(Article.ReviewView.outcomeLine(open.modify(_.outcome).setTo("wont-fix")), "won't fix")
 
   test("the Markdown: state, goals, approvals waiting, then the history by run and round"):
     val v = Article.ReviewView(
@@ -68,7 +70,7 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       ),
       md
     )
-    assert(Article.ReviewView.markdown(v.copy(rounds = Nil)).endsWith("No finding recorded."))
+    assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
     val b = ReviewBadge(ReviewState.InReview, "in review · round 2", "In review.", round = Some(2))

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
+
 import io.circe.parser.parse
 
 import java.time.LocalDate
@@ -41,7 +43,7 @@ class CandidatesSuite extends munit.FunSuite:
       "crossref query \"x\"" -> w("10.1234/A", title = "Other title"),
       "openalex citing 10.9999/z" -> w("10.1234/a"),
       "openalex query \"x\"" -> WorkRef(title = Some("no doi")),
-      "openalex query \"x\"" -> w("10.1234/r").copy(isRetracted = true),
+      "openalex query \"x\"" -> w("10.1234/r").modify(_.isRetracted).setTo(true),
       "europepmc query \"x\"" -> w("10.1234/known"),
       "arxiv query \"x\"" -> WorkRef(arxivId = Some("2401.00001"), title = Some("P"))
     )

@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
+
 import java.nio.file.Path
 
 /** The host-side Calibre integration: both readers produce the same book, the metadata guard refuses junk, and the
@@ -55,7 +57,7 @@ class CalibreSuite extends munit.FunSuite:
       .copy(formats = List("/lib/x.epub", "/lib/x.pdf"))
     assertEquals(b.pick(None).map(_.takeRight(4)), Some(".pdf"))
     assertEquals(b.pick(Some("epub")).map(_.takeRight(5)), Some(".epub"))
-    assertEquals(b.copy(formats = List("/lib/x.mobi")).pick(None), None)
+    assertEquals(b.modify(_.formats).setTo(List("/lib/x.mobi")).pick(None), None)
 
   // ── the metadata guard ──────────────────────────────────────────────────────────────────────
   test("the metadata guard refuses empty and Unknown title/author"):
@@ -171,7 +173,7 @@ class CalibreSuite extends munit.FunSuite:
   test("update MERGES identifiers: the record's DOI is set, Calibre's ISBN and every other scheme are kept"):
     val ids = """{"isbn":"9780918986672","google":"abcDEF","asin":"B000X","doi":"10.9/old"}"""
     val held = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x", identifiers = ids))
-    val _ = Calibre(cfg(), held).update(1567, meta.copy(isbn = Some("9999999999999")))
+    val _ = Calibre(cfg(), held).update(1567, meta.modify(_.isbn).setTo(Some("9999999999999")))
     assert(fields(held).contains("identifiers:asin:B000X,doi:10.1/x,google:abcDEF,isbn:9780918986672"), fields(held))
     assertEquals(
       Calibre.mergeIdentifiers(Map("google" -> "g"), Some("10.1/x"), Some("978")),
@@ -210,7 +212,7 @@ class CalibreSuite extends munit.FunSuite:
       ).replace("Kumarbi", "Perspectives on Hittite Civilization ")
     )
     assertEquals(
-      Calibre(cfg(), same).update(1567, meta.copy(title = " Perspectives on Hittite Civilization")),
+      Calibre(cfg(), same).update(1567, meta.modify(_.title).setTo(" Perspectives on Hittite Civilization")),
       Right(Nil)
     )
     assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
@@ -225,7 +227,7 @@ class CalibreSuite extends munit.FunSuite:
         authors = "Hans G. Güterbock & Harry A. Hoffner"
       )
     )
-    val _ = Calibre(cfg(), renamed).update(1567, meta.copy(title = "  Perspectives on Hittite Civilization  "))
+    val _ = Calibre(cfg(), renamed).update(1567, meta.modify(_.title).setTo("  Perspectives on Hittite Civilization  "))
     assertEquals(fields(renamed), List("title:Perspectives on Hittite Civilization"))
 
   test("authors: First Last, without role words, brackets or library life dates"):
@@ -357,9 +359,8 @@ class CalibreSuite extends munit.FunSuite:
       List("Clunies Ross, Margaret (ed.)"),
       "2018-01-01T00:00:00+00:00"
     )
-    val v2 = v1.copy(
-      id = 1806,
-      title = "The Pre-Christian Religions of the North: Research and Reception, Volume II: From c. 1830 to the Present"
+    val v2 = v1.modify(
+      _.id).setTo(1806).modify(_.title).setTo("The Pre-Christian Religions of the North: Research and Reception, Volume II: From c. 1830 to the Present"
     )
     assertEquals(Calibre.citekeyFor(v1), "cluniesross2018_christian_v1")
     assertEquals(Calibre.citekeyFor(v2), "cluniesross2018_christian_v2")
@@ -486,7 +487,7 @@ class CalibreSuite extends munit.FunSuite:
 
   test("unlinked listing: title, authors, year and the file path of each entry"):
     val b =
-      book(9, "Newest", List("Kristiansen, K."), "2020-01-01").copy(formats = List(s"$lib/K/Newest (9)/Newest.pdf"))
+      book(9, "Newest", List("Kristiansen, K."), "2020-01-01").modify(_.formats).setTo(List(s"$lib/K/Newest (9)/Newest.pdf"))
     val md = Calibre.markdownUnlinked(List(b), total = 3)
     assert(md.contains("1 of 3 Calibre entries not linked"), md)
     assert(md.contains("**9** · Newest (2020) — Kristiansen, K."), md)

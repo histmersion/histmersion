@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 import com.histmersion.domain.automation.agents.TestRuns
 
@@ -60,31 +62,18 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private lazy val autoCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        maxConcurrentRuns = 20,
-        roles = b.agents.roles
-          .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
-        approvals = b.agents.approvals.copy(
-          articlePublish = "checked",
-          articlePlan = "auto",
-          goalPlan = "auto",
-          auto = b.agents.approvals.auto.copy(publishMinSources = 2)
-        ),
-        autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 2)
-      ),
-      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2)),
-      researchAgents = b.researchAgents.copy(review = b.researchAgents.review.copy(spotChecks = 0))
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.maxConcurrentRuns).setTo(20).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)).modify(_.approvals).setTo(b.agents.approvals.modify(
+          _.articlePublish).setTo("checked").modify(_.articlePlan).setTo("auto").modify(_.goalPlan).setTo("auto").modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(2)
+        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(2)
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(2))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(0))
     )
 
   /** The same with every approval a person's (the shipped defaults). */
   private lazy val manualCfg =
-    autoCfg.copy(agents =
-      autoCfg.agents.copy(approvals =
-        autoCfg.agents.approvals.copy(articlePublish = "manual", articlePlan = "manual", goalPlan = "manual")
+    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo("manual").modify(_.articlePlan).setTo("manual").modify(_.goalPlan).setTo("manual")
       )
     )
 
@@ -352,7 +341,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(g.doneLast7 >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
-    assert(a.autopilotPage(st.copy(cronsEnabled = false)).contains("crons are off"))
+    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(false)).contains("crons are off"))
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
@@ -392,7 +381,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     transact(ds)(
       ManagerRepo.setConfig(
         sm.id,
-        sm.config.copy(autoApprove = Some(true)),
+        sm.config.modify(_.autoApprove).setTo(Some(true)),
         sm.cron,
         sm.nextTickAt.flatMap(ManagerPolicy.parseInstant)
       )
@@ -498,9 +487,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test(
     "article-plan cap: the area's daily cap leaves a second plan for a person; a manager that says no is never decided"
   ):
-    val capped = autoCfg.copy(agents =
-      autoCfg.agents.copy(approvals =
-        autoCfg.agents.approvals.copy(auto = autoCfg.agents.approvals.auto.copy(articlesPerGoalPerDay = 2))
+    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(2))
       )
     )
     val (a, h) = handlers(ScriptedClient(Model), capped); seed(h)
@@ -558,7 +545,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("older approvals a person decides never crowd the code-decided ones out of a tick"):
     val personPlans =
-      autoCfg.copy(agents = autoCfg.agents.copy(approvals = autoCfg.agents.approvals.copy(goalPlan = "manual")))
+      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo("manual")))
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
     import io.circe.syntax.*
     val waiting =
@@ -657,7 +644,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 
   test("housekeeping: the safe lint repairs run on their cadence, recorded and logged; off, nothing runs"):
-    val hk = autoCfg.copy(agents = autoCfg.agents.copy(autopilot = autoCfg.agents.autopilot.copy(lintHours = 24)))
+    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(24)))
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)

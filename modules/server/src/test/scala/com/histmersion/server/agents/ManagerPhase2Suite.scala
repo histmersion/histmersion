@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.domain.automation.agents.ScriptedClient
 import com.histmersion.domain.automation.agents.TestRuns
 
@@ -53,19 +55,12 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(
-      db = b.db.copy(url = testDb.get),
-      agents = b.agents.copy(
-        enabled = true,
-        prices = "scripted=1/2",
-        roles = b.agents.roles
-          .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
-        approvals = b.agents.approvals.copy(articlePublish = "auto")
-      ),
-      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2)),
-      researchAgents = b.researchAgents.copy(
-        inferFilter = b.researchAgents.inferFilter.copy(minHits = 1),
-        review = b.researchAgents.review.copy(spotChecks = 0)
+    b.modify(
+      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)).modify(_.approvals).setTo(b.agents.approvals.modify(_.articlePublish).setTo("auto")
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(2))).modify(_.researchAgents).setTo(b.researchAgents.modify(
+        _.inferFilter).setTo(b.researchAgents.inferFilter.modify(_.minHits).setTo(1)).modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(0)
       )
     )
 
@@ -235,7 +230,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       text("""{"rationale":"the tin sources","query":null,"topics":["zzagent_tin"],"tags":[],"extraQueries":[]}""")
     )
     val auto =
-      baseCfg.copy(agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articleFilter = "auto")))
+      baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articleFilter).setTo("auto")))
     val (a, h) = handlers(c, auto); seed(h)
     assert(
       h.research.articles.put("zzagent_f2", Article.Put("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
@@ -358,7 +353,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("enrich: an ingest queues an item (manager created paused); enriched sources are skipped; Enrich on an article"):
     val c = ScriptedClient(Model)
-    val (a, h) = handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(autoEnrich = true))); seed(h)
+    val (a, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(true))); seed(h)
     val note = a.autoEnrich(Ck).getOrElse(fail("no note"))
     assert(note.startsWith("enrichment queued: item #") && note.contains("paused"), note)
     val i = item(EnrichId, SourceEnrich, Ck)
@@ -383,8 +378,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = connect(ds)(AgentRepo.get(item(EnrichId, SourceEnrich, Ck2).runId.get)).get
     assertEquals((run.pipeline, run.origin, run.managerId), ("enrich-source", Some("manager"), Some(EnrichId)))
     // with the managers off, auto-enrich queues a run at once, as before
-    val off = baseCfg.copy(agents =
-      baseCfg.agents.copy(autoEnrich = true, managers = baseCfg.agents.managers.copy(enabled = false))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(true).modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(false))
     )
     val (b, _) = handlers(c, off)
     connect(ds)(sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run())

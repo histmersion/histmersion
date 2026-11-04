@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import hearth.kindlings.optics.syntax.*
+
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.config.AppConfig
@@ -28,7 +30,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
 
   private val loop = GazetteerLoopback()
   private lazy val cfg = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("gazetteers", cfg.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("gazetteers", cfg.db.modify(_.url).setTo(testDb.get))
   private lazy val ds = scratch("store")
 
   override def afterSuite(): Unit =
