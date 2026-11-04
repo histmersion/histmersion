@@ -11,6 +11,16 @@ deliverables. `refactor-audit/priority-family-status.md` records evidence limits
 identity-based regression enforcement and complete finding history are still required.
 The overall 90% automation goal is unchanged.
 
+Capability/transaction evidence now has the integrated `CapabilityHistory` gate:
+228 production diagnostics, 188 anchors, 77 identity-ambiguous occurrences. Frozen
+baselines and append-only observations reject equal-count replacements, reappearance,
+changed multiplicity, stale evidence and missing coverage. Line-only movement passes.
+The synthetic enforcement suite and full integrated assessment passed, without changing
+aggregate baselines or application sources. This is partial identity coverage, not a
+complete confirmed-finding ledger. See `refactor-audit/capability-history/README.md`.
+The separate transaction source sample fails recall at 85% after including supplemental
+mode-change cases; its three misses remain explicit in `refactor-audit/transaction-sample.md`.
+
 - Baseline: `6e1b5387`, a snapshot of the unfinished `contracts2` work.
 - Project-wide assessment: `assessment.conf` compiles production/tests, runs 25 scoped metrics over 28 source modules and verifies structural fixtures plus real-source expectations. It writes per-rule/module counts, baseline deltas, coverage and run status; selected zero gates and per-module no-regression gates are available. The deliberately failing clock gate rejects its 103 residuals. The broader historical ledger has 2,818 occurrences, of which five families account for 2,688 (95.4%); these are not fresh confirmed violations. Bulk automation is now explicitly the priority, with at least 90% automatic fixes as the target. See `refactor-audit/bulk-automation-plan.md`; start with the derivation family rather than more isolated visibility fixes. No application source changes in this measurement batch.
 - Configurable ownership batch: all nine remaining repositories classified in `refactor-audit/repository-batches.md`. FeatureOwners moves five reviewed test files/six declarations and updates their 238 resolved references across 24 files; its second check covers 3,126 files and finds zero old-owner references. AgentRepo outside test files 18 → 14, PlanQuotaRepo 2 → 1, QueueRepo 1 → 0; QueueRepo is now private[worklists]. Structural findings 43 → 42, guards 28/28. Whole production/test compilation passes without follow-up source fixes; QueueServiceInMemorySuite passes 19 tests, while three relocated suites and ProbeRetrySuite are discovered but ignored without a test DB. Expected fixture output compiles under -source:future; old references, destination collision, changed policy and stale hashes are rejected. The next batch should address shared service record contracts and mixed-feature test consumers, not invent another per-suite rewrite. Earlier entries below are historical.
