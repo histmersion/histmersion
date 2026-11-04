@@ -8,7 +8,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 object ArchitectureInventory {
   case class Policy(roots: List[String] = List("modules"), report: String = "refactor-audit/architecture",
-    objects: String = "docs/research-domain-model/objects.md", expectedObjects: Int = 645)
+    objects: String = "docs/research-domain-model/objects.md", expectedObjects: Int = 645,
+    requiredServices: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -154,7 +155,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
     write("comments.tsv","path\tline\tclassification\tcomment",comments.asScala.toList.sortBy(r => (r.head,r(1).toInt)))
     write("expressions.tsv","family\tpath\tline\towner\tsource\tast",expressions.asScala.toList.sortBy(r => (r.head,r(1),r(2).toInt)))
     val types = defs.filter(d => Set("class","case-class","trait","enum","object","alias","abstract-type")(d.kind))
-    val services = types.filter(d => d.name.endsWith("Service") || d.name.endsWith("Repo") || d.name.endsWith("Controllers"))
+    val services = types.filter(d => d.name.endsWith("Service") || d.name.endsWith("Repo") || d.name.endsWith("Controllers") || policy.requiredServices.contains(d.symbol))
     val serviceRows = services.map { d =>
       val impls = types.filter(_.parents.contains(d.symbol))
       val methods = defs.filter(x => x.owner == d.symbol && Set("method","abstract-method")(x.kind))
@@ -164,6 +165,34 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         consumers.filter(_.path.contains("/src/test/")).map(_.path).distinct.sorted.mkString(";"),"structural-evidence; behavioral-parity-unproven")
     }
     write("services.tsv","symbol\tpath\tkind\tvisibility\tconstructor\tmethods\tdirect-implementations\tnamed-Implementation\tnamed-InMemory\ttest-consumers\tstatus",serviceRows)
+    require(policy.requiredServices.forall(bySymbol.contains),"Configured service is absent; reconcile its destination instead of accepting zero findings")
+    val serviceTypes = services.filter(d => d.path.contains("/src/main/") && d.kind != "object")
+    def inherits(d: Definition, target: String, seen: Set[String] = Set.empty): Boolean =
+      d.parents.contains(target) || d.parents.filterNot(seen).exists(p => bySymbol.getOrElse(p,Nil).exists(x => inherits(x,target,seen + p)))
+    val obligations = serviceTypes.filter(d => d.name.endsWith("Service") || policy.requiredServices.contains(d.symbol)).flatMap { service =>
+      val companion = service.symbol.stripSuffix("#") + "."
+      val implementations = types.filter(d => d.symbol != service.symbol && inherits(d,service.symbol))
+      val production = implementations.filter(_.path.contains("/src/main/"))
+      val nested = production.filter(_.owner == companion)
+      val actual = nested.filter(_.name == "Implementation")
+      val memory = nested.filter(_.name == "InMemory")
+      val required = policy.requiredServices.contains(service.symbol)
+      def row(check: String, satisfied: Boolean, evidence: List[String], uncertainty: String = ""): List[String] =
+        List(service.symbol,service.path,check,if(satisfied) "structural-evidence-present" else if(required) "required-shape-missing" else "candidate-gap; confirm-service-role",
+          evidence.mkString(";"),uncertainty)
+      List(
+        row("service-trait",service.kind == "trait",List(service.kind)),
+        row("companion-Implementation",actual.nonEmpty,actual.map(_.symbol),"Inherited aliases and unresolved parent symbols need review"),
+        row("private-Implementation",actual.nonEmpty && actual.forall(_.mods.split(" ").contains("private")),actual.map(d => d.symbol + " " + d.mods),"Checks private member declaration; package-private is not companion-private"),
+        row("companion-InMemory",memory.nonEmpty,memory.map(_.symbol),"A same-named unrelated class does not count"),
+        List(service.symbol,service.path,"behavioral-parity","unproven; contract-suite-evidence-required",
+          refs.filter(r => r.target == service.symbol && r.path.contains("/src/test/")).map(_.path).distinct.sorted.mkString(";"),
+          "Test references establish consumers, not equivalent behavior"),
+        List(service.symbol,service.path,"other-implementations","inventory",production.filterNot(d => nested.contains(d)).map(_.symbol).mkString(";"),"Includes indirect resolved inheritance"))
+    }
+    write("service-obligations.tsv","service\tpath\tcheck\tstatus\tevidence\tuncertainty",obligations)
+    val serviceCounts = obligations.groupBy(r => (r(2),r(3))).toList.sortBy(_._1)
+    write("service-counts.tsv","check\tstatus\tcount",serviceCounts.map { case((c,s),rs) => List(c,s,rs.size.toString) })
     val plan = if(policy.objects.isEmpty) Nil else objectRows(Files.readString(Paths.get(policy.objects)),policy.expectedObjects)
     val objects = types.filter(d => d.kind == "object" && d.topLevel && d.path.contains("/src/main/"))
     val planRows = plan.map { row =>
@@ -192,6 +221,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       "Full source and test coverage. Candidate inventories preserve declarations, signatures, constructors, ASTs, references and source hashes. Counts are evidence rows, not confirmed policy violations.","") ++
       counts.map { case(k,n) => s"- $k: $n" } ++ List("",
       "Service implementations are linked through resolved parent symbols; a class called InMemory elsewhere is not evidence of service parity. Inherited methods, indirect implementations and behavioral parity require further analysis. Unresolved, generated and external references are retained explicitly.",
+      "service-obligations.tsv checks trait shape, companion Implementation/InMemory and private Implementation through resolved transitive inheritance. Required service identities come from configuration; disappearance fails the scan. Other Service names are candidates requiring role confirmation. Behavioral parity is always separately unproven by structural evidence.",
       "Every row of the object plan is reconciled. An absent original object is never marked completed: destination and behavior still need proof. Same-name candidates do not establish conceptual equivalence.",
       "Comments, string constants, annotations and construction ASTs are review inputs. Multiple file names need companion/alias/sealed-hierarchy grouping before being classified as violations. Visibility, transaction ownership, invariants and layer crossings require the corresponding policy checks.")).asJava,UTF_8)
     Files.writeString(out.resolve("status.txt"),"COMPLETE_ARCHITECTURE_EVIDENCE_WITH_REVIEW_CASES\n")

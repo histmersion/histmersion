@@ -29,6 +29,12 @@ class ModelInventoryVerification extends SyntacticRule("ModelInventoryVerificati
     val expected = Files.readAllLines(Paths.get("tools/refactor/model-fixture/expected-primitives.tsv"),UTF_8).asScala.toList.sorted
     require(actual == expected,s"Primitive inventory differs: missing=${expected.diff(actual)} unexpected=${actual.diff(expected)}")
     val leaves = rows("leaves.tsv")
+    val constraints = rows("newtype-constraints.tsv").map(r => r.head -> r(7)).toMap
+    require(constraints("modelinventoryfixture/Models$package.Year.") == "pure","Iron Pure not resolved")
+    require(constraints("modelinventoryfixture/StrictCount.") == "non-Pure-constraint","Known non-Pure constraint missed")
+    require(constraints("modelinventoryfixture/AliasedCount.") == "pure","Cross-file Pure alias not resolved")
+    require(constraints("modelinventoryfixture/Lookalike.") != "pure","Unrelated Pure accepted")
+    require(rows("newtype-constraints.tsv").exists(r => r.head == "modelinventoryfixture/StrictCount." && r(9) == "client-constraint-review"),"Configured client classification missed")
     List("existingId","existingYear","externalId","externalYear").foreach { name =>
       require(leaves.exists(l => positions(l.head)(8) == name && l(2) == "newtype"),"Missing existing newtype: " + name)
     }

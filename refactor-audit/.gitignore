@@ -42,6 +42,7 @@ schema-derives/adapter.txt
 models/positions.tsv
 models/leaves.tsv
 models/types.tsv
+models/newtype-constraints.tsv
 models/uses.tsv
 models/sources.tsv
 models/proposals.tsv
@@ -58,6 +59,7 @@ architecture/references.tsv
 architecture/comments.tsv
 architecture/expressions.tsv
 architecture/services.tsv
+architecture/service-obligations.tsv
 architecture/object-plan.tsv
 architecture/objects.tsv
 architecture/file-groups.tsv

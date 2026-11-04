@@ -32,3 +32,4 @@ externalAlias|constructor-parameter|scala/Int#
 sentinel|value|scala/Int#
 <anonymous>|given|java/lang/String#
 Small|type-bound|scala/Int#
+Pure|alias-definition|scala/Int#
