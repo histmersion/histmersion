@@ -18,6 +18,7 @@ object ArchitectureInventory {
     propertyOwners: Map[String,String] = Map.empty,
     dependencyDirections: Map[String,List[String]] = Map.empty, publicContracts: List[String] = Nil,
     crossingPermits: Map[String,List[String]] = Map.empty, projectPackage: String = "com.histmersion",
+    invariantModels: Map[String,String] = Map.empty, plainRecords: List[String] = Nil,
     databasePrefixes: List[String] = List("com/histmersion/util/database/", "com/augustnagro/magnum/", "java/sql/", "javax/sql/"), visibilityTargets: List[Target] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
@@ -60,6 +61,11 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
   private val comments = new ConcurrentLinkedQueue[List[String]]()
   private val expressions = new ConcurrentLinkedQueue[List[String]]()
   private val constraintOwners = new ConcurrentLinkedQueue[(String,String)]()
+  private case class Construction(path: String, line: Int, owner: String, callee: String, targets: List[String], kind: String, source: String, ast: String)
+  private case class Result(method: String, path: String, line: Int, targets: List[String], shape: String)
+  private val constructions = new ConcurrentLinkedQueue[Construction]()
+  private val results = new ConcurrentLinkedQueue[Result]()
+  private val constructorAccess = new java.util.concurrent.ConcurrentHashMap[String,String]()
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("ArchitectureInventory")(Policy()).map { p =>
     require(p.roots.nonEmpty && p.report.nonEmpty)
     require(p.visibilityTargets.map(_.symbol).distinct.size == p.visibilityTargets.size && p.visibilityTargets.forall(t => t.symbol.nonEmpty && t.scope.nonEmpty),"Invalid visibility target list")
@@ -136,6 +142,19 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         mods.map(_.syntax).mkString(" "),bases,n.symbol.info.fold("<unresolved>")(_.signature.toString),t.pos.text,t.structure,top(t),ctor,
         mods.collect { case m: Mod.Private => "private" -> m.within.syntax; case m: Mod.Protected => "protected" -> m.within.syntax }))
       recordSignature(t,n,id(n.symbol))
+      if(kind == "method" || kind == "abstract-method") n.symbol.info.foreach(_.signature match {
+        case MethodSignature(_,_,result) => results.add(Result(id(n.symbol),path,t.pos.startLine+1,typeSymbols(result).filterNot(_.isNone).map(id).distinct,result.toString))
+        case _ => ()
+      })
+      t match {
+        case d: Defn.Class =>
+          val access = d.ctor.mods.collectFirst {
+            case m: Mod.Private => if(m.within.syntax.isEmpty || m.within.syntax == "this") "private" else "qualified-private:" + m.within.syntax
+            case m: Mod.Protected => "protected:" + m.within.syntax
+          }.getOrElse("public")
+          constructorAccess.put(id(n.symbol),access)
+        case _ => ()
+      }
       if(kind == "alias" && !mods.exists(_.is[Mod.Opaque])) n.symbol.info.foreach(_.signature match {
         case TypeSignature(_,lo,hi) if lo == hi && hi.nonEmpty => aliasTargets.put(id(n.symbol),typeSymbols(hi).filterNot(_.isNone).map(id).distinct)
         case _ => ()
@@ -177,6 +196,33 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       val category = if(internal) "internal-reference-review" else if(text.startsWith("/**") && module(path) == "plugin-api") "plugin-api-scaladoc-review-visibility"
         else "external-reason-or-naming-review"
       comments.add(List(path,(c.pos.startLine+1).toString,category,text))
+    }
+    doc.tree.collect {
+      case a: Term.Apply =>
+        val s = a.fun.symbol
+        val companionResults = s.info.toList.flatMap(_.signature match {
+          case ClassSignature(_,_,_,members) => members.filter(_.symbol.displayName == "apply").flatMap(_.signature match {
+            case MethodSignature(_,_,result) => typeSymbols(result).filterNot(_.isNone).map(id)
+            case _ => Nil
+          })
+          case _ => Nil
+        }).distinct
+        if(s.isNone || Set("apply","copy")(s.displayName) || companionResults.nonEmpty) {
+          val targets = companionResults ++ s.info.toList.flatMap(_.signature match {
+            case MethodSignature(_,_,result) => typeSymbols(result).filterNot(_.isNone).map(id)
+            case _ => Nil
+          }).distinct
+          constructions.add(Construction(path,a.pos.startLine+1,owner(a),id(s),targets,if(s.isNone) "unresolved-call" else if(companionResults.nonEmpty) "companion-apply-candidates" else s.displayName,a.pos.text,a.structure))
+        }
+      case i: Init =>
+        def base(t: Type): Symbol = t match {
+          case a: Type.Apply => base(a.tpe)
+          case a: Type.Annotate => base(a.tpe)
+          case _ => t.symbol
+        }
+        val target = base(i.tpe)
+        constructions.add(Construction(path,i.pos.startLine+1,owner(i),id(i.symbol),List(id(target)).filter(_.nonEmpty),
+          if(i.parent.exists(_.is[Term.New])) "new" else "parent-initializer",i.pos.text,i.structure))
     }
     doc.tree.collect {
       case v: Defn.Val if v.rhs.is[Lit.String] => expressions.add(List("string-constant",path,(v.pos.startLine+1).toString,owner(v),v.pos.text,v.structure))
@@ -246,6 +292,47 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
     val aliasRefs = directRefs.flatMap(r => expanded(r,Set.empty)).distinct
     write("alias-references.tsv","path\tline\towner\ttarget\tevidence\tpackage",aliasRefs.map(r => List(r.path,r.line.toString,r.owner,r.target,r.shape,r.pkg)))
     val allRefs = directRefs ++ aliasRefs
+    val classes = defs.filter(d => Set("class","case-class")(d.kind))
+    val classIds = classes.map(_.symbol).toSet
+    require(policy.invariantModels.keySet.intersect(policy.plainRecords.toSet).isEmpty,"Conflicting model invariant policy")
+    require((policy.invariantModels.keySet ++ policy.plainRecords).forall(classIds),"Configured invariant model or plain record is absent")
+    require(policy.invariantModels.values.forall(_.trim.nonEmpty),"Invariant policy needs a stated obligation")
+    def resultClasses(target: String, seen: Set[String]): List[String] =
+      if(seen(target)) Nil else if(classIds(target)) List(target)
+      else Option(aliasTargets.get(target)).toList.flatten.flatMap(s => resultClasses(s,seen + target))
+    val sites = constructions.asScala.toList.distinct.sortBy(c => (c.path,c.line,c.callee,c.source))
+    val siteClasses = sites.map(c => c -> c.targets.flatMap(s => resultClasses(s,Set.empty)).distinct)
+    write("construction-sites.tsv","path\tline\towner\tcallee\tkind\tproject-classes\tresult-symbols\tresolution\tsource\tast",siteClasses.map { case(c,cs) =>
+      List(c.path,c.line.toString,c.owner,c.callee,c.kind,cs.mkString(";"),c.targets.mkString(";"),
+        if(cs.nonEmpty) "project-model-candidate" else if(c.targets.isEmpty) "unresolved" else "no-project-class-resolved",c.source,c.ast)
+    })
+    val returns = results.asScala.toList.distinct
+    val constructedByOwner = siteClasses.groupBy(_._1.owner).view.mapValues(_.flatMap(_._2).distinct).toMap
+    val constructionCounts = siteClasses.flatMap(_._2).groupMapReduce(identity)(_ => 1)(_ + _)
+    val factoryRows = returns.flatMap { r =>
+      val constructed = constructedByOwner.getOrElse(r.method,Nil)
+      r.targets.flatMap(s => resultClasses(s,Set.empty)).distinct.map { model =>
+        List(model,r.method,r.path,r.line.toString,r.shape,constructed.mkString(";"),
+          if(constructed.contains(model)) "returns-model-and-has-direct-construction; invariant-unproven" else "returns-model; delegation-or-non-factory-review")
+      }
+    }.sortBy(r => (r.head,r(2),r(3).toInt,r(1)))
+    write("factory-candidates.tsv","model\tmethod\tpath\tline\tresult-type\tdirectly-constructed-models\tstatus",factoryRows)
+    val factoryCounts = factoryRows.groupMapReduce(_.head)(_ => 1)(_ + _)
+    val constructionRows = classes.map { d =>
+      val access = Option(constructorAccess.get(d.symbol)).getOrElse("unresolved")
+      val obligation = policy.invariantModels.get(d.symbol)
+      val status = if(policy.plainRecords.contains(d.symbol)) "configured-no-aggregate-invariant"
+        else if(obligation.nonEmpty && access == "public") "required-invariant; public-constructor-review"
+        else if(obligation.nonEmpty) "required-invariant; preservation-unproven"
+        else "invariant-obligation-review"
+      List(d.symbol,d.path,d.line.toString,d.module,d.kind,access,d.mods,obligation.getOrElse(""),status,
+        constructionCounts.getOrElse(d.symbol,0).toString,factoryCounts.getOrElse(d.symbol,0).toString)
+    }
+    write("model-construction.tsv","model\tpath\tline\tmodule\tkind\tconstructor-access\tclass-modifiers\tinvariant\tstatus\tconstruction-evidence\tfactory-candidates",constructionRows)
+    write("model-construction-counts.tsv","scope\tmodule\tconstructor-access\tstatus\tcount",constructionRows.groupBy(r =>
+      (if(r(1).contains("/src/test/")) "test" else "production",r(3),r(5),r(8))).toList.sortBy(_._1).map {
+        case((scope,module,access,status),rs) => List(scope,module,access,status,rs.size.toString)
+      })
     val visibilityScopes = policy.visibilityScopes ++ policy.visibilityTargets.map(t => t.symbol -> t.scope)
     val databaseOwners = allRefs.filter(r => policy.databasePrefixes.exists(r.target.startsWith)).flatMap(r => enclosingType(r.owner,Set.empty)).toSet
     require(visibilityScopes.keys.forall(bySymbol.contains),"Missing configured visibility target")

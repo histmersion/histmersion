@@ -59,6 +59,9 @@ operations/sources.tsv
 architecture/declarations.tsv
 architecture/type-ownership.tsv
 architecture/dependency-crossings.tsv
+architecture/model-construction.tsv
+architecture/construction-sites.tsv
+architecture/factory-candidates.tsv
 architecture/references.tsv
 architecture/type-references.tsv
 architecture/alias-references.tsv
