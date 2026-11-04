@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.Acquire.{EdgeKinds, Ident, Verdicts}
+import com.histmersion.api.library.Acquire.{EdgeKinds, Verdicts}
 import com.histmersion.api.library.{Acquire, FollowupRow, RetractionNotice, UpdateNotice, WorkRef}
 import com.histmersion.api.library.Source
 
@@ -66,24 +66,24 @@ class AcquireSuite extends munit.FunSuite:
 
   // ── identifiers ─────────────────────────────────────────────────────────────────────────────
   test("DOIs are normalised: resolver prefix, doi: scheme, case and trailing punctuation"):
-    assertEquals(Acquire.normalizeDoi("https://doi.org/10.1038/Nature14317"), Some("10.1038/nature14317"))
-    assertEquals(Acquire.normalizeDoi("doi:10.1038/nature14317"), Some("10.1038/nature14317"))
-    assertEquals(Acquire.normalizeDoi("  10.1038/nature14317.  "), Some("10.1038/nature14317"))
-    assertEquals(Acquire.normalizeDoi("10.1126/science.1078208|"), Some("10.1126/science.1078208"))
-    assertEquals(Acquire.normalizeDoi("not a doi"), None)
+    assertEquals(com.histmersion.domain.library.Doi.normalize("https://doi.org/10.1038/Nature14317"), Some("10.1038/nature14317"))
+    assertEquals(com.histmersion.domain.library.Doi.normalize("doi:10.1038/nature14317"), Some("10.1038/nature14317"))
+    assertEquals(com.histmersion.domain.library.Doi.normalize("  10.1038/nature14317.  "), Some("10.1038/nature14317"))
+    assertEquals(com.histmersion.domain.library.Doi.normalize("10.1126/science.1078208|"), Some("10.1126/science.1078208"))
+    assertEquals(com.histmersion.domain.library.Doi.normalize("not a doi"), None)
 
   test("arXiv ids: prefix and version stripped, both id shapes"):
-    assertEquals(Acquire.normalizeArxiv("arXiv:2301.01234v2"), Some("2301.01234"))
-    assertEquals(Acquire.normalizeArxiv("2301.01234"), Some("2301.01234"))
-    assertEquals(Acquire.normalizeArxiv("math.GT/0211159"), Some("math.GT/0211159"))
-    assertEquals(Acquire.normalizeArxiv("haak2015_massive"), None)
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.arxiv("arXiv:2301.01234v2"), Some("2301.01234"))
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.arxiv("2301.01234"), Some("2301.01234"))
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.arxiv("math.GT/0211159"), Some("math.GT/0211159"))
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.arxiv("haak2015_massive"), None)
 
   test("parseIdent prefers DOI, then arXiv, then citekey"):
-    assertEquals(Acquire.parseIdent("10.1038/nature14317"), Right(Ident.Doi("10.1038/nature14317")))
-    assertEquals(Acquire.parseIdent("arxiv:2301.01234"), Right(Ident.Arxiv("2301.01234")))
-    assertEquals(Acquire.parseIdent("haak2015_massive"), Right(Ident.Citekey("haak2015_massive")))
-    assert(Acquire.parseIdent("").isLeft)
-    assert(Acquire.parseIdent("Some Paper Title").isLeft)
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.parse("10.1038/nature14317"), Right(com.histmersion.domain.library.acquisition.Ident.Doi("10.1038/nature14317")))
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.parse("arxiv:2301.01234"), Right(com.histmersion.domain.library.acquisition.Ident.Arxiv("2301.01234")))
+    assertEquals(com.histmersion.domain.library.acquisition.Ident.parse("haak2015_massive"), Right(com.histmersion.domain.library.acquisition.Ident.Citekey("haak2015_massive")))
+    assert(com.histmersion.domain.library.acquisition.Ident.parse("").isLeft)
+    assert(com.histmersion.domain.library.acquisition.Ident.parse("Some Paper Title").isLeft)
 
   // ── verdicts ────────────────────────────────────────────────────────────────────────────────
   private def v(
@@ -197,7 +197,7 @@ class AcquireSuite extends munit.FunSuite:
   private def csv = scala.io.Source.fromResource("acquire/retraction_watch.csv").mkString
 
   test("Retraction Watch CSV parses by header name, through quoted commas and newlines"):
-    val rows = Acquire.parseRetractionWatch(csv)
+    val rows = Acquire.parseRetractionWatch(csv).flatMap(r => com.histmersion.domain.library.acquisition.Ident.doi(r.doi).map(Acquire.RetractionRow(_, r.reason, r.date, r.nature)))
     assertEquals(rows.size, 3)
     assertEquals(rows.head.doi, "10.1177/1758835919874651")
     assertEquals(rows.head.nature, Some("Retraction"))

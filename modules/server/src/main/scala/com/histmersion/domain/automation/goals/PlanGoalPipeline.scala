@@ -186,7 +186,7 @@ final class PlanGoalPipeline(
           case Right(_) => true
           case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug}' not created — ${e.message}"); false
     }
-    plan.queries.foreach(q => goals.link(slug, LinkKind.SearchQuery, q, Some("from the approved plan")))
+    plan.queries.foreach(q => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.SearchQuery), q, Some("from the approved plan")))
     val queued = workLists
       .kindOf("acquire")
       .toOption
@@ -195,7 +195,7 @@ final class PlanGoalPipeline(
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
       .toMap
     val (inCorpus, outside) = plan.works.partition(w => w.inCorpus && w.citekey.isDefined)
-    inCorpus.foreach(w => goals.link(slug, LinkKind.Source, w.citekey.get, Option(w.why).filter(_.nonEmpty)))
+    inCorpus.foreach(w => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), w.citekey.get, Option(w.why).filter(_.nonEmpty)))
     val items = outside.flatMap { w =>
       queued
         .get(w.doi)
@@ -214,7 +214,7 @@ final class PlanGoalPipeline(
             .map(_.id)
         ) match
         case Right(id) =>
-          goals.link(slug, LinkKind.QueueItem, id.toString, Some(w.doi)); Some(id)
+          goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(w.doi)); Some(id)
         case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None
     }
     goals.setPlan(slug, plan.asJson.noSpaces)

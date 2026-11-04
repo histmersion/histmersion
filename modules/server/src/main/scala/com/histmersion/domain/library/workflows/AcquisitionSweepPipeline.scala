@@ -220,7 +220,7 @@ final class AcquisitionSweepPipeline(
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
   private def liveDiscover(ctx: RunCtx, goal: String): Either[String, Found] =
     agents.host.goal(goal).left.map(_.message).map { g =>
-      val queries = Some(goals.refs(goal, LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
+      val queries = Some(goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
       val found = queries.flatMap { q =>
         upstream().discover(q, cfg.scheduler.discoverPerQuery) match
           case Left(m)  => ctx.warn(s"discover '$q': $m"); Nil
@@ -268,7 +268,9 @@ final class AcquisitionSweepPipeline(
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
     )(upstream().ingestLegal(doi).map { r =>
       val _ =
-        goals.link(goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
+        goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), r.citekey, Some(s"ingested by a watcher sweep: ${
+  p.why
+}".take(500)))
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
           mid,

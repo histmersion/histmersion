@@ -3,9 +3,9 @@ package com.histmersion.domain.automation.approvals
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import io.circe.syntax.*
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 
 /** What the approvals' lists read of a source proposal's payload is what the proposal says: its evidence and quote. */
 class ProposalEvidenceSuite extends munit.FunSuite:

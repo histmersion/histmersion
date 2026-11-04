@@ -6,8 +6,8 @@ import com.histmersion.config.*
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataPatch}
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Finding
 

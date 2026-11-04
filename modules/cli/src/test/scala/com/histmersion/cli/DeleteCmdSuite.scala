@@ -20,10 +20,10 @@ class DeleteCmdSuite extends munit.FunSuite:
       Right(DeleteCmd.Args("page2024_history", apply = false, json = true))
     )
 
-  test("there is no override for a cited source, and a bad citekey is a usage error"):
+  test("no force override; missing arguments fail and citekeys reach server validation"):
     assert(parse("page2024_history", "--force").isLeft)
     assert(parse().isLeft)
-    assert(parse("Page 2024").left.exists(_.errors.mkString.contains("invalid citekey")))
+    assertEquals(parse("Page 2024"), Right(DeleteCmd.Args("Page 2024", apply = false, json = false)))
 
   test("the subcommand is registered under `delete` and says it is a dry run"):
     val top = Command("histmersion", "test")(DeleteCmd.command)

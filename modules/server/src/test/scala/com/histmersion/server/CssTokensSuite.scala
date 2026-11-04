@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.{ConfidenceStyle, MapStack, Palette, Wcag}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.research.ReviewState
 
 /** The colour tokens the code names ([[Palette]]) are defined in the stylesheet it ships. A token the stylesheet lacks

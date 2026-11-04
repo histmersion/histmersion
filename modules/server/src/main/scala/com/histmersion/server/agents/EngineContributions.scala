@@ -52,7 +52,7 @@ object EngineContributions:
     * registered pipelines with the engine's own probe.
     */
   val roster: AgentRoster =
-    AgentRoster(ToolboxOrder.names, (Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct)
+    AgentRoster(ToolboxOrder.names, io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[com.histmersion.domain.automation.AgentRole]].transform((Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct))
 
   /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
   def enrich(a: AgentsHandlers): EnrichManagerKind =

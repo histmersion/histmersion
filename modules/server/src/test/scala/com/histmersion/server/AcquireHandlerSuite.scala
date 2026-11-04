@@ -178,7 +178,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       doi,
       year,
       None,
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,
@@ -268,7 +268,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.applied, Some("retracted"))
     assertEquals(
       SourceFixtures.load(ds, "zzacq_retr").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Retracted)
+      Some(com.histmersion.api.library.Source.Status.Retracted)
     )
     // and the verdict is STORED, so a later lint does not need the network
     assertEquals(AcquisitionTesting.assessments(ds).lastFor("zzacq_retr").map(_._1), Some("retracted"))
@@ -287,7 +287,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.applied, None) // no --apply
     assertEquals(
       SourceFixtures.load(ds, "zzacq_ok").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Current)
+      Some(com.histmersion.api.library.Source.Status.Current)
     )
 
   // #699: assess --apply overwrote contested (with a challenges edge behind it) with current
@@ -296,30 +296,30 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source("zzacq_kept", Some("10.1038/zzkept"))
-        .copy(status = com.histmersion.domain.library.Source.Status.Contested),
+        .copy(status = com.histmersion.api.library.Source.Status.Contested),
       cfg.limits.chunkChars
     )
     val h = handlers()
     val a = h.assess(AssessRequest("zzacq_kept", apply = true)).fold(e => fail(e.message), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
-    assertEquals((a.applied, a.kept), (None, Some(com.histmersion.domain.library.Source.Status.Contested)))
+    assertEquals((a.applied, a.kept), (None, Some(com.histmersion.api.library.Source.Status.Contested)))
     assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
     assertEquals(
       SourceFixtures.load(ds, "zzacq_kept").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Contested)
+      Some(com.histmersion.api.library.Source.Status.Contested)
     )
 
     val f = h.assess(AssessRequest("zzacq_kept", apply = true, forceStatus = true)).fold(e => fail(e.message), identity)
     assertEquals((f.applied, f.kept), (Some("current"), None))
     assertEquals(
       SourceFixtures.load(ds, "zzacq_kept").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Current)
+      Some(com.histmersion.api.library.Source.Status.Current)
     )
 
     SourceFixtures.upsert(
       ds,
       source("zzacq_retr2", Some("10.1177/zzretracted2"))
-        .copy(status = com.histmersion.domain.library.Source.Status.Foundational),
+        .copy(status = com.histmersion.api.library.Source.Status.Foundational),
       cfg.limits.chunkChars
     )
     AcquisitionTesting
@@ -334,7 +334,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.applied, Some("retracted"))
     assertEquals(
       SourceFixtures.load(ds, "zzacq_retr2").map(_.status),
-      Some(com.histmersion.domain.library.Source.Status.Retracted)
+      Some(com.histmersion.api.library.Source.Status.Retracted)
     )
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
@@ -414,7 +414,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(stored.edges.map(_.dst), List("zzacq_ref"))
     assertEquals(r.assessment.map(_.verdict), Some(Acquire.Verdicts.Current))
     // a freshly created source takes the verdict as its status
-    assertEquals(stored.status, com.histmersion.domain.library.Source.Status.Current)
+    assertEquals(stored.status, com.histmersion.api.library.Source.Status.Current)
     wipe("zzacq_ingested", "zzacq_ref")
 
   test("a fetched copy's licence becomes the source's, never over one already recorded (#2560)"):

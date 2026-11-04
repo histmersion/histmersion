@@ -35,7 +35,7 @@ trait ManagerKindDefinition:
   /** A manager's settings in effect: its saved config `c` over the defaults of its kind (by default the run limits,
     * failures and backoff the engine knows; a kind whose items have more to set reads them itself).
     */
-  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(kind, c, m)
+  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Manager.Kind, com.histmersion.domain.automation.Manager.Kind].transform(kind), c, m)
 
   /** The pipeline an item of `itemKind` runs. */
   def pipelineOf(itemKind: String): Pipeline

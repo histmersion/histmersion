@@ -263,7 +263,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(rg.statusCode, 200, rg.body)
       assertEquals(
         decode[LabelRenamed](rg.body),
-        LabelRenamed(com.histmersion.util.data.exchange.Bundle.Kind.Goal, "zz-goal-a", "zz-goal-b")
+        LabelRenamed(com.histmersion.api.exchange.Bundle.Kind.Goal, "zz-goal-a", "zz-goal-b")
       )
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
       val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))

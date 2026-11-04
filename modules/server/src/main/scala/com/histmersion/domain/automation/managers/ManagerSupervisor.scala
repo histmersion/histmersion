@@ -208,7 +208,7 @@ final class ManagerSupervisor(
       .find(_.kind == k)
       .fold(
         ReviewSettings
-          .forKind(k.transformInto[com.histmersion.api.automation.Manager.Kind], m.config, managerDefaults)
+          .forKind(k.transformInto[com.histmersion.domain.automation.Manager.Kind], m.config, managerDefaults)
       )(_.settings(m.config, managerDefaults))
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
@@ -282,7 +282,7 @@ final class ManagerSupervisor(
       item.failures,
       item.state,
       run,
-      st.transformInto[com.histmersion.api.automation.Run.State],
+      st.transformInto[com.histmersion.domain.automation.Run.State],
       error,
       kind.facts(this, item, run),
       now
@@ -351,8 +351,8 @@ final class ManagerSupervisor(
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
-  def approvalFacts(run: String, kind: ApprovalKind, none: String): StepFacts =
-    agents.approvalStore.approvalsOf(run, Some(kind)).lastOption match
+  def approvalFacts(run: String, kind: com.histmersion.domain.automation.Approval.Kind, none: String): StepFacts =
+    agents.approvalStore.approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind])).lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
         StepFacts.Waiting(a.id, s"approval #${a.id} waits for a person")
@@ -589,15 +589,7 @@ final class ManagerSupervisor(
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
       )
       val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending)
-      val base = ManagerPolicy.statusNote(
-        State.Active,
-        starved,
-        if full then 0 else 1,
-        pending,
-        waits.size,
-        agents.managerStore.running(m.id),
-        blocked
-      )
+      val base = ManagerPolicy.statusNote(com.histmersion.domain.automation.Manager.State.Active, starved, if full then 0 else 1, pending, waits.size, agents.managerStore.running(m.id), blocked)
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
         case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.take(200)}"
         case None    => base
@@ -618,7 +610,7 @@ final class ManagerSupervisor(
               .setStatusNote(
                 m.id,
                 ManagerPolicy.statusNote(
-                  st.transformInto[com.histmersion.api.automation.Manager.State],
+                  st.transformInto[com.histmersion.domain.automation.Manager.State],
                   None,
                   0,
                   m.counts.pending,
@@ -838,14 +830,14 @@ final class ManagerSupervisor(
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
-  def approvalsOf(run: String, kind: ApprovalKind): List[ApprovalInfo] =
-    agents.approvalStore.approvalsOf(run, Some(kind))
+  def approvalsOf(run: String, kind: com.histmersion.domain.automation.Approval.Kind): List[ApprovalInfo] =
+    agents.approvalStore.approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
   def unsettledOn(target: String): Seq[RunInfo] = agents.runs.unsettledOn(target)
   def runsFor(p: Pipeline, target: String): Seq[RunInfo] = agents.runs.forTarget(p, target)
   def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
   def parentOf(slug: String): Option[String] = agents.goals.get(slug).flatMap(_.parentSlug)
   def linkGoal(goal: String, kind: Goal.Plans.LinkKind, ref: String, note: Option[String]): Unit =
-    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.api.automation.Goal.LinkKind], ref, note)
+    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref, note)
   def goalLinks(goal: String, kind: Goal.Plans.LinkKind): List[String] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
   def sharedIngestLeft(now: Instant): Option[Int] = agents.autopilot.sharedIngestLeft(now)

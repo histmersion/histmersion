@@ -4,7 +4,7 @@ import com.histmersion.api.given
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.{Article, Articles}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Coverage
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing

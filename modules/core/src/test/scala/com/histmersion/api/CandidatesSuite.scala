@@ -25,9 +25,9 @@ class CandidatesSuite extends munit.FunSuite:
   test(
     "a work's key is its DOI, lower case without a resolver; an arXiv preprint without one gets arXiv's DataCite DOI"
   ):
-    assertEquals(Candidates.keyOf(w("https://doi.org/10.1234/ABC")), Some("10.1234/abc"))
-    assertEquals(Candidates.keyOf(WorkRef(arxivId = Some("2401.01234v3"))), Some("10.48550/arxiv.2401.01234"))
-    assertEquals(Candidates.keyOf(WorkRef(title = Some("no id"))), None)
+    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(w("https://doi.org/10.1234/ABC")), Some("10.1234/abc"))
+    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(arxivId = Some("2401.01234v3"))), Some("10.48550/arxiv.2401.01234"))
+    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(title = Some("no id"))), None)
 
   test("a watch reads from its watermark, or (never read) the look-back before today"):
     val today = LocalDate.of(2026, 10, 24)
@@ -45,7 +45,7 @@ class CandidatesSuite extends munit.FunSuite:
       "europepmc query \"x\"" -> w("10.1234/known"),
       "arxiv query \"x\"" -> WorkRef(arxivId = Some("2401.00001"), title = Some("P"))
     )
-    val (kept, skipped) = Candidates.dedupe(found, Set("10.1234/known"))
+    val (kept, skipped) = com.histmersion.domain.library.acquisition.CandidateDedupe.dedupe(found, Set("10.1234/known"))
     assertEquals(
       kept.map(k => (k._1, k._3)),
       List(

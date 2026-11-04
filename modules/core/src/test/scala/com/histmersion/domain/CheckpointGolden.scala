@@ -17,9 +17,9 @@ import com.histmersion.domain.EnrichSource.{
 }
 import com.histmersion.domain.ReviewArticle.{Check, Evidence, Merged, Report, Reviewer, Severity, SpotCheck, Verdict}
 import io.circe.{Decoder, Encoder}
-import com.histmersion.domain.automation.Approval
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it

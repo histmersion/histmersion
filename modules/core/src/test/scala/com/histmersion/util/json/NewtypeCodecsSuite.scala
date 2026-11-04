@@ -1,5 +1,5 @@
 package com.histmersion.util.json
-import com.histmersion.api.jobs.JobInfo
+import com.histmersion.util.jobs.Job as JobInfo
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Decoder, Encoder, Json}
@@ -19,12 +19,12 @@ import com.histmersion.domain.library.Pmid
 import com.histmersion.domain.library.Title
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.Licence
-import com.histmersion.api.automation.Goal
-import com.histmersion.api.automation.Run
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.Run
 import com.histmersion.domain.catalogue.Event
-import com.histmersion.api.catalogue.Place
+import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.places.Wikidata
-import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Source
 import com.histmersion.domain.media.Asset
 import com.histmersion.domain.research.Article
 import com.histmersion.util.plugins.Plugin

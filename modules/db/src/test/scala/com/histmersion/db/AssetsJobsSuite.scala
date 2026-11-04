@@ -41,7 +41,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = com.histmersion.domain.library.Source.Status.Unassessed,
+    status = com.histmersion.api.library.Source.Status.Unassessed,
     topics = Nil,
     regions = Nil,
     tags = Nil,

@@ -3,8 +3,8 @@ package com.histmersion.cli
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Finding
 

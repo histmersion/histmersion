@@ -21,13 +21,13 @@ class PlanRunsSuite extends munit.FunSuite:
         es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(name, uid(name), "2026-01-01T00:00:00.000000Z")
       )
     override def notices: List[String] = List(s"$name notice")
-    override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
+    override def ownerSource(foreign: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
     override def bodiesWanted(
         pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
     ): Set[String] = Set(name)
     override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
       Option.when(answers)(Left(name))
-    override def pairIssue(kind: Issue.Kind): Boolean = answers && kind == Issue.Kind.AttestationUnanchored
+    override def pairIssue(kind: com.histmersion.api.exchange.MergeIssue.Kind): Boolean = answers && kind == com.histmersion.api.exchange.MergeIssue.Kind.AttestationUnanchored
     override def dropped: Set[UUID] = Set(uid(name))
     override def bodyIssue(right: UUID): Option[String] = Option.when(answers)(name)
     override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
@@ -49,7 +49,7 @@ class PlanRunsSuite extends munit.FunSuite:
   private object NoFolds extends PlanFolds:
     def input: com.histmersion.domain.MergePlanner.Input = fail("not asked")
     def localized: BundleEntities = BundleEntities()
-    def fold(foreign: UUID, here: UUID, kind: Bundle.Kind): Unit = ()
+    def fold(foreign: UUID, here: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Unit = ()
     def foldedTo(foreign: UUID): Option[UUID] = None
     def here(u: UUID): Boolean = false
     def toLocal(u: UUID): UUID = u
@@ -61,9 +61,9 @@ class PlanRunsSuite extends munit.FunSuite:
   private val issue =
     MergeIssue(
       "E-00000000",
-      Issue.Kind.LabelTaken,
-      Issue.Severity.Blocking,
-      Bundle.Kind.Event,
+      com.histmersion.api.exchange.MergeIssue.Kind.LabelTaken,
+      com.histmersion.api.exchange.MergeIssue.Severity.Blocking,
+      com.histmersion.api.exchange.Bundle.Kind.Event,
       "x",
       None,
       None,
@@ -78,14 +78,14 @@ class PlanRunsSuite extends munit.FunSuite:
     assertEquals(runs.dropped, Set(uid("a"), uid("b"), uid("c")))
 
   test("the stages that ask take the first kind that answers"):
-    assertEquals(runs.ownerSource(uid("x"), Bundle.Kind.Attestation), Some(uid("b")))
-    assertEquals(runs.argument(issue, MergeDecision(DecisionKind.RenameRight, Some("y"))), Some(Left("b")))
-    assert(runs.pairIssue(Issue.Kind.AttestationUnanchored))
-    assert(!runs.pairIssue(Issue.Kind.TitleDiffers))
-    assertEquals(PlanRuns(Nil).ownerSource(uid("x"), Bundle.Kind.Attestation), None)
+    assertEquals(runs.ownerSource(uid("x"), com.histmersion.api.exchange.Bundle.Kind.Attestation), Some(uid("b")))
+    assertEquals(runs.argument(issue, MergeDecision(com.histmersion.api.exchange.MergeDecision.Kind.RenameRight, Some("y"))), Some(Left("b")))
+    assert(runs.pairIssue(com.histmersion.api.exchange.MergeIssue.Kind.AttestationUnanchored))
+    assert(!runs.pairIssue(com.histmersion.api.exchange.MergeIssue.Kind.TitleDiffers))
+    assertEquals(PlanRuns(Nil).ownerSource(uid("x"), com.histmersion.api.exchange.Bundle.Kind.Attestation), None)
     assertEquals(runs.bodyIssue(uid("x")), Some("b"))
-    assertEquals(runs.citekeyArgument(issue, MergeDecision(DecisionKind.Map, Some("y"))), Some(Left("b citekey")))
-    assertEquals(PlanRuns(Nil).citekeyArgument(issue, MergeDecision(DecisionKind.Map, Some("y"))), None)
+    assertEquals(runs.citekeyArgument(issue, MergeDecision(com.histmersion.api.exchange.MergeDecision.Kind.Map, Some("y"))), Some(Left("b citekey")))
+    assertEquals(PlanRuns(Nil).citekeyArgument(issue, MergeDecision(com.histmersion.api.exchange.MergeDecision.Kind.Map, Some("y"))), None)
 
   test("the sources' fold and rename reach every kind; the plan passes through each in turn"):
     seen.clear()
@@ -98,7 +98,7 @@ class PlanRunsSuite extends munit.FunSuite:
       None,
       None,
       None,
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,

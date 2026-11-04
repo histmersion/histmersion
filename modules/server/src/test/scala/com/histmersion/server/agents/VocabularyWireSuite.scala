@@ -4,11 +4,11 @@ import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.CompileArticle.SourceFact
-import com.histmersion.domain.research.DraftMode
-import com.histmersion.domain.automation.ScheduleKind
+import com.histmersion.api.research.DraftMode
+import com.histmersion.api.automation.ScheduleKind
 import io.circe.syntax.*
-import com.histmersion.domain.automation.Goal
-import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Source
 
 /** The vocabularies live in `values` with no codec; their wire instances are api's `VocabularyCodecs`. A record the
   * server derives a codec for must find those — a vocabulary encoded any other way (by case name, as an object) would

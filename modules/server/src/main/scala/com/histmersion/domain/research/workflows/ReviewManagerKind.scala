@@ -95,7 +95,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item.failures,
       item.state,
       run,
-      st.transformInto[com.histmersion.api.automation.Run.State],
+      st.transformInto[com.histmersion.domain.automation.Run.State],
       error,
       facts,
       task,
@@ -147,7 +147,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
     lazy val progress = c.progress(run)
     item.kind match
-      case InferFilter   => c.approvalFacts(run, ApprovalKind.ArticleFilter, s"no filter proposed — $progress")
+      case InferFilter   => c.approvalFacts(run, com.histmersion.domain.automation.Approval.Kind.ArticleFilter, s"no filter proposed — $progress")
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written => StepFacts.Finished(s"extended (${w.why})")

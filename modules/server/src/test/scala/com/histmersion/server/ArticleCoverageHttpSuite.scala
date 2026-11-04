@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.research.{ArticleMarkdown, Coverage, CritiqueState, DriftKind}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:

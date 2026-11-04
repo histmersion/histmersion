@@ -235,7 +235,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         None,
         Some(2020),
         None,
-        com.histmersion.domain.library.Source.Status.Current,
+        com.histmersion.api.library.Source.Status.Current,
         Nil,
         Nil,
         Nil,

@@ -58,6 +58,6 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(s), api.library.Acquire.normalizeDoi(s), s)
-      assertEquals(Identifiers.arxiv(s), api.library.Acquire.normalizeArxiv(s), s)
+      assertEquals(Identifiers.doi(s), com.histmersion.domain.library.Doi.normalize(s), s)
+      assertEquals(Identifiers.arxiv(s), com.histmersion.domain.library.acquisition.Ident.arxiv(s), s)
     }

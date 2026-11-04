@@ -1,0 +1,76 @@
+# Detector results
+
+Baseline: `6e1b5387`. Production compiler repairs have now been applied through Scalafix. Build files remain unchanged.
+
+## Current checkpoint
+
+The readiness matrix now accounts for all 43 goals. Its command parses all 3,125 Scala source/test files, runs two structural fixture files and passes all 24 structural source assertions. It reports 50 structural findings (34 primitive roles, 12 repository visibility, four Handlers declarations). G10's exact production-package constraint is measured; 42 goals remain partial/unmeasured, so readiness intentionally fails.
+
+Production compilation now passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 21 guarded capability source assertions pass. It reports the same 432 policy findings as the earlier provisional inventory. Compiler repair enables trustworthy measurement; it does not remove those architectural violations.
+
+| Configured check | Findings across all normally compiled main files |
+|---|---:|
+| Environment | 8 |
+| System properties | 12 |
+| Console output | 204 |
+| Clock | 103 |
+| Process lifecycle | 11 |
+| Filesystem | 67 |
+| HTTP | 1 |
+| External configuration loading | 0 |
+| Process execution/dependency | 7 |
+| Repository factory dependency | 0 |
+| Repository transaction lifecycle | 19 |
+| Total | 432 |
+
+The transaction count includes one known helper-call witness: `QueryRepo.run -> QueryRepo.exec -> Connection.setAutoCommit`. These are source-reference/call-site counts, not independent business operations. Repository helpers are followed across files, aliases and recursive paths; dynamic dispatch and callback targets are not fully modeled. Chained capability dependencies are deduplicated. A discovered cross-file local-symbol collision was reproduced in a failing regression fixture and corrected before retaining these results.
+
+Six normally compiled semantic fixture files assert 37 diagnostics, with no unexpected findings. A separate intentionally broken compilation fixture asserts two known findings; normal verification correctly refuses its provisional evidence. Structural fixtures assert 18 diagnostics and protect launcher lookalikes, DOM handlers, nested package roots and repository visibility boundaries.
+
+The ordinary audit exits 1 because violations remain, including the indirect repository witness. Coverage and all source assertions pass. Current details are in `capabilities/`, the goal matrix in `migration/coverage-matrix.md`, and reproduction instructions in `../tools/refactor/README.md`.
+
+Aggregate `Test/compile` now passes across the repository. Core's 817 tests pass across the initial run and the successful rerun of the two repaired suites. Compiler repairs and test updates use Scalafix AST patches; production and test repair check modes verify idempotence. Database integration tests have only been compiled, not executed against a live database.
+
+The complete CLI suite passes (232 tests), the files suite passes (73 tests), and the selected server suites pass (43 tests: PersonalTypes, PersonalControllers, VocabularyWire, AgentsSettings and Pages). The server regression rejects invalid/non-finite coordinates while accepting coordinate limits. CLI tests assert wire-input preservation instead of obsolete client-side validation; domain validation remains covered in core. The full server runtime suite and native builds were not run. `git diff --check` passes.
+
+## Historical initial run
+
+The following snapshot predates helper-call analysis, chain deduplication and best-effort metadata. It explains the earlier 88 count; it is not the current baseline.
+
+The semantic detector analyzed 1,664 of 2,355 main-source files. All compiled
+modules, including web, are covered. Server (617 files) and CLI (74 files) lack
+SemanticDB because the inherited refactor does not compile there. The audit fails
+with incomplete coverage rather than claiming success.
+
+| Configured check | Direct findings |
+|---|---:|
+| Environment | 2 |
+| System properties | 5 |
+| Console output | 3 |
+| Clock | 10 |
+| Process lifecycle | 1 |
+| Filesystem | 39 |
+| HTTP | 1 |
+| External configuration loading | 0 |
+| Process execution/dependency | 9 |
+| Repository factory dependency | 0 |
+| Repository transaction lifecycle | 18 |
+
+These 88 findings are policy matches requiring review. In particular, the
+current plugin package scope includes plugin-testkit infrastructure; its intended
+adapter permissions need review. Zero findings in a category is not proof of
+compliance across missing sources or unsupported call patterns.
+
+Repository lifecycle findings include commit, rollback and auto-commit control in
+GazetteerRepo (14), QueryRepo (3) and VacuumRepo (1). Moving ownership must preserve
+their batch, read-only query and maintenance behavior; no automatic fix was applied.
+
+Four compiled fixture files assert 31 exact diagnostics, with no diagnostics on
+their valid look-alikes and allowed boundary accesses. Positive fixture verification
+exits 0. Normal lint verification exits 64. Tests also establish failures for an
+unknown capability, a misspelled configuration key, a deliberately suppressed
+required diagnostic and omitted fixture files.
+
+The broader AST inventory remains exploratory. Its checklist records G1–G43,
+including unmeasured checks; it is not an acceptance gate. Full details and
+reproduction commands are in ../tools/refactor/README.md.

@@ -13,7 +13,7 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Tree.TreeRow
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Bucket, Filter, Finding, Source}
@@ -89,7 +89,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = Some(2021),
     venue = None,
-    status = com.histmersion.domain.library.Source.Status.Current,
+    status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = List(Tag),

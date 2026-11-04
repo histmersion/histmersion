@@ -41,7 +41,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
       None,
       year,
       None,
-      com.histmersion.domain.library.Source.Status.Current,
+      com.histmersion.api.library.Source.Status.Current,
       Nil,
       Nil,
       Nil,

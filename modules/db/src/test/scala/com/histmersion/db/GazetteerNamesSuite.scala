@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 import com.augustnagro.magnum.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{Geocode, Lpf, Period}
@@ -266,7 +266,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2025),
       venue = None,
-      status = com.histmersion.domain.library.Source.Status.Current,
+      status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,
       regions = Nil,
       tags = Nil,

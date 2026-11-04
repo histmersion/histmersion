@@ -13,17 +13,17 @@ class RenameSuite extends munit.FunSuite:
 
   test("validate: a valid, link-shaped, different key passes (trimmed)"):
     assertEquals(
-      Rename.validate("page2024_history", " page1959_history ").map(ck => ck.value: String),
+      com.histmersion.domain.library.sources.Citekeys.renameTo("page2024_history", " page1959_history ").map(ck => ck.value: String),
       Right("page1959_history")
     )
-    assertEquals(Rename.validate("x2020_a", "knapp2016").map(ck => ck.value: String), Right("knapp2016"))
+    assertEquals(com.histmersion.domain.library.sources.Citekeys.renameTo("x2020_a", "knapp2016").map(ck => ck.value: String), Right("knapp2016"))
 
   test("validate: the same key, an invalid key and a key the link resolver would not take are refused"):
     def refused(to: String, says: String) =
-      Rename.validate("page2024_history", to) match
+      com.histmersion.domain.library.sources.Citekeys.renameTo("page2024_history", to) match
         case Left(e) =>
-          assertEquals(e.code, Some(Write.CodeInvalid))
-          assert(e.message.contains(says), e.message)
+          assert(e.nonEmpty)
+          assert(e.contains(says), e)
         case Right(k) => fail(s"$to should be refused, got $k")
     refused("page2024_history", "already the citekey")
     refused("Page 1959", "invalid citekey")

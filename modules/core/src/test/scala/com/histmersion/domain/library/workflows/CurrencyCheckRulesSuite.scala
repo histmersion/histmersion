@@ -8,7 +8,7 @@ import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.domain.AgentProposals.Proposal
 import CurrencyCheckRules.*
 import com.histmersion.api.library.FollowupRow
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Edge
 
 /** What a currency check makes of a paper citing a source. */
 class CurrencyCheckRulesSuite extends munit.FunSuite:

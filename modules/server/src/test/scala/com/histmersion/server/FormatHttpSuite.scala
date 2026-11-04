@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.catalogue.{Lpf, Place}
 import com.histmersion.api.checks.{FormatField, FormatReport, FormatRule, Lint}
-import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 

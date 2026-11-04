@@ -13,7 +13,7 @@ import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.research.workflows.ReviewComparison
 import io.circe.syntax.*
 import com.histmersion.api.catalogue.Period
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote check read back
   * from accepted AND rejected answers, the claims only one run made, and the major findings two review runs share.

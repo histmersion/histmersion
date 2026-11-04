@@ -17,7 +17,7 @@ import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.augustnagro.magnum.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.api.catalogue.{EventPut, Geocode, Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
@@ -113,7 +113,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       doi = None,
       year = Some(2011),
       venue = None,
-      status = com.histmersion.domain.library.Source.Status.Current,
+      status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,
       regions = List("Zzia region"),
       tags = tags,

@@ -4,7 +4,7 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.personal.{MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
-import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 
 /** What a bookmark or a note points at, from the command line: `<kind> [<id>]` and the flags of a point on the map, a
   * view or a period.

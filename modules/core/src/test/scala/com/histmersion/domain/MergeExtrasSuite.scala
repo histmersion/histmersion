@@ -17,8 +17,8 @@ import MergeFixture.*
 import io.circe.Json
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{IssueHunk, IssueSpan, MergeResolution, MergeResolutions}
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.MergeIssue as Issue
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and

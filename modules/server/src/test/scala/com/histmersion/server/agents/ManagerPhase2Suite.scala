@@ -24,7 +24,7 @@ import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.MetadataPatch
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter

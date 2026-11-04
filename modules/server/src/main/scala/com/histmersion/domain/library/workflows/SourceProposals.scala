@@ -45,9 +45,9 @@ final class SourceProposals(
       runId,
       p.kind,
       p.citekey,
-      p.status.transformInto[Option[com.histmersion.api.library.Source.Status]],
-      now.transformInto[Option[com.histmersion.api.library.Source.Status]],
-      p.edgeKind.transformInto[Option[com.histmersion.api.library.Edge.Kind]],
+      p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+      now.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+      p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]],
       p.target,
       com.histmersion.util.database.Jsonb.write(p),
       state,
@@ -58,12 +58,7 @@ final class SourceProposals(
   def propose(runId: Option[String], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
-    AgentProposals.route(
-      p,
-      now.transformInto[Option[com.histmersion.api.library.Source.Status]],
-      cfg.approvals.statusMode,
-      cfg.approvals.edgeMode
-    ) match
+    AgentProposals.route(p, now.transformInto[Option[com.histmersion.api.library.Source.Status]], cfg.approvals.statusMode.transformInto[com.histmersion.api.automation.Approval.Mode], cfg.approvals.edgeMode.transformInto[com.histmersion.api.automation.Approval.Mode]) match
       case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
       case Route.Apply     =>
         apply(p) match

@@ -12,8 +12,8 @@ import com.histmersion.config.given
 
 import BundlePlan.Decision
 import MergeFixture.*
-import com.histmersion.util.data.exchange.DecisionKind
-import com.histmersion.domain.library.{EditionsPolicy, MatchMethod, MatchOutcome}
+import com.histmersion.api.exchange.MergeDecision.Kind as DecisionKind
+import com.histmersion.api.exchange.EditionsPolicy, com.histmersion.api.library.{MatchMethod, MatchOutcome}
 import com.histmersion.api.exchange.{
   IssueCondition,
   MatchCounts,
@@ -26,8 +26,8 @@ import com.histmersion.api.exchange.{
   MergeResolution,
   MergeResolutions
 }
-import com.histmersion.util.data.exchange.Bundle
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.MergeIssue as Issue
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in
   * one run, conditional issues, resolutions (stale, invalid, partial), the editions policy, and the properties —

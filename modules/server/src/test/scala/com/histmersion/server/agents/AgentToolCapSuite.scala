@@ -20,7 +20,7 @@ import io.circe.syntax.*
 import java.nio.file.Path
 import com.histmersion.db.*
 import com.histmersion.api.ocr.ConvertedDoc
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings

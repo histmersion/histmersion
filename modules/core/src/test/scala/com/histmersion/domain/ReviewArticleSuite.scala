@@ -8,7 +8,7 @@ import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.research.{CitedSource, Coverage}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,

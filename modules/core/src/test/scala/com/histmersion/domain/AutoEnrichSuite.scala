@@ -4,7 +4,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.automation.Agents.RunState
+import com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.AutoEnrich.*
 
 class AutoEnrichSuite extends munit.FunSuite:
@@ -23,14 +23,14 @@ class AutoEnrichSuite extends munit.FunSuite:
     assertEquals(decide(true, true, 0, Some("   "), Nil), Right(()))
 
   test("a pending or finished enrich run covers the source; a failed or cancelled one does not"):
-    List(RunState.Queued, RunState.Running, RunState.Paused, RunState.WaitingApproval, RunState.Done).foreach { st =>
+    List(com.histmersion.domain.automation.Run.State.Queued, com.histmersion.domain.automation.Run.State.Running, com.histmersion.domain.automation.Run.State.Paused, com.histmersion.domain.automation.Run.State.WaitingApproval, com.histmersion.domain.automation.Run.State.Done).foreach { st =>
       assertEquals(
         decide(true, true, 0, None, List(PriorRun("r1", st))),
         Left(Skip.Enriched(s"enrich-source run r1 is ${st.wire}"))
       )
     }
     assertEquals(
-      decide(true, true, 0, None, List(PriorRun("r1", RunState.Failed), PriorRun("r2", RunState.Cancelled))),
+      decide(true, true, 0, None, List(PriorRun("r1", com.histmersion.domain.automation.Run.State.Failed), PriorRun("r2", com.histmersion.domain.automation.Run.State.Cancelled))),
       Right(())
     )
 

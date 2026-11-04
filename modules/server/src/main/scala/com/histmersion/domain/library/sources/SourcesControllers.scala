@@ -89,10 +89,7 @@ final class SourcesControllers(
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patch(citekey: String, p: Source.Patch, strict: Boolean = false): Either[Api.Error, Source.WithFindings] =
     maintenance.guard("patch_source"):
-      Citekey
-        .of(citekey)
-        // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
-        .flatMap(_ => strictGate(strict, formatting.issues(p.summary, p.notes)))
+      Citekey.parse(citekey).left.map(Api.Error(_)).flatMap(_ => strictGate(strict, formatting.issues(p.summary, p.notes)))
         .flatMap(_ => sources.patch(citekey, p, Caller.Local))
         .flatMap(_ => get(citekey))
         .map(withFormatting)

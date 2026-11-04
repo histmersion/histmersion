@@ -65,11 +65,13 @@ final class OaBacklog(
     IngestBacklog.place(site.sourceStore.citekeyOfDoi(doi), acquire, open.map(_.id), settled) match
       case p @ Placement.InCorpus(ck) =>
         val _ =
-          agents.goals.link(goal, LinkKind.Source, ck, Some(s"found again by a watcher sweep: ${w.why}".take(500)))
+          agents.goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some(s"found again by a watcher sweep: ${
+  w.why
+}".take(500)))
 
         p
       case p @ Placement.JoinAcquire(id) =>
-        val _ = agents.goals.link(goal, LinkKind.QueueItem, id.toString, Some(doi))
+        val _ = agents.goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(doi))
         p
       case p @ Placement.JoinBacklog(id) =>
         open.foreach { i =>
@@ -228,7 +230,9 @@ final class OaBacklog(
     site.sourceStore.citekeyOfDoi(doi) match
       case Some(ck) =>
         goals.foreach(g =>
-          agents.goals.link(g, LinkKind.Source, ck, Some(s"found by a watcher sweep: ${w.why}".take(500)))
+          agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some(s"found by a watcher sweep: ${
+  w.why
+}".take(500)))
         )
         settle(
           ItemStatus.Done,
@@ -241,12 +245,9 @@ final class OaBacklog(
         upstream().ingestLegal(doi) match
           case Right(r) =>
             goals.foreach(g =>
-              agents.goals.link(
-                g,
-                LinkKind.Source,
-                r.citekey,
-                Some(s"ingested from a watcher's backlog: ${w.why}".take(500))
-              )
+              agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), r.citekey, Some(s"ingested from a watcher's backlog: ${
+  w.why
+}".take(500)))
             )
             settle(
               ItemStatus.Done,
@@ -291,7 +292,7 @@ final class OaBacklog(
 
   private def settingsOf(managerId: String): ManagerPolicy.ReviewSettings =
     val c = agents.managerStore.get(managerId).map(_.config).getOrElse(ManagerConfig())
-    ManagerPolicy.ReviewSettings.forKind(Kind.Watch, c, managerDefaults)
+    ManagerPolicy.ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
@@ -324,7 +325,7 @@ final class OaBacklog(
         .toOption
         .map(_.id)
     }
-    id.foreach(i => goals.foreach(g => agents.goals.link(g, LinkKind.QueueItem, i.toString, Some(doi))))
+    id.foreach(i => goals.foreach(g => agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), i.toString, Some(doi))))
     id
 
   // ── the one-shot repair ────────────────────────────────────────────────────────────────────────
@@ -358,7 +359,7 @@ final class OaBacklog(
         case RepairAction.Keep(why)  => RepairRow(item, first.doi, goals, first.managerId, Keep, why)
         case RepairAction.Remove(ck) =>
           if !in.dryRun then
-            goals.foreach(g => agents.goals.link(g, LinkKind.Source, ck, Some("found by a watcher sweep")))
+            goals.foreach(g => agents.goals.link(g, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), ck, Some("found by a watcher sweep")))
             removeAcquire(item, goals)
           RepairRow(item, first.doi, goals, first.managerId, Remove, s"in the corpus already: [[$ck]]")
         case RepairAction.Move =>
@@ -455,7 +456,7 @@ final class OaBacklog(
 
   private def removeAcquire(item: Int, goals: List[String]): Unit =
     val _ = site.workLists.delete(item)
-    goals.foreach(g => agents.goals.unlink(g, LinkKind.QueueItem, item.toString))
+    goals.foreach(g => agents.goals.unlink(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, item.toString))
 
 object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),

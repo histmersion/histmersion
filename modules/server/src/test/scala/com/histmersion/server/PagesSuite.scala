@@ -2,9 +2,9 @@ package com.histmersion.server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.library.Confidence
+import com.histmersion.api.library.Confidence
 import com.histmersion.api.research.{CitedSource, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
-import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
 

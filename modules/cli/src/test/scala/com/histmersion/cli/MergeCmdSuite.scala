@@ -3,7 +3,7 @@ package com.histmersion.cli
 import com.histmersion.config.*
 import com.monovore.decline.Command
 import java.nio.file.Files
-import com.histmersion.domain.library.EditionsPolicy
+import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
 
 /** `histmersion merge plan` and the resolution flags of `bundle import`: they parse, and the file plus the flags make

@@ -84,8 +84,8 @@ final class CurrencyCheckPipeline(
             val known = ctx.approvalStore.proposedBefore(
               p.kind,
               p.citekey,
-              p.status.transformInto[Option[com.histmersion.api.library.Source.Status]],
-              p.edgeKind.transformInto[Option[com.histmersion.api.library.Edge.Kind]],
+              p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+              p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]],
               p.target
             ) ||
               site.citations
