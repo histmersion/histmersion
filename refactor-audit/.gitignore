@@ -56,6 +56,10 @@ operations/occurrences.tsv
 operations/sources.tsv
 architecture/declarations.tsv
 architecture/references.tsv
+architecture/type-references.tsv
+architecture/alias-references.tsv
+architecture/visibility-candidates.tsv
+architecture/visibility-consumers.tsv
 architecture/comments.tsv
 architecture/expressions.tsv
 architecture/services.tsv

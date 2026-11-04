@@ -49,8 +49,19 @@ class ArchitectureInventoryVerification extends SyntacticRule("ArchitectureInven
     require(groups.exists(r => r.head.endsWith("/Outcome.scala") && r(3) == "single-logical-group" && r(5).contains("sealed-parent")),"Sealed family misclassified")
     require(groups.exists(r => r.head.endsWith("/Code.scala") && r(3) == "single-logical-group" && r(5).contains("Iron-constraint")),"Newtype/constraint/companion group lost")
     require(groups.exists(r => r.head.endsWith("/Unrelated.scala") && r(3).startsWith("multiple-logical-groups")),"Unrelated declarations merged")
+    val visibility = table("visibility-candidates.tsv").map(r => r.head -> r).toMap
+    require(visibility("com/histmersion/inventoryfixture/visibility/HiddenRepo.")(8) == "feature-restricted","Feature privacy missed")
+    require(visibility("com/histmersion/inventoryfixture/visibility/BroadRepo.")(8) == "broader-than-feature","Broad package privacy accepted")
+    require(visibility("com/histmersion/inventoryfixture/visibility/Envelope.NestedRow#")(8) == "feature-restricted","Enclosing privacy lost")
+    require(visibility("com/histmersion/inventoryfixture/visibility/Storage.")(7).contains("configured-owner"),"Non-suffix target missed")
+    require(visibility("com/histmersion/inventoryfixture/visibility/ConnectionOwner#")(7).contains("database-dependency"),"Database owner without naming convention missed")
+    val consumers = table("visibility-consumers.tsv")
+    require(consumers.exists(r => r.head.endsWith("PublicRepo.ResultRow#") && r(5).endsWith("Consumer.inferred().") && r(7) == "declared-or-inferred-signature" && r(8) == "outside-expected-feature"),"Inferred row escape missed")
+    require(consumers.exists(r => r.head.endsWith("PublicRepo.ResultRow#") && r(5).endsWith("Consumer.aliased().") && r(7).contains("alias=") && r(8) == "outside-expected-feature"),"Alias-hidden row escape missed")
+    require(!consumers.exists(r => r.head.endsWith("PublicRepo.ResultRow#") && r(5).endsWith("Consumer.opaqueValue().")),"Opaque representation leaked into consumer inventory")
     run("omitted-file",cli ++ args ++ List(source + "/Services.scala"),1)
     run("absent-service",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-service.conf") ++ List(source),1)
+    run("absent-visibility",cli ++ args.updated(1,"tools/refactor/architecture-fixture/reject-visibility.conf") ++ List(source),1)
     Files.write(report,List("PASS","Resolved implementations exclude unrelated same-name InMemory and parent type arguments","Public implementation rejected; private indirect implementation accepted","Behavioral parity remains unproven despite matching structure","Constructor visibility and method-reference edges retained","Every object-plan row reconciled; missing originals never count as completion","Omitted source file and absent configured service rejected").asJava,UTF_8)
   }
 }

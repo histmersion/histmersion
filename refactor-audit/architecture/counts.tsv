@@ -3,6 +3,10 @@ files	3127
 declarations	55998
 references	802281
 unresolved-references	9092
+signature-type-references	163150
+alias-expanded-references	6688
+visibility-candidates	479
+visibility-consumer-relationships	39111
 services-repositories-controllers	234
 comments	15981
 top-level-objects	1373
