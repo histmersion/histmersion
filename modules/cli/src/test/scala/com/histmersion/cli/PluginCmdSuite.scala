@@ -20,6 +20,19 @@ import com.histmersion.api.plugins.{PluginJar, PluginsReport}
   */
 class PluginCmdSuite extends munit.FunSuite:
 
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console = new com.histmersion.util.console.Console {
+    def write(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(value: Any): Unit = stdout(String.valueOf(value))
+    def writeLine(): Unit = stdout("")
+    def errorWrite(value: => String): Unit = stderr(value)
+    def errorLine(value: => String): Unit = stderr(value)
+    def errorLine(): Unit = stderr("")
+    def errorFlush(): Unit = ()
+    def readLine(): String = throw new UnsupportedOperationException("input not used")
+  }
+
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   final case class Env(home: Path, data: Path, ops: PluginOps, out: collection.mutable.Buffer[String]):
     def plugins: Path = data.resolve("plugins")
     def describe(id: String, version: String, spi: Int = 1, access: String = "open"): Unit =
@@ -78,7 +91,7 @@ class PluginCmdSuite extends munit.FunSuite:
       )
       val out = collection.mutable.Buffer.empty[String]
       val cfg = CliPluginsConfig("", "", "curl")
-      Env(home, data, PluginOps(LocalInstall(home, data), cfg, out = s => out += s, confirm = _ => true), out)
+      Env(home, data, PluginOps(using consoleFor(s => out += s, _ => ()))(LocalInstall(home, data), cfg, confirm = _ => true), out)
     ,
     e =>
       Files.walk(e.home.getParent).sorted(java.util.Comparator.reverseOrder()).forEach { p =>
@@ -108,7 +121,7 @@ class PluginCmdSuite extends munit.FunSuite:
       val url = s"http://127.0.0.1:${srv.getAddress.getPort}"
       f(
         e.copy(ops =
-          PluginOps(LocalInstall(e.home, e.data), cfgRepos(url), out = s => e.out += s, confirm = _ => true)
+          PluginOps(using consoleFor(s => e.out += s, _ => ()))(LocalInstall(e.home, e.data), cfgRepos(url), confirm = _ => true)
         ),
         repo,
         url
@@ -189,7 +202,7 @@ class PluginCmdSuite extends munit.FunSuite:
     assertEquals(e.installed, List("hello-0.2.0.jar"))
     assertEquals(e.ops.index.jars.map(_.file), List("hello-0.2.0.jar"))
     val shy =
-      PluginOps(LocalInstall(e.home, e.data), CliPluginsConfig("", "", "curl"), out = _ => (), confirm = _ => false)
+      PluginOps(using consoleFor(_ => (), _ => ()))(LocalInstall(e.home, e.data), CliPluginsConfig("", "", "curl"), confirm = _ => false)
     e.describe("other", "1.0")
     assert(shy.add(src.toString, AddOptions()).left.exists(_.message.contains("not installed")))
     assertEquals(e.installed, List("hello-0.2.0.jar"))

@@ -506,8 +506,14 @@ lazy val pluginHelloDeps = project
     }
   )
 
+lazy val console = project
+  .in(file("modules/console"))
+  .settings(commonDeps)
+  .settings(name := "histmersion-console", publish / skip := true)
+
 lazy val pluginResolver = project
   .in(file("modules/plugin-resolver"))
+  .dependsOn(console)
   // run from the relink kit's tools/, never on the server's class path: coursier's jar carries native-image settings
   .settings(
     name := "histmersion-plugin-resolver",
@@ -629,7 +635,7 @@ def buildMetaSource(base: File): String = {
 
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
+  .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults, console)
   // the api's newtypes (Pure) into the domain's, checked, and back, at the boundaries: compile time only
   .dependsOn(chimneyIron % Provided)
   // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
@@ -919,7 +925,7 @@ lazy val server = project
 
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(api.jvm(scala3), config, files)
+  .dependsOn(api.jvm(scala3), config, files, console)
   .settings(
     name := "histmersion-cli",
     description := "The command line, a pure HTTP client of the server; built as a native image",
@@ -931,6 +937,7 @@ lazy val cli = project
   .settings(
     libraryDependencies ++= Seq(
       "com.monovore" %% "decline" % V.decline,
+      "com.outr" %% "scribe" % V.scribe,
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-client4" % V.tapir,
       "com.softwaremill.sttp.client4" %% "core" % V.sttp
     )
@@ -995,6 +1002,7 @@ lazy val root = project
     pluginHelloLib,
     pluginHelloDeps,
     pluginResolver,
+    console,
     chimneyIron,
     chimneyIronTests,
     db,

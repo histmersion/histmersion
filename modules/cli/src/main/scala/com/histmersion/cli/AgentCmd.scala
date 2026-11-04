@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, ModelChains, PlanQuota}
 import com.histmersion.api.research.Articles
+import com.histmersion.util.console.Console
 
 /** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server runs them; this
   * only starts, follows and steers runs over HTTP. Off unless the SERVER has `HISTMERSION_AGENTS_ENABLED=true`.
@@ -15,7 +16,7 @@ object AgentCmd:
   /** How often `--follow` polls. This process's own cadence, not a server tunable. */
   private val PollMs = 2000
 
-  private val models = Opts.subcommand(
+  private def models (using console: Console) = Opts.subcommand(
     "models",
     "Each step role's model chain, the model its next call would use, and every allowance's use per window"
   ) {
@@ -23,21 +24,21 @@ object AgentCmd:
       Opts.subcommand("set", "Save a role's chain over the config: the models tried in order, first choice first") {
         (Opts.argument[String]("role"), Opts.arguments[String]("provider:model")).mapN { (role, ms) => (c: Client) =>
           c.call(AgentsApi.setChain)((role, ModelChains.ChainSet(ms.toList)))
-            .map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.roleChain(r)))
+            .map(r => Cli.out.println(AgentsMarkdown.roleChain(r)))
         }
       }
     val reset =
       Opts.subcommand("reset", "Drop a role's saved chain: the server's config (agents.roles.<role>) applies again") {
         Opts.argument[String]("role").map { role => (c: Client) =>
-          c.call(AgentsApi.resetChain)(role).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.roleChain(r)))
+          c.call(AgentsApi.resetChain)(role).map(r => Cli.out.println(AgentsMarkdown.roleChain(r)))
         }
       }
     val show =
-      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.models(m))))
+      Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => Cli.out.println(AgentsMarkdown.models(m))))
     set orElse reset orElse show
   }
 
-  private val allowance = Opts.subcommand(
+  private def allowance (using console: Console) = Opts.subcommand(
     "allowance",
     "Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config"
   ) {
@@ -58,7 +59,7 @@ object AgentCmd:
           else
             c.call(AgentsApi.removeAllowance)(target)
               .map(r =>
-                com.histmersion.cli.Cli.writeLine(if r.removed then s"The saved allowance of $target is removed."
+                Cli.out.println(if r.removed then s"The saved allowance of $target is removed."
                 else s"No saved allowance for $target.")
               )
         else
@@ -68,12 +69,12 @@ object AgentCmd:
             .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
             .flatMap { ls =>
               c.call(AgentsApi.setAllowance)(ModelChains.AllowanceSet(target, ls.map(_.spec), reserve))
-                .map(a => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.allowance(a)))
+                .map(a => Cli.out.println(AgentsMarkdown.allowance(a)))
             }
       }
   }
 
-  private val generate = Opts.subcommand(
+  private def generate (using console: Console) = Opts.subcommand(
     "generate",
     "Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk"
   ) {
@@ -83,11 +84,11 @@ object AgentCmd:
         .orEmpty,
       Opts.option[String]("out", "A directory on the server to write to instead of its runtimes directory").orNone
     ).mapN { (rts, out) => (c: Client) =>
-      c.call(AgentsApi.generate)(GenerateRequest(rts, out)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.generated(r)))
+      c.call(AgentsApi.generate)(GenerateRequest(rts, out)).map(r => Cli.out.println(AgentsMarkdown.generated(r)))
     }
   }
 
-  private val quota = Opts.subcommand(
+  private def quota (using console: Console) = Opts.subcommand(
     "quota",
     "Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances"
   ) {
@@ -98,7 +99,7 @@ object AgentCmd:
         .map(p =>
           (c: Client) =>
             c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(true))))
-              .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
+              .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
     val release = Opts.subcommand("release", "Release a held plan pool") {
@@ -107,7 +108,7 @@ object AgentCmd:
         .map(p =>
           (c: Client) =>
             c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(false))))
-              .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
+              .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
     val floors = Opts.subcommand(
@@ -125,7 +126,7 @@ object AgentCmd:
             case (Some(_), true) => Left(Cli.Error("--reset takes no floors", exitCode = ExitCode.Usage))
             case _               =>
               c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse("")))))
-                .map(x => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.pool(x)))
+                .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         }
     }
     val fallthrough = Opts.subcommand(
@@ -136,7 +137,7 @@ object AgentCmd:
         v.trim.toLowerCase match
           case "on" | "off" =>
             c.call(AgentsApi.setFallthrough)((role, PlanQuota.FallthroughSet(v.trim.equalsIgnoreCase("on"))))
-              .map(q => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.quota(q)))
+              .map(q => Cli.out.println(AgentsMarkdown.quota(q)))
           case other => Left(Cli.Error(s"'$other' is neither on nor off", exitCode = ExitCode.Usage))
       }
     }
@@ -149,31 +150,31 @@ object AgentCmd:
         .orNone
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.refreshed(r)))
+            c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => Cli.out.println(AgentsMarkdown.refreshed(r)))
         )
     }
-    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.quota(q))))
+    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => Cli.out.println(AgentsMarkdown.quota(q))))
     hold orElse release orElse floors orElse fallthrough orElse refresh orElse show
   }
 
-  private val doctor = Opts.subcommand(
+  private def doctor (using console: Console) = Opts.subcommand(
     "doctor",
     "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login"
   ) {
     Opts.flag("offline", "Skip the providers' model listings (no network)").orFalse.map { offline => (c: Client) =>
-      c.call(AgentsApi.doctor)(Some(offline)).map(d => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.doctor(d)))
+      c.call(AgentsApi.doctor)(Some(offline)).map(d => Cli.out.println(AgentsMarkdown.doctor(d)))
     }
   }
 
   private[cli] val modelOpt =
     Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
 
-  private val probe = Opts.subcommand(
+  private def probe (using console: Console) = Opts.subcommand(
     "probe",
     "One live model call with one read-only tool (get_source) and a typed answer, checked against the record"
   ) {
     (Opts.argument[String]("citekey"), modelOpt).mapN { (ck, model) => (c: Client) =>
-      c.call(AgentsApi.probe)(ProbeRequest(ck, model)).map(p => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.probe(p)))
+      c.call(AgentsApi.probe)(ProbeRequest(ck, model)).map(p => Cli.out.println(AgentsMarkdown.probe(p)))
     }
   }
 
@@ -182,23 +183,23 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: String, last: String): Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, id: String, last: String)(using console: Console) : Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e)  => Left(e)
       case Right(d) =>
         val line = AgentsMarkdown.runLine(d.run)
-        if line != last then com.histmersion.cli.Cli.errorLine(line)
+        if line != last then Cli.err.println(line)
         RunState.parse(d.run.status) match
           case Some(RunState.Queued) | Some(RunState.Running) =>
             Thread.sleep(PollMs.toLong)
             follow(c, id, line)
           case Some(RunState.Done) | Some(RunState.Paused) | Some(RunState.WaitingApproval) =>
-            com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, withMessages = false)); Right(())
+            Cli.out.println(AgentsMarkdown.run(d, withMessages = false)); Right(())
           case _ =>
-            com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, withMessages = false))
+            Cli.out.println(AgentsMarkdown.run(d, withMessages = false))
             Left(Cli.Error(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
 
-  private val run = Opts.subcommand(
+  private def run (using console: Console) = Opts.subcommand(
     "run",
     s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind.wire}>").mkString(", ")})"
   ) {
@@ -284,12 +285,12 @@ object AgentCmd:
                 Option.when(ev._1)(true),
                 over
               )
-            ).flatMap(r => if fol then follow(c, r.id, "") else Right(com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r))))
+            ).flatMap(r => if fol then follow(c, r.id, "") else Right(Cli.out.println(AgentsMarkdown.runLine(r))))
           }
       }
   }
 
-  private val approvals = Opts.subcommand(
+  private def approvals (using console: Console) = Opts.subcommand(
     "approvals",
     "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default"
   ) {
@@ -311,13 +312,13 @@ object AgentCmd:
   /** One decision per id, in the order given, each through the same endpoint (and checks) as a single one; a refused id
     * does not stop the rest, and makes the command fail at the end.
     */
-  private def decide(d: Decision, help: String) = Opts.subcommand(d.wire, help) {
+  private def decide(d: Decision, help: String) (using console: Console) = Opts.subcommand(d.wire, help) {
     (Opts.arguments[Long]("id"), Opts.option[String]("note", "Why — kept with the decision (with every id)").orNone)
       .mapN { (ids, note) => (c: Client) =>
         val failed = ids.toList.flatMap { id =>
           c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))) match
-            case Right(a) => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.approvalLine(a)); None
-            case Left(e)  => com.histmersion.cli.Cli.errorLine(s"#$id: ${e.message}"); Some(e)
+            case Right(a) => Cli.out.println(AgentsMarkdown.approvalLine(a)); None
+            case Left(e)  => Cli.err.println(s"#$id: ${e.message}"); Some(e)
         }
         failed match
           case Nil        => Right(())
@@ -326,7 +327,7 @@ object AgentCmd:
       }
   }
 
-  private val runs = Opts.subcommand("runs", "Agent runs, newest first, filtered on the server") {
+  private def runs (using console: Console) = Opts.subcommand("runs", "Agent runs, newest first, filtered on the server") {
     (ListOpts.runs, Opts.option[Int]("limit", "How many").orNone, beforeOpt("run"), Output.jsonFlag)
       .mapN { (f, limit, before, json) => (c: Client) =>
         c.call(AgentsApi.runs)((f, limit, before, None)).map { (rs, page) =>
@@ -347,7 +348,7 @@ object AgentCmd:
       .option[String]("before", s"The next older page: the id of the last $what shown (the listing prints the command)")
       .orNone
 
-  private val show = Opts.subcommand(
+  private def show (using console: Console) = Opts.subcommand(
     "show",
     "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)"
   ) {
@@ -358,11 +359,11 @@ object AgentCmd:
     )
       .mapN { (id, msgs, fol) => (c: Client) =>
         if fol then follow(c, id, "")
-        else c.call(AgentsApi.run)(id).map(d => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.run(d, msgs)))
+        else c.call(AgentsApi.run)(id).map(d => Cli.out.println(AgentsMarkdown.run(d, msgs)))
       }
   }
 
-  private val compare = Opts.subcommand(
+  private def compare (using console: Console) = Opts.subcommand(
     "compare",
     "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)"
   ) {
@@ -371,7 +372,7 @@ object AgentCmd:
     }
   }
 
-  private def control(action: String, help: String) = Opts.subcommand(action, help) {
+  private def control(action: String, help: String) (using console: Console) = Opts.subcommand(action, help) {
     val budget = if action == "resume" then
       (
         Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,
@@ -379,11 +380,11 @@ object AgentCmd:
       ).tupled
     else Opts((Option.empty[Double], Option.empty[Long]))
     (Opts.argument[String]("id"), budget).mapN { (id, b) => (c: Client) =>
-      c.call(AgentsApi.control)((id, action, b._1, b._2)).map(r => com.histmersion.cli.Cli.writeLine(AgentsMarkdown.runLine(r)))
+      c.call(AgentsApi.control)((id, action, b._1, b._2)).map(r => Cli.out.println(AgentsMarkdown.runLine(r)))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "agent",
       "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"

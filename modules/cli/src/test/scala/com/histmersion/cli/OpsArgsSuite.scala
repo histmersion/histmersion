@@ -7,6 +7,8 @@ import com.histmersion.cli.Ops.{QueueArgs, QueueCmd}
   */
 class OpsArgsSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def parse(args: String*) = QueueArgs.parse(args.toList, None, None, all = false)
 
   test("`queue <list>` shows that list"):

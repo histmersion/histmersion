@@ -10,6 +10,8 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, For
   */
 class FormatCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def parses(cmd: com.monovore.decline.Opts[?], args: String*): Boolean =
     Command("histmersion", "test")(cmd).parse(args.toList, Map.empty).isRight
 

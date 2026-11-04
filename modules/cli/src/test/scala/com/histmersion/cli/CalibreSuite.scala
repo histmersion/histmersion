@@ -10,6 +10,8 @@ import java.nio.file.Path
   */
 class CalibreSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private def fixture(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
 
   private val lib = "/Users/example/Calibre Library"

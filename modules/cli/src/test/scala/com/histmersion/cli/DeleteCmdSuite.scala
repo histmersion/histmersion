@@ -6,6 +6,8 @@ import com.monovore.decline.Command
 /** `histmersion delete <citekey> [--apply] [--json]` (#969): a dry run unless `--apply`, no `--force`. */
 class DeleteCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val cmd = Command("delete", "test")(DeleteCmd.args)
   private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
 

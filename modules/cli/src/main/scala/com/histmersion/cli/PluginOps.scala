@@ -12,16 +12,16 @@ import java.time.temporal.ChronoUnit
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet, PluginsMarkdown, PluginsReport}
+import com.histmersion.util.console.Console
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These commands manage files
   * in the data directory and run the bundle's `histmersion-relink`; they never touch the database, and they refuse when
   * the CLI is pointed at a server on another machine.
   */
-final class PluginOps(
+final class PluginOps(using console: Console)(
     install: LocalInstall,
     cfg: CliPluginsConfig,
     run: Runner = Runner.System,
-    out: String => Unit = s => com.histmersion.cli.Cli.writeLine(s),
     confirm: String => Boolean = PluginOps.ask
 ):
 
@@ -202,7 +202,7 @@ final class PluginOps(
     run.capture(install.relink.toString :: "--resolve" :: repoArgs(repos), install.env) match
       case Right(_)     => ()
       case Left((_, e)) =>
-        out(
+        Cli.out.println(
           s"warning: the plugins' dependencies were not resolved now ($e) — `histmersion plugin rebuild` resolves them"
         )
 
@@ -280,7 +280,7 @@ final class PluginOps(
         writeIndex(replaced.foldLeft(idx)(_.drop(_)).put(Installed(name, sha, source, now, jar.plugins, signer)))
         resolveInstalled(repos)
         resign()
-        out(s"installed $target")
+        Cli.out.println(s"installed $target")
         jar.copy(file = name)
     finally deleteTree(work)
 
@@ -300,7 +300,7 @@ final class PluginOps(
     if !verifying then Right(None)
     else if !Files.isRegularFile(asc) then
       if unsigned then {
-        out("warning: no signature (.asc) for this jar — installed unsigned (--unsigned)"); Right(None)
+        Cli.out.println("warning: no signature (.asc) for this jar — installed unsigned (--unsigned)"); Right(None)
       } else
         Left(
           err(
@@ -312,7 +312,7 @@ final class PluginOps(
       run.capture(List(install.signing.toString, "verify-file", jar.toString, asc.toString), install.env) match
         case Right(fpr)               => Right(Some(fpr.trim))
         case Left((_, e)) if unsigned =>
-          out(s"warning: signature not verified ($e) — installed anyway (--unsigned)"); Right(None)
+          Cli.out.println(s"warning: signature not verified ($e) — installed anyway (--unsigned)"); Right(None)
         case Left((_, e)) => Left(err(s"signature not verified: $e"))
 
   private def show(
@@ -324,35 +324,35 @@ final class PluginOps(
       dependencies: List[String]
   ): Unit =
     jar.plugins.foreach { p =>
-      out(
+      Cli.out.println(
         s"plugin ${p.id} ${p.version} · SPI ${p.spiVersion} · access: ${
             if p.access.isEmpty then "none declared" else p.access.mkString(", ")
           }" +
           (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}")
       )
       p.error.foreach(e =>
-        out(
+        Cli.out.println(
           s"  with its defaults alone it does not register: $e (it may need settings under histmersion.plugins.${p.id})"
         )
       )
       if p.access.contains("unauthorised") then
-        out(
+        Cli.out.println(
           "  its access is UNAUTHORISED: it runs only with histmersion.acquire.allow-unauthorised = true, never on the legal-only path"
         )
     }
-    out(s"file ${jar.file} · SHA-256 $sha")
-    out(s"from $source")
-    if dependencies.isEmpty then out("dependencies: none of its own (no POM lists any)")
-    else dependencies.foreach(out)
-    out(signer.fold("signature: not checked")(f => s"signature: good, key $f"))
-    replaced.filterNot(_ == jar.file).foreach(f => out(s"replaces $f"))
+    Cli.out.println(s"file ${jar.file} · SHA-256 $sha")
+    Cli.out.println(s"from $source")
+    if dependencies.isEmpty then Cli.out.println("dependencies: none of its own (no POM lists any)")
+    else dependencies.foreach(value => Cli.out.println(value))
+    Cli.out.println(signer.fold("signature: not checked")(f => s"signature: good, key $f"))
+    replaced.filterNot(_ == jar.file).foreach(f => Cli.out.println(s"replaces $f"))
 
   /** Re-sign the directory's manifest when GPG provenance is set up. */
   private def resign(): Unit =
     if install.signingOn then
       run.capture(List(install.signing.toString, "sign-plugins"), install.env) match
-        case Right(m)     => out(m.trim)
-        case Left((_, e)) => out(s"warning: the plugins manifest was not re-signed: $e")
+        case Right(m)     => Cli.out.println(m.trim)
+        case Left((_, e)) => Cli.out.println(s"warning: the plugins manifest was not re-signed: $e")
 
   /** `plugin rm`: by plugin id or file name. */
   def rm(what: String): Either[Cli.Error, List[String]] =
@@ -367,7 +367,7 @@ final class PluginOps(
       writeIndex(hits.foldLeft(idx)(_.drop(_)))
       resolveInstalled(Nil)
       resign()
-      hits.foreach(f => out(s"removed $f"))
+      hits.foreach(f => Cli.out.println(s"removed $f"))
       Right(hits)
 
   /** `plugin list`: every jar of the directory, what it holds, whether the installed binary has it. */
@@ -438,8 +438,5 @@ final class PluginOps(
 
 object PluginOps:
   /** Ask on the terminal; no terminal = no. */
-  def ask(question: String): Boolean =
-    Option(java.lang.System.console()).exists { c =>
-      val a = Option(c.readLine(s"$question [y/N] ")).getOrElse("").trim.toLowerCase
-      a == "y" || a == "yes"
-    }
+  def ask(question: String)(using console: Console): Boolean =
+    console.readTerminalLine(s"$question [y/N] ").map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")

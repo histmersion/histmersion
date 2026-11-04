@@ -9,6 +9,8 @@ import com.histmersion.api.automation.Queue
 
 class OutputSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   test("render prints the DTO's own codec with --json, its Markdown without"):
     val item = Queue.QueueItem(7, "tasks", "Read Cline", None, "open", None, Some("2026-10-17T00:00:00Z"), None)
     assertEquals(Output.render(json = false, item)(i => s"#${i.id}"), "#7")
@@ -79,10 +81,10 @@ class OutputSuite extends munit.FunSuite:
     }
     Console.withOut(stdout) {
       Console.withErr(stderr) {
-        Cli.write(value())
-        Cli.writeLine()
-        Cli.writeLine(null)
-        List("a", "b").foreach(Cli.writeLine)
+        summon[com.histmersion.util.console.Console].write(value())
+        summon[com.histmersion.util.console.Console].writeLine()
+        summon[com.histmersion.util.console.Console].writeLine(null)
+        List("a", "b").foreach(summon[com.histmersion.util.console.Console].writeLine)
         Output.emit(json = false, "answer")(identity)
         Output.emit(json = true, "answer")(_ => fail("JSON must not render Markdown"))
       }
@@ -104,13 +106,13 @@ class OutputSuite extends munit.FunSuite:
     }
     var evaluated = 0
     Console.withErr(stream) {
-      Cli.errorWrite({ evaluated += 1; "雪" })
-      Cli.errorLine("line")
-      Cli.errorLine()
-      Cli.errorFlush()
+      summon[com.histmersion.util.console.Console].errorWrite({ evaluated += 1; "雪" })
+      summon[com.histmersion.util.console.Console].errorLine("line")
+      summon[com.histmersion.util.console.Console].errorLine()
+      summon[com.histmersion.util.console.Console].errorFlush()
       JobFollow.Progress.line("working")
       JobFollow.Progress.clear()
-      intercept[IllegalArgumentException] { Cli.errorLine(throw new IllegalArgumentException("failed")) }
+      intercept[IllegalArgumentException] { summon[com.histmersion.util.console.Console].errorLine(throw new IllegalArgumentException("failed")) }
     }
     val nl = System.lineSeparator()
     val blank = " " * JobFollow.Progress.Width
@@ -118,4 +120,36 @@ class OutputSuite extends munit.FunSuite:
     assertEquals(flushes, 1)
     assertEquals(lines, 1)
     assertEquals(evaluated, 1)
+  }
+
+  test("injected consoles isolate command output, progress, input and errors") {
+    val a = new java.io.ByteArrayOutputStream
+    val b = new java.io.ByteArrayOutputStream
+    val errors = new java.io.ByteArrayOutputStream
+    val first = com.histmersion.util.console.Console.streams(new java.io.PrintStream(a, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => "yes")
+    val second = com.histmersion.util.console.Console.streams(new java.io.PrintStream(b, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => "no")
+    def answer(text: String)(using com.histmersion.util.console.Console): Unit = {
+      Cli.out.println(text)
+      Cli.out.flush()
+    }
+    answer("first")(using first)
+    answer("second")(using second)
+    answer("again")(using first)
+    Cli.err(using first).println("problem")
+    JobFollow.Progress.line("working")(using first)
+    assertEquals(first.readLine(), "yes")
+    assertEquals(second.readLine(), "no")
+    val nl = System.lineSeparator()
+    assertEquals(a.toString("UTF-8"), s"first${nl}again${nl}")
+    assertEquals(b.toString("UTF-8"), s"second${nl}")
+    assertEquals(errors.toString("UTF-8"), s"problem${nl}\\r${" " * JobFollow.Progress.Width}\\rworking".replace("\\r", "\r"))
+  }
+
+  test("injected terminal prompts use supplied streams and input") {
+    val out = new java.io.ByteArrayOutputStream
+    val err = new java.io.ByteArrayOutputStream
+    val console = com.histmersion.util.console.Console.streams(new java.io.PrintStream(out), new java.io.PrintStream(err), () => "yes")
+    assertEquals(console.readTerminalLine("Proceed? "), Some("yes"))
+    assertEquals(out.toString("UTF-8"), "")
+    assertEquals(err.toString("UTF-8"), "Proceed? ")
   }

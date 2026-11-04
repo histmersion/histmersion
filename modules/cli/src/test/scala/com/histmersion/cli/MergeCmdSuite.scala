@@ -11,6 +11,8 @@ import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
   */
 class MergeCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val top = Command("histmersion", "test")(MergeCmd.command orElse BundleCmd.command)
   private def parses(args: String*) = top.parse(args.toList, Map.empty).isRight
 

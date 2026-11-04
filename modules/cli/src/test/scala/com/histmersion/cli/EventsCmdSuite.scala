@@ -9,6 +9,8 @@ import com.monovore.decline.Command
   */
 class EventsCmdSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val cmd = Command("patch", "test")(EventsCmd.patchOpts)
   private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
 

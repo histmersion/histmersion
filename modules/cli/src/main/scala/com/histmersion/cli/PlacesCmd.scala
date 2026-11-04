@@ -14,6 +14,7 @@ import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.util.console.Console
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.
@@ -27,24 +28,24 @@ object PlacesCmd:
   /** Config-driven defaults (no literals in code, plan §1.9); read on demand so `--help` never needs a config file to
     * exist.
     */
-  private def cfg = Settings.app.places
-  private def defaultBatch: Int = cfg.importBatch
-  private def seedDir: String = cfg.seedDir
+  private def cfg (using console: Console) = Settings.app.places
+  private def defaultBatch(using console: Console) : Int = cfg.importBatch
+  private def seedDir(using console: Console) : String = cfg.seedDir
 
   private val asOfOpt =
     Opts.option[Long]("as-of", "Signed year the gazetteer is read at (BCE negative, e.g. -1400)").orNone
 
-  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[Long]): Unit =
-    com.histmersion.cli.Cli.writeLine(PlacesMarkdown.places(rows.toVector, asOf))
+  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[Long])(using console: Console) : Unit =
+    Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf))
 
-  private val search = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
+  private def search (using console: Console) = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
     (Opts.argument[String]("query").orNone, asOfOpt, Opts.option[Int]("limit", "Max results").orNone)
       .mapN { (q, asOf, limit) => (c: Client) =>
         c.places(q.map(_.trim).filter(_.nonEmpty), asOf, limit).map(show(_, asOf))
       }
   }
 
-  private val showCmd = Opts.subcommand("show", "One place: geometry, validity, parents and the subtree") {
+  private def showCmd (using console: Console) = Opts.subcommand("show", "One place: geometry, validity, parents and the subtree") {
     (
       Opts.argument[String]("id"),
       asOfOpt,
@@ -55,27 +56,27 @@ object PlacesCmd:
         for
           d <- c.place(id, asOf)
           tree <- if noTree then Right(Nil) else c.placeTree(id, asOf, depth)
-        yield com.histmersion.cli.Cli.writeLine(PlacesMarkdown.place(d, tree.toVector))
+        yield Cli.out.println(PlacesMarkdown.place(d, tree.toVector))
       }
   }
 
-  private val children = Opts.subcommand("children", "What one place contains, as of a year") {
+  private def children (using console: Console) = Opts.subcommand("children", "What one place contains, as of a year") {
     (Opts.argument[String]("id"), asOfOpt).mapN { (id, asOf) => (c: Client) =>
       c.placeChildren(id, asOf).map { rows =>
-        if rows.isEmpty then com.histmersion.cli.Cli.writeLine("_No children._")
-        else com.histmersion.cli.Cli.writeLine(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
+        if rows.isEmpty then Cli.out.println("_No children._")
+        else Cli.out.println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
       }
     }
   }
 
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
-  private[cli] def importFile(
+  private[cli] def importFile(using console: Console)(
       c: Client,
       file: Path,
       kind: Option[String],
       batch: Int,
       dataset: Dataset = Dataset.Local
-  ): Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult] =
+  ) : Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult] =
     if !Files.isRegularFile(file) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.Kind.Region)) match
@@ -89,7 +90,7 @@ object PlacesCmd:
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
                 if total > 1 then
-                  com.histmersion.cli.Cli.errorWrite(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
+                  Cli.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
                 c.importPlaces(kind, Lpf.render(g), dataset)
                   .map(r =>
                     com.histmersion.api.catalogue.Place.ImportResult(
@@ -102,7 +103,7 @@ object PlacesCmd:
               }
             }
             .map { r =>
-              if total > 1 then com.histmersion.cli.Cli.errorWrite("\r" + " " * 72 + "\r")
+              if total > 1 then Cli.err.print("\r" + " " * 72 + "\r")
               r
             }
 
@@ -116,7 +117,7 @@ object PlacesCmd:
       .mapValidated(s => Dataset.parse(s).toValidNel(s"--dataset $s: expected local or seed"))
       .withDefault(Dataset.Local)
 
-  private val importCmd = Opts.subcommand("import", "Upsert a Linked Places / GeoJSON file into the gazetteer") {
+  private def importCmd (using console: Console) = Opts.subcommand("import", "Upsert a Linked Places / GeoJSON file into the gazetteer") {
     (
       Opts.argument[String]("file.json"),
       Opts
@@ -127,7 +128,7 @@ object PlacesCmd:
     )
       .mapN { (file, kind, batch, dataset) => (c: Client) =>
         importFile(c, Path.of(file), kind, batch.getOrElse(defaultBatch), dataset)
-          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeImport(r)))
+          .map(r => Cli.out.println(PlacesMarkdown.placeImport(r)))
       }
   }
 
@@ -167,7 +168,7 @@ object PlacesCmd:
     * Earth's continents), and by the end of pass 1 every place exists. That is why nothing here depends on a clever
     * file-name ordering.
     */
-  private val seed =
+  private def seed (using console: Console) =
     Opts.subcommand("seed", "Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities)") {
       (
         Opts.option[String]("dir", "Directory of LPF/GeoJSON files (default: config places.seedDir)").orNone,
@@ -197,11 +198,11 @@ object PlacesCmd:
               def pass(
                   fs: List[(Path, Option[String])],
                   label: String
-              ): Either[Cli.Error, List[(Path, Option[String])]] =
+              )(using console: Console) : Either[Cli.Error, List[(Path, Option[String])]] =
                 fs.foldLeft[Either[Cli.Error, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>
-                      com.histmersion.cli.Cli.writeLine(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
+                      Cli.out.println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
                       if r.failed.isEmpty then retry else retry :+ (f -> kind)
                     }
                   }
@@ -213,23 +214,23 @@ object PlacesCmd:
                   else pass(retry, "re-resolving parents: ")
                 _ <-
                   if noRebuild then Right(())
-                  else c.rebuildPlaces.map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeRebuild(r)))
+                  else c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
               yield ()
         }
     }
 
-  private val rebuild = Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
-    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeRebuild(r))))
+  private def rebuild (using console: Console) = Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
+    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r))))
   }
 
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: String, noWait: Boolean): Either[Cli.Error, Unit] =
-    com.histmersion.cli.Cli.writeLine(s"job `$id` started (`histmersion jobs $id` follows it)")
+  private def started(c: Client, id: String, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
+    Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
 
-  private val buildHierarchy = Opts.subcommand(
+  private def buildHierarchy (using console: Console) = Opts.subcommand(
     "build-hierarchy",
     "Compute parent-child edges from spatial containment (point inside polygon). Idempotent."
   ) {
@@ -241,7 +242,7 @@ object PlacesCmd:
             case Some(id) => started(c, id, nw)
             case None     =>
               Right(
-                com.histmersion.cli.Cli.writeLine(
+                Cli.out.println(
                   s"**${r.edgesCreated}** spatial containment edges created " +
                     s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)"
                 )
@@ -250,7 +251,7 @@ object PlacesCmd:
     )
   }
 
-  private val fetch = Opts.subcommand(
+  private def fetch (using console: Console) = Opts.subcommand(
     "fetch",
     "Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent."
   ) {
@@ -259,21 +260,21 @@ object PlacesCmd:
         c.fetchExternalPlaces(source, dryRun).flatMap { r =>
           r.job match
             case Some(id) => started(c, id, nw)
-            case None     => Right(com.histmersion.cli.Cli.writeLine(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
+            case None     => Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
   }
 
   // ── the external sources (#1064) ───────────────────────────────────────────────────────────────
 
-  private val sources = Opts.subcommand(
+  private def sources (using console: Console) = Opts.subcommand(
     "sources",
     "The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.gazetteerSources(rows))))
+    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows))))
   }
 
-  private val load = Opts.subcommand(
+  private def load (using console: Console) = Opts.subcommand(
     "load",
     "Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply"
   ) {
@@ -286,7 +287,7 @@ object PlacesCmd:
     )
       .mapN { (source, apply, noWait) => (c: Client) =>
         c.loadPlaces(source, apply).flatMap { j =>
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -299,26 +300,26 @@ object PlacesCmd:
   private val langOpt =
     Opts.option[String]("lang", "Language tag of the name: en, grc, la, pl … (omit when unknown)").orNone
 
-  private val nameAdd = Opts.subcommand(
+  private def nameAdd (using console: Console) = Opts.subcommand(
     "add",
     "Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`"
   ) {
     (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
       c.addPlaceName(id, com.histmersion.api.catalogue.Place.NameAdd(name, lang))
-        .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeNameChanged(r)))
+        .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
     }
   }
 
-  private val nameRemove =
+  private def nameRemove (using console: Console) =
     Opts.subcommand("rm", "Remove a name added by hand (a name the seed gives cannot be removed)") {
       (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN {
         (id, name, lang) => (c: Client) =>
           c.removePlaceName(id, com.histmersion.api.catalogue.Place.NameRemove(name, lang))
-            .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeNameChanged(r)))
+            .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
       }
     }
 
-  private val nameList = Opts.subcommand(
+  private def nameList (using console: Console) = Opts.subcommand(
     "list",
     "The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed"
   ) {
@@ -329,17 +330,17 @@ object PlacesCmd:
       .mapN { (place, csv) => (c: Client) =>
         c.placeNames(place)
           .map(rows =>
-            com.histmersion.cli.Cli.write(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
+            Cli.out.print(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
             else PlacesMarkdown.manualPlaceNames(rows) + "\n")
           )
       }
   }
 
-  private val name = Opts.subcommand("name", "Names added by hand to gazetteer places: add, rm, list") {
+  private def name (using console: Console) = Opts.subcommand("name", "Names added by hand to gazetteer places: add, rm, list") {
     nameAdd orElse nameRemove orElse nameList
   }
 
-  private val add = Opts.subcommand(
+  private def add (using console: Console) = Opts.subcommand(
     "add",
     "Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from"
   ) {
@@ -362,13 +363,13 @@ object PlacesCmd:
     )
       .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
         c.addPlace(com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source, id, names, lang, from, to))
-          .map(p => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeAdded(p)))
+          .map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
       }
   }
 
   // ── a person's kind, period and point for a place (V080, V081) ───────────────────────────────────
 
-  private val set = Opts.subcommand(
+  private def set (using console: Console) = Opts.subcommand(
     "set",
     "Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: " +
       "`places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`"
@@ -397,11 +398,11 @@ object PlacesCmd:
           id,
           com.histmersion.api.catalogue.Place
             .OverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2))
-        ).map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeOverrideChanged(r)))
+        ).map(r => Cli.out.println(PlacesMarkdown.placeOverrideChanged(r)))
       }
   }
 
-  private val merge = Opts.subcommand(
+  private def merge (using console: Console) = Opts.subcommand(
     "merge",
     "Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back"
   ) {
@@ -412,32 +413,32 @@ object PlacesCmd:
     )
       .mapN { (id, into, reason) => (c: Client) =>
         c.mergePlace(id, com.histmersion.api.catalogue.Place.MergeIn(into, reason))
-          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeGone(r)))
+          .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }
 
-  private val rm = Opts.subcommand(
+  private def rm (using console: Console) = Opts.subcommand(
     "rm",
     "Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back"
   ) {
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
         c.removePlace(id, com.histmersion.api.catalogue.Place.RemoveIn(reason))
-          .map(r => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeGone(r)))
+          .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }
 
-  private val overrides = Opts.subcommand(
+  private def overrides (using console: Console) = Opts.subcommand(
     "overrides",
     "The kinds, periods and points set by hand (`places set`), with what each source says"
   ) {
     Opts.option[String]("place", "Only this place's (an id)").orNone.map { place => (c: Client) =>
-      c.placeOverrides(place).map(rows => com.histmersion.cli.Cli.writeLine(PlacesMarkdown.placeOverrides(rows)))
+      c.placeOverrides(place).map(rows => Cli.out.println(PlacesMarkdown.placeOverrides(rows)))
     }
   }
 
   /** `places site-types` (#1449): refine what the Wikidata sites on the map are from their items. */
-  private val siteTypes = Opts.subcommand(
+  private def siteTypes (using console: Console) = Opts.subcommand(
     "site-types",
     "Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' " +
       "classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already"
@@ -454,7 +455,7 @@ object PlacesCmd:
       }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "places",
       "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places"

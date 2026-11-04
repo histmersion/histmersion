@@ -11,8 +11,8 @@ import com.histmersion.config.*
 object Settings:
   lazy val loaded: Either[String, LoadedConfig] = AppConfig.loadWithUserFile()
 
-  lazy val app: AppConfig = loaded match
+   lazy val app: AppConfig = loaded match
     case Right(l)  => l.config
     case Left(err) =>
-      com.histmersion.cli.Cli.processErrorLine(s"warning: $err — going on with the defaults and the environment")
+      scribe.warn(s"warning: $err — going on with the defaults and the environment")
       AppConfig.load()

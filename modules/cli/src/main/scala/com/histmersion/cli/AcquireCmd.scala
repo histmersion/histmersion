@@ -14,6 +14,7 @@ import com.histmersion.api.library.{
   RetractionsUpdate
 }
 import com.histmersion.api.library.Ingest
+import com.histmersion.util.console.Console
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with
@@ -23,7 +24,7 @@ object AcquireCmd:
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 
-  private val discoverSearch = Opts.subcommand("search", "OpenAlex search for literature to ingest") {
+  private def discoverSearch (using console: Console) = Opts.subcommand("search", "OpenAlex search for literature to ingest") {
     (
       Opts.argument[String]("query"),
       Opts.option[Int]("since", "Only works published from this year on").orNone,
@@ -38,26 +39,26 @@ object AcquireCmd:
     }
   }
 
-  private val discoverMeta = Opts.subcommand("meta", "Normalised metadata for one DOI") {
+  private def discoverMeta (using console: Console) = Opts.subcommand("meta", "Normalised metadata for one DOI") {
     (Opts.argument[String]("doi"), Output.jsonFlag).mapN { (doi, json) => (c: Client) =>
       AcquireClient(c).meta(doi).map(w => Output.emit(json, w)(AcquireMarkdown.work))
     }
   }
 
-  private val discoverWikirefs =
+  private def discoverWikirefs (using console: Console) =
     Opts.subcommand("wikirefs", "Harvest the DOIs a Wikipedia article cites (the trailhead)") {
       (Opts.argument[String]("wikipedia-url"), Output.jsonFlag).mapN { (url, json) => (c: Client) =>
         AcquireClient(c).wikirefs(url).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
       }
     }
 
-  val discover = Opts.subcommand("discover", "Find literature upstream (OpenAlex / Crossref / Wikipedia)") {
+  def discover (using console: Console) = Opts.subcommand("discover", "Find literature upstream (OpenAlex / Crossref / Wikipedia)") {
     discoverSearch orElse discoverMeta orElse discoverWikirefs
   }
 
   // ── refs / assess / followups ───────────────────────────────────────────────────────────────
 
-  val refs = Opts.subcommand("refs", "The reference list a paper deposited, resolved against the corpus") {
+  def refs (using console: Console) = Opts.subcommand("refs", "The reference list a paper deposited, resolved against the corpus") {
     (
       Opts.argument[String]("citekey|doi"),
       Opts.flag("apply", "Write the resolved references as `references` edges").orFalse,
@@ -67,15 +68,15 @@ object AcquireCmd:
     }
   }
 
-  private val updateRetractions =
+  private def updateRetractions (using console: Console) =
     Opts.subcommand("update-retractions", "Refresh the local Retraction Watch mirror (~60 000 rows)") {
       Output.jsonFlag.map { json => (c: Client) =>
         val client = AcquireClient(c)
         client.updateRetractions.flatMap { started =>
           if json then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
           else
-            com.histmersion.cli.Cli.errorLine("refreshing the Retraction Watch mirror (~30 MB)…")
-            pollRetractions(client, 0).map(r => com.histmersion.cli.Cli.writeLine(AcquireMarkdown.retractionsUpdate(r)))
+            Cli.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
+            pollRetractions(client, 0).map(r => Cli.out.println(AcquireMarkdown.retractionsUpdate(r)))
         }
       }
     }
@@ -84,7 +85,7 @@ object AcquireCmd:
     * plus 60 000 inserts — so the CLI drives the wait, exactly as `reindex` does.
     */
   @annotation.tailrec
-  private def pollRetractions(c: AcquireClient, waited: Int): Either[Cli.Error, RetractionsUpdate] =
+  private def pollRetractions(c: AcquireClient, waited: Int)(using console: Console) : Either[Cli.Error, RetractionsUpdate] =
     c.retractionsStatus match
       case Left(e)                => Left(e)
       case Right(r) if !r.running =>
@@ -97,10 +98,10 @@ object AcquireCmd:
         )
       case Right(_) =>
         Thread.sleep(2000)
-        com.histmersion.cli.Cli.errorWrite(".")
+        Cli.err.print(".")
         pollRetractions(c, waited + 2)
 
-  private val assessOne =
+  private def assessOne (using console: Console) =
     (
       Opts.argument[String]("citekey|doi"),
       Opts
@@ -114,14 +115,14 @@ object AcquireCmd:
         .map(a => Output.emit(json, a)(AcquireMarkdown.assessment))
     }
 
-  val assess = Opts.subcommand(
+  def assess (using console: Console) = Opts.subcommand(
     "assess",
     "Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact)"
   ) {
     updateRetractions orElse assessOne
   }
 
-  val followups = Opts.subcommand(
+  def followups (using console: Console) = Opts.subcommand(
     "followups",
     "Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites)"
   ) {
@@ -147,7 +148,7 @@ object AcquireCmd:
     * on this machine takes the upload path. The flags of both halves are accepted, and the ones that do not apply to
     * the branch taken are simply unused.
     */
-  val ingest = Opts.subcommand(
+  def ingest (using console: Console) = Opts.subcommand(
     "ingest",
     "Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier " +
       "(metadata → legal OA PDF → the same OCR job → reference edges → assessment)"
@@ -231,20 +232,20 @@ object AcquireCmd:
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
-  private val archiveSearch = Opts.subcommand("search", "Search archive.org texts") {
+  private def archiveSearch (using console: Console) = Opts.subcommand("search", "Search archive.org texts") {
     (Opts.argument[String]("query"), Opts.option[Int]("rows", "Max results").orNone, Output.jsonFlag)
       .mapN { (q, rows, json) => (c: Client) =>
         AcquireClient(c).archiveSearch(q, rows).map(r => Output.emit(json, r)(AcquireMarkdown.archiveSearch))
       }
   }
 
-  private val archiveInfo = Opts.subcommand("info", "One archive.org item: files and lending restriction") {
+  private def archiveInfo (using console: Console) = Opts.subcommand("info", "One archive.org item: files and lending restriction") {
     (Opts.argument[String]("identifier"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       AcquireClient(c).archiveInfo(id).map(i => Output.emit(json, i)(AcquireMarkdown.archiveItem))
     }
   }
 
-  private val archiveImport = Opts.subcommand("import", "Import a PUBLIC archive.org item (lending-only is refused)") {
+  private def archiveImport (using console: Console) = Opts.subcommand("import", "Import a PUBLIC archive.org item (lending-only is refused)") {
     (
       Opts.argument[String]("identifier"),
       Opts.option[String]("citekey", "Override the generated citekey").orNone,
@@ -257,10 +258,10 @@ object AcquireCmd:
     }
   }
 
-  val archive = Opts.subcommand("archive", "Internet Archive: search, inspect and import public texts") {
+  def archive (using console: Console) = Opts.subcommand("archive", "Internet Archive: search, inspect and import public texts") {
     archiveSearch orElse archiveInfo orElse archiveImport
   }
 
   /** Everything this stream adds to `histmersion`, in one value so `Cli` gains a single line. */
-  val all: Opts[Client => Either[Cli.Error, Unit]] =
+  def all(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     discover orElse refs orElse assess orElse followups orElse ingest orElse archive

@@ -10,6 +10,8 @@ import scala.annotation.tailrec
   */
 class CliHelpSnapshotSuite extends munit.FunSuite:
 
+  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+
   private val file = Path.of("modules/cli/src/test/resources/contract/cli-help.txt")
 
   private def help(path: List[String]): String =

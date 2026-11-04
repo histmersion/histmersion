@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.api.basemap.BasemapMarkdown
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.util.console.Console
 
 /** `histmersion basemap status|fetch|rm` — the local base map's extracts on the SERVER's machine
   * (docs/user-guide/how-to/open-data.md): what is there (and which of the two styles it draws whole), downloading them
@@ -13,14 +14,14 @@ import com.histmersion.api.basemap.Basemap
   */
 object BasemapCmd:
 
-  private val statusCmd =
+  private def statusCmd (using console: Console) =
     Opts.subcommand("status", "What is downloaded, where, the free space there, and which styles lack data") {
       Output.jsonFlag.map { json => (c: Client) =>
         c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
       }
     }
 
-  private val fetchCmd = Opts.subcommand(
+  private def fetchCmd (using console: Console) = Opts.subcommand(
     "fetch",
     "Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; " +
       "refused when the disk would be left with less than basemap.min-free-gb"
@@ -65,7 +66,7 @@ object BasemapCmd:
         c.basemapFetch(
           Basemap.FetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
         ).flatMap { j =>
-          com.histmersion.cli.Cli.writeLine(
+          Cli.out.println(
             s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
@@ -73,7 +74,7 @@ object BasemapCmd:
       }
   }
 
-  private val rmCmd = Opts.subcommand(
+  private def rmCmd (using console: Console) = Opts.subcommand(
     "rm",
     "Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache"
   ) {
@@ -94,11 +95,11 @@ object BasemapCmd:
         .orFalse
     ).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => com.histmersion.cli.Cli.writeLine(BasemapMarkdown.removed(r)))
+      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("basemap", "The web UI's local base map (street maps and terrain): status, styles, fetch, rm") {
       statusCmd orElse fetchCmd orElse rmCmd
     }

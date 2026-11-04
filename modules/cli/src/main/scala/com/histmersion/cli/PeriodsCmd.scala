@@ -7,6 +7,7 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.PeriodsMarkdown
+import com.histmersion.util.console.Console
 
 /** `histmersion periods …` — named historical periods, the web timeline's presets (#719) — and `histmersion init`, the
   * first-run import (#720). Kept in its own file so the shared `Cli` only gains one line.
@@ -17,7 +18,7 @@ import com.histmersion.api.catalogue.PeriodsMarkdown
   */
 object PeriodsCmd:
 
-  private val search = Opts.subcommand("search", "Find named periods by label, region or time span") {
+  private def search (using console: Console) = Opts.subcommand("search", "Find named periods by label, region or time span") {
     (
       Opts.argument[String]("query").orNone,
       Opts.option[String]("region", "Exact region (case-insensitive), e.g. Crete").orNone,
@@ -26,18 +27,18 @@ object PeriodsCmd:
     )
       .mapN { (q, region, from, to) => (c: Client) =>
         c.periods(q.map(_.trim).filter(_.nonEmpty), region, from, to)
-          .map(ps => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.list(ps.toVector)))
+          .map(ps => Cli.out.println(PeriodsMarkdown.list(ps.toVector)))
       }
   }
 
-  private val showCmd =
+  private def showCmd (using console: Console) =
     Opts.subcommand("show", "One period: its span, authority, what it is part of and its divisions") {
       Opts.argument[String]("id").map { id => (c: Client) =>
-        c.period(id).map(d => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.detail(d)))
+        c.period(id).map(d => Cli.out.println(PeriodsMarkdown.detail(d)))
       }
     }
 
-  private val seed =
+  private def seed (using console: Console) =
     Opts.subcommand("seed", "Import the period presets bundled with the server (a curated PeriodO subset); idempotent") {
       (
         Opts.option[String]("file", "Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)").orNone,
@@ -55,11 +56,11 @@ object PeriodsCmd:
               Left(Cli.Error("--replace applies to the bundled seed, not to --file", exitCode = ExitCode.Usage))
             case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
             case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
-          r.map(x => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(x)))
+          r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
         }
     }
 
-  private val importCmd = Opts.subcommand(
+  private def importCmd (using console: Console) = Opts.subcommand(
     "import",
     "Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle"
   ) {
@@ -71,11 +72,11 @@ object PeriodsCmd:
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
         if !Files.isRegularFile(f) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
-        else c.importPeriods(cols, Files.readString(f), dataset).map(x => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(x)))
+        else c.importPeriods(cols, Files.readString(f), dataset).map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
       }
   }
 
-  private val fetch = Opts.subcommand(
+  private def fetch (using console: Console) = Opts.subcommand(
     "fetch",
     "Download PeriodO and import collections, each under one node; re-runnable and idempotent"
   ) {
@@ -89,17 +90,17 @@ object PeriodsCmd:
         .orEmpty
     )
       .mapN { (source, cols) => (c: Client) =>
-        c.fetchPeriods(source, cols).map(r => com.histmersion.cli.Cli.writeLine(PeriodsMarkdown.imported(r)))
+        c.fetchPeriods(source, cols).map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
       }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("periods", "Named periods (the timeline presets): search, show, seed and fetch from PeriodO") {
       search orElse showCmd orElse seed orElse importCmd orElse fetch
     }
 
   /** `histmersion init` — what a server does by itself on its first start, on demand. */
-  val init: Opts[Client => Either[Cli.Error, Unit]] =
+  def init(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "init",
       "Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources"
@@ -110,7 +111,7 @@ object PeriodsCmd:
       )
         .mapN { (fetch, noWait) => (c: Client) =>
           c.init(fetch).flatMap { j =>
-            com.histmersion.cli.Cli.writeLine(s"init job `${j.id}` started (`histmersion jobs` lists it)")
+            Cli.out.println(s"init job `${j.id}` started (`histmersion jobs` lists it)")
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }
         }

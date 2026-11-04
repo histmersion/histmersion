@@ -6,12 +6,13 @@ import com.histmersion.api.personal.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.ItemKind
+import com.histmersion.util.console.Console
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
   */
 object NotesCmd:
 
-  private val list = Opts.subcommand("list", "Your notes, last changed first") {
+  private def list (using console: Console) = Opts.subcommand("list", "Your notes, last changed first") {
     (
       Opts
         .option[String](
@@ -28,7 +29,7 @@ object NotesCmd:
     }
   }
 
-  private val show = Opts.subcommand("show", "One note in full") {
+  private def show (using console: Console) = Opts.subcommand("show", "One note in full") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       c.call(PersonalApi.note)(id).map(n => Output.emit(json, n)(PersonalMarkdown.note))
     }
@@ -48,7 +49,7 @@ object NotesCmd:
     Opts.option[String]("file", "Read the note from this Markdown file").orNone
   )
 
-  private val add = Opts.subcommand(
+  private def add (using console: Console) = Opts.subcommand(
     "add",
     "Leave a note on an item (`source anthony2007_horse --text …`) or on a " +
       "place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)"
@@ -68,7 +69,7 @@ object NotesCmd:
     }
   }
 
-  private val edit = Opts.subcommand("edit", "Replace a note's text") {
+  private def edit (using console: Console) = Opts.subcommand("edit", "Replace a note's text") {
     (Opts.argument[String]("id"), textOpts._1, textOpts._2, Output.jsonFlag).mapN {
       (id, inline, file, json) => (c: Client) =>
         text(inline, file)
@@ -77,11 +78,11 @@ object NotesCmd:
     }
   }
 
-  private val rm = Opts.subcommand("rm", "Remove a note (its id, from `notes list`)") {
+  private def rm (using console: Console) = Opts.subcommand("rm", "Remove a note (its id, from `notes list`)") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       c.call(PersonalApi.removeNote)(id).map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
     }
   }
 
-  val command: Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("notes", "Your notes: list, show, add, edit, rm")(list orElse show orElse add orElse edit orElse rm)

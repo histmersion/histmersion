@@ -5,6 +5,7 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
+import com.histmersion.util.console.Console
 
 /** The dependencies of user plugins, resolved together with what the server ships — run from the relink kit by
   * `histmersion-relink --resolve` (which `histmersion plugin add` and `rm`, the relink's pre-flight and the JVM
@@ -20,25 +21,25 @@ import scala.util.control.NonFatal
   * each, and of everything it depends on, is on the class path already. What remains goes into `lib/`. Exit codes: 0
   * done, 1 usage, 2 refused, 3 failed (a repository, a download, a file).
   */
-@main def pluginResolver(args: String*): Unit = sys.exit(DependencyResolver.exitCode(args.toList, s => System.out.println(s), s => System.err.println(s)))
+@main def pluginResolver(args: String*): Unit = sys.exit(DependencyResolver.exitCode(args.toList)(using Console.system))
 
 object DependencyResolver:
 
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
-  def exitCode(args: List[String], out: String => Unit, err: String => Unit): Int = try run(args, out, err)
+  def exitCode(args: List[String])(using console: Console): Int = try run(args)(using console)
     catch
       case NonFatal(e) =>
-        err(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        console.errorLine(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
-  def run(args: List[String], out: String => Unit, err: String => Unit): Int = args match
+  def run(args: List[String])(using console: Console): Int = args match
     case "resolve" :: rest =>
       parse(rest) match
-        case Left(e)  => err(s"$e\n$Usage"); 1
-        case Right(r) => resolve(r, out, err)
-    case _ => err(Usage); 1
+        case Left(e)  => console.errorLine(s"$e\n$Usage"); 1
+        case Right(r) => resolve(r)(using console)
+    case _ => console.errorLine(Usage); 1
 
   /** Pure: the request the arguments make. */
   def parse(args: List[String]): Either[String, ResolveRequest] =
@@ -58,7 +59,7 @@ object DependencyResolver:
     loop(args, ResolveRequest(empty, empty, None, Nil, false, Nil))
       .filterOrElse(r => r.kit != empty && r.lib != empty, "--kit and --lib are required")
 
-  def resolve(r: ResolveRequest, out: String => Unit, err: String => Unit): Int =
+  def resolve(r: ResolveRequest)(using console: Console): Int =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
@@ -66,7 +67,7 @@ object DependencyResolver:
       _ <- Either.cond(missing.isEmpty, (), s"no such plugin jar: ${missing.mkString(", ")}")
     yield (server, stored)
     outcome match
-      case Left(e)                 => err(e); 3
+      case Left(e)                 => console.errorLine(e); 3
       case Right((server, stored)) =>
         val named = (r.repositories ++ stored).distinct
         val remote = if named.nonEmpty then named else List(Coursier.central)
@@ -74,12 +75,12 @@ object DependencyResolver:
         val scratch = Files.createTempDirectory("histmersion-plugin-resolve")
         try
           Coursier.pluginRepository(scratch, plugins) match
-            case Left(e)      => err(s"refused: $e"); 2
+            case Left(e)      => console.errorLine(s"refused: $e"); 2
             case Right(roots) =>
               val local =
                 (Some(scratch) ++ r.histmersionRepo).map(d => RepositoryUrl.applyUnsafe(d.toUri.toString)).toList
               val coursier = Coursier(local ++ remote, r.cache)
-              resolveRoots(roots, server, coursier, out, err) match
+              resolveRoots(roots, server, coursier)(using console) match
                 case Left(rc)    => rc
                 case Right(deps) =>
                   if !r.check then LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
@@ -89,19 +90,15 @@ object DependencyResolver:
   private def resolveRoots(
       roots: List[(PluginArtifact, ModuleCoordinates)],
       server: ServerModules,
-      coursier: Coursier,
-      out: String => Unit,
-      err: String => Unit
-  ): Either[Int, List[Dependency]] =
-    if roots.isEmpty then Right(Nil) else resolveSome(roots, server, coursier, out, err)
+      coursier: Coursier
+  )(using console: Console): Either[Int, List[Dependency]] =
+    if roots.isEmpty then Right(Nil) else resolveSome(roots, server, coursier)(using console)
 
   private def resolveSome(
       roots: List[(PluginArtifact, ModuleCoordinates)],
       server: ServerModules,
-      coursier: Coursier,
-      out: String => Unit,
-      err: String => Unit
-  ): Either[Int, List[Dependency]] =
+      coursier: Coursier
+  )(using console: Console): Either[Int, List[Dependency]] =
     val pluginKeys = roots.map(_._2.key).toSet
     val alone = traverse(roots) { (plugin, c) =>
       coursier
@@ -111,19 +108,19 @@ object DependencyResolver:
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
-      case Left(e)          => err(s"could not resolve the plugins' dependencies: $e"); Left(3)
+      case Left(e)          => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(3)
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
-            conflicts.foreach(c => err(s"refused: ${c.message}"))
+            conflicts.foreach(c => console.errorLine(s"refused: ${c.message}"))
             Left(2)
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match
-              case Left(e)      => err(s"could not resolve the plugins' dependencies: $e"); Left(3)
+              case Left(e)      => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(3)
               case Right(joint) =>
                 val deps = Resolution.dependencies(joint, pluginKeys, server, Resolution.neededBy(perPlugin))
                 val provided = Resolution.provided(perPlugin.flatMap(_._2), pluginKeys, server)
-                Resolution.report(deps, provided).foreach(out)
+                Resolution.report(deps, provided).foreach(console.writeLine)
                 Right(deps)
 
   private def serverModules(kit: Path): Either[String, ServerModules] =
