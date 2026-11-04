@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class AssessRequest(id: String, apply: Boolean = false, forceStatus: Boolean = false)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object AssessRequest:
-  given Schema[AssessRequest] = summon[KindlingsSchema[AssessRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

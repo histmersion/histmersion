@@ -32,6 +32,4 @@ final case class About(
     /** Absent from an older server. */
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object About:
-  given Schema[About] = summon[KindlingsSchema[About]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

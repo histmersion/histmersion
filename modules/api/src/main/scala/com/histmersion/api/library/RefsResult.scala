@@ -13,6 +13,4 @@ final case class RefsResult(
     edgesAdded: Int,
     references: List[RefRow]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RefsResult:
-  given Schema[RefsResult] = summon[KindlingsSchema[RefsResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

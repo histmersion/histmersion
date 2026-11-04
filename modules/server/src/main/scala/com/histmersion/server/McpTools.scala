@@ -474,9 +474,8 @@ object McpTools:
   export com.histmersion.util.mcp.ToolInputs.given
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
-  final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema
-  object PingInput:
-    given Schema[PingInput] = summon[KindlingsSchema[PingInput]].schema
+  final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** The `config` tool's input: what to do with the server's configuration. */
   final case class ConfigInput(
@@ -498,9 +497,8 @@ object McpTools:
         _.description("set: a credential may be written as value:… (the key itself in the file)")
       )
 
-  final case class BackupInput() derives KindlingsCodecAsObject, KindlingsSchema
-  object BackupInput:
-    given Schema[BackupInput] = summon[KindlingsSchema[BackupInput]].schema
+  final case class BackupInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
   final case class IngestInput(
       citekey: String,
@@ -532,9 +530,8 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
-  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object JobControlInput:
-    given Schema[JobControlInput] = summon[KindlingsSchema[JobControlInput]].schema
+  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ActivityInput(
       show: Option[String] = None,
@@ -543,9 +540,8 @@ object McpTools:
       limit: Option[Int] = None,
       before: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ActivityInput:
-    given Schema[ActivityInput] = summon[KindlingsSchema[ActivityInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class JobStatusInput(
       id: Option[String] = None,

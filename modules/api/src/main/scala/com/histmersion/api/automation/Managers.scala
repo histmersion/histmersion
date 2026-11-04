@@ -125,9 +125,8 @@ object Managers:
 
   final case class ArticleSpec(title: String, kind: String, filter: Article.Filter, why: String = "")
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ArticleSpec:
-    given Schema[ArticleSpec] = summon[KindlingsSchema[ArticleSpec]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerConfig(
       maxRuns: Option[Int] = None,
@@ -155,7 +154,7 @@ object Managers:
       autoApprove: Option[Boolean] = None,
       extendMinNew: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
       other.maxRuns.orElse(maxRuns),
       other.maxOpen.orElse(maxOpen),
@@ -183,7 +182,7 @@ object Managers:
       other.extendMinNew.orElse(extendMinNew)
     )
   object ManagerConfig:
-    given Schema[ManagerConfig] = summon[KindlingsSchema[ManagerConfig]].schema
+
 
     def parse(kvs: List[String]): Either[String, ManagerConfig] =
       kvs.foldLeft[Either[String, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
@@ -259,10 +258,10 @@ object Managers:
       failed: Int = 0,
       cancelled: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def open: Int = pending + held + active
   object ItemCounts:
-    given Schema[ItemCounts] = summon[KindlingsSchema[ItemCounts]].schema
+
 
     def of(rows: List[(String, Int)]): ItemCounts =
       @tailrec def loop(
@@ -299,9 +298,8 @@ object Managers:
       kind: String = "",
       text: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerEvent:
-    given Schema[ManagerEvent] = summon[KindlingsSchema[ManagerEvent]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerInfo(
       id: String,
@@ -324,9 +322,8 @@ object Managers:
       backlog: Int = 0,
       backlogDays: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerInfo:
-    given Schema[ManagerInfo] = summon[KindlingsSchema[ManagerInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Hold(
       until: Option[String] = None,
@@ -336,9 +333,8 @@ object Managers:
       untilApproval: Option[Long] = None,
       focus: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Hold:
-    given Schema[Hold] = summon[KindlingsSchema[Hold]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RunMark(
       run: String,
@@ -350,9 +346,8 @@ object Managers:
       pairsBefore: Option[Int] = None,
       pairsAfter: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RunMark:
-    given Schema[RunMark] = summon[KindlingsSchema[RunMark]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ItemState(
       history: List[RunMark] = Nil,
@@ -363,9 +358,8 @@ object Managers:
       filterHits: Option[Int] = None,
       oa: Option[OaWork] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ItemState:
-    given Schema[ItemState] = summon[KindlingsSchema[ItemState]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class OaWork(
       doi: String,
@@ -378,9 +372,8 @@ object Managers:
       foundBy: Option[String] = None,
       acquireText: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object OaWork:
-    given Schema[OaWork] = summon[KindlingsSchema[OaWork]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerItem(
       id: Long,
@@ -402,9 +395,8 @@ object Managers:
       updatedAt: String = "",
       run: Option[Agents.RunInfo] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerItem:
-    given Schema[ManagerItem] = summon[KindlingsSchema[ManagerItem]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class HintEffect(
       action: String,
@@ -417,9 +409,9 @@ object Managers:
       priority: Option[Int] = None,
       config: Option[ManagerConfig] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object HintEffect:
-    given Schema[HintEffect] = summon[KindlingsSchema[HintEffect]].schema
+
     val Prioritise = "prioritise"
     val HoldAction = "hold"
     val Skip = "skip"
@@ -437,9 +429,8 @@ object Managers:
       by: String = "",
       why: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object HintProposal:
-    given Schema[HintProposal] = summon[KindlingsSchema[HintProposal]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerHint(
       id: Long,
@@ -455,9 +446,8 @@ object Managers:
       proposal: Option[Long] = None,
       proposed: Option[HintEffect] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerHint:
-    given Schema[ManagerHint] = summon[KindlingsSchema[ManagerHint]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerDetail(
       manager: ManagerInfo,
@@ -465,21 +455,18 @@ object Managers:
       hints: List[ManagerHint] = Nil,
       events: List[ManagerEvent] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerDetail:
-    given Schema[ManagerDetail] = summon[KindlingsSchema[ManagerDetail]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ItemPage(items: List[ManagerItem], total: Int, offset: Int, limit: Int)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ItemPage:
-    given Schema[ItemPage] = summon[KindlingsSchema[ItemPage]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class EventPage(events: List[ManagerEvent], before: Option[Long] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object EventPage:
-    given Schema[EventPage] = summon[KindlingsSchema[EventPage]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerCreate(
       kind: String,
@@ -488,27 +475,23 @@ object Managers:
       paused: Option[Boolean] = None,
       cron: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerCreate:
-    given Schema[ManagerCreate] = summon[KindlingsSchema[ManagerCreate]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ManagerUpdate:
-    given Schema[ManagerUpdate] = summon[KindlingsSchema[ManagerUpdate]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class EnqueueRequest(kind: String, target: String, priority: Option[Int] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object EnqueueRequest:
-    given Schema[EnqueueRequest] = summon[KindlingsSchema[EnqueueRequest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class EnqueueResult(managerId: String, items: List[ManagerItem] = Nil, skipped: List[String] = Nil)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object EnqueueResult:
-    given Schema[EnqueueResult] = summon[KindlingsSchema[EnqueueResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ItemPatch(
       action: String,
@@ -517,9 +500,9 @@ object Managers:
       untilSource: Option[String] = None,
       reason: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object ItemPatch:
-    given Schema[ItemPatch] = summon[KindlingsSchema[ItemPatch]].schema
+
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 
   final case class HintAdd(
@@ -531,8 +514,7 @@ object Managers:
       propose: Option[Boolean] = None,
       suggest: Option[Boolean] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object HintAdd:
-    given Schema[HintAdd] = summon[KindlingsSchema[HintAdd]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   val Actions: List[String] = List("pause", "resume", "stop")

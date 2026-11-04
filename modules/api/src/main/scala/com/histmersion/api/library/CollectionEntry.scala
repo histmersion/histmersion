@@ -17,7 +17,4 @@ final case class CollectionEntry(
     identifiers: Map[String, String],
     formats: List[String]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionEntry:
-  given Schema[CollectionEntry] = summon[KindlingsSchema[CollectionEntry]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -12,6 +12,4 @@ final case class EventDating(
     method: Option[String] = None,
     note: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventDating:
-  given Schema[EventDating] = summon[KindlingsSchema[EventDating]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -27,7 +27,4 @@ final case class MediaItem(
     fileUrl: String = "",
     targets: List[MediaTarget] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaItem:
-  given Schema[MediaItem] = summon[KindlingsSchema[MediaItem]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

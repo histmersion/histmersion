@@ -11,9 +11,9 @@ final case class EventList(
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, events.size)
 object EventList:
-  given Schema[EventList] = summon[KindlingsSchema[EventList]].schema
+
   def of(total: Int, rows: List[EventSummary], offset: Int): EventList =
     EventList(total, rows, offset, OffsetPage(total, offset, rows.size).next)

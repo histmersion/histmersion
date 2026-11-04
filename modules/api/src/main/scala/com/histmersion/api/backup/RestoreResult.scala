@@ -15,6 +15,4 @@ final case class RestoreResult(
     durationMs: Long,
     warnings: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RestoreResult:
-  given Schema[RestoreResult] = summon[KindlingsSchema[RestoreResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

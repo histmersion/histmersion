@@ -11,7 +11,7 @@ final case class MergeResolutions(
     policy: MergePolicy = MergePolicy(),
     bundle: Option[UUID] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def overriddenBy(later: MergeResolutions): MergeResolutions =
     val ids = later.resolve.map(_.issue).toSet
     MergeResolutions(
@@ -20,7 +20,7 @@ final case class MergeResolutions(
       later.bundle.orElse(bundle)
     )
 object MergeResolutions:
-  given Schema[MergeResolutions] = summon[KindlingsSchema[MergeResolutions]].schema
+
 
   object Text:
 

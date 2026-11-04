@@ -4,9 +4,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject, KindlingsSchema
+final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 object TocEntry:
-  given Schema[TocEntry] = summon[KindlingsSchema[TocEntry]].schema
+
 
   /** A source's table of contents as `get_source` shows it. */
   def markdown(entries: List[TocEntry]): String =

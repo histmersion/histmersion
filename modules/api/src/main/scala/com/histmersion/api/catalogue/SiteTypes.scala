@@ -347,9 +347,9 @@ object SiteTypes:
       requests: Int = 0,
       failed: List[String] = Nil
   ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
-    given sttp.tapir.Schema[Report] = summon[KindlingsSchema[Report]].schema
+
     def summary(r: Report): String =
       if r.dryRun then s"${r.pending} Wikidata site(s) on the map would be asked about"
       else
@@ -365,6 +365,4 @@ object SiteTypes:
 
   final case class Request(dryRun: Boolean = false, limit: Option[Int] = None, refresh: Boolean = false)
       derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
-        KindlingsSchema
-  object Request:
-    given sttp.tapir.Schema[Request] = summon[KindlingsSchema[Request]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

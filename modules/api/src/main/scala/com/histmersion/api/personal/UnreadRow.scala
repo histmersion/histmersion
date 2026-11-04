@@ -16,7 +16,4 @@ final case class UnreadRow(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object UnreadRow:
-  given Schema[UnreadRow] = summon[KindlingsSchema[UnreadRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -11,6 +11,4 @@ final case class ResolvedId(
     source: Option[ResolvedSource] = None,
     article: Option[ResolvedArticle] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ResolvedId:
-  given Schema[ResolvedId] = summon[KindlingsSchema[ResolvedId]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

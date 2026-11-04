@@ -19,6 +19,4 @@ final case class SearchHit(
     doi: Option[String] = None,
     authors: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object SearchHit:
-  given Schema[SearchHit] = summon[KindlingsSchema[SearchHit]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

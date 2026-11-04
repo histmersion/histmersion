@@ -238,19 +238,16 @@ object ModelChains:
 
   final case class LimitSpec(amount: Double, measure: Measure, window: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object LimitSpec:
-    given Schema[LimitSpec] = summon[KindlingsSchema[LimitSpec]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
-  object ChainSet:
-    given Schema[ChainSet] = summon[KindlingsSchema[ChainSet]].schema
+
+  final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class AllowanceSet(target: String, limits: List[LimitSpec] = Nil, reservePct: Int = 0)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object AllowanceSet:
-    given Schema[AllowanceSet] = summon[KindlingsSchema[AllowanceSet]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum SettingSource(val wire: String):
     case Config extends SettingSource("config")
@@ -267,9 +264,8 @@ object ModelChains:
       usable: Boolean,
       freesAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object LimitStatus:
-    given Schema[LimitStatus] = summon[KindlingsSchema[LimitStatus]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class AllowanceStatus(
       target: String,
@@ -280,9 +276,8 @@ object ModelChains:
       freesAt: Option[String] = None,
       note: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object AllowanceStatus:
-    given Schema[AllowanceStatus] = summon[KindlingsSchema[AllowanceStatus]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ChainEntry(
       model: String,
@@ -293,9 +288,8 @@ object ModelChains:
       billing: Option[String] = None,
       cooling: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ChainEntry:
-    given Schema[ChainEntry] = summon[KindlingsSchema[ChainEntry]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RoleChain(
       role: String,
@@ -304,6 +298,4 @@ object ModelChains:
       active: Option[String] = None,
       problem: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RoleChain:
-    given Schema[RoleChain] = summon[KindlingsSchema[RoleChain]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

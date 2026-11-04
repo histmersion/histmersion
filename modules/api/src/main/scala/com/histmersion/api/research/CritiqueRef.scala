@@ -4,13 +4,13 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject, KindlingsSchema:
+final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   def wire: String = s"$src>$dst"
 
   def same(o: CritiqueRef): Boolean = (src == o.src && dst == o.dst) || (src == o.dst && dst == o.src)
 
 object CritiqueRef:
-  given Schema[CritiqueRef] = summon[KindlingsSchema[CritiqueRef]].schema
+
 
   private def key(s: String): String =
     s.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT)

@@ -10,6 +10,4 @@ final case class SpatialHierarchyResult(
     pointPlaces: Int,
     job: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object SpatialHierarchyResult:
-  given Schema[SpatialHierarchyResult] = summon[KindlingsSchema[SpatialHierarchyResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

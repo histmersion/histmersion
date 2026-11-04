@@ -13,6 +13,4 @@ final case class RetractionsUpdate(
     running: Boolean = false,
     error: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RetractionsUpdate:
-  given Schema[RetractionsUpdate] = summon[KindlingsSchema[RetractionsUpdate]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

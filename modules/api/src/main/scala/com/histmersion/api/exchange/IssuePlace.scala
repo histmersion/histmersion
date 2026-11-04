@@ -10,6 +10,4 @@ final case class IssuePlace(
     leftSpan: Option[IssueSpan] = None,
     rightSpan: Option[IssueSpan] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object IssuePlace:
-  given Schema[IssuePlace] = summon[KindlingsSchema[IssuePlace]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

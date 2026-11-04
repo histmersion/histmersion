@@ -49,8 +49,8 @@ object Edge:
       def fromWire(s: String): Option[Kind] = Kind.fromWire(s)
 
   final case class Input(dst: String, kind: com.histmersion.api.library.Edge.Kind, src: Option[String] = None)
-      derives KindlingsSchema
+      derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
-    given Schema[Input] = summon[KindlingsSchema[Input]].schema
+
 
     given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])

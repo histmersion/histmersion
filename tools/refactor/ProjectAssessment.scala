@@ -47,6 +47,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       val policyFiles = walk("tools/refactor").filter(p => p.getParent == Paths.get("tools/refactor") && (p.toString.endsWith(".scala") || p.toString.endsWith(".conf")))
       val policyHash = fingerprint(policyFiles)
       if (policy.compile) run("compile", List("sbt", "--server", "-batch", "set every scalafmtOnCompile := false", "set ThisBuild / scalacOptions += \"-Xsemanticdb\"", "compile", "Test/compile"))
+      run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.0", "--files", "tools/refactor/SchemaVerification.scala"))
       run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
       run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--scala-version", "3.10.0", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
       require(before == fingerprint(sourceFiles), "Application sources changed during assessment")
@@ -71,6 +72,8 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       }
       register("migration/console-injection", "cli production only; dependency-plan nodes")
       table("console.tsv").foreach(r => hits += (("migration/console-injection", module(r(1)))))
+      register("derivation/schema-bridge", "production+tests; semantic plain KindlingsSchema bridges, including deferred shapes")
+      table("schema-derives/plan.tsv").foreach(r => hits += (("derivation/schema-bridge", module(r(1)))))
       require(hits.forall { case (id,m) => scopes.contains(id) && modules.contains(m) }, "Unknown measurement/module")
       val counts = scopes.keys.toList.flatMap(id => ("ALL" :: modules).map(m => (id,m) -> hits.count { case (r,mod) => r == id && (m == "ALL" || mod == m) })).toMap
       val baseline = root.resolve("baseline.tsv")

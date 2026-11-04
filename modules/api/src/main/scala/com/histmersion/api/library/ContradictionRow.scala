@@ -16,6 +16,4 @@ final case class ContradictionRow(
     otherYear: Option[Int] = None,
     otherStatus: Option[com.histmersion.api.library.Source.Status] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ContradictionRow:
-  given Schema[ContradictionRow] = summon[KindlingsSchema[ContradictionRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

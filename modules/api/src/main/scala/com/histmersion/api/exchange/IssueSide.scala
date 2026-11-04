@@ -8,6 +8,4 @@ import com.histmersion.api.given
 
 final case class IssueSide(label: String, uid: UUID, lines: List[String] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object IssueSide:
-  given Schema[IssueSide] = summon[KindlingsSchema[IssueSide]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

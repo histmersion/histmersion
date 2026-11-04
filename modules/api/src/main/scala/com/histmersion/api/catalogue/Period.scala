@@ -18,9 +18,8 @@ object Period:
       parent: Option[HistoricalPeriod] = None,
       children: List[HistoricalPeriod] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Detail:
-    given Schema[Detail] = summon[KindlingsSchema[Detail]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ImportResult(
       periods: Int,
@@ -30,13 +29,12 @@ object Period:
       skippedCount: Int = 0,
       removed: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ImportResult:
-    given Schema[ImportResult] = summon[KindlingsSchema[ImportResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Input(start: Long, end: Long) derives KindlingsSchema
+
+  final case class Input(start: Long, end: Long) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
-    given Schema[Input] = summon[KindlingsSchema[Input]].schema
+
 
     given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
 

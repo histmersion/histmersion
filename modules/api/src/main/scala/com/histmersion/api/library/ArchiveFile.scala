@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class ArchiveFile(name: String, format: Option[String], megabytes: Double)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ArchiveFile:
-  given Schema[ArchiveFile] = summon[KindlingsSchema[ArchiveFile]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

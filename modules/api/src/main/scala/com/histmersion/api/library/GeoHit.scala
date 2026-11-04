@@ -18,6 +18,4 @@ final case class GeoHit(
     doi: Option[String] = None,
     sourceKind: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object GeoHit:
-  given Schema[GeoHit] = summon[KindlingsSchema[GeoHit]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class CalibrePushResult(citekey: String, calibreId: String, ok: Boolean)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CalibrePushResult:
-  given Schema[CalibrePushResult] = summon[KindlingsSchema[CalibrePushResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

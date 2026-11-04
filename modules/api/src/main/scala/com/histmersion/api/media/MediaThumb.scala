@@ -15,7 +15,7 @@ final case class MediaThumb(
     width: Option[Int] = None,
     height: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
 
   /** The picture's line on an event's or a place's page: its role, credit, licence, source and address. */
   def markdownLine: String =
@@ -24,7 +24,7 @@ final case class MediaThumb(
     s"- _${role}_ — $credit · $lic$from · `$url`"
 
 object MediaThumb:
-  given Schema[MediaThumb] = summon[KindlingsSchema[MediaThumb]].schema
+
 
   def thumbPath(uid: String): String = s"/media/$uid/thumb"
   def filePath(uid: String): String = s"/media/$uid/file"

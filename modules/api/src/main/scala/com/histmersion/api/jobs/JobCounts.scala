@@ -13,7 +13,7 @@ final case class JobCounts(
     paused: Int = 0,
     cancelled: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def of(s: JobState): Int = s match
     case JobState.Queued    => queued
     case JobState.Running   => running
@@ -22,7 +22,7 @@ final case class JobCounts(
     case JobState.Paused    => paused
     case JobState.Cancelled => cancelled
 object JobCounts:
-  given Schema[JobCounts] = summon[KindlingsSchema[JobCounts]].schema
+
 
   def of(rows: List[(String, Int)]): JobCounts =
     @tailrec def loop(

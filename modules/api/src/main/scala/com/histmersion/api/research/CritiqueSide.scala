@@ -11,6 +11,4 @@ final case class CritiqueSide(
     cited: Boolean = false,
     mentions: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CritiqueSide:
-  given Schema[CritiqueSide] = summon[KindlingsSchema[CritiqueSide]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -10,6 +10,4 @@ final case class EventsUiConfig(
     mapLimit: Int,
     outlineToleranceDeg: Double
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventsUiConfig:
-  given Schema[EventsUiConfig] = summon[KindlingsSchema[EventsUiConfig]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

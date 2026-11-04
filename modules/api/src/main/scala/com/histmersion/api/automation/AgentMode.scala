@@ -38,6 +38,4 @@ object AgentMode:
     case Finishing => Option.when(!draining)(Step.Drain(true)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
     case Paused    => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(autopilotOn)(Step.Autopilot(false))
 
-  final case class ModeSet(mode: String, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object ModeSet:
-    given Schema[ModeSet] = summon[KindlingsSchema[ModeSet]].schema
+  final case class ModeSet(mode: String, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

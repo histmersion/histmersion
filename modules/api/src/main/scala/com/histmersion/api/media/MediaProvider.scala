@@ -72,6 +72,4 @@ object MediaProvider:
       builtin: Boolean,
       licences: String
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Info:
-    given Schema[Info] = summon[KindlingsSchema[Info]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

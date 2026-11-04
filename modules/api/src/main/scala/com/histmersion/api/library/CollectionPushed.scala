@@ -11,7 +11,4 @@ final case class CollectionPushed(
     title: String,
     replaced: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionPushed:
-  given Schema[CollectionPushed] = summon[KindlingsSchema[CollectionPushed]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

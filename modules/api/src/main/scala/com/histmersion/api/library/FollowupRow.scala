@@ -16,6 +16,4 @@ final case class FollowupRow(
     proposedKind: String = "cites",
     citekey: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FollowupRow:
-  given Schema[FollowupRow] = summon[KindlingsSchema[FollowupRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

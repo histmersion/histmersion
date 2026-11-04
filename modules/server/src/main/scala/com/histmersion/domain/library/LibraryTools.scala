@@ -622,9 +622,8 @@ object LibraryTools:
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
-  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object ExportSourceInput:
-    given Schema[ExportSourceInput] = summon[KindlingsSchema[ExportSourceInput]].schema
+  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).

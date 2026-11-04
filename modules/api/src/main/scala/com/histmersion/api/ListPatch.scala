@@ -10,8 +10,8 @@ final case class ListPatch(
     add: List[String] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[String]] = None
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 object ListPatch:
-  given Schema[ListPatch] = summon[KindlingsSchema[ListPatch]].schema
+
 
   given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])

@@ -13,10 +13,10 @@ final case class MediaCoversReport(
     skipped: List[MediaCount] = Nil,
     failed: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaCoversReport:
-  given Schema[MediaCoversReport] = summon[KindlingsSchema[MediaCoversReport]].schema
+
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(

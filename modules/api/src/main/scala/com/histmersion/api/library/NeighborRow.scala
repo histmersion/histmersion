@@ -12,6 +12,4 @@ final case class NeighborRow(
     status: Option[com.histmersion.api.library.Source.Status] = None,
     target: NeighborTarget = NeighborTarget.Source
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object NeighborRow:
-  given Schema[NeighborRow] = summon[KindlingsSchema[NeighborRow]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

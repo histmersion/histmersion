@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class FormatCheck(text: String, field: FormatField = FormatField.Body, fix: Boolean = false)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FormatCheck:
-  given Schema[FormatCheck] = summon[KindlingsSchema[FormatCheck]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

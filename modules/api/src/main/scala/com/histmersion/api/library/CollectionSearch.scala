@@ -10,7 +10,4 @@ final case class CollectionSearch(
     entries: List[CollectionEntry],
     total: Int
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionSearch:
-  given Schema[CollectionSearch] = summon[KindlingsSchema[CollectionSearch]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

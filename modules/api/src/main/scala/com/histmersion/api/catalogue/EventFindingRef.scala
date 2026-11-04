@@ -13,6 +13,4 @@ final case class EventFindingRef(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventFindingRef:
-  given Schema[EventFindingRef] = summon[KindlingsSchema[EventFindingRef]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

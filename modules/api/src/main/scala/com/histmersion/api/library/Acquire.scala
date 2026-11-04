@@ -257,9 +257,8 @@ object Acquire:
 
     final case class AcquireCheck(item: Int, checkedAt: String, outcome: String, reason: String, checks: Int = 1)
         derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object AcquireCheck:
-      given Schema[AcquireCheck] = summon[KindlingsSchema[AcquireCheck]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     final case class RecheckRequest(
         dryRun: Boolean = false,
@@ -268,9 +267,8 @@ object Acquire:
         by: Option[String] = None,
         all: Boolean = false
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object RecheckRequest:
-      given Schema[RecheckRequest] = summon[KindlingsSchema[RecheckRequest]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     final case class RecheckRow(
         item: Int,
@@ -279,9 +277,8 @@ object Acquire:
         detail: String = "",
         citekey: Option[String] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object RecheckRow:
-      given Schema[RecheckRow] = summon[KindlingsSchema[RecheckRow]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     final case class RecheckResult(
         dryRun: Boolean,
@@ -297,9 +294,8 @@ object Acquire:
         note: Option[String] = None,
         job: Option[JobInfo] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object RecheckResult:
-      given Schema[RecheckResult] = summon[KindlingsSchema[RecheckResult]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     final case class RecheckJob(
         all: Boolean,
@@ -308,9 +304,9 @@ object Acquire:
         by: String = "",
         resumes: Option[String] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
+          KindlingsSchema, com.histmersion.api.json.Schema
     object RecheckJob:
-      given Schema[RecheckJob] = summon[KindlingsSchema[RecheckJob]].schema
+
 
       /** A re-check job's plan, in its detail. */
       val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[RecheckJob]] =
@@ -337,9 +333,8 @@ object Acquire:
         note: Option[String] = None,
         job: Option[String] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema
-    object RecheckStatus:
-      given Schema[RecheckStatus] = summon[KindlingsSchema[RecheckStatus]].schema
+          KindlingsSchema, com.histmersion.api.json.Schema
+
 
     val Closed = "closed"
     val Fetched = "fetched"

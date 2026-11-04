@@ -7,6 +7,4 @@ import com.histmersion.api.given
 
 final case class PassageHit(offset: Int, heading: Option[String], text: String, matches: List[MatchSpan])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object PassageHit:
-  given Schema[PassageHit] = summon[KindlingsSchema[PassageHit]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

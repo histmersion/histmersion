@@ -89,7 +89,7 @@ copy	server:domain/automation/autopilot/AutopilotService.scala	.copy(	4
 copy	server:domain/automation/goals/PlanGoalPipeline.scala	.copy(	1
 copy	server:domain/automation/managers/DrainService.scala	.copy(	1
 copy	server:domain/automation/managers/ManagerSupervisor.scala	.copy(	2
-copy	server:domain/automation/managers/ManagersHandlers.scala	.copy(	12
+copy	server:domain/automation/managers/ManagersControllers.scala	.copy(	12
 copy	server:domain/automation/scheduler/SchedulerService.scala	.copy(	14
 copy	server:domain/automation/worklists/WorkListControllers.scala	.copy(	2
 copy	server:domain/catalogue/events/EventImports.scala	.copy(	2
@@ -168,296 +168,55 @@ copy	web:web/marks/MapMenu.scala	.copy(	1
 copy	web:web/settings/SettingsForm.scala	.copy(	1
 copy	web:web/settings/StartPlace.scala	.copy(	3
 copy	web:web/setup/SetupPage.scala	.copy(	9
-derives	api:api/Api.scala	codec given written by hand	1
-derives	api:api/BBox.scala	codec given written by hand	1
 derives	api:api/GeoPick.scala	codec given written by hand	1
 derives	api:api/ItemKind.scala	codec given written by hand	3
-derives	api:api/ListPatch.scala	codec given written by hand	2
-derives	api:api/SpatialHierarchyResult.scala	codec given written by hand	1
-derives	api:api/StatusCount.scala	codec given written by hand	1
-derives	api:api/TableSize.scala	codec given written by hand	1
-derives	api:api/TimeSpan.scala	codec given written by hand	1
-derives	api:api/ValueCodecs.scala	codec given written by hand	18
+derives	api:api/ListPatch.scala	codec given written by hand	1
 derives	api:api/VocabularyCodecs.scala	codec given written by hand	48
-derives	api:api/aliases/InstanceInfo.scala	codec given written by hand	1
-derives	api:api/aliases/LabelRename.scala	codec given written by hand	1
-derives	api:api/aliases/LabelRenamed.scala	codec given written by hand	1
-derives	api:api/aliases/UidRedirect.scala	codec given written by hand	1
-derives	api:api/automation/Activity.scala	codec given written by hand	3
-derives	api:api/automation/AgentLeaseInfo.scala	codec given written by hand	1
-derives	api:api/automation/AgentMode.scala	codec given written by hand	1
-derives	api:api/automation/AgentScheduler.scala	codec given written by hand	8
-derives	api:api/automation/AgentStateDeleted.scala	codec given written by hand	1
-derives	api:api/automation/AgentStateEntry.scala	codec given written by hand	1
-derives	api:api/automation/AgentStatePut.scala	codec given written by hand	2
-derives	api:api/automation/Agents.scala	codec given written by hand	22
-derives	api:api/automation/ApprovalDigest.scala	codec given written by hand	6
-derives	api:api/automation/Autopilot.scala	codec given written by hand	10
-derives	api:api/automation/Goal.scala	codec given written by hand	19
-derives	api:api/automation/Managers.scala	codec given written by hand	22
-derives	api:api/automation/ModelChains.scala	codec given written by hand	8
-derives	api:api/automation/PlanQuota.scala	codec given written by hand	13
-derives	api:api/automation/Queue.scala	codec given written by hand	9
-derives	api:api/automation/RunCompare.scala	codec given written by hand	9
-derives	api:api/automation/Stalls.scala	codec given written by hand	3
-derives	api:api/backup/Backup.scala	codec given written by hand	3
-derives	api:api/backup/BackupsUsage.scala	codec given written by hand	1
-derives	api:api/backup/RestoreRequest.scala	codec given written by hand	1
-derives	api:api/backup/RestoreResult.scala	codec given written by hand	1
-derives	api:api/basemap/Basemap.scala	codec given written by hand	7
-derives	api:api/catalogue/ArticleEventLead.scala	codec given written by hand	1
-derives	api:api/catalogue/Attestation.scala	codec given written by hand	7
-derives	api:api/catalogue/CatalogProviderInfo.scala	codec given written by hand	1
-derives	api:api/catalogue/CatalogRecord.scala	codec given written by hand	1
-derives	api:api/catalogue/Correction.scala	codec given written by hand	3
-derives	api:api/catalogue/EventArticleRef.scala	codec given written by hand	1
-derives	api:api/catalogue/EventCandidatesRequest.scala	codec given written by hand	1
-derives	api:api/catalogue/EventCatalogueRef.scala	codec given written by hand	1
-derives	api:api/catalogue/EventCount.scala	codec given written by hand	1
-derives	api:api/catalogue/EventDating.scala	codec given written by hand	1
-derives	api:api/catalogue/EventDeleted.scala	codec given written by hand	1
-derives	api:api/catalogue/EventEdge.scala	codec given written by hand	1
-derives	api:api/catalogue/EventFindingRef.scala	codec given written by hand	1
-derives	api:api/catalogue/EventGeo.scala	codec given written by hand	2
-derives	api:api/catalogue/EventImportReport.scala	codec given written by hand	1
-derives	api:api/catalogue/EventImportRequest.scala	codec given written by hand	1
-derives	api:api/catalogue/EventLead.scala	codec given written by hand	3
-derives	api:api/catalogue/EventLinkCandidate.scala	codec given written by hand	1
-derives	api:api/catalogue/EventLinkList.scala	codec given written by hand	1
-derives	api:api/catalogue/EventLinksRequest.scala	codec given written by hand	2
-derives	api:api/catalogue/EventLinksResult.scala	codec given written by hand	1
-derives	api:api/catalogue/EventList.scala	codec given written by hand	1
-derives	api:api/catalogue/EventParticipant.scala	codec given written by hand	1
-derives	api:api/catalogue/EventPassage.scala	codec given written by hand	1
-derives	api:api/catalogue/EventPatch.scala	codec given written by hand	2
-derives	api:api/catalogue/EventPut.scala	codec given written by hand	2
-derives	api:api/catalogue/EventRederiveReport.scala	codec given written by hand	1
-derives	api:api/catalogue/EventRederiveRequest.scala	codec given written by hand	1
-derives	api:api/catalogue/EventSourceRef.scala	codec given written by hand	1
-derives	api:api/catalogue/EventSummary.scala	codec given written by hand	1
-derives	api:api/catalogue/Gazetteer.scala	codec given written by hand	7
+derives	api:api/automation/AgentStatePut.scala	codec given written by hand	1
+derives	api:api/automation/Agents.scala	codec given written by hand	1
+derives	api:api/automation/Goal.scala	codec given written by hand	4
+derives	api:api/automation/ModelChains.scala	codec given written by hand	1
+derives	api:api/automation/Queue.scala	codec given written by hand	2
+derives	api:api/catalogue/Attestation.scala	codec given written by hand	2
+derives	api:api/catalogue/EventLinksRequest.scala	codec given written by hand	1
+derives	api:api/catalogue/EventPatch.scala	codec given written by hand	1
+derives	api:api/catalogue/EventPut.scala	codec given written by hand	1
+derives	api:api/catalogue/Gazetteer.scala	codec given written by hand	3
 derives	api:api/catalogue/Geocode.scala	codec given written by hand	3
-derives	api:api/catalogue/HistoricalPeriod.scala	codec given written by hand	1
-derives	api:api/catalogue/ManualPlaceName.scala	codec given written by hand	1
-derives	api:api/catalogue/MapTilesUiConfig.scala	codec given written by hand	1
-derives	api:api/catalogue/MatchSpan.scala	codec given written by hand	1
-derives	api:api/catalogue/Period.scala	codec given written by hand	5
-derives	api:api/catalogue/Place.scala	codec given written by hand	31
+derives	api:api/catalogue/Period.scala	codec given written by hand	2
+derives	api:api/catalogue/Place.scala	codec given written by hand	14
 derives	api:api/catalogue/PresetRegion.scala	codec given written by hand	1
-derives	api:api/catalogue/SkippedPeriod.scala	codec given written by hand	1
-derives	api:api/checks/FormatCheck.scala	codec given written by hand	1
 derives	api:api/checks/FormatField.scala	codec given written by hand	3
-derives	api:api/checks/FormatIssue.scala	codec given written by hand	1
-derives	api:api/checks/FormatReport.scala	codec given written by hand	1
 derives	api:api/checks/FormatRule.scala	codec given written by hand	3
 derives	api:api/checks/FormatSeverity.scala	codec given written by hand	3
-derives	api:api/checks/Lint.scala	codec given written by hand	4
-derives	api:api/exchange/Bundle.scala	codec given written by hand	9
-derives	api:api/exchange/InitPlan.scala	codec given written by hand	1
-derives	api:api/exchange/IssueCondition.scala	codec given written by hand	1
-derives	api:api/exchange/IssueDetail.scala	codec given written by hand	1
-derives	api:api/exchange/IssueField.scala	codec given written by hand	1
-derives	api:api/exchange/IssueHunk.scala	codec given written by hand	1
-derives	api:api/exchange/IssuePlace.scala	codec given written by hand	1
-derives	api:api/exchange/IssueSide.scala	codec given written by hand	1
-derives	api:api/exchange/IssueSpan.scala	codec given written by hand	1
-derives	api:api/exchange/IssueText.scala	codec given written by hand	1
-derives	api:api/exchange/MatchCounts.scala	codec given written by hand	1
-derives	api:api/exchange/MergeApplyJob.scala	codec given written by hand	1
-derives	api:api/exchange/MergeApplyRequest.scala	codec given written by hand	1
-derives	api:api/exchange/MergeApplyResult.scala	codec given written by hand	1
 derives	api:api/exchange/MergeDecision.scala	codec given written by hand	3
-derives	api:api/exchange/MergeDetail.scala	codec given written by hand	1
-derives	api:api/exchange/MergeImportRequest.scala	codec given written by hand	1
-derives	api:api/exchange/MergeInfo.scala	codec given written by hand	1
-derives	api:api/exchange/MergeIssue.scala	codec given written by hand	1
 derives	api:api/exchange/MergeJobState.scala	codec given written by hand	3
-derives	api:api/exchange/MergeLedger.scala	codec given written by hand	1
-derives	api:api/exchange/MergePlan.scala	codec given written by hand	2
-derives	api:api/exchange/MergePolicy.scala	codec given written by hand	1
-derives	api:api/exchange/MergeResolution.scala	codec given written by hand	1
-derives	api:api/exchange/MergeResolutions.scala	codec given written by hand	1
-derives	api:api/exchange/MergeSession.scala	codec given written by hand	1
-derives	api:api/exchange/MergeTally.scala	codec given written by hand	1
 derives	api:api/exchange/PlanMatches.scala	codec given written by hand	3
-derives	api:api/instance/About.scala	codec given written by hand	1
-derives	api:api/instance/BuildStamp.scala	codec given written by hand	1
-derives	api:api/instance/CorpusCounts.scala	codec given written by hand	1
-derives	api:api/instance/DebounceConfig.scala	codec given written by hand	1
-derives	api:api/instance/EventsUiConfig.scala	codec given written by hand	1
-derives	api:api/instance/Health.scala	codec given written by hand	1
-derives	api:api/instance/TimeConfig.scala	codec given written by hand	1
-derives	api:api/instance/UiConfig.scala	codec given written by hand	1
-derives	api:api/instance/UiNotices.scala	codec given written by hand	4
-derives	api:api/instance/Version.scala	codec given written by hand	1
-derives	api:api/jobs/JobCounts.scala	codec given written by hand	1
 derives	api:api/jobs/JobDetail.scala	codec given written by hand	1
-derives	api:api/jobs/JobInfo.scala	codec given written by hand	1
-derives	api:api/library/Acquire.scala	codec given written by hand	6
-derives	api:api/library/ArchiveFile.scala	codec given written by hand	1
-derives	api:api/library/ArchiveImportRequest.scala	codec given written by hand	1
-derives	api:api/library/ArchiveItem.scala	codec given written by hand	1
-derives	api:api/library/ArchiveSearchResult.scala	codec given written by hand	1
-derives	api:api/library/AssessRequest.scala	codec given written by hand	1
-derives	api:api/library/Assessment.scala	codec given written by hand	1
-derives	api:api/library/Bucket.scala	codec given written by hand	1
-derives	api:api/library/CalibreGap.scala	codec given written by hand	1
-derives	api:api/library/CalibreGaps.scala	codec given written by hand	1
-derives	api:api/library/CalibrePushRequest.scala	codec given written by hand	1
-derives	api:api/library/CalibrePushResult.scala	codec given written by hand	1
-derives	api:api/library/CandidateCount.scala	codec given written by hand	1
-derives	api:api/library/CandidateList.scala	codec given written by hand	1
-derives	api:api/library/CandidateMark.scala	codec given written by hand	1
-derives	api:api/library/CandidateMarked.scala	codec given written by hand	1
-derives	api:api/library/CandidateSweep.scala	codec given written by hand	2
-derives	api:api/library/CandidateWatch.scala	codec given written by hand	1
-derives	api:api/library/CollectionAudit.scala	codec given written by hand	2
-derives	api:api/library/CollectionCover.scala	codec given written by hand	1
-derives	api:api/library/CollectionEntry.scala	codec given written by hand	1
-derives	api:api/library/CollectionFieldChange.scala	codec given written by hand	1
-derives	api:api/library/CollectionFieldValue.scala	codec given written by hand	1
-derives	api:api/library/CollectionGapRow.scala	codec given written by hand	1
-derives	api:api/library/CollectionGaps.scala	codec given written by hand	1
-derives	api:api/library/CollectionImportRequest.scala	codec given written by hand	1
-derives	api:api/library/CollectionImported.scala	codec given written by hand	1
-derives	api:api/library/CollectionInfo.scala	codec given written by hand	1
-derives	api:api/library/CollectionLinkRequest.scala	codec given written by hand	1
-derives	api:api/library/CollectionLinked.scala	codec given written by hand	1
-derives	api:api/library/CollectionPushRequest.scala	codec given written by hand	1
-derives	api:api/library/CollectionPushed.scala	codec given written by hand	1
-derives	api:api/library/CollectionRecordView.scala	codec given written by hand	1
-derives	api:api/library/CollectionSearch.scala	codec given written by hand	1
-derives	api:api/library/CollectionSetDone.scala	codec given written by hand	1
-derives	api:api/library/CollectionSetRequest.scala	codec given written by hand	1
-derives	api:api/library/CollectionSync.scala	codec given written by hand	3
-derives	api:api/library/CollectionUpdateAll.scala	codec given written by hand	2
-derives	api:api/library/CollectionUpdateOne.scala	codec given written by hand	1
-derives	api:api/library/CollectionUpdateRow.scala	codec given written by hand	1
-derives	api:api/library/CollectionUpdatedOne.scala	codec given written by hand	1
-derives	api:api/library/ContradictionRow.scala	codec given written by hand	1
-derives	api:api/library/ContradictionsResult.scala	codec given written by hand	1
-derives	api:api/library/DeleteBlocker.scala	codec given written by hand	4
-derives	api:api/library/DeleteCount.scala	codec given written by hand	1
+derives	api:api/library/DeleteBlocker.scala	codec given written by hand	3
 derives	api:api/library/DeletePart.scala	codec given written by hand	3
-derives	api:api/library/DiscoverResult.scala	codec given written by hand	1
-derives	api:api/library/Edge.scala	codec given written by hand	2
-derives	api:api/library/EdgesPatch.scala	codec given written by hand	2
-derives	api:api/library/EdgesResolved.scala	codec given written by hand	1
-derives	api:api/library/Facet.scala	codec given written by hand	1
-derives	api:api/library/Filter.scala	codec given written by hand	1
-derives	api:api/library/Finding.scala	codec given written by hand	5
-derives	api:api/library/FindingsPatch.scala	codec given written by hand	2
-derives	api:api/library/FollowupRow.scala	codec given written by hand	1
-derives	api:api/library/FollowupsRequest.scala	codec given written by hand	1
-derives	api:api/library/FollowupsResult.scala	codec given written by hand	1
-derives	api:api/library/GeoHit.scala	codec given written by hand	1
-derives	api:api/library/GeoHitPage.scala	codec given written by hand	1
-derives	api:api/library/GraphLink.scala	codec given written by hand	1
-derives	api:api/library/GraphNode.scala	codec given written by hand	1
-derives	api:api/library/Hit.scala	codec given written by hand	1
-derives	api:api/library/Ingest.scala	codec given written by hand	4
-derives	api:api/library/InstanceLabel.scala	codec given written by hand	1
+derives	api:api/library/Edge.scala	codec given written by hand	1
+derives	api:api/library/EdgesPatch.scala	codec given written by hand	1
+derives	api:api/library/Finding.scala	codec given written by hand	3
+derives	api:api/library/FindingsPatch.scala	codec given written by hand	1
 derives	api:api/library/MetadataField.scala	codec given written by hand	3
-derives	api:api/library/MetadataPatch.scala	codec given written by hand	2
-derives	api:api/library/NeighborRow.scala	codec given written by hand	1
+derives	api:api/library/MetadataPatch.scala	codec given written by hand	1
 derives	api:api/library/NeighborTarget.scala	codec given written by hand	3
-derives	api:api/library/NoteImport.scala	codec given written by hand	1
-derives	api:api/library/PassageHit.scala	codec given written by hand	1
-derives	api:api/library/PassageResult.scala	codec given written by hand	1
-derives	api:api/library/PdfInfo.scala	codec given written by hand	1
-derives	api:api/library/Query.scala	codec given written by hand	5
-derives	api:api/library/RefRow.scala	codec given written by hand	1
-derives	api:api/library/RefsRequest.scala	codec given written by hand	1
-derives	api:api/library/RefsResult.scala	codec given written by hand	1
-derives	api:api/library/Rename.scala	codec given written by hand	3
-derives	api:api/library/RepairAcquire.scala	codec given written by hand	3
-derives	api:api/library/ResolvedSource.scala	codec given written by hand	1
-derives	api:api/library/RetractionNotice.scala	codec given written by hand	1
-derives	api:api/library/RetractionsUpdate.scala	codec given written by hand	1
-derives	api:api/library/SearchHit.scala	codec given written by hand	1
-derives	api:api/library/SearchResult.scala	codec given written by hand	1
-derives	api:api/library/SeedRequest.scala	codec given written by hand	1
-derives	api:api/library/SeedResult.scala	codec given written by hand	1
 derives	api:api/library/Sort.scala	codec given written by hand	1
-derives	api:api/library/Source.scala	codec given written by hand	14
-derives	api:api/library/TimeBucket.scala	codec given written by hand	1
-derives	api:api/library/TimeHistogram.scala	codec given written by hand	1
-derives	api:api/library/TocEntry.scala	codec given written by hand	1
-derives	api:api/library/UpdateNotice.scala	codec given written by hand	1
-derives	api:api/library/UpstreamQuota.scala	codec given written by hand	1
-derives	api:api/library/WikirefsResult.scala	codec given written by hand	1
-derives	api:api/library/WorkRef.scala	codec given written by hand	1
-derives	api:api/maintenance/ReindexResult.scala	codec given written by hand	1
-derives	api:api/maintenance/Storage.scala	codec given written by hand	3
+derives	api:api/library/Source.scala	codec given written by hand	3
 derives	api:api/maintenance/Vacuum.scala	codec given written by hand	3
-derives	api:api/maintenance/VacuumPlan.scala	codec given written by hand	1
-derives	api:api/media/AssetDetail.scala	codec given written by hand	1
-derives	api:api/media/AssetInfo.scala	codec given written by hand	1
-derives	api:api/media/AssetInput.scala	codec given written by hand	1
-derives	api:api/media/AssetLink.scala	codec given written by hand	4
-derives	api:api/media/AssetPatch.scala	codec given written by hand	2
-derives	api:api/media/AssetsStored.scala	codec given written by hand	1
-derives	api:api/media/FigureLicenceFill.scala	codec given written by hand	1
-derives	api:api/media/MediaCount.scala	codec given written by hand	1
-derives	api:api/media/MediaCoversReport.scala	codec given written by hand	1
-derives	api:api/media/MediaCoversRequest.scala	codec given written by hand	1
-derives	api:api/media/MediaFacets.scala	codec given written by hand	1
-derives	api:api/media/MediaGeoHit.scala	codec given written by hand	1
-derives	api:api/media/MediaImportReport.scala	codec given written by hand	1
-derives	api:api/media/MediaImportRequest.scala	codec given written by hand	1
-derives	api:api/media/MediaItem.scala	codec given written by hand	1
-derives	api:api/media/MediaList.scala	codec given written by hand	1
-derives	api:api/media/MediaProvider.scala	codec given written by hand	1
-derives	api:api/media/MediaSample.scala	codec given written by hand	1
-derives	api:api/media/MediaSourceLine.scala	codec given written by hand	1
-derives	api:api/media/MediaTarget.scala	codec given written by hand	1
-derives	api:api/media/MediaThumb.scala	codec given written by hand	1
-derives	api:api/ocr/ConvertedDoc.scala	codec given written by hand	1
-derives	api:api/ocr/ConvertedImage.scala	codec given written by hand	1
-derives	api:api/personal/Bookmark.scala	codec given written by hand	9
+derives	api:api/media/AssetPatch.scala	codec given written by hand	1
+derives	api:api/personal/Bookmark.scala	codec given written by hand	6
 derives	api:api/personal/ItemKey.scala	codec given written by hand	3
 derives	api:api/personal/MapZoom.scala	codec given written by hand	3
-derives	api:api/personal/Note.scala	codec given written by hand	9
-derives	api:api/personal/ReadMark.scala	codec given written by hand	2
-derives	api:api/personal/ReadOpened.scala	codec given written by hand	1
-derives	api:api/personal/Target.scala	codec given written by hand	1
-derives	api:api/personal/UnreadPage.scala	codec given written by hand	1
-derives	api:api/personal/UnreadRow.scala	codec given written by hand	1
+derives	api:api/personal/Note.scala	codec given written by hand	6
 derives	api:api/personal/ViewState.scala	codec given written by hand	3
-derives	api:api/plugins/PluginDescription.scala	codec given written by hand	1
-derives	api:api/plugins/PluginFile.scala	codec given written by hand	1
-derives	api:api/plugins/PluginJar.scala	codec given written by hand	1
-derives	api:api/plugins/PluginSet.scala	codec given written by hand	1
-derives	api:api/plugins/PluginSetting.scala	codec given written by hand	1
-derives	api:api/plugins/PluginStatus.scala	codec given written by hand	1
-derives	api:api/plugins/PluginsReport.scala	codec given written by hand	1
-derives	api:api/research/Article.scala	codec given written by hand	32
-derives	api:api/research/Backlink.scala	codec given written by hand	1
-derives	api:api/research/CitedSource.scala	codec given written by hand	1
-derives	api:api/research/Coverage.scala	codec given written by hand	7
-derives	api:api/research/CoverageSearch.scala	codec given written by hand	1
-derives	api:api/research/CritiquePair.scala	codec given written by hand	1
+derives	api:api/research/Article.scala	codec given written by hand	15
+derives	api:api/research/Coverage.scala	codec given written by hand	2
 derives	api:api/research/CritiqueReason.scala	codec given written by hand	2
-derives	api:api/research/CritiqueRef.scala	codec given written by hand	1
-derives	api:api/research/CritiqueSide.scala	codec given written by hand	1
 derives	api:api/research/CritiqueState.scala	codec given written by hand	3
 derives	api:api/research/DriftKind.scala	codec given written by hand	3
-derives	api:api/research/LedgerRow.scala	codec given written by hand	1
-derives	api:api/research/ResolvedArticle.scala	codec given written by hand	1
-derives	api:api/research/ReviewApproval.scala	codec given written by hand	1
-derives	api:api/research/ReviewBadge.scala	codec given written by hand	1
-derives	api:api/research/ReviewFinding.scala	codec given written by hand	1
-derives	api:api/research/ReviewGoal.scala	codec given written by hand	1
-derives	api:api/research/ReviewRound.scala	codec given written by hand	1
 derives	api:api/research/ReviewState.scala	codec given written by hand	3
-derives	api:api/settings/ConfigEdit.scala	codec given written by hand	4
-derives	api:api/settings/ConfigFileInfo.scala	codec given written by hand	1
-derives	api:api/settings/ReloadReport.scala	codec given written by hand	1
-derives	api:api/views/AutopilotStatus.scala	codec given written by hand	1
-derives	api:api/views/EventDetail.scala	codec given written by hand	1
-derives	api:api/views/PlaceDetail.scala	codec given written by hand	1
-derives	api:api/views/QueueListing.scala	codec given written by hand	1
-derives	api:api/views/ResolvedId.scala	codec given written by hand	1
 derives	config:config/AgentsConfig.scala	codec given written by hand	1
 derives	config:config/ApiKey.scala	codec given written by hand	1
 derives	config:config/CitationCount.scala	codec given written by hand	1
@@ -473,14 +232,14 @@ derives	config:config/Percent.scala	codec given written by hand	1
 derives	config:config/Seconds.scala	codec given written by hand	1
 derives	config:config/ServiceUrl.scala	codec given written by hand	1
 derives	config:config/TokenCount.scala	codec given written by hand	1
-derives	core:domain/AgentProposals.scala	codec given written by hand	3
+derives	core:domain/AgentProposals.scala	codec given written by hand	2
 derives	core:domain/CompileArticle.scala	codec given written by hand	6
-derives	core:domain/EnrichSource.scala	codec given written by hand	9
+derives	core:domain/EnrichSource.scala	codec given written by hand	6
 derives	core:domain/FilterInference.scala	codec given written by hand	2
 derives	core:domain/HintProposals.scala	codec given written by hand	2
 derives	core:domain/PlanArticles.scala	codec given written by hand	4
 derives	core:domain/PlanGoal.scala	codec given written by hand	6
-derives	core:domain/ReviewArticle.scala	codec given written by hand	39
+derives	core:domain/ReviewArticle.scala	codec given written by hand	37
 derives	core:domain/ReviewLedger.scala	codec given written by hand	4
 derives	core:domain/library/workflows/AcquisitionSweepRules.scala	codec given written by hand	2
 derives	db:domain/automation/agents/AgentRepo.scala	codec given written by hand	1
@@ -518,21 +277,19 @@ derives	server:domain/catalogue/evidence/AttestationsTools.scala	codec given wri
 derives	server:domain/catalogue/evidence/EventLinksTools.scala	codec given written by hand	2
 derives	server:domain/catalogue/periods/PeriodsTools.scala	codec given written by hand	2
 derives	server:domain/catalogue/places/PlacesTools.scala	codec given written by hand	8
-derives	server:domain/library/LibraryTools.scala	codec given written by hand	27
-derives	server:domain/library/acquisition/AcquisitionTools.scala	codec given written by hand	8
-derives	server:domain/library/collections/CollectionsTools.scala	codec given written by hand	1
-derives	server:domain/library/search/QueryTools.scala	codec given written by hand	3
+derives	server:domain/library/LibraryTools.scala	codec given written by hand	26
+derives	server:domain/library/acquisition/AcquisitionTools.scala	codec given written by hand	2
+derives	server:domain/library/search/QueryTools.scala	codec given written by hand	2
 derives	server:domain/library/workflows/AgentFacetsInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/AgentGetSourceInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/AgentSearchInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/FollowupsInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/LibraryAnswers.scala	codec given written by hand	4
-derives	server:domain/media/MediaTools.scala	codec given written by hand	8
-derives	server:domain/personal/PersonalTools.scala	codec given written by hand	2
-derives	server:domain/research/articles/ArticleTools.scala	codec given written by hand	21
+derives	server:domain/media/MediaTools.scala	codec given written by hand	7
+derives	server:domain/research/articles/ArticleTools.scala	codec given written by hand	20
 derives	server:domain/research/workflows/ResearchAnswers.scala	codec given written by hand	9
-derives	server:server/McpTools.scala	codec given written by hand	31
-derives	server:server/OpsTools.scala	codec given written by hand	5
+derives	server:server/McpTools.scala	codec given written by hand	27
+derives	server:server/OpsTools.scala	codec given written by hand	4
 derives	server:server/views/EventCardTools.scala	codec given written by hand	5
 global	cli:cli/Cli.scala	environment	3
 global	cli:cli/Cli.scala	system property	1
@@ -551,7 +308,7 @@ global	plugin-host:pluginhost/Polite.scala	wall clock	1
 global	server:domain/automation/agents/AgentTrees.scala	home or working directory	1
 global	server:domain/automation/agents/AgentTrees.scala	system property	1
 global	server:domain/automation/agents/AgentTrees.scala	wall clock	1
-global	server:domain/automation/agents/AgentsHandlers.scala	wall clock	4
+global	server:domain/automation/agents/AgentsControllers.scala	wall clock	4
 global	server:domain/automation/agents/Engine.scala	wall clock	7
 global	server:domain/automation/agents/ModelPicker.scala	wall clock	3
 global	server:domain/automation/agents/RunCtx.scala	wall clock	3
@@ -599,90 +356,6 @@ helper	web:web/BaseMaps.scala	BaseMaps about BaseMap	1
 helper	web:web/PointKinds.scala	PointKinds about PointKind	1
 helper	web:web/map/Engines.scala	Engines about Engine	1
 helper	web:web/map/ShapeHits.scala	ShapeHits about ShapeHit	1
-layer	api:api/ConfidenceStyle.scala	the client names a package outside api	1
-layer	api:api/GeoPick.scala	the client names a package outside api	1
-layer	api:api/HtmlAtoms.scala	the client names a package outside api	1
-layer	api:api/ItemKind.scala	the client names a package outside api	1
-layer	api:api/Palette.scala	the client names a package outside api	1
-layer	api:api/StatusCount.scala	the client names a package outside api	1
-layer	api:api/UiLabels.scala	the client names a package outside api	1
-layer	api:api/ValueCodecs.scala	the client names a package outside api	1
-layer	api:api/VocabularyCodecs.scala	the client names a package outside api	1
-layer	api:api/WireEnum.scala	the client names a package outside api	1
-layer	api:api/Wording.scala	the client names a package outside api	1
-layer	api:api/aliases/AliasKinds.scala	the client names a package outside api	1
-layer	api:api/aliases/LabelRenamed.scala	the client names a package outside api	1
-layer	api:api/aliases/LabelRenames.scala	the client names a package outside api	1
-layer	api:api/automation/AgentJobKinds.scala	the client names a package outside api	1
-layer	api:api/automation/Agents.scala	the client names a package outside api	1
-layer	api:api/automation/Goal.scala	the client names a package outside api	1
-layer	api:api/automation/GoalsExport.scala	the client names a package outside api	1
-layer	api:api/automation/ListFilters.scala	the client names a package outside api	1
-layer	api:api/automation/Managers.scala	the client names a package outside api	1
-layer	api:api/automation/ModelChains.scala	the client names a package outside api	1
-layer	api:api/basemap/BasemapJobKinds.scala	the client names a package outside api	1
-layer	api:api/catalogue/CatalogRecord.scala	the client names a package outside api	1
-layer	api:api/catalogue/EventFields.scala	the client names a package outside api	1
-layer	api:api/catalogue/EventLinkCandidate.scala	the client names a package outside api	1
-layer	api:api/catalogue/EventScale.scala	the client names a package outside api	1
-layer	api:api/catalogue/EventsJobKinds.scala	the client names a package outside api	1
-layer	api:api/catalogue/EvidenceJobKinds.scala	the client names a package outside api	1
-layer	api:api/catalogue/Gazetteer.scala	the client names a package outside api	1
-layer	api:api/catalogue/Geocode.scala	the client names a package outside api	1
-layer	api:api/catalogue/Lpf.scala	the client names a package outside api	1
-layer	api:api/catalogue/Period.scala	the client names a package outside api	1
-layer	api:api/catalogue/Place.scala	the client names a package outside api	1
-layer	api:api/catalogue/PlacesJobKinds.scala	the client names a package outside api	1
-layer	api:api/catalogue/PresetRegion.scala	the client names a package outside api	1
-layer	api:api/catalogue/RegionNode.scala	the client names a package outside api	1
-layer	api:api/catalogue/SiteTypes.scala	the client names a package outside api	1
-layer	api:api/checks/FormatField.scala	the client names a package outside api	1
-layer	api:api/checks/FormatMarkdown.scala	the client names a package outside api	1
-layer	api:api/checks/FormatRule.scala	the client names a package outside api	1
-layer	api:api/checks/FormatSeverity.scala	the client names a package outside api	1
-layer	api:api/exchange/Bundle.scala	the client names a package outside api	1
-layer	api:api/exchange/ExchangeJobKinds.scala	the client names a package outside api	1
-layer	api:api/exchange/IssueCondition.scala	the client names a package outside api	1
-layer	api:api/exchange/MergeDecision.scala	the client names a package outside api	1
-layer	api:api/exchange/MergeIssue.scala	the client names a package outside api	1
-layer	api:api/exchange/MergeJobState.scala	the client names a package outside api	1
-layer	api:api/exchange/MergeMarkdown.scala	the client names a package outside api	1
-layer	api:api/exchange/MergePlan.scala	the client names a package outside api	1
-layer	api:api/exchange/MergePolicy.scala	the client names a package outside api	1
-layer	api:api/exchange/MergeResolutions.scala	the client names a package outside api	1
-layer	api:api/jobs/JobKindEntry.scala	the client names a package outside api	1
-layer	api:api/jobs/JobKinds.scala	the client names a package outside api	1
-layer	api:api/library/Acquire.scala	the client names a package outside api	1
-layer	api:api/library/AcquisitionJobKinds.scala	the client names a package outside api	1
-layer	api:api/library/Assessment.scala	the client names a package outside api	1
-layer	api:api/library/CitekeyInput.scala	the client names a package outside api	1
-layer	api:api/library/ContradictionRow.scala	the client names a package outside api	1
-layer	api:api/library/DeleteBlocker.scala	the client names a package outside api	1
-layer	api:api/library/DeletePart.scala	the client names a package outside api	1
-layer	api:api/library/Edge.scala	the client names a package outside api	1
-layer	api:api/library/Finding.scala	the client names a package outside api	1
-layer	api:api/library/GeoHit.scala	the client names a package outside api	1
-layer	api:api/library/GraphNode.scala	the client names a package outside api	1
-layer	api:api/library/IngestJobKinds.scala	the client names a package outside api	1
-layer	api:api/library/MetadataField.scala	the client names a package outside api	1
-layer	api:api/library/MetadataPatch.scala	the client names a package outside api	1
-layer	api:api/library/NeighborRow.scala	the client names a package outside api	1
-layer	api:api/library/NeighborTarget.scala	the client names a package outside api	1
-layer	api:api/library/Rename.scala	the client names a package outside api	1
-layer	api:api/library/ResolvedSource.scala	the client names a package outside api	1
-layer	api:api/library/SearchHit.scala	the client names a package outside api	1
-layer	api:api/library/Source.scala	the client names a package outside api	1
-layer	api:api/maintenance/MaintenanceJobKinds.scala	the client names a package outside api	1
-layer	api:api/media/CoversJobKinds.scala	the client names a package outside api	1
-layer	api:api/media/ImportJobKinds.scala	the client names a package outside api	1
-layer	api:api/research/Article.scala	the client names a package outside api	1
-layer	api:api/research/Articles.scala	the client names a package outside api	1
-layer	api:api/research/CitedSource.scala	the client names a package outside api	1
-layer	api:api/research/Coverage.scala	the client names a package outside api	1
-layer	api:api/research/CritiqueState.scala	the client names a package outside api	1
-layer	api:api/research/DriftKind.scala	the client names a package outside api	1
-layer	api:api/research/ReviewState.scala	the client names a package outside api	1
-layer	api:api/views/PlaceDetail.scala	the client names a package outside api	1
 layer	core:domain/AcquireMatch.scala	a domain file names the api outside a boundary	1
 layer	core:domain/AcquireRecheck.scala	a domain file names the api outside a boundary	1
 layer	core:domain/AgentProposals.scala	a domain file names the api outside a boundary	1
@@ -726,6 +399,7 @@ layer	core:domain/catalogue/periods/PeriodPlan.scala	a domain file names the api
 layer	core:domain/catalogue/places/PlacePlan.scala	a domain file names the api outside a boundary	1
 layer	core:domain/catalogue/places/PlaceReview.scala	a domain file names the api outside a boundary	1
 layer	core:domain/catalogue/places/PointAreas.scala	a domain file names the api outside a boundary	1
+layer	core:domain/library/acquisition/CandidateDedupe.scala	a domain file names the api outside a boundary	1
 layer	core:domain/library/findings/FindingPlan.scala	a domain file names the api outside a boundary	1
 layer	core:domain/library/sources/Citekeys.scala	a domain file names the api outside a boundary	1
 layer	core:domain/library/sources/MergeText.scala	a domain file names the api outside a boundary	1
@@ -747,6 +421,7 @@ layer	db:domain/automation/approvals/ApprovalQuery.scala	a domain file names the
 layer	db:domain/automation/goals/GoalAliasTable.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalLinkRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/goals/GoalMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/goals/GoalSourceReferrer.scala	a domain file names the api outside a boundary	1
@@ -755,6 +430,7 @@ layer	db:domain/automation/managers/ManagerLight.scala	a domain file names the a
 layer	db:domain/automation/managers/ManagerRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/QueueBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/QueueCarried.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/worklists/QueueItemMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/QueueRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/WorkListMergeFollowUps.scala	a domain file names the api outside a boundary	1
 layer	db:domain/automation/worklists/WorkListSourceReferrer.scala	a domain file names the api outside a boundary	1
@@ -766,6 +442,7 @@ layer	db:domain/catalogue/events/EventDatingRow.scala	a domain file names the ap
 layer	db:domain/catalogue/events/EventDetailRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventGeoRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventImportRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventSaved.scala	a domain file names the api outside a boundary	1
@@ -774,6 +451,7 @@ layer	db:domain/catalogue/events/EventSourceFilter.scala	a domain file names the
 layer	db:domain/catalogue/events/EventSourceReferrer.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventSql.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/events/EventsCarried.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/evidence/AttestationMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/evidence/AttestationRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/evidence/EventLinkRepo.scala	a domain file names the api outside a boundary	1
@@ -782,6 +460,7 @@ layer	db:domain/catalogue/evidence/EvidenceCarried.scala	a domain file names the
 layer	db:domain/catalogue/evidence/LeadRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/maptiles/TileRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/periods/PeriodBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/periods/PeriodMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/periods/PeriodRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/periods/PeriodRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/periods/PeriodsCarried.scala	a domain file names the api outside a boundary	1
@@ -793,6 +472,7 @@ layer	db:domain/catalogue/places/Geocoder.scala	a domain file names the api outs
 layer	db:domain/catalogue/places/PlaceAliasTable.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceDetailRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceOverrideRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceReviewRepo.scala	a domain file names the api outside a boundary	1
@@ -816,11 +496,13 @@ layer	db:domain/library/search/FilterSql.scala	a domain file names the api outsi
 layer	db:domain/library/search/FindingHitRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/search/QueryRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/search/SearchRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/FindingMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceAliasTable.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceCheckRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceDeletePlan.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceDeleteRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/SourceMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceRepairs.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourceRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/SourcesCarried.scala	a domain file names the api outside a boundary	1
@@ -829,6 +511,7 @@ layer	db:domain/library/sources/referrers/RenamedReferences.scala	a domain file 
 layer	db:domain/library/sources/referrers/SourceKeys.scala	a domain file names the api outside a boundary	1
 layer	db:domain/library/sources/referrers/SourceRename.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/assets/AssetBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/AssetMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/assets/AssetRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/assets/AssetsCarried.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/assets/MediaRepo.scala	a domain file names the api outside a boundary	1
@@ -836,15 +519,18 @@ layer	db:domain/media/assets/ProviderAsset.scala	a domain file names the api out
 layer	db:domain/media/covers/CoverRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/figures/FigureRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/links/AssetLinkBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/links/AssetLinkMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/links/AssetLinkRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/links/AssetLinkSourceReferrer.scala	a domain file names the api outside a boundary	1
 layer	db:domain/media/links/AssetLinksCarried.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleAliasTable.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleBundleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleCheckRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticleMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleSourceReferrer.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticleSummaryRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticleVersionMergeRules.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/ArticlesCarried.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/CoverageRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/CritiqueRepo.scala	a domain file names the api outside a boundary	1
@@ -858,7 +544,6 @@ layer	server:domain/automation/agents/AgentDef.scala	a domain file names the api
 layer	server:domain/automation/agents/AgentDefinitions.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/agents/AgentStateService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/agents/AgentTrees.scala	a domain file names the api outside a boundary	1
-layer	server:domain/automation/agents/AgentsHandlers.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/agents/AgentsSettings.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/agents/AllowanceGuard.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/agents/AnswerSchemas.scala	a domain file names the api outside a boundary	1
@@ -901,7 +586,6 @@ layer	server:domain/automation/managers/ManagerKindDefinition.scala	a domain fil
 layer	server:domain/automation/managers/ManagerRecord.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/managers/ManagerService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/managers/ManagerSupervisor.scala	a domain file names the api outside a boundary	1
-layer	server:domain/automation/managers/ManagersHandlers.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/managers/Zero.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/scheduler/SchedulerService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/automation/workflows/AutomationHost.scala	a domain file names the api outside a boundary	1
@@ -996,6 +680,7 @@ layer	server:domain/library/workflows/FollowupsInput.scala	a domain file names t
 layer	server:domain/library/workflows/GoalSweep.scala	a domain file names the api outside a boundary	1
 layer	server:domain/library/workflows/LibraryAnswers.scala	a domain file names the api outside a boundary	1
 layer	server:domain/library/workflows/LibrarySite.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/LibraryWorkflow.scala	a domain file names the api outside a boundary	1
 layer	server:domain/library/workflows/OaBacklog.scala	a domain file names the api outside a boundary	1
 layer	server:domain/library/workflows/SeedService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/library/workflows/SourceProposals.scala	a domain file names the api outside a boundary	1
@@ -1039,30 +724,14 @@ layer	server:domain/research/workflows/InferFilterPipeline.scala	a domain file n
 layer	server:domain/research/workflows/ProposeArticlesPipeline.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/ResearchAnswers.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/ResearchSite.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ResearchWorkflow.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/ResearchWorkflows.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/ReviewArticlePipeline.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/ReviewManagerKind.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/workflows/SeedManagerKind.scala	a domain file names the api outside a boundary	1
-layer	web:web/CardIcons.scala	the client names a package outside api	1
-layer	web:web/Certainty.scala	the client names a package outside api	1
-layer	web:web/ConfidenceBadge.scala	the client names a package outside api	1
-layer	web:web/Fmt.scala	the client names a package outside api	1
-layer	web:web/GoalsView.scala	the client names a package outside api	1
-layer	web:web/GraphPanel.scala	the client names a package outside api	1
-layer	web:web/ManagersView.scala	the client names a package outside api	1
-layer	web:web/MapView.scala	the client names a package outside api	1
-layer	web:web/MergeView.scala	the client names a package outside api	1
-layer	web:web/PlaceGlyph.scala	the client names a package outside api	1
-layer	web:web/Preview.scala	the client names a package outside api	1
-layer	web:web/SitePoint.scala	the client names a package outside api	1
-layer	web:web/SourceEditor.scala	the client names a package outside api	1
-layer	web:web/StatusBadge.scala	the client names a package outside api	1
-layer	web:web/TileDecode.scala	the client names a package outside api	1
-layer	web:web/UploadView.scala	the client names a package outside api	1
-layer	web:web/library/ReadingHead.scala	the client names a package outside api	1
-layer	web:web/library/TableRow.scala	the client names a package outside api	1
-layer	web:web/marks/PeriodMarks.scala	the client names a package outside api	1
-layer	web:web/settings/DownloadJobs.scala	the client names a package outside api	1
+prefix	api:api/WireEnumValues.scala	WireEnumValues → WireEnum.Values	1
+prefix	api:api/automation/ApprovalDigest.scala	ApprovalDigest → Approval.Digest	1
+prefix	api:api/automation/RunCompare.scala	RunCompare → Run.Compare	1
 prefix	core:util/jobs/JobAction.scala	JobAction → Job.Action	1
 prefix	core:util/jobs/JobControlStep.scala	JobControlStep → Job.ControlStep	1
 prefix	core:util/jobs/JobStop.scala	JobStop → Job.Stop	1
@@ -1110,12 +779,14 @@ primitive	db:domain/research/articles/CritiqueRepo.scala	String/Int/Long for a c
 primitive	db:domain/research/articles/review/ArticleReviewRepo.scala	String/Int/Long for a concept with a newtype	2
 primitive	db:domain/research/workflows/ReviewLedgerRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:util/jobs/JobRepo.scala	String/Int/Long for a concept with a newtype	2
+primitive	server:domain/automation/agents/AgentsControllers.scala	String/Int/Long for a concept with a newtype	5
 primitive	server:domain/automation/agents/ApprovalService.scala	String/Int/Long for a concept with a newtype	8
 primitive	server:domain/automation/agents/RunService.scala	String/Int/Long for a concept with a newtype	7
 primitive	server:domain/automation/goals/FocusService.scala	String/Int/Long for a concept with a newtype	4
 primitive	server:domain/automation/goals/GoalService.scala	String/Int/Long for a concept with a newtype	6
 primitive	server:domain/automation/goals/GoalsControllers.scala	String/Int/Long for a concept with a newtype	5
 primitive	server:domain/automation/managers/ManagerService.scala	String/Int/Long for a concept with a newtype	2
+primitive	server:domain/automation/managers/ManagersControllers.scala	String/Int/Long for a concept with a newtype	2
 primitive	server:domain/automation/worklists/QueueService.scala	String/Int/Long for a concept with a newtype	1
 primitive	server:domain/catalogue/events/CorrectionService.scala	String/Int/Long for a concept with a newtype	1
 primitive	server:domain/catalogue/events/EventImportsControllers.scala	String/Int/Long for a concept with a newtype	1
@@ -1168,13 +839,13 @@ unwrap	api:api/jobs/JobKinds.scala	.value outside a boundary	3
 unwrap	api:api/library/Acquire.scala	.value outside a boundary	1
 unwrap	api:api/library/Ingest.scala	.value outside a boundary	2
 unwrap	api:api/library/MetadataPatch.scala	.value outside a boundary	1
-unwrap	api:api/library/Rename.scala	.value outside a boundary	2
 unwrap	api:api/maintenance/Vacuum.scala	.value outside a boundary	1
 unwrap	api:api/personal/Target.scala	.value outside a boundary	7
-unwrap	api:api/research/Articles.scala	.value outside a boundary	1
 unwrap	core:domain/EnrichSource.scala	.value outside a boundary	3
+unwrap	core:domain/PlanArticles.scala	.value outside a boundary	1
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	1
 unwrap	core:domain/catalogue/events/EventPlan.scala	.value outside a boundary	2
+unwrap	core:domain/library/sources/Citekeys.scala	.value outside a boundary	2
 unwrap	core:domain/library/sources/MergeText.scala	.value outside a boundary	1
 unwrap	core:domain/media/imports/MediaMatch.scala	.value outside a boundary	11
 unwrap	plugin-api:plugin/Period.scala	.value outside a boundary	4
@@ -1195,7 +866,7 @@ unwrap	server:domain/automation/agents/AgentDefinitions.scala	.value outside a b
 unwrap	server:domain/automation/agents/AgentGenerator.scala	.value outside a boundary	3
 unwrap	server:domain/automation/agents/AgentStateControllers.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/AgentStateService.scala	.value outside a boundary	1
-unwrap	server:domain/automation/agents/AgentsHandlers.scala	.value outside a boundary	2
+unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/AgentsSettings.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/FirstCallProbe.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/LlmClient.scala	.value outside a boundary	5
@@ -1243,12 +914,13 @@ unwrap	server:domain/personal/reading/ReadMark.scala	.value outside a boundary	2
 unwrap	server:domain/personal/reading/ReadingService.scala	.value outside a boundary	4
 unwrap	server:domain/personal/seen/SeenService.scala	.value outside a boundary	2
 unwrap	server:domain/research/articles/ArticleReadable.scala	.value outside a boundary	4
+unwrap	server:domain/research/articles/ArticlesControllers.scala	.value outside a boundary	3
 unwrap	server:domain/research/workflows/InferFilterPipeline.scala	.value outside a boundary	1
 unwrap	server:domain/research/workflows/ProposeArticlesPipeline.scala	.value outside a boundary	1
 unwrap	server:server/Composition.scala	.value outside a boundary	1
 unwrap	server:server/agents/ClaudeCode.scala	.value outside a boundary	1
 unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	1
-unwrap	server:server/agents/ServerAutomationHost.scala	.value outside a boundary	1
+unwrap	server:server/agents/ServerAutomationHost.scala	.value outside a boundary	2
 unwrap	server:server/hot/Hot.scala	.value outside a boundary	8
 unwrap	server:server/instance/InstanceControllers.scala	.value outside a boundary	1
 unwrap	server:util/basemap/BasemapFetch.scala	.value outside a boundary	1

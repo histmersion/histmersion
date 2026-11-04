@@ -19,13 +19,13 @@ final case class Correction(
     createdAt: String = "",
     checkedAt: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object Correction:
-  given Schema[Correction] = summon[KindlingsSchema[Correction]].schema
+
 
   final case class Counts(kept: Int = 0, retired: Int = 0, conflicts: Int = 0)
       derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
       Counts(kept + o.kept, retired + o.retired, conflicts + o.conflicts)
     def isEmpty: Boolean = kept == 0 && retired == 0 && conflicts == 0
@@ -34,12 +34,10 @@ object Correction:
       Option.when(!isEmpty)(
         s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict"
       )
-  object Counts:
-    given Schema[Counts] = summon[KindlingsSchema[Counts]].schema
 
-  final case class List(total: Int, corrections: scala.List[Correction]) derives KindlingsCodecAsObject, KindlingsSchema
-  object List:
-    given Schema[List] = summon[KindlingsSchema[List]].schema
+
+  final case class List(total: Int, corrections: scala.List[Correction]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   object Status:
     val Active = "active"

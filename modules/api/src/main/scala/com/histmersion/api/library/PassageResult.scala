@@ -14,6 +14,4 @@ final case class PassageResult(
     passages: List[PassageHit],
     bodyChars: Int
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object PassageResult:
-  given Schema[PassageResult] = summon[KindlingsSchema[PassageResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

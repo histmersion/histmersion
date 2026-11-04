@@ -171,9 +171,8 @@ object Place:
 
   final case class Counts(sources: Int, findings: Int, articles: Int, events: Int)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Counts:
-    given Schema[Counts] = summon[KindlingsSchema[Counts]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum Dating:
     case Stated, EndOnly, Unknown
@@ -201,9 +200,8 @@ object Place:
 
   final case class Description(text: String, lang: String = "", source: String = "")
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Description:
-    given Schema[Description] = summon[KindlingsSchema[Description]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Designation(
       id: String,
@@ -342,9 +340,9 @@ object Place:
       accuracyM: Option[Float] = None,
       citekey: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object Footprint:
-    given Schema[Footprint] = summon[KindlingsSchema[Footprint]].schema
+
     val Roles: List[String] = List("extent", "core", "maximal", "frontier", "seat", "snapshot")
     val Certainties: List[String] = List("definite", "approximate", "uncertain")
 
@@ -357,9 +355,8 @@ object Place:
       findingsAfter: Int,
       unlocated: Int
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Gone:
-    given Schema[Gone] = summon[KindlingsSchema[Gone]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Hit(
       id: String,
@@ -375,11 +372,10 @@ object Place:
       dating: Dating = Dating.Stated,
       importSource: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def toSummary: Summary =
       Summary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
-  object Hit:
-    given Schema[Hit] = summon[KindlingsSchema[Hit]].schema
+
 
   final case class ImportResult(
       places: Int,
@@ -388,17 +384,16 @@ object Place:
       failed: List[String] = Nil,
       job: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ImportResult:
-    given Schema[ImportResult] = summon[KindlingsSchema[ImportResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Input(place: Place, names: List[Name] = Nil, relations: List[Relation] = Nil)
 
   final case class Link(placeId: String, scheme: String, externalId: String, relation: String = "close_match")
       derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
-    given Schema[Link] = summon[KindlingsSchema[Link]].schema
+
     val Schemes: List[String] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
     val Relations: List[String] = List("close_match", "exact_match", "broad_match", "see_also")
 
@@ -442,9 +437,9 @@ object Place:
   ):
     def bounds: (Option[Long], Option[Long]) = OpenSide.bounds(period, open)
 
-  final case class NameAdd(name: String, lang: Option[String] = None) derives KindlingsSchema
+  final case class NameAdd(name: String, lang: Option[String] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object NameAdd:
-    given Schema[NameAdd] = summon[KindlingsSchema[NameAdd]].schema
+
     given Codec.AsObject[NameAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[NameAdd])
 
   final case class NameChanged(
@@ -456,13 +451,12 @@ object Place:
       changed: Boolean,
       wasImported: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object NameChanged:
-    given Schema[NameChanged] = summon[KindlingsSchema[NameChanged]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class NameRemove(name: String, lang: Option[String] = None) derives KindlingsSchema
+
+  final case class NameRemove(name: String, lang: Option[String] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object NameRemove:
-    given Schema[NameRemove] = summon[KindlingsSchema[NameRemove]].schema
+
     given Codec.AsObject[NameRemove] = StrictJson.codec(KindlingsCodecAsObject.derived[NameRemove])
 
   final case class Override(
@@ -482,9 +476,8 @@ object Place:
       sourceLat: Option[Double] = None,
       sourceLon: Option[Double] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Override:
-    given Schema[Override] = summon[KindlingsSchema[Override]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class OverrideChanged(
       placeId: String,
@@ -502,9 +495,8 @@ object Place:
       latAfter: Option[Double] = None,
       lonAfter: Option[Double] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object OverrideChanged:
-    given Schema[OverrideChanged] = summon[KindlingsSchema[OverrideChanged]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum OverrideEdit:
     case Reset
@@ -629,9 +621,8 @@ object Place:
       unlocated: Int,
       places: Int
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RebuildResult:
-    given Schema[RebuildResult] = summon[KindlingsSchema[RebuildResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Record(
       dateSource: Option[String] = None,
@@ -685,9 +676,9 @@ object Place:
       List(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical, Succeeds, SameAs, VersionOf, CapitalOf)
     val partOfKinds: Set[String] = Set(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical)
 
-  final case class RemoveIn(reason: Option[String] = None) derives KindlingsSchema
+  final case class RemoveIn(reason: Option[String] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object RemoveIn:
-    given Schema[RemoveIn] = summon[KindlingsSchema[RemoveIn]].schema
+
     given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
 
   object Shape:
@@ -714,10 +705,9 @@ object Place:
       dating: Dating = Dating.Stated,
       importSource: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def when: String = Dating.describe(dating, periodStart, periodEnd)
-  object Summary:
-    given Schema[Summary] = summon[KindlingsSchema[Summary]].schema
+
 
   enum TimeBasis:
     case Dated, Timeless, Modern, Grouping, Findings
@@ -765,9 +755,8 @@ object Place:
       findings: Int,
       contested: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object TreeRow:
-    given Schema[TreeRow] = summon[KindlingsSchema[TreeRow]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Type(
       placeId: String,
@@ -775,6 +764,4 @@ object Place:
       period: Option[Period] = None,
       citekey: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Type:
-    given Schema[Type] = summon[KindlingsSchema[Type]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

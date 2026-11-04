@@ -9,7 +9,4 @@ final case class GraphLink(
     target: String,
     kind: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object GraphLink:
-  given Schema[GraphLink] = summon[KindlingsSchema[GraphLink]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

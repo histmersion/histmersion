@@ -24,9 +24,9 @@ final case class EventGeo(
     precision: String = EventPrecision.Precise,
     dating: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object EventGeo:
-  given Schema[EventGeo] = summon[KindlingsSchema[EventGeo]].schema
+
 
   def missingEnd(ts: TimeSpan): Option[String] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
@@ -37,6 +37,4 @@ object EventGeo:
 
   final case class List(events: scala.List[EventGeo], unplaced: Int = 0, imprecise: Int = 0)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object List:
-    given Schema[List] = summon[KindlingsSchema[List]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

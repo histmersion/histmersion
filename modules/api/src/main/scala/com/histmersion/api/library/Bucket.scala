@@ -27,6 +27,4 @@ object Bucket:
     */
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
 
-  final case class Sample(citekey: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Sample:
-    given Schema[Sample] = summon[KindlingsSchema[Sample]].schema
+  final case class Sample(citekey: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

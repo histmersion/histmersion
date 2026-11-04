@@ -6,22 +6,19 @@ import com.histmersion.api.given
 
 object Lint:
 
-  final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object LintItem:
-    given Schema[LintItem] = summon[KindlingsSchema[LintItem]].schema
+  final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class LintRuleReport(rule: String, description: String, count: Int, items: List[LintItem])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object LintRuleReport:
-    given Schema[LintRuleReport] = summon[KindlingsSchema[LintRuleReport]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class LintReport(rules: List[LintRuleReport], fixed: List[String] = Nil)
       derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def total: Int = rules.map(_.count).sum
-  object LintReport:
-    given Schema[LintReport] = summon[KindlingsSchema[LintReport]].schema
+
 
   final case class LintFixResult(
       applied: List[String],
@@ -37,9 +34,8 @@ object Lint:
       pointAreasRemoved: Int = 0,
       pointAreasRemaining: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object LintFixResult:
-    given Schema[LintFixResult] = summon[KindlingsSchema[LintFixResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Rule(name: String, description: String)
 

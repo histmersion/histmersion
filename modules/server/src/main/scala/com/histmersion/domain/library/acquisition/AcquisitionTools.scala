@@ -197,9 +197,8 @@ object AcquisitionTools:
       limit: Option[Int] = None,
       notInDb: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object DiscoverInput:
-    given Schema[DiscoverInput] = summon[KindlingsSchema[DiscoverInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class CandidatesInput(
       goal: Option[String] = None,
@@ -211,13 +210,11 @@ object AcquisitionTools:
       sweep: Boolean = false,
       dryRun: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object CandidatesInput:
-    given Schema[CandidatesInput] = summon[KindlingsSchema[CandidatesInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
-  object RefsInput:
-    given Schema[RefsInput] = summon[KindlingsSchema[RefsInput]].schema
+
+  final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class AssessInput(
       id: Option[String] = None,
@@ -226,9 +223,8 @@ object AcquisitionTools:
       updateRetractions: Boolean = false,
       retractionsStatus: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object AssessInput:
-    given Schema[AssessInput] = summon[KindlingsSchema[AssessInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class FollowupsInput(
       id: String,
@@ -236,9 +232,8 @@ object AcquisitionTools:
       limit: Option[Int] = None,
       apply: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object FollowupsInput:
-    given Schema[FollowupsInput] = summon[KindlingsSchema[FollowupsInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class IngestInput(
       id: String,
@@ -263,6 +258,4 @@ object AcquisitionTools:
       format: Option[String] = None,
       rows: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ArchiveInput:
-    given Schema[ArchiveInput] = summon[KindlingsSchema[ArchiveInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class ManualPlaceName(placeId: String, label: String, name: String, lang: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ManualPlaceName:
-  given Schema[ManualPlaceName] = summon[KindlingsSchema[ManualPlaceName]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

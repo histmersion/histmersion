@@ -21,6 +21,4 @@ final case class Assessment(
     checkedAt: Option[String] = None,
     kept: Option[com.histmersion.api.library.Source.Status] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object Assessment:
-  given Schema[Assessment] = summon[KindlingsSchema[Assessment]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

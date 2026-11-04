@@ -11,9 +11,9 @@ final case class ConfigFileInfo(
     loaded: Boolean = false,
     unknownKeys: List[String] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object ConfigFileInfo:
-  given Schema[ConfigFileInfo] = summon[KindlingsSchema[ConfigFileInfo]].schema
+
 
   def describe(c: ConfigFileInfo): String =
     c.path match

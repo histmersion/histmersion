@@ -11,7 +11,4 @@ final case class GraphNode(
     status: Option[com.histmersion.api.library.Source.Status] = None,
     depth: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object GraphNode:
-  given Schema[GraphNode] = summon[KindlingsSchema[GraphNode]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

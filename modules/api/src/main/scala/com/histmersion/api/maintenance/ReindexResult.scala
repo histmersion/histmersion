@@ -7,6 +7,4 @@ import com.histmersion.api.given
 /** Re-indexing the whole corpus takes minutes, far past any HTTP timeout, so one call does a bounded slice. */
 final case class ReindexResult(sources: Int, chunks: Int, lastCitekey: Option[String], remaining: Int)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReindexResult:
-  given Schema[ReindexResult] = summon[KindlingsSchema[ReindexResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

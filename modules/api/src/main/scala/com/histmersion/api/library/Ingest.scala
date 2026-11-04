@@ -26,9 +26,8 @@ object Ingest:
 
   final case class Accepted(jobId: String, citekey: String, status: String, sha256: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Accepted:
-    given Schema[Accepted] = summon[KindlingsSchema[Accepted]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Params(
       citekey: String,
@@ -54,9 +53,8 @@ object Ingest:
       steps: List[Step],
       dropIn: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Report:
-    given Schema[Report] = summon[KindlingsSchema[Report]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Request(
       id: String,
@@ -65,10 +63,7 @@ object Ingest:
       refetch: Boolean = false,
       legalOnly: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Step(step: String, ok: Boolean, detail: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Step:
-    given Schema[Step] = summon[KindlingsSchema[Step]].schema
+
+  final case class Step(step: String, ok: Boolean, detail: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

@@ -231,9 +231,8 @@ object PlanQuota:
       source: String,
       why: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object WindowStatus:
-    given Schema[WindowStatus] = summon[KindlingsSchema[WindowStatus]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class PoolStatus(
       pool: String,
@@ -256,31 +255,26 @@ object PlanQuota:
       refreshesToday: Int = 0,
       lastRefresh: Option[RefreshInfo] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object PoolStatus:
-    given Schema[PoolStatus] = summon[KindlingsSchema[PoolStatus]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RefreshInfo(at: String, mode: String, trigger: String, ok: Boolean, detail: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RefreshInfo:
-    given Schema[RefreshInfo] = summon[KindlingsSchema[RefreshInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object QuotaRefresh:
-    given Schema[QuotaRefresh] = summon[KindlingsSchema[QuotaRefresh]].schema
+
+  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class PoolRefreshed(pool: String, refreshed: Boolean, detail: String, status: PoolStatus)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object PoolRefreshed:
-    given Schema[PoolRefreshed] = summon[KindlingsSchema[PoolRefreshed]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[String] = Nil)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QuotaRefreshed:
-    given Schema[QuotaRefreshed] = summon[KindlingsSchema[QuotaRefreshed]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class QuotaInfo(
       plans: List[PoolStatus],
@@ -289,41 +283,33 @@ object PlanQuota:
       now: String,
       cooldowns: List[Cooldown] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object QuotaInfo:
-    given Schema[QuotaInfo] = summon[KindlingsSchema[QuotaInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Cooldown(model: String, until: String, reason: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Cooldown:
-    given Schema[Cooldown] = summon[KindlingsSchema[Cooldown]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class PoolSet(hold: Option[Boolean] = None, floors: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object PoolSet:
-    given Schema[PoolSet] = summon[KindlingsSchema[PoolSet]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class FallthroughSet(fallthrough: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
-  object FallthroughSet:
-    given Schema[FallthroughSet] = summon[KindlingsSchema[FallthroughSet]].schema
+
+  final case class FallthroughSet(fallthrough: Boolean) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
   final case class ModWindow(kind: String, percentUsed: Double, resetsAt: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ModWindow:
-    given Schema[ModWindow] = summon[KindlingsSchema[ModWindow]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ModReport(source: String, rateLimits: List[ModWindow])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ModReport:
-    given Schema[ModReport] = summon[KindlingsSchema[ModReport]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class GuardAnswer(allow: Boolean, reason: Option[String] = None, resetsAt: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object GuardAnswer:
-    given Schema[GuardAnswer] = summon[KindlingsSchema[GuardAnswer]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

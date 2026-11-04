@@ -11,7 +11,4 @@ final case class CollectionPushRequest(
     citekey: String,
     replace: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionPushRequest:
-  given Schema[CollectionPushRequest] = summon[KindlingsSchema[CollectionPushRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

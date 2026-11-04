@@ -7,9 +7,8 @@ import com.histmersion.api.given
 
 object ApprovalDigest:
 
-  final case class SubjectCount(subject: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-  object SubjectCount:
-    given Schema[SubjectCount] = summon[KindlingsSchema[SubjectCount]].schema
+  final case class SubjectCount(subject: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class KindGroup(
       kind: String,
@@ -19,9 +18,8 @@ object ApprovalDigest:
       subjects: List[SubjectCount] = Nil,
       ids: List[Long] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object KindGroup:
-    given Schema[KindGroup] = summon[KindlingsSchema[KindGroup]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Digest(
       at: String,
@@ -31,9 +29,8 @@ object ApprovalDigest:
       lastWritten: Option[String] = None,
       goalPlansWait: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Digest:
-    given Schema[Digest] = summon[KindlingsSchema[Digest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class BulkDecide(
       decision: String,
@@ -45,13 +42,11 @@ object ApprovalDigest:
       limit: Option[Int] = None,
       by: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object BulkDecide:
-    given Schema[BulkDecide] = summon[KindlingsSchema[BulkDecide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class BulkFailed(id: Long, error: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object BulkFailed:
-    given Schema[BulkFailed] = summon[KindlingsSchema[BulkFailed]].schema
+
+  final case class BulkFailed(id: Long, error: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class BulkResult(
       decision: String,
@@ -61,9 +56,8 @@ object ApprovalDigest:
       failed: List[BulkFailed] = Nil,
       left: Int = 0
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object BulkResult:
-    given Schema[BulkResult] = summon[KindlingsSchema[BulkResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   val Waits = "waits"
 

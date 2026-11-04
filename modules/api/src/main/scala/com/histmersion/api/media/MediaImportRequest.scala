@@ -12,7 +12,4 @@ final case class MediaImportRequest(
     event: Option[String] = None,
     refresh: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaImportRequest:
-  given Schema[MediaImportRequest] = summon[KindlingsSchema[MediaImportRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

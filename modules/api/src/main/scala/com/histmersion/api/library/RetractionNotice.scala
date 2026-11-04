@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class RetractionNotice(nature: Option[String], reason: Option[String], date: Option[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RetractionNotice:
-  given Schema[RetractionNotice] = summon[KindlingsSchema[RetractionNotice]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

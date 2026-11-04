@@ -35,9 +35,8 @@ object CollectionsTools:
       apply: Boolean = false,
       fields: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object CollectionInput:
-    given Schema[CollectionInput] = summon[KindlingsSchema[CollectionInput]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local

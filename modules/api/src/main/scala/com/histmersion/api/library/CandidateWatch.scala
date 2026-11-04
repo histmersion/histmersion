@@ -14,6 +14,4 @@ final case class CandidateWatch(
     lastError: Option[String] = None,
     lastFound: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CandidateWatch:
-  given Schema[CandidateWatch] = summon[KindlingsSchema[CandidateWatch]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

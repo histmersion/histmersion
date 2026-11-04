@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class EventLinkList(eventId: String, label: String, candidates: List[EventLinkCandidate])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventLinkList:
-  given Schema[EventLinkList] = summon[KindlingsSchema[EventLinkList]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

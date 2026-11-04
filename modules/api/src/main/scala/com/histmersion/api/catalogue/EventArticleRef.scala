@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class EventArticleRef(slug: String, title: String, citekey: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventArticleRef:
-  given Schema[EventArticleRef] = summon[KindlingsSchema[EventArticleRef]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

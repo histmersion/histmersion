@@ -11,6 +11,4 @@ final case class MergeDetail(
     resolutions: Option[MergeResolutions] = None,
     remembered: List[MergeResolution] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeDetail:
-  given Schema[MergeDetail] = summon[KindlingsSchema[MergeDetail]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

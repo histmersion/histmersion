@@ -12,7 +12,4 @@ final case class MediaTarget(
     item: Option[String] = None,
     basis: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaTarget:
-  given Schema[MediaTarget] = summon[KindlingsSchema[MediaTarget]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

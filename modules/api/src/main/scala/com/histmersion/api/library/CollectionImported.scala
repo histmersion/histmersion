@@ -20,7 +20,4 @@ final case class CollectionImported(
     jobError: Option[String] = None,
     jobErrorCode: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionImported:
-  given Schema[CollectionImported] = summon[KindlingsSchema[CollectionImported]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -11,7 +11,4 @@ final case class CollectionUpdatedOne(
     changed: List[String],
     title: String
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionUpdatedOne:
-  given Schema[CollectionUpdatedOne] = summon[KindlingsSchema[CollectionUpdatedOne]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -12,6 +12,4 @@ final case class AssetInput(
     height: Option[Int] = None,
     sha256: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object AssetInput:
-  given Schema[AssetInput] = summon[KindlingsSchema[AssetInput]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

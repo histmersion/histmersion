@@ -12,7 +12,7 @@ final case class CritiquePair(
     reason: Option[String] = None,
     reasonBy: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def ref: CritiqueRef = CritiqueRef(src.citekey, dst.citekey)
   def open: Boolean = state == CritiqueState.Open
 
@@ -23,5 +23,3 @@ final case class CritiquePair(
   def bearing: Boolean = open && criticised.cited
 
   def line: String = s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]"
-object CritiquePair:
-  given Schema[CritiquePair] = summon[KindlingsSchema[CritiquePair]].schema

@@ -12,6 +12,4 @@ final case class FollowupsResult(
     edgesAdded: Int,
     followups: List[FollowupRow]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object FollowupsResult:
-  given Schema[FollowupsResult] = summon[KindlingsSchema[FollowupsResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

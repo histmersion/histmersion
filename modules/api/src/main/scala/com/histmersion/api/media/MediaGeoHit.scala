@@ -23,7 +23,4 @@ final case class MediaGeoHit(
     licenseUrl: Option[String] = None,
     author: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaGeoHit:
-  given Schema[MediaGeoHit] = summon[KindlingsSchema[MediaGeoHit]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

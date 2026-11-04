@@ -6,7 +6,4 @@ import com.histmersion.api.given
 
 final case class MediaSourceLine(citekey: String, role: String, provider: String, detail: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object MediaSourceLine:
-  given Schema[MediaSourceLine] = summon[KindlingsSchema[MediaSourceLine]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

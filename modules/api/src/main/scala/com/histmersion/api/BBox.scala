@@ -8,7 +8,7 @@ import sttp.tapir.Schema
 /** `minLon > maxLon`: the box crosses the antimeridian. */
 final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double)
     derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def crossesAntimeridian: Boolean = minLon > maxLon
 
   def contains(lon: Double, lat: Double): Boolean =
@@ -17,7 +17,7 @@ final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Do
     latOk && lonOk
 
 object BBox:
-  given Schema[BBox] = summon[KindlingsSchema[BBox]].schema
+
 
   def parse(s: String): Option[BBox] =
     val parts = s.split(",").map(_.trim).toList

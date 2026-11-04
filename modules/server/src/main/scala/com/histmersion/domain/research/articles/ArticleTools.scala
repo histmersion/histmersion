@@ -337,9 +337,8 @@ object ArticleTools:
     given Codec.AsObject[PatchArticleInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
-  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object ExportArticleInput:
-    given Schema[ExportArticleInput] = summon[KindlingsSchema[ExportArticleInput]].schema
+  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ArticleVersionsInput(slug: String) derives KindlingsCodecAsObject
   object ArticleVersionsInput:

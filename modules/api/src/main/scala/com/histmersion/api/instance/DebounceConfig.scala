@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int, previewMs: Int)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object DebounceConfig:
-  given Schema[DebounceConfig] = summon[KindlingsSchema[DebounceConfig]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

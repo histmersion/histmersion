@@ -19,9 +19,8 @@ object RunCompare:
       attempts: Int,
       failures: Int
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RunSide:
-    given Schema[RunSide] = summon[KindlingsSchema[RunSide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class StepSide(
       models: List[String],
@@ -35,13 +34,11 @@ object RunCompare:
       firstCallTokens: Option[Long] = None,
       turns: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object StepSide:
-    given Schema[StepSide] = summon[KindlingsSchema[StepSide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class StepRow(name: String, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema
-  object StepRow:
-    given Schema[StepRow] = summon[KindlingsSchema[StepRow]].schema
+
+  final case class StepRow(name: String, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class EnrichSide(
       findings: Int,
@@ -56,19 +53,16 @@ object RunCompare:
       notesChars: Int,
       uniqueClaims: List[String]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object EnrichSide:
-    given Schema[EnrichSide] = summon[KindlingsSchema[EnrichSide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ReviewerSide(reviewer: String, verdict: Option[String], majors: Int, minors: Int)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ReviewerSide:
-    given Schema[ReviewerSide] = summon[KindlingsSchema[ReviewerSide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-  object KindCount:
-    given Schema[KindCount] = summon[KindlingsSchema[KindCount]].schema
+
+  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ReviewSide(
       verdict: Option[String],
@@ -77,15 +71,13 @@ object RunCompare:
       kinds: List[KindCount],
       majors: List[String]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ReviewSide:
-    given Schema[ReviewSide] = summon[KindlingsSchema[ReviewSide]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class MajorOverlap(a: String, b: String, aMajors: Int, bMajors: Int, shared: Int, pairs: List[String])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object MajorOverlap:
-    given Schema[MajorOverlap] = summon[KindlingsSchema[MajorOverlap]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Comparison(
       pipeline: String,
@@ -97,6 +89,4 @@ object RunCompare:
       overlaps: List[MajorOverlap] = Nil,
       notes: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Comparison:
-    given Schema[Comparison] = summon[KindlingsSchema[Comparison]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

@@ -9,6 +9,4 @@ final case class ArchiveImportRequest(
     citekey: Option[String] = None,
     format: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ArchiveImportRequest:
-  given Schema[ArchiveImportRequest] = summon[KindlingsSchema[ArchiveImportRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

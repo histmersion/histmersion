@@ -14,6 +14,4 @@ final case class ReviewBadge(
     runs: Int = 0,
     round: Option[Int] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewBadge:
-  given Schema[ReviewBadge] = summon[KindlingsSchema[ReviewBadge]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

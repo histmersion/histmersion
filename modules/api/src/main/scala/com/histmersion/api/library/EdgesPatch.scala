@@ -7,8 +7,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
-final case class EdgesPatch(add: List[Edge.Input] = Nil, remove: List[Edge.Input] = Nil) derives KindlingsSchema
+final case class EdgesPatch(add: List[Edge.Input] = Nil, remove: List[Edge.Input] = Nil) derives KindlingsSchema, com.histmersion.api.json.Schema
 object EdgesPatch:
-  given Schema[EdgesPatch] = summon[KindlingsSchema[EdgesPatch]].schema
+
 
   given Codec.AsObject[EdgesPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgesPatch])

@@ -10,10 +10,10 @@ final case class CollectionSync(
     applied: Boolean,
     pushes: List[com.histmersion.api.library.CollectionSync.Push]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object CollectionSync:
-  given Schema[CollectionSync] = summon[KindlingsSchema[CollectionSync]].schema
+
 
   /** One push of a sync: the item it became, or why it failed. */
   final case class Push(
@@ -21,17 +21,13 @@ object CollectionSync:
       id: Option[String],
       error: Option[String]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Push:
-    given Schema[Push] = summon[KindlingsSchema[Push]].schema
+
 
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(
       apply: Boolean = false,
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

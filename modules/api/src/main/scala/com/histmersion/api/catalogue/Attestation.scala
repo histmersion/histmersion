@@ -24,19 +24,18 @@ final case class Attestation(
     ctsUrn: Option[String] = None,
     note: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object Attestation:
-  given Schema[Attestation] = summon[KindlingsSchema[Attestation]].schema
+
 
   final case class Deleted(
       id: Long,
       deleted: Boolean
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Deleted:
-    given Schema[Deleted] = summon[KindlingsSchema[Deleted]].schema
+
 
   final case class List(
       total: Int,
@@ -44,11 +43,11 @@ object Attestation:
       offset: Int = 0,
       next: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, attestations.size)
 
   object List:
-    given Schema[List] = summon[KindlingsSchema[List]].schema
+
     def of(total: Int, rows: scala.List[Attestation], offset: Int): List =
       List(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
@@ -64,10 +63,10 @@ object Attestation:
       xywh: Option[String] = None,
       ctsUrn: Option[String] = None,
       note: Option[String] = None
-  ) derives KindlingsSchema
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema
 
   object Patch:
-    given Schema[Patch] = summon[KindlingsSchema[Patch]].schema
+
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
@@ -86,9 +85,9 @@ object Attestation:
       xywh: Option[String] = None,
       ctsUrn: Option[String] = None,
       note: Option[String] = None
-  ) derives KindlingsSchema
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema
 
   object Put:
-    given Schema[Put] = summon[KindlingsSchema[Put]].schema
+
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])

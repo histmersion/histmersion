@@ -11,8 +11,8 @@ final case class FindingsPatch(
     add: List[Finding.Input] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[Finding.Input]] = None
-) derives KindlingsSchema
+) derives KindlingsSchema, com.histmersion.api.json.Schema
 object FindingsPatch:
-  given Schema[FindingsPatch] = summon[KindlingsSchema[FindingsPatch]].schema
+
 
   given Codec.AsObject[FindingsPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingsPatch])

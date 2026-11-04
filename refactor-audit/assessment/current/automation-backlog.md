@@ -1,19 +1,19 @@
 # Bulk rewrite planning baseline
 
-Historical contracts.tsv: 1277 grouped rows, 2818 occurrences. SHA-256: f1e84a6f161461a077b2754518b54646f87ec788061d302608e89d3bc6e02bf0.
+Historical contracts.tsv: 949 grouped rows, 2204 occurrences. SHA-256: 9bb1c24e5b45c60124fbd0c5628b98232d0d79daa4685c7e7e6d7ae0cb54f261.
 
 These are recorded exceptions, not a fresh violation count. Do not add them to current detector counts or use them as a verified completion denominator. Reconcile each family with semantic matches and valid cases before rewriting. The target is at least 90% automatic fixes across the agreed violation inventory, with the difficult remainder tracked explicitly.
 
 | Historical family | Rows | Occurrences |
 |---|---:|---:|
-| derives | 366 | 1042 |
+| derives | 123 | 505 |
 | copy | 168 | 479 |
-| layer | 464 | 464 |
-| unwrap | 118 | 390 |
-| primitive | 72 | 313 |
+| unwrap | 119 | 394 |
+| layer | 373 | 373 |
+| primitive | 74 | 320 |
 | global | 42 | 82 |
 | helper | 23 | 23 |
-| prefix | 16 | 16 |
+| prefix | 19 | 19 |
 | service | 7 | 7 |
 | concept | 1 | 2 |
 

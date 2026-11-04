@@ -19,9 +19,8 @@ object Rename:
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
 
-  final case class Count(table: String, rows: Int) derives KindlingsCodecAsObject, KindlingsSchema
-  object Count:
-    given Schema[Count] = summon[KindlingsSchema[Count]].schema
+  final case class Count(table: String, rows: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Counts(
       findings: Int,
@@ -31,10 +30,7 @@ object Rename:
       columns: List[Count],
       edgesPromoted: Int
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Counts:
-    given Schema[Counts] = summon[KindlingsSchema[Counts]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class Request(newCitekey: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+
+  final case class Request(newCitekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

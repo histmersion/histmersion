@@ -10,7 +10,5 @@ final case class PluginsReport(
     warnings: List[String] = Nil,
     set: Option[PluginSet] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def ok: Boolean = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
-object PluginsReport:
-  given Schema[PluginsReport] = summon[KindlingsSchema[PluginsReport]].schema

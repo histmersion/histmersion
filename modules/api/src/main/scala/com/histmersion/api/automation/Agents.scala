@@ -39,7 +39,7 @@ object Agents:
     */
   final case class Usage(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0)
       derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
       Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
     def total: Long = input + output
@@ -49,7 +49,7 @@ object Agents:
 
   object Usage:
     val Zero: Usage = Usage()
-    given Schema[Usage] = summon[KindlingsSchema[Usage]].schema
+
 
   final case class Price(
       input: BigDecimal,
@@ -160,13 +160,12 @@ object Agents:
 
   final case class ProbeRequest(citekey: String, model: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ProbeRequest:
-    given Schema[ProbeRequest] = summon[KindlingsSchema[ProbeRequest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ProbeAnswer(citekey: String, title: String, year: Option[Int])
       derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[Int]): List[String] = List(
       Option.when(Option(citekey).forall(_.trim.isEmpty))("the citekey is empty — give the source's citekey"),
@@ -177,8 +176,7 @@ object Agents:
         "the year is missing — give the source's publication year from get_source"
       )
     ).flatten
-  object ProbeAnswer:
-    given Schema[ProbeAnswer] = summon[KindlingsSchema[ProbeAnswer]].schema
+
 
   final case class ProbeResult(
       model: String,
@@ -194,9 +192,8 @@ object Agents:
       problems: List[String] = Nil,
       attempts: Int = 1
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ProbeResult:
-    given Schema[ProbeResult] = summon[KindlingsSchema[ProbeResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RunRequest(
       pipeline: String,
@@ -217,14 +214,13 @@ object Agents:
       dryRun: Option[Boolean] = None,
       modelFor: List[ModelOverride] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RunRequest:
-    given Schema[RunRequest] = summon[KindlingsSchema[RunRequest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
 
-  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject, KindlingsSchema:
+
+  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
     def text: String = s"$role=$model"
   object ModelOverride:
-    given Schema[ModelOverride] = summon[KindlingsSchema[ModelOverride]].schema
+
 
     def parse(s: String): Either[String, ModelOverride] =
       s.indexOf('=') match
@@ -253,12 +249,11 @@ object Agents:
       subGoals: Option[Int] = None,
       oaBacklog: Option[Boolean] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
-  object RunParams:
-    given Schema[RunParams] = summon[KindlingsSchema[RunParams]].schema
+
 
   final case class RunInfo(
       id: String,
@@ -287,17 +282,15 @@ object Agents:
       managerItem: Option[Long] = None,
       heartbeatAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def isWaiting: Boolean = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
 
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
-  object RunInfo:
-    given Schema[RunInfo] = summon[KindlingsSchema[RunInfo]].schema
 
-  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object WouldWrite:
-    given Schema[WouldWrite] = summon[KindlingsSchema[WouldWrite]].schema
+
+  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class StepInfo(
       seq: Int,
@@ -318,14 +311,13 @@ object Agents:
       firstCallTokens: Option[Long] = None,
       turns: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: String = (model, actualModel) match
       case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => s"$m → $a"
       case (Some(m), _)                                          => m
       case (None, Some(a))                                       => a
       case (None, None)                                          => ""
-  object StepInfo:
-    given Schema[StepInfo] = summon[KindlingsSchema[StepInfo]].schema
+
 
   final case class MessageInfo(
       seq: Int,
@@ -337,21 +329,18 @@ object Agents:
       toolResult: Option[String] = None,
       latencyMs: Option[Int] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object MessageInfo:
-    given Schema[MessageInfo] = summon[KindlingsSchema[MessageInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RunDetail:
-    given Schema[RunDetail] = summon[KindlingsSchema[RunDetail]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class RoleModel(role: String, model: Option[String], ready: Boolean, problem: Option[String])
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object RoleModel:
-    given Schema[RoleModel] = summon[KindlingsSchema[RoleModel]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ModelsInfo(
       enabled: Boolean,
@@ -363,9 +352,8 @@ object Agents:
       allowances: List[ModelChains.AllowanceStatus] = Nil,
       now: String = ""
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object ModelsInfo:
-    given Schema[ModelsInfo] = summon[KindlingsSchema[ModelsInfo]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum CheckLevel(val wire: String):
     case Ok extends CheckLevel("ok")
@@ -384,9 +372,8 @@ object Agents:
 
   final case class DoctorCheck(name: String, level: CheckLevel, detail: String)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object DoctorCheck:
-    given Schema[DoctorCheck] = summon[KindlingsSchema[DoctorCheck]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class ProviderDoctor(
       provider: String,
@@ -395,13 +382,12 @@ object Agents:
       checks: List[DoctorCheck],
       upstreamModels: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def level: CheckLevel =
       if checks.exists(_.level == CheckLevel.Fail) then CheckLevel.Fail
       else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn
       else CheckLevel.Ok
-  object ProviderDoctor:
-    given Schema[ProviderDoctor] = summon[KindlingsSchema[ProviderDoctor]].schema
+
 
   final case class DoctorReport(
       enabled: Boolean,
@@ -409,15 +395,13 @@ object Agents:
       providers: List[ProviderDoctor],
       checks: List[DoctorCheck]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object DoctorReport:
-    given Schema[DoctorReport] = summon[KindlingsSchema[DoctorReport]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class GenerateRequest(runtimes: List[String] = Nil, out: Option[String] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object GenerateRequest:
-    given Schema[GenerateRequest] = summon[KindlingsSchema[GenerateRequest]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class GenerateResult(
       dir: String,
@@ -427,9 +411,8 @@ object Agents:
       removed: Int,
       definitions: String
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object GenerateResult:
-    given Schema[GenerateResult] = summon[KindlingsSchema[GenerateResult]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum Decision(val wire: String):
     case Approve extends Decision("approve")
@@ -461,7 +444,7 @@ object Agents:
       articles: Option[Article.Plans.ArticlePlan] = None,
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
@@ -475,9 +458,6 @@ object Agents:
         val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
         Some(copy(articles = p, evidence = p.map(_.rationale).getOrElse("")))
       else None
-  object ApprovalInfo:
-    given Schema[ApprovalInfo] = summon[KindlingsSchema[ApprovalInfo]].schema
 
-  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
-  object DecisionRequest:
-    given Schema[DecisionRequest] = summon[KindlingsSchema[DecisionRequest]].schema
+
+  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

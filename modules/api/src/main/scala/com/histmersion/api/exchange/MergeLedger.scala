@@ -8,6 +8,4 @@ import com.histmersion.api.given
 
 final case class MergeLedger(query: Option[String], entries: List[LedgerRow], redirects: List[UidRedirect] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeLedger:
-  given Schema[MergeLedger] = summon[KindlingsSchema[MergeLedger]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

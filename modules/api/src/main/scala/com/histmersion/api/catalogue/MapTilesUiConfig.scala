@@ -7,6 +7,4 @@ import com.histmersion.api.given
 /** `maxZoom` is in MapLibre's zoom: the app's minus one. */
 final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Double = 1.0)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MapTilesUiConfig:
-  given Schema[MapTilesUiConfig] = summon[KindlingsSchema[MapTilesUiConfig]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -9,7 +9,4 @@ final case class CollectionCover(
     line: String,
     warning: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionCover:
-  given Schema[CollectionCover] = summon[KindlingsSchema[CollectionCover]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

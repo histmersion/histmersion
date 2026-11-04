@@ -18,6 +18,4 @@ final case class UpstreamQuota(
     rateRemaining: Option[Int] = None,
     observedAt: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object UpstreamQuota:
-  given Schema[UpstreamQuota] = summon[KindlingsSchema[UpstreamQuota]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

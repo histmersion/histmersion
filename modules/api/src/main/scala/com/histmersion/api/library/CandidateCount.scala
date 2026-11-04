@@ -4,6 +4,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CandidateCount(state: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
-object CandidateCount:
-  given Schema[CandidateCount] = summon[KindlingsSchema[CandidateCount]].schema
+final case class CandidateCount(state: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

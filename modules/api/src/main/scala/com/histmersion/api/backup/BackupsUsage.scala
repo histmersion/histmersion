@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class BackupsUsage(count: Int, bytes: Long, newest: Option[String], keep: Int)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object BackupsUsage:
-  given Schema[BackupsUsage] = summon[KindlingsSchema[BackupsUsage]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

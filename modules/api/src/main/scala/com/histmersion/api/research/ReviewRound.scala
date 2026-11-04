@@ -11,6 +11,4 @@ final case class ReviewRound(
     startedAt: Option[String],
     findings: List[ReviewFinding]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewRound:
-  given Schema[ReviewRound] = summon[KindlingsSchema[ReviewRound]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

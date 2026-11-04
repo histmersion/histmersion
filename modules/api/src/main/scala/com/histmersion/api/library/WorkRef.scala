@@ -25,6 +25,4 @@ final case class WorkRef(
     oaLocations: List[String] = Nil,
     oaLicence: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object WorkRef:
-  given Schema[WorkRef] = summon[KindlingsSchema[WorkRef]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -9,7 +9,4 @@ final case class CollectionSetDone(
     id: String,
     fields: List[String]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object CollectionSetDone:
-  given Schema[CollectionSetDone] = summon[KindlingsSchema[CollectionSetDone]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

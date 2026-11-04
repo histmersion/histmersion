@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class ContradictionsResult(rows: List[ContradictionRow], total: Int)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ContradictionsResult:
-  given Schema[ContradictionsResult] = summon[KindlingsSchema[ContradictionsResult]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

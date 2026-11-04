@@ -13,6 +13,4 @@ final case class CitedSource(
     authors: List[String] = Nil,
     doi: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CitedSource:
-  given Schema[CitedSource] = summon[KindlingsSchema[CitedSource]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

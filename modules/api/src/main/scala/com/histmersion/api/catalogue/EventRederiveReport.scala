@@ -17,9 +17,9 @@ final case class EventRederiveReport(
     examples: List[String] = Nil,
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object EventRederiveReport:
-  given Schema[EventRederiveReport] = summon[KindlingsSchema[EventRederiveReport]].schema
+
 
   /** An events re-dating job's report, in its detail. */
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =

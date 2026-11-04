@@ -142,9 +142,8 @@ object Backup:
       val v = n.toDouble / math.pow(1000, exp.toDouble)
       String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
 
-  final case class Info(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object Info:
-    given Schema[Info] = summon[KindlingsSchema[Info]].schema
+  final case class Info(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class Result(
       file: String,
@@ -153,9 +152,8 @@ object Backup:
       durationMs: Long,
       pruned: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Result:
-    given Schema[Result] = summon[KindlingsSchema[Result]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   enum State:
     case Running, Done, Failed
@@ -173,13 +171,13 @@ object Backup:
       error: Option[String] = None,
       pruned: List[String] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def stateOf: Option[State] = State.parse(state)
     def result: Option[Result] =
       for b <- bytes; h <- sha256 if stateOf.contains(State.Done) yield Result(file, b, h, durationMs, pruned)
 
   object Status:
-    given Schema[Status] = summon[KindlingsSchema[Status]].schema
+
     def running(file: String, elapsedMs: Long): Status = Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)

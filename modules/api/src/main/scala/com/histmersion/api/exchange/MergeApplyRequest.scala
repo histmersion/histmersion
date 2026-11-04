@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class MergeApplyRequest(bundle: String, planHash: String, resolutions: MergeResolutions = MergeResolutions())
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object MergeApplyRequest:
-  given Schema[MergeApplyRequest] = summon[KindlingsSchema[MergeApplyRequest]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

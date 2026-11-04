@@ -9,16 +9,13 @@ final case class CollectionUpdateAll(
     rows: List[CollectionUpdateRow],
     applied: Boolean
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 
 object CollectionUpdateAll:
-  given Schema[CollectionUpdateAll] = summon[KindlingsSchema[CollectionUpdateAll]].schema
+
 
   /** Plan the rewrite of every linked item from its record; with `apply`, write it. */
   final case class Request(
       apply: Boolean = false
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema
-
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

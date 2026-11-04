@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class CatalogProviderInfo(id: String, title: String, licence: String, citation: String, home: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object CatalogProviderInfo:
-  given Schema[CatalogProviderInfo] = summon[KindlingsSchema[CatalogProviderInfo]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

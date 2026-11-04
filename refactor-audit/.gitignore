@@ -35,6 +35,10 @@ assessment/current/repositories/
 assessment/current/owners/
 assessment/current/fixture-verification/
 assessment/current/*.tsv
+assessment/current/schema-derives/
+derivations/*.tsv
+schema-derives/*.tsv
+schema-derives/adapter.txt
 controller-renames-check.tsv*
 repair-fixtures/
 files.txt

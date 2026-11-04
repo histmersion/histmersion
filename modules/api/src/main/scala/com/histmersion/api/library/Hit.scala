@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class Hit(source: SearchHit, matched: List[Finding.Match], why: List[String])
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object Hit:
-  given Schema[Hit] = summon[KindlingsSchema[Hit]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

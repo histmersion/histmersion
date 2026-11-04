@@ -23,15 +23,13 @@ final case class MergePlan(
     resolved: Int,
     changes: Int = 0
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema:
+      KindlingsSchema, com.histmersion.api.json.Schema:
   def open: List[MergeIssue] = issues.filter(_.open)
   def blocking: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Default)
 object MergePlan:
-  given Schema[MergePlan] = summon[KindlingsSchema[MergePlan]].schema
+
 
   final case class Request(bundle: String, resolutions: MergeResolutions = MergeResolutions())
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Request:
-    given Schema[Request] = summon[KindlingsSchema[Request]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema

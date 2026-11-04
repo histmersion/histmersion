@@ -8,6 +8,4 @@ import com.histmersion.api.given
 
 final case class InstanceInfo(id: UUID, label: Option[String], createdAt: String)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object InstanceInfo:
-  given Schema[InstanceInfo] = summon[KindlingsSchema[InstanceInfo]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

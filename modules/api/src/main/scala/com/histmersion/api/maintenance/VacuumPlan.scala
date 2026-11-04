@@ -4,9 +4,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class VacuumPlan(analyze: Boolean, tables: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
+final case class VacuumPlan(analyze: Boolean, tables: List[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 object VacuumPlan:
-  given Schema[VacuumPlan] = summon[KindlingsSchema[VacuumPlan]].schema
+
 
   /** A vacuum job's plan, in its detail. */
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[VacuumPlan]] =

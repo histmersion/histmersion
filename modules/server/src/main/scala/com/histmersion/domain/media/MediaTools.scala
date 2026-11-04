@@ -22,9 +22,8 @@ import com.histmersion.api.media.AssetLink
 object MediaTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
-  object AssetsInput:
-    given Schema[AssetsInput] = summon[KindlingsSchema[AssetsInput]].schema
+  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
 
   final case class PatchAssetInput(
       citekey: String,

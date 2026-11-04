@@ -4,9 +4,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class EventCount(key: String, n: Int) derives KindlingsCodecAsObject, KindlingsSchema
+final case class EventCount(key: String, n: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 object EventCount:
-  given Schema[EventCount] = summon[KindlingsSchema[EventCount]].schema
+
 
   def of(keys: List[String]): List[EventCount] =
     keys.groupBy(identity).toList.map((k, v) => EventCount(k, v.size)).sortBy(c => (-c.n, c.key))

@@ -6,6 +6,4 @@ import com.histmersion.api.given
 
 final case class EventPassage(start: Int, end: Int, quote: String, name: String, context: String = "")
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-object EventPassage:
-  given Schema[EventPassage] = summon[KindlingsSchema[EventPassage]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

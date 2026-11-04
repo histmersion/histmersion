@@ -8,7 +8,4 @@ import com.histmersion.api.ItemKind
 
 final case class ReadOpened(kind: ItemKind, id: ItemKey, title: Option[String] = None)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object ReadOpened:
-  given Schema[ReadOpened] = summon[KindlingsSchema[ReadOpened]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

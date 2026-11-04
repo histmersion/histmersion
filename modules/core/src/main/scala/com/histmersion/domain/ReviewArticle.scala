@@ -430,7 +430,7 @@ object ReviewArticle:
       /** A missing-critique finding's pair of the critique checklist (§6.8). */
       pair: Option[CritiqueRef] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema:
+        KindlingsSchema, com.histmersion.api.json.Schema:
     def major: Boolean = severity == Severity.Major
 
     /** One line for a person or a queue item. */
@@ -438,15 +438,13 @@ object ReviewArticle:
       val at = Option(where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
       s"$id ${severity.wire}$at: ${problem.trim}"
 
-  object Finding:
-    given Schema[Finding] = summon[KindlingsSchema[Finding]].schema
+
 
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
   final case class Evidence(citekey: String, offset: Option[Int], quote: String, ratio: Double)
       derives KindlingsCodecAsObject,
-        KindlingsSchema
-  object Evidence:
-    given Schema[Evidence] = summon[KindlingsSchema[Evidence]].schema
+        KindlingsSchema, com.histmersion.api.json.Schema
+
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for
     * [[Evidence]]), and `tool` — the call of the step that read the source.

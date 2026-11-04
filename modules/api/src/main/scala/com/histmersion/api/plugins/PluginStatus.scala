@@ -15,6 +15,4 @@ final case class PluginStatus(
     warnings: List[String] = Nil,
     error: Option[String] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object PluginStatus:
-  given Schema[PluginStatus] = summon[KindlingsSchema[PluginStatus]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

@@ -4,6 +4,4 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class ResolvedArticle(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
-object ResolvedArticle:
-  given Schema[ResolvedArticle] = summon[KindlingsSchema[ResolvedArticle]].schema
+final case class ResolvedArticle(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

@@ -24,9 +24,9 @@ final case class EventImportReport(
     citation: String = "",
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
+      KindlingsSchema, com.histmersion.api.json.Schema
 object EventImportReport:
-  given Schema[EventImportReport] = summon[KindlingsSchema[EventImportReport]].schema
+
 
   /** An events import job's report, in its detail. */
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventImportReport]] =

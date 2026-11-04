@@ -7,7 +7,4 @@ import sttp.tapir.Schema
 
 final case class UnreadPage(rows: List[UnreadRow], total: Int, offset: Int = 0)
     derives KindlingsCodecAsObject,
-      KindlingsSchema
-
-object UnreadPage:
-  given Schema[UnreadPage] = summon[KindlingsSchema[UnreadPage]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema

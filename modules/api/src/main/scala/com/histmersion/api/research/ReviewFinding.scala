@@ -21,6 +21,4 @@ final case class ReviewFinding(
     reopened: Int = 0,
     deferred: Boolean = false
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewFinding:
-  given Schema[ReviewFinding] = summon[KindlingsSchema[ReviewFinding]].schema
+      KindlingsSchema, com.histmersion.api.json.Schema
