@@ -1,4 +1,6 @@
-package com.histmersion.db
+package com.histmersion.domain.automation.worklists
+
+import com.histmersion.db.*
 
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Queue

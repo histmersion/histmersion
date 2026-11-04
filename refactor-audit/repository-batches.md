@@ -1,0 +1,33 @@
+# Repository migration batches
+
+Baseline: c6ae9bd8. Nine public repositories remain. The source of the consumer counts is `repository-visibility/outside-files.tsv`; the semantic reference inventory includes ASTs and inferred record-member references. Counts are outside files, not calls. A zero-production count does not prove that a repository's types cannot escape through an inferred signature; compilation remains required.
+
+| Repository | Production / test files | Classification and next transformation |
+| --- | --- | --- |
+| AgentRepo | 1 / 18 | Relocate the engine, plan-quota and plugin-agent suites and existing TestRuns helper as one batch. Remaining integration tests need service operations or owner-specific test extraction. ManagerService consumes StepRecord through an exposed type; move the shared record contract out of the repository, including RunService's StepRecord/MessageRecord signatures, before narrowing visibility. |
+| LeaseRepo | 0 / 1 | ManagerRunSuite is mixed manager/agent integration. Extract its standalone lease repository test with its DB setup and cleanup into agents; keep the separate two-server lease integration test where it is. Do not relocate the whole manager suite. |
+| PlanQuotaRepo | 1 / 2 | PlanQuotaRunSuite belongs to agents and is in the relocation batch. PlanRefreshRunSuite also uses AutopilotRepo and stays for service/extraction work. Production PlanPools reads/writes quota state while implementing host refresh behavior; supply quota persistence through an agent-owned service instead of moving host code wholesale. Preserve transaction boundaries and refresh behavior. |
+| AutopilotRepo | 0 / 3 | AcquireRecheckDbSuite, ManagerAutopilotSuite, PlanRefreshRunSuite cross feature boundaries. Route drain/configuration setup through the autopilot service; extract repository-specific assertions where no equivalent service operation exists. Do not move all three into autopilot merely to permit access. |
+| FocusRepo | 3 / 1 | FocusService.goals and FocusService.Goal expose GoalRow to AutoApprovals, SchedulerService and SeedService, with inferred member references. Define the service-owned value and keep DbCodec in the database layer, then transform the row at the boundary. SchedulerDbSuite also tests managers and goal links; inspect its inferred record use after the contract migration. |
+| GoalLinkRepo | 0 / 9 | MergeExtrasDbSuite, CandidateSearchSuite, GoalAgentsRunSuite, IngestBacklogDbSuite, ManagerAutopilotSuite, ManagerPhase2Suite, ManagerPhase3Suite, SchedulerDbSuite and SchedulerRunSuite are integration consumers. Separate seed/setup operations from assertions; use goal-link service operations where equivalent, and keep direct repository assertions in goal-owned tests. |
+| GoalRepo | 0 / 8 | BundleSuite, MergeExtrasDbSuite, MergeSuite, RangeSqlSuite, CandidateSearchSuite, DataOracleSuite, GoalAgentsRunSuite and ManagerAutopilotSuite span features. Bundle/merge tests run in db and cannot depend on server services: extract goal-owned persistence checks or use a narrow existing test fixture contract; do not add a db → server dependency. RangeSqlSuite's goal range cases can be extracted together. |
+| ManagerRepo | 0 / 9 | MergeExtrasDbSuite plus AutoEnrichRunSuite, IngestBacklogDbSuite, ManagerAutopilotSuite, ManagerPhase2Suite, ManagerPhase3Suite, ManagerRunSuite, SchedulerDbSuite and SchedulerRunSuite. These inspect manager state as part of larger workflows. Batch service-level observations and setup separately from low-level repository test extraction. |
+| QueueRepo | 0 / 1 | QueueRows is already a test-only worklist fixture, returning wire records rather than repository types. Move it to worklists and update all callers, then make QueueRepo private. No new bridge or production API is introduced. |
+
+## Safe relocation batch
+
+`tools/refactor/feature-owners.conf` is the reviewed ownership mapping. One semantic Scalafix rule handles all five files and their six top-level declarations; its inspect report covers every production/test file and records 238 references before rewriting. AgentEngineSuite includes ScriptedClient, so that helper's clients must move with the declaration. TestRuns and QueueRows retain their existing behavior. Imports, aliases, qualified references and same-package references must be repaired; unrelated same-named symbols must be unchanged.
+
+Only test packages/file locations and their references change. Suite names and test names remain unchanged. Run the automation oracle with both `com.histmersion.server.agents.*` and `com.histmersion.domain.automation.agents.*`; simple suite names still select the existing resources. The full build's suite discovery is package-independent.
+
+Deferred AgentRepo consumers are ListFilterRepoSuite, PagingRepoSuite, AiTrafficSuite, AutoEnrichRunSuite, GoalAgentsRunSuite, IngestBacklogDbSuite, ManagerAutopilotSuite, ManagerPhase2Suite, ManagerPhase3Suite, ManagerRunSuite, PlanRefreshRunSuite, ReviewArticleRunSuite, SchedulerDbSuite and SchedulerRunSuite. AiTrafficSuite tests host/provider HTTP behavior; ReviewArticleRunSuite tests the research workflow. They are not automatically agent-owned just because a resolved record member belongs to AgentRepo.
+
+## Gates
+
+Batch outcome: the five configured relocations compiled without follow-up source repairs; all 238 old-owner references are gone. QueueRepo became private after the refreshed inventory. AgentRepo's outside test files are now 14 and PlanQuotaRepo's one. The remaining eight public repositories require the deferred transformations above. Structural findings are 42, with 28/28 source expectations. QueueServiceInMemorySuite passed 19 tests; selected DB suites were discovered but skipped because no test database is configured.
+
+1. Compile fixtures with SemanticDB; inspect their actual trees; compare rewrites against expected output and compile the output. Verify old symbols fail the check and migrated symbols pass; check destination collisions and stale inventory rejection.
+2. Inspect all application source/test files once; fail on missing coverage or changed input hashes before applying the batch.
+3. Apply all reviewed ownership mappings and update consumers. Compile the entire production and test graph once; use compiler failures to expose unsupported reference shapes.
+4. Refresh the repository inventory, narrow all newly unblocked repositories together, and compile the changed graph. Re-run the structural and capability measures once at the end.
+5. Report reduced consumer counts separately from eliminated repository violations. Do not call skipped DB suites behavioral validation. Do not broaden visibility scopes or permissions to make the metrics green.

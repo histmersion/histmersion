@@ -23,6 +23,11 @@ repository-visibility/sources.tsv
 repository-visibility/declarations.tsv
 repository-visibility/references.tsv
 repository-visibility/outside-files.tsv
+feature-owners/sources.tsv
+feature-owners/policy.txt
+feature-owners/references.tsv
+owner-fixture/
+owner-fixture-output/
 controller-renames-check.tsv*
 repair-fixtures/
 files.txt

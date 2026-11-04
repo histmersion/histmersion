@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.automation.worklists.QueueRows
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.research.articles.ArticleFixtures

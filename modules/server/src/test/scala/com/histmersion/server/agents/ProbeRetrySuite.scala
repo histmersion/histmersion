@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ScriptedClient
+
 import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsControllers}
 import com.histmersion.domain.automation.managers.Zero
 

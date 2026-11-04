@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ScriptedClient
+import com.histmersion.domain.automation.agents.TestRuns
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.agents.*
@@ -13,7 +16,7 @@ import com.histmersion.api.automation.Autopilot.AutopilotSet
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
-import com.histmersion.db.QueueRows
+import com.histmersion.domain.automation.worklists.{QueueRows}
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
