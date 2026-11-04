@@ -29,6 +29,23 @@ import sttp.client4.*
   */
 object Cli:
 
+  private[cli] def errorWrite(value: => String): Unit =
+    val stream = Console.err
+    stream.print(value)
+  private[cli] def errorLine(value: => String): Unit =
+    val stream = Console.err
+    stream.println(value)
+  private[cli] def errorLine(): Unit = Console.err.println()
+  private[cli] def errorFlush(): Unit = Console.err.flush()
+  private[cli] def processErrorWrite(value: => String): Unit =
+    val stream = System.err
+    stream.print(value)
+  private[cli] def processErrorLine(value: => String): Unit =
+    val stream = System.err
+    stream.println(value)
+  private[cli] def processErrorLine(): Unit = System.err.println()
+  private[cli] def processErrorFlush(): Unit = System.err.flush()
+
   private[cli] def writeLine(value: Any): Unit = scala.Predef.println(value)
   private[cli] def writeLine(): Unit = scala.Predef.println()
   private[cli] def write(value: Any): Unit = scala.Predef.print(value)

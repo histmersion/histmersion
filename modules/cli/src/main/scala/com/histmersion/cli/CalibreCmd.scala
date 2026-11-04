@@ -170,7 +170,7 @@ object CalibreCmd:
         res.relinkedFrom.foreach(prev => com.histmersion.cli.Cli.writeLine(s"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
         com.histmersion.cli.Cli.writeLine(s"File (left in place, never modified): ${res.file}")
         res.cover.foreach(cv =>
-          if cv.warning then Console.err.println(s"warning: cover not stored — ${cv.line}") else com.histmersion.cli.Cli.writeLine(cv.line)
+          if cv.warning then com.histmersion.cli.Cli.errorLine(s"warning: cover not stored — ${cv.line}") else com.histmersion.cli.Cli.writeLine(cv.line)
         )
       if noConvert then Right(())
       else
@@ -276,7 +276,7 @@ object CalibreCmd:
           case Right(r) if r.covers > 0 => com.histmersion.cli.Cli.writeLine(s"Cover: from Open Library (ISBN $isbn)")
           case _                        => com.histmersion.cli.Cli.writeLine(s"Cover: none (no cover file in Calibre, none at Open Library)")
       case MediaCovers.Outcome.Skipped(why) => com.histmersion.cli.Cli.writeLine(s"Cover: none ($why)")
-      case MediaCovers.Outcome.Failed(why)  => Console.err.println(s"warning: cover not stored — $why")
+      case MediaCovers.Outcome.Failed(why)  => com.histmersion.cli.Cli.errorLine(s"warning: cover not stored — $why")
 
   /** Create the source, or enrich it if the citekey already exists — a re-import must never wipe the findings and notes
     * an agent compiled. Either way the record ends up linked to THIS entry (#721: an import into an existing record
@@ -677,7 +677,7 @@ object CalibreCmd:
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
             case (ck, Right((id, _))) => com.histmersion.cli.Cli.writeLine(s"  + $ck → Calibre id $id")
-            case (ck, Left(e))        => Console.err.println(s"  ! $ck: ${e.message}")
+            case (ck, Left(e))        => com.histmersion.cli.Cli.errorLine(s"  ! $ck: ${e.message}")
           }
           val failed = results.count(_._2.isLeft)
           com.histmersion.cli.Cli.writeLine(s"pushed ${results.size - failed} source(s), $failed failed$note")
@@ -720,7 +720,7 @@ object CalibreCmd:
           r.pushes.foreach(p =>
             p.id match
               case Some(id) => com.histmersion.cli.Cli.writeLine(s"  + ${p.citekey} → Calibre id $id")
-              case None     => Console.err.println(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")
+              case None     => com.histmersion.cli.Cli.errorLine(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")
           )
           val failed = r.pushes.count(_.id.isEmpty)
           com.histmersion.cli.Cli.writeLine(s"pushed ${r.pushes.size - failed} source(s), $failed failed$note")

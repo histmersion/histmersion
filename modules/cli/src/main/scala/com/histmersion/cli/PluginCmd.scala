@@ -151,7 +151,7 @@ object PluginCmd:
           copied <- PluginAuthoring.publishToMavenLocal(install, dir)
         yield
           com.histmersion.cli.Cli.writeLine(if asUrl then dir.toUri.toString else dir.toString)
-          java.lang.System.err.println(if copied.isEmpty then
+          com.histmersion.cli.Cli.processErrorLine(if copied.isEmpty then
             s"Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts are up to date there"
           else
             s"copied ${copied.size} file(s) of Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts there")

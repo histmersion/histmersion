@@ -14,5 +14,5 @@ object Settings:
   lazy val app: AppConfig = loaded match
     case Right(l)  => l.config
     case Left(err) =>
-      System.err.println(s"warning: $err — going on with the defaults and the environment")
+      com.histmersion.cli.Cli.processErrorLine(s"warning: $err — going on with the defaults and the environment")
       AppConfig.load()

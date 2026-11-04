@@ -4,7 +4,11 @@ Baseline: `6e1b5387`. Production compiler repairs have now been applied through 
 
 ## Current checkpoint
 
-The stdout batch redirected 163 symbol-resolved `Predef.print`/`println` references across 23 CLI files to three package-private methods on the existing permitted `Cli` owner. No capability permissions were added or broadened. Console findings fell from 204 to 41 and total capability findings from 432 to 269; all other category counts are unchanged. Stderr/progress handling and non-CLI diagnostics remain for subsequent batches.
+The stderr batch redirected 24 resolved calls in 12 CLI files to narrow operations at the existing permitted Cli boundary. Capability findings fell from 269 to 245, with console findings 41 → 17; no other category changed and no permission was broadened. The remaining console findings are outside the CLI module.
+
+Production and aggregate test compilation pass, as do all 234 CLI tests. Executable before/after fixtures preserve dynamic Console.err versus process System.err, receiver-before-argument evaluation when System.err is replaced, String overload selection, blank lines, carriage returns and flush counts. Method references and non-string overloads remain unsupported. Check mode rejects the original fixture, passes the compiled output and reports zero remaining or unsupported application cases. The real progress renderer has byte-exact regression coverage, including exceptions and single evaluation.
+
+The preceding stdout batch redirected 163 symbol-resolved `Predef.print`/`println` references across 23 CLI files to three package-private methods on the existing permitted `Cli` owner. No capability permissions were added or broadened. Console findings fell from 204 to 41 and total capability findings from 432 to 269; all other category counts were unchanged.
 
 Production and aggregate test compilation pass. All 233 CLI tests pass, including a new byte-exact output regression covering stdout/stderr isolation, blank lines, null, Unicode, callbacks, Markdown/JSON rendering and exactly-once argument evaluation/rendering. The executable fixture passes before and after rewriting, its output matches the expected source, and check mode rejects the original fixture but accepts the compiled result. An effectful receiver remains unchanged and is reported as unsupported. Application check mode reports zero supported rewrites and zero unsupported cases.
 
@@ -14,13 +18,13 @@ The readiness matrix accounts for all 43 goals. Its command parses all 3,125 Sca
 
 After this batch, production and aggregate test compilation pass. All 25 tests in ContractSnapshotSuite, AgentsSettingsSuite and AiProvidersSuite pass, with snapshot files unchanged. The snapshot test exposed an API/domain role membership mismatch in AgentDefinitions; a scoped Scalafix boundary conversion fixed it. Live database tests were not run for this rename batch.
 
-Production compilation passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 24 guarded capability source assertions pass, including the new output boundary and a remaining stderr violation. It reports 269 policy findings, down from the compiling checkpoint's 432.
+Production compilation passes with normal SemanticDB, including server and CLI. The ordinary audit reads all 2,355 main-source files with zero missing files. All 27 guarded capability source assertions pass, including the output boundaries and a remaining server console violation. It reports 245 policy findings, down from the compiling checkpoint's 432.
 
 | Configured check | Findings across all normally compiled main files |
 |---|---:|
 | Environment | 8 |
 | System properties | 12 |
-| Console output | 41 |
+| Console output | 17 |
 | Clock | 103 |
 | Process lifecycle | 11 |
 | Filesystem | 67 |
@@ -29,7 +33,7 @@ Production compilation passes with normal SemanticDB, including server and CLI. 
 | Process execution/dependency | 7 |
 | Repository factory dependency | 0 |
 | Repository transaction lifecycle | 19 |
-| Total | 269 |
+| Total | 245 |
 
 The transaction count includes one known helper-call witness: `QueryRepo.run -> QueryRepo.exec -> Connection.setAutoCommit`. These are source-reference/call-site counts, not independent business operations. Repository helpers are followed across files, aliases and recursive paths; dynamic dispatch and callback targets are not fully modeled. Chained capability dependencies are deduplicated. A discovered cross-file local-symbol collision was reproduced in a failing regression fixture and corrected before retaining these results.
 
