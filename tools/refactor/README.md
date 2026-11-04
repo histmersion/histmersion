@@ -238,4 +238,3 @@ Use the same fixture command with these alternative configs to exercise rejectio
 | `source-missing-files.conf`, with `--files tools/refactor/fixtures.scala` instead | Exit 1: independently enumerated fixture was not analyzed |
 
 Concept mappings are explicit owner/parameter/raw-type/required-type records. They check declared syntax, not inferred types or aliases. Unconfigured concepts and implementation/call-site propagation are unmeasured. Repository roles currently use the feature-package and `Repo` suffix convention; unnamed repositories remain unmeasured. A feature-private qualifier must name the feature package or an enclosing owner, not a broader domain. These rules make no claim about unwraps, constructor invariants, service ownership, transitive calls or capability coverage in files missing SemanticDB. Tests are parsed for coverage but production checks currently apply only to main sources.
-
