@@ -61,11 +61,12 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
   private val comments = new ConcurrentLinkedQueue[List[String]]()
   private val expressions = new ConcurrentLinkedQueue[List[String]]()
   private val constraintOwners = new ConcurrentLinkedQueue[(String,String)]()
-  private case class Construction(path: String, line: Int, owner: String, callee: String, targets: List[String], kind: String, source: String, ast: String)
+  private case class Construction(path: String, line: Int, owner: String, callee: String, targets: List[String], kind: String, source: String, ast: String, offset: Int)
   private case class Result(method: String, path: String, line: Int, targets: List[String], shape: String)
   private val constructions = new ConcurrentLinkedQueue[Construction]()
   private val results = new ConcurrentLinkedQueue[Result]()
   private val constructorAccess = new java.util.concurrent.ConcurrentHashMap[String,String]()
+  private val callResults = new java.util.concurrent.ConcurrentHashMap[String,List[String]]()
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("ArchitectureInventory")(Policy()).map { p =>
     require(p.roots.nonEmpty && p.report.nonEmpty)
     require(p.visibilityTargets.map(_.symbol).distinct.size == p.visibilityTargets.size && p.visibilityTargets.forall(t => t.symbol.nonEmpty && t.scope.nonEmpty),"Invalid visibility target list")
@@ -119,6 +120,17 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         signatureReferences.add(Reference(path,t.pos.startLine+1,declaration,id(target),target.displayName,"declared-or-inferred-signature",pkg(t)))
       }
     }
+    def rememberCalls(symbol: Symbol): Unit = symbol.info.foreach(_.signature match {
+      case ClassSignature(_,_,_,members) =>
+        members.foreach(m => m.signature match {
+          case MethodSignature(_,_,result) => callResults.put(id(m.symbol),typeSymbols(result).filterNot(_.isNone).map(id).distinct)
+          case _ => ()
+        })
+        val applyTargets = members.filter(_.symbol.displayName == "apply").flatMap(m => Option(callResults.get(id(m.symbol))).toList.flatten).distinct
+        if(applyTargets.nonEmpty) callResults.put(id(symbol),applyTargets)
+      case MethodSignature(_,_,result) => callResults.put(id(symbol),typeSymbols(result).filterNot(_.isNone).map(id).distinct)
+      case _ => ()
+    })
     def top(t: Tree): Boolean = ancestors(t).exists(_.is[Source]) && !ancestors(t).exists {
       case _: Defn.Class | _: Defn.Trait | _: Defn.Object | _: Defn.Enum | _: Defn.Def | _: Defn.Given | _: Term.Block => true
       case _ => false
@@ -142,6 +154,8 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         mods.map(_.syntax).mkString(" "),bases,n.symbol.info.fold("<unresolved>")(_.signature.toString),t.pos.text,t.structure,top(t),ctor,
         mods.collect { case m: Mod.Private => "private" -> m.within.syntax; case m: Mod.Protected => "protected" -> m.within.syntax }))
       recordSignature(t,n,id(n.symbol))
+      rememberCalls(n.symbol)
+      if((kind == "class" || kind == "case-class") && !n.symbol.isLocal && !n.symbol.isNone) rememberCalls(Symbol(n.symbol.value.stripSuffix("#") + "."))
       if(kind == "method" || kind == "abstract-method") n.symbol.info.foreach(_.signature match {
         case MethodSignature(_,_,result) => results.add(Result(id(n.symbol),path,t.pos.startLine+1,typeSymbols(result).filterNot(_.isNone).map(id).distinct,result.toString))
         case _ => ()
@@ -197,9 +211,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         else "external-reason-or-naming-review"
       comments.add(List(path,(c.pos.startLine+1).toString,category,text))
     }
-    doc.tree.collect {
-      case a: Term.Apply =>
-        val s = a.fun.symbol
+    def recordInvocation(a: Tree, s: Symbol): Unit = {
         val companionResults = s.info.toList.flatMap(_.signature match {
           case ClassSignature(_,_,_,members) => members.filter(_.symbol.displayName == "apply").flatMap(_.signature match {
             case MethodSignature(_,_,result) => typeSymbols(result).filterNot(_.isNone).map(id)
@@ -207,13 +219,24 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
           })
           case _ => Nil
         }).distinct
-        if(s.isNone || Set("apply","copy")(s.displayName) || companionResults.nonEmpty) {
-          val targets = companionResults ++ s.info.toList.flatMap(_.signature match {
+        val targets = companionResults ++ s.info.toList.flatMap(_.signature match {
             case MethodSignature(_,_,result) => typeSymbols(result).filterNot(_.isNone).map(id)
             case _ => Nil
           }).distinct
-          constructions.add(Construction(path,a.pos.startLine+1,owner(a),id(s),targets,if(s.isNone) "unresolved-call" else if(companionResults.nonEmpty) "companion-apply-candidates" else s.displayName,a.pos.text,a.structure))
-        }
+        val kind = if(s.isNone) "unresolved-call"
+          else if(companionResults.nonEmpty) "companion-apply-candidates"
+          else if(Set("apply","copy")(s.displayName)) s.displayName
+          else s.info.map(_.signature) match {
+            case Some(_: MethodSignature) => "method-call"
+            case Some(_) => "callable-value-or-companion"
+            case None => "unresolved-call-metadata"
+          }
+        constructions.add(Construction(path,a.pos.startLine+1,owner(a),id(s),targets,kind,a.pos.text,a.structure,a.pos.start))
+    }
+    doc.tree.collect {
+      case a: Term.Apply => recordInvocation(a,a.fun.symbol)
+      case a: Term.ApplyInfix => recordInvocation(a,a.op.symbol)
+      case a: Term.ApplyUnary => recordInvocation(a,a.op.symbol)
       case i: Init =>
         def base(t: Type): Symbol = t match {
           case a: Type.Apply => base(a.tpe)
@@ -222,7 +245,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
         }
         val target = base(i.tpe)
         constructions.add(Construction(path,i.pos.startLine+1,owner(i),id(i.symbol),List(id(target)).filter(_.nonEmpty),
-          if(i.parent.exists(_.is[Term.New])) "new" else "parent-initializer",i.pos.text,i.structure))
+          if(i.parent.exists(_.is[Term.New])) "new" else "parent-initializer",i.pos.text,i.structure,i.pos.start))
     }
     doc.tree.collect {
       case v: Defn.Val if v.rhs.is[Lit.String] => expressions.add(List("string-constant",path,(v.pos.startLine+1).toString,owner(v),v.pos.text,v.structure))
@@ -300,12 +323,20 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
     def resultClasses(target: String, seen: Set[String]): List[String] =
       if(seen(target)) Nil else if(classIds(target)) List(target)
       else Option(aliasTargets.get(target)).toList.flatten.flatMap(s => resultClasses(s,seen + target))
-    val sites = constructions.asScala.toList.distinct.sortBy(c => (c.path,c.line,c.callee,c.source))
+    val sites = constructions.asScala.toList.map { c =>
+      val recovered = Option(callResults.get(c.callee)).toList.flatten
+      c.copy(targets=(c.targets ++ recovered).distinct,
+        kind=if(c.targets.isEmpty && recovered.nonEmpty) "project-signature-call-candidate" else c.kind)
+    }.distinct.sortBy(c => (c.path,c.offset,c.callee,c.source))
     val siteClasses = sites.map(c => c -> c.targets.flatMap(s => resultClasses(s,Set.empty)).distinct)
-    write("construction-sites.tsv","path\tline\towner\tcallee\tkind\tproject-classes\tresult-symbols\tresolution\tsource\tast",siteClasses.map { case(c,cs) =>
+    write("construction-sites.tsv","path\tline\towner\tcallee\tkind\tproject-classes\tresult-symbols\tresolution\tsource\tast\toffset",siteClasses.map { case(c,cs) =>
       List(c.path,c.line.toString,c.owner,c.callee,c.kind,cs.mkString(";"),c.targets.mkString(";"),
-        if(cs.nonEmpty) "project-model-candidate" else if(c.targets.isEmpty) "unresolved" else "no-project-class-resolved",c.source,c.ast)
+        if(cs.nonEmpty) "project-model-result-candidate" else if(c.targets.isEmpty) "unresolved" else "no-project-class-resolved",c.source,c.ast,c.offset.toString)
     })
+    write("invocation-counts.tsv","scope\tmodule\tkind\tresolution\tcount",siteClasses.groupBy { case(c,cs) =>
+      (if(c.path.contains("/src/test/")) "test" else "production",module(c.path),c.kind,
+        if(cs.nonEmpty) "project-model-result-candidate" else if(c.targets.isEmpty) "unresolved" else "no-project-class-resolved")
+    }.toList.sortBy(_._1).map { case((scope,module,kind,resolution),rs) => List(scope,module,kind,resolution,rs.size.toString) })
     val returns = results.asScala.toList.distinct
     val constructedByOwner = siteClasses.groupBy(_._1.owner).view.mapValues(_.flatMap(_._2).distinct).toMap
     val constructionCounts = siteClasses.flatMap(_._2).groupMapReduce(identity)(_ => 1)(_ + _)
@@ -313,10 +344,10 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       val constructed = constructedByOwner.getOrElse(r.method,Nil)
       r.targets.flatMap(s => resultClasses(s,Set.empty)).distinct.map { model =>
         List(model,r.method,r.path,r.line.toString,r.shape,constructed.mkString(";"),
-          if(constructed.contains(model)) "returns-model-and-has-direct-construction; invariant-unproven" else "returns-model; delegation-or-non-factory-review")
+          if(constructed.contains(model)) "returns-model-and-has-model-result-call; invariant-unproven" else "returns-model; delegation-or-non-factory-review")
       }
     }.sortBy(r => (r.head,r(2),r(3).toInt,r(1)))
-    write("factory-candidates.tsv","model\tmethod\tpath\tline\tresult-type\tdirectly-constructed-models\tstatus",factoryRows)
+    write("factory-candidates.tsv","model\tmethod\tpath\tline\tresult-type\tmodel-result-call-candidates\tstatus",factoryRows)
     val factoryCounts = factoryRows.groupMapReduce(_.head)(_ => 1)(_ + _)
     val constructionRows = classes.map { d =>
       val access = Option(constructorAccess.get(d.symbol)).getOrElse("unresolved")
@@ -328,7 +359,7 @@ class ArchitectureInventory(val policy: ArchitectureInventory.Policy) extends Se
       List(d.symbol,d.path,d.line.toString,d.module,d.kind,access,d.mods,obligation.getOrElse(""),status,
         constructionCounts.getOrElse(d.symbol,0).toString,factoryCounts.getOrElse(d.symbol,0).toString)
     }
-    write("model-construction.tsv","model\tpath\tline\tmodule\tkind\tconstructor-access\tclass-modifiers\tinvariant\tstatus\tconstruction-evidence\tfactory-candidates",constructionRows)
+    write("model-construction.tsv","model\tpath\tline\tmodule\tkind\tconstructor-access\tclass-modifiers\tinvariant\tstatus\tmodel-result-call-candidates\tfactory-candidates",constructionRows)
     write("model-construction-counts.tsv","scope\tmodule\tconstructor-access\tstatus\tcount",constructionRows.groupBy(r =>
       (if(r(1).contains("/src/test/")) "test" else "production",r(3),r(5),r(8))).toList.sortBy(_._1).map {
         case((scope,module,access,status),rs) => List(scope,module,access,status,rs.size.toString)
