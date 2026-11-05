@@ -94,7 +94,7 @@ object LeadService:
           if e.citekey.isDefined || s.attestations.exists(a => a.targetType == "event" && a.targetId == id) then
             EventTier.Attested
           else EventTier.Catalogue
-        val cs = s.candidates.filter(_.eventId == id)
+        val cs = s.candidates.filter(_.eventId == com.histmersion.api.catalogue.Event.Id(id))
         LeadRow(
           e.id,
           e.label,

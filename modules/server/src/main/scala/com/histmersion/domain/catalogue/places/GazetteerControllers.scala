@@ -60,7 +60,7 @@ final class GazetteerControllers(
                     s"${r.places} places, ${r.names} names, ${r.relations} relations" +
                       (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")
                   )
-              ).map(j => Place.ImportResult(0, 0, 0, job = Some(j.id)))
+              ).map(j => Place.ImportResult(0, 0, 0, job = Some(j.id.value)))
           }
 
   /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025); like the gazetteers, a real run
@@ -73,7 +73,7 @@ final class GazetteerControllers(
         imports
           .land(dryRun = false)
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
-      ).map(j => Place.ImportResult(0, 0, 0, job = Some(j.id)))
+      ).map(j => Place.ImportResult(0, 0, 0, job = Some(j.id.value)))
 
   /** `POST /api/places/build-hierarchy` — parent-child edges from spatial containment, as a background job (ST_Contains
     * across thousands of polygons is slow): the answer carries its id, the finished job's summary the counts.
@@ -86,4 +86,4 @@ final class GazetteerControllers(
       ) {
         val r = geometry.buildHierarchy()
         Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
-      }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id)))
+      }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id.value)))
