@@ -156,3 +156,27 @@ class QuerySuite extends munit.FunSuite:
   test("empty stays empty"):
     assertEquals(Query.check("   "), Left("empty statement"))
     assertEquals(Query.check(" ; ; "), Left("empty statement"))
+
+  test("nested leading comments cannot hide transaction or session control"):
+    val prefixes = List(
+      "/* outer /* inner */ outer */ ",
+      "/* /* */ */",
+      "-- header\n/* outer /* middle /* inner */ middle */ outer */\n-- tail\n"
+    )
+    val commands = List("COMMIT", "ROLLBACK", "BEGIN", "END", "ABORT", "START TRANSACTION", "SAVEPOINT s", "RELEASE SAVEPOINT s", "SET TRANSACTION READ WRITE", "RESET ALL", "DISCARD ALL", "DO $$ BEGIN END $$", "CALL something()")
+    prefixes.foreach { prefix =>
+      commands.foreach { command =>
+        val sql = prefix + command
+        assert(Query.check(sql).isLeft, s"control statement accepted: $sql")
+      }
+    }
+
+  test("nested leading comments preserve allowed queries and their keyword"):
+    val sql = "/* outer /* inner */ outer */ select '/* literal */'"
+    assertEquals(Query.leadingKeyword(sql), "SELECT")
+    assertEquals(Query.check(sql), Right(sql))
+    assertEquals(Query.leadingKeyword("/* /* */ */ -- next\nwith q as (select 1) select * from q"), "WITH")
+
+  test("unclosed leading comments contain no executable keyword"):
+    assertEquals(Query.leadingKeyword("/* outer /* inner */ COMMIT"), "")
+    assertEquals(Query.leadingKeyword("/*"), "")

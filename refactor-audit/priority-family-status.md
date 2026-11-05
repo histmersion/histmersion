@@ -1,5 +1,23 @@
 # Priority-family status
 
+## Transaction source acceptance checkpoint
+
+A source-only audit plus parent counterexample found a fourth confirmed transaction
+guard defect: nested SQL comments could hide COMMIT from Query.check. The guarded
+Scalafix repair passes all 29 Query tests; all three added tests failed before it.
+TX-0004 and its discovery/repair events are added without resetting TX-0001–TX-0003.
+This is a verified lexical guard fix, not database execution proof.
+Full production and test compilation pass across 3,143 source files with unchanged
+hashes during the build.
+
+The independent negative sample contains ten distinct production methods in six
+unchanged files, with zero transaction diagnostics in the frozen preceding scan.
+No independent positives means recall remains undefined. The auditor's initial
+incorrect Query judgment and subsequent correction are preserved. The two dynamic
+SQL cases stay unresolved; no exception or detector acceptance is inferred.
+See transaction-query-comments/README.md. Other families retain the measurements
+below from before the two-file Query repair; no fresh aggregate scan is claimed.
+
 ## Fresh measurement after pagination migration
 
 The assessment completed on 3,143 files in 28 modules. Compilation and measurement
