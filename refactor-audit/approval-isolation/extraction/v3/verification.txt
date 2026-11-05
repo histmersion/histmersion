@@ -1,0 +1,2 @@
+PASS: extracted definitions compile together on the evaluated server classpath.
+This is a preview only. Wiring, old-method removal, module-local compilation and before/after contract execution remain required.

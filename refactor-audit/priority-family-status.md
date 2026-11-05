@@ -1,5 +1,20 @@
 # Priority-family status
 
+## Approval extraction development checkpoint
+
+The source-proposal ownership repair now has a generated four-file definition/storage
+preview that compiles, and a frozen eight-test baseline covering database and memory
+implementations with no skips. The preview retains typed library inputs and shares
+the original atomic insertion operation; its service reads through the engine's
+connection-context method inside the same transaction. Two generator errors were
+caught by compilation and corrected before application; their plans remain preserved.
+
+Application sources are unchanged. Caller wiring, removal of old source-specific
+engine methods, full module compilation, behavior comparison and identity-based
+remeasurement remain required. All 54 confirmed relationships remain outstanding.
+See `approval-isolation/extraction/README.md` for the exact next AST pass. The test
+cluster was stopped after the baseline. No new detector refinement round was consumed.
+
 ## Integrated isolation gate and expanded repair scope
 
 ProjectAssessment now executes the isolation identity gate. A full assessment of
