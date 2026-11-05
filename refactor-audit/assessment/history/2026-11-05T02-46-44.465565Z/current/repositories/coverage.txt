@@ -1,0 +1,4 @@
+expected=3140
+visited=3140
+missing=0
+scope=resolved source references including imports, aliases and member symbols; inferred API escapes and reflection require review and compilation

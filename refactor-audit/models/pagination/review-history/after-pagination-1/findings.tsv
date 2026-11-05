@@ -1,0 +1,12 @@
+id	status	position	route	intended-type	treatment	scope
+01acf8ed294832b968779b153a7a11892a58846e5454d139c0d7371037d58c04	outstanding	com/histmersion/api/library/Filter#limit.:constructor-parameter	value	com.histmersion.api.PageSize.Request	manual/design	production
+3b1e376ef4061093af0c7921dd5518e77ece1005788c114538b24275b0929af5	verified-fixed	com/histmersion/api/library/GeoHitPage#next.:constructor-parameter	value/argument[0]	com.histmersion.api.Offset	bulk-rewrite	production
+678e872462dc7d0dc09e3176b945dba0ab1ce1bc1dc71a9c9d5dad9678e59a3a	outstanding	com/histmersion/api/library/Filter#offset.:constructor-parameter	value	com.histmersion.api.Offset	bulk-rewrite	production
+7adbd80359550009ae4b427e7a222eb71066ae5223573d60c3b1f72645028642	verified-fixed	com/histmersion/api/OffsetPage#total.:constructor-parameter	value	com.histmersion.api.RowCount	bulk-rewrite	production
+7f25d5ce2ab624d9797a35138a1fa60525a88e1c58353db63411eb96f7c6d2f2	verified-fixed	com/histmersion/api/OffsetPage#offset.:constructor-parameter	value	com.histmersion.api.Offset	bulk-rewrite	production
+a6d9b7e42a83b1e0f764558fd2c1bf5012fb90e6205eff77802144ca72603c5b	outstanding	com/histmersion/api/library/PassageHit#offset.:constructor-parameter	value	com.histmersion.api.library.PassageHit.Offset	targeted-rewrite	production
+b7df7dfa6ec7f93fbc42432506e7dd6cbdcd4b4e015aa11dd253da5ebc03b97a	verified-fixed	com/histmersion/api/OffsetPage#next().:return	value/ByNameType[0]/argument[0]	com.histmersion.api.Offset	bulk-rewrite	production
+ca49ef387ca54a2abbf145b8b97323bd22b3b1778071f3add6ced73a4b269ceb	verified-fixed	com/histmersion/api/library/GeoHitPage#offset.:constructor-parameter	value	com.histmersion.api.Offset	bulk-rewrite	production
+dd7b304f63ca4f4372a8241733d6becfb919ab5ce012cbda7efd323a45a74db1	verified-fixed	com/histmersion/api/library/SearchResult#offset.:constructor-parameter	value	com.histmersion.api.Offset	bulk-rewrite	production
+e28e33b4f7040140fa9a1c95d9208ddc594f4ef6791e5d616b92af9a78fab4d6	verified-fixed	com/histmersion/api/library/SearchResult#next.:constructor-parameter	value/argument[0]	com.histmersion.api.Offset	bulk-rewrite	production
+fac76208524c2df32329d1de6deeaf69832eac43ef2941d8c267663c5fbd5a1b	verified-fixed	com/histmersion/api/OffsetPage#shown.:constructor-parameter	value	com.histmersion.api.RowCount	bulk-rewrite	production

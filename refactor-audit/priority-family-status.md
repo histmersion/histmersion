@@ -1,5 +1,26 @@
 # Priority-family status
 
+## Fresh measurement after pagination migration
+
+The assessment completed on 3,143 files in 28 modules. Compilation and measurement
+source fingerprints agree. The original aggregate baseline is unchanged; its policy
+fingerprint is now incomparable, so this is **not** a passing aggregate no-regression
+comparison. The capability and isolation identity gates separately pass with zero
+new/reopened identities. No detector refinement round was spent on this checkpoint.
+
+| Family | Current bounded evidence | Verified repair / outstanding | Limits |
+|---|---|---|---|
+| Transactions | No supported ownership diagnostics; two dynamic SQL evidence cases remain | Three previously verified ownership repairs retained | Dispatch, callbacks, test policy and independent acceptance remain unestablished |
+| Capabilities | 147 production occurrences, 125 anchors; no new/reopened identities or multiplicity changes | Prior repairs retained; this batch grants no new exceptions | 43 identity-ambiguous occurrences; tests and dynamic effects outside this gate |
+| Isolation | 191 production and 199 test candidate relationships, no new/reopened identities | Prior 54 production repairs retained; prior classifications/exceptions unchanged | 106 ambiguous-owner relationships; 181,915 unclassified-direction evidence rows |
+| Primitive models | 30,387 production member primitive candidate leaves; 46,873 unresolved leaves across all scopes | Original pagination review: **8 of 11 fixed, 3 outstanding**, production only | Candidate-count reduction is not repair credit; independent family precision/recall still unestablished |
+| Copy updates | 108 production / 58 test resolved occurrences; 52 production / 97 test unresolved owners | Prior 334 production / 1,529 test repairs retained; 107 confirmed production residuals plus one non-violation | Automation remains paused at 2/2 rounds; failed test recall is retained |
+
+The pagination ledger retains original IDs and direct newtype evidence, and rejects
+a reopened ID even when a substituted ID keeps aggregate fixed counts equal. Its gate
+covers only the eleven reviewed findings. See models/pagination/measurement-1.md.
+This is not 90% migration completion or whole-family detector acceptance.
+
 ## Pagination definitions and callers compile project-wide
 
 Build-v7 passes both full production and test compilation across 3,143 source files,
@@ -22,7 +43,7 @@ The assertions were adapted through Scalafix, preserving numeric expectations an
 test identities. The new domain/API conversion points preserve the distinction
 between layers. Autopilot DraftFacts.hits, EventLead.List.total, API factory parameters,
 Filter.limit/offset and PassageHit.Offset remain explicit migration work. Compilation
-success does not make them compliant. Project-wide remeasurement is in progress;
+success does not make them compliant. Project-wide remeasurement is complete above;
 no new detector-quality or whole-migration automation claim is made here.
 
 ## Web count state propagated; server compilation remains open
