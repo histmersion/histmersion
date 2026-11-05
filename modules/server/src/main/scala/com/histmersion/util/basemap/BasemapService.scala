@@ -216,7 +216,7 @@ final class BasemapService(
   /** The on-demand relief and its cache (`terrain-cache/` beside the extract). */
   def onDemand: OnDemandTiles =
     demandAt(Basemap.Layer.Terrain, "terrain-cache")(at =>
-      OnDemandTiles(at, () => cfg.terrain.onDemand, OnDemandTiles.Source.Planet(() => cfg.terrain.url), http)
+      OnDemandTiles(at, () => cfg.terrain.onDemand, OnDemandTiles.Source.Planet(() => cfg.terrain.url), http)(using clock)
     )
 
   /** The map outside the extract, or deeper (#3760): read from the planet build the extract came from, thinned as the
@@ -236,7 +236,7 @@ final class BasemapService(
             if PmTiles.isGzip(b) then PmTiles.Compression.Gzip else PmTiles.Compression.None,
             vectorRules()
           )
-      )
+      )(using clock)
     )
 
   /** The sea floor outside the extract (#3760): one GET a tile, cached in `sea-cache/`. */
@@ -248,7 +248,7 @@ final class BasemapService(
         OnDemandTiles.Source.Template(() => cfg.bathymetry.url),
         http,
         ext = "png"
-      )
+      )(using clock)
     )
 
   /** A layer's on-demand tiles (none for the names). */

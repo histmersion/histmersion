@@ -1,5 +1,5 @@
 rule	module	count
-capability/clock	ALL	48
+capability/clock	ALL	46
 capability/clock	api	0
 capability/clock	chimney-iron	0
 capability/clock	chimney-iron-tests	0
@@ -24,7 +24,7 @@ capability/clock	plugins/events	0
 capability/clock	plugins/fetchers	0
 capability/clock	plugins/gazetteers	0
 capability/clock	plugins/media	0
-capability/clock	server	43
+capability/clock	server	41
 capability/clock	upstreams	0
 capability/clock	values	0
 capability/clock	web	0

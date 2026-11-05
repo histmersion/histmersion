@@ -1,0 +1,14 @@
+path	symbol	line
+modules/server/src/main/scala/com/histmersion/server/BasemapWiring.scala	com/histmersion/server/BasemapWiring.http().	30
+modules/server/src/main/scala/com/histmersion/server/BasemapWiring.scala	com/histmersion/util/basemap/JavaRangeHttp#	47
+modules/server/src/main/scala/com/histmersion/util/basemap/BasemapService.scala	com/histmersion/util/basemap/OnDemandTiles#	219
+modules/server/src/main/scala/com/histmersion/util/basemap/BasemapService.scala	com/histmersion/util/basemap/OnDemandTiles#	227
+modules/server/src/main/scala/com/histmersion/util/basemap/BasemapService.scala	com/histmersion/util/basemap/OnDemandTiles#	245
+modules/server/src/main/scala/com/histmersion/util/basemap/OnDemandTiles.scala	com/histmersion/util/basemap/DiskLru#	44
+modules/server/src/test/scala/com/histmersion/util/basemap/BasemapExtractTool.scala	com/histmersion/server/BasemapWiring.http().	106
+modules/server/src/test/scala/com/histmersion/util/basemap/BasemapExtractTool.scala	com/histmersion/server/BasemapWiring.http().	75
+modules/server/src/test/scala/com/histmersion/util/basemap/OnDemandTilesSuite.scala	com/histmersion/util/basemap/DiskLru#	31
+modules/server/src/test/scala/com/histmersion/util/basemap/OnDemandTilesSuite.scala	com/histmersion/util/basemap/DiskLru#	47
+modules/server/src/test/scala/com/histmersion/util/basemap/OnDemandTilesSuite.scala	com/histmersion/util/basemap/OnDemandTiles#	190
+modules/server/src/test/scala/com/histmersion/util/basemap/OnDemandTilesSuite.scala	com/histmersion/util/basemap/OnDemandTiles#	67
+modules/server/src/test/scala/com/histmersion/util/basemap/OnDemandTilesSuite.scala	com/histmersion/util/basemap/OnDemandTiles#	88

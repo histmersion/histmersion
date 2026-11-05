@@ -14,7 +14,7 @@ object ProjectAssessment {
   case class Pipeline(mode: String = "plan", report: String = "", scopeReview: String = "",
     prepare: List[Invocation] = Nil, rewrites: List[Invocation] = Nil,
     baselineTests: List[String] = Nil, afterTests: List[String] = Nil,
-    compileConfig: String = "", identityChecks: List[Invocation] = Nil)
+    compileConfig: String = "", identityChecks: List[Invocation] = Nil, capabilityFixes: List[String] = Nil)
   object Pipeline {
     implicit val surface: generic.Surface[Pipeline] = generic.deriveSurface[Pipeline]
     implicit val decoder: ConfDecoder[Pipeline] = generic.deriveDecoder(Pipeline()).noTypos
@@ -72,7 +72,9 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       path
     }
     require(Files.isRegularFile(local(p.scopeReview)), "Missing eligibility/exclusions review")
-    require(p.rewrites.nonEmpty && p.identityChecks.nonEmpty, "Require rewrites and original-ID reconciliation")
+    require(p.rewrites.nonEmpty && (p.identityChecks.nonEmpty || p.capabilityFixes.nonEmpty), "Require rewrites and original-ID reconciliation")
+    require(p.capabilityFixes.distinct.size == p.capabilityFixes.size, "Duplicate expected capability IDs")
+    require(p.capabilityFixes.forall(_.matches("CAP-[0-9a-f]{64}")), "Expected complete original capability IDs")
     require(p.baselineTests.nonEmpty && p.baselineTests.size == p.afterTests.size, "Require paired behavioral tests")
     def config(path: String) = {
       require(Files.isRegularFile(local(path)), "Missing configuration: " + path)
@@ -120,8 +122,19 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
     }
     def stages(label: String, xs: List[Invocation]): Unit = xs.zipWithIndex.foreach { case (i,n) => stage(label + "-" + n, i) }
     def tests(label: String, xs: List[String]): Unit = stages(label, xs.map(c => Invocation(c, List("tools/refactor/BatchTestVerification.scala"))))
+    def capabilities(): Map[String,List[String]] = {
+      val stream = Files.list(Paths.get("refactor-audit/capability-history/observations"))
+      val observation = try stream.iterator.asScala.filter(Files.isDirectory(_)).toList.sortBy(_.toString).last finally stream.close()
+      require(lines(observation.resolve("status.txt")).head == "PASS", "Capability identity gate failed")
+      require(lines(observation.resolve("sources.txt")) == List(fingerprint(sourceFiles)), "Stale capability observation")
+      val rows = lines(observation.resolve("findings.tsv")).tail.map(_.split("\t", -1).toList)
+      require(rows.forall(_.size == 9) && rows.map(_.head).distinct.size == rows.size, "Invalid capability identity table")
+      rows.map(r => r.head -> r).toMap
+    }
     try {
       new ProjectAssessment(policy.copy(compile = true, zero = Nil, pipeline = None)).afterComplete()
+      val originalCapabilities = capabilities()
+      require(p.capabilityFixes.forall(originalCapabilities.contains), "Expected repair ID is absent from the before observation")
       val before = fingerprint(sourceFiles)
       val rulesBefore = fingerprint(policyInputs)
       val reviewBefore = hash(Files.readString(local(p.scopeReview)))
@@ -133,11 +146,18 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       val rewritten = fingerprint(sourceFiles)
       tests("after-tests", p.afterTests)
       new ProjectAssessment(policy.copy(compile = false, pipeline = None)).afterComplete()
+      if (p.capabilityFixes.nonEmpty) {
+        require(capabilities() == originalCapabilities -- p.capabilityFixes,
+          "Capability reconciliation differs from exact expected removals; an unchanged aggregate count is insufficient")
+      }
       stages("identity", p.identityChecks)
       require(rewritten == fingerprint(sourceFiles), "Verification changed application sources")
       require(rulesBefore == fingerprint(policyInputs), "Policy/configuration changed during migration")
       require(reviewBefore == hash(Files.readString(local(p.scopeReview))), "Eligibility review changed during migration")
-      write(output.resolve("status.txt"), List("PASS", "Compilation, selected tests, assessment and configured original-ID checks passed.", "Repair counts remain in the existing family histories; no overall percentage implied."))
+      write(output.resolve("status.txt"), List("PASS", "Compilation, selected tests, assessment and configured original-ID checks passed.",
+        "verified-capability-ids=" + p.capabilityFixes.size,
+        "verified-capability-occurrences=" + p.capabilityFixes.map(id => originalCapabilities(id)(1).toInt).sum,
+        "Repair counts remain in the existing family histories; no overall percentage implied."))
     } catch {
       case e: Exception =>
         write(output.resolve("status.txt"), List("FAILED", Option(e.getMessage).getOrElse(e.toString), "Stopped without rollback; inspect the worktree and stage logs before resuming."))

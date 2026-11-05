@@ -27,7 +27,7 @@ import com.histmersion.api.Api
 object BasemapWiring:
 
   /** The base map of `deps`, reading its providers over the network. */
-  def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap))
+  def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
   def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => Long = _.usableSpace.value): BasemapService =
@@ -43,7 +43,7 @@ object BasemapWiring:
   /** The client of the base map's providers: HTTP/1.1 (one stream per request; the providers are CDNs), following
     * redirects.
     */
-  def http(cfg: BasemapConfig): RangeHttp =
+  def http(cfg: BasemapConfig)(using clock: java.time.Clock): RangeHttp =
     JavaRangeHttp(
       HttpClient
         .newBuilder()
@@ -55,7 +55,7 @@ object BasemapWiring:
       cfg.retries,
       HttpPolicy.userAgent(s"Histmersion/${Version.version} (terrain base map)"),
       Retries
-    )
+    )(using clock)
 
   /** The grid of `basemap.bathymetry.source`. */
   def seaFloor(source: SeaFloorSource): SeaFloorGrid = source match

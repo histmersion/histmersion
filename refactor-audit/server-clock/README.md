@@ -1,5 +1,55 @@
 # Supplied wall-clock batch
 
+## Method-body continuation, verified
+
+The next configuration applies contextual-clock propagation to both remaining
+confirmed direct method-body reads: DiskLru.get
+(`CAP-7f7a906cb3c5171963abaa8d6de34267c1f779e78197280f9665e6ef4f22591f`)
+and JavaRangeHttp.send's retry calculation
+(`CAP-9b8af934229dd717b94c86a3349175d4243046c679f923e1722f6f0bbc7699ab`).
+The latter retains its ambiguous local-owner identity; exact before/after ID
+reconciliation is required, not an aggregate decrease. Its previous targeted
+treatment can use the same configured propagation transformation as DiskLru.
+
+The full-source preview covers 3,159 files, changes five production and two test
+files, and resolves thirteen callers. OnDemandTiles forwards the clock to DiskLru;
+BasemapService and BasemapWiring supply their existing clock. Test constructors
+explicitly supply a system clock, preserving their prior timing behavior. DiskLru
+retains Instant.ofEpochMilli(clock.millis()), including millisecond truncation.
+
+Excluded from this transformation: global callback defaults in OnDemandTiles,
+StorageCache, StorageFigures, Polite and PolicyHttp. They require default removal
+or earlier-parameter dependency propagation that preserves explicit callback
+overrides; a contextual parameter appended after a default is not its scope.
+Monotonic timing, environment access and unresolved recording-adapter ownership
+also remain outstanding. No exception or compliance classification is granted.
+
+`server-clock-body-pipeline.conf` runs the existing compilation, paired basemap
+behavioral tests, project assessment and exact capability-ID reconciliation. The
+expected result is removal of exactly the two IDs above with every other capability
+row and multiplicity unchanged. No new batch-specific verifier is introduced.
+The pipeline passed: all 3,159 source/test files compile, and the same 47 test
+identities pass before and after with no failures or skips. The post-observation
+`capability-history/observations/2026-11-05T11-04-52.562146Z` retains exactly the
+before rows minus the two reviewed IDs. It contains 77 anchors / 94 occurrences,
+with zero new/reopened IDs or multiplicity changes. Review-3 now has fifteen
+confirmed outstanding anchors / sixteen occurrences. Candidates (48 anchors / 64
+occurrences), thirteen unresolved adapter operations and one non-violation remain.
+The earlier eight-ID/nine-occurrence repair history is unchanged.
+
+Isolation still has 111 production and 215 test relationships, 75 ambiguous owners,
+182,326 unclassified direction rows, and zero new/reopened relationships. Model
+primitive/unresolved counts are unchanged; four added clock parameter positions
+increase declared/inferred positions to 107,466 without shrinking a denominator.
+
+Existing tests cover cache eviction/restart, on-demand tiles and basemap behavior.
+No new fixed-clock HTTP retry probe or native-image verification is claimed.
+Compilation, paired tests and exact-ID reconciliation constitute the standard
+verification contract for this batch; full evidence is in body-build-1,
+body-tests-1 and body-pipeline-1. No new batch-specific runner or verifier was added.
+
+## First completed batch
+
 ClockAccessPreview is a configured semantic Scalafix rule: resolved zero-argument
 Instant.now/currentTimeMillis calls are rewritten to an explicitly selected Clock.
 Owner paths, expected occurrence counts, contextual constructor definitions and

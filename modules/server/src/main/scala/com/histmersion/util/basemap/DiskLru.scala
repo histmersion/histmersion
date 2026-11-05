@@ -12,7 +12,7 @@ import java.time.Instant
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
   */
-final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp"):
+final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp")(using clock: java.time.Clock):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -54,7 +54,7 @@ final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp"):
       val f = file(key, absent = false)
       store.get(f) match
         case Some(b) =>
-          store.touch(f, Instant.ofEpochMilli(System.currentTimeMillis()))
+          store.touch(f, Instant.ofEpochMilli(clock.millis()))
           Some(Some(b.bytes()))
         case None if store.isFile(file(key, absent = true)) => Some(None)
         case None => total -= index.remove(key); None // removed behind our back
