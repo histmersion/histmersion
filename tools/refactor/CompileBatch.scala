@@ -33,5 +33,6 @@ class CompileBatch(val policy: CompileBatch.Policy) extends SyntacticRule("Compi
     require(sources() == before,"Source universe changed during compilation")
     Files.writeString(report.resolve("status.txt"),(if(code == 0) "PASS" else "COMPILE_FAILED") + "\nexit=" + code + "\nsource-files=" + before.size + "\nAll source hashes stable during compilation. Later commands may not execute after the first failed command.\n")
     println(Files.readString(report.resolve("status.txt")))
+    require(code == 0, "Compilation failed; subsequent migration stages must not run")
   }
 }

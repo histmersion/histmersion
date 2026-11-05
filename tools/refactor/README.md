@@ -12,14 +12,55 @@ The bounded acceptance review has assigned dispositions to every family; this do
 not establish inventory acceptance. Insufficient detectors are frozen with explicit
 limits. Copy automation is paused at its two-round limit. Prioritize transaction
 ownership, capability access, module isolation and primitive/newtype modeling.
-Do not start another repair until the existing tools are consolidated into one
-configurable pipeline. Extend the existing entry points rather than creating
+Use the configurable pipeline in ProjectAssessment for the next repair; its first
+complete repair execution is still outstanding. Extend the existing entry points rather than creating
 batch-specific runners, verifiers or report frameworks; those require explicit
 justification and user approval. Configuration may select a batch, but the batch
 must cover all eligible confirmed findings for its reusable transformation, with
 exclusions explained before application. Standard verification is compilation,
 relevant behavioral tests and stable-ID remeasurement. An additional check needs a
 concrete risk not covered by that contract.
+
+### Configurable migration pipeline
+
+`ProjectAssessment.pipeline` composes existing rules; it does not replace their
+finding histories or create a new finding ledger. `pipeline-example.conf` is a
+non-executing example referencing the completed clock batch. Run it with:
+
+```
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/pipeline-example.conf --scala-version 3.10.0 --files tools/refactor/ProjectAssessment.scala
+```
+
+`mode = plan` validates configuration structure only. It does not check preview
+freshness, run tests, validate eligibility judgments or authorize reusing an old
+observation. The example cannot be switched to apply: its observations already
+exist and its preview belongs to an already completed batch.
+
+A fresh batch supplies a scopeReview path documenting all eligible confirmed IDs
+and exclusions, prepare/rewrites invocations (config, files, semantic), paired
+baselineTests/afterTests configurations for BatchTestVerification, a compileConfig
+for CompileBatch, and original-ID identityChecks using existing reconciliation
+rules. The pipeline requires full `compile` and `Test/compile`, matching test scopes
+and environments, and fresh build/test/output observations. Identity-check selection
+still requires review: a configured check must cover the batch's original IDs;
+the runner cannot infer that from a filename.
+
+Apply order is full pre-assessment, baseline tests, preparation, rewrites, full
+compilation, after tests, post-assessment, and original-ID reconciliation. The
+assessment retains its capability/isolation regression gates and archived evidence.
+Source hashes forbid preparation/test changes; policy and scope-review fingerprints
+must stay fixed during execution. Stages use argument arrays, Scala 3 parsing and
+ordinary SemanticDB. No shell scripts or stale-SemanticDB override are involved.
+Failures stop the sequence and leave the worktree for inspection, without automatic
+rollback or baseline recapture. The batch observation contains stage logs and status;
+repair credit stays in existing family histories. Extra identity checks reuse existing
+tools; introducing another batch-specific verifier still requires approval.
+
+Validation so far: both changed Scala rules compile; the example plan succeeds;
+apply rejects existing test observations before executing stages; a deliberately
+failed sbt task propagates a nonzero Scalafix exit through CompileBatch while all
+3,159 application source hashes remain stable. A complete fresh repair through this
+entry point has not yet run. These are tooling checks, not migration progress counts.
 
 Historical copy development: the cheap-model source audit selected the frozen `copy-holdout.tsv` without reading detector reports; it has 21 grouped locations, including 21 positive copy occurrences and two legitimate comparison locations. The first run found 19 positives, missed two method-result receivers, and had no false positives. Round one addressed that gap; the sample then became development/regression evidence. Subsequent independent acceptance results, including insufficient test recall, are retained in the consolidated ledger. Negative diversity and nonrandom selection limit inference beyond sampled cases. `Printer.copy` remains unclassified rather than being forced into either label.
 

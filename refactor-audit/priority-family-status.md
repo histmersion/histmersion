@@ -50,9 +50,12 @@ acceptance. Independent samples were bounded to 12 model, nine structural and 12
 effects/build files. Several families lack a usable positive/negative pair. No new
 blanket exception was accepted and no unsupported case was marked compliant.
 
-Before further repairs, consolidate existing entry points into one configurable
-pipeline using ProjectAssessment, CompileBatch, BatchTestVerification and existing
-Scalafix rewrite/history tools. That consolidation is **not yet implemented**.
+ProjectAssessment now composes CompileBatch, BatchTestVerification and existing
+Scalafix rewrite/history tools through one configurable pipeline. Configuration-only
+validation and rejection of reused observations pass; CompileBatch now propagates
+failed sbt exits, verified with a deliberately invalid task and unchanged hashes for
+all 3,159 application sources. The first complete fresh repair through the pipeline
+is **not yet verified**. No additional application repair is credited for this work.
 Use compilation, selected behavioral tests and stable-ID remeasurement as the
 standard contract. New batch-specific runners, verifiers or report frameworks
 require explicit justification and user approval. Select a reusable transformation
