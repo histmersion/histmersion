@@ -29,5 +29,5 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
         )
       SafePath.confine(corpusRoot, asked).left.map(Api.Error(_)).flatMap { dir =>
         if !Files.isDirectory(dir) then Left(Api.Error(s"not a directory on the server: $dir"))
-        else Right(importer.run(SeedNoteFiles(dir, corpusRoot), req.force, cfg.limits.assetBytes))
+        else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), req.force, cfg.limits.assetBytes))
       }

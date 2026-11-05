@@ -114,7 +114,7 @@ public-method-review	plugins/events	76	80
 public-method-review	plugins/fetchers	30	31
 public-method-review	plugins/gazetteers	16	17
 public-method-review	plugins/media	198	229
-public-method-review	server	2996	3373
+public-method-review	server	2998	3375
 public-method-review	upstreams	162	171
 public-method-review	values	116	117
 public-method-review	web	1831	1963
@@ -137,7 +137,7 @@ record-field	plugins/calibre	40	41
 record-field	plugins/events	14	14
 record-field	plugins/fetchers	2	2
 record-field	plugins/media	49	52
-record-field	server	1140	1195
+record-field	server	1142	1197
 record-field	upstreams	101	102
 record-field	web	319	332
 test-position	api	656	703
@@ -168,6 +168,7 @@ trait-contract	config	4	4
 trait-contract	console	5	5
 trait-contract	core	42	44
 trait-contract	db	21	23
+trait-contract	files	2	2
 trait-contract	plugin-api	121	139
 trait-contract	plugin-fixtures/hello	2	2
 trait-contract	plugin-host	14	15

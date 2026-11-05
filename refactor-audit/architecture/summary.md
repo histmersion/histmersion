@@ -2,14 +2,14 @@
 
 Full source and test coverage. Candidate inventories preserve declarations, signatures, constructors, ASTs, references and source hashes. Counts are evidence rows, not confirmed policy violations.
 
-- files: 3136
-- declarations: 56241
-- references: 805798
-- unresolved-references: 8967
-- signature-type-references: 163588
+- files: 3138
+- declarations: 56251
+- references: 805896
+- unresolved-references: 8964
+- signature-type-references: 163614
 - alias-expanded-references: 6723
 - visibility-candidates: 482
-- visibility-consumer-relationships: 39245
+- visibility-consumer-relationships: 39246
 - services-repositories-controllers: 234
 - comments: 15968
 - top-level-objects: 1379

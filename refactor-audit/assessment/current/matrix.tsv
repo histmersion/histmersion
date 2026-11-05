@@ -202,7 +202,7 @@ capability/environment	server	production; configured symbol/owner policy	0	unkno
 capability/environment	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/environment	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/environment	web	production; configured symbol/owner policy	0	unknown	incomparable
-capability/filesystem	ALL	production; configured symbol/owner policy	23	unknown	incomparable
+capability/filesystem	ALL	production; configured symbol/owner policy	18	unknown	incomparable
 capability/filesystem	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
@@ -211,7 +211,7 @@ capability/filesystem	config	production; configured symbol/owner policy	0	unknow
 capability/filesystem	console	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	core	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	db	production; configured symbol/owner policy	0	unknown	incomparable
-capability/filesystem	files	production; configured symbol/owner policy	3	unknown	incomparable
+capability/filesystem	files	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugin-api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugin-fixtures/hello	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugin-fixtures/hello-ai	production; configured symbol/owner policy	0	unknown	incomparable
@@ -227,7 +227,7 @@ capability/filesystem	plugins/events	production; configured symbol/owner policy	
 capability/filesystem	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugins/media	production; configured symbol/owner policy	0	unknown	incomparable
-capability/filesystem	server	production; configured symbol/owner policy	2	unknown	incomparable
+capability/filesystem	server	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	web	production; configured symbol/owner policy	0	unknown	incomparable

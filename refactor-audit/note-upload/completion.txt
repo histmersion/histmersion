@@ -1,0 +1,5 @@
+PASS: note/upload batch reconciled
+4 confirmed production occurrences / 4 anchors repaired; 1 previously legitimate operation removed separately.
+147 raw production findings / 125 anchors remain; all other identities and multiplicities unchanged.
+14 final source hashes match the frozen preview; 29 tests retain passing identities and outcomes.
+Overall migration and independent detector-quality validation remain open.

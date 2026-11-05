@@ -1,0 +1,8 @@
+class	test	status	message
+com.histmersion.server.SeedNoteFilesSuite	dirFor falls back to the md/<citekey>/figures convention	passed	
+com.histmersion.server.SeedNoteFilesSuite	dirFor gives up when the note is not three levels deep	passed	
+com.histmersion.server.SeedNoteFilesSuite	dirFor puts figures next to the converted body named by md_path	passed	
+com.histmersion.server.SeedNoteFilesSuite	load measures the dimensions off the header	passed	
+com.histmersion.server.SeedNoteFilesSuite	load on a missing directory is empty, not an error	passed	
+com.histmersion.server.SeedNoteFilesSuite	load reads images, skips non-images, and respects the byte cap	passed	
+com.histmersion.server.SeedNoteFilesSuite	mdPathOf reads the frontmatter key, quoted or not	passed	

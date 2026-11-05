@@ -50,6 +50,7 @@ final class Deps(
 ):
 
   /** Transactions on the application role ([[ds]]). */
+  val textFiles: com.histmersion.util.storage.TextFiles = new com.histmersion.util.storage.DiskTextFiles
   val stores: com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
   val resources: com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   val jvmHome: com.histmersion.util.system.JvmHome = SystemContext.jvmHome()

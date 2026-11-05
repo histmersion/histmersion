@@ -7,7 +7,7 @@ config	152	11
 console	1	0
 core	126	92
 db	255	90
-files	14	10
+files	15	10
 plugin-api	65	8
 plugin-fixtures/hello	7	0
 plugin-fixtures/hello-ai	4	0
@@ -23,7 +23,7 @@ plugins/events	19	2
 plugins/fetchers	22	2
 plugins/gazetteers	9	4
 plugins/media	38	5
-server	622	313
+server	623	313
 upstreams	32	7
 values	55	6
 web	276	87

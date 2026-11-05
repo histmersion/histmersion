@@ -90,7 +90,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(Ingest.Params(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile))
+      .ingest(Ingest.Params(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
       .fold(e => fail(e.message), identity)
     def go(n: Int): JobInfo =
       val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message), identity)

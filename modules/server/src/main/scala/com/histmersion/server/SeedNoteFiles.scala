@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 /** The notes of a folder the person names for a seed, read where they are: the frontmatter of each `*.md` (its
   * converted body from `md_path`, confined to `corpus.dir` when that is set) and the figures beside it.
   */
-final class SeedNoteFiles(dir: Path, confineTo: Option[String]) extends SeedFolder:
+final class SeedNoteFiles(dir: Path, confineTo: Option[String])(using com.histmersion.util.storage.TextFiles) extends SeedFolder:
 
   // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
   // eventually exhausts the process's file descriptors.

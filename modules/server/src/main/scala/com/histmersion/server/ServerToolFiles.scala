@@ -17,4 +17,4 @@ final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
         "histmersion.corpus.dir is not configured — the `ingest` tool's `path` is " +
           "unconfined; set it (HISTMERSION_CORPUS_DIR) to bound server-side reads"
       )
-    SafePath.confine(root, path).map(f => Option.when(Files.isRegularFile(f))(Upload.handed(f.toFile)))
+    SafePath.confine(root, path).map(f => Option.when(Files.isRegularFile(f))(Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(f.toFile))))

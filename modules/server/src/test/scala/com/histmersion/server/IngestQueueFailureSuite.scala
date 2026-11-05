@@ -64,7 +64,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       val accepted = handler.controllers
         .ingest(
           Ingest.Params(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
-          com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile)
+          com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile))
         )
         .toOption
         .get

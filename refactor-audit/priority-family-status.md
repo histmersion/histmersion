@@ -1,5 +1,34 @@
 # Priority-family status
 
+## Checkpoint after note/upload repair
+
+The integrated assessment completed on 3,138 source/test files. Production
+capability coverage is 2,368/2,368 files: 147 raw occurrences in 125 anchors,
+zero new/reopened identities and zero multiplicity changes. Of those occurrences,
+146 remain candidates and one is an adjudicated non-violation. Test capability
+coverage and independent detector precision/recall are still unestablished.
+
+The original capability treatment review's 58 confirmed occurrences in 48 anchors
+are repaired across agent-storage, plugin-capabilities and note-upload; two additional
+classloader gaps were repaired separately. Three clock occurrences have an explicit
+exact-owner adapter exception. Note/upload accounts for four verified repairs and
+one removed non-violation, with 29 unchanged passing test identities and full
+production/test compilation. See each batch's frozen plan and verified ledger.
+The earlier checkpoint below is retained as history, not current outstanding work.
+
+Transaction ownership retains three repaired boundaries and two unresolved SQL
+expressions. Module isolation retains zero forbidden configured evaluated build
+edges, but semantic crossings and test/published-plugin policy need adjudication
+and stable history. Primitive modeling now has 30,436 production member primitive
+leaves in 28,248 positions (six more of each than the plugin checkpoint), and 46,867
+unresolved leaves across all scopes. These remain candidates, not a confirmed repair
+denominator. No primitive fixes are claimed. Copy automation remains paused.
+
+The next bounded work is specified in `next-priority-batch.md`: identity history for
+module isolation and purpose/owner/equivalence decisions for pagination modeling.
+The 90% automation objective remains project-wide and is not established by finishing
+the currently reviewed capability subset.
+
 ## Capability treatment checkpoint
 
 The bounded source review in `capability-treatment/README.md` now confirms 58

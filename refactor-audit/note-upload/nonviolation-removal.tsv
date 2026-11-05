@@ -1,0 +1,2 @@
+id	status	evidence
+CAP-f7e1cc51f4b1060694b76771bfe702a1982296b72ee46e6110dbfb8e38bfa5ae	removed-legitimate-operation-not-a-repair	plan.tsv; applied-verification.txt; preview-verification.txt; refactor-audit/capability-history/observations/2026-11-05T00-43-45.555810Z
