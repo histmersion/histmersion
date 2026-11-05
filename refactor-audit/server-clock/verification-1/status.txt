@@ -1,0 +1,10 @@
+PASS
+compiled-sources=3159
+verified-anchors=8
+verified-occurrences=9
+unchanged-test-identities=38
+probe-fails-before-passes-after=true
+current-capability-occurrences=96
+observation=refactor-audit/capability-history/observations/2026-11-05T10-20-16.312301Z
+source-fingerprint=9fffa7dc33cc247e531e36e83aa002e6c40816814bd958997da2a9044b90d284
+independent-detector-quality=unestablished

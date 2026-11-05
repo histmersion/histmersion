@@ -10,7 +10,7 @@ object AstRecipe {
     implicit val surface: generic.Surface[Edit] = generic.deriveSurface[Edit]
     implicit val decoder: ConfDecoder[Edit] = generic.deriveDecoder(Edit()).noTypos
   }
-  case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "")
+  case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -28,7 +28,12 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       case _ => s.parse[Stat].get.structure
     }
     def rows(p: String) = Files.readAllLines(Paths.get(p)).asScala.drop(1).map(_.split("\t",-1)).toList
-    val initial = rows(policy.manifest).map(r => r(0) -> r(1)).toMap
+    val initial = policy.appliedPlans.foldLeft(rows(policy.manifest).map(r => r(0) -> r(1)).toMap) { (before, plan) =>
+      val changes = rows(plan)
+      require(changes.forall(_.length == 3) && changes.map(_(0)).distinct.size == changes.size)
+      changes.foreach(r => require(before.get(r(0)).contains(r(1)), "Patch chain does not match manifest: " + r(0)))
+      before ++ changes.map(r => r(0) -> r(2))
+    }
     val frozen = if(policy.relocatedPreview.isEmpty) initial else {
       require(policy.manifest == policy.relocatedPreview + "/sources.tsv" && Files.exists(Paths.get(policy.relocatedPreview,"applied.txt")))
       val changes = rows(policy.relocatedPreview + "/plan.tsv").map(r => r(0) -> r(2)).toMap

@@ -38,7 +38,7 @@ object BasemapWiring:
       jobs(deps),
       http,
       freeSpace
-    )
+    )(using deps.clock)
 
   /** The client of the base map's providers: HTTP/1.1 (one stream per request; the providers are CDNs), following
     * redirects.

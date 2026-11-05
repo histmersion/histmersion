@@ -6,18 +6,32 @@ rewrite category first. Detection and repair are separate deliverables.
 
 ## Immediate sequence
 
-1. Close validation of the current test-copy batch: compilation, unchanged test
-   identities, no new failures or skips, fixture checks and project-wide remeasurement.
-   Preserve the failed copy holdout (20 TP, 3 FN, 0 FP, 5 TN). Then stop expanding
-   copy detection and rewrite automation; retain residual findings and limitations.
-2. Establish identity-based evidence/history and regression checking for transaction
-   ownership, capability access, module isolation and primitive/newtype modeling.
-   Aggregate count gates alone do not meet this requirement.
-3. Establish the same bounded measurement contract for every remaining family in
-   migration-rounds.tsv. Unsupported checks remain explicitly unmeasured.
-4. Choose repair batches by architectural importance and safe common transformation,
-   with definitions and callers together. Difficult detection must not block other
-   useful families. Required design work remains visible alongside bulk opportunities.
+1. Finish or safely revert the active server-clock batch using existing verification
+   tools. No additional batch-specific infrastructure. Copy automation stays paused;
+   preserve its failed test holdout (20 TP, 3 FN, 0 FP, 5 TN).
+2. Before any further repair, complete one bounded inventory acceptance pass across
+   every family in migration-rounds.tsv. Record coverage, independent sample results,
+   confirmed findings, candidates, unresolved evidence and accepted exceptions, with
+   production and tests separate. Respect the existing two-round limit. Freeze an
+   insufficient detector with explicit limits rather than refining indefinitely.
+3. Consolidate the existing migration-rounds.tsv as the migration ledger and
+   priority-family-status.md as the status report. Reference original finding IDs,
+   observations, adjudications and repair histories; do not replace or duplicate them
+   in another tracking system. The original 43-goal scope, including all twelve
+   historical slices, remains binding.
+4. Consolidate existing rewrite/verification tools into one configurable pipeline.
+   Batch configuration is allowed. A new batch-specific runner, verifier or report
+   framework needs a concrete justification and explicit user approval before creation.
+5. Select further batches by reusable transformation and project-wide applicability.
+   Apply each supported transformation to all eligible confirmed findings together;
+   explain exclusions before proceeding. Compilation, relevant behavioral tests and
+   stable-ID remeasurement are the standard contract. Add extra verification only
+   for a concrete risk those checks cannot address.
+
+Report inventory acceptance completed, confirmed violations repaired, confirmed
+violations remaining and automation coverage separately. Tooling volume, generated
+artifacts and repeated scans are not migration progress. Do not claim accepted
+inventory completion or an overall repair percentage without supporting evidence.
 
 ## Bounded measurement contract
 

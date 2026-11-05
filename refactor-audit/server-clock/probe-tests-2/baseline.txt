@@ -1,0 +1,4 @@
+tests=38
+failures=1
+skipped=0
+exit=1

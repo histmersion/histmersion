@@ -1,0 +1,52 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-lib/histmersion-plugin-hello-lib_3-0.1.0.pom
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/histmersion-plugin-hello-deps_3-0.1.0.pom
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] done compiling
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/util/basemap/BasemapServiceSuite.scala:74:31 
+[error] 74 |    (BasemapWiring.service(Deps(cfg, ds, clock = java.time.Clock.fixed(java.time.Instant.parse("2000-01-02T03:04:05Z"), java.time.ZoneOffset.UTC)), () => router, _ => free), v, t)
+[error]    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter queryDs of method apply in object Deps: (cfg: com.histmersion.config.AppConfig, ds: javax.sql.DataSource,
+[error]    |  queryDs: javax.sql.DataSource,
+[error]    |  maintenance: com.histmersion.util.data.maintenance.WriteGate,
+[error]    |  configFile: com.histmersion.api.settings.ConfigFileInfo,
+[error]    |  plugins: com.histmersion.pluginhost.Generation, clock: java.time.Clock,
+[error]    |  timer: com.histmersion.util.time.Timer, pause: com.histmersion.util.time.Pause
+[error]    |  ): com.histmersion.server.Deps
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/util/basemap/BasemapServiceSuite.scala:324:40 
+[error] 324 |    val svc = BasemapWiring.service(Deps(cfg, ds, clock = java.time.Clock.fixed(java.time.Instant.parse("2000-01-02T03:04:05Z"), java.time.ZoneOffset.UTC)), () => router)
+[error]     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter queryDs of method apply in object Deps: (cfg: com.histmersion.config.AppConfig, ds: javax.sql.DataSource,
+[error]     |  queryDs: javax.sql.DataSource,
+[error]     |  maintenance: com.histmersion.util.data.maintenance.WriteGate,
+[error]     |  configFile: com.histmersion.api.settings.ConfigFileInfo,
+[error]     |  plugins: com.histmersion.pluginhost.Generation, clock: java.time.Clock,
+[error]     |  timer: com.histmersion.util.time.Timer, pause: com.histmersion.util.time.Pause
+[error]     |  ): com.histmersion.server.Deps
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/util/basemap/BasemapServiceSuite.scala:325:19 
+[error] 325 |    val dry = await(svc.fetch(Basemap.FetchQuery(layer = "bathymetry", dryRun = true)).fold(e => fail(e.message), _.id))
+[error]     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter left of method await in class BasemapServiceSuite: (id: String, left: Int): com.histmersion.api.jobs.JobInfo
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/util/basemap/BasemapServiceSuite.scala:338:17 
+[error] 338 |    val j = await(svc.fetch(Basemap.FetchQuery(layer = "bathymetry")).fold(e => fail(e.message), _.id))
+[error]     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter left of method await in class BasemapServiceSuite: (id: String, left: Int): com.histmersion.api.jobs.JobInfo
+[error] four errors found
+[error] (server / Test / compileIncremental) Compilation failed
+[error] elapsed time: 19 s, cache 98%, 484 disk cache hits, 6 onsite tasks
