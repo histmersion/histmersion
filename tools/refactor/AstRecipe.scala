@@ -13,7 +13,8 @@ object AstRecipe {
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
     measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false,
-    signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false)
+    signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false, indexNewtypes: Boolean = false,
+    expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -111,7 +112,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       require(!Files.exists(Paths.get(p)) && !policy.edits.exists(_.path == p)); s.parse[Source].get; (p,"",s)
     }
     Files.createDirectories(out)
-    if(policy.measureTypes) TypeMeasurement.run(frozen,out,policy.confirmedTypes,policy.expectedTypeSelectors,policy.previousTypes)
+    if(policy.measureTypes) TypeMeasurement.run(frozen,out,policy.confirmedTypes,policy.expectedTypeSelectors,policy.previousTypes,policy.indexNewtypes,policy.appliedPlans,policy.expectedNewtypes,policy.expectedOverlap)
     (changed ++ created).foreach { case(p,b,n) =>
       val dest = out.resolve("sources").resolve(p); Files.createDirectories(dest.getParent); Files.writeString(dest,n)
       if(b.nonEmpty) { val old = out.resolve("before").resolve(p); Files.createDirectories(old.getParent); Files.writeString(old,b) }
@@ -131,13 +132,127 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
   }
 }
 
+class NewtypeIndex(histories: List[String]) {
+  private val definitions = scala.collection.mutable.ListBuffer.empty[List[String]]
+  private val references = scala.collection.mutable.ListBuffer.empty[List[String]]
+  private val definitionOrdinals = scala.collection.mutable.Map.empty[String,Int]
+  private def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
+  private def owner(t: Tree): String = parents(t).reverse.collect {
+    case p: Pkg => p.ref.syntax
+    case o: Defn.Object => o.name.value
+    case c: Defn.Class => c.name.value
+    case c: Defn.Trait => c.name.value
+    case e: Defn.Enum => e.name.value
+    case d: Defn.Def => d.name.value
+  }.mkString(".")
+  private def canonical(s: String): String = s.replace("_root_.","").replace("java.lang.String","String").replace("scala.","")
+  def inspect(tree: Source,path: String,module: String,scope: String): Unit = {
+    def add(t: Tree,name: String,kind: String,base: String,rule: String,alias: String): Unit = {
+      val full = owner(t) + "." + name
+      val key = path + "::" + full
+      val ordinal = definitionOrdinals.getOrElse(key,0); definitionOrdinals(key) = ordinal + 1
+      definitions += List(key + "#" + ordinal,path,module,scope,(t.pos.startLine + 1).toString,full,name,kind,base,rule,
+        canonical(base),rule.stripPrefix("_root_."),if(parents(t).exists(_.is[Defn.Def])) "local" else "member",alias,t.structure)
+    }
+    tree.collect {
+      case o: Defn.Object => o.templ.inits.foreach { init => init.tpe match {
+        case a: Type.Apply if Set("RefinedType","RefinedSubtype")(a.tpe.syntax.split('.').last) && a.argClause.values.size == 2 =>
+          val linked = o.parent.toList.flatMap(_.children).exists {
+            case d: Defn.Type => d.name.value == o.name.value && d.body.syntax == o.name.value + ".T"
+            case _ => false
+          }
+          add(o,o.name.value,"Iron-parent-shape",a.argClause.values.head.syntax,a.argClause.values(1).syntax,if(linked) "alias-present" else "alias-unresolved")
+        case _ => ()
+      }}
+      case t: Defn.Type if t.mods.exists(_.is[Mod.Opaque]) => add(t,t.name.value,"opaque",t.body.syntax,"opaque-bound-unresolved","opaque")
+    }
+  }
+  def use(t: Type,path: String,module: String,scope: String,line: String,context: String,kind: String): Unit = t.collect {
+    case s: Type.Select if !s.syntax.endsWith(".T") => references += List(path,module,scope,line,context,kind,s.syntax.stripPrefix("_root_."))
+    case n: Type.Name if !n.parent.exists(_.is[Type.Select]) => references += List(path,module,scope,line,context,kind,n.value)
+  }
+  def finish(out: java.nio.file.Path, expected: List[String], expectedGroups: Map[String,Int]): Unit = {
+    def escape(s: String) = s.replace("\\","\\\\").replace("\t","\\t").replace("\n","\\n").replace("\r","\\r")
+    def write(name: String,header: String,rows: List[List[String]]): Unit = Files.write(out.resolve(name),(header :: rows.map(_.map(escape).mkString("\t"))).asJava)
+    val ds = definitions.toList.sortBy(r => (r(1),r(5)))
+    require(ds.map(_.head).distinct.size == ds.size,"Duplicate newtype index identity")
+    if(expected.nonEmpty) require(ds.map(_(5)).sorted == expected.sorted,"Newtype fixture definition mismatch")
+    val history = histories.flatMap { p =>
+      val file = Paths.get(p).getParent.resolve("shapes.tsv")
+      if(!Files.exists(file)) Nil else Files.readAllLines(file).asScala.drop(1).flatMap { line =>
+        val r = line.split("\t",-1)
+        if(r.length != 4 || !r(2).contains("#") || r(2).startsWith("CORRECTION") || r(2).startsWith("UNRESOLVED") || !r(3).matches("[A-Za-z_][A-Za-z0-9_.]*")) Nil
+        else {
+          val parts = r(2).split("#",2)
+          val target = if(r(3).startsWith("com.")) r(3) else parts.head + "." + r(3).split('.').last
+          List(List(r(0),target,parts(1).takeWhile(_ != '/'),file.toString))
+        }
+      }.toList
+    }.distinct
+    val historyByOwner = history.groupBy(r => (r.head,r(1)))
+    val historyByName = history.groupBy(r => (r.head,r(1).split('.').last))
+    val origin = ds.flatMap { d =>
+      val exact = historyByOwner.getOrElse((d(1),d(5)),Nil)
+      val fallback = historyByName.getOrElse((d(1),d(6)),Nil)
+      val selected = if(exact.nonEmpty) exact else if(fallback.map(_(1)).distinct.size == 1) fallback else Nil
+      selected.map(r => List(d.head,r(2),r(3),if(exact.nonEmpty) "owner-match" else "unique-source-name; review"))
+    }
+    val byFull = ds.groupBy(_(5))
+    val byName = ds.groupBy(_(6))
+    val uses = references.toList.distinct.flatMap { r =>
+      val raw = r(6)
+      if(!byName.contains(raw.split('.').last)) Nil else {
+        val prefixes = r(4).split('.').toList.inits.map(_.mkString(".")).toList
+        val matches = (raw :: prefixes.map(p => if(p.isEmpty) raw else p + "." + raw)).distinct.iterator.map(k => byFull.getOrElse(k,Nil)).find(_.nonEmpty).getOrElse(Nil)
+        if(matches.size == 1) List(r ++ List(matches.head.head,if(raw == matches.head(5)) "fully-qualified-AST-match" else "lexical-AST-match; imports-unverified"))
+        else List(r ++ List("UNRESOLVED","import-or-owner-ambiguity"))
+      }
+    }
+    val byOrigin = origin.groupBy(_.head)
+    val members = ds.filter(_(3) == "production").flatMap { d =>
+      val tokens = byOrigin.getOrElse(d.head,Nil).map(_(1).split('.').last).filter(_.nonEmpty).distinct
+      (if(tokens.nonEmpty) tokens else List(d(6))).map { token =>
+        val purpose = token.toLowerCase(java.util.Locale.ROOT)
+        (purpose,d(10),d)
+      }
+    }.groupBy(x => (x._1,x._2)).toList.filter(_._2.map(_._3.head).distinct.size > 1)
+    val generic = Set("id","name","value","key","result","wire","label","text","kind","n","s","x","y")
+    val priority = Set("slug","citekey","title","year","seconds","bytes","offset","limit","pagesize","sha256","doi","budgetusd","tokens","lat","lon")
+    val membership = scala.collection.mutable.ListBuffer.empty[List[String]]
+    val groups = members.map { case((purpose,base),rs) =>
+      val selected = rs.map(_._3).groupBy(_.head).values.map(_.head).toList.sortBy(_.head)
+      val key = purpose + "|" + base
+      val id = java.security.MessageDigest.getInstance("SHA-256").digest(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)).take(10).map(b => f"${b & 255}%02x").mkString
+      selected.foreach(d => membership += List(id,d.head,purpose,"candidate-only; do not merge automatically"))
+      val constraints = selected.map(_(11)).distinct.sorted
+      val modules = selected.map(_(2)).distinct.sorted
+      val score = (if(priority(purpose)) 100 else if(generic(purpose)) 0 else 20) + math.min(selected.size,50)
+      List(id,purpose,base,selected.size.toString,constraints.size.toString,modules.mkString(";"),constraints.mkString(";"),
+        if(constraints.size > 1) "constraint-syntax-diff; resolution-and-construction-review" else "same-syntax; semantic-identity-unverified",
+        if(modules.size > 1) "cross-module-and-layer-review" else "owner-purpose-review",score.toString)
+    }.sortBy(r => (-r(9).toInt,r(1),r(2)))
+    expectedGroups.foreach { case(p,n) => require(membership.filter(_(2) == p).map(_(1)).distinct.size == n,"Overlap fixture membership differs: " + p) }
+    write("newtypes.tsv","id\tpath\tmodule\tscope\tline\tlexical-name\tname\tkind\tbase\tconstraint\tbase-bucket\tconstraint-syntax\tlocality\talias\tast",ds)
+    write("newtype-origins.tsv","definition\tdeclaration-origin\tevidence\tmatching",origin)
+    write("newtype-uses.tsv","path\tmodule\tscope\tline\tcontext\tkind\tsyntax\tdefinition\tmatching",uses)
+    write("overlap-groups.tsv","group\tpurpose-token\tbase-bucket\tdefinitions\tconstraint-variants\tmodules\tconstraints\tconstraint-review\tboundary-review\tpriority",groups)
+    write("overlap-members.tsv","group\tdefinition\tpurpose-token\tstatus",membership.toList)
+    write("newtype-counts.tsv","scope\tmodule\tkind\tdefinitions",ds.groupBy(r => (r(3),r(2),r(7))).toList.sortBy(_._1).map { case((s,m,k),rs) => List(s,m,k,rs.size.toString) })
+    val note = s"${ds.size} newtype-shaped definitions (${ds.count(_(3) == "production")} production, ${ds.count(_(3) == "test")} test); ${groups.size} production overlap candidate groups; ${uses.count(_(7) == "UNRESOLVED")} unresolved candidate references.\nGrouping is a review queue, not semantic equivalence. Raw syntax constraints, owner meaning and module isolation must be reviewed. Imports, aliases, inherited newtypes and external symbols are not resolved. Reference counts cover measured declaration types only.\n"
+    Files.writeString(out.resolve("newtype-index.txt"),note)
+    println(note)
+  }
+}
+
 object TypeMeasurement {
-  def run(sources: Map[String,String], out: java.nio.file.Path, confirmed: List[String], expected: List[String], previous: String): Unit = {
+  def run(sources: Map[String,String], out: java.nio.file.Path, confirmed: List[String], expected: List[String], previous: String, indexTypes: Boolean, histories: List[String], expectedNewtypes: List[String], expectedOverlap: Map[String,Int]): Unit = {
     import scala.jdk.CollectionConverters._
     implicit val dialect: Dialect = dialects.Scala3
     val primitives = Set("String","Boolean","Byte","Short","Int","Long","Float","Double","Char")
     val positions = scala.collection.mutable.ListBuffer.empty[List[String]]
     val leaves = scala.collection.mutable.ListBuffer.empty[List[String]]
+    val contexts = scala.collection.mutable.Map.empty[String,List[String]]
+    val index = if(indexTypes) Some(new NewtypeIndex(histories)) else None
     def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
     def owner(t: Tree): String = parents(t).reverse.collect {
       case p: Pkg => p.ref.syntax
@@ -153,6 +268,7 @@ object TypeMeasurement {
       val tree = source.parse[Source].get
       val scope = if(path.contains("/src/test/")) "test" else "production"
       val module = path.stripPrefix("modules/").split("/src/").head
+      index.foreach(_.inspect(tree,path,module,scope))
       val serial = scala.collection.mutable.Map.empty[String,Int]
       def position(n: Name, kind: String, declared: Option[Type]): Unit = {
         val o = owner(n)
@@ -163,6 +279,30 @@ object TypeMeasurement {
         val local = kind == "lambda-parameter" || methods.exists(d => !(d.name eq n) &&
           !(kind == "method-parameter" && methods.headOption.contains(d)))
         positions += List(id,path,module,scope,if(local) "local" else "member",(n.pos.startLine + 1).toString,kind,o,n.value,declared.fold("<inferred>")(_.syntax),declared.fold("")(_.structure))
+        val ctx = parents(n)
+        val mods = ctx.flatMap {
+          case d: Defn.Def => d.mods
+          case d: Defn.Val => d.mods
+          case d: Defn.Var => d.mods
+          case d: Defn.Class => d.mods
+          case d: Defn.Trait => d.mods
+          case d: Defn.Object => d.mods
+          case _ => Nil
+        }
+        val native = mods.exists { case a: Mod.Annot => a.init.tpe.syntax.endsWith("native"); case _ => false } || ctx.exists {
+          case d: Defn.Def => d.body match { case Term.Select(_,Term.Name("native")) => true; case _ => false }
+          case _ => false
+        }
+        val category = if(native) "native-contract-review" else if(mods.exists(_.is[Mod.Override])) "override-contract-review"
+          else if(kind == "lambda-parameter") "lambda-propagation-review"
+          else if(kind == "alias") "alias-signature-review"
+          else if(declared.exists(_.collect { case _: Type.ByName => true; case _: Type.Repeated => true; case _: Type.ApplyInfix => true }.nonEmpty)) "wrapper-shape-review"
+          else if(declared.exists(_.collect { case a: Type.Apply if a.tpe.syntax.endsWith("Array") => true }.nonEmpty)) "buffer-or-native-array-review"
+          else "declaration-owner-or-name-review"
+        val treatment = if(Set("wrapper-shape-review","alias-signature-review")(category)) "bulk-rewrite-candidate"
+          else if(category == "lambda-propagation-review") "type-propagation-candidate" else "targeted-or-design-review"
+        contexts(id) = List(category,treatment,"candidate; no accepted exception inferred")
+        declared.foreach(t => index.foreach(_.use(t,path,module,scope,(n.pos.startLine + 1).toString,o,kind)))
         def emit(route: String,status: String,detail: String,t: Option[Type],callback: Boolean): Unit = {
           val selector = key + "|" + route
           leaves += List(id,route,status,detail,t.fold("")(_.structure),if(callback) "callback" else kind,
@@ -220,6 +360,14 @@ object TypeMeasurement {
     def write(name: String,header: String,rows: List[List[String]]): Unit = Files.write(out.resolve(name),(header :: rows.map(_.map(esc).mkString("\t"))).asJava)
     write("positions.tsv","id\tpath\tmodule\tscope\tlocality\tline\tkind\towner\tname\tdeclared\tast",positions.toList)
     write("leaves.tsv","position\troute\tstatus\tdetail\tast\tfamily\tclassification\tselector",leaves.toList)
+    val residual = leaves.toList.filter(l => l(2) == "primitive" && byId(l.head)(3) == "production").map { l =>
+      val p = byId(l.head)
+      List(l.head,l(1),p(1),p(5),p(2),p(6),p(7),p(8),l(3)) ++ contexts(l.head)
+    }
+    write("residual-treatment.tsv","position\troute\tpath\tline\tmodule\tkind\towner\tname\tprimitive\tcategory\tproposed-treatment\tstatus",residual)
+    write("residual-treatment-counts.tsv","category\tproposed-treatment\tleaves",residual.groupBy(r => (r(9),r(10))).toList.sortBy(_._1).map { case((c,t),rs) => List(c,t,rs.size.toString) })
+    write("residual-treatment-samples.tsv","position\troute\tpath\tline\tmodule\tkind\towner\tname\tprimitive\tcategory\tproposed-treatment\tstatus",residual.groupBy(_(9)).toList.sortBy(_._1).flatMap { case(_,rs) => rs.groupBy(_(4)).toList.sortBy(_._1).take(2).map(_._2.head) })
+    index.foreach(_.finish(out,expectedNewtypes,expectedOverlap))
     write("sources.tsv","path\tsha256",sources.toList.sorted.map { case(p,h) => List(p,h) })
     if(sources.keys.forall(_.startsWith("modules/"))) {
       val stream = Files.walk(Paths.get("modules"))
