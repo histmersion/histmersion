@@ -5,16 +5,34 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class TimeHistogram(
-    from: Long,
-    to: Long,
-    bucket: Long,
+    from: TimeHistogram.From,
+    to: TimeHistogram.To,
+    bucket: TimeHistogram.Bucket,
     buckets: List[TimeBucket],
     // Defaults keep the `by=time` JSON byte-identical for older clients.
-    by: String = "time",
-    unit: String = "sources",
-    total: Int = 0,
-    depth: Int = 0,
-    asOf: Option[Long] = None,
+    by: TimeHistogram.By = "time",
+    unit: TimeHistogram.Unit = "sources",
+    total: TimeHistogram.Total = 0,
+    depth: TimeHistogram.Depth = 0,
+    asOf: Option[TimeHistogram.AsOf] = None,
     tree: List[Bucket] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object TimeHistogram:
+  type From = From.T
+  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type To = To.T
+  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bucket = Bucket.T
+  object Bucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type By = By.T
+  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unit = Unit.T
+  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsOf = AsOf.T
+  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

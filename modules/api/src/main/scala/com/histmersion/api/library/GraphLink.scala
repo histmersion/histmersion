@@ -5,8 +5,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class GraphLink(
-    source: String,
-    target: String,
-    kind: String
+    source: com.histmersion.api.library.Citekey,
+    target: com.histmersion.api.library.Citekey,
+    kind: com.histmersion.api.library.Edge.Kind
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

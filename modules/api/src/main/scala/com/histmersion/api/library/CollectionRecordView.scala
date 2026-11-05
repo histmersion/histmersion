@@ -6,8 +6,8 @@ import sttp.tapir.Schema
 
 /** What a record or an item says of a work, as an audit compares them. */
 final case class CollectionRecordView(
-    title: String,
-    authors: List[String],
-    year: Option[Int]
+    title: com.histmersion.api.library.Title,
+    authors: List[com.histmersion.api.library.AuthorName],
+    year: Option[com.histmersion.api.catalogue.Year]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

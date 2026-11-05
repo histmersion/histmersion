@@ -15,14 +15,24 @@ object Tree:
   val KeyUnlocated = "unlocated"
 
   final case class TreeRow(
-      key: String,
-      citekey: String,
-      title: String,
-      start: Option[Long] = None,
-      end: Option[Long] = None,
-      placeIds: List[String] = Nil
+      key: TreeRow.Key,
+      citekey: com.histmersion.api.library.Citekey,
+      title: com.histmersion.api.library.Title,
+      start: Option[TreeRow.Start] = None,
+      end: Option[TreeRow.End] = None,
+      placeIds: List[TreeRow.PlaceIds] = Nil
   ):
     def toPeriodRow: Period.Row = Period.Row(start, end)
+
+  object TreeRow:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceIds = PlaceIds.T
+    object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def coversAsOf(p: Option[Period], asOf: Option[Long]): Boolean = (p, asOf) match
     case (None, _)                     => true

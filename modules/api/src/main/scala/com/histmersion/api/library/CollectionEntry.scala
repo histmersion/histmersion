@@ -8,13 +8,27 @@ import sttp.tapir.Schema
   * identifiers by scheme and its files.
   */
 final case class CollectionEntry(
-    id: String,
-    title: String,
-    authors: List[String],
-    year: Option[Int],
-    publisher: Option[String],
-    tags: List[String],
-    identifiers: Map[String, String],
-    formats: List[String]
+    id: CollectionEntry.Id,
+    title: com.histmersion.api.library.Title,
+    authors: List[com.histmersion.api.library.AuthorName],
+    year: Option[com.histmersion.api.catalogue.Year],
+    publisher: Option[CollectionEntry.Publisher],
+    tags: List[CollectionEntry.Tags],
+    identifiers: Map[CollectionEntry.IdentifiersKey, CollectionEntry.IdentifiersValue],
+    formats: List[CollectionEntry.Formats]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionEntry:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Publisher = Publisher.T
+  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifiersKey = IdentifiersKey.T
+  object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifiersValue = IdentifiersValue.T
+  object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Formats = Formats.T
+  object Formats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

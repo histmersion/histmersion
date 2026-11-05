@@ -4,4 +4,12 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class TimeBucket(start: Long, end: Long, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count: TimeBucket.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+object TimeBucket:
+  type Start = Start.T
+  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type End = End.T
+  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

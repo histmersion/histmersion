@@ -7,11 +7,21 @@ import com.histmersion.api.media.AssetInput
 import com.histmersion.api.given
 
 final case class NoteImport(
-    text: String,
-    citekey: Option[String] = None,
-    body: Option[String] = None,
-    mtime: Option[Long] = None,
-    force: Boolean = false,
+    text: NoteImport.Text,
+    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    body: Option[NoteImport.Body] = None,
+    mtime: Option[NoteImport.Mtime] = None,
+    force: NoteImport.Force = false,
     assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object NoteImport:
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mtime = Mtime.T
+  object Mtime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Force = Force.T
+  object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

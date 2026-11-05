@@ -28,7 +28,13 @@ object Candidates:
       .flatMap(w => scala.util.Try(java.time.LocalDate.parse(w.take(10))).toOption)
       .getOrElse(today.minusDays(math.max(0, lookbackDays).toLong))
 
-  final case class Found(key: String, work: WorkRef, by: String)
+  final case class Found(key: Found.Key, work: WorkRef, by: Found.By)
+
+  object Found:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type By = By.T
+    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(

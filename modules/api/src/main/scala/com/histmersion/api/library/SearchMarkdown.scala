@@ -128,7 +128,17 @@ object SearchMarkdown:
       val col = if starts then "sources" else unit
       (List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
 
-  final case class CollapsedBucket(start: Long, end: Long, count: Int, merged: Int)
+  final case class CollapsedBucket(start: CollapsedBucket.Start, end: CollapsedBucket.End, count: CollapsedBucket.Count, merged: CollapsedBucket.Merged)
+
+  object CollapsedBucket:
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Merged = Merged.T
+    object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
     if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, 1))

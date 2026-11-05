@@ -24,46 +24,88 @@ object Ingest:
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
       .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))
 
-  final case class Accepted(jobId: String, citekey: String, status: String, sha256: Option[String] = None)
+  final case class Accepted(jobId: com.histmersion.api.jobs.JobInfo.Id, citekey: com.histmersion.api.library.Citekey, status: Accepted.Status, sha256: Option[com.histmersion.api.Sha256] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Accepted:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class Params(
-      citekey: String,
-      filename: Option[String] = None,
-      quality: Boolean = false,
-      force: Boolean = false,
-      title: Option[String] = None,
-      authors: List[String] = Nil,
-      year: Option[Int] = None,
-      doi: Option[String] = None,
-      provenance: Option[String] = None,
-      acquireItem: Option[Int] = None
+      citekey: com.histmersion.api.library.Citekey,
+      filename: Option[Params.Filename] = None,
+      quality: Params.Quality = false,
+      force: Params.Force = false,
+      title: Option[com.histmersion.api.library.Title] = None,
+      authors: List[com.histmersion.api.library.AuthorName] = Nil,
+      year: Option[com.histmersion.api.catalogue.Year] = None,
+      doi: Option[com.histmersion.api.library.Doi] = None,
+      provenance: Option[Params.Provenance] = None,
+      acquireItem: Option[Params.AcquireItem] = None
   )
 
+  object Params:
+    type Filename = Filename.T
+    object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quality = Quality.T
+    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Force = Force.T
+    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provenance = Provenance.T
+    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcquireItem = AcquireItem.T
+    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Report(
-      citekey: String,
-      doi: Option[String],
-      title: Option[String],
-      created: Boolean,
+      citekey: com.histmersion.api.library.Citekey,
+      doi: Option[com.histmersion.api.library.Doi],
+      title: Option[com.histmersion.api.library.Title],
+      created: Report.Created,
       pdf: Option[PdfInfo],
-      edgesAdded: Int,
+      edgesAdded: Report.EdgesAdded,
       assessment: Option[Assessment],
       steps: List[Step],
-      dropIn: Option[String] = None
+      dropIn: Option[Report.DropIn] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Report:
+    type Created = Created.T
+    object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EdgesAdded = EdgesAdded.T
+    object EdgesAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DropIn = DropIn.T
+    object DropIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Request(
-      id: String,
-      citekey: Option[String] = None,
-      arxiv: Option[String] = None,
-      refetch: Boolean = false,
-      legalOnly: Boolean = false
+      id: Request.Id,
+      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      arxiv: Option[Request.Arxiv] = None,
+      refetch: Request.Refetch = false,
+      legalOnly: Request.LegalOnly = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Request:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Arxiv = Arxiv.T
+    object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refetch = Refetch.T
+    object Refetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LegalOnly = LegalOnly.T
+    object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Step(step: String, ok: Boolean, detail: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Step:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ok = Ok.T
+    object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

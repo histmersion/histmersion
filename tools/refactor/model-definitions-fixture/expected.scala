@@ -27,3 +27,8 @@ object Token:
 final case class Collision(kind: String)
 object Collision:
   object Kind
+
+final case class Choice(kind: fixture.Choice.Kind)
+object Choice:
+  enum Kind:
+    case One

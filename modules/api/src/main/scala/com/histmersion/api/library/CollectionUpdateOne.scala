@@ -6,6 +6,6 @@ import sttp.tapir.Schema
 
 /** Rewrite the item source `citekey` is linked to from its record. */
 final case class CollectionUpdateOne(
-    citekey: String
+    citekey: com.histmersion.api.library.Citekey
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

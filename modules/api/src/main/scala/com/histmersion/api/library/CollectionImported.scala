@@ -9,15 +9,27 @@ import sttp.tapir.Schema
   * (`job`) or why it was not (`jobError`, with its `jobErrorCode`).
   */
 final case class CollectionImported(
-    citekey: String,
-    id: String,
-    title: String,
-    relinkedFrom: Option[String],
-    file: String,
+    citekey: com.histmersion.api.library.Citekey,
+    id: CollectionImported.Id,
+    title: com.histmersion.api.library.Title,
+    relinkedFrom: Option[CollectionImported.RelinkedFrom],
+    file: CollectionImported.File,
     source: Source.WithFindings,
     cover: Option[CollectionCover],
     job: Option[Ingest.Accepted],
-    jobError: Option[String] = None,
-    jobErrorCode: Option[String] = None
+    jobError: Option[CollectionImported.JobError] = None,
+    jobErrorCode: Option[CollectionImported.JobErrorCode] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionImported:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelinkedFrom = RelinkedFrom.T
+  object RelinkedFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type File = File.T
+  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobError = JobError.T
+  object JobError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobErrorCode = JobErrorCode.T
+  object JobErrorCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

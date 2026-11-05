@@ -5,15 +5,19 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class ContradictionRow(
-    citekey: String,
-    title: String,
-    year: Option[Int],
+    citekey: com.histmersion.api.library.Citekey,
+    title: com.histmersion.api.library.Title,
+    year: Option[com.histmersion.api.catalogue.Year],
     status: com.histmersion.api.library.Source.Status,
-    direction: Option[String],
-    kind: Option[String],
-    otherCitekey: Option[String],
-    otherTitle: Option[String],
-    otherYear: Option[Int] = None,
+    direction: Option[ContradictionRow.Direction],
+    kind: Option[com.histmersion.api.library.Edge.Kind],
+    otherCitekey: Option[com.histmersion.api.library.Citekey],
+    otherTitle: Option[com.histmersion.api.library.Title],
+    otherYear: Option[com.histmersion.api.catalogue.Year] = None,
     otherStatus: Option[com.histmersion.api.library.Source.Status] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object ContradictionRow:
+  type Direction = Direction.T
+  object Direction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

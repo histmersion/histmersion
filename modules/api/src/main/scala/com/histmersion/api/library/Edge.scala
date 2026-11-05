@@ -7,7 +7,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-final case class Edge(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, kind: String)
+final case class Edge(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, kind: com.histmersion.api.library.Edge.Kind)
 
 object Edge:
 
@@ -48,7 +48,7 @@ object Edge:
       def wire(e: Kind): String = wireOf(e)
       def fromWire(s: String): Option[Kind] = Kind.fromWire(s)
 
-  final case class Input(dst: String, kind: com.histmersion.api.library.Edge.Kind, src: Option[String] = None)
+  final case class Input(dst: com.histmersion.api.library.Citekey, kind: com.histmersion.api.library.Edge.Kind, src: Option[com.histmersion.api.library.Citekey] = None)
       derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
 

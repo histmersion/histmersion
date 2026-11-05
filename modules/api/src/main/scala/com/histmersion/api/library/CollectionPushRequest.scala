@@ -8,7 +8,11 @@ import sttp.tapir.Schema
   * it is linked to.
   */
 final case class CollectionPushRequest(
-    citekey: String,
-    replace: Boolean = false
+    citekey: com.histmersion.api.library.Citekey,
+    replace: CollectionPushRequest.Replace = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionPushRequest:
+  type Replace = Replace.T
+  object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

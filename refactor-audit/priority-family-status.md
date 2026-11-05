@@ -1,5 +1,35 @@
 # Priority-family status
 
+## Definition sweep applied: library API
+
+definitions-library-1 converts 612 explicit primitive leaves in 130 production
+models across 91 library API files using the existing rule and frozen-preview
+applicator. The cumulative definition sweep is 989 leaves in 197 models across
+129 production files. These counts do not establish verified behavioral repairs
+or the project-wide primitive denominator. No test or caller repairs were made.
+
+Reuse covers source identifiers, bibliographic values, hashes/byte counts,
+coordinates/years, source properties shared by put/patch records, finding
+properties, candidate identities/state and filter/query representations. Author
+and title search fragments remain distinct from author names and actual titles;
+uncertain concept equivalences retain separate companion-owned types. The
+existing Edge.Kind enum is reused by citation records instead of duplicated.
+
+The reusable rule now distinguishes generating a canonical type at its owner from
+referencing an existing same-named companion member. An added fixture tests the
+existing-enum case without changing the prior cases: seven rewritten leaves in
+four models and one deliberately blocked collision. Generated output exactly
+matches the expected source, which compiles with Scala 3.10.0 and Iron 3.4.1.
+
+All 91 production files were applied after frozen-source hash checks.
+definitions-library-remaining-1 validates the research/media/library source hash
+chain and reports zero further supported primitive leaves or blocked matches in
+the library scope. Whitespace checks pass. This is syntactic coverage and
+idempotence evidence; aliases, import renames and unsupported type shapes remain
+unverified. Compilation repair, validation migration, concept consolidation and
+behavioral tests remain later phases. Historical IDs, denominators, exceptions
+and repair credit are unchanged. The next definition scope is catalogue models.
+
 ## Definition sweep applied: media API
 
 definitions-media-1 applies the same reusable transformation to 170 explicit

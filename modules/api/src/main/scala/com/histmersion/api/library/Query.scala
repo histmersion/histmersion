@@ -16,27 +16,57 @@ import com.histmersion.api.given
   */
 object Query:
 
-  final case class QueryRequest(sql: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class QueryRequest(sql: QueryRequest.Sql) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object QueryRequest:
+    type Sql = Sql.T
+    object Sql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class QueryResult(
-      columns: List[String],
-      rows: List[List[Option[String]]],
-      rowCount: Int,
-      truncated: Boolean,
-      elapsedMs: Long
+      columns: List[QueryResult.Columns],
+      rows: List[List[Option[QueryResult.Rows]]],
+      rowCount: QueryResult.RowCount,
+      truncated: QueryResult.Truncated,
+      elapsedMs: QueryResult.ElapsedMs
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object QueryResult:
+    type Columns = Columns.T
+    object Columns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rows = Rows.T
+    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RowCount = RowCount.T
+    object RowCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Truncated = Truncated.T
+    object Truncated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ElapsedMs = ElapsedMs.T
+    object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class SchemaColumn(name: String, dataType: String, nullable: Boolean)
+
+  final case class SchemaColumn(name: SchemaColumn.Name, dataType: SchemaColumn.DataType, nullable: SchemaColumn.Nullable)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object SchemaColumn:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DataType = DataType.T
+    object DataType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Nullable = Nullable.T
+    object Nullable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn])
+
+  final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object SchemaTable:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

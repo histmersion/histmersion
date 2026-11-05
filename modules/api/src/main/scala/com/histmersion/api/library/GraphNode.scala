@@ -5,10 +5,14 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class GraphNode(
-    id: String,
-    title: Option[String] = None,
-    year: Option[Int] = None,
+    id: com.histmersion.api.library.Citekey,
+    title: Option[com.histmersion.api.library.Title] = None,
+    year: Option[com.histmersion.api.catalogue.Year] = None,
     status: Option[com.histmersion.api.library.Source.Status] = None,
-    depth: Int = 0
+    depth: GraphNode.Depth = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object GraphNode:
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
