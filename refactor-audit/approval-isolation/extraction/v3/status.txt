@@ -1,0 +1,4 @@
+PREVIEW_ONLY
+4 definitions/storage files; application unchanged.
+Source callers and removal of old source-specific engine methods remain required before application.
+No repair claimed; compile validation pending.
