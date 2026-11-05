@@ -45,10 +45,10 @@ object EventLayer:
   private var config: EventsUiConfig = null
   private var items: Vector[(EventGeo, (Long, Long))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
-  private var anchors: Map[String, Vector[String]] = Map.empty
-  private val shown = mutable.HashMap.empty[String, Shown]
+  private var anchors: Map[String, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
+  private val shown = mutable.HashMap.empty[com.histmersion.api.catalogue.Event.Id, Shown]
   // the outlines drawn now, by event id, with their geometry
-  private val outlined = mutable.LinkedHashMap.empty[String, js.Any]
+  private val outlined = mutable.LinkedHashMap.empty[com.histmersion.api.catalogue.Event.Id, js.Any]
   // the events request a late answer must belong to: `stop` supersedes it
   private val latest = Latest()
   // the last frame drawn, so the events that arrive after it are drawn at once
@@ -121,7 +121,7 @@ object EventLayer:
 
   private def drawOutlines(): Unit =
     outlines.foreach(
-      _.set(outlined.toSeq.map((id, g) => ShapeFeature(id, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha))))
+      _.set(outlined.toSeq.map((id, g) => ShapeFeature(id.value, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha))))
     )
 
   private def add(e: EventGeo, start: Long, a: Double): Shown =
@@ -137,7 +137,7 @@ object EventLayer:
       }
       .getOrElse(false)
     val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a))
-    val marker = DomMarker(e.lat, e.lon, el)
+    val marker = DomMarker(e.lat.value, e.lon.value, el)
     // a regional label under the local ones: the battle stays readable inside its war
     marker.setZ(if e.scale == EventScale.Regional then 1 else 2)
     pane.add(marker)
@@ -145,7 +145,7 @@ object EventLayer:
     MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
     s
 
-  private def remove(id: String, s: Shown): Unit =
+  private def remove(id: com.histmersion.api.catalogue.Event.Id, s: Shown): Unit =
     MapLabels.untrackEvent(id)
     pane.remove(s.marker)
     outlined.remove(id)
@@ -159,9 +159,9 @@ object EventLayer:
     labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
   /** The visibility, as `--a` on the label and the outline's own. */
-  private def setAlpha(id: String, s: Shown, a: Double): Unit =
+  private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: Double): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    if s.outline then outlines.foreach(_.restyle(id, "", a))
+    if s.outline then outlines.foreach(_.restyle(id.value, "", a))
 
   /** The stacking slot, as `--i`, on the label. */
   private def setSlot(s: Shown, slot: Int): Unit =

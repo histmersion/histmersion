@@ -50,7 +50,7 @@ object EventPlayback:
   /** Pure: the stacking slot of each SHOWN event at one anchor — `ids` in their order there (by start), numbered 0, 1,
     * 2… among those shown, so a label moves up when the one above it goes.
     */
-  def slots(ids: Seq[String], shown: String => Boolean): Map[String, Int] =
+  def slots[A](ids: Seq[A], shown: A => Boolean): Map[A, Int] =
     ids.filter(shown).zipWithIndex.toMap
 
   /** Pure: an event name's rank in the map's collision pass ([[MapLabels]], [[LabelPlacement.cull]]): above every area

@@ -266,17 +266,17 @@ object MapLabels:
     * cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes over another name); without a map
     * pass it is simply shown.
     */
-  def trackEvent(key: String, marker: DomMarker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
+  def trackEvent(key: com.histmersion.api.catalogue.Event.Id, marker: DomMarker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
-      entries(EventKey + key) = Entry(marker.at, rank, None, label, Some(() => Some(marker.el)))
-      state.remove(EventKey + key)
+      entries(EventKey + key.value) = Entry(marker.at, rank, None, label, Some(() => Some(marker.el)))
+      state.remove(EventKey + key.value)
       schedule()
 
   /** The event's name is gone from the map: the names it hid come back at the next pass. */
-  def untrackEvent(key: String): Unit =
-    state.remove(EventKey + key)
-    if entries.remove(EventKey + key).isDefined then schedule()
+  def untrackEvent(key: com.histmersion.api.catalogue.Event.Id): Unit =
+    state.remove(EventKey + key.value)
+    if entries.remove(EventKey + key.value).isDefined then schedule()
 
   /** Every event's name is gone (playback stopped). */
   def untrackEvents(): Unit =

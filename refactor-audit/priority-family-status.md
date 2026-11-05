@@ -2,6 +2,23 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Caller follow-up caller-state-1 is applied: ten exact AST recipes across
+EventLayer, EventPlayback and MapLabels. Event identity collections/helpers now
+use Event.Id; coordinate anchor keys remain String. slots is generic in its key
+type, preserving the input key through its predicate and returned map. Primitive
+extraction is limited to map geometry, marker coordinates and DOM label keys.
+The existing AstRecipe and ApplyFrozenPreview tools generated/applied the edits;
+hash verification passes. This is targeted rewrite treatment, not evidence of a
+general-purpose collection rewrite or additional confirmed finding identities.
+
+applied-build-2 reports 36 web diagnostics, down from 51, with none in those
+three files. Core and CLI repeat cached compile failures; their previous 22/1
+diagnostics remain unresolved, not freshly recounted. Compilation still fails
+and behavioral tests have not run. EventPlaybackSuite contains stacking order,
+visibility filtering and anchor checks, but needs the remaining web/test caller
+repairs before it can validate this change. The 87-ID cohort remains applied and
+unverified; no repair credit or overall automation percentage is added.
+
 The 87-field / seventeen-concept batch is now APPLIED to this worktree as an
 incomplete migration. ApplyFrozenPreview applied preview-13's frozen plan;
 applied-verification.txt confirms all 233 files exactly match its hashes.
