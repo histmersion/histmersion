@@ -22,6 +22,29 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundlePlan:
 
+  type CountsLoopInserted = CountsLoopInserted.T
+  object CountsLoopInserted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopUpdated = CountsLoopUpdated.T
+  object CountsLoopUpdated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopUnchanged = CountsLoopUnchanged.T
+  object CountsLoopUnchanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopKeptLocal = CountsLoopKeptLocal.T
+  object CountsLoopKeptLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopConflicts = CountsLoopConflicts.T
+  object CountsLoopConflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopDeleted = CountsLoopDeleted.T
+  object CountsLoopDeleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopSkippedDeleted = CountsLoopSkippedDeleted.T
+  object CountsLoopSkippedDeleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopHeld = CountsLoopHeld.T
+  object CountsLoopHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CascadeGoneResult = CascadeGoneResult.T
+  object CascadeGoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CascadeHeldResult = CascadeHeldResult.T
+  object CascadeHeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CascadeWritingResult = CascadeWritingResult.T
+  object CascadeWritingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EntityForeignRev = EntityForeignRev.T
   object EntityForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntityOwnBundle = EntityOwnBundle.T
@@ -125,14 +148,14 @@ object BundlePlan:
   def counts(kind: Bundle.Kind, ds: Iterable[Decision]): com.histmersion.api.exchange.Bundle.KindCounts =
     val decisions = ds.iterator
     @tailrec def loop(
-        inserted: Int,
-        updated: Int,
-        unchanged: Int,
-        keptLocal: Int,
-        conflicts: Int,
-        deleted: Int,
-        skippedDeleted: Int,
-        held: Int
+        inserted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopInserted,
+        updated: com.histmersion.util.data.exchange.BundlePlan.CountsLoopUpdated,
+        unchanged: com.histmersion.util.data.exchange.BundlePlan.CountsLoopUnchanged,
+        keptLocal: com.histmersion.util.data.exchange.BundlePlan.CountsLoopKeptLocal,
+        conflicts: com.histmersion.util.data.exchange.BundlePlan.CountsLoopConflicts,
+        deleted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopDeleted,
+        skippedDeleted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopSkippedDeleted,
+        held: com.histmersion.util.data.exchange.BundlePlan.CountsLoopHeld
     ): com.histmersion.api.exchange.Bundle.KindCounts =
       if !decisions.hasNext then
         com.histmersion.api.exchange.Bundle.KindCounts(
@@ -202,15 +225,15 @@ object BundlePlan:
       refs: List[BundleEntities.Reference],
       deletedHere: java.util.UUID => com.histmersion.util.data.exchange.BundlePlan.CascadeDeletedHereResult
   ): Map[java.util.UUID, Decision] =
-    def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
+    def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeGoneResult =
       ds.get(u) match
         case Some(Decision.SkipDeleted) | Some(Decision.Delete) | Some(Decision.RecordTombstone) |
             Some(Decision.Skip) =>
           true
         case Some(_) => false
         case None    => deletedHere(u)
-    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean = ds.get(u).contains(Decision.Held)
-    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
+    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeHeldResult = ds.get(u).contains(Decision.Held)
+    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeWritingResult =
       ds.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
     // every round turns at least one writing line into a non-writing one, so it ends within
     // `decisions.size` rounds

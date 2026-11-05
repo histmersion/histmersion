@@ -38,6 +38,21 @@ object BasemapFetch:
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
     */
+  type PlanGetResultPart1 = PlanGetResultPart1.T
+  object PlanGetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanGetResultPart2Part1 = PlanGetResultPart2Part1.T
+  object PlanGetResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanGetOffset = PlanGetOffset.T
+  object PlanGetOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanGetLength = PlanGetLength.T
+  object PlanGetLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleReadResult = AssembleReadResult.T
+  object AssembleReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleReadOffset = AssembleReadOffset.T
+  object AssembleReadOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleReadLength = AssembleReadLength.T
+  object AssembleReadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveGetResultPart2Part1 = ResolveGetResultPart2Part1.T
   object ResolveGetResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AssembleTransformArg1 = AssembleTransformArg1.T
@@ -288,7 +303,7 @@ object BasemapFetch:
       minZoom: Option[com.histmersion.util.basemap.BasemapFetch.PlanMinZoom] = None
   ): Either[com.histmersion.util.basemap.BasemapFetch.PlanResultPart1, Plan] =
     var requests = 0 // directory requests made, each after a pause
-    def get(offset: Long, length: Long): Either[String, (Array[Byte], RemoteFile)] =
+    def get(offset: com.histmersion.util.basemap.BasemapFetch.PlanGetOffset, length: com.histmersion.util.basemap.BasemapFetch.PlanGetLength): Either[com.histmersion.util.basemap.BasemapFetch.PlanGetResultPart1, (com.histmersion.util.basemap.BasemapFetch.PlanGetResultPart2Part1, RemoteFile)] =
       if requests > 0 then pace.sleep(pace.gapMs)
       if Thread.interrupted() then throw InterruptedException()
       requests += 1
@@ -447,7 +462,7 @@ object BasemapFetch:
   ): Either[com.histmersion.util.basemap.BasemapFetch.AssembleResultPart1, (com.histmersion.util.basemap.BasemapFetch.AssembleResultPart2Part1, com.histmersion.util.basemap.BasemapFetch.AssembleResultPart2Part2)] =
     val starts = p.requests.map(_._1).toArray
     val readers = mutable.HashMap.empty[Int, RandomReader]
-    def read(offset: Long, length: Int): Array[Byte] =
+    def read(offset: com.histmersion.util.basemap.BasemapFetch.AssembleReadOffset, length: com.histmersion.util.basemap.BasemapFetch.AssembleReadLength): com.histmersion.util.basemap.BasemapFetch.AssembleReadResult =
       val i = { val k = java.util.Arrays.binarySearch(starts, offset); if k >= 0 then k else -k - 2 }
       val r = p.requests(i)
       val reader = readers.getOrElseUpdate(

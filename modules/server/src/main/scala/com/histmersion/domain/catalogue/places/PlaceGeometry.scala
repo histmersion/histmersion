@@ -89,7 +89,7 @@ object PlaceGeometry:
         val named = if todo.isEmpty then Map.empty[String, Set[String]] else db.read(PointAreaRepo.nameKeysIn())
         // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
         @tailrec
-        def go(rest: List[List[String]], removed: Int, findings: Int, cks: Set[String]): (Int, Int, Set[String]) =
+        def go(rest: List[List[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoRest]], removed: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoRemoved, findings: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoFindings, cks: Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoCks]): (com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart1, com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart2, Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart3]) =
           rest match
             case Nil         => (removed, findings, cks)
             case ids :: more =>
@@ -101,6 +101,21 @@ object PlaceGeometry:
         PointAreaRepo.Removal(removed, remaining, findings, cks.size)
 
   object Implementation:
+    type RemovePointAreasGoResultPart1 = RemovePointAreasGoResultPart1.T
+    object RemovePointAreasGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoResultPart2 = RemovePointAreasGoResultPart2.T
+    object RemovePointAreasGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoResultPart3 = RemovePointAreasGoResultPart3.T
+    object RemovePointAreasGoResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoRest = RemovePointAreasGoRest.T
+    object RemovePointAreasGoRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoRemoved = RemovePointAreasGoRemoved.T
+    object RemovePointAreasGoRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoFindings = RemovePointAreasGoFindings.T
+    object RemovePointAreasGoFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemovePointAreasGoCks = RemovePointAreasGoCks.T
+    object RemovePointAreasGoCks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RebuildFindingPlacesToleranceKm = RebuildFindingPlacesToleranceKm.T
     object RebuildFindingPlacesToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReplaceLandResult = ReplaceLandResult.T

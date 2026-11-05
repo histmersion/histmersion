@@ -26,6 +26,13 @@ object Lpf:
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
+  type PropertyPeriodFromPairA = PropertyPeriodFromPairA.T
+  object PropertyPeriodFromPairA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PropertyPeriodFromPairB = PropertyPeriodFromPairB.T
+  object PropertyPeriodFromPairB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFeaturesPart1 = ParseFeaturesPart1.T
+  object ParseFeaturesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ToIsoResult = ToIsoResult.T
   object ToIsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToIsoHistoricalYear = ToIsoHistoricalYear.T
@@ -174,7 +181,7 @@ object Lpf:
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
-    def fromPair(a: Option[Long], b: Option[Long]): Option[Span] = (a, b) match
+    def fromPair(a: Option[com.histmersion.api.catalogue.Lpf.PropertyPeriodFromPairA], b: Option[com.histmersion.api.catalogue.Lpf.PropertyPeriodFromPairB]): Option[Span] = (a, b) match
       case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
       case (None, None)       => None
       case _                  => Some(Span(a, b))
@@ -331,7 +338,7 @@ object Lpf:
               .filter(o => o.contains("geometry") || o.contains("properties"))
               .map(o => List(Json.fromJsonObject(o)))
           )
-      val features: Either[String, List[Json]] =
+      val features: Either[com.histmersion.api.catalogue.Lpf.ParseFeaturesPart1, List[Json]] =
         found.toRight("not a FeatureCollection: no `features` array and not a feature")
       features.flatMap { fs =>
         val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, i))

@@ -13,6 +13,9 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
   */
 object TargetFlags:
 
+  type TargetUsageWhy = TargetUsageWhy.T
+  object TargetUsageWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OptsViews = OptsViews.T
   object OptsViews extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -63,7 +66,7 @@ object TargetFlags:
 
   /** The target the flags name, or why they name none. Pure. */
   def target(r: Raw): Either[Cli.Error, Target] =
-    def usage(why: String) = Cli.Error(why, exitCode = ExitCode.Usage)
+    def usage(why: com.histmersion.cli.TargetFlags.TargetUsageWhy) = Cli.Error(why, exitCode = ExitCode.Usage)
     for
       kind <- ItemKind
         .parse(r.kind)

@@ -16,6 +16,9 @@ import com.histmersion.api.catalogue.Place
 private[search] object SearchRepo:
 
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
+  type SourcesSnippetsPart1 = SourcesSnippetsPart1.T
+  object SourcesSnippetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CountResult = CountResult.T
   object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnlocatedResult = UnlocatedResult.T
@@ -60,7 +63,7 @@ private[search] object SearchRepo:
     else
       val citekeys = rows.map(_.citekey).toList
       // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
-      val snippets: Map[String, FilterSql.SnippetRow] =
+      val snippets: Map[com.histmersion.domain.library.search.SearchRepo.SourcesSnippetsPart1, FilterSql.SnippetRow] =
         FilterSql.text(filter) match
           case Some(q) =>
             FilterSql

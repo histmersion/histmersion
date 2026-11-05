@@ -4,6 +4,9 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 object ManagersMarkdown:
+  type TokensOneX = TokensOneX.T
+  object TokensOneX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CountsResult = CountsResult.T
   object CountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TodayResult = TodayResult.T
@@ -69,7 +72,7 @@ object ManagersMarkdown:
     BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
   private def tokens(n: com.histmersion.api.automation.ManagersMarkdown.TokensN): com.histmersion.api.automation.ManagersMarkdown.TokensResult =
-    def one(x: Double) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
+    def one(x: com.histmersion.api.automation.ManagersMarkdown.TokensOneX) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
 
   def backlog(n: com.histmersion.api.automation.ManagersMarkdown.BacklogN, days: Option[com.histmersion.api.automation.ManagersMarkdown.BacklogDays]): com.histmersion.api.automation.ManagersMarkdown.BacklogResult =

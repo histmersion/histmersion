@@ -9,10 +9,15 @@ trait HostLog:
   def plugin: com.histmersion.plugin.Plugin.Log =
     val self = this
     new com.histmersion.plugin.Plugin.Log:
-      def info(message: String): Unit = self.info(message)
-      def warn(message: String): Unit = self.warn(message)
+      def info(message: com.histmersion.pluginhost.HostLog.PluginInfoMessage): Unit = self.info(message)
+      def warn(message: com.histmersion.pluginhost.HostLog.PluginWarnMessage): Unit = self.warn(message)
 
 object HostLog:
+  type PluginInfoMessage = PluginInfoMessage.T
+  object PluginInfoMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginWarnMessage = PluginWarnMessage.T
+  object PluginWarnMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InfoLine = InfoLine.T
   object InfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WarnLine = WarnLine.T

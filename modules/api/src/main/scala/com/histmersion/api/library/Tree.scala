@@ -6,6 +6,23 @@ import com.histmersion.api.catalogue.Place
 
 object Tree:
 
+  type RegionsLiveId = RegionsLiveId.T
+  object RegionsLiveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsAtId = RegionsAtId.T
+  object RegionsAtId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelIds = RegionsLevelIds.T
+  object RegionsLevelIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelSeen = RegionsLevelSeen.T
+  object RegionsLevelSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelLeft = RegionsLevelLeft.T
+  object RegionsLevelLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoResult = AncestorsGoResult.T
+  object AncestorsGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoFrontier = AncestorsGoFrontier.T
+  object AncestorsGoFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoSeen = AncestorsGoSeen.T
+  object AncestorsGoSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxDepth = MaxDepth.T
   object MaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxSamples = MaxSamples.T
@@ -289,7 +306,7 @@ object Tree:
       root: Option[com.histmersion.api.library.Tree.RegionsRoot] = None
   ): (List[Bucket], com.histmersion.api.library.Tree.RegionsResultPart2) =
     val byId = nodes.iterator.map(n => n.id -> n).toMap
-    def live(id: String) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
+    def live(id: com.histmersion.api.library.Tree.RegionsLiveId) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
       r.kind == Place.Relation.PartOf && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
     )
@@ -297,11 +314,11 @@ object Tree:
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap
 
     val reach = rows.iterator.map(r => r.key -> ancestors(r.placeIds.filter(live).toSet, parents)).toMap
-    def at(id: String): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
+    def at(id: com.histmersion.api.library.Tree.RegionsAtId): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
 
     val drawnAt = scala.collection.mutable.Map.empty[String, Unit]
 
-    def level(ids: List[String], seen: Set[String], left: Int): List[Bucket] =
+    def level(ids: List[com.histmersion.api.library.Tree.RegionsLevelIds], seen: Set[com.histmersion.api.library.Tree.RegionsLevelSeen], left: com.histmersion.api.library.Tree.RegionsLevelLeft): List[Bucket] =
       ids.distinct
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
@@ -372,7 +389,7 @@ object Tree:
 
   private def ancestors(start: Set[com.histmersion.api.library.Tree.AncestorsStart], parents: Map[com.histmersion.api.library.Tree.AncestorsParentsPart1, List[com.histmersion.api.library.Tree.AncestorsParentsPart2]]): Set[com.histmersion.api.library.Tree.AncestorsResult] =
     @annotation.tailrec
-    def go(frontier: Set[String], seen: Set[String]): Set[String] =
+    def go(frontier: Set[com.histmersion.api.library.Tree.AncestorsGoFrontier], seen: Set[com.histmersion.api.library.Tree.AncestorsGoSeen]): Set[com.histmersion.api.library.Tree.AncestorsGoResult] =
       val next = frontier.flatMap(parents.getOrElse(_, Nil)) -- seen
       if next.isEmpty then seen else go(next, seen ++ next)
     go(start, start)

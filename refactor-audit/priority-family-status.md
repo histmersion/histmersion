@@ -1,5 +1,39 @@
 # Priority-family status
 
+## Applied: local helper signatures and explicit local bindings
+
+local-members-project-1 converts 1236 additional explicit primitive positions in
+309 production files. The member transformation now supports local methods and
+explicit local val/var types, placing the newtypes on the enclosing non-local
+owner's companion. Names include the enclosing method path so unrelated locals
+named label in different methods do not silently share a type. Repeated names
+within the same method that would collide stay unresolved. Captures and lexical
+scope remain unchanged; no caller or implementation repair was performed.
+
+Local owners lacking a valid global companion path, overrides/native contracts,
+shadowing, packed/unsupported forms and name conflicts remain explicit residuals.
+The fixture covers local arguments/results, local bindings, distinct enclosing
+methods and a same-method collision that remains untouched. Output matches
+expected source exactly; expected code compiles with Scala 3.10.0/Iron 3.4.1. Five
+positions convert and one collision is blocked. The frozen applicator checks all
+309 files; application/source/config/docs whitespace checks pass. No application
+compilation or behavioral success is claimed.
+
+type-positions-after-local-members-1 validates all 3167 current main/test files
+and the sixteen-plan source chain. Stable-ID comparison reports exactly 1236 raw
+leaves removed and zero introduced. The global explicit count changes from 7888
+to 6652: production598/test6054. Tests are unchanged. The scoped rerun produces
+zero further supported edits and 348 blocked positions. The global residual is
+broader than this rewrite and retains lambda, alias, constructor and unsupported
+positions. Inference and imported-alias/external-contract resolution remain
+unverified. No accepted exceptions or verified repair credit are added.
+
+Next classify the bounded production residual and build the requested newtype
+overlap index from the current definitions. Keep unsupported cases detected;
+indexing and purpose consolidation must not depend on declaring these compliant.
+Historical baselines, original finding identities and failed observations remain
+preserved in the existing ledger and review directories.
+
 ## Applied: enum case payloads
 
 enum-payloads-project-2 converts 336 explicit primitive payload positions across

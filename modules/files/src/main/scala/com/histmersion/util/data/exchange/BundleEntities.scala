@@ -80,7 +80,7 @@ final case class BundleEntities(
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
-    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
+    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => com.histmersion.util.data.exchange.BundleEntities.RevsOfLabelResult) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
     (of(Bundle.Kind.Source, sources)(_.uid, _.citekey) ++
       of(Bundle.Kind.Finding, findings)(_.uid, _.id) ++
@@ -128,9 +128,9 @@ final case class BundleEntities(
     * here; a required one makes the line impossible to write.
     */
   def references: List[Reference] =
-    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
+    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.ReferencesReqFrom) =
       Reference(kind, uid, owner, from, required = true)
-    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
+    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.ReferencesOptFrom) =
       Reference(kind, uid, owner, from, required = false)
     findings.map(f => req(Bundle.Kind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
       edges.map(e => opt(Bundle.Kind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
@@ -163,6 +163,17 @@ final case class BundleEntities(
     references.filterNot(r => own(r.uid))
 
 object BundleEntities:
+
+  type RevsOfLabelResult = RevsOfLabelResult.T
+  object RevsOfLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferencesReqFrom = ReferencesReqFrom.T
+  object ReferencesReqFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferencesOptFrom = ReferencesOptFrom.T
+  object ReferencesOptFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeReadPath = DecodeReadPath.T
+  object DecodeReadPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeReadStamped = DecodeReadStamped.T
+  object DecodeReadStamped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PayloadsResultPart2 = PayloadsResultPart2.T
   object PayloadsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -222,7 +233,7 @@ object BundleEntities:
     */
   def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart1, com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart2]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.DecodeResultPart2]) =
     val problems = List.newBuilder[String]
-    def read[A: Decoder](path: String, stamped: Boolean): List[A] =
+    def read[A: Decoder](path: com.histmersion.util.data.exchange.BundleEntities.DecodeReadPath, stamped: com.histmersion.util.data.exchange.BundleEntities.DecodeReadStamped): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
         BundleFormat.decodeLine[A](l, stamped) match
           case Right(a) => Some(a)

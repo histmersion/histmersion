@@ -9,6 +9,15 @@ import sttp.tapir.Schema
 
 object Acquire:
 
+  type ClassifyHasCues = ClassifyHasCues.T
+  object ClassifyHasCues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRetractionWatchColResult = ParseRetractionWatchColResult.T
+  object ParseRetractionWatchColResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRetractionWatchColR = ParseRetractionWatchColR.T
+  object ParseRetractionWatchColR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRetractionWatchColName = ParseRetractionWatchColName.T
+  object ParseRetractionWatchColName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CitekeyResult = CitekeyResult.T
   object CitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitekeyAuthors = CitekeyAuthors.T
@@ -300,7 +309,7 @@ object Acquire:
     val newer = (citingYear, targetYear) match
       case (Some(c), Some(t)) => c - t >= gapYears
       case _                  => false
-    def has(cues: List[String]) = cues.exists(text.contains)
+    def has(cues: List[com.histmersion.api.library.Acquire.ClassifyHasCues]) = cues.exists(text.contains)
 
     if has(RefutesCues) then EdgeKinds.Refutes
     else if has(SupersedeCues) then EdgeKinds.Supersedes
@@ -335,7 +344,7 @@ object Acquire:
       case Nil            => Nil
       case header :: rows =>
         val idx = header.map(_.trim.replaceAll("^﻿", "")).zipWithIndex.toMap
-        def col(r: List[String], name: String): Option[String] =
+        def col(r: List[com.histmersion.api.library.Acquire.ParseRetractionWatchColR], name: com.histmersion.api.library.Acquire.ParseRetractionWatchColName): Option[com.histmersion.api.library.Acquire.ParseRetractionWatchColResult] =
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
           col(r, "OriginalPaperDOI").map { doi =>

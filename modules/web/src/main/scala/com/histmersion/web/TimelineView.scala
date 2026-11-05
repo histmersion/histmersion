@@ -16,6 +16,15 @@ import com.histmersion.api.library.TimeBucket
 
 object TimelineView:
 
+  type RenderDetailAxisXOfResult = RenderDetailAxisXOfResult.T
+  object RenderDetailAxisXOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailAxisXOfYr = RenderDetailAxisXOfYr.T
+  object RenderDetailAxisXOfYr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailOverlayXOfResult = RenderDetailOverlayXOfResult.T
+  object RenderDetailOverlayXOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailOverlayXOfYr = RenderDetailOverlayXOfYr.T
+  object RenderDetailOverlayXOfYr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SpanFromResult = SpanFromResult.T
   object SpanFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpanToResult = SpanToResult.T
@@ -694,7 +703,7 @@ object TimelineView:
     val major = niceInterval(spanYears / targetTicks)
     val minor = major / (if major >= 10 then 5 else 1)
     val textWidth = (label: String) => label.length * 6.2
-    def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
+    def xOf(yr: com.histmersion.web.TimelineView.RenderDetailAxisXOfYr): com.histmersion.web.TimelineView.RenderDetailAxisXOfResult = (yr - sf.toDouble) / spanYears * w
     val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
     val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
     var lastLabelEnd = 0.0
@@ -746,7 +755,7 @@ object TimelineView:
       val sf = spanFrom
       val st = spanTo
       val spanYears = (st - sf).toDouble.max(1)
-      def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
+      def xOf(yr: com.histmersion.web.TimelineView.RenderDetailOverlayXOfYr): com.histmersion.web.TimelineView.RenderDetailOverlayXOfResult = (yr - sf.toDouble) / spanYears * w
       dragState.now().foreach { d =>
         if d.kind == DragKind.ZoomDetail then
           val dx0 = Math.min(d.startX, d.curX)

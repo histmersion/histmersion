@@ -22,6 +22,9 @@ import com.histmersion.api.library.Filter
 object UiState:
 
   /** A pending write, built with `field := value` and committed by [[set]]. */
+  type RestoreLocalOnName = RestoreLocalOnName.T
+  object RestoreLocalOnName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LayerOnResult = LayerOnResult.T
   object LayerOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetLayerOn = SetLayerOn.T
@@ -540,7 +543,7 @@ object UiState:
     store.get(LegacyLayersKey).foreach { raw =>
       if store.get(LocalPrefix + layers.key).isEmpty then
         Try(js.JSON.parse(raw)).foreach { d =>
-          def on(name: String) =
+          def on(name: com.histmersion.web.UiState.RestoreLocalOnName) =
             Try(d.selectDynamic(name).asInstanceOf[Any]).toOption.contains(true)
           layers.set(
             List(MapLayer.Boundaries -> "overlay", MapLayer.Media -> "media", MapLayer.Sites -> "sites").collect {

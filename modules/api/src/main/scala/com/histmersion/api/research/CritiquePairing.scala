@@ -7,6 +7,15 @@ import com.histmersion.api.given
 
 object CritiquePairing:
 
+  type RepairInsertResultPart1 = RepairInsertResultPart1.T
+  object RepairInsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepairInsertRestPart1Part1 = RepairInsertRestPart1Part1.T
+  object RepairInsertRestPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepairInsertRestPart1Part2 = RepairInsertRestPart1Part2.T
+  object RepairInsertRestPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepairInsertLs = RepairInsertLs.T
+  object RepairInsertLs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LettersResult = LettersResult.T
   object LettersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LettersS = LettersS.T
@@ -210,10 +219,10 @@ object CritiquePairing:
       val crlf = body.contains("\r\n")
       val lines = body.replace("\r\n", "\n").split("\n", -1).toVector
       @tailrec def insert(
-          rest: List[((Int, Int), List[Hit])],
-          ls: Vector[String],
+          rest: List[((com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part1, com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part2), List[Hit])],
+          ls: Vector[com.histmersion.api.research.CritiquePairing.RepairInsertLs],
           acc: List[Hit]
-      ): (Vector[String], List[Hit]) =
+      ): (Vector[com.histmersion.api.research.CritiquePairing.RepairInsertResultPart1], List[Hit]) =
         rest match
           case Nil                      => (ls, acc)
           case ((from, to), xs) :: tail =>

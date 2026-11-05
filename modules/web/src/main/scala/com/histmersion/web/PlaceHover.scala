@@ -20,6 +20,9 @@ import org.scalajs.dom
 object PlaceHover:
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
+  type BindChooseResult = BindChooseResult.T
+  object BindChooseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LastX = LastX.T
   object LastX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastY = LastY.T
@@ -209,7 +212,7 @@ object PlaceHover:
     */
   def bind(m: DomMarker, id: com.histmersion.web.PlaceHover.BindId, label: com.histmersion.web.PlaceHover.BindLabel, kind: com.histmersion.web.PlaceHover.BindKind, asOf: () => Option[com.histmersion.web.PlaceHover.BindAsOfResult]): Unit =
     def target = Preview.Target.Place(id, asOf())
-    def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
+    def choose(): com.histmersion.web.PlaceHover.BindChooseResult = PlacesInput.toggleFromMap(id, label, kind)
     m.handlers = new MarkerHandlers:
       override def over(e: dom.MouseEvent): Unit = hoverIn(e, Some(target))
       override def move(e: dom.MouseEvent): Unit = hoverMove(e)

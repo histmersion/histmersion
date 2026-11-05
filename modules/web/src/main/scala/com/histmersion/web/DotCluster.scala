@@ -10,6 +10,13 @@ import com.histmersion.api.library.GeoHit
 object DotCluster:
 
   /** A bubble's content: what its markers hold. */
+  type BubbleHtmlRingCls = BubbleHtmlRingCls.T
+  object BubbleHtmlRingCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BubbleHtmlRingOut = BubbleHtmlRingOut.T
+  object BubbleHtmlRingOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BubbleHtmlRingExtra = BubbleHtmlRingExtra.T
+  object BubbleHtmlRingExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SummaryResult = SummaryResult.T
   object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SummaryCountsPart2 = SummaryCountsPart2.T
@@ -144,7 +151,7 @@ object DotCluster:
     val r = d / 2.0
     // the disc and its rings, each `out` px beyond the disc's edge: circles, or (events only) rounded
     // squares whose corners round by the same distance out — concentric either way
-    def ring(cls: String, out: Double, extra: String = "") = form match
+    def ring(cls: com.histmersion.web.DotCluster.BubbleHtmlRingCls, out: com.histmersion.web.DotCluster.BubbleHtmlRingOut, extra: com.histmersion.web.DotCluster.BubbleHtmlRingExtra = "") = form match
       case BubbleForm.Events =>
         val h = r + out
         s"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""

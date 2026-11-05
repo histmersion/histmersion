@@ -686,7 +686,7 @@ final class AcquisitionControllers(
         stored(Acquire.citekey(item.creator, item.year, item.title), item.creator, item.year, item.title)
       )
     Citekey.parse(rawCitekey).left.map(Write.invalid).flatMap { validCk =>
-      val citekey: String = validCk.value
+      val citekey: com.histmersion.domain.library.Citekey = validCk.value
       steps += Ingest.Step(
         "metadata",
         true,

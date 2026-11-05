@@ -13,6 +13,15 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 object Storage:
 
+  type UnderNormP = UnderNormP.T
+  object UnderNormP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownWalkResultPart2 = ShownWalkResultPart2.T
+  object ShownWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownWalkDepth = ShownWalkDepth.T
+  object ShownWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownWalkSeen = ShownWalkSeen.T
+  object ShownWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DefaultLowFreeBytes = DefaultLowFreeBytes.T
   object DefaultLowFreeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderResult = UnderResult.T
@@ -35,7 +44,7 @@ object Storage:
   val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = 10L * 1000 * 1000 * 1000
 
   def under(child: com.histmersion.api.maintenance.Storage.UnderChild, parent: com.histmersion.api.maintenance.Storage.UnderParent): com.histmersion.api.maintenance.Storage.UnderResult =
-    def norm(p: String) = p.replace('\\', '/').stripSuffix("/")
+    def norm(p: com.histmersion.api.maintenance.Storage.UnderNormP) = p.replace('\\', '/').stripSuffix("/")
     val c = norm(child)
     val p = norm(parent)
     c == p || c.startsWith(p + "/")
@@ -110,7 +119,7 @@ object Storage:
   def shown(entries: List[Storage.Entry]): List[(Storage.Entry, com.histmersion.api.maintenance.Storage.ShownResultPart2)] =
     val present = entries.filter(_.exists)
     val keys = present.map(_.key).toSet
-    def walk(e: Storage.Entry, depth: Int, seen: Set[String]): List[(Storage.Entry, Int)] =
+    def walk(e: Storage.Entry, depth: com.histmersion.api.maintenance.Storage.ShownWalkDepth, seen: Set[com.histmersion.api.maintenance.Storage.ShownWalkSeen]): List[(Storage.Entry, com.histmersion.api.maintenance.Storage.ShownWalkResultPart2)] =
       (e, depth) :: present
         .filter(c => c.within.contains(e.key) && !seen.contains(c.key))
         .flatMap(c => walk(c, depth + 1, seen + e.key))

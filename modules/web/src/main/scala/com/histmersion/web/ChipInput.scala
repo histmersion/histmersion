@@ -18,6 +18,17 @@ import com.histmersion.api.library.{Facet, Label}
   */
 object ChipInput:
 
+  type ApplyTimer = ApplyTimer.T
+  object ApplyTimer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPreviewValue = ApplyPreviewValue.T
+  object ApplyPreviewValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPreviewV = ApplyPreviewV.T
+  object ApplyPreviewV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAddRaw = ApplyAddRaw.T
+  object ApplyAddRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRemoveAtI = ApplyRemoveAtI.T
+  object ApplyRemoveAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Seq = Seq.T
   object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyValues = ApplyValues.T
@@ -80,13 +91,13 @@ object ChipInput:
     val active = Var(-1)
     val menuHidden = Var(true)
 
-    var timer: Int = 0
+    var timer: com.histmersion.web.ChipInput.ApplyTimer = 0
     // the suggestions request a late answer must belong to
     val latest = Latest()
     var inputEl: dom.HTMLInputElement = null
-    var previewValue: Option[String] = None
+    var previewValue: Option[com.histmersion.web.ChipInput.ApplyPreviewValue] = None
 
-    def preview(v: Option[String]): Unit =
+    def preview(v: Option[com.histmersion.web.ChipInput.ApplyPreviewV]): Unit =
       if previewValue != v then
         previewValue = v
         config.onPreview(v)
@@ -133,7 +144,7 @@ object ChipInput:
       if timer != 0 then dom.window.clearTimeout(timer)
       timer = dom.window.setTimeout(() => suggest(), config.debounceMs.toDouble).toInt
 
-    def add(raw: String): Unit =
+    def add(raw: com.histmersion.web.ChipInput.ApplyAddRaw): Unit =
       val v = Option(raw).getOrElse("").trim
       if inputEl != null then inputEl.value = ""
       menuHidden.set(true)
@@ -146,7 +157,7 @@ object ChipInput:
       // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
       endPreview()
 
-    def removeAt(i: Int): Unit =
+    def removeAt(i: com.histmersion.web.ChipInput.ApplyRemoveAtI): Unit =
       config.onChange(values.now().zipWithIndex.collect { case (v, j) if j != i => v })
 
     div(

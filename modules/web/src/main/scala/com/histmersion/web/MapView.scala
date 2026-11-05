@@ -21,6 +21,19 @@ import com.histmersion.api.library.Source
 
 object MapView:
 
+  type AvgMidLoopResult = AvgMidLoopResult.T
+  object AvgMidLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AvgMidLoopSum = AvgMidLoopSum.T
+  object AvgMidLoopSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AvgMidLoopN = AvgMidLoopN.T
+  object AvgMidLoopN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampEndsNormResult = RampEndsNormResult.T
+  object RampEndsNormResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampEndsNormV = RampEndsNormV.T
+  object RampEndsNormV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadOverlayColorOfResult = LoadOverlayColorOfResult.T
+  object LoadOverlayColorOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Radius = Radius.T
   object Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentSpanPart1 = CurrentSpanPart1.T
@@ -449,7 +462,7 @@ object MapView:
 
   private[web] def avgMid(items: Iterable[GeoHit]): Option[com.histmersion.web.MapView.AvgMidResult] =
     val points = items.iterator
-    @tailrec def loop(sum: Double, n: Int): Option[Double] =
+    @tailrec def loop(sum: com.histmersion.web.MapView.AvgMidLoopSum, n: com.histmersion.web.MapView.AvgMidLoopN): Option[com.histmersion.web.MapView.AvgMidLoopResult] =
       if points.hasNext then
         midOf(points.next()) match
           case Some(m) => loop(sum + m, n + 1)
@@ -503,7 +516,7 @@ object MapView:
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
-        def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
+        def norm(v: com.histmersion.web.MapView.RampEndsNormV): com.histmersion.web.MapView.RampEndsNormResult = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
         (Certainty.desaturate(Fmt.color(norm(lo)), certainty), Certainty.desaturate(Fmt.color(norm(hi)), certainty))
 
   private def radiusFor(n: com.histmersion.web.MapView.RadiusForN): com.histmersion.web.MapView.RadiusForResult =
@@ -970,7 +983,7 @@ object MapView:
           // largest first, so small polities sit on top and stay hoverable
           val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
           def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
-          def colorOf(f: js.Dynamic): String =
+          def colorOf(f: js.Dynamic): com.histmersion.web.MapView.LoadOverlayColorOfResult =
             viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
           def byFindings(f: js.Dynamic) =
             dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)

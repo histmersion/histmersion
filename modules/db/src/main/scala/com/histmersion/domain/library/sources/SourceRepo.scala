@@ -28,6 +28,9 @@ import com.histmersion.api.Api
   */
 private[sources] object SourceRepo:
 
+  type RenameInTakenCk = RenameInTakenCk.T
+  object RenameInTakenCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NamingResult = NamingResult.T
   object NamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NamingName = NamingName.T
@@ -563,7 +566,7 @@ private[sources] object SourceRepo:
       DbCon
   ): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
-    def taken(ck: String) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+    def taken(ck: com.histmersion.domain.library.sources.SourceRepo.RenameInTakenCk) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
       sql"SELECT id FROM findings WHERE left(id, ${newCk.length + 1}) = ${newCk + "#"} LIMIT 1"
         .query[String]

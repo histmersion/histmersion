@@ -378,7 +378,7 @@ object RunService:
 
     /** Whether `r` passes every filter of `q` but `except`'s. */
     private def matches(q: RunQuery, except: com.histmersion.domain.automation.agents.RunService.InMemory.MatchesExcept)(r: JobRunState): com.histmersion.domain.automation.agents.RunService.InMemory.MatchesResult =
-      def any(name: String, vs: List[String], v: => Option[String]) =
+      def any(name: com.histmersion.domain.automation.agents.RunService.InMemory.MatchesAnyName, vs: List[com.histmersion.domain.automation.agents.RunService.InMemory.MatchesAnyVs], v: => Option[String]) =
         except == name || vs.isEmpty || v.exists(vs.contains)
       any("status", q.status, Some(r.row.status)) &&
       any("pipeline", q.pipelines, Some(r.row.pipeline)) &&
@@ -417,7 +417,7 @@ object RunService:
     private def facet(values: List[com.histmersion.domain.automation.agents.RunService.InMemory.FacetValues]): List[(com.histmersion.domain.automation.agents.RunService.InMemory.FacetResultPart1, com.histmersion.domain.automation.agents.RunService.InMemory.FacetResultPart2)] =
       values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax)
     def runFacets(q: RunQuery): (List[(com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsResultPart1Part1, com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsResultPart1Part2)], List[(com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsResultPart2Part1, List[(com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsResultPart2Part2Part1, com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsResultPart2Part2Part2)])]) =
-      def of(except: String) = runs.filter(matches(q, except))
+      def of(except: com.histmersion.domain.automation.agents.RunService.InMemory.RunFacetsOfExcept) = runs.filter(matches(q, except))
       (
         facet(of("status").map(_.row.status)),
         List(
@@ -532,6 +532,13 @@ object RunService:
           .count(_.createdAt.isBefore(cut))
 
   object InMemory:
+    type MatchesAnyName = MatchesAnyName.T
+    object MatchesAnyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MatchesAnyVs = MatchesAnyVs.T
+    object MatchesAnyVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunFacetsOfExcept = RunFacetsOfExcept.T
+    object RunFacetsOfExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TextResult = TextResult.T
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type KeyResultPart2 = KeyResultPart2.T

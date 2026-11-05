@@ -11,6 +11,19 @@ import com.histmersion.api.given
 
 object PeriodO:
 
+  type ParseStringsResultPart1 = ParseStringsResultPart1.T
+  object ParseStringsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStringsResultPart2 = ParseStringsResultPart2.T
+  object ParseStringsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStringsKey = ParseStringsKey.T
+  object ParseStringsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefinitionSkipDetail = DefinitionSkipDetail.T
+  object DefinitionSkipDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefinitionOutsideY = DefinitionOutsideY.T
+  object DefinitionOutsideY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentsFirstVisitPath = ParentsFirstVisitPath.T
+  object ParentsFirstVisitPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsoYearResult = IsoYearResult.T
   object IsoYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsoYearRaw = IsoYearRaw.T
@@ -76,7 +89,7 @@ object PeriodO:
     io.circe.parser.parse(json).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
-      def strings(key: String): List[(String, String)] = overlay
+      def strings(key: com.histmersion.api.catalogue.PeriodO.ParseStringsKey): List[(com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1, com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2)] = overlay
         .downField(key)
         .focus
         .flatMap(_.asObject)
@@ -188,8 +201,8 @@ object PeriodO:
         .filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
-    def skip(reason: Period.Skip, detail: String) = Left(SkippedPeriod(id, label, reason, detail))
-    def outside(y: Long) = y < MinYear || y > MaxYear
+    def skip(reason: Period.Skip, detail: com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail) = Left(SkippedPeriod(id, label, reason, detail))
+    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = y < MinYear || y > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, s"$s → $e lies outside $MinYear..$MaxYear")
@@ -248,7 +261,7 @@ object PeriodO:
   private[api] def parentsFirst(rows: List[HistoricalPeriod]): List[HistoricalPeriod] =
     val byId = rows.map(r => r.id -> r).toMap
     val out = scala.collection.mutable.LinkedHashMap.empty[String, HistoricalPeriod]
-    def visit(r: HistoricalPeriod, path: Set[String]): Unit =
+    def visit(r: HistoricalPeriod, path: Set[com.histmersion.api.catalogue.PeriodO.ParentsFirstVisitPath]): Unit =
       if !out.contains(r.id) then
         val parent = r.parentId.flatMap(byId.get)
         parent match

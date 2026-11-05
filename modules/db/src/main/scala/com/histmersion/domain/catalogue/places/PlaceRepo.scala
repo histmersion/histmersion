@@ -32,6 +32,15 @@ import com.histmersion.api.Api
   */
 private[places] object PlaceRepo:
 
+  type SearchRanked = SearchRanked.T
+  object SearchRanked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordOfArrayKey = RecordOfArrayKey.T
+  object RecordOfArrayKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonTimeQueryRankL = GeoJsonTimeQueryRankL.T
+  object GeoJsonTimeQueryRankL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameInExistsI = RenameInExistsI.T
+  object RenameInExistsI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SuppressedResult = SuppressedResult.T
   object SuppressedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SuppressedIds = SuppressedIds.T
@@ -380,7 +389,7 @@ private[places] object PlaceRepo:
                        ${SqlLiteral(Geocoder.tierSql)},
                        fc.n DESC, length(p.label), p.id
               LIMIT $n""").query[String].run()
-    val ranked: Vector[String] =
+    val ranked: Vector[com.histmersion.domain.catalogue.places.PlaceRepo.SearchRanked] =
       if byPrefix.size >= n then byPrefix
       else
         // `cand` first (#1064): with GeoNames and Wikidata in, the gazetteer holds ~1.5 M places
@@ -490,7 +499,7 @@ private[places] object PlaceRepo:
   private def recordOf(id: com.histmersion.domain.catalogue.places.PlaceRepo.RecordOfId)(using DbCon): com.histmersion.api.catalogue.Place.Record =
     val dateSource =
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
-    def array(key: String) =
+    def array(key: com.histmersion.domain.catalogue.places.PlaceRepo.RecordOfArrayKey) =
       s"CASE WHEN jsonb_typeof(p.properties->'$key') = 'array' THEN p.properties->'$key' ELSE '[]'::jsonb END"
     val periods = Sql
       .of(
@@ -778,7 +787,7 @@ private[places] object PlaceRepo:
     // what was there then before what is merely shown then: among equal areas (every point) a dated
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
     // 4 000 Natural Earth cities would otherwise take the whole site limit by id
-    def rank(l: String) =
+    def rank(l: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryRankL) =
       s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
@@ -1102,7 +1111,7 @@ private[places] object PlaceRepo:
     * follows a rename made in the other collection, #888).
     */
   private[places] def renameIn(oldId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameInOldId, newId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameInNewId)(using DbCon): Either[Api.Error, Unit] =
-    def exists(i: String) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
+    def exists(i: com.histmersion.domain.catalogue.places.PlaceRepo.RenameInExistsI) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(Api.Error(s"No place '$oldId'", Some(Write.CodeNotFound)))
     else if exists(newId) then Left(Api.Error(s"'$newId' is already the id of another place", Some(Write.CodeInvalid)))

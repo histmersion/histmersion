@@ -24,6 +24,19 @@ import com.histmersion.api.media.MediaProvider
 object DataSection:
 
   /** What Histmersion's files take, as a share of the free space left on the disk, 0–100. Pure. */
+  type PaneActText = PaneActText.T
+  object PaneActText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneActWhat = PaneActWhat.T
+  object PaneActWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneActPrimary = PaneActPrimary.T
+  object PaneActPrimary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapsActText = MapsActText.T
+  object MapsActText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapsActWhat = MapsActWhat.T
+  object MapsActWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapsActPrimary = MapsActPrimary.T
+  object MapsActPrimary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ShareResult = ShareResult.T
   object ShareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShareUsed = ShareUsed.T
@@ -55,7 +68,7 @@ object DataSection:
       ApiClient.placeSources().foreach(sources.set)
       ApiClient.eventCatalogues().foreach(cats.set)
       ApiClient.mediaProviders().foreach(media.set)
-    def act(text: String, what: String, job: => Future[JobInfo], primary: Boolean = false): HtmlElement =
+    def act(text: com.histmersion.web.settings.DataSection.PaneActText, what: com.histmersion.web.settings.DataSection.PaneActWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.PaneActPrimary = false): HtmlElement =
       starter.act(text, what, job, primary)
     div(
       cls := "settings-section data-section",
@@ -228,7 +241,7 @@ object DataSection:
     object FollowN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def maps(b: Basemap.Status, starter: Starter): List[HtmlElement] =
-    def act(text: String, what: String, job: => Future[JobInfo], primary: Boolean) =
+    def act(text: com.histmersion.web.settings.DataSection.MapsActText, what: com.histmersion.web.settings.DataSection.MapsActWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.MapsActPrimary) =
       starter.act(text, what, job, primary)
     val main =
       b.layers.filter(l =>

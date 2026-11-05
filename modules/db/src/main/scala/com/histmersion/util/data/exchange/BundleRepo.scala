@@ -23,6 +23,13 @@ object BundleRepo:
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
+  type ReferenceDigestResultPart1 = ReferenceDigestResultPart1.T
+  object ReferenceDigestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceDigestResultPart2 = ReferenceDigestResultPart2.T
+  object ReferenceDigestResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceDigestTable = ReferenceDigestTable.T
+  object ReferenceDigestTable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SetLabelLabel = SetLabelLabel.T
   object SetLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchemaVersionResult = SchemaVersionResult.T
@@ -42,7 +49,7 @@ object BundleRepo:
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
   private[histmersion] def reference(using DbCon): com.histmersion.api.exchange.Bundle.Reference =
     // the SEED rows only: a place or period of this collection's own travels in the bundle itself
-    def digest(table: String): (Int, String) =
+    def digest(table: com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestTable): (com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestResultPart1, com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestResultPart2) =
       Sql
         .raw(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
                   FROM $table WHERE dataset = 'seed'""")

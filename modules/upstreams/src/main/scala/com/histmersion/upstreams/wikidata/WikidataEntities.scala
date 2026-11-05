@@ -10,6 +10,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 object WikidataEntities:
 
   /** The Commons category property. */
+  type ItemsStatementsOfP = ItemsStatementsOfP.T
+  object ItemsStatementsOfP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EncResult = EncResult.T
   object EncResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncS = EncS.T
@@ -55,7 +58,7 @@ object WikidataEntities:
           if e.downField("missing").focus.isDefined then None
           else
             val claims = e.downField("claims").focus.flatMap(_.asObject)
-            def statementsOf(p: String): List[WikidataStatement] =
+            def statementsOf(p: com.histmersion.upstreams.wikidata.WikidataEntities.ItemsStatementsOfP): List[WikidataStatement] =
               claims.flatMap(_(p)).flatMap(_.asArray).toList.flatten.zipWithIndex.flatMap { (st, i) =>
                 val s = st.hcursor
                 val rank = s.get[String]("rank").getOrElse("normal")

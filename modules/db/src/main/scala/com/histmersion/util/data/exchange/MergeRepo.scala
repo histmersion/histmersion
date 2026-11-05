@@ -31,6 +31,9 @@ import com.histmersion.api.Api
   */
 object MergeRepo:
 
+  type LedgerAsUidS = LedgerAsUidS.T
+  object LedgerAsUidS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ListLimit = ListLimit.T
   object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindIdOrPrefix = FindIdOrPrefix.T
@@ -156,7 +159,7 @@ object MergeRepo:
     val label = rules.ledgerLabelSql
     val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
                             l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
-    def asUid(s: String): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
+    def asUid(s: com.histmersion.util.data.exchange.MergeRepo.LedgerAsUidS): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
     val target: Either[Api.Error, Option[UUID]] = uid.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(u) =>

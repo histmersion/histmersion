@@ -9,6 +9,11 @@ object SettingEdit:
   /** A change as a person or a client gives it — the key as typed, the value as typed and read as the setting's kind
     * (`None`: take it out). An unknown key is left to [[SettingPolicy]], which refuses it by name.
     */
+  type ParseAllLoopRestPart1 = ParseAllLoopRestPart1.T
+  object ParseAllLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseAllLoopRestPart2 = ParseAllLoopRestPart2.T
+  object ParseAllLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseKey = ParseKey.T
   object ParseKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseValue = ParseValue.T
@@ -31,7 +36,7 @@ object SettingEdit:
   /** Every change of `changes` parsed, the first refusal ending it. */
   def parseAll(changes: List[(com.histmersion.config.edit.SettingEdit.ParseAllChangesPart1, Option[com.histmersion.config.edit.SettingEdit.ParseAllChangesPart2])], schema: ConfigSchema): Either[SettingError, List[SettingEdit]] =
     @scala.annotation.tailrec
-    def loop(rest: List[(String, Option[String])], acc: List[SettingEdit]): Either[SettingError, List[SettingEdit]] =
+    def loop(rest: List[(com.histmersion.config.edit.SettingEdit.ParseAllLoopRestPart1, Option[com.histmersion.config.edit.SettingEdit.ParseAllLoopRestPart2])], acc: List[SettingEdit]): Either[SettingError, List[SettingEdit]] =
       rest match
         case Nil            => Right(acc.reverse)
         case (k, v) :: tail =>

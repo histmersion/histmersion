@@ -16,6 +16,17 @@ import sttp.apispec.circe.*
 object ClaudeCode:
 
   /** The MCP server's name as the CLI sees it; its tools are `mcp__histmersion__<tool>`. */
+  type ParseModel = ParseModel.T
+  object ParseModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseServedPart1 = ParseServedPart1.T
+  object ParseServedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseMcpProblem = ParseMcpProblem.T
+  object ParseMcpProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFirstCall = ParseFirstCall.T
+  object ParseFirstCall extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStripN = ParseStripN.T
+  object ParseStripN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ToolIdResult = ToolIdResult.T
   object ToolIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToolIdName = ToolIdName.T
@@ -366,13 +377,13 @@ object ClaudeCode:
     val pending = scala.collection.mutable.LinkedHashMap.empty[String, ToolCall]
     var result: Option[Result] = None
     var usage: Option[TokenUsage] = None
-    var model: Option[String] = None
-    var served: List[(String, TokenUsage)] = Nil
-    var mcpProblem: Option[String] = None
-    var firstCall: Option[Long] = None
+    var model: Option[com.histmersion.server.agents.ClaudeCode.ParseModel] = None
+    var served: List[(com.histmersion.server.agents.ClaudeCode.ParseServedPart1, TokenUsage)] = Nil
+    var mcpProblem: Option[com.histmersion.server.agents.ClaudeCode.ParseMcpProblem] = None
+    var firstCall: Option[com.histmersion.server.agents.ClaudeCode.ParseFirstCall] = None
     val readings = List.newBuilder[com.histmersion.api.automation.PlanQuota.Reading]
     val now = System.currentTimeMillis()
-    def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
+    def strip(n: com.histmersion.server.agents.ClaudeCode.ParseStripN) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
       val c = e.hcursor
       c.downField("type").as[String].getOrElse("") match

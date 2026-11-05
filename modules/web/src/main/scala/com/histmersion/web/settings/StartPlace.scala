@@ -17,6 +17,9 @@ import com.histmersion.api.catalogue.Place
 object StartPlace:
 
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
+  type ChooserSearchQ = ChooserSearchQ.T
+  object ChooserSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ZoomForResult = ZoomForResult.T
   object ZoomForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ViewOfResultPart2 = ViewOfResultPart2.T
@@ -66,7 +69,7 @@ object StartPlace:
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
-    def search(q: String): Unit =
+    def search(q: com.histmersion.web.settings.StartPlace.ChooserSearchQ): Unit =
       query.set(q)
       if q.trim.length >= 2 then
         ApiClient.places(Some(q.trim), None, Some(6)).foreach(hs => if query.now() == q then hits.set(hs))

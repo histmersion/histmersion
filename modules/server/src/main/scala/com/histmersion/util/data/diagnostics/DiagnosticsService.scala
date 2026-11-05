@@ -22,6 +22,9 @@ trait DiagnosticsService:
   def ownerTables: List[(DataOwner, ByteCount)]
 
 object DiagnosticsService:
+  type RegisteredNames = RegisteredNames.T
+  object RegisteredNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DatabaseSizeResultPart1 = DatabaseSizeResultPart1.T
   object DatabaseSizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LargestTablesN = LargestTablesN.T
@@ -44,7 +47,7 @@ object DiagnosticsService:
 
   /** The tables of `registry` in `sized` (every table by size, largest first), in that order. */
   private def registered(registry: DataContributions, sized: List[(com.histmersion.util.data.diagnostics.DiagnosticsService.RegisteredSizedPart1, com.histmersion.util.data.diagnostics.DiagnosticsService.RegisteredSizedPart2)]): List[(com.histmersion.util.data.diagnostics.DiagnosticsService.RegisteredResultPart1, com.histmersion.util.data.diagnostics.DiagnosticsService.RegisteredResultPart2)] =
-    val names: Set[String] = registry.tables.map(t => t._2.name.value: String).toSet
+    val names: Set[com.histmersion.util.data.diagnostics.DiagnosticsService.RegisteredNames] = registry.tables.map(t => t._2.name.value: String).toSet
     sized.filter((name, _) => names.contains(name))
 
   private def perOwner(registry: DataContributions, sized: List[(com.histmersion.util.data.diagnostics.DiagnosticsService.PerOwnerSizedPart1, com.histmersion.util.data.diagnostics.DiagnosticsService.PerOwnerSizedPart2)]): List[(DataOwner, ByteCount)] =

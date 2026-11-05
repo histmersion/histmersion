@@ -6,6 +6,21 @@ import com.histmersion.api.given
 
 object Lint:
 
+  type SuggestCommonPrefixResult = SuggestCommonPrefixResult.T
+  object SuggestCommonPrefixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestCommonPrefixA = SuggestCommonPrefixA.T
+  object SuggestCommonPrefixA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestCommonPrefixB = SuggestCommonPrefixB.T
+  object SuggestCommonPrefixB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsLeadIn = ExtractParagraphsLeadIn.T
+  object ExtractParagraphsLeadIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsSettleNextIsList = ExtractParagraphsSettleNextIsList.T
+  object ExtractParagraphsSettleNextIsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsIsListT = ExtractParagraphsIsListT.T
+  object ExtractParagraphsIsListT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsBlockNextIsList = ExtractParagraphsBlockNextIsList.T
+  object ExtractParagraphsBlockNextIsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Names = Names.T
   object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RuleName = RuleName.T
@@ -310,7 +325,7 @@ object Lint:
     val t = target.trim.toLowerCase
     if t.isEmpty || max <= 0 then Nil
     else
-      def commonPrefix(a: String, b: String): Int =
+      def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.SuggestCommonPrefixResult =
         val n = math.min(a.length, b.length)
         var i = 0
         while i < n && a.charAt(i) == b.charAt(i) do i += 1
@@ -426,16 +441,16 @@ object Lint:
     var inFence = false
     val paras = List.newBuilder[String]
     val current = new StringBuilder()
-    var leadIn: Option[String] = None
-    def settle(nextIsList: Boolean): Unit =
+    var leadIn: Option[com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn] = None
+    def settle(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList): Unit =
       leadIn.foreach(t => if !nextIsList then paras += t)
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
       if text.nonEmpty then if isListLeadIn(text) then leadIn = Some(text) else paras += text
       current.clear()
-    def isList(t: String) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
-    def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
+    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
+    def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
       if t.startsWith("```") then

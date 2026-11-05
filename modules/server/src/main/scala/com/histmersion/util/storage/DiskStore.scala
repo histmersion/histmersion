@@ -208,6 +208,9 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
 private[storage] object DiskStore:
 
   /** The files `rule` removes, oldest first. */
+  type PrunedLoopTotal = PrunedLoopTotal.T
+  object PrunedLoopTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PutBytes = PutBytes.T
   object PutBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteBytes = WriteBytes.T
@@ -239,7 +242,7 @@ private[storage] object DiskStore:
     rule match
       case PruneRule.OlderThan(cutoff)       => oldest.filter(_.modified.isBefore(cutoff))
       case PruneRule.LeastRecentlyUsed(keep) =>
-        @tailrec def loop(rest: List[Stored], total: Long, out: List[Stored]): List[Stored] = rest match
+        @tailrec def loop(rest: List[Stored], total: com.histmersion.util.storage.DiskStore.PrunedLoopTotal, out: List[Stored]): List[Stored] = rest match
           case s :: tail if total > keep.value => loop(tail, total - s.size.value, s :: out)
           case _                               => out.reverse
         loop(oldest, files.iterator.map(_.size.value).sum, Nil)
@@ -295,7 +298,7 @@ private[storage] object DiskStore:
     }
 
     private def withChannel[A](body: FileChannel => A): A =
-      def attempt(retry: Boolean): A =
+      def attempt(retry: com.histmersion.util.storage.DiskStore.ChannelReader.WithChannelAttemptRetry): A =
         val c = ch
         try body(c)
         catch
@@ -310,7 +313,7 @@ private[storage] object DiskStore:
 
     def read(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadResult = withChannel { c =>
       val buf = ByteBuffer.allocate(length)
-      @tailrec def loop(at: Long): Unit =
+      @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLoopAt): Unit =
         if buf.hasRemaining then
           val n = c.read(buf, at)
           if n < 0 then throw java.io.EOFException(s"$file ends before byte ${offset.value + length}")
@@ -321,7 +324,7 @@ private[storage] object DiskStore:
 
     def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToResult = withChannel { c =>
       val buf = ByteBuffer.allocate(length)
-      @tailrec def loop(at: Long): Unit =
+      @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLoopAt): Unit =
         if buf.hasRemaining then
           val n = c.read(buf, at)
           if n > 0 then loop(at + n)
@@ -332,6 +335,13 @@ private[storage] object DiskStore:
     def close(): Unit = synchronized { closed = true; ch.close() }
 
   object ChannelReader:
+    type WithChannelAttemptRetry = WithChannelAttemptRetry.T
+    object WithChannelAttemptRetry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadLoopAt = ReadLoopAt.T
+    object ReadLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadUpToLoopAt = ReadUpToLoopAt.T
+    object ReadUpToLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ReadResult = ReadResult.T
     object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadUpToResult = ReadUpToResult.T
@@ -359,7 +369,7 @@ private[storage] object DiskStore:
     def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtBytes): Unit =
       Using.resource(FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) { ch =>
         val buf = ByteBuffer.wrap(bytes)
-        @tailrec def loop(at: Long): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
+        @tailrec def loop(at: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtLoopAt): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
         loop(offset.value)
       }
 
@@ -391,6 +401,9 @@ private[storage] object DiskStore:
     private[util] def onDisk: Either[Store.Error, Path] = Right(file)
 
   object FileReservation:
+    type WriteAtLoopAt = WriteAtLoopAt.T
+    object WriteAtLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type WriteAtBytes = WriteAtBytes.T
     object WriteAtBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

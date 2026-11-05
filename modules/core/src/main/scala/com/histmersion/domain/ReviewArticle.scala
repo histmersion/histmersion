@@ -41,6 +41,35 @@ object ReviewArticle:
   // ── vocabularies ───────────────────────────────────────────────────────────────────────────────
 
   /** Who raised a finding. The prefix is the finding id's letter (`R3`, `C1`, `S2`, `M1`). */
+  type MechanicalFKind = MechanicalFKind.T
+  object MechanicalFKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalFWhere = MechanicalFWhere.T
+  object MechanicalFWhere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalFQuote = MechanicalFQuote.T
+  object MechanicalFQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalFProblem = MechanicalFProblem.T
+  object MechanicalFProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalFFix = MechanicalFFix.T
+  object MechanicalFFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoverageDriftKeysCks = CoverageDriftKeysCks.T
+  object CoverageDriftKeysCks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSpotChecksCheckedPart1 = CheckSpotChecksCheckedPart1.T
+  object CheckSpotChecksCheckedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimSentenceHasT = ClaimSentenceHasT.T
+  object ClaimSentenceHasT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCritiquesMinorWhy = CheckCritiquesMinorWhy.T
+  object CheckCritiquesMinorWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckChecksCheckedPart1 = CheckChecksCheckedPart1.T
+  object CheckChecksCheckedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodyLinksT = CheckBodyLinksT.T
+  object CheckBodyLinksT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetAsideHeldResultPart1 = CheckSetAsideHeldResultPart1.T
+  object CheckSetAsideHeldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetAsideHeldLabel = CheckSetAsideHeldLabel.T
+  object CheckSetAsideHeldLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetAsideHeldReason = CheckSetAsideHeldReason.T
+  object CheckSetAsideHeldReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ExplainSlots = ExplainSlots.T
   object ExplainSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChecksDescriptionResult = ChecksDescriptionResult.T
@@ -1229,7 +1258,7 @@ object ReviewArticle:
       generated: com.histmersion.domain.ReviewArticle.MechanicalGenerated = false
   ): List[Finding] =
     val hs = headings(body)
-    def f(sev: Severity, kind: String, where: String, quote: String, problem: String, fix: String) =
+    def f(sev: Severity, kind: com.histmersion.domain.ReviewArticle.MechanicalFKind, where: com.histmersion.domain.ReviewArticle.MechanicalFWhere, quote: com.histmersion.domain.ReviewArticle.MechanicalFQuote, problem: com.histmersion.domain.ReviewArticle.MechanicalFProblem, fix: com.histmersion.domain.ReviewArticle.MechanicalFFix) =
       (sev, kind, where, quote, problem, fix)
     val filler = Article.Lint
       .articleFiller(List(slug -> body))
@@ -1350,7 +1379,7 @@ object ReviewArticle:
     * returns, is minor (it is not shown).
     */
   def coverageDrift(c: Coverage, from: com.histmersion.domain.ReviewArticle.CoverageDriftFrom): List[Finding] =
-    def keys(cks: List[String]) =
+    def keys(cks: List[com.histmersion.domain.ReviewArticle.CoverageDriftKeysCks]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
       if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
     c.drift.zipWithIndex.map { (d, i) =>
@@ -1550,7 +1579,7 @@ object ReviewArticle:
       val claim = Option(a.claim).map(_.trim).getOrElse("")
       val verdict = Option(a.verdict).map(_.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse("")
       val label = s"spot-check ${i + 1} ([[$ck]])"
-      val checked: Either[String, SpotCheck] =
+      val checked: Either[com.histmersion.domain.ReviewArticle.CheckSpotChecksCheckedPart1, SpotCheck] =
         if ck.isEmpty then Left(s"spot-check ${i + 1}: no citekey")
         else if rule.cited.nonEmpty && !rule.cited.exists(_.equalsIgnoreCase(ck)) then
           Left(s"$label: the article does not cite it — check a source it cites")
@@ -1793,7 +1822,7 @@ object ReviewArticle:
     */
   def claimSentence(body: com.histmersion.domain.ReviewArticle.ClaimSentenceBody, quote: com.histmersion.domain.ReviewArticle.ClaimSentenceQuote, minRatio: com.histmersion.domain.ReviewArticle.ClaimSentenceMinRatio): Option[com.histmersion.domain.ReviewArticle.ClaimSentenceResult] =
     val q = Option(quote).map(_.trim).getOrElse("")
-    def has(t: String) = AgentVerify.findQuote(q, t, minRatio).accepted
+    def has(t: com.histmersion.domain.ReviewArticle.ClaimSentenceHasT) = AgentVerify.findQuote(q, t, minRatio).accepted
     if q.isEmpty then None
     else
       Critiques.paragraphs(body).find(has).map { p =>
@@ -1867,7 +1896,7 @@ object ReviewArticle:
       if !isMissingCritique(f) || !f.major then Right((f, None))
       else
         val label = s"${f.id} (missing-critique, major)"
-        def minor(g: Finding, why: String) =
+        def minor(g: Finding, why: com.histmersion.domain.ReviewArticle.CheckCritiquesMinorWhy) =
           Right((recordedMinor(g, why), Some(s"${r.wire}: $label — $why; recorded minor")))
         f.pair.flatMap(Critiques.find(rule.pairs, _)) match
           case Some(p) if p.open =>
@@ -2021,7 +2050,7 @@ object ReviewArticle:
       val id = Option(c.id).map(_.trim).getOrElse("")
       val q = Option(c.quote).map(_.trim).getOrElse("")
       val note = Option(c.note).map(_.trim).getOrElse("")
-      val checked: Either[String, Check] = byId.get(id) match
+      val checked: Either[com.histmersion.domain.ReviewArticle.CheckChecksCheckedPart1, Check] = byId.get(id) match
         case None if id.isEmpty =>
           Left(s"a check with no id — give the id of the finding it checks (${byId.keys.toList.sorted.mkString(", ")})")
         case None =>
@@ -2282,7 +2311,7 @@ object ReviewArticle:
       draft: Article.Edits.Draft,
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
-    def links(t: String) = AgentVerify.linkProblems(t, corpus.isCitekey, corpus.isTarget)
+    def links(t: com.histmersion.domain.ReviewArticle.CheckBodyLinksT) = AgentVerify.linkProblems(t, corpus.isCitekey, corpus.isTarget)
     val applied = draft match
       case Article.Edits.Draft.Edits(es) =>
         Article.Edits.applyAll(
@@ -2550,7 +2579,7 @@ object ReviewArticle:
       critiques: List[CritiquePair]
   ): (List[SetAside], List[CritiqueReason], List[com.histmersion.domain.ReviewArticle.CheckSetAsideResultPart3]) =
     def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
-    def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
+    def held(label: com.histmersion.domain.ReviewArticle.CheckSetAsideHeldLabel, r: CritiqueRef, reason: com.histmersion.domain.ReviewArticle.CheckSetAsideHeldReason): Either[com.histmersion.domain.ReviewArticle.CheckSetAsideHeldResultPart1, CritiquePair] =
       Critiques.find(critiques, r) match
         case None => Left(s"$label: ${r.wire} is not a pair of the article's critique checklist (no recorded edge)")
         case Some(_) if reason.isEmpty                          => Left(s"$label: give the reason")

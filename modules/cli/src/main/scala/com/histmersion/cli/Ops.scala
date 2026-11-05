@@ -26,6 +26,11 @@ object Ops:
   // ── queue argument grammar (pure) ────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
+  type WriteMetaFilesPart1 = WriteMetaFilesPart1.T
+  object WriteMetaFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteMetaFilesPart2ResultPart2 = WriteMetaFilesPart2ResultPart2.T
+  object WriteMetaFilesPart2ResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WriteMetaResultPart2 = WriteMetaResultPart2.T
   object WriteMetaResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadMetaResultPart2 = ReadMetaResultPart2.T
@@ -114,6 +119,13 @@ object Ops:
       object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object QueueArgs:
+    type ParseIdResultPart1 = ParseIdResultPart1.T
+    object ParseIdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseIdResultPart2 = ParseIdResultPart2.T
+    object ParseIdResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseIdS = ParseIdS.T
+    object ParseIdS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Usage = Usage.T
     object Usage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseResultPart1 = ParseResultPart1.T
@@ -153,7 +165,7 @@ object Ops:
         item: Option[com.histmersion.cli.Ops.QueueArgs.ParseItem] = None,
         noWait: com.histmersion.cli.Ops.QueueArgs.ParseNoWait = false
     ): Either[com.histmersion.cli.Ops.QueueArgs.ParseResultPart1, QueueCmd] =
-      def id(s: String): Either[String, Int] =
+      def id(s: com.histmersion.cli.Ops.QueueArgs.ParseIdS): Either[com.histmersion.cli.Ops.QueueArgs.ParseIdResultPart1, com.histmersion.cli.Ops.QueueArgs.ParseIdResultPart2] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
       val recheckFlags = dryRun || limit.isDefined || item.isDefined || noWait
       args match
@@ -189,7 +201,7 @@ object Ops:
     */
   def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[com.histmersion.cli.Ops.WriteMetaResultPart2]] =
     val _ = Files.createDirectories(dir)
-    val files: List[(String, () => Either[Cli.Error, String])] =
+    val files: List[(com.histmersion.cli.Ops.WriteMetaFilesPart1, () => Either[Cli.Error, com.histmersion.cli.Ops.WriteMetaFilesPart2ResultPart2])] =
       Queue.Kind.values.toList.map(k => k.file -> (() => c.queueExport(k.label))) :+
         (GoalsExport.File -> (() => c.goalsExport))
     files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>

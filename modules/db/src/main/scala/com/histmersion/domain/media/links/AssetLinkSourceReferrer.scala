@@ -26,7 +26,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val ck = source.citekey
-    def n(q: Frag): Int = q.query[Int].run().headOption.getOrElse(0)
+    def n(q: Frag): com.histmersion.domain.media.links.AssetLinkSourceReferrer.ReportNResult = q.query[Int].run().headOption.getOrElse(0)
     DeleteReport(counts =
       List(
         DeletePart.Assets -> n(sql"SELECT count(*)::int FROM assets WHERE citekey = $ck"),
@@ -50,5 +50,8 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       .toList
 
 object AssetLinkSourceReferrer:
+  type ReportNResult = ReportNResult.T
+  object ReportNResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LinksToResult = LinksToResult.T
   object LinksToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

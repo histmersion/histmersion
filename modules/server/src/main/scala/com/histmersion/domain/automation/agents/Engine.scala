@@ -349,7 +349,7 @@ final class Engine(
         if transition(id, RunState.Queued, RunState.Running).isDefined then
           val ctl = Control(Thread.currentThread())
           running.put(id, ctl)
-          val outcome: Either[Halt, String] =
+          val outcome: Either[Halt, com.histmersion.domain.automation.agents.Engine.ExecuteOutcomePart2] =
             try
               pipe match
                 case None                    => Left(Halt.Fail(s"no pipeline '${run.pipeline}' in this build"))
@@ -562,6 +562,13 @@ final class Engine(
   */
 object Engine:
   /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
+  type ExecuteOutcomePart2 = ExecuteOutcomePart2.T
+  object ExecuteOutcomePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswerProblemExcerptRaw = AnswerProblemExcerptRaw.T
+  object AnswerProblemExcerptRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswerProblemWhyResult = AnswerProblemWhyResult.T
+  object AnswerProblemWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PruneTraceResult = PruneTraceResult.T
   object PruneTraceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PruneTraceForce = PruneTraceForce.T
@@ -715,10 +722,10 @@ object Engine:
     * or, for no answer at all, how the call ended.
     */
   def answerProblem(f: AgentFailure, finish: FinishReason): com.histmersion.domain.automation.agents.Engine.AnswerProblemResult =
-    def excerpt(raw: String) =
+    def excerpt(raw: com.histmersion.domain.automation.agents.Engine.AnswerProblemExcerptRaw) =
       val r = raw.trim
       if r.isEmpty then "" else s" — the answer began: ${r.take(AnswerExcerpt)}"
-    def why(cause: Throwable): String = cause match
+    def why(cause: Throwable): com.histmersion.domain.automation.agents.Engine.AnswerProblemWhyResult = cause match
       case d: io.circe.DecodingFailure =>
         val path = io.circe.CursorOp.opsToPath(d.history)
         s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}"

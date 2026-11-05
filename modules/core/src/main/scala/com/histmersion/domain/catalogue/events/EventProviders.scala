@@ -42,6 +42,9 @@ object EventProviders:
       * classes, the most specific first: a naval battle is also a battle, and stays a naval battle whichever class is
       * read last); a kind not in `order` yields to one that is.
       */
+    type MoreSpecificRankK = MoreSpecificRankK.T
+    object MoreSpecificRankK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type MoreSpecificResult = MoreSpecificResult.T
     object MoreSpecificResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MoreSpecificOrder = MoreSpecificOrder.T
@@ -74,7 +77,7 @@ object EventProviders:
     object ClaimsProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def moreSpecific(order: List[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder], a: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificA, b: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificB): com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificResult =
-      def rank(k: String) = order.indexOf(EventTaxonomy.canonical(k)) match
+      def rank(k: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificRankK) = order.indexOf(EventTaxonomy.canonical(k)) match
         case -1 => Int.MaxValue
         case i  => i
       if rank(b) < rank(a) then b else a

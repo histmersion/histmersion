@@ -10,6 +10,15 @@ import com.histmersion.api.given
 
 object Queue:
 
+  type ApplyPatchClearableV = ApplyPatchClearableV.T
+  object ApplyPatchClearableV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPatchClearableOld = ApplyPatchClearableOld.T
+  object ApplyPatchClearableOld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePushSegment = ParsePushSegment.T
+  object ParsePushSegment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePushIndex = ParsePushIndex.T
+  object ParsePushIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Statuses = Statuses.T
   object Statuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusOfResultPart1 = StatusOfResultPart1.T
@@ -253,7 +262,7 @@ object Queue:
     (own ++ linked).groupBy(_._1).toList.sortBy(_._1).map((id, gs) => ItemGoals(id, gs.map(_._2).distinctBy(_.slug)))
 
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
-    def clearable(v: Option[String], old: Option[String]) = v.fold(old)(x => Some(x.trim).filter(_.nonEmpty))
+    def clearable(v: Option[com.histmersion.api.automation.Queue.ApplyPatchClearableV], old: Option[com.histmersion.api.automation.Queue.ApplyPatchClearableOld]) = v.fold(old)(x => Some(x.trim).filter(_.nonEmpty))
     val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
     val closedBy =
       if status != Done then None
@@ -304,7 +313,7 @@ object Queue:
 
     def flush(): Unit = { flushItem(); flushNote() }
 
-    def push(segment: String, index: Int): Unit =
+    def push(segment: com.histmersion.api.automation.Queue.ParsePushSegment, index: com.histmersion.api.automation.Queue.ParsePushIndex): Unit =
       val i = math.min(index, stack.length)
       stack = stack.take(i) :+ segment
 

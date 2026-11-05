@@ -163,7 +163,7 @@ final class OaBacklog(
       val shared = agents.autopilot.sharedIngestLeft(now)
       val sharedCap = Option.when(shared.isDefined)(agents.autopilot.ingestCap).filter(_ > 0)
       // a held item drains once released: counted in the backlog, not in the days (it waits for a person)
-      def lane(id: String, pending: Int): Lane =
+      def lane(id: com.histmersion.domain.library.workflows.OaBacklog.SnapshotLaneId, pending: com.histmersion.domain.library.workflows.OaBacklog.SnapshotLanePending): Lane =
         val perDay = light
           .get(id)
           .filter(_ => left.contains(id))
@@ -241,7 +241,7 @@ final class OaBacklog(
     val doi = i.target
     val w = i.state.oa.getOrElse(OaWork(doi))
     val goals = (w.goals ++ holderGoal.toList).distinct
-    def settle(status: ItemStatus, outcome: String, kind: String, text: String, d: Drained): Drained =
+    def settle(status: ItemStatus, outcome: com.histmersion.domain.library.workflows.OaBacklog.OneSettleOutcome, kind: com.histmersion.domain.library.workflows.OaBacklog.OneSettleKind, text: com.histmersion.domain.library.workflows.OaBacklog.OneSettleText, d: Drained): Drained =
       if agents.managerStore.settle(i.id, status, outcome, List(ItemStatus.Pending)) then
         agents.managerStore.event(i.managerId, Some(i.id), None, kind, text)
         d
@@ -509,6 +509,17 @@ object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),
     * and in all.
     */
+  type SnapshotLaneId = SnapshotLaneId.T
+  object SnapshotLaneId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotLanePending = SnapshotLanePending.T
+  object SnapshotLanePending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneSettleOutcome = OneSettleOutcome.T
+  object OneSettleOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneSettleKind = OneSettleKind.T
+  object OneSettleKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneSettleText = OneSettleText.T
+  object OneSettleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AddManagerId = AddManagerId.T
   object AddManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddGoal = AddGoal.T

@@ -2,6 +2,11 @@ package com.histmersion.upstreams.jats
 object Jats:
 
   // ── the tree ────────────────────────────────────────────────────────────────────────────────
+  type CitationFieldsPart1 = CitationFieldsPart1.T
+  object CitationFieldsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationFieldsPart2 = CitationFieldsPart2.T
+  object CitationFieldsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsJatsResult = IsJatsResult.T
   object IsJatsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsJatsXml = IsJatsXml.T
@@ -393,7 +398,7 @@ object Jats:
   private def citation(c: Elem): com.histmersion.upstreams.jats.Jats.CitationResult =
     if c.name != "element-citation" then runText(c)
     else
-      val fields: Vector[(String, String)] = c.elems.flatMap {
+      val fields: Vector[(com.histmersion.upstreams.jats.Jats.CitationFieldsPart1, com.histmersion.upstreams.jats.Jats.CitationFieldsPart2)] = c.elems.flatMap {
         case g if g.name == "person-group" =>
           val names = g.elems
             .flatMap {

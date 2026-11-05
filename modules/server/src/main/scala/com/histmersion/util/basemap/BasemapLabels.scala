@@ -26,6 +26,25 @@ object BasemapLabels:
   /** One name to place: a point (`line` empty) or a river's line (`line` its parts, lon/lat), shown from map zoom
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
     */
+  type WithinInLon = WithinInLon.T
+  object WithinInLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithinInLat = WithinInLat.T
+  object WithinInLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipTouchesAPart1 = ClipTouchesAPart1.T
+  object ClipTouchesAPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipTouchesAPart2 = ClipTouchesAPart2.T
+  object ClipTouchesAPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipTouchesBPart1 = ClipTouchesBPart1.T
+  object ClipTouchesBPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipTouchesBPart2 = ClipTouchesBPart2.T
+  object ClipTouchesBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesSlotZ = TilesSlotZ.T
+  object TilesSlotZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesSlotX = TilesSlotX.T
+  object TilesSlotX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesSlotY = TilesSlotY.T
+  object TilesSlotY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TilesResultPart2 = TilesResultPart2.T
   object TilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -360,7 +379,7 @@ object BasemapLabels:
 
   /** Does the label touch `b` (grown by `margin` degrees)? Pure. */
   def within(l: Label, b: BBox, margin: com.histmersion.util.basemap.BasemapLabels.WithinMargin = 1.0): com.histmersion.util.basemap.BasemapLabels.WithinResult =
-    def in(lon: Double, lat: Double) =
+    def in(lon: com.histmersion.util.basemap.BasemapLabels.WithinInLon, lat: com.histmersion.util.basemap.BasemapLabels.WithinInLat) =
       lon >= b.minLon - margin && lon <= b.maxLon + margin && lat >= b.minLat - margin && lat <= b.maxLat + margin
     if l.line.isEmpty then in(l.lon, l.lat) else l.line.exists(_.exists(in.tupled))
 
@@ -406,7 +425,7 @@ object BasemapLabels:
   def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.BasemapLabels.ClipX, y: com.histmersion.util.basemap.BasemapLabels.ClipY, buffer: com.histmersion.util.basemap.BasemapLabels.ClipBuffer): Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.ClipResultPart1, com.histmersion.util.basemap.BasemapLabels.ClipResultPart2)]] =
     val x0 = x * Extent - buffer; val y0 = y * Extent - buffer
     val x1 = (x + 1) * Extent + buffer; val y1 = (y + 1) * Extent + buffer
-    def touches(a: (Double, Double), b: (Double, Double)) =
+    def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart2)) =
       math.max(a._1, b._1) >= x0 && math.min(a._1, b._1) <= x1 && math.max(a._2, b._2) >= y0 && math.min(
         a._2,
         b._2
@@ -443,7 +462,7 @@ object BasemapLabels:
     type Features = mutable.ListBuffer[(Int, Vector[Int], List[(String, String | Long)])]
     // per tile id, its points and its lines, filled zoom by zoom
     val out = mutable.TreeMap.empty[Long, (Features, Features)]
-    def slot(z: Int, x: Long, y: Long) =
+    def slot(z: com.histmersion.util.basemap.BasemapLabels.TilesSlotZ, x: com.histmersion.util.basemap.BasemapLabels.TilesSlotX, y: com.histmersion.util.basemap.BasemapLabels.TilesSlotY) =
       out.getOrElseUpdate(PmTiles.tileId(z, x, y), (mutable.ListBuffer.empty, mutable.ListBuffer.empty))
     for z <- 0 to maxZoom do
       val n = 1L << z

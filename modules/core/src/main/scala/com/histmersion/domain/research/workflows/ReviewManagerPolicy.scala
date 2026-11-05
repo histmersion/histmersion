@@ -20,6 +20,9 @@ import com.histmersion.domain.automation.Run
 object ReviewManagerPolicy:
 
   /** A review manager's settings in effect: its saved config over research's defaults (`d`) and the engine's (`m`). */
+  type EvaluateReviewStopWhy = EvaluateReviewStopWhy.T
+  object EvaluateReviewStopWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NoProgressResult = NoProgressResult.T
   object NoProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoProgressN = NoProgressN.T
@@ -204,7 +207,7 @@ object ReviewManagerPolicy:
         val st = state.modify(_.history).setTo(state.history :+ mark).modify(_.before).setTo(None).modify(_.pairsBefore).setTo(None)
         val churn = f.onlyMissingCritiques && pairsStalled(st.history, s.noProgressRuns)
         val pairs = f.openPairs.fold("")(n => s", ${Plural.count(n, "open critique pair")}")
-        def stop(why: String) =
+        def stop(why: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewStopWhy) =
           val task = taskText.fold(s"review manager stopped [[$slug]]: $why (agent run ${run.take(8)})")(t =>
             s"$t — review manager stopped: $why"
           )

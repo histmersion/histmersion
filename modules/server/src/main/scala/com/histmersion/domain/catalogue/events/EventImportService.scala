@@ -152,16 +152,16 @@ object EventImportService:
       val applied = s.corrections.filter(c =>
         c.targetKind == Correction.Target.Event && c.targetId == id && Correction.Status.applied(c.status)
       )
-      def json(t: String) = io.circe.parser.parse(t).getOrElse(io.circe.Json.Null)
+      def json(t: com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshJsonT) = io.circe.parser.parse(t).getOrElse(io.circe.Json.Null)
       val outcomes = applied.flatMap(c =>
         now.get(c.field).map(up => (c, Corrections.reconcile(json(c.value), json(c.upstreamValue), up), up))
       )
       val keep = outcomes.collect {
         case (c, o, _) if o != Corrections.Outcome.Retire => c.field -> json(c.value)
       }.toMap
-      def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
+      def text(f: com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshTextF): Option[Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshTextResult]] = keep.get(f).map(_.asString)
       val spanKept = keep.contains(EventFields.Span)
-      val geom: Option[String] = keep.get(EventFields.Geometry) match
+      val geom: Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshGeom] = keep.get(EventFields.Geometry) match
         case Some(g) => Option.when(!g.isNull)(g.noSpaces)
         case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
       val refreshed = s
@@ -239,10 +239,10 @@ object EventImportService:
       val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
       val wd = recs.flatMap(_.wikidata).headOption
       val catalogue = s.events.find(_.id == eventId).map(_.catalogue)
-      def ownerIn(p: String): Option[CatalogRecord] =
+      def ownerIn(p: com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveOneOwnerInP): Option[CatalogRecord] =
         val storedKeys = s.catalogueRecords.filter(_._1 == eventId).map(_._2.key).toList
         CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
-      def refreshOrFill(p: String): (CatalogueState, Boolean, Option[Correction.Counts]) =
+      def refreshOrFill(p: com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveOneRefreshOrFillP): (CatalogueState, com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveOneRefreshOrFillResultPart2, Option[Correction.Counts]) =
         ownerIn(p).fold((fill(s, eventId, names, wd), false, None)) { r =>
           val (after, c) = refresh(s, eventId, r, names, wd)
           (after, false, Some(c))
@@ -264,10 +264,10 @@ object EventImportService:
     def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
       val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1)
       @tailrec def loop(
-          rest: List[(String, List[(CatalogRecord, CatalogMerge.Placement)])],
+          rest: List[(com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveLoopRestPart1, List[(CatalogRecord, CatalogMerge.Placement)])],
           s: CatalogueState,
-          created: Int,
-          updated: Int,
+          created: com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveLoopCreated,
+          updated: com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveLoopUpdated,
           counts: Correction.Counts
       ): (CatalogueState, EventSaved) = rest match
         case (eventId, group) :: tail =>
@@ -314,6 +314,27 @@ object EventImportService:
       val _ = state.updateAndGet(_.modify(_.importParts).using(_ - provider))
 
   object InMemory:
+    type RefreshJsonT = RefreshJsonT.T
+    object RefreshJsonT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshTextResult = RefreshTextResult.T
+    object RefreshTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshTextF = RefreshTextF.T
+    object RefreshTextF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshGeom = RefreshGeom.T
+    object RefreshGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveOneOwnerInP = SaveOneOwnerInP.T
+    object SaveOneOwnerInP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveOneRefreshOrFillResultPart2 = SaveOneRefreshOrFillResultPart2.T
+    object SaveOneRefreshOrFillResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveOneRefreshOrFillP = SaveOneRefreshOrFillP.T
+    object SaveOneRefreshOrFillP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveLoopRestPart1 = SaveLoopRestPart1.T
+    object SaveLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveLoopCreated = SaveLoopCreated.T
+    object SaveLoopCreated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveLoopUpdated = SaveLoopUpdated.T
+    object SaveLoopUpdated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type MergedResult = MergedResult.T
     object MergedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MergedNames = MergedNames.T

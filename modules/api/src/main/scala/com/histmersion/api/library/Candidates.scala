@@ -6,6 +6,15 @@ import com.histmersion.api.given
 
 object Candidates:
 
+  type ArxivWorksTagResult = ArxivWorksTagResult.T
+  object ArxivWorksTagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivWorksTagS = ArxivWorksTagS.T
+  object ArxivWorksTagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivWorksTagT = ArxivWorksTagT.T
+  object ArxivWorksTagT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivWorksUnescapeS = ArxivWorksUnescapeS.T
+  object ArxivWorksUnescapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Indexes = Indexes.T
   object Indexes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SinceWatermark = SinceWatermark.T
@@ -102,9 +111,9 @@ object Candidates:
     }
 
   def arxivWorks(atom: com.histmersion.api.library.Candidates.ArxivWorksAtom): List[WorkRef] =
-    def tag(s: String, t: String): Option[String] =
+    def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates.ArxivWorksTagResult] =
       s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn(s).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
-    def unescape(s: String) =
+    def unescape(s: com.histmersion.api.library.Candidates.ArxivWorksUnescapeS) =
       s.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
     "(?s)<entry>(.*?)</entry>".r.findAllMatchIn(atom).map(_.group(1)).toList.map { e =>
       val id = tag(e, "id").map(_.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))

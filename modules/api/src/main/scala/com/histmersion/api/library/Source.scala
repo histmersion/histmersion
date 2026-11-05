@@ -341,6 +341,13 @@ object Source:
     object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Kinds:
+    type IsbnDoiIsbnEndResult = IsbnDoiIsbnEndResult.T
+    object IsbnDoiIsbnEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsbnDoiIsbnEndI = IsbnDoiIsbnEndI.T
+    object IsbnDoiIsbnEndI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsbnDoiIsbnEndDigits = IsbnDoiIsbnEndDigits.T
+    object IsbnDoiIsbnEndDigits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type All = All.T
     object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfResult = OfResult.T
@@ -404,7 +411,7 @@ object Source:
       val suffix = doi.dropWhile(_ != '/').drop(1).toLowerCase(java.util.Locale.ROOT).stripPrefix("cbo")
       if !(suffix.startsWith("978") || suffix.startsWith("979")) then None
       else
-        @tailrec def isbnEnd(i: Int, digits: Int): Option[Int] =
+        @tailrec def isbnEnd(i: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI, digits: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits): Option[com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndResult] =
           if digits >= 13 then Some(i)
           else if i < suffix.length && suffix(i).isDigit then isbnEnd(i + 1, digits + 1)
           else if i < suffix.length && suffix(i) == '-' then isbnEnd(i + 1, digits)
@@ -603,6 +610,15 @@ object Source:
     * metadata checked, an old citekey in a patch followed to the current one.
     */
   object Write:
+
+    type AllocateLoopResultPart1 = AllocateLoopResultPart1.T
+    object AllocateLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllocateLoopUsed = AllocateLoopUsed.T
+    object AllocateLoopUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllocateLoopAccPart1 = AllocateLoopAccPart1.T
+    object AllocateLoopAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodOfSaneV = PeriodOfSaneV.T
+    object PeriodOfSaneV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type FindingIdResult = FindingIdResult.T
     object FindingIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -813,9 +829,9 @@ object Source:
     ): Either[com.histmersion.api.library.Source.Write.AllocateResultPart1, List[Finding]] =
       @tailrec def loop(
           rest: List[Finding.Input],
-          used: Set[String],
-          acc: List[Either[String, Finding]]
-      ): List[Either[String, Finding]] =
+          used: Set[com.histmersion.api.library.Source.Write.AllocateLoopUsed],
+          acc: List[Either[com.histmersion.api.library.Source.Write.AllocateLoopAccPart1, Finding]]
+      ): List[Either[com.histmersion.api.library.Source.Write.AllocateLoopResultPart1, Finding]] =
         rest match
           case Nil        => acc.reverse
           case in :: tail =>
@@ -845,7 +861,7 @@ object Source:
 
     /** Postgres rejects an inverted int8range. */
     private[api] def periodOf(start: Option[com.histmersion.api.library.Source.Write.PeriodOfStart], end: Option[com.histmersion.api.library.Source.Write.PeriodOfEnd], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.PeriodOfResultPart1, Option[Period]] =
-      def sane(v: Long) = v >= Filter.Earliest && v <= Filter.Latest
+      def sane(v: com.histmersion.api.library.Source.Write.PeriodOfSaneV) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
         case (Some(a), _) if !sane(a)     => Left(outOfRange(what, "period_start", a))
         case (_, Some(b)) if !sane(b)     => Left(outOfRange(what, "period_end", b))

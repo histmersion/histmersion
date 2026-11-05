@@ -82,7 +82,7 @@ object UiNotices:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult =
-      def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
+      def runs(n: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN) = if n == 1 then "1 run" else s"$n runs"
       if !on || (draining && running == 0) then "Agents paused"
       else if draining then s"Agents finishing current work · ${runs(running)}"
       else if running > 0 then s"Agents working · ${runs(running)}"
@@ -90,6 +90,9 @@ object UiNotices:
       else "Agents on · nothing to do"
 
   object AgentsGlance:
+    type WordingRunsN = WordingRunsN.T
+    object WordingRunsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type WordingResult = WordingResult.T
     object WordingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

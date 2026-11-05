@@ -17,6 +17,9 @@ import com.histmersion.api.automation.Manager
   */
 object WatchSchedules:
 
+  type MigrateGapResult = MigrateGapResult.T
+  object MigrateGapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def sweepOf(k: ScheduleKind): Sweep = k match
     case ScheduleKind.Currency    => Sweep.Currency
     case ScheduleKind.Acquisition => Sweep.Acquisition
@@ -61,7 +64,7 @@ object WatchSchedules:
     val base = existing.map(_.config).getOrElse(ManagerConfig(sweeps = Some(Nil)))
     val had = existing.fold(List.empty[Sweep])(e => Sweep.of(e.config))
     val sweeps = Sweep.values.toList.filter(s => had.contains(s) || on.exists(x => sweepOf(x.kind) == s))
-    def gap(s: GoalSchedule): Long =
+    def gap(s: GoalSchedule): com.histmersion.domain.WatchSchedules.MigrateGapResult =
       Cron.parse(s.cron).toOption.flatMap(_.shortestGapMinutes(now)).getOrElse(Long.MaxValue)
     val pick = (if on.nonEmpty then on else ordered).sortBy(s => (gap(s), s.kind.ordinal)).headOption
     val keepOwn = existing.flatMap(_.cron).isDefined

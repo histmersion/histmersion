@@ -2,6 +2,13 @@ package com.histmersion.api.media
 import com.histmersion.api.given
 object ImageSize:
 
+  type JpegSizeGoResultPart1 = JpegSizeGoResultPart1.T
+  object JpegSizeGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JpegSizeGoResultPart2 = JpegSizeGoResultPart2.T
+  object JpegSizeGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JpegSizeGoI = JpegSizeGoI.T
+  object JpegSizeGoI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfBytes = OfBytes.T
   object OfBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type U8B = U8B.T
@@ -95,7 +102,7 @@ object ImageSize:
     */
   private def jpegSize(b: com.histmersion.api.media.ImageSize.JpegSizeB): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSize.JpegSizeResultPart2)] =
     @annotation.tailrec
-    def go(i: Int): Option[(Int, Int)] =
+    def go(i: com.histmersion.api.media.ImageSize.JpegSizeGoI): Option[(com.histmersion.api.media.ImageSize.JpegSizeGoResultPart1, com.histmersion.api.media.ImageSize.JpegSizeGoResultPart2)] =
       if i + 9 >= b.length || u8(b, i) != 0xff then None
       else
         val marker = u8(b, i + 1)

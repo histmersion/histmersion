@@ -140,6 +140,9 @@ object ModelChains:
     def spec: LimitSpec = LimitSpec(amount.toDouble, measure, window.text)
 
   object Limit:
+    type ParseParsedPart1 = ParseParsedPart1.T
+    object ParseParsedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TextResult = TextResult.T
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CompactResult = CompactResult.T
@@ -182,7 +185,7 @@ object ModelChains:
         case i  =>
           val (lhs, win) = (t.substring(0, i).trim, t.substring(i + 1))
           val words = lhs.split("\\s+").toList.filter(_.nonEmpty)
-          val parsed: Either[String, (BigDecimal, Measure)] = words match
+          val parsed: Either[com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1, (BigDecimal, Measure)] = words match
             case List(a) if a.startsWith("$") => amount(a).map(_ -> Measure.Usd)
             case List(a, m)                   =>
               Measure.parse(m).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(a).map(_ -> me))

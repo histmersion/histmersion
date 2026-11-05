@@ -24,7 +24,7 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Lines]):
 
   /** The `leaf = ${?VAR}` lines directly under line `i`. */
   private def envLines(i: com.histmersion.config.edit.ReferenceDocs.EnvLinesI, leaf: com.histmersion.config.edit.ReferenceDocs.EnvLinesLeaf): List[com.histmersion.config.edit.ReferenceDocs.EnvLinesResult] =
-    @tailrec def loop(j: Int, acc: List[Int]): List[Int] =
+    @tailrec def loop(j: com.histmersion.config.edit.ReferenceDocs.EnvLinesLoopJ, acc: List[com.histmersion.config.edit.ReferenceDocs.EnvLinesLoopAcc]): List[com.histmersion.config.edit.ReferenceDocs.EnvLinesLoopResult] =
       if j >= lines.size then acc.reverse
       else
         EnvLine.findFirstMatchIn(content(lines(j))) match
@@ -36,20 +36,45 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Lines]):
 
   /** The comment-only lines right above line `i` that are not a continuation of the line above them. */
   private def leading(i: com.histmersion.config.edit.ReferenceDocs.LeadingI, indent: com.histmersion.config.edit.ReferenceDocs.LeadingIndent): List[com.histmersion.config.edit.ReferenceDocs.LeadingResult] =
-    @tailrec def loop(j: Int, acc: List[String]): List[String] =
+    @tailrec def loop(j: com.histmersion.config.edit.ReferenceDocs.LeadingLoopJ, acc: List[com.histmersion.config.edit.ReferenceDocs.LeadingLoopAcc]): List[com.histmersion.config.edit.ReferenceDocs.LeadingLoopResult] =
       if j < 0 || !isCommentOnly(lines(j)) || commentColumn(lines(j)) > indent + ContinuationIndent then acc
       else loop(j - 1, commentText(lines(j)) :: acc)
     loop(i - 1, Nil)
 
   /** The comment-only lines under line `i`, indented past the key: the end-of-line comment goes on there. */
   private def continuations(i: com.histmersion.config.edit.ReferenceDocs.ContinuationsI, indent: com.histmersion.config.edit.ReferenceDocs.ContinuationsIndent): List[com.histmersion.config.edit.ReferenceDocs.ContinuationsResult] =
-    @tailrec def loop(j: Int, acc: List[String]): List[String] =
+    @tailrec def loop(j: com.histmersion.config.edit.ReferenceDocs.ContinuationsLoopJ, acc: List[com.histmersion.config.edit.ReferenceDocs.ContinuationsLoopAcc]): List[com.histmersion.config.edit.ReferenceDocs.ContinuationsLoopResult] =
       if j >= lines.size || !isCommentOnly(lines(j)) || commentColumn(lines(j)) <= indent + ContinuationIndent then
         acc.reverse
       else loop(j + 1, commentText(lines(j)) :: acc)
     loop(i + 1, Nil)
 
 object ReferenceDocs:
+  type EnvLinesLoopResult = EnvLinesLoopResult.T
+  object EnvLinesLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvLinesLoopJ = EnvLinesLoopJ.T
+  object EnvLinesLoopJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvLinesLoopAcc = EnvLinesLoopAcc.T
+  object EnvLinesLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadingLoopResult = LeadingLoopResult.T
+  object LeadingLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadingLoopJ = LeadingLoopJ.T
+  object LeadingLoopJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadingLoopAcc = LeadingLoopAcc.T
+  object LeadingLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContinuationsLoopResult = ContinuationsLoopResult.T
+  object ContinuationsLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContinuationsLoopJ = ContinuationsLoopJ.T
+  object ContinuationsLoopJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContinuationsLoopAcc = ContinuationsLoopAcc.T
+  object ContinuationsLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommentStartLoopResult = CommentStartLoopResult.T
+  object CommentStartLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommentStartLoopI = CommentStartLoopI.T
+  object CommentStartLoopI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommentStartLoopQuoted = CommentStartLoopQuoted.T
+  object CommentStartLoopQuoted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Lines = Lines.T
   object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -129,7 +154,7 @@ object ReferenceDocs:
 
   /** Where the comment starts in `l` — `#` or `//` outside a quoted string — if it has one. */
   private def commentStart(l: com.histmersion.config.edit.ReferenceDocs.CommentStartL): Option[com.histmersion.config.edit.ReferenceDocs.CommentStartResult] =
-    @tailrec def loop(i: Int, quoted: Boolean): Option[Int] =
+    @tailrec def loop(i: com.histmersion.config.edit.ReferenceDocs.CommentStartLoopI, quoted: com.histmersion.config.edit.ReferenceDocs.CommentStartLoopQuoted): Option[com.histmersion.config.edit.ReferenceDocs.CommentStartLoopResult] =
       if i >= l.length then None
       else
         l.charAt(i) match

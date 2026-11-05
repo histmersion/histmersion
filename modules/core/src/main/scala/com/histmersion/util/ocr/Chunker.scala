@@ -17,6 +17,11 @@ package com.histmersion.util.ocr
   */
 object Chunker:
 
+  type ChunkBreadcrumbResult = ChunkBreadcrumbResult.T
+  object ChunkBreadcrumbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChunkEmitHeading = ChunkEmitHeading.T
+  object ChunkEmitHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ChunkMarkdown = ChunkMarkdown.T
   object ChunkMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChunkMaxChars = ChunkMaxChars.T
@@ -47,11 +52,11 @@ object Chunker:
       var stack = List.empty[(Int, String)]
       val buf = new StringBuilder
 
-      def breadcrumb: Option[String] =
+      def breadcrumb: Option[com.histmersion.util.ocr.Chunker.ChunkBreadcrumbResult] =
         val path = stack.reverse.map(_._2).filter(_.nonEmpty)
         if path.isEmpty then None else Some(path.mkString(" > "))
 
-      def emit(heading: Option[String]): Unit =
+      def emit(heading: Option[com.histmersion.util.ocr.Chunker.ChunkEmitHeading]): Unit =
         val section = buf.toString
         buf.clear()
         split(section, max).foreach { body =>

@@ -96,7 +96,7 @@ final class AgentDoctor(
       case (name, p) if !BuiltinAi.reserved(name) =>
         val kind = ProviderKind.Plugin(name)
         val models = chained.filter(_.provider == kind)
-        def safe[A](what: String, a: => A, orElse: String => A): A =
+        def safe[A](what: com.histmersion.server.agents.AgentDoctor.PluginsSafeWhat, a: => A, orElse: com.histmersion.server.agents.AgentDoctor.PluginsSafeOrElseArg1 => A): A =
           try a
           catch case scala.util.control.NonFatal(e) => orElse(s"$what threw ${e.getClass.getSimpleName}")
         val own = safe(
@@ -213,7 +213,7 @@ final class AgentDoctor(
           s"refused: the server listens on ${app.server.host}, beyond loopback — another client could spend your " +
             "Claude plan. Bind to 127.0.0.1 or set allow-non-loopback when every client is you"
         )
-    val childEnv: Map[String, Option[String]] =
+    val childEnv: Map[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart1, Option[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart2]] =
       (if cc.useApiKey then Map.empty else Map("ANTHROPIC_API_KEY" -> None, "ANTHROPIC_AUTH_TOKEN" -> None)) ++
         Option(cc.configDir.trim)
           .filter(_.nonEmpty)
@@ -345,6 +345,15 @@ object AgentDoctor:
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.
     */
+  type PluginsSafeWhat = PluginsSafeWhat.T
+  object PluginsSafeWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginsSafeOrElseArg1 = PluginsSafeOrElseArg1.T
+  object PluginsSafeOrElseArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeCodeChildEnvPart1 = ClaudeCodeChildEnvPart1.T
+  object ClaudeCodeChildEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeCodeChildEnvPart2 = ClaudeCodeChildEnvPart2.T
+  object ClaudeCodeChildEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListModelsArg1 = ListModelsArg1.T

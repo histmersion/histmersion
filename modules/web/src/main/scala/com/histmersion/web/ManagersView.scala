@@ -29,6 +29,41 @@ import com.histmersion.api.automation.Goal
 object ManagersView:
 
   /** Items per page, events per page. */
+  type ConfigGK = ConfigGK.T
+  object ConfigGK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigOnOffResultPart1 = ConfigOnOffResultPart1.T
+  object ConfigOnOffResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigOnOffResultPart2 = ConfigOnOffResultPart2.T
+  object ConfigOnOffResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigOnOffK = ConfigOnOffK.T
+  object ConfigOnOffK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigOnOffWhat = ConfigOnOffWhat.T
+  object ConfigOnOffWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusPanelGoWhat = FocusPanelGoWhat.T
+  object FocusPanelGoWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusPanelGoalLinkSlug = FocusPanelGoalLinkSlug.T
+  object FocusPanelGoalLinkSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AutopilotSectionDrainOn = AutopilotSectionDrainOn.T
+  object AutopilotSectionDrainOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AutopilotSectionFlipOn = AutopilotSectionFlipOn.T
+  object AutopilotSectionFlipOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchedulerSectionSwitchName = SchedulerSectionSwitchName.T
+  object SchedulerSectionSwitchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchedulerSectionOpenRunsManager = SchedulerSectionOpenRunsManager.T
+  object SchedulerSectionOpenRunsManager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneTimer = ManagerPaneTimer.T
+  object ManagerPaneTimer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneDelay = ManagerPaneDelay.T
+  object ManagerPaneDelay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneMounted = ManagerPaneMounted.T
+  object ManagerPaneMounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneExtended = ManagerPaneExtended.T
+  object ManagerPaneExtended extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneRefreshChanged = ManagerPaneRefreshChanged.T
+  object ManagerPaneRefreshChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneWriteWhat = ManagerPaneWriteWhat.T
+  object ManagerPaneWriteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BadgeResult = BadgeResult.T
   object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagerMeaningResult = ManagerMeaningResult.T
@@ -240,7 +275,7 @@ object ManagersView:
 
   /** The settings form → a config (blank fields are the server's defaults). Left = what does not parse. */
   def config(f: Map[com.histmersion.web.ManagersView.ConfigFPart1, com.histmersion.web.ManagersView.ConfigFPart2]): Either[com.histmersion.web.ManagersView.ConfigResultPart1, ManagerConfig] =
-    def g(k: String) = f.getOrElse(k, "").trim
+    def g(k: com.histmersion.web.ManagersView.ConfigGK) = f.getOrElse(k, "").trim
     val bad = List(
       "maxRuns",
       "maxOpen",
@@ -259,7 +294,7 @@ object ManagersView:
       "extendMinNew"
     )
       .filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
-    def onOff(k: String, what: String): Either[String, Option[Boolean]] = g(k).toLowerCase match
+    def onOff(k: com.histmersion.web.ManagersView.ConfigOnOffK, what: com.histmersion.web.ManagersView.ConfigOnOffWhat): Either[com.histmersion.web.ManagersView.ConfigOnOffResultPart1, Option[com.histmersion.web.ManagersView.ConfigOnOffResultPart2]] = g(k).toLowerCase match
       case ""                     => Right(None)
       case "true" | "on" | "yes"  => Right(Some(true))
       case "false" | "off" | "no" => Right(Some(false))
@@ -543,7 +578,7 @@ object ManagersView:
       failure: Var[Option[com.histmersion.web.ManagersView.FocusPanelFailure]]
   ): HtmlElement =
     val cap = Var(f.max.toString)
-    def go(what: String)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
+    def go(what: com.histmersion.web.ManagersView.FocusPanelGoWhat)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         call.onComplete(
@@ -559,7 +594,7 @@ object ManagersView:
         title := tip,
         onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug))))
       )
-    def goalLink(slug: String) = WinLink(WindowKey.Goal(slug), slug)
+    def goalLink(slug: com.histmersion.web.ManagersView.FocusPanelGoalLinkSlug) = WinLink(WindowKey.Goal(slug), slug)
     div(
       cls := "autopilot-focus",
       div(
@@ -665,13 +700,13 @@ object ManagersView:
     def load(): Unit = ApiClient.autopilot.onComplete(
       _.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) })
     )
-    def drain(on: Boolean): Unit =
+    def drain(on: com.histmersion.web.ManagersView.AutopilotSectionDrainOn): Unit =
       ApiClient
         .drain(on)
         .onComplete(
           _.fold(e => failure.set(Some(s"drain: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
         )
-    def flip(on: Boolean): Unit =
+    def flip(on: com.histmersion.web.ManagersView.AutopilotSectionFlipOn): Unit =
       pending.set(Some(on))
       ApiClient.setAutopilot(on).onComplete { r =>
         pending.set(None)
@@ -860,7 +895,7 @@ object ManagersView:
     def load(): Unit = ApiClient
       .scheduler(Some(300))
       .onComplete(_.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) }))
-    def switch(name: String): Unit =
+    def switch(name: com.histmersion.web.ManagersView.SchedulerSectionSwitchName): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         ApiClient
@@ -871,7 +906,7 @@ object ManagersView:
     val filters = List(UiState.schedTypes, UiState.schedCodes, UiState.schedSubject)
     val stalls = Var(Option.empty[Stalls.StallReport])
     val waiting = st.signal.map(_.fold(List.empty[AgentScheduler.Waiting])(_.waiting))
-    def openRuns(manager: String): Unit =
+    def openRuns(manager: com.histmersion.web.ManagersView.SchedulerSectionOpenRunsManager): Unit =
       UiState.set(UiState.runManager := Some(manager), UiState.runStatus := None)()
       WindowManager.open(WindowKey.Runs)
     div(
@@ -1145,15 +1180,15 @@ object ManagersView:
     val busy = Var(false)
     // `var`s local to this window: its pending poll, the delay, whether it is mounted, whether older
     // events were loaded (a poll then keeps them)
-    var timer: Int = 0
-    var delay: Option[Int] = None
-    var mounted: Boolean = false
-    var extended: Boolean = false
+    var timer: com.histmersion.web.ManagersView.ManagerPaneTimer = 0
+    var delay: Option[com.histmersion.web.ManagersView.ManagerPaneDelay] = None
+    var mounted: com.histmersion.web.ManagersView.ManagerPaneMounted = false
+    var extended: com.histmersion.web.ManagersView.ManagerPaneExtended = false
 
     def items(): Unit =
       ApiClient.managerItems(id, status.now(), offset.now(), ItemLimit).foreach(p => page.set(Some(p)))
 
-    def refresh(changed: Boolean): Unit =
+    def refresh(changed: com.histmersion.web.ManagersView.ManagerPaneRefreshChanged): Unit =
       dom.window.clearTimeout(timer)
       ApiClient.manager(id).onComplete { r =>
         if mounted then
@@ -1174,7 +1209,7 @@ object ManagersView:
       }
       items()
 
-    def write[A](what: String)(f: => scala.concurrent.Future[A]): Unit =
+    def write[A](what: com.histmersion.web.ManagersView.ManagerPaneWriteWhat)(f: => scala.concurrent.Future[A]): Unit =
       busy.set(true)
       f.onComplete { r =>
         busy.set(false)

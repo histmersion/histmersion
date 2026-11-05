@@ -21,6 +21,15 @@ object ManagerPolicy:
     * the enrich and seeding managers their run limits, failures and backoff (their items run once each: no rounds, no
     * refill).
     */
+  type RoundRobinGoQsPart2 = RoundRobinGoQsPart2.T
+  object RoundRobinGoQsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundRobinGoLeft = RoundRobinGoLeft.T
+  object RoundRobinGoLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesEqA = MatchesEqA.T
+  object MatchesEqA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesEqB = MatchesEqB.T
+  object MatchesEqB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CheckCronResultPart1 = CheckCronResultPart1.T
   object CheckCronResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckCronText = CheckCronText.T
@@ -481,7 +490,7 @@ object ManagerPolicy:
     */
   def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinQueuesPart2, List[A])], room: com.histmersion.domain.ManagerPolicy.RoundRobinRoom): List[(M, A)] =
     @annotation.tailrec
-    def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
+    def go(qs: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinGoQsPart2, List[A])], left: com.histmersion.domain.ManagerPolicy.RoundRobinGoLeft, acc: Vector[(M, A)]): Vector[(M, A)] =
       val live = qs.filter((_, cap, as) => cap > 0 && as.nonEmpty)
       if left <= 0 || live.isEmpty then acc
       else
@@ -537,7 +546,7 @@ object ManagerPolicy:
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
   def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.histmersion.domain.ManagerPolicy.MatchesTopics], goals: List[com.histmersion.domain.ManagerPolicy.MatchesGoals]): com.histmersion.domain.ManagerPolicy.MatchesResult =
-    def eq(a: String, b: String) = a.trim.equalsIgnoreCase(b.trim)
+    def eq(a: com.histmersion.domain.ManagerPolicy.MatchesEqA, b: com.histmersion.domain.ManagerPolicy.MatchesEqB) = a.trim.equalsIgnoreCase(b.trim)
     e.targets.exists(eq(_, target)) || e.tag.exists(t => tags.exists(eq(_, t))) ||
     e.topic.exists(t => topics.exists(eq(_, t))) || e.goal.exists(g => goals.exists(eq(_, g)))
 

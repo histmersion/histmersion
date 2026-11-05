@@ -196,9 +196,9 @@ final class PointSet[D](
   def zoomToShow(k: com.histmersion.web.map.PointSet.ZoomToShowK, andThen: () => Unit): Unit =
     val s = surface()
     items.get(k).foreach { d =>
-      def done(): Boolean = drawnAlone(k).isDefined
-      def deepest: Boolean = s.zoom >= s.maxZoom - 0.01
-      def inseparable: Boolean = Clustering.onePlace(groupKeys(k).flatMap(items.get).map(at))
+      def done(): com.histmersion.web.map.PointSet.ZoomToShowDoneResult = drawnAlone(k).isDefined
+      def deepest: com.histmersion.web.map.PointSet.ZoomToShowDeepestResult = s.zoom >= s.maxZoom - 0.01
+      def inseparable: com.histmersion.web.map.PointSet.ZoomToShowInseparableResult = Clustering.onePlace(groupKeys(k).flatMap(items.get).map(at))
       layout(animate = false)
       if done() || deepest || inseparable then andThen()
       else
@@ -305,7 +305,7 @@ final class PointSet[D](
     val (wantSingles, wantBubbles) = wanted
     // what goes: at once, or (a zoom that animates) kept until it is known whether it merges into a bubble
     val gone = mutable.ListBuffer.empty[(DomMarker, MarkerPane, Seq[String])]
-    def leave(m: DomMarker, mp: MarkerPane, ks: Seq[String]): Unit =
+    def leave(m: DomMarker, mp: MarkerPane, ks: Seq[com.histmersion.web.map.PointSet.DrawLeaveKs]): Unit =
       if before.isDefined && mp.has(m) then gone += ((m, mp, ks)) else mp.remove(m)
     singles.filterInPlace { (k, mp) =>
       val keep = wantSingles(k) && items.contains(k)
@@ -327,24 +327,24 @@ final class PointSet[D](
       wantBubbles.iterator.filterNot((id, _) => bubbles.contains(id)).map((id, ks) => (id, ks, false))).toVector
     val (w, h) = s.size
     val c = ScreenPt(w / 2, h / 2)
-    def dist(ks: Vector[String]): Double =
+    def dist(ks: Vector[com.histmersion.web.map.PointSet.DrawDistKs]): com.histmersion.web.map.PointSet.DrawDistResult =
       val q = s.project(at(items(ks.head)))
       math.hypot(q.x - c.x, q.y - c.y)
-    def onScreen(ks: Vector[String]): Boolean =
+    def onScreen(ks: Vector[com.histmersion.web.map.PointSet.DrawOnScreenKs]): com.histmersion.web.map.PointSet.DrawOnScreenResult =
       val pts = ks.flatMap(items.get).map(at)
       pts.nonEmpty && Clustering.inView(
         s,
         LatLon(pts.map(_.lat).sum / pts.size, pts.map(_.lon).sum / pts.size),
         OnScreenMargin
       )
-    def nearestFirst(v: Vector[(String, Vector[String], Boolean)]) =
+    def nearestFirst(v: Vector[(com.histmersion.web.map.PointSet.DrawNearestFirstVPart1, Vector[com.histmersion.web.map.PointSet.DrawNearestFirstVPart2], com.histmersion.web.map.PointSet.DrawNearestFirstVPart3)]) =
       if v.size > 32 then v.sortBy(t => dist(t._2)) else v
     val (first, later) = if before.isDefined then todo.partition(t => onScreen(t._2)) else (Vector.empty, todo)
     val queue = mutable.Queue.from(nearestFirst(first) ++ nearestFirst(later))
     // `var`s: the markers on screen still to make before the moves start, and whether they have started
     var firstLeft = first.size
     var started = false
-    def make(one: (String, Vector[String], Boolean)): Unit =
+    def make(one: (com.histmersion.web.map.PointSet.DrawMakeOnePart1, Vector[com.histmersion.web.map.PointSet.DrawMakeOnePart2], com.histmersion.web.map.PointSet.DrawMakeOnePart3)): Unit =
       val (id, ks, alone) = one
       val made =
         if alone then
@@ -419,7 +419,7 @@ final class PointSet[D](
         case None    => if ks.exists(was.contains) then arriving += m
     }
     val (w, h) = surface().size
-    def seen(at: (Double, Double)): Boolean =
+    def seen(at: (com.histmersion.web.map.PointSet.AnimateSeenAtPart1, com.histmersion.web.map.PointSet.AnimateSeenAtPart2)): com.histmersion.web.map.PointSet.AnimateSeenResult =
       at._1 >= -OnScreenMargin && at._2 >= -OnScreenMargin && at._1 <= w + OnScreenMargin && at._2 <= h + OnScreenMargin
     // a marker merging off screen into a bubble off screen goes at once: nobody sees it fly
     gone.foreach { (m, mp, ks) =>
@@ -435,6 +435,41 @@ final class PointSet[D](
     arriving.foreach(ClusterMotion.arrive)
 
 object PointSet:
+  type ZoomToShowDoneResult = ZoomToShowDoneResult.T
+  object ZoomToShowDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomToShowDeepestResult = ZoomToShowDeepestResult.T
+  object ZoomToShowDeepestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomToShowInseparableResult = ZoomToShowInseparableResult.T
+  object ZoomToShowInseparableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawLeaveKs = DrawLeaveKs.T
+  object DrawLeaveKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawDistResult = DrawDistResult.T
+  object DrawDistResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawDistKs = DrawDistKs.T
+  object DrawDistKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawOnScreenResult = DrawOnScreenResult.T
+  object DrawOnScreenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawOnScreenKs = DrawOnScreenKs.T
+  object DrawOnScreenKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawNearestFirstVPart1 = DrawNearestFirstVPart1.T
+  object DrawNearestFirstVPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawNearestFirstVPart2 = DrawNearestFirstVPart2.T
+  object DrawNearestFirstVPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawNearestFirstVPart3 = DrawNearestFirstVPart3.T
+  object DrawNearestFirstVPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawMakeOnePart1 = DrawMakeOnePart1.T
+  object DrawMakeOnePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawMakeOnePart2 = DrawMakeOnePart2.T
+  object DrawMakeOnePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawMakeOnePart3 = DrawMakeOnePart3.T
+  object DrawMakeOnePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateSeenResult = AnimateSeenResult.T
+  object AnimateSeenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateSeenAtPart1 = AnimateSeenAtPart1.T
+  object AnimateSeenAtPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateSeenAtPart2 = AnimateSeenAtPart2.T
+  object AnimateSeenAtPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KeyResult = KeyResult.T
   object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RadiusResult = RadiusResult.T

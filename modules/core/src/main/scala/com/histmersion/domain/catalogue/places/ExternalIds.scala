@@ -2,6 +2,9 @@ package com.histmersion.domain.catalogue.places
 
 /** Gazetteer ids in the URI forms providers write them. Pure. */
 object ExternalIds:
+  type OfPlaceIdNumPrefix = OfPlaceIdNumPrefix.T
+  object OfPlaceIdNumPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfResultPart1 = OfResultPart1.T
   object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResultPart2 = OfResultPart2.T
@@ -38,7 +41,7 @@ object ExternalIds:
     */
   def ofPlaceId(placeId: com.histmersion.domain.catalogue.Place.Id): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart1, com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart2)] =
     val s = placeId.trim
-    def num(prefix: String) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
+    def num(prefix: com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdNumPrefix) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
     num("pleiades_")
       .map(Pleiades -> _)
       .orElse(num("geonames_").map(GeoNames -> _))

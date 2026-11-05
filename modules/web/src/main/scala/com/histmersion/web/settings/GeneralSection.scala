@@ -13,6 +13,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object GeneralSection:
 
+  type StartCardFromPageTextK = StartCardFromPageTextK.T
+  object StartCardFromPageTextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ThemeNameResult = ThemeNameResult.T
   object ThemeNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChoiceRowTitle = ChoiceRowTitle.T
@@ -99,7 +102,7 @@ object GeneralSection:
     val saved = Var(ui.mapStart)
     // the file's own values once read (another window may have changed them since this page loaded)
     def fromPage(p: ConfigEdit.Page): MapStartConfig =
-      def text(k: String) = p.field(s"ui.map-start.$k").flatMap(f => f.effective).map(v => Draft.plain(Some(v)))
+      def text(k: com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK) = p.field(s"ui.map-start.$k").flatMap(f => f.effective).map(v => Draft.plain(Some(v)))
       MapStartConfig(
         text("mode").getOrElse(ui.mapStart.mode),
         text("lat").flatMap(_.toDoubleOption).getOrElse(ui.mapStart.lat),

@@ -4,6 +4,15 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object Critiques:
 
+  type UnitsAddS = UnitsAddS.T
+  object UnitsAddS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotUsedLinesHeadingL = NotUsedLinesHeadingL.T
+  object NotUsedLinesHeadingL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotUsedLinesLevelL = NotUsedLinesLevelL.T
+  object NotUsedLinesLevelL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildSideCk = BuildSideCk.T
+  object BuildSideCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Kinds = Kinds.T
   object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderFirstResult = OlderFirstResult.T
@@ -92,7 +101,7 @@ object Critiques:
       start = -1
     lines.indices.foreach { i =>
       val t = lines(i).trim
-      def add(s: String): Unit =
+      def add(s: com.histmersion.api.research.Critiques.UnitsAddS): Unit =
         if start < 0 then start = i
         last = i
         cur.append(if cur.isEmpty then s else s" $s")
@@ -109,8 +118,8 @@ object Critiques:
     out.result()
 
   private def notUsedLines(lines: Vector[com.histmersion.api.research.Critiques.NotUsedLinesLines]): Set[com.histmersion.api.research.Critiques.NotUsedLinesResult] =
-    def heading(l: String) = l.trim.startsWith("#")
-    def level(l: String) = l.trim.takeWhile(_ == '#').length
+    def heading(l: com.histmersion.api.research.Critiques.NotUsedLinesHeadingL) = l.trim.startsWith("#")
+    def level(l: com.histmersion.api.research.Critiques.NotUsedLinesLevelL) = l.trim.takeWhile(_ == '#').length
     lines.indexWhere(l => heading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")) match
       case -1 => Set.empty
       case i  =>
@@ -128,7 +137,7 @@ object Critiques:
     val units = paragraphs(body).map(p => Article.Links.targets(p).flatMap(resolve).toSet)
     val cited = units.flatten.toSet
     val mentions = units.flatMap(_.toList).groupBy(identity).view.mapValues(_.size).toMap
-    def side(ck: String) =
+    def side(ck: com.histmersion.api.research.Critiques.BuildSideCk) =
       val r = refs(ck)
       CritiqueSide(ck, r.map(_._1), r.flatMap(_._2), cited(ck), mentions.getOrElse(ck, 0))
     edges

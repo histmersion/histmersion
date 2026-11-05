@@ -25,6 +25,31 @@ import com.histmersion.domain.research.workflows.ReviewComparison
   */
 object ReviewLedger:
 
+  type AbsorbAbsorbAllSeen = AbsorbAbsorbAllSeen.T
+  object AbsorbAbsorbAllSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesKeyP = EditedPassagesKeyP.T
+  object EditedPassagesKeyP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkResultPart1 = EditedPassagesWalkResultPart1.T
+  object EditedPassagesWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkResultPart2 = EditedPassagesWalkResultPart2.T
+  object EditedPassagesWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkI = EditedPassagesWalkI.T
+  object EditedPassagesWalkI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkJ = EditedPassagesWalkJ.T
+  object EditedPassagesWalkJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkKeptA = EditedPassagesWalkKeptA.T
+  object EditedPassagesWalkKeptA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesWalkKeptB = EditedPassagesWalkKeptB.T
+  object EditedPassagesWalkKeptB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesHeadingOfResult = EditedPassagesHeadingOfResult.T
+  object EditedPassagesHeadingOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedPassagesHeadingOfI = EditedPassagesHeadingOfI.T
+  object EditedPassagesHeadingOfI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GuardInQ = GuardInQ.T
+  object GuardInQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GuardInBody = GuardInBody.T
+  object GuardInBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MechanicalKeyResultPart1 = MechanicalKeyResultPart1.T
   object MechanicalKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MechanicalKeyResultPart2 = MechanicalKeyResultPart2.T
@@ -360,7 +385,7 @@ object ReviewLedger:
         rest: List[Finding],
         led: Ledger,
         out: Vector[Finding],
-        seen: Set[String]
+        seen: Set[com.histmersion.domain.ReviewLedger.AbsorbAbsorbAllSeen]
     ): (Ledger, List[Finding]) =
       rest match
         case Nil       => (led, out.toList)
@@ -676,14 +701,14 @@ object ReviewLedger:
   def editedPassages(before: com.histmersion.domain.ReviewLedger.EditedPassagesBefore, after: com.histmersion.domain.ReviewLedger.EditedPassagesAfter, margin: com.histmersion.domain.ReviewLedger.EditedPassagesMargin = 1): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
-    def key(p: String) = p.replaceAll("\\s+", " ")
+    def key(p: com.histmersion.domain.ReviewLedger.EditedPassagesKeyP) = p.replaceAll("\\s+", " ")
     val (ka, kb) = (a.map(key), b.map(key))
     // LCS table, suffix form: t(i)(j) = LCS of a.drop(i), b.drop(j)
     val t = Array.ofDim[Int](a.size + 1, b.size + 1)
     for i <- a.indices.reverse; j <- b.indices.reverse do
       t(i)(j) = if ka(i) == kb(j) then t(i + 1)(j + 1) + 1 else math.max(t(i + 1)(j), t(i)(j + 1))
     @annotation.tailrec
-    def walk(i: Int, j: Int, keptA: Set[Int], keptB: Set[Int]): (Set[Int], Set[Int]) =
+    def walk(i: com.histmersion.domain.ReviewLedger.EditedPassagesWalkI, j: com.histmersion.domain.ReviewLedger.EditedPassagesWalkJ, keptA: Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkKeptA], keptB: Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkKeptB]): (Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkResultPart1], Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkResultPart2]) =
       if i >= a.size || j >= b.size then (keptA, keptB)
       else if ka(i) == kb(j) then walk(i + 1, j + 1, keptA + i, keptB + j)
       else if t(i + 1)(j) >= t(i)(j + 1) then walk(i + 1, j, keptA, keptB)
@@ -699,7 +724,7 @@ object ReviewLedger:
       }
       .reverse
       .map(_.reverse)
-    def headingOf(i: Int): Option[String] =
+    def headingOf(i: com.histmersion.domain.ReviewLedger.EditedPassagesHeadingOfI): Option[com.histmersion.domain.ReviewLedger.EditedPassagesHeadingOfResult] =
       (i to 0 by -1).iterator.map(b(_)).collectFirst {
         case p if p.linesIterator.nextOption().exists(Heading.matches) =>
           p.linesIterator.next() match { case Heading(h) => h.trim; case h => h }
@@ -761,7 +786,7 @@ object ReviewLedger:
       cites: (com.histmersion.domain.ReviewLedger.GuardCitesArg1, com.histmersion.domain.ReviewLedger.GuardCitesArg2) => com.histmersion.domain.ReviewLedger.GuardCitesResult,
       minRatio: com.histmersion.domain.ReviewLedger.GuardMinRatio
   ): List[Regression] =
-    def in(q: String, body: String) = AgentVerify.findQuote(q, body, minRatio).accepted
+    def in(q: com.histmersion.domain.ReviewLedger.GuardInQ, body: com.histmersion.domain.ReviewLedger.GuardInBody) = AgentVerify.findQuote(q, body, minRatio).accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
       val pair = e.finding.pair
         .filter(r => answered(before, r) && !answered(after, r))

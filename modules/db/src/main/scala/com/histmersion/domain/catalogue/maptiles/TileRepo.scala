@@ -18,6 +18,9 @@ import com.histmersion.domain.catalogue.Place
 private[maptiles] object TileRepo:
 
   /** What a layer's tiles read, by the groups of V105's `map_changes`. */
+  type UnitsSqlHeldV = UnitsSqlHeldV.T
+  object UnitsSqlHeldV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GroupsPart2 = GroupsPart2.T
   object GroupsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VersionsResultPart1 = VersionsResultPart1.T
@@ -115,7 +118,7 @@ private[maptiles] object TileRepo:
     */
   def unitsSql(c: TileCoord): (com.histmersion.domain.catalogue.maptiles.TileRepo.UnitsSqlResultPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.UnitsSqlResultPart2) =
     val l = s"radians(greatest(${-TileCoord.MaxLat}, least(${TileCoord.MaxLat}, lat)))"
-    def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
+    def held(v: com.histmersion.domain.catalogue.maptiles.TileRepo.UnitsSqlHeldV) = s"least(greatest($v, 0), 0.99999999999)"
     (
       s"(${held("(lon + 180) / 360.0")} * ${c.side} - ${c.x}) * ${TileCoord.Extent}",
       s"(${held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2")} * ${c.side} - ${c.y}) * ${TileCoord.Extent}"

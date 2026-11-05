@@ -308,7 +308,7 @@ final class BasemapService(
     val key = s"${stamp(this.key(Basemap.Layer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
-      def at(az: Int, ax: Long, ay: Long): Option[(String, Array[Byte])] =
+      def at(az: com.histmersion.util.basemap.BasemapService.FromAncestorAtAz, ax: com.histmersion.util.basemap.BasemapService.FromAncestorAtAx, ay: com.histmersion.util.basemap.BasemapService.FromAncestorAtAy): Option[(com.histmersion.util.basemap.BasemapService.FromAncestorAtResultPart1, com.histmersion.util.basemap.BasemapService.FromAncestorAtResultPart2)] =
         focus.iterator
           .filter((_, f) => az >= f.header.minZoom && az <= f.header.maxZoom)
           .flatMap((p, f) =>
@@ -478,7 +478,7 @@ final class BasemapService(
       if jobs.running.isDefined then Left(jobs.busy("a base-map fetch", Some(BasemapApi.Busy)))
       else
         val store = files
-        def gone(f: Store.Key, w: Store.Key): List[(String, Long)] =
+        def gone(f: Store.Key, w: Store.Key): List[(com.histmersion.util.basemap.BasemapService.RemoveGoneResultPart1, com.histmersion.util.basemap.BasemapService.RemoveGoneResultPart2)] =
           Option(open.remove(store.where(f))).foreach(_._2.close())
           val bytes = store.stat(f).filter(_.isFile).fold(0L)(_.size.value)
           val file = Option.when(store.delete(f))((store.where(f), bytes))
@@ -531,7 +531,7 @@ final class BasemapService(
     object FocusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def ask(q: Basemap.FetchQuery): Either[com.histmersion.util.basemap.BasemapService.AskResultPart1, Ask] =
-    def zoom(z: Int, what: String) =
+    def zoom(z: com.histmersion.util.basemap.BasemapService.AskZoomZ, what: com.histmersion.util.basemap.BasemapService.AskZoomWhat) =
       Either.cond(z >= 0 && z <= Basemap.MaxZoomCap, z, s"$what $z is outside 0–${Basemap.MaxZoomCap}")
     val asked = q.bbox.map(_.trim).filter(_.nonEmpty)
     for
@@ -711,7 +711,7 @@ final class BasemapService(
     // the local archive is at most the distinct contents the requests carry (the vector one is far
     // smaller once thinned); it is written beside the downloaded parts before they are removed
     val outBytes = plan.contentBytes
-    def room(next: Long): Either[String, Unit] =
+    def room(next: com.histmersion.util.basemap.BasemapService.DownloadRoomNext): Either[com.histmersion.util.basemap.BasemapService.DownloadRoomResultPart1, Unit] =
       val free = freeSpace(store)
       val left = free - next - outBytes
       Either.cond(
@@ -972,6 +972,29 @@ object BasemapService:
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
+  type FromAncestorAtResultPart1 = FromAncestorAtResultPart1.T
+  object FromAncestorAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAncestorAtResultPart2 = FromAncestorAtResultPart2.T
+  object FromAncestorAtResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAncestorAtAz = FromAncestorAtAz.T
+  object FromAncestorAtAz extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAncestorAtAx = FromAncestorAtAx.T
+  object FromAncestorAtAx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAncestorAtAy = FromAncestorAtAy.T
+  object FromAncestorAtAy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveGoneResultPart1 = RemoveGoneResultPart1.T
+  object RemoveGoneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveGoneResultPart2 = RemoveGoneResultPart2.T
+  object RemoveGoneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AskZoomZ = AskZoomZ.T
+  object AskZoomZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AskZoomWhat = AskZoomWhat.T
+  object AskZoomWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadRoomResultPart1 = DownloadRoomResultPart1.T
+  object DownloadRoomResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadRoomNext = DownloadRoomNext.T
+  object DownloadRoomNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DeeperReliefResultPart2 = DeeperReliefResultPart2.T
   object DeeperReliefResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAncestorResult = FromAncestorResult.T

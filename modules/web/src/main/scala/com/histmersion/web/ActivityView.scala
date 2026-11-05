@@ -19,6 +19,11 @@ object ActivityView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The row's first words: what is going on, or what it was and when (`hm` = the clock time it shows). */
+  type ClockTwoN = ClockTwoN.T
+  object ClockTwoN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowActAction = RowActAction.T
+  object RowActAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhenResult = WhenResult.T
   object WhenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WhenHm = WhenHm.T
@@ -117,7 +122,7 @@ object ActivityView:
     val d = new js.Date(iso)
     if d.getTime().isNaN then iso.take(16)
     else
-      def two(n: Double) = f"${n.toInt}%02d"
+      def two(n: com.histmersion.web.ActivityView.ClockTwoN) = f"${n.toInt}%02d"
       if d.toDateString() == new js.Date().toDateString() then s"${two(d.getHours())}:${two(d.getMinutes())}"
       else s"${d.getDate().toInt} ${Months(d.getMonth().toInt)}"
 
@@ -178,7 +183,7 @@ object ActivityView:
   def row(e: Entry, changed: () => Unit): HtmlElement =
     val busy = Var(false)
     val failure = Var(Option.empty[String])
-    def act(action: String): Unit =
+    def act(action: com.histmersion.web.ActivityView.RowActAction): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         busy.set(true)

@@ -39,6 +39,9 @@ given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.d
   */
 private[articles] object ArticleRepo:
 
+  type RenameInExistsS = RenameInExistsS.T
+  object RenameInExistsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FilterJsonResult = FilterJsonResult.T
   object FilterJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReasonsJsonResult = ReasonsJsonResult.T
@@ -302,7 +305,7 @@ private[articles] object ArticleRepo:
     * articles whose links moved.
     */
   private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInNewSlug)(using DbCon): Either[Api.Error, List[com.histmersion.domain.research.articles.ArticleRepo.RenameInResultPart2]] =
-    def exists(s: String) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
+    def exists(s: com.histmersion.domain.research.articles.ArticleRepo.RenameInExistsS) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Articles.notFound(oldSlug))
     else if exists(newSlug) then

@@ -27,6 +27,29 @@ import com.histmersion.api.Api
 object BasemapWiring:
 
   /** The base map of `deps`, reading its providers over the network. */
+  type JobsRunningResult = JobsRunningResult.T
+  object JobsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsGuardedOp = JobsGuardedOp.T
+  object JobsGuardedOp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsBusyWhat = JobsBusyWhat.T
+  object JobsBusyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsBusyBusyCode = JobsBusyBusyCode.T
+  object JobsBusyBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartKind = JobsStartKind.T
+  object JobsStartKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartAbout = JobsStartAbout.T
+  object JobsStartAbout extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartWhat = JobsStartWhat.T
+  object JobsStartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartBusyCode = JobsStartBusyCode.T
+  object JobsStartBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartBodyArg1Arg1 = JobsStartBodyArg1Arg1.T
+  object JobsStartBodyArg1Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartBodyResultPart1 = JobsStartBodyResultPart1.T
+  object JobsStartBodyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStartBodyResultPart2 = JobsStartBodyResultPart2.T
+  object JobsStartBodyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ServiceFreeSpaceResult = ServiceFreeSpaceResult.T
   object ServiceFreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BackoffMsResult = BackoffMsResult.T
@@ -101,14 +124,14 @@ object BasemapWiring:
   def jobs(deps: Deps): BasemapJobs = new BasemapJobs:
     private val slot = BackgroundJob.Slot()
 
-    def running: Option[String] = slot.current
+    def running: Option[com.histmersion.server.BasemapWiring.JobsRunningResult] = slot.current
 
-    def guarded[A](op: String)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
+    def guarded[A](op: com.histmersion.server.BasemapWiring.JobsGuardedOp)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
 
-    def busy(what: String, busyCode: Option[String]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
+    def busy(what: com.histmersion.server.BasemapWiring.JobsBusyWhat, busyCode: Option[com.histmersion.server.BasemapWiring.JobsBusyBusyCode]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
 
-    def start(kind: String, about: String, what: String, busyCode: Option[String])(
-        body: (String => Unit) => Either[String, String]
+    def start(kind: com.histmersion.server.BasemapWiring.JobsStartKind, about: com.histmersion.server.BasemapWiring.JobsStartAbout, what: com.histmersion.server.BasemapWiring.JobsStartWhat, busyCode: Option[com.histmersion.server.BasemapWiring.JobsStartBusyCode])(
+        body: (com.histmersion.server.BasemapWiring.JobsStartBodyArg1Arg1 => Unit) => Either[com.histmersion.server.BasemapWiring.JobsStartBodyResultPart1, com.histmersion.server.BasemapWiring.JobsStartBodyResultPart2]
     ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,

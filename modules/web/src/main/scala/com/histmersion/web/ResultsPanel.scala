@@ -17,6 +17,9 @@ import com.histmersion.api.instance.UiConfig
 object ResultsPanel:
 
   /** The width, px: the one this browser kept, else the default. */
+  type SheetHandlePxName = SheetHandlePxName.T
+  object SheetHandlePxName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Width = Width.T
   object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ViewportResult = ViewportResult.T
@@ -199,7 +202,7 @@ object ResultsPanel:
     /** A length token of the stylesheet's, in px. Measured, not parsed: the tokens are `clamp()` and `calc()` of the
       * screen's size, which only layout resolves.
       */
-    def px(name: String) =
+    def px(name: com.histmersion.web.ResultsPanel.SheetHandlePxName) =
       scala.util
         .Try {
           val probe = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]

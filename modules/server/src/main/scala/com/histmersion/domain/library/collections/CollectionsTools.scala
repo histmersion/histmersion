@@ -19,6 +19,9 @@ import com.histmersion.api.library.{
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
+  type ApplyAnswerFResult = ApplyAnswerFResult.T
+  object ApplyAnswerFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class CollectionInput(
@@ -64,7 +67,7 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => String) =
+    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => com.histmersion.domain.library.collections.CollectionsTools.ApplyAnswerFResult) =
       ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")

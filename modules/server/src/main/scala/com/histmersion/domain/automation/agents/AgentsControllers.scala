@@ -928,7 +928,7 @@ final class AgentsControllers(
   ): Either[Api.Error, ProbeResult] =
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
       "reply with that source's citekey, exact title and publication year."
-    def call(user: String) = LlmCall[ProbeAnswer](
+    def call(user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallCallUser) = LlmCall[ProbeAnswer](
       system = system,
       user = user,
       tools = toolbox.tools(d.tools),
@@ -940,7 +940,7 @@ final class AgentsControllers(
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     val t0 = timer.start()
     @annotation.tailrec
-    def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
+    def go(attempt: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt, user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoUser, used: Usage, calls: List[com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoCalls]): Either[Api.Error, ProbeResult] =
       AgentsControllers.attempt(client.model)(client.run(call(user))) match
         case Left(e)    => Left(e)
         case Right(res) =>
@@ -978,6 +978,15 @@ final class AgentsControllers(
 
 object AgentsControllers:
   /** The server's providers over one [[CliRuntime]]. */
+  type ProbeCallCallUser = ProbeCallCallUser.T
+  object ProbeCallCallUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeCallGoAttempt = ProbeCallGoAttempt.T
+  object ProbeCallGoAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeCallGoUser = ProbeCallGoUser.T
+  object ProbeCallGoUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeCallGoCalls = ProbeCallGoCalls.T
+  object ProbeCallGoCalls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SourcesToPlanResult = SourcesToPlanResult.T
   object SourcesToPlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RoundsCapResult = RoundsCapResult.T

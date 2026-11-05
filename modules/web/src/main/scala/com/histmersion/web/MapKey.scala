@@ -11,6 +11,15 @@ import com.histmersion.api.library.Source
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
   */
 object MapKey:
+  type ShapesHtmlBadgeShape = ShapesHtmlBadgeShape.T
+  object ShapesHtmlBadgeShape extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesHtmlBadgeInner = ShapesHtmlBadgeInner.T
+  object ShapesHtmlBadgeInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesHtmlListItemsPart1 = ShapesHtmlListItemsPart1.T
+  object ShapesHtmlListItemsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesHtmlListItemsPart2 = ShapesHtmlListItemsPart2.T
+  object ShapesHtmlListItemsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EventsHtmlResult = EventsHtmlResult.T
   object EventsHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SitesHtmlResult = SitesHtmlResult.T
@@ -59,7 +68,7 @@ object MapKey:
     * layers are on: the findings always are.
     */
   def shapesHtml: com.histmersion.web.MapKey.ShapesHtmlResult =
-    def badge(shape: String, inner: String) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
+    def badge(shape: com.histmersion.web.MapKey.ShapesHtmlBadgeShape, inner: com.histmersion.web.MapKey.ShapesHtmlBadgeInner) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
       Icon.html(Icon.Region) -> "a region or polity (its boundary)",
@@ -91,7 +100,7 @@ object MapKey:
       badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
         (if k == Source.Kinds.Unknown then "source of unknown kind" else k)
     )
-    def list(items: List[(String, String)]) =
+    def list(items: List[(com.histmersion.web.MapKey.ShapesHtmlListItemsPart1, com.histmersion.web.MapKey.ShapesHtmlListItemsPart2)]) =
       items.map((m, label) => s"""<li>$m<span>${Fmt.esc(label)}</span></li>""").mkString
     s"""<div class="hd-key-group"><div class="hd-key-title">shapes</div><ul class="hd-key-list">${list(
         shapes

@@ -141,11 +141,11 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     val (rr, ll) = (rightRev(r), leftRev(l.uid))
     def mk(
         kind: MergeIssue.Kind,
-        title: String,
+        title: com.histmersion.domain.library.sources.SourcePlan.FieldIssuesMkTitle,
         opts: List[MergeDecision.Kind],
         suggested: Option[MergeDecision] = None,
         sev: MergeIssue.Severity = MergeIssue.Severity.Blocking,
-        why: List[String] = Nil
+        why: List[com.histmersion.domain.library.sources.SourcePlan.FieldIssuesMkWhy] = Nil
     ): MergeIssue =
       MergeIssue(
         MergePlanner.issueId(kind, Bundle.Kind.Source, fu, lu, rr, ll),
@@ -405,6 +405,19 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 object SourcePlan:
 
   /** The questions of a pair of sources: their decisions are carried out with the pair's fold. */
+  type FieldIssuesMkTitle = FieldIssuesMkTitle.T
+  object FieldIssuesMkTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldIssuesMkWhy = FieldIssuesMkWhy.T
+  object FieldIssuesMkWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RicherAuthorsScoreAs = RicherAuthorsScoreAs.T
+  object RicherAuthorsScoreAs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldProseResult = FoldProseResult.T
+  object FoldProseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldProseA = FoldProseA.T
+  object FoldProseA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldProseB = FoldProseB.T
+  object FoldProseB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LeftRevResult = LeftRevResult.T
   object LeftRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RightRevResult = RightRevResult.T
@@ -491,7 +504,7 @@ object SourcePlan:
 
   /** The richer author list: as many names, then the longer written-out names (`Hans G.` over `H. G.`). */
   def richerAuthors(l: List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsL], r: List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsR]): List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsResult] =
-    def score(as: List[String]) =
+    def score(as: List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsScoreAs]) =
       (
         as.size,
         as.flatMap(MergeText.person).map(p => p.forenames.map(_.length).sum).sum,
@@ -513,7 +526,7 @@ object SourcePlan:
       case Some(MergeDecision.Kind.KeepRight) => right
       case Some(MergeDecision.Kind.KeepLeft)  => left
       case _                                  => auto
-    def prose(k: MergeIssue.Kind, a: Option[String], b: Option[String]): Option[String] =
+    def prose(k: MergeIssue.Kind, a: Option[com.histmersion.domain.library.sources.SourcePlan.FoldProseA], b: Option[com.histmersion.domain.library.sources.SourcePlan.FoldProseB]): Option[com.histmersion.domain.library.sources.SourcePlan.FoldProseResult] =
       (trimmed(a), trimmed(b)) match
         case (Some(x), Some(y)) if x != y =>
           decided.get(k).map(_.kind) match

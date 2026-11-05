@@ -19,6 +19,9 @@ import com.histmersion.api.automation.Goal
 object ApprovalsView:
 
   /** How many a page lists. */
+  type StateButtonsCountS = StateButtonsCountS.T
+  object StateButtonsCountS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KindMeaningResult = KindMeaningResult.T
   object KindMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindMeaningKind = KindMeaningKind.T
@@ -365,7 +368,7 @@ object ApprovalsView:
   def kindLabel(kind: com.histmersion.web.ApprovalsView.KindLabelKind): com.histmersion.web.ApprovalsView.KindLabelResult = ApprovalKind.parse(kind).fold(Wording.humanize(kind))(Wording.approvalKind)
 
   private def stateButtons: HtmlElement =
-    def count(l: ListPaging.Listing[ApprovalInfo], s: String) =
+    def count(l: ListPaging.Listing[ApprovalInfo], s: com.histmersion.web.ApprovalsView.StateButtonsCountS) =
       ListPaging.count(l, Option.when(s != "all")(s), _.state)
     div(
       cls := "btn-group jobs-filter approvals-state",

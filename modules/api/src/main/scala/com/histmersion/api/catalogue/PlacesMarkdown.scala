@@ -3,6 +3,9 @@ import com.histmersion.api.Markdown.*
 
 object PlacesMarkdown:
 
+  type PlaceListTitle = PlaceListTitle.T
+  object PlaceListTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KindOfResult = KindOfResult.T
   object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindOfKind = KindOfKind.T
@@ -176,7 +179,7 @@ object PlacesMarkdown:
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
-    def list(title: String, xs: List[Place.Summary]) =
+    def list(title: com.histmersion.api.catalogue.PlacesMarkdown.PlaceListTitle, xs: List[Place.Summary]) =
       if xs.isEmpty then ""
       else
         s"\n\n**$title**\n" +

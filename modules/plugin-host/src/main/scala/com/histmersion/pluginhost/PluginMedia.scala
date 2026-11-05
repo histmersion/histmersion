@@ -17,6 +17,13 @@ import scala.util.control.NonFatal
 object PluginMedia:
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
+  type HttpGetUrl = HttpGetUrl.T
+  object HttpGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpGetHeadersPart1 = HttpGetHeadersPart1.T
+  object HttpGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpGetHeadersPart2 = HttpGetHeadersPart2.T
+  object HttpGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PoliteSleepArg1 = PoliteSleepArg1.T
   object PoliteSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefusalResult = RefusalResult.T
@@ -53,7 +60,7 @@ object PluginMedia:
     * of the request.
     */
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
-    def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
+    def get(url: com.histmersion.pluginhost.PluginMedia.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart1, com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart2]) = polite.get(url, headers).map(_.body)
 
   /** A plugin's answer, or what it threw as a failure of that call. */
   def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginMedia.GuardResultPart1, A] =

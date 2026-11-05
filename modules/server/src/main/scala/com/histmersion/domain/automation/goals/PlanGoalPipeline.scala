@@ -120,7 +120,7 @@ final class PlanGoalPipeline(
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
       case _                  => "not given"
-    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
+    def list(xs: List[com.histmersion.domain.automation.goals.PlanGoalPipeline.InputListXs]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
     val goal = s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.getOrElse("none")}\n" +
       s"tags: ${l.tags.mkString(", ")}\nregions: ${l.regions.mkString(", ")}\nperiod: $period"
     s"Plan the research of this goal.\n\n${Prompt.data("goal", goal)}\n\n" +
@@ -223,6 +223,9 @@ final class PlanGoalPipeline(
 
 object PlanGoalPipeline:
   /** How many of the most used topics and tags the planner is shown. */
+  type InputListXs = InputListXs.T
+  object InputListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TakenResult = TakenResult.T
   object TakenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TakenS = TakenS.T

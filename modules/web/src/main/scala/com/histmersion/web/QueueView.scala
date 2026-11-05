@@ -25,6 +25,13 @@ import com.histmersion.api.library.Acquire
 object QueueView:
 
   /** A run of an item's text: the queue items are short Markdown lines. */
+  type TopicSuggestionsNormS = TopicSuggestionsNormS.T
+  object TopicSuggestionsNormS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneWriteWhat = PaneWriteWhat.T
+  object PaneWriteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkPickerSearchQ = LinkPickerSearchQ.T
+  object LinkPickerSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SegmentsText = SegmentsText.T
   object SegmentsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadingResultPart1 = HeadingResultPart1.T
@@ -354,7 +361,7 @@ object QueueView:
     * is typed (case and underscores aside), without the one typed exactly.
     */
   def topicSuggestions(items: List[Queue.QueueItem], typed: com.histmersion.web.QueueView.TopicSuggestionsTyped, limit: com.histmersion.web.QueueView.TopicSuggestionsLimit = 12): List[com.histmersion.web.QueueView.TopicSuggestionsResult] =
-    def norm(s: String) = Label.display(s).toLowerCase.trim
+    def norm(s: com.histmersion.web.QueueView.TopicSuggestionsNormS) = Label.display(s).toLowerCase.trim
     val q = norm(typed)
     items
       .sortBy(_.id)
@@ -415,7 +422,7 @@ object QueueView:
       }
 
     /** Every write of this pane: its failure lands in the pane; the list reloads either way. */
-    def write[A](what: String, f: scala.concurrent.Future[A])(done: A => Unit = (_: A) => ()): Unit =
+    def write[A](what: com.histmersion.web.QueueView.PaneWriteWhat, f: scala.concurrent.Future[A])(done: A => Unit = (_: A) => ()): Unit =
       f.onComplete { r =>
         r.fold(e => failure.set(Some(s"Could not $what: ${e.getMessage}")), a => { failure.set(None); done(a) })
         load()
@@ -867,7 +874,7 @@ object QueueView:
     val query = Var(QueueItemRef.searchQuery(item))
     val hits = Var(Option.empty[List[SearchHit]])
     val problem = Var(Option.empty[String])
-    def search(q: String): Unit =
+    def search(q: com.histmersion.web.QueueView.LinkPickerSearchQ): Unit =
       if q.trim.isEmpty then hits.set(Some(Nil))
       else
         ApiClient.sources(Filter(q = Some(q.trim), limit = 8)).onComplete { r =>

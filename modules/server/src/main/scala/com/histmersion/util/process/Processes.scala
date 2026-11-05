@@ -102,12 +102,12 @@ object Processes:
       launched.updateAndGet(launch :: _)
       val r = answer(launch)
       Right(new RunningProcess:
-        def pid: Long = 0L
-        def isAlive: Boolean = false
+        def pid: com.histmersion.util.process.Processes.InMemory.StartPidResult = 0L
+        def isAlive: com.histmersion.util.process.Processes.InMemory.StartIsAliveResult = false
         val output: InputStream = ByteArrayInputStream(r.lines.map(_ + "\n").mkString.getBytes("UTF-8"))
         val input: OutputStream = ByteArrayOutputStream()
-        def waitFor(): Int = r.exitCode
-        def waitFor(timeout: Long, unit: TimeUnit): Boolean = true
+        def waitFor(): com.histmersion.util.process.Processes.InMemory.StartWaitForResult = r.exitCode
+        def waitFor(timeout: com.histmersion.util.process.Processes.InMemory.StartWaitForTimeout, unit: TimeUnit): Boolean = true
         def destroy(): Unit = ()
         def destroyForcibly(): Unit = ())
 
@@ -115,6 +115,15 @@ object Processes:
       start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList))
 
   object InMemory:
+    type StartPidResult = StartPidResult.T
+    object StartPidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartIsAliveResult = StartIsAliveResult.T
+    object StartIsAliveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartWaitForResult = StartWaitForResult.T
+    object StartWaitForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartWaitForTimeout = StartWaitForTimeout.T
+    object StartWaitForTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type StartResultPart1 = StartResultPart1.T
     object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RunResultPart1 = RunResultPart1.T

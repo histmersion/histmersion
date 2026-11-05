@@ -36,6 +36,17 @@ import scala.util.Try
   */
 private[config] object ConfigLayers:
 
+  type CheckLoopResultPart1 = CheckLoopResultPart1.T
+  object CheckLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLoopRestPart1 = CheckLoopRestPart1.T
+  object CheckLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLoopRestPart2 = CheckLoopRestPart2.T
+  object CheckLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLoopSettings = CheckLoopSettings.T
+  object CheckLoopSettings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLoopUnknown = CheckLoopUnknown.T
+  object CheckLoopUnknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LeavesResultPart1 = LeavesResultPart1.T
   object LeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LeavesResultPart2 = LeavesResultPart2.T
@@ -118,10 +129,10 @@ private[config] object ConfigLayers:
 
   def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.CheckResultPart1, Keys] =
     @tailrec def loop(
-        rest: List[(List[String], Boolean)],
-        settings: List[String],
-        unknown: List[String]
-    ): Either[String, Keys] =
+        rest: List[(List[com.histmersion.config.ConfigLayers.CheckLoopRestPart1], com.histmersion.config.ConfigLayers.CheckLoopRestPart2)],
+        settings: List[com.histmersion.config.ConfigLayers.CheckLoopSettings],
+        unknown: List[com.histmersion.config.ConfigLayers.CheckLoopUnknown]
+    ): Either[com.histmersion.config.ConfigLayers.CheckLoopResultPart1, Keys] =
       rest match
         case Nil                                    => Right(Keys(settings, unknown))
         case (keys, _) :: tail if inOpenBlock(keys) => loop(tail, settings, unknown)

@@ -269,7 +269,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
         p.style == v.style && p.status == v.status && p.reduced == v.reduced
       case _ => false
     lastSpec = Some(b)
-    def make(retry: Boolean): Unit =
+    def make(retry: com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry): Unit =
       MapLibreStyles.style(b, dom.window.location.origin).onComplete {
         case scala.util.Success(style) =>
           // applied after the next paint: the input that asked for it (a checkbox, a menu) shows first, and the
@@ -362,13 +362,18 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
     p.on("close", _ => { val _ = popups -= p })
     new Popup:
       def close(): Unit = { val _ = p.remove() }
-      def isOpen: Boolean = p.isOpen()
+      def isOpen: com.histmersion.web.map.maplibre.MapLibreSurface.PopupIsOpenResult = p.isOpen()
       def element: Option[dom.HTMLElement] = Option(p.getElement()).filterNot(js.isUndefined)
 
   def closePopups(): Unit = popups.toList.foreach(_.remove())
 
 object MapLibreSurface:
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
+  type SetBaseMapMakeRetry = SetBaseMapMakeRetry.T
+  object SetBaseMapMakeRetry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PopupIsOpenResult = PopupIsOpenResult.T
+  object PopupIsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxZoom0 = MaxZoom0.T
   object MaxZoom0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PixelRatio = PixelRatio.T

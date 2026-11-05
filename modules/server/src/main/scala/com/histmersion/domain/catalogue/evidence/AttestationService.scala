@@ -101,7 +101,7 @@ object AttestationService:
         limit: com.histmersion.domain.catalogue.evidence.AttestationService.InMemory.ListLimit,
         offset: com.histmersion.domain.catalogue.evidence.AttestationService.InMemory.ListOffset
     ): Attestation.List =
-      def named(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
+      def named(o: Option[com.histmersion.domain.catalogue.evidence.AttestationService.InMemory.ListNamedO]) = o.map(_.trim).filter(_.nonEmpty)
       val (ck, tt, ti) = (named(citekey), named(targetType), named(targetId))
       val all = state.get.attestations.filter(a =>
         ck.forall(_ == a.citekey) && tt.forall(_ == a.targetType) && ti.forall(_ == a.targetId)
@@ -170,6 +170,9 @@ object AttestationService:
       had
 
   object InMemory:
+    type ListNamedO = ListNamedO.T
+    object ListNamedO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ListTargetType = ListTargetType.T
     object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ListTargetId = ListTargetId.T

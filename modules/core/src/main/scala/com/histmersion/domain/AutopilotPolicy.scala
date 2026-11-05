@@ -22,6 +22,15 @@ object AutopilotPolicy:
   /** What the checks say about one open approval: approve it (why, for the note), reject it (why), or leave it for a
     * person (or for tomorrow, when only a daily cap stood in the way).
     */
+  type DepthGoResult = DepthGoResult.T
+  object DepthGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthGoS = DepthGoS.T
+  object DepthGoS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthGoSeen = DepthGoSeen.T
+  object DepthGoSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthGoN = DepthGoN.T
+  object DepthGoN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ArticlePlanMinSources = ArticlePlanMinSources.T
   object ArticlePlanMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticlePlanApprovedToday = ArticlePlanApprovedToday.T
@@ -442,7 +451,7 @@ object AutopilotPolicy:
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
   def depth(slug: com.histmersion.domain.AutopilotPolicy.DepthSlug, parentOf: com.histmersion.domain.AutopilotPolicy.DepthParentOfArg1 => Option[com.histmersion.domain.AutopilotPolicy.DepthParentOfResult]): com.histmersion.domain.AutopilotPolicy.DepthResult =
     @annotation.tailrec
-    def go(s: String, seen: Set[String], n: Int): Int = parentOf(s) match
+    def go(s: com.histmersion.domain.AutopilotPolicy.DepthGoS, seen: Set[com.histmersion.domain.AutopilotPolicy.DepthGoSeen], n: com.histmersion.domain.AutopilotPolicy.DepthGoN): com.histmersion.domain.AutopilotPolicy.DepthGoResult = parentOf(s) match
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
       case _                             => n
     go(slug, Set(slug), 0)

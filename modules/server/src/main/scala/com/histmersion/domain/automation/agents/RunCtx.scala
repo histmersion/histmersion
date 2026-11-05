@@ -370,10 +370,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     // `seen`: the tool calls of this step's attempts so far, oldest first (what `validate` is shown)
     @annotation.tailrec
     def go(
-        attempt: Int,
-        tries: Int,
-        problems: List[String],
-        previous: Option[String],
+        attempt: com.histmersion.domain.automation.agents.RunCtx.AttemptsGoAttempt,
+        tries: com.histmersion.domain.automation.agents.RunCtx.AttemptsGoTries,
+        problems: List[com.histmersion.domain.automation.agents.RunCtx.AttemptsGoProblems],
+        previous: Option[com.histmersion.domain.automation.agents.RunCtx.AttemptsGoPrevious],
         seen: List[ToolUse]
     ): Either[Halt, O] =
       engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
@@ -603,6 +603,15 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     )
 
 object RunCtx:
+  type AttemptsGoAttempt = AttemptsGoAttempt.T
+  object AttemptsGoAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptsGoTries = AttemptsGoTries.T
+  object AttemptsGoTries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptsGoProblems = AttemptsGoProblems.T
+  object AttemptsGoProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptsGoPrevious = AttemptsGoPrevious.T
+  object AttemptsGoPrevious extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ClaimSeqResult = ClaimSeqResult.T
   object ClaimSeqResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReserveResult = ReserveResult.T

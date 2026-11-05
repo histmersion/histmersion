@@ -21,6 +21,9 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleExport:
 
+  type WriteBlobsPart1 = WriteBlobsPart1.T
+  object WriteBlobsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WriteResultPart1 = WriteResultPart1.T
   object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteSince = WriteSince.T
@@ -41,7 +44,7 @@ object BundleExport:
       val carried = kinds.inBundleOrder.map(k => k.entry.value -> k.out(scope, files))
 
       // the first use of a digest is the one read
-      val blobs: Map[String, BlobOut] =
+      val blobs: Map[com.histmersion.util.data.exchange.BundleExport.WriteBlobsPart1, BlobOut] =
         carried.flatMap(_._2.blobs).foldLeft(Map.empty[String, BlobOut]) { (m, b) =>
           if m.contains(b.sha256) then m else m + (b.sha256 -> b)
         }

@@ -58,6 +58,15 @@ final case class GeoTiffGrid(
 object GeoTiffGrid:
 
   // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
+  type ParseBytesAtResultPart1 = ParseBytesAtResultPart1.T
+  object ParseBytesAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBytesAtResultPart2 = ParseBytesAtResultPart2.T
+  object ParseBytesAtResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBytesAtOffset = ParseBytesAtOffset.T
+  object ParseBytesAtOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBytesAtLength = ParseBytesAtLength.T
+  object ParseBytesAtLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LeB = LeB.T
   object LeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHead = ParseHead.T
@@ -212,7 +221,7 @@ object GeoTiffGrid:
     * samples in strips — GEBCO's GeoTIFFs — and nothing else: anything else is refused with what it is.
     */
   def parse(head: com.histmersion.util.basemap.GeoTiffGrid.ParseHead, read: (com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg1, com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg2) => Either[com.histmersion.util.basemap.GeoTiffGrid.ParseReadResultPart1, com.histmersion.util.basemap.GeoTiffGrid.ParseReadResultPart2]): Either[com.histmersion.util.basemap.GeoTiffGrid.ParseResultPart1, GeoTiffGrid] =
-    def bytesAt(offset: Long, length: Int): Either[String, Array[Byte]] =
+    def bytesAt(offset: com.histmersion.util.basemap.GeoTiffGrid.ParseBytesAtOffset, length: com.histmersion.util.basemap.GeoTiffGrid.ParseBytesAtLength): Either[com.histmersion.util.basemap.GeoTiffGrid.ParseBytesAtResultPart1, com.histmersion.util.basemap.GeoTiffGrid.ParseBytesAtResultPart2] =
       if offset + length <= head.length then
         Right(java.util.Arrays.copyOfRange(head, offset.toInt, offset.toInt + length))
       else read(offset, length)

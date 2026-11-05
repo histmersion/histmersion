@@ -23,6 +23,11 @@ object UploadView:
     * `acquireItem`, and the server's OCR job ticks it off as `ingested as [[citekey]]` when — and only when — the job
     * succeeds.
     */
+  type WithItemKeepResult = WithItemKeepResult.T
+  object WithItemKeepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithItemKeepGetResult = WithItemKeepGetResult.T
+  object WithItemKeepGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SuggestCitekeyResult = SuggestCitekeyResult.T
   object SuggestCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SuggestCitekeyFileName = SuggestCitekeyFileName.T
@@ -153,7 +158,7 @@ object UploadView:
     // the citekey suggested from the file's name was not typed either: the item's is better
     val suggested = d.fileName.flatMap(suggestCitekey)
     // a field is the reader's own when it is non-blank and not what a pick or the file name put there
-    def keep(get: Draft => String): String =
+    def keep(get: Draft => com.histmersion.web.UploadView.WithItemKeepGetResult): com.histmersion.web.UploadView.WithItemKeepResult =
       val mine = get(d)
       if mine.trim.isEmpty || prev.exists(p => get(p) == mine) || suggested.contains(mine) then get(from)
       else mine

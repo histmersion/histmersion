@@ -8,6 +8,11 @@ import sttp.tapir.{Schema, SchemaType}
   */
 object StrictJson:
 
+  type NestedFieldsChildrenResultPart1 = NestedFieldsChildrenResultPart1.T
+  object NestedFieldsChildrenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NestedFieldsChildrenPath = NestedFieldsChildrenPath.T
+  object NestedFieldsChildrenPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProblemsResult = ProblemsResult.T
   object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProblemsKeys = ProblemsKeys.T
@@ -67,7 +72,7 @@ object StrictJson:
     case _                         => Nil
 
   private def nestedFields(s: Schema[?]): List[(com.histmersion.api.StrictJson.NestedFieldsResultPart1, com.histmersion.api.StrictJson.NestedFieldsResultPart2)] =
-    def children(path: String, sc: Schema[?]): List[(String, Schema[?])] = sc.schemaType match
+    def children(path: com.histmersion.api.StrictJson.NestedFieldsChildrenPath, sc: Schema[?]): List[(com.histmersion.api.StrictJson.NestedFieldsChildrenResultPart1, Schema[?])] = sc.schemaType match
       case p: SchemaType.SProduct[?] =>
         p.fields.map(f => ((if path.isEmpty then "" else s"$path.") + f.name.encodedName, f.schema))
       case SchemaType.SOption(e) => children(path, e)

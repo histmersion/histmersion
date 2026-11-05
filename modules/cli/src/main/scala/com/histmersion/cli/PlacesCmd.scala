@@ -28,6 +28,13 @@ object PlacesCmd:
   /** Config-driven defaults (no literals in code, plan §1.9); read on demand so `--help` never needs a config file to
     * exist.
     */
+  type SeedPassResultPart2Part2 = SeedPassResultPart2Part2.T
+  object SeedPassResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassFsPart2 = SeedPassFsPart2.T
+  object SeedPassFsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassLabel = SeedPassLabel.T
+  object SeedPassLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DefaultBatchResult = DefaultBatchResult.T
   object DefaultBatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SeedDirResult = SeedDirResult.T
@@ -215,9 +222,9 @@ object PlacesCmd:
               Left(Cli.Error(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = ExitCode.Usage))
             else
               def pass(
-                  fs: List[(Path, Option[String])],
-                  label: String
-              )(using console: Console) : Either[Cli.Error, List[(Path, Option[String])]] =
+                  fs: List[(Path, Option[com.histmersion.cli.PlacesCmd.SeedPassFsPart2])],
+                  label: com.histmersion.cli.PlacesCmd.SeedPassLabel
+              )(using console: Console) : Either[Cli.Error, List[(Path, Option[com.histmersion.cli.PlacesCmd.SeedPassResultPart2Part2])]] =
                 fs.foldLeft[Either[Cli.Error, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>

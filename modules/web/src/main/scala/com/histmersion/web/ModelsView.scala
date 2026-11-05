@@ -20,6 +20,9 @@ object ModelsView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A chain as typed: `a > b > c` (commas also separate). */
+  type PaneCheckOffline = PaneCheckOffline.T
+  object PaneCheckOffline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ChainInputResult = ChainInputResult.T
   object ChainInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChainInputS = ChainInputS.T
@@ -129,7 +132,7 @@ object ModelsView:
         load()
       }
 
-    def check(offline: Boolean): Unit =
+    def check(offline: com.histmersion.web.ModelsView.PaneCheckOffline): Unit =
       busy.set(true)
       ApiClient.agentDoctor(offline).onComplete { r =>
         busy.set(false)

@@ -18,6 +18,21 @@ import scala.jdk.CollectionConverters.*
 object AgentDefinitions:
 
   /** The MCP server's name in every runtime's configuration. */
+  type MarkerProblemsPairResult = MarkerProblemsPairResult.T
+  object MarkerProblemsPairResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsPairRestPart1 = MarkerProblemsPairRestPart1.T
+  object MarkerProblemsPairRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsPairRestPart2 = MarkerProblemsPairRestPart2.T
+  object MarkerProblemsPairRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsPairOpen = MarkerProblemsPairOpen.T
+  object MarkerProblemsPairOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsPairErrs = MarkerProblemsPairErrs.T
+  object MarkerProblemsPairErrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFailM = ParseFailM.T
+  object ParseFailM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStrK = ParseStrK.T
+  object ParseStrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ForAudienceResult = ForAudienceResult.T
   object ForAudienceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ForAudienceText = ForAudienceText.T
@@ -140,7 +155,7 @@ object AgentDefinitions:
     val ms = Marker.findAllMatchIn(text).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
       ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire == a)).map(a => s"names no audience: only:$a")
-    @tailrec def pair(rest: List[(Boolean, String)], open: Option[String], errs: List[String]): List[String] =
+    @tailrec def pair(rest: List[(com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsPairRestPart1, com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsPairRestPart2)], open: Option[com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsPairOpen], errs: List[com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsPairErrs]): List[com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsPairResult] =
       (open, rest) match
         case (_, Nil)                               => errs ++ open.map(o => s"only:$o is never closed").toList
         case (None, (false, a) :: tail)             => pair(tail, Some(a), errs)
@@ -194,9 +209,9 @@ object AgentDefinitions:
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
   def parse(name: com.histmersion.domain.automation.agents.AgentDefinitions.ParseName, md: com.histmersion.domain.automation.agents.AgentDefinitions.ParseMd, known: List[ToolName]): Either[com.histmersion.domain.automation.agents.AgentDefinitions.ParseResultPart1, AgentDef] =
-    def fail(m: String) = Left(s"agents/$name.md: $m")
+    def fail(m: com.histmersion.domain.automation.agents.AgentDefinitions.ParseFailM) = Left(s"agents/$name.md: $m")
     split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.map(m => s"agents/$name.md: $m").flatMap { (m, body) =>
-      def str(k: String) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
+      def str(k: com.histmersion.domain.automation.agents.AgentDefinitions.ParseStrK) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
       val tools = m.get("tools").map(_.asMatchable) match
         case Some(t: java.util.Map[?, ?]) => t.asScala.toMap.map((k, v) => k.toString -> v)
         case _                            => Map.empty[String, Any]

@@ -32,6 +32,9 @@ final case class AutomationState(
 )
 
 object AutomationState:
+  type InsertApprovalMade = InsertApprovalMade.T
+  object InsertApprovalMade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InsertApprovalResult = InsertApprovalResult.T
   object InsertApprovalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InsertApprovalConflictsResult = InsertApprovalConflictsResult.T
@@ -61,7 +64,7 @@ object AutomationState:
   import hearth.kindlings.optics.syntax.*
 
   def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => com.histmersion.domain.automation.AutomationState.InsertApprovalConflictsResult)(make: com.histmersion.domain.automation.AutomationState.InsertApprovalMakeArg1 => ApprovalRecord): Option[com.histmersion.domain.automation.AutomationState.InsertApprovalResult] =
-    var made: Option[Long] = None
+    var made: Option[com.histmersion.domain.automation.AutomationState.InsertApprovalMade] = None
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }
       else

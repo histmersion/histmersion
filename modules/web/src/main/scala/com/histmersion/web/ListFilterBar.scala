@@ -13,6 +13,9 @@ import com.raquo.laminar.api.L.*
 object ListFilterBar:
 
   // `var`: the typing pause (`ui.debounce.search-ms`), known once `/api/config` has answered
+  type TextCommitS = TextCommitS.T
+  object TextCommitS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TypingMs = TypingMs.T
   object TypingMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChipItemsResultPart1 = ChipItemsResultPart1.T
@@ -219,7 +222,7 @@ object ListFilterBar:
     */
   def text(label: com.histmersion.web.ListFilterBar.TextLabel, field: Field[Option[com.histmersion.web.ListFilterBar.TextField]]): HtmlElement =
     val draft = Var(field.now().getOrElse(""))
-    def commit(s: String): Unit = if typed(s) != field.now() then UiState.set(field := typed(s))()
+    def commit(s: com.histmersion.web.ListFilterBar.TextCommitS): Unit = if typed(s) != field.now() then UiState.set(field := typed(s))()
     input(
       typ := "search",
       cls := "field list-text",

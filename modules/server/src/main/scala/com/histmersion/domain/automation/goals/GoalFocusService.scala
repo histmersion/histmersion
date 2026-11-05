@@ -260,7 +260,7 @@ final class GoalFocusService(
         val ratio = acfg.focusRatio
         val recent = Transactor(ds).read(FocusRepo.recentTargets(m.id, math.max(1, ratio)))
         val goalsOf = agents.focusStore.goalsOf(link, (due.map(_.target) ++ recent).distinct)
-        def mine(t: String) = goalsOf.getOrElse(t, Nil).exists(active)
+        def mine(t: com.histmersion.domain.automation.goals.GoalFocusService.FairMineT) = goalsOf.getOrElse(t, Nil).exists(active)
         val person = pending.filter(_.origin == ItemOrigin.Person.wire).map(_.id).toSet
         GoalFocus.fairOrder(due, c => person(c.id) || mine(c.target), recent.map(mine), ratio)
       case _ => due
@@ -276,7 +276,7 @@ final class GoalFocusService(
   def goalPlanBlock(goal: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal, proposed: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockProposed): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockResult] =
     val goals = agents.focusStore.goals()
     val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
-    def open(s: String, seen: Set[String]): Int =
+    def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenSeen]): com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenResult =
       kids
         .getOrElse(s, Nil)
         .filterNot(k => seen(k.slug))
@@ -304,7 +304,7 @@ final class GoalFocusService(
     val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
-    def goal(p: GoalFocus.Pick, active: Boolean): FocusGoal =
+    def goal(p: GoalFocus.Pick, active: com.histmersion.domain.automation.goals.GoalFocusService.InfoGoalActive): FocusGoal =
       val f = byGoal.get(p.slug)
       val ps = List(seedId(p.slug), watchId(p.slug)).flatMap(pace.get)
       val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2).sum)
@@ -357,8 +357,8 @@ final class GoalFocusService(
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `goal`"))
-    def missing(g: String) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
-    val done: Either[Api.Error, String] = in.action.trim.toLowerCase match
+    def missing(g: com.histmersion.domain.automation.goals.GoalFocusService.SetMissingG) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
+    val done: Either[Api.Error, com.histmersion.domain.automation.goals.GoalFocusService.SetDonePart2] = in.action.trim.toLowerCase match
       case "pin" | "unpin" =>
         val on = in.action.trim.equalsIgnoreCase("pin")
         goal.flatMap(g => Either.cond(agents.focusStore.pin(g, on), g, missing(g))).map { g =>
@@ -395,6 +395,21 @@ final class GoalFocusService(
     scribe.info(line)
 
 object GoalFocusService:
+  type FairMineT = FairMineT.T
+  object FairMineT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanBlockOpenResult = GoalPlanBlockOpenResult.T
+  object GoalPlanBlockOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanBlockOpenS = GoalPlanBlockOpenS.T
+  object GoalPlanBlockOpenS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanBlockOpenSeen = GoalPlanBlockOpenSeen.T
+  object GoalPlanBlockOpenSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoGoalActive = InfoGoalActive.T
+  object InfoGoalActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetMissingG = SetMissingG.T
+  object SetMissingG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetDonePart2 = SetDonePart2.T
+  object SetDonePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CapResultPart1 = CapResultPart1.T
   object CapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapResultPart2 = CapResultPart2.T

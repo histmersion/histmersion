@@ -29,6 +29,11 @@ import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, Me
   */
 object MergeResolutionsFile:
 
+  type ParseTextsPart1 = ParseTextsPart1.T
+  object ParseTextsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseTextsPart2 = ParseTextsPart2.T
+  object ParseTextsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseText = ParseText.T
@@ -83,7 +88,7 @@ object MergeResolutionsFile:
               .sortBy(_.issue)
           case Some(other) => errors += s"resolve: expected a map of issue id → decision, found '$other'"; Nil
         // the merged texts of `file:` decisions made on the review screen, kept in the file itself
-        val texts: Map[String, String] = top.get("texts").flatMap(Option(_)) match
+        val texts: Map[com.histmersion.util.data.exchange.MergeResolutionsFile.ParseTextsPart1, com.histmersion.util.data.exchange.MergeResolutionsFile.ParseTextsPart2] = top.get("texts").flatMap(Option(_)) match
           case None                         => Map.empty
           case Some(t: java.util.Map[?, ?]) =>
             t.asScala.toList.flatMap((k, v) => Option(v).map(x => String.valueOf(k).trim -> String.valueOf(x))).toMap

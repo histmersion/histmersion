@@ -70,7 +70,7 @@ object CitationService:
 
     def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationService.InMemory.NeighborsKinds]): List[NeighborRow] =
       val st = state.get
-      def wanted(kind: String) = kinds.isEmpty || kinds.contains(kind)
+      def wanted(kind: com.histmersion.domain.library.citations.CitationService.InMemory.NeighborsWantedKind) = kinds.isEmpty || kinds.contains(kind)
       def source(ck: com.histmersion.api.library.Citekey) = st.sources.get(ck.value).map(_.source)
       val out = st.edges.toList.filter(e => e.src == com.histmersion.api.library.Citekey(citekey) && wanted(e.kind)).flatMap { e =>
         source(e.dst).map(s => NeighborRow("out", e.kind, e.dst.value, Some(s.title.value), Some(s.status), NeighborTarget.Source))
@@ -87,8 +87,8 @@ object CitationService:
       val st = state.get
       val maxDepth = depth.max(0).min(4)
       @tailrec def walk(
-          d: Int,
-          frontier: List[String],
+          d: com.histmersion.domain.library.citations.CitationService.InMemory.GraphWalkD,
+          frontier: List[com.histmersion.domain.library.citations.CitationService.InMemory.GraphWalkFrontier],
           nodes: Vector[GraphNode],
           links: Set[GraphLink]
       ): (Vector[GraphNode], Set[GraphLink]) =
@@ -117,7 +117,7 @@ object CitationService:
 
     def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsSince]): ContradictionsResult =
       val st = state.get
-      def row(ck: String, direction: String, kind: String, other: String): Option[ContradictionRow] =
+      def row(ck: com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsRowCk, direction: com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsRowDirection, kind: com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsRowKind, other: com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsRowOther): Option[ContradictionRow] =
         for s <- st.sources.get(ck).map(_.source)
         yield
           val o = st.sources.get(other).map(_.source)
@@ -149,6 +149,21 @@ object CitationService:
           ContradictionsResult(all, all.size)
 
   object InMemory:
+    type NeighborsWantedKind = NeighborsWantedKind.T
+    object NeighborsWantedKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GraphWalkD = GraphWalkD.T
+    object GraphWalkD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GraphWalkFrontier = GraphWalkFrontier.T
+    object GraphWalkFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsRowCk = ContradictionsRowCk.T
+    object ContradictionsRowCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsRowDirection = ContradictionsRowDirection.T
+    object ContradictionsRowDirection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsRowKind = ContradictionsRowKind.T
+    object ContradictionsRowKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsRowOther = ContradictionsRowOther.T
+    object ContradictionsRowOther extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type NeighborsKinds = NeighborsKinds.T
     object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GraphDepth = GraphDepth.T

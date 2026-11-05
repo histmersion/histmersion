@@ -452,7 +452,7 @@ object GoalService:
       else
         val _ = state.updateAndGet { st =>
           val r = st.goals(old)
-          def moved(s: String) = if s == old then now else s
+          def moved(s: com.histmersion.domain.automation.goals.GoalService.InMemory.RenameMovedS) = if s == old then now else s
           st.modify(_.goals)
             .using(gs =>
               (gs - old)
@@ -590,6 +590,9 @@ object GoalService:
         .map(view)
 
   object InMemory:
+    type RenameMovedS = RenameMovedS.T
+    object RenameMovedS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GoalsResultPart1 = GoalsResultPart1.T
     object GoalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedTextResult = UpdatedTextResult.T

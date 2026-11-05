@@ -24,6 +24,23 @@ final case class JobCounts(
 object JobCounts:
 
 
+  type OfLoopRestPart1 = OfLoopRestPart1.T
+  object OfLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopRestPart2 = OfLoopRestPart2.T
+  object OfLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopQueued = OfLoopQueued.T
+  object OfLoopQueued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopRunning = OfLoopRunning.T
+  object OfLoopRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopDone = OfLoopDone.T
+  object OfLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopFailed = OfLoopFailed.T
+  object OfLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopPaused = OfLoopPaused.T
+  object OfLoopPaused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopCancelled = OfLoopCancelled.T
+  object OfLoopCancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfResult = OfResult.T
   object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfRowsPart1 = OfRowsPart1.T
@@ -46,13 +63,13 @@ object JobCounts:
 
   def of(rows: List[(com.histmersion.api.jobs.JobCounts.OfRowsPart1, com.histmersion.api.jobs.JobCounts.OfRowsPart2)]): JobCounts =
     @tailrec def loop(
-        rest: List[(String, Int)],
-        queued: Int,
-        running: Int,
-        done: Int,
-        failed: Int,
-        paused: Int,
-        cancelled: Int
+        rest: List[(com.histmersion.api.jobs.JobCounts.OfLoopRestPart1, com.histmersion.api.jobs.JobCounts.OfLoopRestPart2)],
+        queued: com.histmersion.api.jobs.JobCounts.OfLoopQueued,
+        running: com.histmersion.api.jobs.JobCounts.OfLoopRunning,
+        done: com.histmersion.api.jobs.JobCounts.OfLoopDone,
+        failed: com.histmersion.api.jobs.JobCounts.OfLoopFailed,
+        paused: com.histmersion.api.jobs.JobCounts.OfLoopPaused,
+        cancelled: com.histmersion.api.jobs.JobCounts.OfLoopCancelled
     ): JobCounts =
       rest match
         case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)

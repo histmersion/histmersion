@@ -77,7 +77,7 @@ object QueueService:
     def get(id: QueueItemId): Option[QueueItem] = state.get.get(id)
 
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
-      val wanted: Set[Int] = ids.map(i => i.value: Int).toSet
+      val wanted: Set[com.histmersion.domain.automation.worklists.QueueService.InMemory.ByIdsWanted] = ids.map(i => i.value: Int).toSet
       state.get.items.filter(i => wanted(i.id)).toList
 
     def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = state.get.naming(list, doi).toList
@@ -98,3 +98,7 @@ object QueueService:
         start.addedAll(list, items, at)
       }
       ImportCounts(items.size, if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else 0)
+
+  object InMemory:
+    type ByIdsWanted = ByIdsWanted.T
+    object ByIdsWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

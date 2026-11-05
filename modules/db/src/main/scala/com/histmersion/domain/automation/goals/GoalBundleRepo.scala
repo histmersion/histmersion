@@ -19,6 +19,9 @@ import com.histmersion.api.exchange.Bundle
   */
 private[goals] object GoalBundleRepo:
 
+  type GoalSetsRef = GoalSetsRef.T
+  object GoalSetsRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GoalSlugOfResult = GoalSlugOfResult.T
   object GoalSlugOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -106,7 +109,7 @@ private[goals] object GoalBundleRepo:
   private def goalSets(w: BundleImport.Writer, g: Bundle.Goal)(using DbCon): Unit =
     val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
     g.links.getOrElse(Nil).foreach { l =>
-      val ref: Option[String] = l.kind match
+      val ref: Option[com.histmersion.domain.automation.goals.GoalBundleRepo.GoalSetsRef] = l.kind match
         case "source"  => l.refUid.flatMap(w.citekeyHere).orElse(Some(l.ref))
         case "article" =>
           l.refUid

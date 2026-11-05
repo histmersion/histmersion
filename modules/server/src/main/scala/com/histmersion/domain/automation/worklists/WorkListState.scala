@@ -45,7 +45,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.L
 
   /** Each of `ins` added to `kind` at `now`, in order. */
   def addedAll(kind: Kind, ins: List[QueueAdd], now: Instant): WorkListState =
-    @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: Int): WorkListState = rest match
+    @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: com.histmersion.domain.automation.worklists.WorkListState.AddedAllLoopLast): WorkListState = rest match
       case Nil        => WorkListState(items ++ made, last)
       case in :: tail => loop(tail, made :+ WorkListState.item(kind, in, last + 1, now), last + 1)
     loop(ins, Vector.empty, lastId)
@@ -66,6 +66,9 @@ final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.L
   def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
 
 object WorkListState:
+  type AddedAllLoopLast = AddedAllLoopLast.T
+  object AddedAllLoopLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StampResult = StampResult.T
   object StampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemId = ItemId.T

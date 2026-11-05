@@ -20,6 +20,9 @@ import com.histmersion.api.research.Article
   */
 object ReadingPane:
 
+  type ArticlePaneRefOfVPart1 = ArticlePaneRefOfVPart1.T
+  object ArticlePaneRefOfVPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CachedCachePart1 = CachedCachePart1.T
   object CachedCachePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CachedKey = CachedKey.T
@@ -278,7 +281,7 @@ object ReadingPane:
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(slug))
     val ref0 = marks.ItemRef.article(slug, row.map(_.title).getOrElse(slug))
-    def refOf(v: Option[Either[String, Article.View]]) =
+    def refOf(v: Option[Either[com.histmersion.web.library.ReadingPane.ArticlePaneRefOfVPart1, Article.View]]) =
       v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title))
     val ref = reading.signal.map(refOf).distinct
     div(

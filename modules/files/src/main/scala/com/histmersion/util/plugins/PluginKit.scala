@@ -18,6 +18,11 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
 object PluginKit:
 
   /** JSON as these files are written: two-space indented, absent options left out. */
+  type StatusLinesShortD = StatusLinesShortD.T
+  object StatusLinesShortD extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JarNameCleanS = JarNameCleanS.T
+  object JarNameCleanS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Sha256HexBytes = Sha256HexBytes.T
   object Sha256HexBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -248,7 +253,7 @@ object PluginKit:
 
   /** The status as Markdown lines (the CLI prints them). */
   def statusLines(s: SetStatus, serverAnswered: com.histmersion.util.plugins.PluginKit.StatusLinesServerAnswered): List[com.histmersion.util.plugins.PluginKit.StatusLinesResult] =
-    def short(d: String) = d.take(12) + "…"
+    def short(d: com.histmersion.util.plugins.PluginKit.StatusLinesShortD) = d.take(12) + "…"
     val verdict = s.verdict match
       case Verdict.UpToDate     => "up to date: the binary holds exactly the plugins in the directory"
       case Verdict.RelinkNeeded =>
@@ -330,7 +335,7 @@ object PluginKit:
     * else the name it came with. Only `[A-Za-z0-9._+-]` survive.
     */
   def jarName(plugins: List[PluginDescription], fallback: com.histmersion.util.plugins.PluginKit.JarNameFallback): com.histmersion.util.plugins.PluginKit.JarNameResult =
-    def clean(s: String) = s.replaceAll("[^A-Za-z0-9._+\\-]", "_")
+    def clean(s: com.histmersion.util.plugins.PluginKit.JarNameCleanS) = s.replaceAll("[^A-Za-z0-9._+\\-]", "_")
     plugins match
       case List(p) if p.id.nonEmpty => clean(s"${p.id}-${p.version}.jar")
       case _                        => clean(if fallback.endsWith(".jar") then fallback else s"$fallback.jar")

@@ -51,8 +51,8 @@ final class VacuumJobs(
       }
 
   private def run(plan: VacuumPlan, progress: com.histmersion.util.data.maintenance.VacuumJobs.RunProgressArg1 => Unit): BackgroundJob.Outcome =
-    @tailrec def loop(rest: List[(String, Int)], lines: List[String]): BackgroundJob.Outcome =
-      def outcome(failed: Option[String]) =
+    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1, com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2)], lines: List[com.histmersion.util.data.maintenance.VacuumJobs.RunLoopLines]): BackgroundJob.Outcome =
+      def outcome(failed: Option[com.histmersion.util.data.maintenance.VacuumJobs.RunLoopOutcomeFailed]) =
         BackgroundJob.Outcome(Option.when(lines.nonEmpty)(lines.mkString("; ")), failed)
       rest match
         case Nil                            => outcome(None)
@@ -72,6 +72,15 @@ final class VacuumJobs(
     loop(plan.tables.zipWithIndex, Nil)
 
 object VacuumJobs:
+  type RunLoopRestPart1 = RunLoopRestPart1.T
+  object RunLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunLoopRestPart2 = RunLoopRestPart2.T
+  object RunLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunLoopLines = RunLoopLines.T
+  object RunLoopLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunLoopOutcomeFailed = RunLoopOutcomeFailed.T
+  object RunLoopOutcomeFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DefaultsResult = DefaultsResult.T
   object DefaultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -38,7 +38,7 @@ private[places] object GazetteerImport:
       if apply then transactions.transact(work) else transactions.rollback(work)
 
     def batch(records: List[GazRecord]): Gazetteer.LoadCounts =
-      @tailrec def dedupe(rest: List[GazRecord], ok: Vector[GazRecord], duplicates: List[String]): (Vector[GazRecord], List[String]) =
+      @tailrec def dedupe(rest: List[GazRecord], ok: Vector[GazRecord], duplicates: List[com.histmersion.domain.catalogue.places.GazetteerImport.Session.BatchDedupeDuplicates]): (Vector[GazRecord], List[com.histmersion.domain.catalogue.places.GazetteerImport.Session.BatchDedupeResultPart2]) =
         rest match
           case Nil => (ok, duplicates)
           case record :: tail if ok.exists(_.ref == record.ref) => dedupe(tail, ok, duplicates :+ s"${record.ref}: repeated")
@@ -60,6 +60,11 @@ private[places] object GazetteerImport:
     def sweep(): Gazetteer.LoadCounts = write(repo.sweep())
 
   object Session:
+    type BatchDedupeResultPart2 = BatchDedupeResultPart2.T
+    object BatchDedupeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BatchDedupeDuplicates = BatchDedupeDuplicates.T
+    object BatchDedupeDuplicates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Apply = Apply.T
     object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

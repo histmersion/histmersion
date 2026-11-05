@@ -38,6 +38,9 @@ import com.histmersion.api.automation.Goal
   * tool: a thin wrapper over [[AgentsControllers]], Markdown out.
   */
 object AgentsTools:
+  type ApplyOutPart2 = ApplyOutPart2.T
+  object ApplyOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApplyRepairAcquireArg1 = ApplyRepairAcquireArg1.T
   object ApplyRepairAcquireArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyRepairAcquireResultPart2 = ApplyRepairAcquireResultPart2.T
@@ -331,7 +334,7 @@ object AgentsTools:
           val m = a.managing
           val id = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId)
           def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `target`"))
-          val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
+          val out: Either[Api.Error, com.histmersion.domain.automation.agents.AgentsTools.ApplyOutPart2] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
             case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)

@@ -17,6 +17,9 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
 
 object GazetteerPaths:
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
+  type OfOrConfigured = OfOrConfigured.T
+  object OfOrConfigured extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ManifestTextResultPart1 = ManifestTextResultPart1.T
   object ManifestTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManifestTextResultPart2 = ManifestTextResultPart2.T
@@ -34,7 +37,7 @@ object GazetteerPaths:
       .getOrElse(Path.of(cfg.init.dataDir))
       .resolve("gazetteer")
     val cache = UserPaths.cacheDir(env).map(_.resolve("gazetteer")).getOrElse(data)
-    def or(configured: String, fallback: Path): Path =
+    def or(configured: com.histmersion.server.GazetteerPaths.OfOrConfigured, fallback: Path): Path =
       Option(configured)
         .map(_.trim)
         .filter(_.nonEmpty)

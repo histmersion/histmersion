@@ -53,8 +53,8 @@ final class GazetteerImports(
       val batch = math.max(1, cfg().places.importBatch)
       def importFile(
           f: Store.Key,
-          kind: Option[String]
-      ): Either[String, com.histmersion.api.catalogue.Place.ImportResult] =
+          kind: Option[com.histmersion.domain.catalogue.places.GazetteerImports.SeedImportFileKind]
+      ): Either[com.histmersion.domain.catalogue.places.GazetteerImports.SeedImportFileResultPart1, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
           .toRight(s"${f.value}: not found")
@@ -68,7 +68,7 @@ final class GazetteerImports(
               (sum.failed ++ r.failed).take(20)
             )
           })
-      def pass(fs: List[(Store.Key, Option[String])]): Either[String, (Int, List[(Store.Key, Option[String])])] =
+      def pass(fs: List[(Store.Key, Option[com.histmersion.domain.catalogue.places.GazetteerImports.SeedPassFsPart2])]): Either[com.histmersion.domain.catalogue.places.GazetteerImports.SeedPassResultPart1, (com.histmersion.domain.catalogue.places.GazetteerImports.SeedPassResultPart2Part1, List[(Store.Key, Option[com.histmersion.domain.catalogue.places.GazetteerImports.SeedPassResultPart2Part2Part2])])] =
         fs.zipWithIndex.foldLeft[Either[String, (Int, List[(Store.Key, Option[String])])]](Right((0, Nil))) {
           case (acc, ((f, kind), i)) =>
             acc.flatMap { (n, retry) =>
@@ -108,6 +108,19 @@ final class GazetteerImports(
     ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, cfg().places.pointToleranceKm)
 
 object GazetteerImports:
+  type SeedImportFileResultPart1 = SeedImportFileResultPart1.T
+  object SeedImportFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedImportFileKind = SeedImportFileKind.T
+  object SeedImportFileKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassResultPart1 = SeedPassResultPart1.T
+  object SeedPassResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassResultPart2Part1 = SeedPassResultPart2Part1.T
+  object SeedPassResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassResultPart2Part2Part2 = SeedPassResultPart2Part2Part2.T
+  object SeedPassResultPart2Part2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedPassFsPart2 = SeedPassFsPart2.T
+  object SeedPassFsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TextArg1 = TextArg1.T
   object TextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextResultPart1 = TextResultPart1.T

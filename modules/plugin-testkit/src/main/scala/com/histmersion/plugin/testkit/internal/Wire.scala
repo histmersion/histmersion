@@ -22,6 +22,9 @@ final private[testkit] case class RecordedExchange(
 )
 
 private[testkit] object RecordedExchange:
+  type ParseFieldK = ParseFieldK.T
+  object ParseFieldK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KeptHeaders = KeptHeaders.T
   object KeptHeaders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderResult = RenderResult.T
@@ -92,7 +95,7 @@ private[testkit] object RecordedExchange:
           case Array(method, url) =>
             val pairs =
               fields.map(_.split(":", 2)).collect { case Array(k, v) => k.trim.toLowerCase(Locale.ROOT) -> v.trim }
-            def field(k: String) = pairs.collectFirst { case (`k`, v) => v }
+            def field(k: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseFieldK) = pairs.collectFirst { case (`k`, v) => v }
             val status = field("status").map(s => s.toIntOption.toRight(s"status '$s' is not a number"))
             status match
               case Some(Left(e)) => Left(e)
@@ -196,7 +199,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   /** The transport of one channel: `live` is built only when a request goes to the network. */
   def transport(live: => HttpTransport): HttpTransport = new HttpTransport:
     private lazy val network = live
-    def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart2]): Either[com.histmersion.plugin.testkit.internal.Wire.TransportGetResultPart1, HttpAnswer] =
       val shown = scrub(url)
       synchronized(asked += s"GET $shown")
       mode match
@@ -254,6 +257,15 @@ private[testkit] object Wire:
   /** Every exchange recorded in `dir`, by method and URL, in the order they were recorded. A file that does not parse
     * fails the test, naming it.
     */
+  type TransportGetResultPart1 = TransportGetResultPart1.T
+  object TransportGetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TransportGetUrl = TransportGetUrl.T
+  object TransportGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TransportGetHeadersPart1 = TransportGetHeadersPart1.T
+  object TransportGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TransportGetHeadersPart2 = TransportGetHeadersPart2.T
+  object TransportGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RecordedPart1Part1 = RecordedPart1Part1.T
   object RecordedPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordedPart1Part2 = RecordedPart1Part2.T

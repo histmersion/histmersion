@@ -550,7 +550,7 @@ object SourceService:
 
     def patch(requested: com.histmersion.domain.library.sources.SourceService.InMemory.PatchRequested, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.sources.SourceService.InMemory.PatchResultPart2] =
       val at = clock.instant()
-      var answer: Either[Api.Error, String] = Left(Write.notFound(requested))
+      var answer: Either[Api.Error, com.histmersion.domain.library.sources.SourceService.InMemory.PatchAnswerPart2] = Left(Write.notFound(requested))
       val _ = state.updateAndGet { st =>
         val citekey = currentIn(st, requested).getOrElse(requested)
         loadIn(st, citekey) match
@@ -617,7 +617,7 @@ object SourceService:
       val prefix = from + "#"
       val stored = st.sources(from)
       val renumbered = stored.source.findings.count(_.id.startsWith(prefix))
-      def newId(id: String): String = if id.startsWith(prefix) then to + id.drop(from.length) else id
+      def newId(id: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowNewIdId): com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowNewIdResult = if id.startsWith(prefix) then to + id.drop(from.length) else id
       val moved = stored
         .modify(_.source.citekey)
         .setTo(to)
@@ -644,7 +644,7 @@ object SourceService:
       val promoting = keyed.parked.filter(e => promotable(e.dst) && e.src != to)
       val newEdges = promoting.map(_.modify(_.dst).setTo(to)).filterNot(keyed.edges)
       val linked = keyed.modify(_.edges).using(_ ++ newEdges).modify(_.parked).using(_ -- promoting)
-      val target: String => Option[String] = t => Option.when(t == from || shorts(t))(to)
+      val target: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowTargetArg1 => Option[com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowTargetResult] = t => Option.when(t == from || shorts(t))(to)
       val needle = from.takeWhile(_ != '_')
       val retargeted = linked.sources.toList.sortBy(_._1).flatMap { (ck, x) =>
         val text = (x.source.notes.getOrElse("") + " " + x.source.summary.getOrElse("")).toLowerCase
@@ -841,6 +841,17 @@ object SourceService:
       else Left(Write.notFound(citekey))
 
   object InMemory:
+    type PatchAnswerPart2 = PatchAnswerPart2.T
+    object PatchAnswerPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedNowNewIdResult = RenamedNowNewIdResult.T
+    object RenamedNowNewIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedNowNewIdId = RenamedNowNewIdId.T
+    object RenamedNowNewIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedNowTargetArg1 = RenamedNowTargetArg1.T
+    object RenamedNowTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedNowTargetResult = RenamedNowTargetResult.T
+    object RenamedNowTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TokenResult = TokenResult.T
     object TokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CurrentInResult = CurrentInResult.T

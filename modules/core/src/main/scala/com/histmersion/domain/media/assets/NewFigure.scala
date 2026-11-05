@@ -15,6 +15,11 @@ final case class NewFigure(name: NewFigure.Name, mime: NewFigure.Mime, bytes: Ne
 object NewFigure:
 
   /** Decode a wire [[AssetInput]]; `Left` with a readable reason when the payload is unusable. */
+  type DedupeLoopShas = DedupeLoopShas.T
+  object DedupeLoopShas extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeLoopNames = DedupeLoopNames.T
+  object DedupeLoopNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfResultPart1 = OfResultPart1.T
   object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfMaxBytes = OfMaxBytes.T
@@ -63,8 +68,8 @@ object NewFigure:
   def dedupe(figures: List[NewFigure]): List[NewFigure] =
     @tailrec def loop(
         rest: List[NewFigure],
-        shas: Set[String],
-        names: Set[String],
+        shas: Set[com.histmersion.domain.media.assets.NewFigure.DedupeLoopShas],
+        names: Set[com.histmersion.domain.media.assets.NewFigure.DedupeLoopNames],
         acc: List[NewFigure]
     ): List[NewFigure] =
       rest match

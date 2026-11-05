@@ -25,6 +25,11 @@ import com.histmersion.util.console.Console
 
 object DependencyResolver:
 
+  type ParseLoopResultPart1 = ParseLoopResultPart1.T
+  object ParseLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLoopRest = ParseLoopRest.T
+  object ParseLoopRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ExitCodeResult = ExitCodeResult.T
   object ExitCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExitCodeArgs = ExitCodeArgs.T
@@ -69,7 +74,7 @@ object DependencyResolver:
   /** Pure: the request the arguments make. */
   def parse(args: List[com.histmersion.pluginresolver.DependencyResolver.ParseArgs]): Either[com.histmersion.pluginresolver.DependencyResolver.ParseResultPart1, ResolveRequest] =
     @annotation.tailrec
-    def loop(rest: List[String], acc: ResolveRequest): Either[String, ResolveRequest] = rest match
+    def loop(rest: List[com.histmersion.pluginresolver.DependencyResolver.ParseLoopRest], acc: ResolveRequest): Either[com.histmersion.pluginresolver.DependencyResolver.ParseLoopResultPart1, ResolveRequest] = rest match
       case "--kit" :: d :: t              => loop(t, acc.copy(kit = Path.of(d)))
       case "--lib" :: d :: t              => loop(t, acc.copy(lib = Path.of(d)))
       case "--histmersion-repo" :: d :: t => loop(t, acc.copy(histmersionRepo = Some(Path.of(d))))

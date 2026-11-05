@@ -11,6 +11,9 @@ final case class ServerModules(shipped: Map[ModuleKey, ModuleVersion], excluded:
 
 object ServerModules:
   /** The kit's two files, one entry per line; blank lines and `#` comments ignored. */
+  type ParseEntriesLines = ParseEntriesLines.T
+  object ParseEntriesLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProvidesResult = ProvidesResult.T
   object ProvidesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T
@@ -21,7 +24,7 @@ object ServerModules:
   object ParseExcludes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(modules: List[com.histmersion.pluginresolver.ServerModules.ParseModules], excludes: List[com.histmersion.pluginresolver.ServerModules.ParseExcludes]): Either[com.histmersion.pluginresolver.ServerModules.ParseResultPart1, ServerModules] =
-    def entries(lines: List[String]) = lines.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
+    def entries(lines: List[com.histmersion.pluginresolver.ServerModules.ParseEntriesLines]) = lines.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     for
       shipped <- traverse(entries(modules))(ModuleCoordinates.parse)
       excluded <- traverse(entries(excludes))(ModuleKey.parse)

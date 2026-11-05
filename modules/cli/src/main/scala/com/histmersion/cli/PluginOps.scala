@@ -140,7 +140,7 @@ final class PluginOps(using console: Console)(
     * has). The dependencies the POM lists are the resolver's (`histmersion-relink --resolve`).
     */
   private def maven(c: Coordinates, to: Path, wantAsc: com.histmersion.cli.PluginOps.MavenWantAsc, repos: List[com.histmersion.cli.PluginOps.MavenRepos]): Either[Cli.Error, com.histmersion.cli.PluginOps.MavenResultPart2] =
-    def one(repo: String): Either[String, String] =
+    def one(repo: com.histmersion.cli.PluginOps.MavenOneRepo): Either[com.histmersion.cli.PluginOps.MavenOneResultPart1, com.histmersion.cli.PluginOps.MavenOneResultPart2] =
       val url = c.jarUrl(repo)
       for
         _ <- curl(url, to)
@@ -440,6 +440,13 @@ final class PluginOps(using console: Console)(
 
 object PluginOps:
   /** Ask on the terminal; no terminal = no. */
+  type MavenOneResultPart1 = MavenOneResultPart1.T
+  object MavenOneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MavenOneResultPart2 = MavenOneResultPart2.T
+  object MavenOneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MavenOneRepo = MavenOneRepo.T
+  object MavenOneRepo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ConfirmArg1 = ConfirmArg1.T
   object ConfirmArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConfirmResult = ConfirmResult.T

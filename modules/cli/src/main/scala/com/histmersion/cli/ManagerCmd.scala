@@ -25,6 +25,13 @@ import com.histmersion.util.console.Console
   */
 object ManagerCmd:
 
+  type SchedulerUsageM = SchedulerUsageM.T
+  object SchedulerUsageM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRequestUsageM = FocusRequestUsageM.T
+  object FocusRequestUsageM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRequestNumS = FocusRequestNumS.T
+  object FocusRequestNumS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ConfigKvs = ConfigKvs.T
   object ConfigKvs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FocusRequestArgs = FocusRequestArgs.T
@@ -181,7 +188,7 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: String) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+      def usage(m: com.histmersion.cli.ManagerCmd.SchedulerUsageM) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
           c.call(ManagersApi.scheduler)(limit).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
@@ -257,8 +264,8 @@ object ManagerCmd:
     * it); a malformed one is a usage error before anything is sent.
     */
   def focusRequest(args: List[com.histmersion.cli.ManagerCmd.FocusRequestArgs]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: String) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
-    def num(s: String) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
+    def usage(m: com.histmersion.cli.ManagerCmd.FocusRequestUsageM) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+    def num(s: com.histmersion.cli.ManagerCmd.FocusRequestNumS) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
       case List(v @ ("pin" | "unpin"), g) => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))

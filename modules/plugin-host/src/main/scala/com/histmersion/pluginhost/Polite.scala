@@ -57,7 +57,7 @@ final class Polite(
     val h = host(url)
     val sent =
       headers.filterNot(_._1.equalsIgnoreCase("User-Agent")) + ("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))
-    def attempt(n: Int, refusals: Int): Either[String, HttpAnswer] =
+    def attempt(n: com.histmersion.pluginhost.Polite.GetAttemptN, refusals: com.histmersion.pluginhost.Polite.GetAttemptRefusals): Either[com.histmersion.pluginhost.Polite.GetAttemptResultPart1, HttpAnswer] =
       pace(h)
       count += 1
       http.get(url, sent).flatMap { a =>
@@ -106,6 +106,13 @@ final class Polite(
 
 object Polite:
   /** A host is never asked more than this many times slower than its configured pace. */
+  type GetAttemptResultPart1 = GetAttemptResultPart1.T
+  object GetAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetAttemptN = GetAttemptN.T
+  object GetAttemptN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetAttemptRefusals = GetAttemptRefusals.T
+  object GetAttemptRefusals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FileResultPart2Part1 = FileResultPart2Part1.T
   object FileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -44,7 +44,7 @@ final class SiteTypesControllers(
       val cap = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)
       val api = settings().media.wikidata.apiUrl
       val superCache = scala.collection.mutable.Map.empty[String, List[String]]
-      def claims(ids: List[String], prop: String): Map[String, List[String]] =
+      def claims(ids: List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesClaimsIds], prop: com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesClaimsProp): Map[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesClaimsResultPart1, List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesClaimsResultPart2]] =
         ids
           .grouped(ec.siteTypes.batch.max(1))
           .toList
@@ -57,9 +57,9 @@ final class SiteTypesControllers(
           .toMap
 
       /** The superclasses of `classes` within `depth` P279 steps, nearest first (cached per run). */
-      def supers(classes: List[String]): List[String] =
+      def supers(classes: List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersClasses]): List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersResult] =
         val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
-        @tailrec def walk(steps: Int, frontier: List[String], acc: List[String]): List[String] =
+        @tailrec def walk(steps: com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersWalkSteps, frontier: List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersWalkFrontier], acc: List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersWalkAcc]): List[com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesSupersWalkResult] =
           if steps <= 0 then acc
           else
             val ask = frontier.filterNot(superCache.contains).distinct
@@ -97,6 +97,27 @@ final class SiteTypesControllers(
       report.copy(pending = sites.countSitesToType(req.refresh, Some(started)), requests = c.requests)
 
 object SiteTypesControllers:
+  type RunSiteTypesClaimsResultPart1 = RunSiteTypesClaimsResultPart1.T
+  object RunSiteTypesClaimsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesClaimsResultPart2 = RunSiteTypesClaimsResultPart2.T
+  object RunSiteTypesClaimsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesClaimsIds = RunSiteTypesClaimsIds.T
+  object RunSiteTypesClaimsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesClaimsProp = RunSiteTypesClaimsProp.T
+  object RunSiteTypesClaimsProp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersResult = RunSiteTypesSupersResult.T
+  object RunSiteTypesSupersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersClasses = RunSiteTypesSupersClasses.T
+  object RunSiteTypesSupersClasses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersWalkResult = RunSiteTypesSupersWalkResult.T
+  object RunSiteTypesSupersWalkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersWalkSteps = RunSiteTypesSupersWalkSteps.T
+  object RunSiteTypesSupersWalkSteps extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersWalkFrontier = RunSiteTypesSupersWalkFrontier.T
+  object RunSiteTypesSupersWalkFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesSupersWalkAcc = RunSiteTypesSupersWalkAcc.T
+  object RunSiteTypesSupersWalkAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PoliteIntervalMs = PoliteIntervalMs.T
   object PoliteIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunSiteTypesProgressArg1 = RunSiteTypesProgressArg1.T

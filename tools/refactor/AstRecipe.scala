@@ -13,7 +13,7 @@ object AstRecipe {
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
     measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false,
-    signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil)
+    signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -66,7 +66,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       val tree = source.parse[Source].get
       val definitionPatches = if(definitionPaths(path)) {
         val records = ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, policy.otherConstructors, evidence)
-        val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,policy.signatureBuffers,evidence) else Nil
+        val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,policy.signatureBuffers,policy.localMemberTypes,evidence) else Nil
         val corrections = BufferSignatureRepair.patches(tree,path,bufferTargets.getOrElse(path,Nil),externalBufferRefs,evidence)
         (records ++ members ++ corrections).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
           if(a == b) {
@@ -286,10 +286,11 @@ object BufferSignatureRepair {
 }
 
 object MemberDefinitions {
-  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], wholeBuffers: Boolean,
+  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], wholeBuffers: Boolean, localMembers: Boolean,
       evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
     val result = scala.collection.mutable.ListBuffer.empty[(Int,Int,String)]
     val additions = scala.collection.mutable.LinkedHashMap.empty[Tree,scala.collection.mutable.LinkedHashMap[String,String]]
+    val localDeclarations = scala.collection.mutable.Map.empty[(Tree,String),Int]
     def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
     def indent(t: Tree): String = source.substring(source.lastIndexOf('\n',t.pos.start - 1) + 1,t.pos.start).takeWhile(_ == ' ')
     def upper(s: String): String = if(s.isEmpty) "Anonymous" else s.head.toUpper + s.tail
@@ -319,6 +320,9 @@ object MemberDefinitions {
       val enclosing = context.collectFirst { case o: Defn.Object => o; case c: Defn.Class => c; case c: Defn.Trait => c; case c: Defn.Enum => c }
       enclosing.foreach { entity =>
         val owner = ownerName(entity)
+        val enclosingMethods = context.takeWhile(_ ne entity).reverse.collect { case d: Defn.Def => d.name.value }
+        val local = enclosingMethods.nonEmpty
+        val localOwner = parents(entity).exists(t => t.is[Defn.Def] || t.is[Term.Block])
         val targetOwner: Tree = entity match {
           case o: Defn.Object => o
           case _ => entity.parent.toList.flatMap(_.children).collectFirst {
@@ -334,27 +338,29 @@ object MemberDefinitions {
           case _ => Nil
         }.toSet
         leaves(t).foreach { case(leaf,base,suffix) =>
-          val key = owner + "." + keyName + (if(suffix.isEmpty) "" else "." + suffix)
-          val name = names.getOrElse(key,prefix + suffix)
+          val scopedKey = (enclosingMethods :+ keyName).mkString(".")
+          val key = owner + "." + scopedKey + (if(suffix.isEmpty) "" else "." + suffix)
+          val name = names.getOrElse(key,enclosingMethods.map(upper).mkString + prefix + suffix)
           val mappings = reuse.toList.collect { case(pattern,value) if key.matches(pattern.split("\\*",-1).map(java.util.regex.Pattern.quote).mkString(".*")) => value }.distinct
           require(mappings.size <= 1,"Conflicting member concept mappings: " + key)
           val declared = additions.getOrElseUpdate(targetOwner,scala.collection.mutable.LinkedHashMap.empty[String,String])
           val shadowed = tree.collect { case d: Defn.Type if d.name.value == base => d }.nonEmpty
-          val local = context.exists(_.is[Defn.Def])
+          val localCollision = local && localDeclarations.get((targetOwner,name)).exists(_ != declaration.pos.start)
           val packed = !base.startsWith("Array[") && (leaf :: parents(leaf).takeWhile(x => x.pos.start >= t.pos.start && x.pos.end <= t.pos.end)).exists {
             case a: Type.Apply => Set("Array","scala.Array","_root_.scala.Array","js.Array")(a.tpe.syntax)
             case _ => false
           }
           val empty = targetOwner.is[Defn.Object] && stats(targetOwner).isEmpty
-          if(blocked || local || shadowed || packed || empty || !name.matches("[A-Z][A-Za-z0-9_]*") ||
+          if(blocked || (local && !localMembers) || localOwner || localCollision || shadowed || packed || empty || !name.matches("[A-Z][A-Za-z0-9_]*") ||
             (mappings.isEmpty && (occupied(name) || declared.get(name).exists(_ != base)))) {
-            val reasons = List(if(blocked) "override-or-native-contract" else "",if(local) "local" else "",if(shadowed) "primitive-name-shadowing" else "",if(packed) "whole-buffer-modeling-required" else "",if(empty) "empty-companion" else "").filter(_.nonEmpty)
+            val reasons = List(if(blocked) "override-or-native-contract" else "",if(local && !localMembers) "local" else "",if(localOwner) "local-owner-requires-local-companion" else "",if(localCollision) "local-declaration-name-conflict" else "",if(shadowed) "primitive-name-shadowing" else "",if(packed) "whole-buffer-modeling-required" else "",if(empty) "empty-companion" else "").filter(_.nonEmpty)
             evidence += List(path,(leaf.pos.startLine + 1).toString,"UNRESOLVED member " + key,leaf.structure + " " + (if(reasons.isEmpty) "name-or-base-conflict" else reasons.mkString(",")))
           } else {
             val replacement = mappings.headOption.getOrElse(owner + "." + name)
             if(mappings.isEmpty) declared(name) = base
+            if(local) localDeclarations((targetOwner,name)) = declaration.pos.start
             result += ((leaf.pos.start,leaf.pos.end,replacement))
-            evidence += List(path,(leaf.pos.startLine + 1).toString,owner + "#" + keyName + "/" + suffix + " " + leaf.structure,replacement)
+            evidence += List(path,(leaf.pos.startLine + 1).toString,owner + "#" + scopedKey + "/" + suffix + " " + leaf.structure,replacement)
           }
         }
       }

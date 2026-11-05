@@ -39,7 +39,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
       s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
 
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-    val periodIdMap: Map[String, String] =
+    val periodIdMap: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart2] =
       in.foreign.periods.flatMap(p => in.periodMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
     repoint(es, periodIdMap)
 
@@ -122,6 +122,11 @@ object PeriodPlan:
   /** Periods point at their parents by id: a bundle period matched to one here under another id is pointed at under
     * that id. Pure.
     */
+  type LocalizedPeriodIdMapPart1 = LocalizedPeriodIdMapPart1.T
+  object LocalizedPeriodIdMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalizedPeriodIdMapPart2 = LocalizedPeriodIdMapPart2.T
+  object LocalizedPeriodIdMapPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InfoResult = InfoResult.T
   object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfoLabel = InfoLabel.T

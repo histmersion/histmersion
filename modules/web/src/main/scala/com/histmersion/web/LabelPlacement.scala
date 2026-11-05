@@ -26,6 +26,25 @@ import scala.collection.mutable
 object LabelPlacement:
 
   /** A point in the zoom-0 Mercator plane. */
+  type HullCrossResult = HullCrossResult.T
+  object HullCrossResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipRingEdgeInsideResult = ClipRingEdgeInsideResult.T
+  object ClipRingEdgeInsideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipRingAtXX = ClipRingAtXX.T
+  object ClipRingAtXX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipRingAtYY = ClipRingAtYY.T
+  object ClipRingAtYY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullCellsResultPart1 = CullCellsResultPart1.T
+  object CullCellsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullCellsResultPart2 = CullCellsResultPart2.T
+  object CullCellsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullCellsPad = CullCellsPad.T
+  object CullCellsPad extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullOverlapsResult = CullOverlapsResult.T
+  object CullOverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullOverlapsPad = CullOverlapsPad.T
+  object CullOverlapsPad extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProjectLat = ProjectLat.T
   object ProjectLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProjectLon = ProjectLon.T
@@ -216,7 +235,7 @@ object LabelPlacement:
     val ps = pts.distinct.sortBy(p => (p.x, p.y)).toVector
     if ps.length < 3 then ps
     else
-      def cross(o: Pt, a: Pt, b: Pt): Double = (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
+      def cross(o: Pt, a: Pt, b: Pt): com.histmersion.web.LabelPlacement.HullCrossResult = (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
       val h = mutable.ArrayBuffer.empty[Pt]
       for p <- ps do
         while h.length >= 2 && cross(h(h.length - 2), h(h.length - 1), p) <= 0 do h.remove(h.length - 1)
@@ -592,7 +611,7 @@ object LabelPlacement:
 
   /** Pure: one ring clipped to a rectangle (Sutherland–Hodgman). */
   def clipRing(ring: Vector[Pt], r: Rect): Vector[Pt] =
-    def edge(in: Vector[Pt], inside: Pt => Boolean, cut: (Pt, Pt) => Pt): Vector[Pt] =
+    def edge(in: Vector[Pt], inside: Pt => com.histmersion.web.LabelPlacement.ClipRingEdgeInsideResult, cut: (Pt, Pt) => Pt): Vector[Pt] =
       if in.isEmpty then in
       else
         val out = Vector.newBuilder[Pt]
@@ -608,8 +627,8 @@ object LabelPlacement:
           prevIn = curIn
         }
         out.result()
-    def atX(x: Double)(a: Pt, b: Pt): Pt = Pt(x, a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x))
-    def atY(y: Double)(a: Pt, b: Pt): Pt = Pt(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y), y)
+    def atX(x: com.histmersion.web.LabelPlacement.ClipRingAtXX)(a: Pt, b: Pt): Pt = Pt(x, a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x))
+    def atY(y: com.histmersion.web.LabelPlacement.ClipRingAtYY)(a: Pt, b: Pt): Pt = Pt(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y), y)
     val l = edge(ring, _.x >= r.minX, atX(r.minX))
     val rt = edge(l, _.x <= r.maxX, atX(r.maxX))
     val t = edge(rt, _.y >= r.minY, atY(r.minY))
@@ -652,13 +671,13 @@ object LabelPlacement:
   def cull(boxes: Seq[Box], cell: com.histmersion.web.LabelPlacement.CullCell = 128.0, shown: com.histmersion.web.LabelPlacement.CullShownArg1 => com.histmersion.web.LabelPlacement.CullShownResult = _ => true): Set[com.histmersion.web.LabelPlacement.CullResult] =
     val grid = mutable.HashMap.empty[(Int, Int), mutable.ArrayBuffer[Box]]
     val kept = mutable.Set.empty[String]
-    def cells(b: Box, pad: Double): Seq[(Int, Int)] =
+    def cells(b: Box, pad: com.histmersion.web.LabelPlacement.CullCellsPad): Seq[(com.histmersion.web.LabelPlacement.CullCellsResultPart1, com.histmersion.web.LabelPlacement.CullCellsResultPart2)] =
       val x0 = math.floor((b.cx - b.w / 2 - pad) / cell).toInt
       val x1 = math.floor((b.cx + b.w / 2 + pad) / cell).toInt
       val y0 = math.floor((b.cy - b.h / 2 - pad) / cell).toInt
       val y1 = math.floor((b.cy + b.h / 2 + pad) / cell).toInt
       for gx <- x0 to x1; gy <- y0 to y1 yield (gx, gy)
-    def overlaps(a: Box, b: Box, pad: Double): Boolean =
+    def overlaps(a: Box, b: Box, pad: com.histmersion.web.LabelPlacement.CullOverlapsPad): com.histmersion.web.LabelPlacement.CullOverlapsResult =
       math.abs(a.cx - b.cx) * 2 < a.w + b.w + 2 * pad && math.abs(a.cy - b.cy) * 2 < a.h + b.h + 2 * pad
     for b <- boxes.sortBy(b => (-b.rank, b.key)) do
       val pad = if shown(b.key) then PadPx else PadPx + AppearPadPx

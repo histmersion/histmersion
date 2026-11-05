@@ -11,6 +11,11 @@ import com.histmersion.api.library.Source
 
 object Wording:
 
+  type AllowanceWindowSpanResult = AllowanceWindowSpanResult.T
+  object AllowanceWindowSpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceWindowSpanMinutes = AllowanceWindowSpanMinutes.T
+  object AllowanceWindowSpanMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HumanizeResult = HumanizeResult.T
   object HumanizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HumanizeId = HumanizeId.T
@@ -192,7 +197,7 @@ object Wording:
 
   def allowanceWindow(kind: com.histmersion.api.Wording.AllowanceWindowKind): com.histmersion.api.Wording.AllowanceWindowResult =
     val k = kind.trim.toLowerCase.split('/').last
-    def span(minutes: Long): String = minutes match
+    def span(minutes: com.histmersion.api.Wording.AllowanceWindowSpanMinutes): com.histmersion.api.Wording.AllowanceWindowSpanResult = minutes match
       case 10080              => "This week's limit"
       case 1440               => "Today's limit"
       case m if m % 1440 == 0 => s"${m / 1440}-day limit"

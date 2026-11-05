@@ -140,6 +140,9 @@ final class ServerGraph private (
   def close(): Unit = graph.close()
 
 object ServerGraph:
+  type WatchOursResult = WatchOursResult.T
+  object WatchOursResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Migrations = Migrations.T
   object Migrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -280,7 +283,7 @@ object ServerGraph:
         StandardWatchEventKinds.ENTRY_MODIFY,
         StandardWatchEventKinds.ENTRY_DELETE
       )
-      def ours(k: java.nio.file.WatchKey): Boolean =
+      def ours(k: java.nio.file.WatchKey): com.histmersion.server.ServerGraph.WatchOursResult =
         import scala.jdk.CollectionConverters.*
         val hit = k
           .pollEvents()

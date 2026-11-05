@@ -8,6 +8,9 @@ import io.circe.Json
 import io.circe.syntax.*
 
 private[agents] object AgentTreeWriter:
+  type WriteKeyName = WriteKeyName.T
+  object WriteKeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WriteResultPart1 = WriteResultPart1.T
   object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteTreePart1 = WriteTreePart1.T
@@ -23,7 +26,7 @@ private[agents] object AgentTreeWriter:
 
   def write(store: Store, tree: Map[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteTreePart1, com.histmersion.domain.automation.agents.AgentTreeWriter.WriteTreePart2], runtimes: List[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteRuntimes], sha: com.histmersion.domain.automation.agents.AgentTreeWriter.WriteSha)(using clock: Clock): Either[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteResultPart1, GenerateResult] =
     try
-      def key(name: String): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
+      def key(name: com.histmersion.domain.automation.agents.AgentTreeWriter.WriteKeyName): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
       store.makeDirectory().fold(error => throw java.io.IOException(error.message), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
         io.circe.parser.parse(blob.text()).toOption

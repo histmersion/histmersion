@@ -6,6 +6,9 @@ import java.util.zip.{CRC32, Deflater, Inflater}
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:
 
+  type DecodeBe32I = DecodeBe32I.T
+  object DecodeBe32I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsPngB = IsPngB.T
   object IsPngB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeRgbResult = EncodeRgbResult.T
@@ -95,7 +98,7 @@ object Png:
   def decode(b: com.histmersion.util.basemap.Png.DecodeB): Either[com.histmersion.util.basemap.Png.DecodeResultPart1, Vp8l.Image] =
     if !isPng(b) then Left("not a PNG")
     else
-      def be32(i: Int) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)
+      def be32(i: com.histmersion.util.basemap.Png.DecodeBe32I) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)
       var i = 8
       var w, h, depth, colour, interlace = -1
       val idat = ByteArrayOutputStream()

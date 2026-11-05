@@ -25,6 +25,17 @@ object AgentRepo:
   /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
     * ([[Jsonb]]).
     */
+  type RunFacetsFromExcept = RunFacetsFromExcept.T
+  object RunFacetsFromExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFacetsUsedExcept = RunFacetsUsedExcept.T
+  object RunFacetsUsedExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalPageCursorResultPart1 = ApprovalPageCursorResultPart1.T
+  object ApprovalPageCursorResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalPageCursorC = ApprovalPageCursorC.T
+  object ApprovalPageCursorC extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalFacetsFromExcept = ApprovalFacetsFromExcept.T
+  object ApprovalFacetsFromExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetId = GetId.T
   object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListStatus = ListStatus.T
@@ -462,8 +473,8 @@ object AgentRepo:
     */
   def runFacets(q: RunQuery)(using DbCon): (List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart1Part1, com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart1Part2)], List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part1, List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part2Part1, com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part2Part2)])]) =
     val c = runConds(q)
-    def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
-    def used(except: String): Sql =
+    def from(except: com.histmersion.domain.automation.agents.AgentRepo.RunFacetsFromExcept) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
+    def used(except: com.histmersion.domain.automation.agents.AgentRepo.RunFacetsUsedExcept): Sql =
       Sql.raw(
         " FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
           "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x"
@@ -863,7 +874,7 @@ object AgentRepo:
       before: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageBefore],
       upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageUpTo]
   )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart1, (List[ApprovalInfo], com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart2Part2)] =
-    def cursor(c: String): Either[String, Param] =
+    def cursor(c: com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageCursorC): Either[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageCursorResultPart1, Param] =
       c.trim.toLongOption
         .map(Param.L(_))
         .filter(Keyset.existsOn("approvals", _))
@@ -882,7 +893,7 @@ object AgentRepo:
     */
   def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart1Part1, com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart1Part2)], List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part1, List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part2Part1, com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part2Part2)])]) =
     val c = approvalConds(q)
-    def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
+    def from(except: com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsFromExcept) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
     (
       Keyset.countsOn(from("state"), "state"),
       List(

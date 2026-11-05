@@ -56,6 +56,19 @@ object MarkdownLint:
     * @param isCitekey
     *   is this token a stored citekey? `None` = do not look for bare citekeys
     */
+  type FixLoopResultPart1 = FixLoopResultPart1.T
+  object FixLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixLoopResultPart2 = FixLoopResultPart2.T
+  object FixLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixLoopT = FixLoopT.T
+  object FixLoopT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixLoopRound = FixLoopRound.T
+  object FixLoopRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixLoopDone = FixLoopDone.T
+  object FixLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixLoopNonOverlappingReach = FixLoopNonOverlappingReach.T
+  object FixLoopNonOverlappingReach extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IssuesText = IssuesText.T
   object IssuesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LookupsResult = LookupsResult.T
@@ -175,12 +188,12 @@ object MarkdownLint:
     */
   def fix(text: com.histmersion.server.MarkdownLint.FixText, field: FormatField, ctx: Context = Context()): (com.histmersion.server.MarkdownLint.FixResultPart1, List[com.histmersion.server.MarkdownLint.FixResultPart2]) =
     @annotation.tailrec
-    def loop(t: String, round: Int, done: List[String]): (String, List[String]) =
+    def loop(t: com.histmersion.server.MarkdownLint.FixLoopT, round: com.histmersion.server.MarkdownLint.FixLoopRound, done: List[com.histmersion.server.MarkdownLint.FixLoopDone]): (com.histmersion.server.MarkdownLint.FixLoopResultPart1, List[com.histmersion.server.MarkdownLint.FixLoopResultPart2]) =
       val fixable = check(t, field, ctx).filter(_.edits.nonEmpty)
       if fixable.isEmpty || round >= 3 then (t, done)
       else
         // non-overlapping, earliest first; an edit that overlaps an earlier one waits for the next round
-        @tailrec def nonOverlapping(rest: List[Finding], acc: List[Finding], reach: Int): List[Finding] =
+        @tailrec def nonOverlapping(rest: List[Finding], acc: List[Finding], reach: com.histmersion.server.MarkdownLint.FixLoopNonOverlappingReach): List[Finding] =
           rest match
             case Nil       => acc
             case f :: tail =>
@@ -626,10 +639,10 @@ object MarkdownLint:
         (t.contains("|") && DelimRow.matches(t) && t.contains("-")))
 
     private def tables(): Unit =
-      val rendered: List[(Int, Int)] = nodes.collect { case t: TableBlock =>
+      val rendered: List[(com.histmersion.server.MarkdownLint.Scan.TablesRenderedPart1, com.histmersion.server.MarkdownLint.Scan.TablesRenderedPart2)] = nodes.collect { case t: TableBlock =>
         (lineOf(t.getStartOffset), lineOf(math.max(t.getStartOffset, t.getEndOffset - 1)))
       }
-      def coveredBy(l: Int) = rendered.find((a, b) => l >= a && l <= b)
+      def coveredBy(l: com.histmersion.server.MarkdownLint.Scan.TablesCoveredByL) = rendered.find((a, b) => l >= a && l <= b)
       // runs of pipe rows
       var l = 0
       while l < nLines do
@@ -1402,6 +1415,13 @@ object MarkdownLint:
         }
 
   object Scan:
+    type TablesRenderedPart1 = TablesRenderedPart1.T
+    object TablesRenderedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TablesRenderedPart2 = TablesRenderedPart2.T
+    object TablesRenderedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TablesCoveredByL = TablesCoveredByL.T
+    object TablesCoveredByL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type LineStarts = LineStarts.T
     object LineStarts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

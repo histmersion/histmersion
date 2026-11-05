@@ -232,7 +232,7 @@ final class IngestQueue(
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
   private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.TickOffId, citekey: com.histmersion.domain.library.Citekey, jobId: com.histmersion.util.jobs.Job.Id): com.histmersion.domain.library.ingest.IngestQueue.TickOffResult =
-    def warning(message: String): String =
+    def warning(message: com.histmersion.domain.library.ingest.IngestQueue.TickOffWarningMessage): com.histmersion.domain.library.ingest.IngestQueue.TickOffWarningResult =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
     try
@@ -291,6 +291,11 @@ final class IngestQueue(
     )
 
 object IngestQueue:
+  type TickOffWarningResult = TickOffWarningResult.T
+  object TickOffWarningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickOffWarningMessage = TickOffWarningMessage.T
+  object TickOffWarningMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AfterStoreArg1 = AfterStoreArg1.T
   object AfterStoreArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterStoreResult = AfterStoreResult.T

@@ -13,6 +13,9 @@ import scala.jdk.CollectionConverters.*
   * before it built is given a baseline at 109 instead ([[squashHistory]]).
   */
 object Migrate:
+  type RetryingGoN = RetryingGoN.T
+  object RetryingGoN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MigrationNamesResult = MigrationNamesResult.T
   object MigrationNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetResourceName = GetResourceName.T
@@ -206,7 +209,7 @@ object Migrate:
   /** Run `f`, again (up to `attempts` times, with a short growing pause) while it fails [[transient]]ly. */
   private[histmersion] def retrying[A](attempts: com.histmersion.util.database.Migrate.RetryingAttempts)(f: => A): A =
     @annotation.tailrec
-    def go(n: Int): A =
+    def go(n: com.histmersion.util.database.Migrate.RetryingGoN): A =
       scala.util.Try(f) match
         case scala.util.Success(a)                                 => a
         case scala.util.Failure(e) if n < attempts && transient(e) =>

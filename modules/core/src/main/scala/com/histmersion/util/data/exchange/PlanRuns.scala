@@ -137,7 +137,13 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def planned(plan: MergePlan): MergePlan = runs.foldLeft(plan)((p, r) => r.planned(p))
 
   override def relinked(text: String, citekeys: Map[String, String]): String =
-    @tailrec def loop(rest: List[PlanRun], t: String): String = rest match
+    @tailrec def loop(rest: List[PlanRun], t: com.histmersion.util.data.exchange.PlanRuns.RelinkedLoopT): com.histmersion.util.data.exchange.PlanRuns.RelinkedLoopResult = rest match
       case r :: tail => loop(tail, r.relinked(t, citekeys))
       case Nil       => t
     loop(runs, text)
+
+object PlanRuns:
+  type RelinkedLoopResult = RelinkedLoopResult.T
+  object RelinkedLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelinkedLoopT = RelinkedLoopT.T
+  object RelinkedLoopT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

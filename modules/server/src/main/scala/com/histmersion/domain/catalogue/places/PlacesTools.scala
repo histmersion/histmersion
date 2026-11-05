@@ -17,6 +17,9 @@ import com.histmersion.api.Api
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
   */
 object PlacesTools:
+  type ApplyTextRPart2 = ApplyTextRPart2.T
+  object ApplyTextRPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import com.histmersion.util.mcp.ToolInputs.given
 
   /** Input of the `places` tool. */
@@ -202,7 +205,7 @@ object PlacesTools:
           val gone = into.isDefined || in.remove.getOrElse(false)
           val ask = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
             in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
-          def text(r: Either[Api.Error, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
+          def text(r: Either[Api.Error, com.histmersion.domain.catalogue.places.PlacesTools.ApplyTextRPart2]) = ToolResult.text(r.fold(McpOut.refusal, identity))
           (id, ask) match
             case (_, false)   => ToolResult.text(PlacesMarkdown.placeOverrides(places.overrides(id)))
             case (None, true) =>

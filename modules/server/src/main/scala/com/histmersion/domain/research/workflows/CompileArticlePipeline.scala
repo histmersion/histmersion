@@ -265,7 +265,7 @@ final class CompileArticlePipeline(
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
   private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteResultPart1, Written] =
-    def task(why: String): Unit =
+    def task(why: com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteTaskWhy): Unit =
       ctx.warn(why)
       val item = Pipelines.entry(
         ctx,
@@ -352,6 +352,9 @@ final class CompileArticlePipeline(
 object CompileArticlePipeline:
 
   /** What a compile-article run's write step did (None: it never got there). */
+  type WriteTaskWhy = WriteTaskWhy.T
+  object WriteTaskWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompileResultPart2 = CompileResultPart2.T

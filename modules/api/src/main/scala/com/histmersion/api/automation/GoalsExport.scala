@@ -5,6 +5,21 @@ import com.histmersion.api.given
 
 object GoalsExport:
 
+  type TreeWalkResultPart2 = TreeWalkResultPart2.T
+  object TreeWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeWalkDepth = TreeWalkDepth.T
+  object TreeWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeWalkSeen = TreeWalkSeen.T
+  object TreeWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsSectionLabel = LinkSectionsSectionLabel.T
+  object LinkSectionsSectionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsSectionLineResult = LinkSectionsSectionLineResult.T
+  object LinkSectionsSectionLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsSectionKeyResultPart1 = LinkSectionsSectionKeyResultPart1.T
+  object LinkSectionsSectionKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsSectionKeyResultPart2 = LinkSectionsSectionKeyResultPart2.T
+  object LinkSectionsSectionKeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderItemStatusPart1 = RenderItemStatusPart1.T
@@ -79,7 +94,7 @@ object GoalsExport:
     val bySlug = views.map(v => v.goal.slug -> v).toMap
     val children = views.groupBy(_.goal.parentSlug).view.mapValues(_.sortBy(_.goal.slug)).toMap
     val roots = views.filter(v => v.goal.parentSlug.forall(p => !bySlug.contains(p))).sortBy(_.goal.slug)
-    def walk(v: GoalView, depth: Int, seen: Set[String]): List[(GoalView, Int)] =
+    def walk(v: GoalView, depth: com.histmersion.api.automation.GoalsExport.TreeWalkDepth, seen: Set[com.histmersion.api.automation.GoalsExport.TreeWalkSeen]): List[(GoalView, com.histmersion.api.automation.GoalsExport.TreeWalkResultPart2)] =
       (v, depth) :: children
         .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
@@ -113,9 +128,9 @@ object GoalsExport:
   private def linkSections(links: List[GoalLink], itemStatus: Map[com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart1, com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart2]): List[com.histmersion.api.automation.GoalsExport.LinkSectionsResult] =
     def section(
         kind: com.histmersion.api.automation.Goal.LinkKind,
-        label: String,
-        line: GoalLink => String,
-        key: GoalLink => (Long, String)
+        label: com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLabel,
+        line: GoalLink => com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLineResult,
+        key: GoalLink => (com.histmersion.api.automation.GoalsExport.LinkSectionsSectionKeyResultPart1, com.histmersion.api.automation.GoalsExport.LinkSectionsSectionKeyResultPart2)
     ) =
       links.filter(_.kind == kind).sortBy(key) match
         case Nil => None

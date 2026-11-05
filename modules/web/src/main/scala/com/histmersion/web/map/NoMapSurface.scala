@@ -65,7 +65,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def pointTiles(id: com.histmersion.web.map.NoMapSurface.PointTilesId, layer: com.histmersion.web.map.NoMapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.NoMapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
   def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = ""): Popup = new Popup:
     def close(): Unit = ()
-    def isOpen: Boolean = false
+    def isOpen: com.histmersion.web.map.NoMapSurface.PopupIsOpenResult = false
     def element: Option[dom.HTMLElement] = None
   def closePopups(): Unit = ()
   def drawnNames: Seq[com.histmersion.web.map.NoMapSurface.DrawnNamesResult] = Nil
@@ -80,6 +80,9 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def unavailable: com.histmersion.web.map.NoMapSurface.UnavailableResult = why
 
 object NoMapSurface:
+  type PopupIsOpenResult = PopupIsOpenResult.T
+  object PopupIsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Why = Why.T
   object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxZoom0 = MaxZoom0.T

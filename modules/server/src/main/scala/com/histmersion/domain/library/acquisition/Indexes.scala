@@ -12,6 +12,9 @@ object Indexes:
     * key as the plugins resolved it ([[com.histmersion.util.plugins.Plugins.coreKey]]), else `acquire.core.api-key`;
     * `core` the server's CORE budget.
     */
+  type OfAllPart1 = OfAllPart1.T
+  object OfAllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfCoreKey = OfCoreKey.T
   object OfCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -23,7 +26,7 @@ object Indexes:
   ): (List[ScholarlyIndex], CitationAlerts) =
     val key = coreKey.orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)
-    val all: Map[String, ScholarlyIndex] = Map(
+    val all: Map[com.histmersion.domain.library.acquisition.Indexes.OfAllPart1, ScholarlyIndex] = Map(
       "openalex" -> openalex,
       "crossref" -> CrossrefIndex(cfg, http),
       "europepmc" -> EuropePmcIndex(cfg, http),

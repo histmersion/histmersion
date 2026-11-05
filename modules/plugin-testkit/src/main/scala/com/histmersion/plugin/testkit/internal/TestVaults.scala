@@ -16,12 +16,15 @@ final private[testkit] class TestVaults(id: TestVaults.Id, values: Map[TestVault
           vault,
           new Secret.Vault:
             val name = vault
-            def resolve(ref: String) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")
+            def resolve(ref: com.histmersion.plugin.testkit.internal.TestVaults.RegisterResolveRef) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")
         )
       )
     }
 
 object TestVaults:
+  type RegisterResolveRef = RegisterResolveRef.T
+  object RegisterResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValuesKey = ValuesKey.T

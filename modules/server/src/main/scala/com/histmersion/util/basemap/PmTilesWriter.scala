@@ -77,6 +77,13 @@ final class PmTilesWriter(out: Reservation):
 object PmTilesWriter:
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
+  type DirectoriesTryLeavesResultPart1 = DirectoriesTryLeavesResultPart1.T
+  object DirectoriesTryLeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DirectoriesTryLeavesResultPart2 = DirectoriesTryLeavesResultPart2.T
+  object DirectoriesTryLeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DirectoriesTryLeavesSize = DirectoriesTryLeavesSize.T
+  object DirectoriesTryLeavesSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AddBytes = AddBytes.T
   object AddBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DirectoriesResultPart1 = DirectoriesResultPart1.T
@@ -102,7 +109,7 @@ object PmTilesWriter:
     if whole.length <= PmTiles.RootBytes - PmTiles.HeaderBytes then (whole, Array.emptyByteArray)
     else
       @annotation.tailrec
-      def tryLeaves(size: Int): (Array[Byte], Array[Byte]) =
+      def tryLeaves(size: com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesSize): (com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesResultPart1, com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesResultPart2) =
         val out = java.io.ByteArrayOutputStream()
         val index = entries
           .grouped(size)

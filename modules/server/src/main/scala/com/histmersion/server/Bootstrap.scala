@@ -149,7 +149,7 @@ final class Bootstrap(
             .change(SkippedPeriod.SkippedCount)(_ + r.skippedCount)
         }
       r
-    val steps: List[(String, () => Either[String, String])] =
+    val steps: List[(com.histmersion.server.Bootstrap.RunStepsPart1, () => Either[com.histmersion.server.Bootstrap.RunStepsPart2ResultPart1, com.histmersion.server.Bootstrap.RunStepsPart2ResultPart2])] =
       List(
         Option.when(p.gazetteer)("gazetteer" -> (() => seedPlaces(note))),
         Option.when(p.periodPresets)(
@@ -214,6 +214,13 @@ final class Bootstrap(
 
 object Bootstrap:
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
+  type RunStepsPart1 = RunStepsPart1.T
+  object RunStepsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStepsPart2ResultPart1 = RunStepsPart2ResultPart1.T
+  object RunStepsPart2ResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStepsPart2ResultPart2 = RunStepsPart2ResultPart2.T
+  object RunStepsPart2ResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DownloadArg1 = DownloadArg1.T
   object DownloadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart1 = DownloadResultPart1.T

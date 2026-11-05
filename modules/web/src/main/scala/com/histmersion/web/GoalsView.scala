@@ -19,6 +19,31 @@ import com.histmersion.api.research.Articles
 object GoalsView:
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
+  type TreeWalkResultPart2 = TreeWalkResultPart2.T
+  object TreeWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeWalkParent = TreeWalkParent.T
+  object TreeWalkParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeWalkDepth = TreeWalkDepth.T
+  object TreeWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeWalkSeen = TreeWalkSeen.T
+  object TreeWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedNoteMadeId = CreatedNoteMadeId.T
+  object CreatedNoteMadeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedNoteMadeResume = CreatedNoteMadeResume.T
+  object CreatedNoteMadeResume extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaFormFieldV = NewAreaFormFieldV.T
+  object NewAreaFormFieldV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaFormFieldName = NewAreaFormFieldName.T
+  object NewAreaFormFieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaFormFieldHint = NewAreaFormFieldHint.T
+  object NewAreaFormFieldHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaFormBoxV = NewAreaFormBoxV.T
+  object NewAreaFormBoxV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaFormBoxText = NewAreaFormBoxText.T
+  object NewAreaFormBoxText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPaneWriteWhat = GoalPaneWriteWhat.T
+  object GoalPaneWriteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TreeResultPart2 = TreeResultPart2.T
   object TreeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StagesPart1 = StagesPart1.T
@@ -105,7 +130,7 @@ object GoalsView:
   def tree(goals: List[Goal]): List[(Goal, com.histmersion.web.GoalsView.TreeResultPart2)] =
     val slugs = goals.map(_.slug).toSet
     val byParent = goals.groupBy(g => g.parentSlug.filter(slugs))
-    def walk(parent: Option[String], depth: Int, seen: Set[String]): List[(Goal, Int)] =
+    def walk(parent: Option[com.histmersion.web.GoalsView.TreeWalkParent], depth: com.histmersion.web.GoalsView.TreeWalkDepth, seen: Set[com.histmersion.web.GoalsView.TreeWalkSeen]): List[(Goal, com.histmersion.web.GoalsView.TreeWalkResultPart2)] =
       byParent.getOrElse(parent, Nil).sortBy(_.slug).filterNot(g => seen(g.slug)).flatMap { g =>
         (g, depth) :: walk(Some(g.slug), depth + 1, seen + g.slug)
       }
@@ -213,7 +238,7 @@ object GoalsView:
       watched: Option[com.histmersion.web.GoalsView.CreatedNoteWatched] = None,
       active: Set[com.histmersion.web.GoalsView.CreatedNoteActive] = Set.empty
   ): com.histmersion.web.GoalsView.CreatedNoteResult =
-    def made(id: String, resume: String) =
+    def made(id: com.histmersion.web.GoalsView.CreatedNoteMadeId, resume: com.histmersion.web.GoalsView.CreatedNoteMadeResume) =
       if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
     s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
       seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
@@ -283,7 +308,7 @@ object GoalsView:
     val plan = Var(true); val seed = Var(true); val watch = Var(false); val ingest = Var(false); val perDay = Var("")
     val busy = Var(false)
     val msg = Var(Option.empty[Either[String, String]])
-    def field(v: Var[String], name: String, hint: String) =
+    def field(v: Var[com.histmersion.web.GoalsView.NewAreaFormFieldV], name: com.histmersion.web.GoalsView.NewAreaFormFieldName, hint: com.histmersion.web.GoalsView.NewAreaFormFieldHint) =
       input(
         typ := "text",
         cls := "field",
@@ -291,7 +316,7 @@ object GoalsView:
         placeholder := hint,
         controlled(value <-- v.signal, onInput.mapToValue --> v.writer)
       )
-    def box(v: Var[Boolean], text: String) =
+    def box(v: Var[com.histmersion.web.GoalsView.NewAreaFormBoxV], text: com.histmersion.web.GoalsView.NewAreaFormBoxText) =
       label(
         cls := "goal-on",
         input(typ := "checkbox", controlled(checked <-- v.signal, onClick.mapToChecked --> v.writer)),
@@ -442,7 +467,7 @@ object GoalsView:
         )
         .foreach(a => approvals.set(a._1))
 
-    def write[A](what: String)(f: => scala.concurrent.Future[A]): Unit =
+    def write[A](what: com.histmersion.web.GoalsView.GoalPaneWriteWhat)(f: => scala.concurrent.Future[A]): Unit =
       busy.set(true)
       f.onComplete { r =>
         busy.set(false)

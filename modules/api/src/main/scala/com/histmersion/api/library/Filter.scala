@@ -38,6 +38,9 @@ object Filter:
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
+  type OfCleanXs = OfCleanXs.T
+  object OfCleanXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsEmptyResult = IsEmptyResult.T
   object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HasFindingCriteriaResult = HasFindingCriteriaResult.T
@@ -176,7 +179,7 @@ object Filter:
       title: Option[com.histmersion.api.library.Filter.OfTitle] = None,
       goal: Option[com.histmersion.api.library.Filter.OfGoal] = None
   ): Filter =
-    def clean(xs: List[String]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean(xs: List[com.histmersion.api.library.Filter.OfCleanXs]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
       q = q.map(_.trim).filter(_.nonEmpty),
       tags = clean(tags),

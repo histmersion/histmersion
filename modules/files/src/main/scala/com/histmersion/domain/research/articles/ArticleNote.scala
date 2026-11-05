@@ -24,6 +24,11 @@ object ArticleNote:
     * [[ArticleCoverage.GeneratedEnd]], which [[parse]] drops again — the stored body never holds them, and the filter
     * and reasons they come from travel in the frontmatter.
     */
+  type FilterMapLstK = FilterMapLstK.T
+  object FilterMapLstK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilterMapLstXs = FilterMapLstXs.T
+  object FilterMapLstXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderGenerated = RenderGenerated.T
@@ -92,7 +97,7 @@ object ArticleNote:
   private def filterMap(f: Article.Filter): java.util.Map[com.histmersion.domain.research.articles.ArticleNote.FilterMapResultPart1, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     f.query.foreach(m.put("query", _))
-    def lst(k: String, xs: List[String]) = if xs.nonEmpty then m.put(k, xs.asJava)
+    def lst(k: com.histmersion.domain.research.articles.ArticleNote.FilterMapLstK, xs: List[com.histmersion.domain.research.articles.ArticleNote.FilterMapLstXs]) = if xs.nonEmpty then m.put(k, xs.asJava)
     lst("topics", f.topics); lst("tags", f.tags); lst("status", f.status); lst("places", f.places)
     lst("authors", f.authors)
     f.from.foreach(v => m.put("from", Long.box(v)))

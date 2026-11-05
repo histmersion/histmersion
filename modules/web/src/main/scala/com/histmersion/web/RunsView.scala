@@ -19,6 +19,13 @@ import com.histmersion.api.library.Label
 object RunsView:
 
   /** How many runs a page lists. */
+  type FilterButtonsBtnLabel = FilterButtonsBtnLabel.T
+  object FilterButtonsBtnLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilterButtonsBtnCount = FilterButtonsBtnCount.T
+  object FilterButtonsBtnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunPaneRefreshChanged = RunPaneRefreshChanged.T
+  object RunPaneRefreshChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LiveResult = LiveResult.T
@@ -499,7 +506,7 @@ object RunsView:
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.runStatus.now()))
 
   private def filterButtons: HtmlElement =
-    def btn(label: String, value: Option[RunState], count: Signal[Int]) =
+    def btn(label: com.histmersion.web.RunsView.FilterButtonsBtnLabel, value: Option[RunState], count: Signal[com.histmersion.web.RunsView.FilterButtonsBtnCount]) =
       button(
         typ := "button",
         cls := "btn btn--toggle",
@@ -582,7 +589,7 @@ object RunsView:
         if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(())
     )
 
-    def refresh(changed: Boolean): Unit = run.refresh(changed)
+    def refresh(changed: com.histmersion.web.RunsView.RunPaneRefreshChanged): Unit = run.refresh(changed)
 
     def act(a: Action): Unit =
       busy.set(true)

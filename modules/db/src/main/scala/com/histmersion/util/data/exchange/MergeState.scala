@@ -34,6 +34,27 @@ import com.histmersion.api.exchange.{Bundle, MergeDecision, MergePlan, MergeReso
   */
 object MergeState:
 
+  type LoadOwnersResultPart1 = LoadOwnersResultPart1.T
+  object LoadOwnersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadOwnersQ = LoadOwnersQ.T
+  object LoadOwnersQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadOwnersLabels = LoadOwnersLabels.T
+  object LoadOwnersLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithGeoJsonConvG = WithGeoJsonConvG.T
+  object WithGeoJsonConvG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsLoopResultPart1 = BlobTextsLoopResultPart1.T
+  object BlobTextsLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsLoopResultPart2 = BlobTextsLoopResultPart2.T
+  object BlobTextsLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsLoopAccPart1 = BlobTextsLoopAccPart1.T
+  object BlobTextsLoopAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsLoopAccPart2 = BlobTextsLoopAccPart2.T
+  object BlobTextsLoopAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSketchesLoopResultPart1 = BundleSketchesLoopResultPart1.T
+  object BundleSketchesLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSketchesLoopAccPart1 = BundleSketchesLoopAccPart1.T
+  object BundleSketchesLoopAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IdsResult = IdsResult.T
   object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadReadProblems = LoadReadProblems.T
@@ -98,7 +119,7 @@ object MergeState:
     val localUids = foreignUids.map(idOf)
 
     // who has the bundle's labels here (the owners that register their own merge rules add theirs to the input)
-    def owners(q: String, labels: List[String]): Map[String, UUID] =
+    def owners(q: com.histmersion.util.data.exchange.MergeState.LoadOwnersQ, labels: List[com.histmersion.util.data.exchange.MergeState.LoadOwnersLabels]): Map[com.histmersion.util.data.exchange.MergeState.LoadOwnersResultPart1, UUID] =
       if labels.isEmpty then Map.empty
       else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
     val localized = MergePlanner.localize(es, mapped, Map.empty)
@@ -192,7 +213,7 @@ object MergeState:
         .run()
         .flatMap((h, j) => j.map(h -> _))
         .toMap
-      def conv(g: Option[String]) = g.flatMap(json.get)
+      def conv(g: Option[com.histmersion.util.data.exchange.MergeState.WithGeoJsonConvG]) = g.flatMap(json.get)
       p.modify(_.issues)
         .setTo(
           p.issues.map(i =>
@@ -272,7 +293,7 @@ object MergeState:
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
-      def loop(acc: Map[String, String]): Map[String, String] =
+      def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2]): Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopResultPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopResultPart2] =
         if acc.size == wanted.size then acc
         else
           tar.next() match
@@ -289,7 +310,7 @@ object MergeState:
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
-      def loop(acc: Map[String, MinHash]): Map[String, MinHash] =
+      def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopAccPart1, MinHash]): Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopResultPart1, MinHash] =
         if acc.size == wanted.size then acc
         else
           tar.next() match

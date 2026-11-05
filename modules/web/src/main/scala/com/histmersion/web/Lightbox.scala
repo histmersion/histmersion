@@ -12,6 +12,9 @@ import org.scalajs.dom.document
 object Lightbox:
 
   /** What a full-size view shows: the picture and what its licence asks to be said beside it. */
+  type FromAttrsAK = FromAttrsAK.T
+  object FromAttrsAK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AttrsResult = AttrsResult.T
   object AttrsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAttrsAttrArg1 = FromAttrsAttrArg1.T
@@ -84,7 +87,7 @@ object Lightbox:
 
   /** Pure: the item an image's attributes (`attr`, absent → None) and `src`/`alt` describe. */
   def fromAttrs(attr: com.histmersion.web.Lightbox.FromAttrsAttrArg1 => Option[com.histmersion.web.Lightbox.FromAttrsAttrResult], src: com.histmersion.web.Lightbox.FromAttrsSrc, alt: com.histmersion.web.Lightbox.FromAttrsAlt): Item =
-    def a(k: String) = attr(s"data-lb-$k").map(_.trim).filter(_.nonEmpty)
+    def a(k: com.histmersion.web.Lightbox.FromAttrsAK) = attr(s"data-lb-$k").map(_.trim).filter(_.nonEmpty)
     Item(
       attr(Full).filter(_.nonEmpty).getOrElse(src),
       alt,

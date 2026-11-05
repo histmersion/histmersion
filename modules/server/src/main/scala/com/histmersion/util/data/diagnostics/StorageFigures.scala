@@ -29,9 +29,9 @@ final class StorageFigures(registry: DataContributions):
         storage.find(s.location).map(store => StorageSpot(s.key, s.label, s.group, List(store), Some(store)))
       )
     val shown = named.flatMap(_.path)
-    def covered(child: String) =
+    def covered(child: com.histmersion.util.data.diagnostics.StorageFigures.SpotsCoveredChild) =
       shown.exists(s => StorageReports.under(s, child) || StorageReports.under(child, s))
-    def children(location: Location): List[(String, Store)] =
+    def children(location: Location): List[(com.histmersion.util.data.diagnostics.StorageFigures.SpotsChildrenResultPart1, Store)] =
       storage.find(location).toList.flatMap { dir =>
         dir
           .names()
@@ -179,5 +179,10 @@ final class StorageFigures(registry: DataContributions):
     StorageReports.withHints(report)
 
 object StorageFigures:
+  type SpotsCoveredChild = SpotsCoveredChild.T
+  object SpotsCoveredChild extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotsChildrenResultPart1 = SpotsChildrenResultPart1.T
+  object SpotsChildrenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BasemapDetailResult = BasemapDetailResult.T
   object BasemapDetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -14,6 +14,11 @@ import java.util.jar.{JarEntry, JarOutputStream}
   */
 object PluginSetResource:
 
+  type WriteJarEntryName = WriteJarEntryName.T
+  object WriteJarEntryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteJarEntryText = WriteJarEntryText.T
+  object WriteJarEntryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -37,7 +42,7 @@ object PluginSetResource:
   def writeJar(out: OutputStream, set: PluginSet): Unit =
     val jar = JarOutputStream(out)
     try
-      def entry(name: String, text: String): Unit =
+      def entry(name: com.histmersion.util.plugins.PluginSetResource.WriteJarEntryName, text: com.histmersion.util.plugins.PluginSetResource.WriteJarEntryText): Unit =
         val e = JarEntry(name)
         e.setTime(EntryTime)
         jar.putNextEntry(e)

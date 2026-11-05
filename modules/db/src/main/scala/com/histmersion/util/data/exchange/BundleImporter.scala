@@ -35,6 +35,13 @@ import javax.sql.DataSource
   */
 object BundleImporter:
 
+  type ImportInWritesResult = ImportInWritesResult.T
+  object ImportInWritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportInResultApplied = ImportInResultApplied.T
+  object ImportInResultApplied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteAllWritesResult = WriteAllWritesResult.T
+  object WriteAllWritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunResultPart1 = RunResultPart1.T
   object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunBundleSha256 = RunBundleSha256.T
@@ -137,7 +144,7 @@ object BundleImporter:
     val ownBundle = input.ownBundle
     val decided = planned.rows
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
-    def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    def writes(uid: UUID): com.histmersion.util.data.exchange.BundleImporter.ImportInWritesResult = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
 
     // ── what holds it up: the plan's problems, its open issues, decisions only merge apply can do ──
     val holding = plan.issues.filter(_.open)
@@ -153,7 +160,7 @@ object BundleImporter:
     val needed = neededBlobs(es, writes)
     val shown =
       holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(_.startsWith(i.id)))
-    def result(applied: Boolean, mergeId: Option[UUID]) =
+    def result(applied: com.histmersion.util.data.exchange.BundleImporter.ImportInResultApplied, mergeId: Option[UUID]) =
       Bundle.ImportResult(
         m.bundleId,
         m.instance,
@@ -196,7 +203,7 @@ object BundleImporter:
     val es = planned.localized
     val decided = planned.rows
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
-    def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    def writes(uid: UUID): com.histmersion.util.data.exchange.BundleImporter.WriteAllWritesResult = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val needed = neededBlobs(es, writes)
     MergeRepo.importing(true)
     val w =

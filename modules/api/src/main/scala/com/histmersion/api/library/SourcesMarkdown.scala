@@ -5,6 +5,19 @@ import com.histmersion.api.media.AssetLinks
 
 object SourcesMarkdown:
 
+  type NeighborsBlockResult = NeighborsBlockResult.T
+  object NeighborsBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsBlockTitle = NeighborsBlockTitle.T
+  object NeighborsBlockTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsBlockItemResult = NeighborsBlockItemResult.T
+  object NeighborsBlockItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsSourcesDir = NeighborsSourcesDir.T
+  object NeighborsSourcesDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsSourceItemResult = NeighborsSourceItemResult.T
+  object NeighborsSourceItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceRenamedListXs = SourceRenamedListXs.T
+  object SourceRenamedListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SourceFindingsOnlyResult = SourceFindingsOnlyResult.T
   object SourceFindingsOnlyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceResult = SourceResult.T
@@ -89,10 +102,10 @@ object SourcesMarkdown:
       s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view."
     else
-      def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => String): String =
+      def block(title: com.histmersion.api.library.SourcesMarkdown.NeighborsBlockTitle, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.SourcesMarkdown.NeighborsBlockItemResult): com.histmersion.api.library.SourcesMarkdown.NeighborsBlockResult =
         if rs.isEmpty then "" else s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}"
-      def sources(dir: String) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
-      val sourceItem: NeighborRow => String = r =>
+      def sources(dir: com.histmersion.api.library.SourcesMarkdown.NeighborsSourcesDir) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
+      val sourceItem: NeighborRow => com.histmersion.api.library.SourcesMarkdown.NeighborsSourceItemResult = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
         s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st"
       s"### Sources · $citekey" +
@@ -153,7 +166,7 @@ object SourcesMarkdown:
 
   def sourceRenamed(r: Source.Renamed): com.histmersion.api.library.SourcesMarkdown.SourceRenamedResult =
     val c = r.counts
-    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
+    def list(xs: List[com.histmersion.api.library.SourcesMarkdown.SourceRenamedListXs]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
     val columns =
       if c.columns.isEmpty then ""
       else "\n" + c.columns.map(n => s"  - ${n.table}: ${n.rows}").mkString("\n")

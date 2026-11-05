@@ -8,6 +8,9 @@ final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
 
 object ExternalId:
+  type ParseMakeId = ParseMakeId.T
+  object ParseMakeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KeyResult = KeyResult.T
   object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceIdResult = PlaceIdResult.T
@@ -27,7 +30,7 @@ object ExternalId:
 
   def parse(raw: com.histmersion.api.library.ExternalId.ParseRaw): Option[ExternalId] =
     val s = raw.trim
-    def make(scheme: LinkScheme, id: String): Option[ExternalId] =
+    def make(scheme: LinkScheme, id: com.histmersion.api.library.ExternalId.ParseMakeId): Option[ExternalId] =
       val v = id.trim.stripSuffix("/")
       scheme match
         case LinkScheme.Wikidata =>

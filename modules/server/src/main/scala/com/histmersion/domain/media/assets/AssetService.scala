@@ -745,7 +745,7 @@ object AssetService:
     def file(uid: com.histmersion.domain.media.assets.AssetService.InMemory.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart1, com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart2)] = byUid(uid).map(a => (a.mime, a.bytes))
 
     def facets: MediaFacets =
-      def counted(keys: Vector[String]): List[MediaCount] =
+      def counted(keys: Vector[com.histmersion.domain.media.assets.AssetService.InMemory.FacetsCountedKeys]): List[MediaCount] =
         keys.groupBy(identity).toList.map((k, v) => MediaCount(k, v.size)).sortBy(c => (-c.n, c.key))
       MediaFacets(
         counted(held.map(_.provider.getOrElse(MediaProvider.Source))),
@@ -824,6 +824,9 @@ object AssetService:
     def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.InMemory.PlaceThumbsSameSiteKm, limit: com.histmersion.domain.media.assets.AssetService.InMemory.PlaceThumbsLimit): List[MediaThumb] = Nil
 
   object InMemory:
+    type FacetsCountedKeys = FacetsCountedKeys.T
+    object FacetsCountedKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type NamedName = NamedName.T
     object NamedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ByUidUid = ByUidUid.T

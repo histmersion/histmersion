@@ -26,6 +26,11 @@ import com.histmersion.api.basemap.Basemap
 object SetupPage:
 
   /** This tab left the setup without saving: it is not shown again until the tab is closed. */
+  type ChoicesOfTextK = ChoicesOfTextK.T
+  object ChoicesOfTextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElementFinishDownload = ElementFinishDownload.T
+  object ElementFinishDownload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LeftResult = LeftResult.T
   object LeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartDownloadResult = StartDownloadResult.T
@@ -57,7 +62,7 @@ object SetupPage:
 
   /** The choices the settings say now. Pure. */
   def choicesOf(p: ConfigEdit.Page, ui: UiConfig): SetupChoices =
-    def text(k: String) = p.field(k).flatMap(_.effective).map(v => Draft.plain(Some(v)))
+    def text(k: com.histmersion.web.setup.SetupPage.ChoicesOfTextK) = p.field(k).flatMap(_.effective).map(v => Draft.plain(Some(v)))
     SetupChoices(
       email = text("acquire.contact-email").getOrElse(""),
       finders = FindersSection.finders(ui).map(f => f.id -> f.enabled).toMap,
@@ -97,7 +102,7 @@ object SetupPage:
       ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption))
 
     /** Write the choices (and the mark that the setup is done); then, unless skipping, start the downloads. */
-    def finish(download: Boolean): Unit =
+    def finish(download: com.histmersion.web.setup.SetupPage.ElementFinishDownload): Unit =
       val c = choices.now()
       SetupPlan.email(c.email) match
         case Left(why) => problem.set(Some(why)); step.set(SetupStep.Papers)

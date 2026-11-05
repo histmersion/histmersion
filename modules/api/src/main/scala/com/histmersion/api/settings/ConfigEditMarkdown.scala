@@ -3,6 +3,11 @@ package com.histmersion.api.settings
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ConfigEditMarkdown:
+  type WrittenListTitle = WrittenListTitle.T
+  object WrittenListTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrittenListXs = WrittenListXs.T
+  object WrittenListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ShownResult = ShownResult.T
   object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldResult = FieldResult.T
@@ -53,7 +58,7 @@ object ConfigEditMarkdown:
     (head ++ problems ++ body).mkString("\n")
 
   def written(w: Written): com.histmersion.api.settings.ConfigEditMarkdown.WrittenResult =
-    def list(title: String, xs: List[String]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
+    def list(title: com.histmersion.api.settings.ConfigEditMarkdown.WrittenListTitle, xs: List[com.histmersion.api.settings.ConfigEditMarkdown.WrittenListXs]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
       else s"# Settings changed — ${Plural.count(w.changed.size, "setting")}"

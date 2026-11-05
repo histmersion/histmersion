@@ -88,7 +88,7 @@ object Referable:
     /** Where the merges since sent `uid`: the last uid of its redirects, if it has any. */
     private def redirected(uid: ItemUid, hops: com.histmersion.domain.Referable.Records.RedirectedHops): Option[ItemUid] =
       @scala.annotation.tailrec
-      def last(at: ItemUid, hops: Int): ItemUid = redirects.get(at) match
+      def last(at: ItemUid, hops: com.histmersion.domain.Referable.Records.RedirectedLastHops): ItemUid = redirects.get(at) match
         case Some(next) if hops < Records.MaxHops => last(next, hops + 1)
         case _                                    => at
       redirects.get(uid).map(last(_, hops + 1))
@@ -120,6 +120,9 @@ object Referable:
 
   object Records:
     /** How many merges in a row are followed: a chain longer than this is a loop the merge never writes. */
+    type RedirectedLastHops = RedirectedLastHops.T
+    object RedirectedLastHops extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RedirectedHops = RedirectedHops.T
     object RedirectedHops extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

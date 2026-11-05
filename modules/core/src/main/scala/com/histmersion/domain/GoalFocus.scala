@@ -30,6 +30,39 @@ import com.histmersion.domain.automation.Goal
 object GoalFocus:
 
   /** How close a goal is to done (lower = closer). */
+  type RootGoResult = RootGoResult.T
+  object RootGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootGoS = RootGoS.T
+  object RootGoS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootGoSeen = RootGoSeen.T
+  object RootGoSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectRootOfResult = SelectRootOfResult.T
+  object SelectRootOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectRootOfSlug = SelectRootOfSlug.T
+  object SelectRootOfSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectFillResultPart2Part2 = SelectFillResultPart2Part2.T
+  object SelectFillResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectFillAccPart2 = SelectFillAccPart2.T
+  object SelectFillAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptResultPart2Part2 = SelectPreemptResultPart2Part2.T
+  object SelectPreemptResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptResultPart3Part1 = SelectPreemptResultPart3Part1.T
+  object SelectPreemptResultPart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptResultPart3Part2 = SelectPreemptResultPart3Part2.T
+  object SelectPreemptResultPart3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptFreshPart2 = SelectPreemptFreshPart2.T
+  object SelectPreemptFreshPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptSwapsPart1 = SelectPreemptSwapsPart1.T
+  object SelectPreemptSwapsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectPreemptSwapsPart2 = SelectPreemptSwapsPart2.T
+  object SelectPreemptSwapsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoldsWaitPart1 = HoldsWaitPart1.T
+  object HoldsWaitPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoldsWaitPart2 = HoldsWaitPart2.T
+  object HoldsWaitPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FairOrderGoRun = FairOrderGoRun.T
+  object FairOrderGoRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UsesModelResult = UsesModelResult.T
   object UsesModelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UsesModelKind = UsesModelKind.T
@@ -420,7 +453,7 @@ object GoalFocus:
   /** The root of a goal's tree (a cycle or a missing parent stops the walk). */
   def root(slug: com.histmersion.domain.GoalFocus.RootSlug, parentOf: com.histmersion.domain.GoalFocus.RootParentOfArg1 => Option[com.histmersion.domain.GoalFocus.RootParentOfResult]): com.histmersion.domain.GoalFocus.RootResult =
     @annotation.tailrec
-    def go(s: String, seen: Set[String]): String = parentOf(s) match
+    def go(s: com.histmersion.domain.GoalFocus.RootGoS, seen: Set[com.histmersion.domain.GoalFocus.RootGoSeen]): com.histmersion.domain.GoalFocus.RootGoResult = parentOf(s) match
       case Some(p) if !seen(p) && seen.size < 64 => go(p, seen + p)
       case _                                     => s
     go(slug, Set(slug))
@@ -460,7 +493,7 @@ object GoalFocus:
     val bySlug = goals.map(g => g.slug -> g).toMap
     val kids = goals.filter(_.parent.isDefined).groupBy(_.parent.get)
     val rootMemo = collection.mutable.Map.empty[String, String] // memo of the walk; local to this call
-    def rootOf(slug: String): String = rootMemo.getOrElseUpdate(slug, root(slug, x => bySlug.get(x).flatMap(_.parent)))
+    def rootOf(slug: com.histmersion.domain.GoalFocus.SelectRootOfSlug): com.histmersion.domain.GoalFocus.SelectRootOfResult = rootMemo.getOrElseUpdate(slug, root(slug, x => bySlug.get(x).flatMap(_.parent)))
     val fits = goals.map(g => g -> fit(g, kids, s))
     val cands = fits.collect { case (g, Fit.Candidate(st)) => (g, st) }
     val stageOf = cands.map((g, st) => g.slug -> st).toMap
@@ -472,7 +505,7 @@ object GoalFocus:
     val (kept, displaced) = (kept0.take(room0), kept0.drop(room0))
     // free slots, greedily: each pick changes who is near
     @annotation.tailrec
-    def fill(chosen: List[Facts], pool: List[Facts], acc: List[(Facts, String)]): (List[Facts], List[(Facts, String)]) =
+    def fill(chosen: List[Facts], pool: List[Facts], acc: List[(Facts, com.histmersion.domain.GoalFocus.SelectFillAccPart2)]): (List[Facts], List[(Facts, com.histmersion.domain.GoalFocus.SelectFillResultPart2Part2)]) =
       if chosen.size >= cap || pool.isEmpty then (chosen, acc)
       else
         val best = pool.minBy(g => key(g, stageOf(g.slug), kin(g, chosen, rootOf)._1))
@@ -490,9 +523,9 @@ object GoalFocus:
     @annotation.tailrec
     def preempt(
         chosen: List[Facts],
-        fresh: List[(Facts, String)],
-        swaps: List[(String, String)]
-    ): (List[Facts], List[(Facts, String)], List[(String, String)]) =
+        fresh: List[(Facts, com.histmersion.domain.GoalFocus.SelectPreemptFreshPart2)],
+        swaps: List[(com.histmersion.domain.GoalFocus.SelectPreemptSwapsPart1, com.histmersion.domain.GoalFocus.SelectPreemptSwapsPart2)]
+    ): (List[Facts], List[(Facts, com.histmersion.domain.GoalFocus.SelectPreemptResultPart2Part2)], List[(com.histmersion.domain.GoalFocus.SelectPreemptResultPart3Part1, com.histmersion.domain.GoalFocus.SelectPreemptResultPart3Part2)]) =
       val pool = cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug))
       val urgent = pool.filter(g => stageOf(g.slug).rank <= Stage.Compiling.rank)
       val victims = chosen.filter(g => !g.pinned && stageOf(g.slug) == Stage.Gathering)
@@ -618,7 +651,7 @@ object GoalFocus:
     val decided = items.map { i =>
       val unfinished = i.goals.filter(g => bySlug.get(g).exists(f => !finished(f.status)))
       val actives = unfinished.filter(plan.activeSet)
-      val wait: Option[(String, String)] =
+      val wait: Option[(com.histmersion.domain.GoalFocus.HoldsWaitPart1, com.histmersion.domain.GoalFocus.HoldsWaitPart2)] =
         if !usesModel(i.kind) || unfinished.isEmpty || i.person then None
         else if actives.nonEmpty then
           if actives.exists(g => !openKids.contains(g) || i.kind == PlanGoalItem) then None
@@ -648,7 +681,7 @@ object GoalFocus:
     if ratio <= 0 || fs.isEmpty || os.isEmpty then fs ++ os
     else
       @annotation.tailrec
-      def go(f: List[A], o: List[A], run: Int, acc: List[A]): List[A] =
+      def go(f: List[A], o: List[A], run: com.histmersion.domain.GoalFocus.FairOrderGoRun, acc: List[A]): List[A] =
         (f, o) match
           case (Nil, _)           => acc ++ o
           case (_, Nil)           => acc ++ f

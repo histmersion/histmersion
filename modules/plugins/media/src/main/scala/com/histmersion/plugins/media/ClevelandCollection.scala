@@ -22,6 +22,9 @@ final class ClevelandCollection(conf: CollectionSettings)
 
 object ClevelandCollection:
 
+  type RecordUrlSize = RecordUrlSize.T
+  object RecordUrlSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchResultPart1 = SearchResultPart1.T
   object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchResultPart2Part1 = SearchResultPart2Part1.T
@@ -88,7 +91,7 @@ object ClevelandCollection:
         if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator, credit))
         else Left(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})")
       val img = c.downField("images")
-      def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
+      def url(size: com.histmersion.plugins.media.ClevelandCollection.RecordUrlSize) = img.downField(size).downField("url").focus.flatMap(_.asString)
       val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)
       MediaItem(
         acc,

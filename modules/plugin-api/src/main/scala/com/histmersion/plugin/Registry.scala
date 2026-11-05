@@ -8,6 +8,9 @@ trait Registry[A]:
 
 object Registry:
   /** A registry that takes nothing, saying why. */
+  type RefusingAddId = RefusingAddId.T
+  object RefusingAddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AddResultPart1 = AddResultPart1.T
   object AddResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddId = AddId.T
@@ -16,4 +19,4 @@ object Registry:
   object RefusingWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def refusing[A](why: com.histmersion.plugin.Registry.RefusingWhy): Registry[A] = new Registry[A]:
-    def add(id: String, a: A) = Left(s"'$id': $why")
+    def add(id: com.histmersion.plugin.Registry.RefusingAddId, a: A) = Left(s"'$id': $why")

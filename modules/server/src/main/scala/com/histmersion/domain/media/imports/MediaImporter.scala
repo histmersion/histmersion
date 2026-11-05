@@ -39,6 +39,27 @@ trait MediaImporter:
 
 object MediaImporter:
 
+  type OfTargetsPlace = OfTargetsPlace.T
+  object OfTargetsPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTargetsEvent = OfTargetsEvent.T
+  object OfTargetsEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTargetsLimit = OfTargetsLimit.T
+  object OfTargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTargetsRefresh = OfTargetsRefresh.T
+  object OfTargetsRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTargetsSince = OfTargetsSince.T
+  object OfTargetsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPendingSince = OfPendingSince.T
+  object OfPendingSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStartRunsArg2 = OfStartRunsArg2.T
+  object OfStartRunsArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStartRunsArg3 = OfStartRunsArg3.T
+  object OfStartRunsArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStartRunDryRun = OfStartRunDryRun.T
+  object OfStartRunDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStartRunRefresh = OfStartRunRefresh.T
+  object OfStartRunRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CheckResult = CheckResult.T
   object CheckResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TitleResult = TitleResult.T
@@ -116,7 +137,7 @@ object MediaImporter:
       val title = what
       val over = MediaImporter.over(asks)
       def batch = cfg().importBatch
-      def targets(place: Option[String], event: Option[String], limit: Int, refresh: Boolean, since: Option[Long]) =
+      def targets(place: Option[com.histmersion.domain.media.imports.MediaImporter.OfTargetsPlace], event: Option[com.histmersion.domain.media.imports.MediaImporter.OfTargetsEvent], limit: com.histmersion.domain.media.imports.MediaImporter.OfTargetsLimit, refresh: com.histmersion.domain.media.imports.MediaImporter.OfTargetsRefresh, since: Option[com.histmersion.domain.media.imports.MediaImporter.OfTargetsSince]) =
         if both then imports.targets(check, place, event, limit, refresh, since)
         else
           imports.collectionTargets(
@@ -129,7 +150,7 @@ object MediaImporter:
             since,
             pleiadesOnly = pleiades
           )
-      def pending(since: Option[Long]) =
+      def pending(since: Option[com.histmersion.domain.media.imports.MediaImporter.OfPendingSince]) =
         if both then imports.pending(check, since)
         else imports.collectionPending(check, places = !events, since, pleiadesOnly = pleiades)
       def start() =
@@ -142,7 +163,7 @@ object MediaImporter:
             .setTo(PluginMedia.guard(Right(col.requestIntervalMs)).getOrElse(media.requestIntervalMs)),
           refusalBackoffMs = PluginMedia.guard(Right(col.refusalBackoffMs)).getOrElse(Nil)
         )
-        val runs: (List[Target], Boolean, Boolean) => MediaImportReport =
+        val runs: (List[Target], com.histmersion.domain.media.imports.MediaImporter.OfStartRunsArg2, com.histmersion.domain.media.imports.MediaImporter.OfStartRunsArg3) => MediaImportReport =
           if own then OwnImport(name, col, fetch, media).run(_, _, _, store)
           else
             CollectionImport(
@@ -152,5 +173,5 @@ object MediaImporter:
               converter
             ).run(_, _, _, store)
         new Run:
-          def run(ts: List[Target], dryRun: Boolean, refresh: Boolean) = runs(ts, dryRun, refresh)
+          def run(ts: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.OfStartRunDryRun, refresh: com.histmersion.domain.media.imports.MediaImporter.OfStartRunRefresh) = runs(ts, dryRun, refresh)
           def requests = fetch.requests

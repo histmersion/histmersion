@@ -14,6 +14,27 @@ import scala.util.Try
   */
 object ConfigTextEdit:
 
+  type InFileStyleLoopResult = InFileStyleLoopResult.T
+  object InFileStyleLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InFileStyleLoopRest = InFileStyleLoopRest.T
+  object InFileStyleLoopRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InFileStyleLoopSeenPart1 = InFileStyleLoopSeenPart1.T
+  object InFileStyleLoopSeenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InFileStyleLoopSeenPart2 = InFileStyleLoopSeenPart2.T
+  object InFileStyleLoopSeenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InFileStyleLoopAcc = InFileStyleLoopAcc.T
+  object InFileStyleLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLoopResult = CountLoopResult.T
+  object CountLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLoopFrom = CountLoopFrom.T
+  object CountLoopFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLoopN = CountLoopN.T
+  object CountLoopN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrittenDownPath = WrittenDownPath.T
+  object WrittenDownPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrittenDownSeen = WrittenDownSeen.T
+  object WrittenDownSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApplyText = ApplyText.T
   object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyHereResult = ApplyHereResult.T
@@ -109,7 +130,7 @@ object ConfigTextEdit:
     */
   private def inFileStyle(before: com.histmersion.config.edit.ConfigTextEdit.InFileStyleBefore, after: com.histmersion.config.edit.ConfigTextEdit.InFileStyleAfter): com.histmersion.config.edit.ConfigTextEdit.InFileStyleResult =
     val old = before.linesIterator.toList.groupBy(identity).view.mapValues(_.size).toMap
-    @tailrec def loop(rest: List[String], seen: Map[String, Int], acc: List[String]): List[String] =
+    @tailrec def loop(rest: List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopRest], seen: Map[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopSeenPart1, com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopSeenPart2], acc: List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopAcc]): List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopResult] =
       rest match
         case Nil          => acc.reverse
         case line :: tail =>
@@ -196,7 +217,7 @@ object ConfigTextEdit:
       includes(after) < includes(before)
 
   private def count(text: com.histmersion.config.edit.ConfigTextEdit.CountText, what: com.histmersion.config.edit.ConfigTextEdit.CountWhat): com.histmersion.config.edit.ConfigTextEdit.CountResult =
-    @tailrec def loop(from: Int, n: Int): Int = text.indexOf(what, from) match
+    @tailrec def loop(from: com.histmersion.config.edit.ConfigTextEdit.CountLoopFrom, n: com.histmersion.config.edit.ConfigTextEdit.CountLoopN): com.histmersion.config.edit.ConfigTextEdit.CountLoopResult = text.indexOf(what, from) match
       case -1 => n
       case i  => loop(i + what.length, n + 1)
     loop(0, 0)
@@ -205,7 +226,7 @@ object ConfigTextEdit:
 
   /** Where the file (read with its includes, unresolved) writes `key`. */
   def written(current: Config, key: SettingKey, here: ConfigOrigin => com.histmersion.config.edit.ConfigTextEdit.WrittenHereResult): Written =
-    @tailrec def down(obj: ConfigObject, path: List[String], seen: List[String]): Written =
+    @tailrec def down(obj: ConfigObject, path: List[com.histmersion.config.edit.ConfigTextEdit.WrittenDownPath], seen: List[com.histmersion.config.edit.ConfigTextEdit.WrittenDownSeen]): Written =
       path match
         case Nil          => Written.Nowhere
         case word :: rest =>

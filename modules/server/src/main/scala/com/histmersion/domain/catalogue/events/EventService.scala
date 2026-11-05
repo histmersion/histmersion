@@ -215,7 +215,7 @@ object EventService:
         Some(bySource && overlaps(e, f.period) && title.forall(t => containsText(Some(e.label), t)))
 
     private def selects(s: CatalogueState, sel: EventSelection)(e: HeldEvent): com.histmersion.domain.catalogue.events.EventService.InMemory.SelectsResult =
-      def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
+      def clean(o: Option[com.histmersion.domain.catalogue.events.EventService.InMemory.SelectsCleanO]) = o.map(_.trim).filter(_.nonEmpty)
       val tier = e.summary(attested(s, e.id)).tier
       val bySources = related(s, e, sel.filter).forall { inSelection =>
         inSelection || (sel.narrow.context && tier == EventTier.Catalogue &&
@@ -356,7 +356,7 @@ object EventService:
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
         val up = EventFields.upstream(rec)
-        @tailrec def loop(rest: List[(String, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
+        @tailrec def loop(rest: List[(com.histmersion.domain.catalogue.events.EventService.InMemory.WithCorrectionsLoopRestPart1, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
           case (f, v) :: tail => loop(tail, up.get(f).fold(acc)(u => corrected(acc, provider, id, f, v, u)))
           case Nil            => acc
         loop(fields.toList, s)
@@ -471,7 +471,7 @@ object EventService:
     def rename(from: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameFrom, to: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameTo): Either[Api.Error, Unit] =
       val (oldId, newId) = (from.trim, to.trim)
       val s = state.get
-      def exists(i: String) = s.events.exists(_.id == i)
+      def exists(i: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameExistsI) = s.events.exists(_.id == i)
       val aliasOf = s.eventAliases.get(newId)
       if !exists(oldId) then Left(missing(oldId))
       else if exists(newId) then
@@ -485,7 +485,7 @@ object EventService:
         )
       else
         val _ = state.updateAndGet { s =>
-          def ren(i: String) = if i == oldId then newId else i
+          def ren(i: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameRenI) = if i == oldId then newId else i
           s.modify(_.events)
             .using(_.map { e =>
               e.modify(_.id)
@@ -531,6 +531,15 @@ object EventService:
       had
 
   object InMemory:
+    type SelectsCleanO = SelectsCleanO.T
+    object SelectsCleanO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WithCorrectionsLoopRestPart1 = WithCorrectionsLoopRestPart1.T
+    object WithCorrectionsLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameExistsI = RenameExistsI.T
+    object RenameExistsI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameRenI = RenameRenI.T
+    object RenameRenI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type SelectedSourcesResult = SelectedSourcesResult.T
     object SelectedSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
