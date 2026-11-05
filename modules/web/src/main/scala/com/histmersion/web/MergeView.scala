@@ -120,12 +120,16 @@ object MergeView:
   type MiniMapRight = MiniMapRight.T
   object MiniMapRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Group(val title: String):
+  enum Group(val title: Group.Title):
     case Open extends Group("to decide")
     case Decided extends Group("decided")
     case Conditional extends Group("conditional — listed now, so no new question appears after a decision")
     case Defaults extends Group("defaults — applied unless changed")
     case Info extends Group("information")
+
+  object Group:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def groupOf(i: MergeIssue): Group =
     if i.condition.isDefined then Group.Conditional

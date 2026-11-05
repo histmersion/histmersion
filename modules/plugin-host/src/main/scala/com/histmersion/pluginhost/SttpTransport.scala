@@ -10,7 +10,7 @@ import scala.concurrent.duration.*
 /** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
   * configured ([[OutboundTls.configure]]); `None` keeps the client's default, the JDK's roots.
   */
-final class SttpTransport(timeoutSeconds: Int, tls: Option[javax.net.ssl.SSLContext] = None) extends HttpTransport:
+final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Option[javax.net.ssl.SSLContext] = None) extends HttpTransport:
   // HTTP/1.1 on every request: java.net.http negotiates HTTP/2 by ALPN, and some hosts that offer h2
   // then drop the stream — Europe PMC's www.ebi.ac.uk answered every h2 request with "EOF reached while
   // reading" while HTTP/1.1 got a 200. One download per request gains nothing from h2's multiplexing.
@@ -49,6 +49,9 @@ final class SttpTransport(timeoutSeconds: Int, tls: Option[javax.net.ssl.SSLCont
 
 object SttpTransport:
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetResultPart1 = GetResultPart1.T
   object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetUrl = GetUrl.T

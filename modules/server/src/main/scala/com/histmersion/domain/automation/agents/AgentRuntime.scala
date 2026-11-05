@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
   * CLI runtimes, the direct API (sttp-ai, the engine's own loop), and the person's own interactive Claude Code session
   * (the plugin the research workspace installs).
   */
-enum AgentRuntime(val wire: String):
+enum AgentRuntime(val wire: AgentRuntime.Wire):
   case ClaudeCode extends AgentRuntime("claude-code")
   case Codex extends AgentRuntime("codex")
   case Opencode extends AgentRuntime("opencode")
@@ -25,6 +25,9 @@ enum AgentRuntime(val wire: String):
     case Codex | Api              => ToolStyle.Bare
 
 object AgentRuntime:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

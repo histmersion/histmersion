@@ -219,13 +219,16 @@ object AgentVerify:
   /** How a model states a year. It never converts; code does. `BP` is RAW (uncalibrated) radiocarbon years, which
     * cannot be turned into a calendar year without a calibration curve.
     */
-  enum YearUnit(val wire: String):
+  enum YearUnit(val wire: YearUnit.Wire):
     case BCE extends YearUnit("BCE")
     case CE extends YearUnit("CE")
     case CalBP extends YearUnit("calBP")
     case BP extends YearUnit("BP")
 
   object YearUnit:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

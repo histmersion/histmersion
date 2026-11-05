@@ -14,7 +14,7 @@ object Run:
     * person's pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval
     * it waits on; `Cancelled` and the other terminal states are final.
     */
-  enum State(val wire: String):
+  enum State(val wire: State.Wire):
     case Queued extends State("queued")
     case Running extends State("running")
     case Paused extends State("paused")
@@ -26,6 +26,9 @@ object Run:
     def isTerminal: com.histmersion.domain.automation.Run.State.IsTerminalResult = this == Done || this == Failed || this == Cancelled
 
   object State:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type IsTerminalResult = IsTerminalResult.T
     object IsTerminalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T

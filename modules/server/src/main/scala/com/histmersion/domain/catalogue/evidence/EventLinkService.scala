@@ -94,7 +94,7 @@ object EventLinkService:
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
     * one that is gone.
     */
-  final class InMemory(state: AtomicReference[CatalogueState], title: String => Option[Option[String]])
+  final class InMemory(state: AtomicReference[CatalogueState], title: InMemory.TitleArg1 => Option[Option[InMemory.TitleResult]])
       extends EventLinkService:
     def candidates(id: com.histmersion.domain.catalogue.evidence.EventLinkService.InMemory.CandidatesId, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.InMemory.CandidatesWithRejected): List[EventLinkCandidate] =
       state.get.candidates
@@ -151,6 +151,11 @@ object EventLinkService:
         .toList
 
   object InMemory:
+    type TitleArg1 = TitleArg1.T
+    object TitleArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TitleResult = TitleResult.T
+    object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type CandidatesId = CandidatesId.T
     object CandidatesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CandidatesWithRejected = CandidatesWithRejected.T

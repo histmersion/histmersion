@@ -8,7 +8,7 @@ import com.histmersion.plugin.*
   * they carry, else by the museum rule's names. The aggregators, institutions and `dc:type`s the collection excludes
   * (natural-history specimens) are refused, and so is an object made after `max-year`.
   */
-final class EuropeanaCollection(conf: CollectionSettings, key: Option[String], licences: LicenceReader)
+final class EuropeanaCollection(conf: CollectionSettings, key: Option[EuropeanaCollection.Key], licences: LicenceReader)
     extends KeyedCollection(conf, "media-europeana", key, "a Europeana personal API key", "media.europeana"):
   val title = "Europeana images"
   override val description = described(
@@ -41,6 +41,9 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[String], l
       .map(explain)
 
 object EuropeanaCollection:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchResultPart1 = SearchResultPart1.T
   object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchResultPart2Part1 = SearchResultPart2Part1.T

@@ -7,7 +7,7 @@ import com.histmersion.server.{LinkTarget, MarkdownLint}
 /** A source's summary and notes checked with the prose lint the articles are checked with, their `[[links]]` resolved
   * by `links` (the corpus's sources and articles).
   */
-final class SourceTextFormatting(links: List[String] => String => Option[LinkTarget]) extends SourceFormatting:
+final class SourceTextFormatting(links: List[SourceTextFormatting.LinksArg1] => SourceTextFormatting.LinksResultArg1 => Option[LinkTarget]) extends SourceFormatting:
   def issues(summary: Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesSummary], notes: Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesNotes]): List[FormatIssue] =
     MarkdownLint.ofSource(summary, notes, links(MarkdownLint.lookups(summary.toList ++ notes.toList)))
 
@@ -16,6 +16,11 @@ final class SourceTextFormatting(links: List[String] => String => Option[LinkTar
   def refusal(issues: List[FormatIssue]): Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.RefusalResult] = MarkdownLint.refusal(issues)
 
 object SourceTextFormatting:
+  type LinksArg1 = LinksArg1.T
+  object LinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksResultArg1 = LinksResultArg1.T
+  object LinksResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IssuesSummary = IssuesSummary.T
   object IssuesSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IssuesNotes = IssuesNotes.T

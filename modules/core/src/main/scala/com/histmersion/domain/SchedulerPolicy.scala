@@ -89,7 +89,7 @@ object SchedulerPolicy:
   // ── job types ──────────────────────────────────────────────────────────────────────────────────
 
   /** What kind of work an item is, for the priorities and the shares. */
-  enum JobType(val wire: String, val label: String):
+  enum JobType(val wire: JobType.Wire, val label: JobType.Label):
     case GoalPlan extends JobType("goal-plan", "goal plans")
     case Propose extends JobType("propose", "article proposals")
     case Sweep extends JobType("sweep", "candidate sweeps and their ranking")
@@ -101,6 +101,11 @@ object SchedulerPolicy:
     case Review extends JobType("review", "reviews and their revisions")
 
   object JobType:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfItemKind = OfItemKind.T

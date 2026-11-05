@@ -856,7 +856,7 @@ object Calibre:
     explicit.map(PushFile.Given(_)).orElse(local.map(PushFile.Local(_))).getOrElse(PushFile.Server)
 
   /** Where the file a push would add comes from, as `calibre gaps`/`sync` report it (`original`). */
-  enum GapOriginal(val label: String):
+  enum GapOriginal(val label: GapOriginal.Label):
     /** `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host. */
     case Local extends GapOriginal("local")
 
@@ -870,6 +870,10 @@ object Calibre:
       * file). Nothing to push, so not a Calibre gap: it belongs on the acquire list.
       */
     case Missing extends GapOriginal("none")
+
+  object GapOriginal:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One source the server lists as not in Calibre, with where its original is and whether it COUNTS as a gap — the
     * `calibre gaps --quiet` reminder and `calibre sync` count only these.
@@ -1173,7 +1177,7 @@ object Calibre:
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-  enum Field(val name: String):
+  enum Field(val name: Field.Name):
     case Title extends Field("title")
     case Authors extends Field("authors")
     case Pubdate extends Field("pubdate")
@@ -1181,6 +1185,10 @@ object Calibre:
     case Tags extends Field("tags")
     case Publisher extends Field("publisher")
     case Comments extends Field("comments")
+
+  object Field:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the `calibre … --json` commands print: case classes with derived codecs, printed through [[Output.emit]] like
     * every other `--json`, never `Json.obj` assembled by hand. The field names are the ones those commands always

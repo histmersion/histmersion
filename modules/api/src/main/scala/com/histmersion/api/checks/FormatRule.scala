@@ -5,7 +5,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
-enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boolean, val description: String):
+enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
   case Frontmatter
       extends FormatRule(
         "frontmatter",
@@ -225,6 +225,13 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
       )
 
 object FormatRule:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fixable = Fixable.T
+  object Fixable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WireResult = WireResult.T
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromWireS = FromWireS.T

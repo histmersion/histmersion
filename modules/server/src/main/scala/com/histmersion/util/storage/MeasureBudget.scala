@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicLong
   * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
   */
 final class MeasureBudget(
-    val maxEntries: Long,
-    val deadlineNanos: Long,
-    val clock: () => Long = () => System.nanoTime()
+    val maxEntries: MeasureBudget.MaxEntries,
+    val deadlineNanos: MeasureBudget.DeadlineNanos,
+    val clock: () => MeasureBudget.ClockResult = () => System.nanoTime()
 ):
   private val used = AtomicLong(0L)
 
@@ -18,6 +18,13 @@ final class MeasureBudget(
   def exhausted: com.histmersion.util.storage.MeasureBudget.ExhaustedResult = used.get >= maxEntries || clock() >= deadlineNanos
 
 object MeasureBudget:
+  type MaxEntries = MaxEntries.T
+  object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeadlineNanos = DeadlineNanos.T
+  object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClockResult = ClockResult.T
+  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TakeResult = TakeResult.T
   object TakeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpentResult = SpentResult.T

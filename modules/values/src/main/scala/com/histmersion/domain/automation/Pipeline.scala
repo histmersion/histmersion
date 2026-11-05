@@ -1,10 +1,10 @@
 package com.histmersion.domain.automation
 enum Pipeline(
-    val wire: String,
-    val version: Int,
+    val wire: Pipeline.Wire,
+    val version: Pipeline.Version,
     val targetKind: TargetKind,
     val roles: List[AgentRole],
-    val describe: String
+    val describe: Pipeline.Describe
 ):
   case EnrichSource
       extends Pipeline(
@@ -80,6 +80,13 @@ enum Pipeline(
       )
 
 object Pipeline:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Version = Version.T
+  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Describe = Describe.T
+  object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

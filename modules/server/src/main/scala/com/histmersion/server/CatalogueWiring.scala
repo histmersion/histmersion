@@ -42,7 +42,7 @@ import com.histmersion.util.storage.Location
 final class CatalogueWiring(
     deps: Deps,
     http: HttpTransport,
-    presentYear: () => Long,
+    presentYear: () => CatalogueWiring.PresentYearResult,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope
 ):
@@ -133,6 +133,9 @@ object CatalogueWiring:
   /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
     * `text` a url's text (the land).
     */
+  type PresentYearResult = PresentYearResult.T
+  object PresentYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GazetteerTextArg1 = GazetteerTextArg1.T
   object GazetteerTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GazetteerTextResultPart1 = GazetteerTextResultPart1.T

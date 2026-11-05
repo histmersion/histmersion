@@ -190,7 +190,7 @@ object EventService:
     */
   final class InMemory(
       state: AtomicReference[CatalogueState],
-      selectedSources: com.histmersion.api.library.Filter => Option[Set[String]] = _ => None
+      selectedSources: com.histmersion.api.library.Filter => Option[Set[InMemory.SelectedSourcesResult]] = _ => None
   ) extends EventService:
 
     private def attested(s: CatalogueState, id: com.histmersion.domain.catalogue.events.EventService.InMemory.AttestedId): com.histmersion.domain.catalogue.events.EventService.InMemory.AttestedResult =
@@ -531,6 +531,9 @@ object EventService:
       had
 
   object InMemory:
+    type SelectedSourcesResult = SelectedSourcesResult.T
+    object SelectedSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AttestedResult = AttestedResult.T
     object AttestedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AttestedId = AttestedId.T

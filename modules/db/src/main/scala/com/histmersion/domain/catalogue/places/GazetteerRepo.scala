@@ -184,10 +184,10 @@ private[places] object GazetteerRepo:
     Session(source, version, windowYears, pointAreaKinds)
 
   final class Session private[GazetteerRepo] (
-      source: String,
-      version: String,
-      windowYears: Int,
-      pointAreaKinds: Set[String]
+      source: Session.Source,
+      version: Session.Version,
+      windowYears: Session.WindowYears,
+      pointAreaKinds: Set[Session.PointAreaKinds]
   )(using con: DbCon):
 
     def writeBatch(records: List[GazRecord]): Gazetteer.LoadCounts = write(records)
@@ -520,6 +520,15 @@ private[places] object GazetteerRepo:
       (out.count(identity), removed, out.count(!_))
 
   object Session:
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WindowYears = WindowYears.T
+    object WindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointAreaKinds = PointAreaKinds.T
+    object PointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type PruneCandidatesResult = PruneCandidatesResult.T
     object PruneCandidatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DeletePruneChunkResult = DeletePruneChunkResult.T

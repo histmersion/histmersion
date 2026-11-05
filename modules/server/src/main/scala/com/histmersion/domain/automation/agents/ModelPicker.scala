@@ -31,12 +31,12 @@ import com.histmersion.api.automation.PlanQuota
 final class ModelPicker(
     ds: DataSource,
     cfg: => AgentsConfig,
-    resolve: ModelRef => Either[String, (LlmClient, Billing)],
+    resolve: ModelRef => Either[ModelPicker.ResolveResultPart1, (LlmClient, Billing)],
     val pools: PlanPools,
     /** The names plugin AI providers are registered under now (the pinned generation's): what a chain or an allowance
       * may name besides the host's providers.
       */
-    known: () => Set[String] = () => Set.empty
+    known: () => Set[ModelPicker.KnownResult] = () => Set.empty
 )(using wallClock: java.time.Clock):
 
   /** model wire → (skipped until, when its plan reported the limit) */
@@ -431,6 +431,11 @@ object ModelPicker:
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.
     */
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KnownResult = KnownResult.T
+  object KnownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CoolNow = CoolNow.T
   object CoolNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CoolingResult = CoolingResult.T

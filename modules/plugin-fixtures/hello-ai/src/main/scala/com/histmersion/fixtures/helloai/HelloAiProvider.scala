@@ -3,7 +3,7 @@ package com.histmersion.fixtures.helloai
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
-final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiProvider:
+final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasToken) extends AiProvider:
   val title = "Hello AI (scripted test provider)"
   override val description = "answers from its config; calls no model"
   override val capabilities = AiCapabilities(tools = true, structuredOutput = false)
@@ -40,3 +40,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiP
                 )
               )
             case None => Right(AiTurn(r.text, Nil, AiStop.EndTurn, usage, Some(s"${request.model}-scripted")))
+
+object HelloAiProvider:
+  type HasToken = HasToken.T
+  object HasToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

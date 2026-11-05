@@ -8,7 +8,7 @@ import io.circe.Json
   * its IIIF server, `{iiif}/{image_id}/full/{w},/0/default.jpg` (843 px is the size it caches and recommends). The
   * place field is `place_of_origin`; years are signed already.
   */
-final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: Int)
+final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstituteCollection.ThumbPx)
     extends MuseumCollection(conf, "The Art Institute of Chicago", "media.aic"):
   val title = "Art Institute of Chicago objects"
   override val description = "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
@@ -20,6 +20,9 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: Int)
       .flatMap(ArtInstituteCollection.records(_, conf.imageUrl, conf.displayPx, thumbPx))
 
 object ArtInstituteCollection:
+
+  type ThumbPx = ThumbPx.T
+  object ThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type SearchResultPart1 = SearchResultPart1.T
   object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -1,12 +1,15 @@
 package com.histmersion.domain.personal.reading
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
-enum ReadingShow(val wire: String):
+enum ReadingShow(val wire: ReadingShow.Wire):
   case Read extends ReadingShow("read")
   case Opened extends ReadingShow("opened")
   case All extends ReadingShow("all")
 
 object ReadingShow:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T

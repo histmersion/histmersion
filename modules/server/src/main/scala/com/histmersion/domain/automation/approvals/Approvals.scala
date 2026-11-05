@@ -26,7 +26,7 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")
+    applyHint: Managers.HintProposal => Either[Approvals.ApplyHintResultPart1, Approvals.ApplyHintResultPart2] = _ => Left("no managers to apply it")
 ):
 
 
@@ -160,6 +160,11 @@ final class Approvals(
     yield out
 
 object Approvals:
+  type ApplyHintResultPart1 = ApplyHintResultPart1.T
+  object ApplyHintResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyHintResultPart2 = ApplyHintResultPart2.T
+  object ApplyHintResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ListState = ListState.T
   object ListState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListLimit = ListLimit.T

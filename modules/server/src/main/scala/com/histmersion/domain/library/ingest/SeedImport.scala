@@ -16,7 +16,7 @@ import hearth.kindlings.optics.syntax.*
   * source by `addFigures` (media's), and the body's `…/figures/<name>` links normalised to `assets/<name>` in the same
   * write.
   */
-final class SeedImport(sources: SourceService, addFigures: (String, List[NewFigure]) => Int):
+final class SeedImport(sources: SourceService, addFigures: (SeedImport.AddFiguresArg1, List[NewFigure]) => SeedImport.AddFiguresResult):
 
   def run(folder: SeedFolder, force: com.histmersion.domain.library.ingest.SeedImport.RunForce, assetBytes: com.histmersion.domain.library.ingest.SeedImport.RunAssetBytes): SeedResult =
     val stored = if force then Map.empty[String, Long] else sources.updatedAtMillis
@@ -46,6 +46,11 @@ final class SeedImport(sources: SourceService, addFigures: (String, List[NewFigu
 
 object SeedImport:
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
+  type AddFiguresArg1 = AddFiguresArg1.T
+  object AddFiguresArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddFiguresResult = AddFiguresResult.T
+  object AddFiguresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunForce = RunForce.T
   object RunForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunAssetBytes = RunAssetBytes.T

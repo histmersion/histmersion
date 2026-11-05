@@ -22,10 +22,15 @@ object Resources:
           finally in.close()
         )
 
-  final class InMemory(contents: Map[String, String]) extends Resources:
+  final class InMemory(contents: Map[InMemory.ContentsKey, InMemory.ContentsValue]) extends Resources:
     def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.storage.Resources.InMemory.TextResultPart2] = contents.get(name).toRight(s"missing prompt resource $name")
 
   object InMemory:
+    type ContentsKey = ContentsKey.T
+    object ContentsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContentsValue = ContentsValue.T
+    object ContentsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TextResultPart1 = TextResultPart1.T
     object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TextResultPart2 = TextResultPart2.T

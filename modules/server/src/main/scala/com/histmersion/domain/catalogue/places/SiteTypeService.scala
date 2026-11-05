@@ -78,7 +78,7 @@ object SiteTypeService:
     object SetSiteTypesTypesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same rules over the shared in-memory state; `now` is the time a site is asked at (epoch ms). */
-  final class InMemory(state: AtomicReference[CatalogueState], now: () => Long) extends SiteTypeService:
+  final class InMemory(state: AtomicReference[CatalogueState], now: () => InMemory.NowResult) extends SiteTypeService:
     private val WikidataSite = "^wikidata_q[1-9][0-9]*$".r
 
     private def toType(refresh: com.histmersion.domain.catalogue.places.SiteTypeService.InMemory.ToTypeRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTypeService.InMemory.ToTypeBefore])(s: HeldSite): com.histmersion.domain.catalogue.places.SiteTypeService.InMemory.ToTypeResult =
@@ -110,6 +110,9 @@ object SiteTypeService:
       )
 
   object InMemory:
+    type NowResult = NowResult.T
+    object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ToTypeResult = ToTypeResult.T
     object ToTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ToTypeRefresh = ToTypeRefresh.T

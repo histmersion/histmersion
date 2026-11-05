@@ -47,7 +47,7 @@ object Migrate:
     try scala.io.Source.fromInputStream(is, "UTF-8").getLines().map(_.trim).filter(_.nonEmpty).toList
     finally is.close()
 
-  final private class Res(name: String) extends LoadableResource:
+  final private class Res(name: Res.Name) extends LoadableResource:
     def read(): Reader =
       InputStreamReader(getClass.getClassLoader.getResourceAsStream(s"$Base/$name"), Charset.forName("UTF-8"))
     def getAbsolutePath: com.histmersion.util.database.Migrate.Res.GetAbsolutePathResult = s"$Base/$name"
@@ -56,6 +56,9 @@ object Migrate:
     def getRelativePath: com.histmersion.util.database.Migrate.Res.GetRelativePathResult = name
 
   object Res:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GetAbsolutePathResult = GetAbsolutePathResult.T
     object GetAbsolutePathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GetAbsolutePathOnDiskResult = GetAbsolutePathOnDiskResult.T

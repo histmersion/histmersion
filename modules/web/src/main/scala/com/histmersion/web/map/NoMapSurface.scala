@@ -9,7 +9,7 @@ import scala.collection.mutable
   * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
   * windows behave as with a map.
   */
-final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, maxZoom0: Double) extends MapSurface:
+final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: NoMapSurface.MaxZoom0) extends MapSurface:
 
   // `var`s: the view the app asked for, kept so it reads back what it set; the max zoom
   private var at = LatLon(37.0, 30.0)
@@ -80,6 +80,11 @@ final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, m
   def unavailable: com.histmersion.web.map.NoMapSurface.UnavailableResult = why
 
 object NoMapSurface:
+  type Why = Why.T
+  object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom0 = MaxZoom0.T
+  object MaxZoom0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ZoomResult = ZoomResult.T
   object ZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxZoomResult = MaxZoomResult.T

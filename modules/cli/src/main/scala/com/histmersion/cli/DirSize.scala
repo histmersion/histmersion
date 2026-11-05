@@ -45,7 +45,7 @@ object DirSize:
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
     */
-  final class Budget(val maxEntries: Long, val deadlineNanos: Long, val clock: () => Long = () => System.nanoTime()):
+  final class Budget(val maxEntries: Budget.MaxEntries, val deadlineNanos: Budget.DeadlineNanos, val clock: () => Budget.ClockResult = () => System.nanoTime()):
     private val used = AtomicLong(0L)
 
     /** Count one entry; false once either cap is reached. */
@@ -54,6 +54,13 @@ object DirSize:
     def exhausted: com.histmersion.cli.DirSize.Budget.ExhaustedResult = used.get >= maxEntries || clock() >= deadlineNanos
 
   object Budget:
+    type MaxEntries = MaxEntries.T
+    object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DeadlineNanos = DeadlineNanos.T
+    object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClockResult = ClockResult.T
+    object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TakeResult = TakeResult.T
     object TakeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SpentResult = SpentResult.T

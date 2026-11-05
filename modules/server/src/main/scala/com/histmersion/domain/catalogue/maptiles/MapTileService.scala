@@ -23,7 +23,7 @@ import com.histmersion.api.Api
 final class MapTileService(
     db: Transactor,
     settings: () => UiMapTilesSettings,
-    modernFrom: () => Long,
+    modernFrom: () => MapTileService.ModernFromResult,
     scopeOf: Filter => PlaceScope,
     undatedSites: UndatedSites,
     events: EventService,
@@ -115,6 +115,9 @@ final class MapTileService(
     VectorTileWriter.tile(Seq(layer.wire -> points))
 
 object MapTileService:
+  type ModernFromResult = ModernFromResult.T
+  object ModernFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CurrentVersionsResultPart1 = CurrentVersionsResultPart1.T
   object CurrentVersionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentVersionsResultPart2 = CurrentVersionsResultPart2.T

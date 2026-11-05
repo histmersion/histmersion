@@ -1,7 +1,7 @@
 package com.histmersion.web.setup
 
 /** The first-run setup's seven steps, in order. */
-enum SetupStep(val label: String, val optional: Boolean = false):
+enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = false):
   case Welcome extends SetupStep("Welcome")
   case Papers extends SetupStep("Finding open papers")
   case Maps extends SetupStep("Maps")
@@ -15,5 +15,10 @@ enum SetupStep(val label: String, val optional: Boolean = false):
   def back: Option[SetupStep] = Option.when(ordinal > 0)(SetupStep.values(ordinal - 1))
 
 object SetupStep:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Optional = Optional.T
+  object Optional extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NumberResult = NumberResult.T
   object NumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

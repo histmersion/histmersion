@@ -41,7 +41,7 @@ final class InstanceControllers(
     agentLease: () => Option[AgentLeaseInfo],
     upstreams: Instant => List[UpstreamQuota],
     acquireRecheck: Instant => Option[Acquire.Checks.RecheckStatus],
-    setupDue: () => Boolean
+    setupDue: () => InstanceControllers.SetupDueResult
 ):
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg
@@ -196,6 +196,9 @@ final class InstanceControllers(
       case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
 
 object InstanceControllers:
+  type SetupDueResult = SetupDueResult.T
+  object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MarkSeenBoard = MarkSeenBoard.T
   object MarkSeenBoard extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BaseMapSourceResult = BaseMapSourceResult.T

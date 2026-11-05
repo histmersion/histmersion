@@ -12,9 +12,15 @@ import com.histmersion.plugin.*
   * @param key
   *   its settings' path (`media.met`), named when it is switched off
   */
-abstract class MuseumCollection(conf: CollectionSettings, provider: String, key: String) extends MediaCollection:
+abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
   override def perPlace: Int = conf.perPlace
   override def requestIntervalMs: Int = conf.requestIntervalMs
   override def refusalBackoffMs: List[Long] = conf.refusalBackoffMs
   override def check: Either[String, Unit] =
     Either.cond(conf.enabled, (), s"$provider is switched off ($key.enabled = false)")
+
+object MuseumCollection:
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -22,9 +22,9 @@ import scala.jdk.CollectionConverters.*
 final class Polite(
     http: HttpTransport,
     cfg: MediaConfig,
-    sleep: Long => Unit = ms => Thread.sleep(ms),
-    clock: () => Long = () => System.currentTimeMillis(),
-    refusalBackoffMs: List[Long] = Nil,
+    sleep: Polite.SleepArg1 => Unit = ms => Thread.sleep(ms),
+    clock: () => Polite.ClockResult = () => System.currentTimeMillis(),
+    refusalBackoffMs: List[Polite.RefusalBackoffMs] = Nil,
     log: HostLog = HostLog.scribe
 ):
 
@@ -106,6 +106,13 @@ final class Polite(
 
 object Polite:
   /** A host is never asked more than this many times slower than its configured pace. */
+  type SleepArg1 = SleepArg1.T
+  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClockResult = ClockResult.T
+  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalBackoffMs = RefusalBackoffMs.T
+  object RefusalBackoffMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IntervalMsResult = IntervalMsResult.T
   object IntervalMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IntervalMsH = IntervalMsH.T

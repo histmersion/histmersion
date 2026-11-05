@@ -31,10 +31,10 @@ final class OnDemandTiles(
     cfg: () => BasemapOnDemandConfig,
     source: OnDemandTiles.Source,
     http: () => RangeHttp,
-    now: () => Long = () => System.currentTimeMillis(),
-    sleep: Long => Unit = ms => Thread.sleep(ms),
-    ext: String = "webp",
-    transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))
+    now: () => OnDemandTiles.NowResult = () => System.currentTimeMillis(),
+    sleep: OnDemandTiles.SleepArg1 => Unit = ms => Thread.sleep(ms),
+    ext: OnDemandTiles.Ext = "webp",
+    transform: Array[Byte] => Either[OnDemandTiles.TransformResultPart1, Option[Array[Byte]]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
   private def url(): com.histmersion.util.basemap.OnDemandTiles.UrlResult = source match
@@ -245,6 +245,15 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
+  type NowResult = NowResult.T
+  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepArg1 = SleepArg1.T
+  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ext = Ext.T
+  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TransformResultPart1 = TransformResultPart1.T
+  object TransformResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UrlResult = UrlResult.T
   object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ServesResult = ServesResult.T

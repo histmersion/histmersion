@@ -20,14 +20,14 @@ final class PointSet[D](
     paneOf: D => MarkerPane,
     pane: () => MarkerPane,
     surface: () => MapSurface,
-    key: D => String,
+    key: D => PointSet.KeyResult,
     at: D => LatLon,
-    radius: () => Double,
-    single: (D, Boolean) => DomMarker,
+    radius: () => PointSet.RadiusResult,
+    single: (D, PointSet.SingleArg2) => DomMarker,
     bubble: Seq[D] => DomMarker,
-    animateMax: Int,
-    exitMs: Int,
-    fadeOut: String,
+    animateMax: PointSet.AnimateMax,
+    exitMs: PointSet.ExitMs,
+    fadeOut: PointSet.FadeOut,
     repaint: (DomMarker, Seq[D]) => Unit = (_: DomMarker, _: Seq[D]) => ()
 ):
 
@@ -129,11 +129,17 @@ final class PointSet[D](
 
   /** A fanned-out bubble: its points, their markers and panes, the legs, the bubble itself. */
   final private class Spider(
-      val keys: Seq[String],
-      val members: Seq[(String, (DomMarker, MarkerPane))],
+      val keys: Seq[Spider.Keys],
+      val members: Seq[(Spider.MembersPart1, (DomMarker, MarkerPane))],
       val legs: DomMarker,
       val bubble: Option[DomMarker]
   )
+
+  object Spider:
+    type Keys = Keys.T
+    object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MembersPart1 = MembersPart1.T
+    object MembersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private var spider: Option[Spider] = None
 
   /** The points fanned out now (none: no bubble is). */
@@ -429,6 +435,19 @@ final class PointSet[D](
     arriving.foreach(ClusterMotion.arrive)
 
 object PointSet:
+  type KeyResult = KeyResult.T
+  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RadiusResult = RadiusResult.T
+  object RadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SingleArg2 = SingleArg2.T
+  object SingleArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateMax = AnimateMax.T
+  object AnimateMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExitMs = ExitMs.T
+  object ExitMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FadeOut = FadeOut.T
+  object FadeOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GroupsPart1 = GroupsPart1.T
   object GroupsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupOfPart1 = GroupOfPart1.T

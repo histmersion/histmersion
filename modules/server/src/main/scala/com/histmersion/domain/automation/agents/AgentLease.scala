@@ -9,7 +9,7 @@ import javax.sql.DataSource
   * over when the holder's lease runs out (it renews it every `ttl / 3`; the ttl is 3 × the managers' tick). `owner`
   * names this PROCESS (host and pid): two servers in one JVM (a test suite) share it; two processes never do.
   */
-final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = AgentLease.ownerId()):
+final class AgentLease(ds: DataSource, ttlSeconds: AgentLease.TtlSeconds, val owner: AgentLease.Owner = AgentLease.ownerId()):
 
   @volatile private var held = false
   @volatile private var thread: Option[Thread] = None
@@ -102,6 +102,11 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     catch case _: Exception => None
 
 object AgentLease:
+  type TtlSeconds = TtlSeconds.T
+  object TtlSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Owner = Owner.T
+  object Owner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsHeldResult = IsHeldResult.T
   object IsHeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartedResult = StartedResult.T

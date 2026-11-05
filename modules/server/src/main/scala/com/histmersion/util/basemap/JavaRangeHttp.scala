@@ -14,11 +14,11 @@ import scala.util.Using
   */
 final class JavaRangeHttp(
     client: HttpClient,
-    timeoutSeconds: Int,
-    retries: Int,
-    userAgent: String,
+    timeoutSeconds: JavaRangeHttp.TimeoutSeconds,
+    retries: JavaRangeHttp.Retries,
+    userAgent: JavaRangeHttp.UserAgent,
     policy: RetryPolicy,
-    sleep: Long => Unit = ms => Thread.sleep(ms)
+    sleep: JavaRangeHttp.SleepArg1 => Unit = ms => Thread.sleep(ms)
 )(using clock: java.time.Clock) extends RangeHttp:
 
   private def request(url: com.histmersion.util.basemap.JavaRangeHttp.RequestUrl, range: Option[(com.histmersion.util.basemap.JavaRangeHttp.RequestRangePart1, com.histmersion.util.basemap.JavaRangeHttp.RequestRangePart2)]): HttpRequest =
@@ -121,6 +121,15 @@ final class JavaRangeHttp(
     )
 
 object JavaRangeHttp:
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Retries = Retries.T
+  object Retries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserAgent = UserAgent.T
+  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepArg1 = SleepArg1.T
+  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RequestUrl = RequestUrl.T
   object RequestUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestRangePart1 = RequestRangePart1.T

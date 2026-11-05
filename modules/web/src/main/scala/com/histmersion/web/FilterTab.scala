@@ -23,15 +23,15 @@ import scala.concurrent.{ExecutionContext, Future}
   *   how many rows "show more" reveals
   */
 final class FilterTab[Q, Row](
-    name: String,
-    singular: String,
-    noun: String,
+    name: FilterTab.Name,
+    singular: FilterTab.Singular,
+    noun: FilterTab.Noun,
     query: () => Q,
-    fetch: (Q, Int) => Future[TabPage[Row]],
+    fetch: (Q, FilterTab.FetchArg2) => Future[TabPage[Row]],
     render: Row => HtmlElement,
-    empty: String,
-    page: Int,
-    debounceMs: () => Int
+    empty: FilterTab.Empty,
+    page: FilterTab.Page,
+    debounceMs: () => FilterTab.DebounceMsResult
 )(using ExecutionContext):
 
   val state: Var[TabState[Row]] = Var(TabState[Row]())
@@ -86,5 +86,20 @@ final class FilterTab[Q, Row](
         )
 
 object FilterTab:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Singular = Singular.T
+  object Singular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Noun = Noun.T
+  object Noun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchArg2 = FetchArg2.T
+  object FetchArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Empty = Empty.T
+  object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Page = Page.T
+  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DebounceMsResult = DebounceMsResult.T
+  object DebounceMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Timer = Timer.T
   object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

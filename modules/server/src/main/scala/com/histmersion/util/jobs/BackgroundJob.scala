@@ -94,7 +94,7 @@ object BackgroundJob:
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
     */
-  final class Slot(held: AtomicReference[Option[String]] = AtomicReference[Option[String]](None)):
+  final class Slot(held: AtomicReference[Option[Slot.Held]] = AtomicReference[Option[String]](None)):
     def isRunning: com.histmersion.util.jobs.BackgroundJob.Slot.IsRunningResult = held.get().isDefined
     def current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.CurrentResult] = held.get()
     private[BackgroundJob] def claim(what: com.histmersion.util.jobs.BackgroundJob.Slot.ClaimWhat): com.histmersion.util.jobs.BackgroundJob.Slot.ClaimResult = held.compareAndSet(None, Some(what))
@@ -102,6 +102,9 @@ object BackgroundJob:
     private[BackgroundJob] def free(): Unit = held.set(None)
 
   object Slot:
+    type Held = Held.T
+    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type IsRunningResult = IsRunningResult.T
     object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CurrentResult = CurrentResult.T

@@ -138,7 +138,7 @@ object ReviewLedger:
   type LegacyTaskText = LegacyTaskText.T
   object LegacyTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Status(val wire: String):
+  enum Status(val wire: Status.Wire):
     case Open extends Status("open")
     case Fixed extends Status("fixed")
     case Rejected extends Status("rejected")
@@ -150,6 +150,9 @@ object ReviewLedger:
     case SetAside extends Status("set-aside")
 
   object Status:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T
@@ -166,11 +169,14 @@ object ReviewLedger:
     given Decoder[Status] = WireEnum.decoder
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
-  enum LessonSource(val wire: String):
+  enum LessonSource(val wire: LessonSource.Wire):
     case Rejection extends LessonSource("rejection")
     case Recheck extends LessonSource("recheck")
 
   object LessonSource:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T

@@ -126,7 +126,11 @@ object Vp8l:
         case e: ArrayIndexOutOfBoundsException => Left(s"corrupt VP8L stream (${e.getMessage})")
     }
 
-  final private class Vp8lError(msg: String) extends Exception(msg)
+  final private class Vp8lError(msg: Vp8lError.Msg) extends Exception(msg)
+
+  object Vp8lError:
+    type Msg = Msg.T
+    object Msg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def fail(msg: com.histmersion.util.basemap.Vp8l.FailMsg): Nothing = throw Vp8lError(msg)
 
@@ -154,7 +158,7 @@ object Vp8l:
 
   // ── the bit reader: least significant bit first ──────────────────────────────────────────────
 
-  final private[basemap] class Bits(b: Array[Byte], from: Int, until: Int):
+  final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
     // `var`s: the reader's buffer, its valid bits and the next byte — a hot loop's state
     private var buf: com.histmersion.util.basemap.Vp8l.Bits.Buf = 0L
     private var nbits: com.histmersion.util.basemap.Vp8l.Bits.Nbits = 0
@@ -187,6 +191,11 @@ object Vp8l:
     def overrun: com.histmersion.util.basemap.Vp8l.Bits.OverrunResult = pos - 8 > until
 
   object Bits:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Buf = Buf.T
     object Buf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Nbits = Nbits.T
@@ -212,7 +221,7 @@ object Vp8l:
     * `root` holds `symbol << 4 | length` for codes of up to [[Root]] bits, or a negative index into `subs` whose table
     * is read with the bits after the root ones. A code of one symbol takes no bits.
     */
-  final private[basemap] class Code(root: Array[Int], subs: Array[Array[Int]], subBits: Array[Int], val single: Int):
+  final private[basemap] class Code(root: Array[Int], subs: Array[Array[Int]], subBits: Array[Int], val single: Code.Single):
     def read(r: Bits): com.histmersion.util.basemap.Vp8l.Code.ReadResult =
       if single >= 0 then single
       else
@@ -229,6 +238,9 @@ object Vp8l:
           s >>> 4
 
   object Code:
+    type Single = Single.T
+    object Single extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ReadResult = ReadResult.T
     object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -337,7 +349,7 @@ object Vp8l:
     type Bits = Bits.T
     object Bits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final private class Decoder(b: Array[Byte], from: Int, until: Int):
+  final private class Decoder(b: Array[Byte], from: Decoder.From, until: Decoder.Until):
     private val r = Bits(b, from, until)
 
     def image(): Image =
@@ -527,6 +539,11 @@ object Vp8l:
       case _ => unindex(t, px, h)
 
   object Decoder:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type SubResult = SubResult.T
     object SubResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SubSize = SubSize.T

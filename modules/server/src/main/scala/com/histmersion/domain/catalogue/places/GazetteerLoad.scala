@@ -256,7 +256,7 @@ object GazetteerLoad:
     }
 
   /** Feed the records of one file to `sink` in batches; a malformed record is skipped and named. */
-  final private class Batcher(size: Int, sink: List[GazRecord] => Gazetteer.LoadCounts):
+  final private class Batcher(size: Batcher.Size, sink: List[GazRecord] => Gazetteer.LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
     var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts("", "") // the running sum
@@ -277,6 +277,9 @@ object GazetteerLoad:
         n = 0
 
   object Batcher:
+    type Size = Size.T
+    object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AddRPart1 = AddRPart1.T
     object AddRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

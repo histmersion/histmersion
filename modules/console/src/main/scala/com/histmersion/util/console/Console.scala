@@ -51,8 +51,8 @@ object Console:
   final private class Streams(
       stdout: () => java.io.PrintStream,
       stderr: () => java.io.PrintStream,
-      input: () => String,
-      terminal: String => Option[String] = _ => None
+      input: () => Streams.InputResult,
+      terminal: Streams.TerminalArg1 => Option[Streams.TerminalResult] = _ => None
   ) extends Console:
     override def readTerminalLine(prompt: String): Option[String] =
       terminal(prompt)
@@ -71,5 +71,12 @@ object Console:
     def readLine(): com.histmersion.util.console.Console.Streams.ReadLineResult = input()
 
   object Streams:
+    type InputResult = InputResult.T
+    object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerminalArg1 = TerminalArg1.T
+    object TerminalArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerminalResult = TerminalResult.T
+    object TerminalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ReadLineResult = ReadLineResult.T
     object ReadLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

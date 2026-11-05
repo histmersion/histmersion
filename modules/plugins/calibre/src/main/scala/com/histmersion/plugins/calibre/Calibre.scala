@@ -856,7 +856,7 @@ object Calibre:
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-  enum Field(val name: String):
+  enum Field(val name: Field.Name):
     case Title extends Field("title")
     case Authors extends Field("authors")
     case Pubdate extends Field("pubdate")
@@ -864,6 +864,10 @@ object Calibre:
     case Tags extends Field("tags")
     case Publisher extends Field("publisher")
     case Comments extends Field("comments")
+
+  object Field:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where the library is and how it is reached, resolved from the plugin's settings: the library's folder (`~`
     * expanded), the `calibredb` and `sqlite3` to run, and the process whose presence means the Calibre GUI holds the

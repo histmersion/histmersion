@@ -12,9 +12,9 @@ import scala.collection.mutable
   * asked for — and alone. Not thread-safe: the page has one thread. Pure apart from its own state; no browser API.
   */
 final class BoundedCache[K, V](
-    val maxEntries: Int,
-    val maxWeight: Long = Long.MaxValue,
-    weigh: V => Long = (_: V) => 0L
+    val maxEntries: BoundedCache.MaxEntries,
+    val maxWeight: BoundedCache.MaxWeight = Long.MaxValue,
+    weigh: V => BoundedCache.WeighResult = (_: V) => 0L
 ):
   require(maxEntries > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
@@ -89,6 +89,13 @@ final class BoundedCache[K, V](
 
 object BoundedCache:
   /** The figures a diagnostics read reports for one cache. */
+  type MaxEntries = MaxEntries.T
+  object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxWeight = MaxWeight.T
+  object MaxWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WeighResult = WeighResult.T
+  object WeighResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SizeResult = SizeResult.T
   object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WeightResult = WeightResult.T

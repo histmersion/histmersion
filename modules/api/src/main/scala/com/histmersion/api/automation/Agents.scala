@@ -185,7 +185,7 @@ object Agents:
 
   val JobKind = com.histmersion.api.automation.AgentJobKinds.Agent.kind.value
 
-  enum PauseReason(val wire: String):
+  enum PauseReason(val wire: PauseReason.Wire):
     case Budget extends PauseReason("budget")
     case Interrupted extends PauseReason("interrupted")
     case Requested extends PauseReason("requested")
@@ -197,17 +197,24 @@ object Agents:
 
     case Stalled extends PauseReason("stalled")
 
-  enum StepKind(val wire: String):
+  object PauseReason:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  enum StepKind(val wire: StepKind.Wire):
     case Code extends StepKind("code")
     case Llm extends StepKind("llm")
 
   object StepKind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.Agents.StepKind.ParseS): Option[StepKind] = values.find(_.wire == s)
 
-  enum Origin(val wire: String):
+  enum Origin(val wire: Origin.Wire):
     case Person extends Origin("person")
     case Scheduler extends Origin("scheduler")
     case Run extends Origin("run")
@@ -220,6 +227,9 @@ object Agents:
     def unattended: com.histmersion.api.automation.Agents.Origin.UnattendedResult = this != Person
 
   object Origin:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type UnattendedResult = UnattendedResult.T
     object UnattendedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
@@ -643,12 +653,15 @@ object Agents:
     object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  enum CheckLevel(val wire: String):
+  enum CheckLevel(val wire: CheckLevel.Wire):
     case Ok extends CheckLevel("ok")
     case Warn extends CheckLevel("warn")
     case Fail extends CheckLevel("fail")
 
   object CheckLevel:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T
@@ -751,11 +764,14 @@ object Agents:
     object Definitions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  enum Decision(val wire: String):
+  enum Decision(val wire: Decision.Wire):
     case Approve extends Decision("approve")
     case Reject extends Decision("reject")
 
   object Decision:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

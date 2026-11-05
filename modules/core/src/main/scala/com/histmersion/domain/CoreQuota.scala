@@ -36,12 +36,18 @@ object CoreQuota:
   type RetryAtV = RetryAtV.T
   object RetryAtV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Purpose(val wire: String, val label: String):
+  enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
     case Lookup extends Purpose("lookup", "PDF lookups")
 
     /** The new-source search's `core` index: one saved query of a goal. */
     case Search extends Purpose("search", "searches")
+
+  object Purpose:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The limits Histmersion keeps to (`acquire.core.*`). */
   final case class Limits(

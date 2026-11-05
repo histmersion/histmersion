@@ -32,7 +32,7 @@ private[places] object GazetteerImport:
   final class Session private[GazetteerImport] (
       repo: GazetteerRepo.Session,
       transactions: Transactor.Session,
-      apply: Boolean
+      apply: Session.Apply
   ):
     private def write[A](work: DbCon ?=> A): A =
       if apply then transactions.transact(work) else transactions.rollback(work)
@@ -60,6 +60,9 @@ private[places] object GazetteerImport:
     def sweep(): Gazetteer.LoadCounts = write(repo.sweep())
 
   object Session:
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type PruneResult = PruneResult.T
     object PruneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PruneBatch = PruneBatch.T

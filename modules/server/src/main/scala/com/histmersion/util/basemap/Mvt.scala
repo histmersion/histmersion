@@ -116,7 +116,7 @@ object Mvt:
     type PayloadStart = PayloadStart.T
     object PayloadStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final private class Reader(val b: Array[Byte], from: Int, until: Int):
+  final private class Reader(val b: Array[Byte], from: Reader.From, until: Reader.Until):
     var pos: com.histmersion.util.basemap.Mvt.Reader.Pos = from // the next unread byte
 
     def hasNext: com.histmersion.util.basemap.Mvt.Reader.HasNextResult = pos < until
@@ -155,6 +155,11 @@ object Mvt:
     private def check(): Unit = if pos > until then throw IllegalArgumentException("field past the end")
 
   object Reader:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Pos = Pos.T
     object Pos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HasNextResult = HasNextResult.T

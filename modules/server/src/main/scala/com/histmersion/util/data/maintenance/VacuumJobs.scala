@@ -21,7 +21,7 @@ final class VacuumJobs(
     ds: DataSource,
     gate: WriteGate,
     registry: DataContributions,
-    defaults: () => List[String],
+    defaults: () => List[VacuumJobs.DefaultsResult],
     pins: WorkCarrier = WorkCarrier.none
 ):
   private val transactor = Transactor(ds)
@@ -72,6 +72,9 @@ final class VacuumJobs(
     loop(plan.tables.zipWithIndex, Nil)
 
 object VacuumJobs:
+  type DefaultsResult = DefaultsResult.T
+  object DefaultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsRunningResult = IsRunningResult.T
   object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VacuumableResult = VacuumableResult.T

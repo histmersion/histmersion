@@ -13,8 +13,8 @@ import com.histmersion.api.catalogue.Period
 final class PeriodImports(
     periods: PeriodService,
     sources: () => PeriodSources,
-    seed: () => Either[String, String],
-    download: String => Either[String, String]
+    seed: () => Either[PeriodImports.SeedResultPart1, PeriodImports.SeedResultPart2],
+    download: PeriodImports.DownloadArg1 => Either[PeriodImports.DownloadResultPart1, PeriodImports.DownloadResultPart2]
 ):
 
   /** The bundled seed, parsed. */
@@ -70,6 +70,17 @@ final class PeriodImports(
 
 object PeriodImports:
   /** The `seed_versions` name of the bundled period seed. */
+  type SeedResultPart1 = SeedResultPart1.T
+  object SeedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedResultPart2 = SeedResultPart2.T
+  object SeedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadArg1 = DownloadArg1.T
+  object DownloadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart1 = DownloadResultPart1.T
+  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart2 = DownloadResultPart2.T
+  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BundledResultPart1 = BundledResultPart1.T
   object BundledResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplySeedResultPart1 = ApplySeedResultPart1.T

@@ -3,7 +3,7 @@ package com.histmersion.util.data.diagnostics
 import com.histmersion.util.storage.Location
 
 /** How About › Storage shows a store: its entry's key, label and group. About lists them in this order. */
-enum ShownStore(val location: Location, val key: String, val label: String, val group: String):
+enum ShownStore(val location: Location, val key: ShownStore.Key, val label: ShownStore.Label, val group: ShownStore.Group):
   case DatabaseCluster
       extends ShownStore(Location.DatabaseCluster, "database-cluster", "database files (bundled Postgres)", "database")
   case Backups extends ShownStore(Location.Backups, "backups", "backups", "backups")
@@ -31,3 +31,11 @@ enum ShownStore(val location: Location, val key: String, val label: String, val 
         "other"
       )
   case Logs extends ShownStore(Location.Logs, "logs", "logs", "logs")
+
+object ShownStore:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Group = Group.T
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

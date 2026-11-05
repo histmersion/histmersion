@@ -29,7 +29,7 @@ object Managers:
   export com.histmersion.api.automation.Manager.State as State
   export com.histmersion.api.automation.ItemStatus
 
-  enum ItemOrigin(val wire: String):
+  enum ItemOrigin(val wire: ItemOrigin.Wire):
     case Selection extends ItemOrigin("selection")
     case Person extends ItemOrigin("person")
     case Chain extends ItemOrigin("chain")
@@ -41,6 +41,9 @@ object Managers:
     case Cron extends ItemOrigin("cron")
 
   object ItemOrigin:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -117,11 +120,16 @@ object Managers:
 
   def watchId(goal: com.histmersion.api.automation.Managers.WatchIdGoal): com.histmersion.api.automation.Managers.WatchIdResult = s"watch:${goal.trim}"
 
-  enum Sweep(val wire: String, val itemKind: String):
+  enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind):
     case Acquisition extends Sweep("acquisition", AcquisitionSweep)
     case Currency extends Sweep("currency", CurrencyCheck)
 
   object Sweep:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemKind = ItemKind.T
+    object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfItemKind = OfItemKind.T
@@ -134,13 +142,16 @@ object Managers:
     def of(c: ManagerConfig): List[Sweep] =
       c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))
 
-  enum EnqueueKind(val wire: String):
+  enum EnqueueKind(val wire: EnqueueKind.Wire):
     case Review extends EnqueueKind("review")
     case Extend extends EnqueueKind("extend")
     case Enrich extends EnqueueKind("enrich")
     case Seed extends EnqueueKind("seed")
 
   object EnqueueKind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

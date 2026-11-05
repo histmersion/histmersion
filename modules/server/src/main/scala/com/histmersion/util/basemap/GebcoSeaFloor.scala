@@ -16,7 +16,7 @@ import scala.util.Using
   * 0…`gebco.max-zoom`. A tile reaching past the region takes its outside from ETOPO1's tile at `etopoUrl` (one GET), as
   * the ETOPO1 extract has it.
   */
-final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: String, http: RangeHttp, maxRequestBytes: Long):
+final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.EtopoUrl, http: RangeHttp, maxRequestBytes: GebcoSeaFloor.MaxRequestBytes):
 
   private val HeaderBytes = 256 * 1024
   private val TileSize = 256
@@ -115,6 +115,11 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: String, http: Range
 object GebcoSeaFloor:
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
+  type EtopoUrl = EtopoUrl.T
+  object EtopoUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxRequestBytes = MaxRequestBytes.T
+  object MaxRequestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PlanResultPart1 = PlanResultPart1.T
   object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanMaxZoom = PlanMaxZoom.T

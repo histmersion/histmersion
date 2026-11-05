@@ -11,13 +11,13 @@ import scala.scalajs.js
   * and commits through [[UiState.set]] — nothing keeps its own copy.
   */
 final class Field[A](
-    val key: String,
-    val hashKey: String,
+    val key: Field.Key,
+    val hashKey: Field.HashKey,
     initial: A,
     val persist: Persist,
     val role: Role,
-    val label: Option[String] = None,
-    val chip: Boolean = true
+    val label: Option[Field.Label] = None,
+    val chip: Field.Chip = true
 )(using val codec: FieldCodec[A]):
   private val v = Var(initial)
   // `var`: `from`/`to` default to the CONFIGURED span, known only once `/api/config` has answered
@@ -45,6 +45,15 @@ final class Field[A](
   private[web] def remove(value: com.histmersion.web.Field.RemoveValue): Unit = load(encoded.filterNot(_ == value))
 
 object Field:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HashKey = HashKey.T
+  object HashKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Chip = Chip.T
+  object Chip extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EncodedResult = EncodedResult.T
   object EncodedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadVs = LoadVs.T

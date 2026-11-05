@@ -3,7 +3,7 @@ package com.histmersion.config.edit
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.
   */
-enum SecretForm(val wire: String, val describe: String):
+enum SecretForm(val wire: SecretForm.Wire, val describe: SecretForm.Describe):
   case Unset extends SecretForm("unset", "not set")
 
   /** `env:<NAME>`: the server's environment variable. */
@@ -19,6 +19,11 @@ enum SecretForm(val wire: String, val describe: String):
   case Plain extends SecretForm("plain", "set")
 
 object SecretForm:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Describe = Describe.T
+  object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfText = OfText.T
   object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReferenceResultPart1 = ReferenceResultPart1.T

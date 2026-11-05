@@ -15,7 +15,7 @@ import com.histmersion.plugin.*
   * @param provider
   *   the name its checks are recorded and its pictures stored under
   */
-final class PluginCollection(val provider: String, col: MediaCollection, allowed: String) extends SearchedCollection:
+final class PluginCollection(val provider: PluginCollection.Provider, col: MediaCollection, allowed: PluginCollection.Allowed) extends SearchedCollection:
   val role: com.histmersion.domain.media.imports.PluginCollection.Role = col.role
   private val latest = col.latestYear.map(_.value)
   val conf: MediaCollectionConfig =
@@ -65,6 +65,11 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
       case Some(it) => PluginMedia.guard(col.complete(it, PluginMedia.http(fetch))).map(PluginMedia.record)
 
 object PluginCollection:
+
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Allowed = Allowed.T
+  object Allowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Role = Role.T
   object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

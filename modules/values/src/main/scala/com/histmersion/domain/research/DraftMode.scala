@@ -1,11 +1,14 @@
 package com.histmersion.domain.research
 
 import com.histmersion.WireEnumValues
-enum DraftMode(val wire: String):
+enum DraftMode(val wire: DraftMode.Wire):
   case Create extends DraftMode("create")
   case Extend extends DraftMode("extend")
 
 object DraftMode:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WireResult = WireResult.T

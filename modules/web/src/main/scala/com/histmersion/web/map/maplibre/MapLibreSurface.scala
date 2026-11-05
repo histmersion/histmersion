@@ -9,7 +9,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 /** A [[MapSurface]] over one MapLibre map. */
-final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: Option[Double], caps: Capabilities)
+final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZoom0, pixelRatio: Option[MapLibreSurface.PixelRatio], caps: Capabilities)
     extends MapSurface:
   import MapLibreEngine.ZoomShift
 
@@ -369,6 +369,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
 
 object MapLibreSurface:
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
+  type MaxZoom0 = MaxZoom0.T
+  object MaxZoom0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelRatio = PixelRatio.T
+  object PixelRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ZoomResult = ZoomResult.T
   object ZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxZoomResult = MaxZoomResult.T

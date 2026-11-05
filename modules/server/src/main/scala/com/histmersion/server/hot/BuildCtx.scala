@@ -21,11 +21,17 @@ final class BuildCtx[C, A] private[hot] (
     val previous: Option[A],
     val previousConfig: Option[C],
     /** The config keys this reload changed (empty for the first build). */
-    val changed: List[String],
-    dep: String => Any
+    val changed: List[BuildCtx.Changed],
+    dep: BuildCtx.DepArg1 => Any
 ):
   /** A dependency's value in the generation being built. */
   def apply[B](h: Hot[B]): B =
     // the map behind `dep` holds, under a node's name, a value of the type that node's Hot was made
     // with (HotGraph.node is the only writer), so the name fixes the type
     dep(h.name).asInstanceOf[B]
+
+object BuildCtx:
+  type Changed = Changed.T
+  object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepArg1 = DepArg1.T
+  object DepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

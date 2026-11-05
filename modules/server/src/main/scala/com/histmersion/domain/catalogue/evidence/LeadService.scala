@@ -179,7 +179,7 @@ object LeadService:
   final class InMemory(
       state: AtomicReference[CatalogueState],
       events: com.histmersion.domain.catalogue.events.EventService,
-      source: String => Option[(Option[String], Option[Int])]
+      source: InMemory.SourceArg1 => Option[(Option[InMemory.SourceResultPart1], Option[InMemory.SourceResultPart2])]
   ) extends LeadService:
 
     def attestingSources(id: com.histmersion.domain.catalogue.evidence.LeadService.InMemory.AttestingSourcesId): List[EventSourceRef] =
@@ -244,6 +244,13 @@ object LeadService:
     ): List[(com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart1, com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart2, com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart3, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart5], Option[com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart6], Option[com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart7], com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart8, com.histmersion.domain.catalogue.evidence.LeadService.InMemory.ArticleCandidatesResultPart9)] = Nil
 
   object InMemory:
+    type SourceArg1 = SourceArg1.T
+    object SourceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SourceResultPart1 = SourceResultPart1.T
+    object SourceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SourceResultPart2 = SourceResultPart2.T
+    object SourceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AttestingSourcesId = AttestingSourcesId.T
     object AttestingSourcesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NearFindingsId = NearFindingsId.T

@@ -39,7 +39,7 @@ final class SystemProcesses extends Processes:
       else Right(Result(proc.exitValue, out(), err()))
     }
 
-  final class Session private (proc: Process, tool: String) extends Processes.Session:
+  final class Session private (proc: Process, tool: Session.Tool) extends Processes.Session:
     private val lock = new Object
     // what the tool printed so far; appended by the two reader threads, read under `lock`
     private val outBytes = new java.io.ByteArrayOutputStream()
@@ -105,6 +105,9 @@ final class SystemProcesses extends Processes:
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
+    type Tool = Tool.T
+    object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OutResult = OutResult.T
     object OutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ErrResult = ErrResult.T

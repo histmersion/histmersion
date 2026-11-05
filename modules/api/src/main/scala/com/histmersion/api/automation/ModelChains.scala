@@ -75,11 +75,14 @@ object ModelChains:
 
   def chainText(ms: List[ModelRef]): com.histmersion.api.automation.ModelChains.ChainTextResult = ms.map(_.wire).mkString(" > ")
 
-  enum Measure(val wire: String):
+  enum Measure(val wire: Measure.Wire):
     case Tokens extends Measure("tokens")
     case Usd extends Measure("usd")
 
   object Measure:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T
@@ -379,9 +382,13 @@ object ModelChains:
     object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  enum SettingSource(val wire: String):
+  enum SettingSource(val wire: SettingSource.Wire):
     case Config extends SettingSource("config")
     case Saved extends SettingSource("saved")
+
+  object SettingSource:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class LimitStatus(
       limit: LimitStatus.Limit,

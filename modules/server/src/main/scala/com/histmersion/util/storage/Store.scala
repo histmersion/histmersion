@@ -198,13 +198,17 @@ object Store:
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
-  enum Error(val message: String):
+  enum Error(val message: Error.Message):
     case NotFound(where: String) extends Error(s"$where: no such file")
     case NotAFile(where: String) extends Error(s"$where is not a file")
     case Failed(reason: String) extends Error(reason)
 
     /** An in-memory store has no file to hand to another program. */
     case NotOnDisk(where: String) extends Error(s"$where is not on disk")
+
+  object Error:
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A name inside a store: `/`-separated segments, relative, never `.` or `..`, no empty segment, no backslash or NUL.
     * The empty key is the store itself.

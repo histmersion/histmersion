@@ -2,7 +2,7 @@ package com.histmersion.api
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-enum ItemKind(val wire: String, val label: String):
+enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
   case Source extends ItemKind("source", "Source")
   case Article extends ItemKind("article", "Article")
   case Event extends ItemKind("event", "Event")
@@ -16,6 +16,11 @@ enum ItemKind(val wire: String, val label: String):
   def isItem: com.histmersion.api.ItemKind.IsItemResult = ItemKind.Items.contains(this)
 
 object ItemKind:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsItemResult = IsItemResult.T
   object IsItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T

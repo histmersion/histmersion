@@ -32,7 +32,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders
     *      it to Markdown instead of OCR.
     */
-  final private class PmcLookup(doi: String, ctx: Fetch.Context):
+  final private class PmcLookup(doi: PmcLookup.Doi, ctx: Fetch.Context):
     lazy val hit: Option[EuropePmcHit] =
       http.json(
         Url(
@@ -91,6 +91,9 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
 
   object PmcLookup:
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DatasetExt = DatasetExt.T
     object DatasetExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DatasetOkResult = DatasetOkResult.T

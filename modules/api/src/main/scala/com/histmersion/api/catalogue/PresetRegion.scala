@@ -4,7 +4,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{BBox, WireEnum}
 import com.histmersion.api.given
 
-enum PresetRegion(val wire: String, val label: String, val box: Option[BBox]):
+enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]):
   case Aegean extends PresetRegion("aegean", "Aegean", Some(BBox(19.5, 34.5, 29.5, 41.5)))
   case Anatolia extends PresetRegion("anatolia", "Anatolia", Some(BBox(26.0, 35.8, 45.0, 42.2)))
   case BritainIreland extends PresetRegion("britain-ireland", "Britain and Ireland", Some(BBox(-10.7, 49.8, 1.8, 60.9)))
@@ -25,6 +25,11 @@ enum PresetRegion(val wire: String, val label: String, val box: Option[BBox]):
   case Broad extends PresetRegion("broad", "Continent-wide definitions", None)
 
 object PresetRegion:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WireResult = WireResult.T

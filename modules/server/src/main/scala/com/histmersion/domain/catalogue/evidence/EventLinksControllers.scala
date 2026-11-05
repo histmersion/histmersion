@@ -51,7 +51,7 @@ final class EventLinksControllers(
     attestations: AttestationService,
     sources: Passage.Source,
     jobs: CatalogueJobs,
-    info: String => Option[CatalogProviderInfo],
+    info: EventLinksControllers.InfoArg1 => Option[CatalogProviderInfo],
     resolve: Filter => Filter,
     scope: Filter => PlaceScope,
     settings: () => AppConfig,
@@ -319,6 +319,9 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
+  type InfoArg1 = InfoArg1.T
+  object InfoArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NotFoundM = NotFoundM.T
   object NotFoundM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventOrFailId = EventOrFailId.T

@@ -381,7 +381,7 @@ object Article:
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    enum Op(val wire: String):
+    enum Op(val wire: Op.Wire):
       case Replace extends Op("replace")
 
       case InsertAfter extends Op("insertAfter")
@@ -391,6 +391,9 @@ object Article:
       case Delete extends Op("delete")
 
     object Op:
+      type Wire = Wire.T
+      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       type ParseS = ParseS.T
       object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type WireResult = WireResult.T

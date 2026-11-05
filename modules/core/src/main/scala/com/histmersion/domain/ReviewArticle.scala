@@ -344,13 +344,18 @@ object ReviewArticle:
   type LogLineResult = LogLineResult.T
   object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Reviewer(val wire: String, val prefix: String):
+  enum Reviewer(val wire: Reviewer.Wire, val prefix: Reviewer.Prefix):
     case Mechanical extends Reviewer("mechanical", "M")
     case Rules extends Reviewer("rules", "R")
     case ColdReader extends Reviewer("cold-reader", "C")
     case Skeptic extends Reviewer("skeptic", "S")
 
   object Reviewer:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Prefix = Prefix.T
+    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T
@@ -367,11 +372,14 @@ object ReviewArticle:
     given Decoder[Reviewer] = WireEnum.decoder
     given Schema[Reviewer] = WireEnum.schema
 
-  enum Severity(val wire: String):
+  enum Severity(val wire: Severity.Wire):
     case Major extends Severity("major")
     case Minor extends Severity("minor")
 
   object Severity:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T
@@ -389,12 +397,17 @@ object ReviewArticle:
     given Schema[Severity] = WireEnum.schema
 
   /** An article's (or one reviewer's) verdict, ordered: the worst one wins. */
-  enum Verdict(val wire: String, val rank: Int):
+  enum Verdict(val wire: Verdict.Wire, val rank: Verdict.Rank):
     case Pass extends Verdict("PASS", 0)
     case Minor extends Verdict("MINOR", 1)
     case Major extends Verdict("MAJOR", 2)
 
   object Verdict:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rank = Rank.T
+    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T

@@ -11,11 +11,11 @@ import scala.scalajs.js
   * `now` and `later` are injectable so the timing can be tested without a browser clock.
   */
 final class Throttle[A](
-    intervalMs: Int,
+    intervalMs: Throttle.IntervalMs,
     f: A => Unit,
-    now: () => Double = () => js.Date.now(),
-    later: (Double, () => Unit) => Int = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Int => Unit = id => dom.window.clearTimeout(id)
+    now: () => Throttle.NowResult = () => js.Date.now(),
+    later: (Throttle.LaterArg1, () => Unit) => Throttle.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
+    cancel: Throttle.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 ):
   private var lastRun: com.histmersion.web.Throttle.LastRun = Double.NegativeInfinity
   private var pending: Option[A] = None
@@ -41,6 +41,17 @@ final class Throttle[A](
     f(a)
 
 object Throttle:
+  type IntervalMs = IntervalMs.T
+  object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowResult = NowResult.T
+  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterArg1 = LaterArg1.T
+  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterResult = LaterResult.T
+  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CancelArg1 = CancelArg1.T
+  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LastRun = LastRun.T
   object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Timer = Timer.T

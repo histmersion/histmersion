@@ -271,10 +271,16 @@ object RunsView:
     else page.count(RunState.Queued.wire) + page.count(RunState.Running.wire) > 0
 
   /** What a person can do to a run in this state. */
-  enum Action(val wire: String, val label: String):
+  enum Action(val wire: Action.Wire, val label: Action.Label):
     case Pause extends Action("pause", "pause")
     case Resume extends Action("resume", "resume")
     case Cancel extends Action("cancel", "cancel")
+
+  object Action:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def actions(status: com.histmersion.web.RunsView.ActionsStatus): List[Action] = RunState.parse(status) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)

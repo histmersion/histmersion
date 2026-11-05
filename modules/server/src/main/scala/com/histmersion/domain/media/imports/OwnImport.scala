@@ -26,7 +26,7 @@ import scala.util.control.NonFatal
   * @param name
   *   the collection's name in the registry
   */
-final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: MediaConfig):
+final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite, cfg: MediaConfig):
 
   private val check = BuiltinMedia.checkOf(name)
   private val provider = BuiltinMedia.providerOf(name)
@@ -271,6 +271,9 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
         }
 
 object OwnImport:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WikidataOfResult = WikidataOfResult.T
   object WikidataOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TypeOfResult = TypeOfResult.T

@@ -65,7 +65,7 @@ object JobDetail:
     * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON
     * ([[JobDetail]]); the kinds' registry lists every field in the order the detail shows them.
     */
-  final class Field[A](val name: String, val default: A)(using
+  final class Field[A](val name: Field.Name, val default: A)(using
       encoder: Encoder[A],
       decoder: Decoder[A],
       schema: Schema[A]
@@ -87,3 +87,7 @@ object JobDetail:
     /** The field in the detail's schema: optional, as a field with a default is. */
     private[histmersion] def schemaField: SProductField[JobDetail] =
       SProductField[JobDetail, A](FieldName(name), schema.copy(isOptional = true), d => Some(of(d)))
+
+  object Field:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

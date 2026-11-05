@@ -38,7 +38,7 @@ final class ServerGraph private (
     val graph: Hot.Graph[HotConfig],
     source: Option[ConfigSource],
     val pool: Hot[DataSource],
-    val migrations: Hot[String],
+    val migrations: Hot[ServerGraph.Migrations],
     val queryPool: Hot[ReadOnlyPool],
     val plugins: Hot[Generation],
     val core: com.histmersion.domain.library.acquisition.CoreBudget
@@ -140,6 +140,9 @@ final class ServerGraph private (
   def close(): Unit = graph.close()
 
 object ServerGraph:
+  type Migrations = Migrations.T
+  object Migrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AddWatchResultPart1 = AddWatchResultPart1.T
   object AddWatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddWatchResultPart2 = AddWatchResultPart2.T

@@ -11,17 +11,27 @@ import scala.scalajs.js.JSConverters.*
 /** One [[ShapeSet]] as a GeoJSON source and its layers. Its features carry numeric ids (feature state needs them) and
   * their own id as `hid`; colour and visibility live in feature state, so a restyle never sends the geometry again.
   */
-final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: ShapeStyle) extends ShapeSet:
+final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look: ShapeStyle) extends ShapeSet:
   // `var`s: the next numeric id, and what is drawn: our id → (numeric id, geometry, colour, alpha, dashed)
   private var next = 1
   final private class Drawn(
-      val n: Int,
+      val n: Drawn.N,
       val geometry: js.Any,
-      var colour: String,
-      var alpha: Double,
-      val dashed: Boolean
+      var colour: Drawn.Colour,
+      var alpha: Drawn.Alpha,
+      val dashed: Drawn.Dashed
   ):
     lazy val bounds: Option[GeoBounds] = GeoBounds.ofGeometry(geometry.asInstanceOf[js.Dynamic])
+
+  object Drawn:
+    type N = N.T
+    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Colour = Colour.T
+    object Colour extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Alpha = Alpha.T
+    object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dashed = Dashed.T
+    object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val drawn = mutable.LinkedHashMap.empty[String, Drawn]
   private val numeric = mutable.HashMap.empty[String, Int]
   // the shapes whose colour or visibility was set in place (feature state): only these need it again
@@ -218,6 +228,9 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
     }
 
 object GlShapes:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TimesK = TimesK.T
   object TimesK extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayerIdsResult = LayerIdsResult.T

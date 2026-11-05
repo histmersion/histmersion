@@ -8,7 +8,7 @@ import scala.jdk.CollectionConverters.*
 /** The steps of the engine's pipelines, each run as one agent definition. A test holds every one of them to a
   * definition that parses.
   */
-enum StepAgent(val wire: String):
+enum StepAgent(val wire: StepAgent.Wire):
   case Probe extends StepAgent("probe")
   case EnrichClassify extends StepAgent("enrich-classify")
   case EnrichFindings extends StepAgent("enrich-findings")
@@ -24,3 +24,7 @@ enum StepAgent(val wire: String):
   case FilterInferrer extends StepAgent("filter-inferrer")
   case ArticlePlanner extends StepAgent("article-planner")
   case HintReader extends StepAgent("hint-reader")
+
+object StepAgent:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

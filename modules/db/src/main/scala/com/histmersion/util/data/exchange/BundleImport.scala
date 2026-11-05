@@ -63,10 +63,10 @@ object BundleImport:
       decided: List[MergePlanner.Row],
       decisionOf: Map[UUID, Decision],
       /** Whether the line of a uid is written. */
-      val writes: UUID => Boolean,
+      val writes: UUID => Writer.WritesResult,
       /** This collection's rows as lines, before the import. */
       val local: BundleEntities,
-      skipAliases: Set[String],
+      skipAliases: Set[Writer.SkipAliases],
       /** What the merge does besides writing the decided lines. */
       val merged: MergePlanner.Apply,
       /** The import's options: the chunk size, the point tolerance, the referrers a rename runs. */
@@ -167,6 +167,11 @@ object BundleImport:
       }
 
   object Writer:
+    type WritesResult = WritesResult.T
+    object WritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkipAliases = SkipAliases.T
+    object SkipAliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type InsertsResult = InsertsResult.T
     object InsertsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SkipsAliasResult = SkipsAliasResult.T

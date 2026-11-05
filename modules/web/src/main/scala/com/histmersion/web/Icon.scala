@@ -15,7 +15,7 @@ import com.histmersion.api.library.{Acquire, Filter}
 /** Inline SVG icons drawn with `currentColor`, so they follow the button's text colour (and its active state) instead
   * of the platform's emoji font. 24×24 stroke paths.
   */
-enum Icon(val paths: List[String]):
+enum Icon(val paths: List[Icon.Paths]):
   /** Stacked sheets: the map's layers (and, on a phone, the drawer that holds them). */
   case Layers
       extends Icon(List("M12 3.5l8.5 4.5-8.5 4.5-8.5-4.5z", "M3.5 12l8.5 4.5 8.5-4.5", "M3.5 16l8.5 4.5 8.5-4.5"))
@@ -181,6 +181,9 @@ enum Icon(val paths: List[String]):
 
 object Icon:
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
+  type Paths = Paths.T
+  object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HtmlResult = HtmlResult.T
   object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

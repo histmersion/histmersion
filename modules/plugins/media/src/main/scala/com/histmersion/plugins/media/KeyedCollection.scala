@@ -18,10 +18,10 @@ import com.histmersion.plugin.*
   */
 abstract class KeyedCollection(
     conf: CollectionSettings,
-    plugin: String,
-    key: Option[String],
-    needs: String,
-    settings: String
+    plugin: KeyedCollection.Plugin,
+    key: Option[KeyedCollection.Key],
+    needs: KeyedCollection.Needs,
+    settings: KeyedCollection.Settings
 ) extends MediaCollection:
   override def perPlace: Int = conf.perPlace
   override def requestIntervalMs: Int = conf.requestIntervalMs
@@ -52,6 +52,15 @@ abstract class KeyedCollection(
     else e
 
 object KeyedCollection:
+  type Plugin = Plugin.T
+  object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Needs = Needs.T
+  object Needs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Settings = Settings.T
+  object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DescribedResult = DescribedResult.T
   object DescribedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescribedText = DescribedText.T

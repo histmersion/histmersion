@@ -11,7 +11,7 @@ object Activity:
   type KeyOfId = KeyOfId.T
   object KeyOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum EntryKind(val wire: String):
+  enum EntryKind(val wire: EntryKind.Wire):
     case Run extends EntryKind("run")
     case Job extends EntryKind("job")
     case Log extends EntryKind("log")
@@ -25,6 +25,9 @@ object Activity:
       case Decision => "You decided"
 
   object EntryKind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type WordingResult = WordingResult.T
     object WordingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
@@ -32,11 +35,15 @@ object Activity:
 
     def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == s.trim.toLowerCase)
 
-  enum Writer(val wire: String):
+  enum Writer(val wire: Writer.Wire):
     case Agent extends Writer("agent")
     case Job extends Writer("job")
 
-  enum Show(val wire: String, val label: String):
+  object Writer:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  enum Show(val wire: Show.Wire, val label: Show.Label):
     case Everything extends Show("all", "Everything")
     case Running extends Show("running", "Running now")
     case Agents extends Show("agents", "Agent work")
@@ -45,6 +52,11 @@ object Activity:
     case Problems extends Show("problems", "Problems")
 
   object Show:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

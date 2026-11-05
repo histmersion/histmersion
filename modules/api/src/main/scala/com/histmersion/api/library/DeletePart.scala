@@ -7,7 +7,7 @@ import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 
-enum DeletePart(val wire: String, val label: String):
+enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label):
   case Findings extends DeletePart("findings", "findings")
   case FindingPlaces extends DeletePart("finding-places", "gazetteer assignments of its findings")
   case EdgesOut extends DeletePart("edges-out", "edges from it")
@@ -28,6 +28,11 @@ enum DeletePart(val wire: String, val label: String):
   case CoverageReasons extends DeletePart("coverage-reasons", "articles' reasons for leaving it out")
 
 object DeletePart:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WireResult = WireResult.T
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromWireS = FromWireS.T

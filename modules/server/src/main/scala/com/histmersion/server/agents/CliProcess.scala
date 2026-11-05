@@ -122,7 +122,7 @@ object CliProcess:
         .find(f => Files.isRegularFile(f) && Files.isExecutable(f))
 
   /** One live CLI: the process, whether it leads its own group, and every descendant seen so far. */
-  final private class ProcessTree(val p: Process, val grouped: Boolean):
+  final private class ProcessTree(val p: Process, val grouped: ProcessTree.Grouped):
     val seen: java.util.Set[ProcessHandle] = java.util.concurrent.ConcurrentHashMap.newKeySet[ProcessHandle]()
 
     /** Remember the descendants it has now. macOS's process-table read (`sysctl KERN_PROC`) fails now and then while
@@ -150,6 +150,10 @@ object CliProcess:
       seen.asScala.filter(_.isAlive).foreach { d =>
         val _ = d.destroyForcibly()
       }
+
+  object ProcessTree:
+    type Grouped = Grouped.T
+    object Grouped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def signalGroup(pgid: com.histmersion.server.agents.CliProcess.SignalGroupPgid, sig: com.histmersion.server.agents.CliProcess.SignalGroupSig): Unit =
     try

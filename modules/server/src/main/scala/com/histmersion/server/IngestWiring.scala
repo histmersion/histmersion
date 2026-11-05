@@ -16,7 +16,7 @@ final class IngestWiring(
     converter: ConverterClient,
     sources: SourceService,
     figures: AssetService,
-    afterStore: String => Option[String]
+    afterStore: IngestWiring.AfterStoreArg1 => Option[IngestWiring.AfterStoreResult]
 ):
   private def originals: Store = deps.storage.store(Location.IngestOriginals)
 
@@ -53,3 +53,9 @@ final class IngestWiring(
   val jobs: QueuedIngest = QueuedIngest(controllers, sources, c => spool.get(c.key).map(Upload.stored))
 
   val seed: SeedImport = SeedImport(sources, figures.addFigures)
+
+object IngestWiring:
+  type AfterStoreArg1 = AfterStoreArg1.T
+  object AfterStoreArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterStoreResult = AfterStoreResult.T
+  object AfterStoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

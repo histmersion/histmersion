@@ -16,7 +16,7 @@ final class CatalogueJobs(
     maintenance: WriteGate,
     pins: WorkCarrier,
     stops: JobStops,
-    stoppable: Set[String]
+    stoppable: Set[CatalogueJobs.Stoppable]
 ):
   private val slot = BackgroundJob.Slot()
 
@@ -43,6 +43,9 @@ final class CatalogueJobs(
   def held: com.histmersion.domain.catalogue.CatalogueJobs.HeldResult = maintenance.active
 
 object CatalogueJobs:
+  type Stoppable = Stoppable.T
+  object Stoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StartKind = StartKind.T
   object StartKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartDescribe = StartDescribe.T

@@ -5,7 +5,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
-enum DriftKind(val wire: String):
+enum DriftKind(val wire: DriftKind.Wire):
   case Unplaced extends DriftKind("unplaced")
 
   case ReasonForCited extends DriftKind("reason-for-cited")
@@ -13,6 +13,9 @@ enum DriftKind(val wire: String):
   case ReasonOutside extends DriftKind("reason-outside-filter")
 
 object DriftKind:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WireResult = WireResult.T
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromWireS = FromWireS.T

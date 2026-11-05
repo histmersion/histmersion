@@ -59,7 +59,7 @@ object PmTiles:
   /** The root directory must fit, with the header, in the first 16 KiB: one request reads both. */
   val RootBytes = 16384
 
-  enum Compression(val code: Int):
+  enum Compression(val code: Compression.Code):
     case Unknown extends Compression(0)
     case None extends Compression(1)
     case Gzip extends Compression(2)
@@ -67,12 +67,15 @@ object PmTiles:
     case Zstd extends Compression(4)
 
   object Compression:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OfCode = OfCode.T
     object OfCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(code: com.histmersion.util.basemap.PmTiles.Compression.OfCode): Compression = values.find(_.code == code).getOrElse(Unknown)
 
-  enum TileType(val code: Int, val mime: String):
+  enum TileType(val code: TileType.Code, val mime: TileType.Mime):
     case Unknown extends TileType(0, "application/octet-stream")
     case Mvt extends TileType(1, "application/vnd.mapbox-vector-tile")
     case Png extends TileType(2, "image/png")
@@ -81,6 +84,11 @@ object PmTiles:
     case Avif extends TileType(5, "image/avif")
 
   object TileType:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mime = Mime.T
+    object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OfCode = OfCode.T
     object OfCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -414,12 +422,12 @@ object PmTiles:
     */
   final class File private (
       /** Where the archive is, for messages. */
-      val where: String,
+      val where: File.Where,
       reader: RandomReader,
       val header: PmTiles.Header,
       root: Vector[PmTiles.Entry],
       val metadata: Json,
-      maxLeaves: Int
+      maxLeaves: File.MaxLeaves
   ) extends AutoCloseable:
 
     private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
@@ -462,6 +470,11 @@ object PmTiles:
     def close(): Unit = reader.close()
 
   object File:
+
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLeaves = MaxLeaves.T
+    object MaxLeaves extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type ReadOffset = ReadOffset.T
     object ReadOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

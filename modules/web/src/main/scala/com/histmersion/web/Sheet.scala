@@ -10,12 +10,15 @@ import scala.scalajs.js
 /** How far the sidebar is pulled up in the narrow (phone) layout, where it is a bottom sheet: a strip, half the screen,
   * or all of it but the search bar. The heights are the stylesheet's.
   */
-enum Sheet(val wire: String):
+enum Sheet(val wire: Sheet.Wire):
   case Peek extends Sheet("peek")
   case Half extends Sheet("half")
   case Full extends Sheet("full")
 
 object Sheet:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NearestFraction = NearestFraction.T

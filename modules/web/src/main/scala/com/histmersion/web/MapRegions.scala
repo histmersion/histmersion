@@ -26,7 +26,7 @@ object MapRegions:
   type SizesAnswer = SizesAnswer.T
   object SizesAnswer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Content(val label: String):
+  enum Content(val label: Content.Label):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
     case Map extends Content("the map, every layer (in place of the region downloaded now)")
 
@@ -34,6 +34,9 @@ object MapRegions:
     case Relief extends Content("the detailed relief, kept beside the map")
 
   object Content:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

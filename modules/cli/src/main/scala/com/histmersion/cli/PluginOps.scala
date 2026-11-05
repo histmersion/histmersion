@@ -24,7 +24,7 @@ final class PluginOps(using console: Console)(
     install: LocalInstall,
     cfg: CliPluginsConfig,
     run: Runner = Runner.System,
-    confirm: String => Boolean = PluginOps.ask
+    confirm: PluginOps.ConfirmArg1 => PluginOps.ConfirmResult = PluginOps.ask
 ):
 
   private def err(msg: com.histmersion.cli.PluginOps.ErrMsg, code: com.histmersion.cli.PluginOps.ErrCode = ExitCode.Refused) = Cli.Error(msg, exitCode = code)
@@ -440,6 +440,11 @@ final class PluginOps(using console: Console)(
 
 object PluginOps:
   /** Ask on the terminal; no terminal = no. */
+  type ConfirmArg1 = ConfirmArg1.T
+  object ConfirmArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfirmResult = ConfirmResult.T
+  object ConfirmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ErrMsg = ErrMsg.T
   object ErrMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ErrCode = ErrCode.T

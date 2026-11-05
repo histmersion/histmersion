@@ -1,11 +1,14 @@
 package com.histmersion.domain.automation
 
 import com.histmersion.WireEnumValues
-enum ScheduleKind(val wire: String, val pipeline: Pipeline):
+enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline):
   case Currency extends ScheduleKind("currency", Pipeline.CurrencyCheck)
   case Acquisition extends ScheduleKind("acquisition", Pipeline.AcquisitionSweep)
 
 object ScheduleKind:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WireResult = WireResult.T

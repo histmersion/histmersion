@@ -5,7 +5,7 @@ import com.histmersion.api.library.Sort
 /** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
   * the reader names an order of publication here, not a ranking of the map's results.
   */
-enum LibrarySort(val wire: String, val label: String, val sort: Sort):
+enum LibrarySort(val wire: LibrarySort.Wire, val label: LibrarySort.Label, val sort: Sort):
   case Relevance extends LibrarySort("relevance", "Relevance", Sort.Relevance)
   case Newest extends LibrarySort("newest", "Newest publication", Sort.Year)
   case Oldest extends LibrarySort("oldest", "Oldest publication", Sort.Oldest)
@@ -14,6 +14,11 @@ enum LibrarySort(val wire: String, val label: String, val sort: Sort):
 
 object LibrarySort:
   /** Pure: the order an address names; relevance for none, or for one it does not know. */
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfWire = OfWire.T
   object OfWire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

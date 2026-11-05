@@ -337,7 +337,7 @@ object Basemap:
 
 
 
-  enum Layer(val wire: String, val title: String):
+  enum Layer(val wire: Layer.Wire, val title: Layer.Title):
     case Vector extends Layer("vector", "coast, water and land cover")
 
     case Terrain extends Layer("terrain", "relief")
@@ -350,6 +350,11 @@ object Basemap:
     def file: com.histmersion.api.basemap.Basemap.Layer.FileResult = s"$wire.pmtiles"
 
   object Layer:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type FileResult = FileResult.T
     object FileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T

@@ -14,7 +14,7 @@ import scala.util.Using
   * one; redirects followed by THIS connection (the JVM-wide default it used to flip as well changed every other
   * `HttpURLConnection` in the process).
   */
-final class HttpDownload(userAgent: String):
+final class HttpDownload(userAgent: HttpDownload.UserAgent):
 
   private def open(url: com.histmersion.server.HttpDownload.OpenUrl, readTimeoutMs: com.histmersion.server.HttpDownload.OpenReadTimeoutMs): HttpURLConnection =
     val conn = URI.create(url).toURL.openConnection().asInstanceOf[HttpURLConnection]
@@ -48,6 +48,9 @@ final class HttpDownload(userAgent: String):
     catch case e: Exception => Left(s"download of $url failed: ${e.getMessage}")
 
 object HttpDownload:
+  type UserAgent = UserAgent.T
+  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OpenUrl = OpenUrl.T
   object OpenUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenReadTimeoutMs = OpenReadTimeoutMs.T

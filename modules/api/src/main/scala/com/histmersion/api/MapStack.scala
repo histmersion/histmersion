@@ -5,7 +5,7 @@ object MapStack:
   type PointsAboveAreasResult = PointsAboveAreasResult.T
   object PointsAboveAreasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Pane(val name: String, val point: Boolean, val canvas: Boolean):
+  enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
     case Areas extends Pane("areas", point = false, canvas = true)
 
     case AreaPoints extends Pane("area-points", point = false, canvas = false)
@@ -21,6 +21,13 @@ object MapStack:
     def cssClass: com.histmersion.api.MapStack.Pane.CssClassResult = s"hd-pane--$name"
 
   object Pane:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Point = Point.T
+    object Point extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Canvas = Canvas.T
+    object Canvas extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type CssClassResult = CssClassResult.T
     object CssClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

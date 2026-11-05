@@ -18,8 +18,8 @@ import com.histmersion.api.aliases.LabelRenamed
 final class GoalsControllers(
     goals: GoalService,
     queues: QueueService,
-    current: String => String,
-    pageSize: Option[Int] => Int,
+    current: GoalsControllers.CurrentArg1 => GoalsControllers.CurrentResult,
+    pageSize: Option[GoalsControllers.PageSizeArg1] => GoalsControllers.PageSizeResult,
     maintenance: WriteGate
 ):
   private def notFound(slug: com.histmersion.domain.automation.goals.GoalsControllers.NotFoundSlug) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
@@ -75,6 +75,15 @@ final class GoalsControllers(
     GoalsExport.render(views, status)
 
 object GoalsControllers:
+  type CurrentArg1 = CurrentArg1.T
+  object CurrentArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSizeArg1 = PageSizeArg1.T
+  object PageSizeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSizeResult = PageSizeResult.T
+  object PageSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NotFoundSlug = NotFoundSlug.T
   object NotFoundSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetSlug = GetSlug.T

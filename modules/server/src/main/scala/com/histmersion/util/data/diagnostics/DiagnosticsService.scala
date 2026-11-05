@@ -79,7 +79,7 @@ object DiagnosticsService:
   final class InMemory(
       registry: DataContributions,
       counts: Map[DataOwner, DataFigures],
-      database: (String, ByteCount),
+      database: (InMemory.DatabasePart1, ByteCount),
       tables: List[(TableName, ByteCount)]
   ) extends DiagnosticsService:
     private def sized = tables.map((t, b) => t.value -> b.value)
@@ -90,6 +90,9 @@ object DiagnosticsService:
     def ownerTables: List[(DataOwner, ByteCount)] = perOwner(registry, sized)
 
   object InMemory:
+    type DatabasePart1 = DatabasePart1.T
+    object DatabasePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DatabaseSizeResultPart1 = DatabaseSizeResultPart1.T
     object DatabaseSizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LargestTablesN = LargestTablesN.T

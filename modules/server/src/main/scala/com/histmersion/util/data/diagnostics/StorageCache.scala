@@ -19,8 +19,8 @@ import com.histmersion.api.maintenance.Storage
   */
 final class StorageCache(
     prepare: () => () => Storage.Report,
-    ttlMillis: () => Long,
-    clock: () => Long = () => System.currentTimeMillis(),
+    ttlMillis: () => StorageCache.TtlMillisResult,
+    clock: () => StorageCache.ClockResult = () => System.currentTimeMillis(),
     spawn: (() => Unit) => Unit = r => { val _ = Thread.ofVirtual().name("histmersion-storage").start(() => r()) }
 ):
 
@@ -67,5 +67,10 @@ final class StorageCache(
           f
 
 object StorageCache:
+  type TtlMillisResult = TtlMillisResult.T
+  object TtlMillisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClockResult = ClockResult.T
+  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetWaitMillis = GetWaitMillis.T
   object GetWaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

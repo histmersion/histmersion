@@ -162,7 +162,7 @@ object AcquireRecheck:
           case other                    => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_checks.outcome`). */
-  enum Outcome(val wire: String):
+  enum Outcome(val wire: Outcome.Wire):
     /** In the corpus with its original: closed. */
     case Closed extends Outcome("closed")
 
@@ -176,6 +176,9 @@ object AcquireRecheck:
     case Failed extends Outcome("failed")
 
   object Outcome:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

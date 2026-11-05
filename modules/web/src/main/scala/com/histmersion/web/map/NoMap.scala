@@ -19,7 +19,7 @@ object NoMap:
   type HtmlWhy = HtmlWhy.T
   object HtmlWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final class Shapes(val id: String) extends ShapeSet:
+  final class Shapes(val id: Shapes.Id) extends ShapeSet:
     // `var`: the ids the app set, read back as it set them
     private var current: Seq[com.histmersion.web.map.NoMap.Shapes.Current] = Nil
     def set(shapes: Seq[ShapeFeature]): Unit = current = shapes.map(_.id)
@@ -27,6 +27,9 @@ object NoMap:
     def ids: Seq[com.histmersion.web.map.NoMap.Shapes.IdsResult] = current
 
   object Shapes:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Current = Current.T
     object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RestyleId = RestyleId.T

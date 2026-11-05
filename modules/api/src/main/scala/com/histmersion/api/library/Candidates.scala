@@ -21,22 +21,28 @@ object Candidates:
   type OpenalexAuthorIdsResult = OpenalexAuthorIdsResult.T
   object OpenalexAuthorIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum WatchKind(val wire: String):
+  enum WatchKind(val wire: WatchKind.Wire):
     case Query extends WatchKind("query")
     case Citing extends WatchKind("citing")
     case Author extends WatchKind("author")
   object WatchKind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
 
-  enum State(val wire: String):
+  enum State(val wire: State.Wire):
     case New extends State("new")
     case Seen extends State("seen")
     case Queued extends State("queued")
     case Dismissed extends State("dismissed")
   object State:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -56,7 +56,7 @@ object Goal:
     val all: scala.List[com.histmersion.api.automation.Goal.Status.All] = scala.List(Planned, Seeding, Compiled, Reviewed, Done)
 
   /** What a goal is linked to. */
-  enum LinkKind(val wire: String):
+  enum LinkKind(val wire: LinkKind.Wire):
     case Source extends LinkKind("source")
     case Article extends LinkKind("article")
     case Query extends LinkKind("query")
@@ -65,6 +65,9 @@ object Goal:
   object LinkKind:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireResult = WireResult.T

@@ -1,5 +1,31 @@
 # Priority-family status
 
+## Applied: ordinary-class and enum header constructor types
+
+constructor-types-project-1 converts 566 additional explicit primitive constructor
+positions in 264 production files. The existing class-field transformation now
+also accepts ordinary classes and enum headers when configured, emitting types
+on their companions. Constructor calls and bodies remain for compilation repair.
+Packed buffers, local owners, shadowing and name/base conflicts remain unresolved;
+no accepted exception or verified behavioral repair credit is added.
+
+The fixture covers an ordinary class, enum constructor metadata and an unchanged
+binary-array constructor. Generated output matches expected source exactly and
+the expected source compiles with Scala 3.10.0/Iron 3.4.1. It reports three
+conversions and one blocked buffer leaf. The frozen applicator checks and applies
+all 264 files; application/source/config/docs whitespace checks pass. The scoped
+rerun produces zero further supported edits and 1780 blocked positions, including
+the prior member/signature residual. No application compilation pass is claimed.
+
+type-positions-after-constructors-1 validates all 3167 current main/test source
+files and the thirteen-plan source hash chain. Stable-ID comparison reports
+exactly 566 raw primitive leaves removed and zero introduced. The global count
+falls from 8987 to 8421: production2367/test6054. Tests are unchanged. The residual
+includes shapes outside this rewrite (enum case payloads, aliases, inferred or
+otherwise unsupported types), as well as genuine boundary candidates requiring
+classification. Prior buffer-signature corrections remain outstanding and overlap
+indexing/consolidation remains deferred until the conversion batches are handled.
+
 ## Applied: callback/member/method conversion across production modules
 
 member-types-project-1 applies the same transformation across all configured

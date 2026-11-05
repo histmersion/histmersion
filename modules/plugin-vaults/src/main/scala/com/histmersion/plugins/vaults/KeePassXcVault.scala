@@ -8,15 +8,15 @@ import java.nio.file.Path
 import scala.concurrent.duration.*
 
 final class KeePassXcVault(
-    val name: String,
-    exe: String,
-    db: String,
-    keyFile: Option[String],
-    password: Option[String],
-    attribute: String,
+    val name: KeePassXcVault.Name,
+    exe: KeePassXcVault.Exe,
+    db: KeePassXcVault.Db,
+    keyFile: Option[KeePassXcVault.KeyFile],
+    password: Option[KeePassXcVault.Password],
+    attribute: KeePassXcVault.Attribute,
     timeout: FiniteDuration,
     yubikeys: List[YubiKey.Slot],
-    ykman: Option[String],
+    ykman: Option[KeePassXcVault.Ykman],
     yubikeyTimeout: FiniteDuration,
     log: Plugin.Log
 )(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
@@ -226,6 +226,21 @@ final class KeePassXcVault(
     else None
 
 object KeePassXcVault:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Exe = Exe.T
+  object Exe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Db = Db.T
+  object Db extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyFile = KeyFile.T
+  object KeyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Password = Password.T
+  object Password extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Attribute = Attribute.T
+  object Attribute extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ykman = Ykman.T
+  object Ykman extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T

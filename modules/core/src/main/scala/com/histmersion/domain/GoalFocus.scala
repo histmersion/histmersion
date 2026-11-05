@@ -109,13 +109,18 @@ object GoalFocus:
   type EtaDaysDoneLast7 = EtaDaysDoneLast7.T
   object EtaDaysDoneLast7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Stage(val rank: Int, val wire: String):
+  enum Stage(val rank: Stage.Rank, val wire: Stage.Wire):
     case Reviewing extends Stage(0, "reviewing")
     case Compiling extends Stage(1, "compiling")
     case Ready extends Stage(2, "ready")
     case Gathering extends Stage(3, "gathering")
 
   object Stage:
+    type Rank = Rank.T
+    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

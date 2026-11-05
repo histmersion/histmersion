@@ -23,8 +23,8 @@ import com.histmersion.domain.catalogue.evidence.passages.Passage
 final class AttestationsControllers(
     attestations: AttestationService,
     sources: Passage.Source,
-    current: (AliasKind, String) => String,
-    page: Option[Int] => Int,
+    current: (AliasKind, AttestationsControllers.CurrentArg2) => AttestationsControllers.CurrentResult,
+    page: Option[AttestationsControllers.PageArg1] => AttestationsControllers.PageResult,
     maintenance: WriteGate
 ):
 
@@ -70,6 +70,15 @@ final class AttestationsControllers(
       else Left(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
 
 object AttestationsControllers:
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageArg1 = PageArg1.T
+  object PageArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageResult = PageResult.T
+  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RefIdResult = RefIdResult.T
   object RefIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefIdTargetType = RefIdTargetType.T

@@ -8,12 +8,17 @@ import com.histmersion.api.given
 
 object ConfigEdit:
 
-  enum Source(val wire: String, val label: String):
+  enum Source(val wire: Source.Wire, val label: Source.Label):
     case Default extends Source("default", "the default")
     case File extends Source("file", "the settings file")
     case Environment extends Source("environment", "an environment variable")
 
   object Source:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -31,7 +31,7 @@ final class BasemapService(
     seaFloor: () => SeaFloorGrid,
     jobs: BasemapJobs,
     http: () => RangeHttp,
-    freeSpace: Store => Long = _.usableSpace.value
+    freeSpace: Store => BasemapService.FreeSpaceResult = _.usableSpace.value
 )(using clock: java.time.Clock):
 
   private def cfg = config()
@@ -972,6 +972,9 @@ object BasemapService:
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
+  type FreeSpaceResult = FreeSpaceResult.T
+  object FreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AttributionResult = AttributionResult.T
   object AttributionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StampResult = StampResult.T

@@ -1,5 +1,5 @@
 package com.histmersion.api.automation
-enum AgentRole(val wire: String):
+enum AgentRole(val wire: AgentRole.Wire):
   case Probe extends AgentRole("probe")
   case Extractor extends AgentRole("extractor")
   case Reviewer extends AgentRole("reviewer")
@@ -14,6 +14,9 @@ enum AgentRole(val wire: String):
   case Writer extends AgentRole("writer")
 
 object AgentRole:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

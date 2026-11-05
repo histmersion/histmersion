@@ -40,7 +40,7 @@ object JobControlService:
   final private class Implementation(
       ds: DataSource,
       stops: JobStops,
-      runs: (String, JobAction) => Either[Api.Error, Unit]
+      runs: (Implementation.RunsArg1, JobAction) => Either[Api.Error, Unit]
   ) extends JobControlService:
 
     def control(id: com.histmersion.util.jobs.JobControlService.Implementation.ControlId, action: JobAction): Either[Api.Error, JobInfo] =
@@ -63,6 +63,9 @@ object JobControlService:
       }
 
   object Implementation:
+    type RunsArg1 = RunsArg1.T
+    object RunsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ControlId = ControlId.T
     object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -70,9 +73,9 @@ object JobControlService:
     * [[JobStops.requestedFor]] between its parts and reports how it stopped with [[stopped]].
     */
   final class InMemory(
-      jobs: AtomicReference[Map[String, JobInfo]],
+      jobs: AtomicReference[Map[InMemory.JobsKey, JobInfo]],
       stops: JobStops,
-      runs: (String, JobAction) => Either[Api.Error, Unit] = (_, _) => Right(())
+      runs: (InMemory.RunsArg1, JobAction) => Either[Api.Error, Unit] = (_, _) => Right(())
   ) extends JobControlService:
 
     /** A job, as the store would hold it. */
@@ -118,6 +121,11 @@ object JobControlService:
       }
 
   object InMemory:
+    type JobsKey = JobsKey.T
+    object JobsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunsArg1 = RunsArg1.T
+    object RunsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GetId = GetId.T
     object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type StoppedId = StoppedId.T

@@ -10,7 +10,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * (`api-key`). Registered without a key, the collection is listed and its import says what is missing; it is never
   * asked.
   */
-abstract class KeyedPlugin(id: String, name: String) extends MediaPlugin(id):
+abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id):
   type Config = KeyedPlugin.Config
 
   /** The collection over the media settings and the key, when one is set. */
@@ -28,6 +28,11 @@ object KeyedPlugin:
   /** A key-gated collection's settings: `api-key`, the key as a SECRET REFERENCE (`env:<NAME>`, a vault's), never the
     * key; `null` = none, and the collection is then not asked. Its other settings are Histmersion's own `media.*`.
     */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CollectionKey = CollectionKey.T
   object CollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegisterResultPart1 = RegisterResultPart1.T

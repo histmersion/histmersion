@@ -29,10 +29,10 @@ import com.histmersion.api.catalogue.EventGeo
 final class EventsControllers(
     events: EventService,
     card: EventEntry => EventEntry,
-    current: (AliasKind, String) => String,
+    current: (AliasKind, EventsControllers.CurrentArg2) => EventsControllers.CurrentResult,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope,
-    mapView: () => (Int, Double),
+    mapView: () => (EventsControllers.MapViewResultPart1, EventsControllers.MapViewResultPart2),
     maintenance: WriteGate
 ):
 
@@ -130,6 +130,15 @@ final class EventsControllers(
       yield (from, newId)
 
 object EventsControllers:
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapViewResultPart1 = MapViewResultPart1.T
+  object MapViewResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapViewResultPart2 = MapViewResultPart2.T
+  object MapViewResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ValidScaleScale = ValidScaleScale.T
   object ValidScaleScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValidGeometryG = ValidGeometryG.T

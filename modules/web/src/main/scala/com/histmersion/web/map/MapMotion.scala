@@ -8,12 +8,17 @@ import scala.scalajs.js
 /** The reader's "Map motion" setting (#4718), kept per device: follow the system's reduced-motion setting (the
   * default), always animate, or never.
   */
-enum MapMotion(val wire: String, val label: String):
+enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
   case System extends MapMotion("system", "Follow the system")
   case Always extends MapMotion("always", "Always animate")
   case Never extends MapMotion("never", "Never animate")
 
 object MapMotion:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AnimatesResult = AnimatesResult.T
