@@ -1,0 +1,5 @@
+VERIFIED_REPAIR_ASSERTIONS_AND_EXACT_ENTRY_PERMISSION
+25 confirmed plugin file/process occurrences repaired. Three nanoTime occurrences relocated from vault Subprocess.Session.await to host SystemProcesses.Session.await are explicitly accepted adapter mechanics, not counted as fixes. Source assertions retain positive fixture controls.
+before-examples-sha256=035013be28cf6dcbd9b8fd98a5f56dbf26be3877766e3638c5cd6a1478c3d9b8
+after-examples-sha256=22826c4d0b4816798cc628a5acd931bda1b2161a67c6b8c2ae07dc35b2addace
+baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e

@@ -8,12 +8,12 @@ console	1	0
 core	126	92
 db	255	90
 files	14	10
-plugin-api	63	8
+plugin-api	65	8
 plugin-fixtures/hello	7	0
 plugin-fixtures/hello-ai	4	0
 plugin-fixtures/hello-deps	3	0
 plugin-fixtures/hello-lib	1	0
-plugin-host	30	7
+plugin-host	32	7
 plugin-resolver	17	3
 plugin-testkit	23	4
 plugin-vaults	13	1

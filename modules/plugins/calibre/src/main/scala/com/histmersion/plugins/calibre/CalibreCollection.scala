@@ -8,7 +8,7 @@ import scala.util.Try
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
-final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shell: Shell) extends SourceCollection:
+final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: String = "Calibre"
@@ -54,7 +54,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shel
       .map(bytes => FetchedFile("calibre", Some(file.name), bytes, CalibreCollection.extension(file.name)))
 
   override def cover(item: CollectionItem): Either[String, Option[FetchedFile]] =
-    item.cover.map(_.trim).filter(p => p.nonEmpty && Files.isRegularFile(Path.of(p))) match
+    item.cover.map(_.trim).filter(p => p.nonEmpty && files.isFile(Path.of(p))) match
       case None       => Right(None)
       case Some(path) =>
         CalibreCollection
@@ -165,40 +165,25 @@ object CalibreCollection:
 
   def extension(name: String): String = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
 
-  def read(path: String): Either[String, Array[Byte]] =
-    Try(Files.readAllBytes(Path.of(path))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
+  def read(path: String)(using files: com.histmersion.plugin.LocalFiles): Either[String, Array[Byte]] =
+    Try(files.read(Path.of(path))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
-  def staged[A](name: String, file: FetchedFile)(f: Path => Either[String, A]): Either[String, A] =
-    Try(Files.createTempDirectory("histmersion-original-")).toEither.left
-      .map(e => s"cannot stage the file: ${e.getMessage}")
-      .flatMap { dir =>
-        try
-          val p = dir.resolve(s"$name.${file.extension}")
-          Try(Files.write(p, file.bytes)).toEither.left.map(e => s"cannot stage the file: ${e.getMessage}").flatMap(f)
-        finally
-          val s = Files.list(dir)
-          try s.forEach(p => Files.deleteIfExists(p): Unit)
-          finally s.close()
-          Files.deleteIfExists(dir): Unit
-      }
+  def staged[A](name: String, file: FetchedFile)(f: Path => Either[String, A])(using files: com.histmersion.plugin.LocalFiles): Either[String, A] =
+    files.staged(s"$name.${file.extension}", file.bytes)(f)
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
-  def reach(dir: Path): Either[String, Unit] =
+  def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[String, Unit] =
     val db = dir.resolve("metadata.db")
-    if !Files.isDirectory(dir) && !Files.exists(db) then
+    if !files.isDirectory(dir) && !files.exists(db) then
       Left(
         s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
           "holds metadata.db (a server in a container needs that folder mounted)"
       )
     else
-      Try {
-        val in = Files.newInputStream(db)
-        try in.read(new Array[Byte](16))
-        finally in.close()
-      }.toEither.left
+      Try { files.readPrefix(db, 16); () }.toEither.left
         .map {
           case _: java.nio.file.NoSuchFileException =>
             s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"

@@ -1,5 +1,5 @@
 rule	module	scope	current	baseline	delta
-capability/clock	ALL	production; configured symbol/owner policy	102	unknown	incomparable
+capability/clock	ALL	production; configured symbol/owner policy	99	unknown	incomparable
 capability/clock	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
@@ -17,7 +17,7 @@ capability/clock	plugin-fixtures/hello-lib	production; configured symbol/owner p
 capability/clock	plugin-host	production; configured symbol/owner policy	2	unknown	incomparable
 capability/clock	plugin-resolver	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugin-testkit	production; configured symbol/owner policy	0	unknown	incomparable
-capability/clock	plugin-vaults	production; configured symbol/owner policy	3	unknown	incomparable
+capability/clock	plugin-vaults	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/ai-http	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/calibre	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/events	production; configured symbol/owner policy	0	unknown	incomparable
@@ -202,7 +202,7 @@ capability/environment	server	production; configured symbol/owner policy	0	unkno
 capability/environment	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/environment	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/environment	web	production; configured symbol/owner policy	0	unknown	incomparable
-capability/filesystem	ALL	production; configured symbol/owner policy	41	unknown	incomparable
+capability/filesystem	ALL	production; configured symbol/owner policy	23	unknown	incomparable
 capability/filesystem	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
@@ -220,9 +220,9 @@ capability/filesystem	plugin-fixtures/hello-lib	production; configured symbol/ow
 capability/filesystem	plugin-host	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugin-resolver	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugin-testkit	production; configured symbol/owner policy	17	unknown	incomparable
-capability/filesystem	plugin-vaults	production; configured symbol/owner policy	5	unknown	incomparable
+capability/filesystem	plugin-vaults	production; configured symbol/owner policy	1	unknown	incomparable
 capability/filesystem	plugins/ai-http	production; configured symbol/owner policy	0	unknown	incomparable
-capability/filesystem	plugins/calibre	production; configured symbol/owner policy	14	unknown	incomparable
+capability/filesystem	plugins/calibre	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugins/events	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/filesystem	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable
@@ -289,7 +289,7 @@ capability/lifecycle	server	production; configured symbol/owner policy	9	unknown
 capability/lifecycle	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/lifecycle	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/lifecycle	web	production; configured symbol/owner policy	0	unknown	incomparable
-capability/process	ALL	production; configured symbol/owner policy	7	unknown	incomparable
+capability/process	ALL	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
@@ -307,9 +307,9 @@ capability/process	plugin-fixtures/hello-lib	production; configured symbol/owner
 capability/process	plugin-host	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugin-resolver	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugin-testkit	production; configured symbol/owner policy	0	unknown	incomparable
-capability/process	plugin-vaults	production; configured symbol/owner policy	6	unknown	incomparable
+capability/process	plugin-vaults	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugins/ai-http	production; configured symbol/owner policy	0	unknown	incomparable
-capability/process	plugins/calibre	production; configured symbol/owner policy	1	unknown	incomparable
+capability/process	plugins/calibre	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugins/events	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/process	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable

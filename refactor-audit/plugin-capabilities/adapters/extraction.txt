@@ -1,0 +1,4 @@
+Subprocess.run, Session and drain extracted through Scalameta trees; application unchanged.
+source-sha256=a8ee4c48be7a4ef0e0a6dbfa1fd399843d0e959c4dc54caff74b7582b5ebd7f4
+generated-sha256=dd03d8173f0f9f2f2ace3e057faddd7e2df701fe67d5f7d066bf3ac5b1772e2d
+Interactive session implements the plugin-api contract; host owns process creation and monotonic waiting.

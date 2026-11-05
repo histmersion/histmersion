@@ -7,6 +7,8 @@ import java.nio.file.Path
   */
 class CalibreSettingsSuite extends munit.FunSuite:
 
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   private val settings = Calibre.Settings("~/Calibre Library", "calibredb", "sqlite3", writeBack = true, "gui")
   private def only(paths: String*): Path => Boolean = p => paths.contains(p.toString)
 

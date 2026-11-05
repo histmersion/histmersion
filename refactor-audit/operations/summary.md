@@ -1,6 +1,6 @@
 # Semantic operation inventory
 
-3132 files; 4612 source occurrences. Definitions and call-site ASTs remain available in occurrences.tsv.
+3136 files; 4634 source occurrences. Definitions and call-site ASTs remain available in occurrences.tsv.
 
 These are operation inventories, not blanket violations. Case-class copy owners are resolved against project declarations; unrelated copy methods remain separate. Fold allocations are syntactically visible constructors/tuples or resolved case-class calls, not a proof about evaluation semantics or indirect effects. Iron accessors and unresolved inline expansions remain separate. Every value access still needs an approved boundary decision. Customized derivations/givens require behavioral review.
 
@@ -17,12 +17,12 @@ These are operation inventories, not blanket violations. Case-class copy owners 
 | derivation-call | kindlings-derived | test | 2 |
 | derivation-call | other-derived-review | production | 19 |
 | derivation-call | other-derived-review | test | 31 |
-| fold | no-visible-allocation; indirect-effects-unresolved | production | 1349 |
+| fold | no-visible-allocation; indirect-effects-unresolved | production | 1348 |
 | fold | no-visible-allocation; indirect-effects-unresolved | test | 764 |
 | fold | visible-allocation-review | production | 154 |
 | fold | visible-allocation-review | test | 6 |
-| given-instance | instance-body-review | production | 530 |
-| given-instance | instance-body-review | test | 124 |
+| given-instance | instance-body-review | production | 539 |
+| given-instance | instance-body-review | test | 138 |
 | unwrap | accessor-or-inline-expansion-review | production | 41 |
 | unwrap | accessor-or-inline-expansion-review | test | 12 |
 | unwrap | iron-accessor | production | 635 |

@@ -183,7 +183,7 @@ object RelinkPlugins:
       List(p),
       user,
       ConfigFactory.empty("plugin-tool"),
-      HostServices(() => NoHttp, ConfigFactory.empty("plugin-tool"), (_, _, _) => ())
+      HostServices(() => NoHttp, ConfigFactory.empty("plugin-tool"), (_, _, _) => (), files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
     )
     val st = g.report.plugins.find(_.id == info.id)
     val access =

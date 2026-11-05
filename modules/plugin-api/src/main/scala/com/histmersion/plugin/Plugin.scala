@@ -90,6 +90,8 @@ object Plugin:
     /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After, bot challenges stop
       * the request). A plugin never opens its own sockets.
       */
+    def files: LocalFiles = LocalFiles.Unavailable
+    def processes: Processes = Processes.Unavailable
     def http: Http
 
     def log: Log

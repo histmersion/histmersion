@@ -10,6 +10,8 @@ import java.nio.file.Path
   */
 class CalibreSuite extends munit.FunSuite:
 
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   private def fixture(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
 
   private val lib = "/Users/example/Calibre Library"

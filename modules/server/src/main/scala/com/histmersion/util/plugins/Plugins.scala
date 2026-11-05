@@ -72,7 +72,7 @@ object Plugins:
       all,
       legacy.user,
       legacy.env,
-      HostServices(http, loaded.env, log, quota),
+      HostServices(http, loaded.env, log, quota, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses),
       errors ++ legacy.warnings,
       carry,
       fallback = FirstPartySettings.fallback(_, host),
@@ -202,7 +202,7 @@ object Plugins:
 
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
   def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
-    HostServices(http, env, log)
+    HostServices(http, env, log, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
 
   private def log(id: String, warn: Boolean, message: String): Unit =
     val line = if id.isEmpty then s"plugins: $message" else s"plugin $id: $message"

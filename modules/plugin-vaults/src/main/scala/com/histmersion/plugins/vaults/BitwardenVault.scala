@@ -12,7 +12,7 @@ final class BitwardenVault(
     session: Option[String],
     field: String,
     timeout: FiniteDuration
-) extends Secret.Vault:
+)(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
   def resolve(ref: String): Either[String, String] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for

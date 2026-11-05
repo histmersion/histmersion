@@ -11,17 +11,10 @@ trait Shell:
 
 object Shell:
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
-  object System extends Shell:
+  def system(using processes: com.histmersion.plugin.Processes): Shell = new Shell:
     def run(cmd: List[String]): Either[String, String] =
-      scala.util
-        .Try {
-          val p = new ProcessBuilder(cmd.asJava).redirectErrorStream(false).start()
-          val out = new String(p.getInputStream.readAllBytes, "UTF-8")
-          val err = new String(p.getErrorStream.readAllBytes, "UTF-8")
-          val rc = p.waitFor()
-          if rc == 0 then Right(out) else Left(s"${cmd.head} exited $rc: ${err.trim.take(400)}")
-        }
-        .fold(e => Left(s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"), identity)
-
-    def isRunning(processMatch: String): Boolean =
-      run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)
+      processes.capture(cmd).flatMap(result =>
+        if result.exit == 0 then Right(result.out)
+        else Left(s"${cmd.head} exited ${result.exit}: ${result.err.trim.take(400)}")
+      )
+    def isRunning(processMatch: String): Boolean = run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)
