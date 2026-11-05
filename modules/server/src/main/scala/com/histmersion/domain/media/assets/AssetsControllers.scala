@@ -4,7 +4,6 @@ import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.domain.library.Citekey
 import com.histmersion.api.media.{
   AssetDetail,
   AssetInfo,
@@ -51,9 +50,11 @@ final class AssetsControllers(
   /** Add figures to an existing source (the host-side seed path). */
   def putFigures(citekey: String, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
     maintenance.guard("put_assets")(
-      Citekey.parse(citekey).left.map(Write.invalid).flatMap { _ =>
-        if !sources.exists(citekey) then Left(Write.notFound(citekey))
-        else decode(in).map(stored => AssetsStored(citekey, assets.addFigures(citekey, stored)))
+      sources.lookup(citekey).left.map {
+        case MediaSources.Error.Invalid(message) => Write.invalid(message)
+        case MediaSources.Error.NotFound => Write.notFound(citekey)
+      }.flatMap { key =>
+        decode(in).map(stored => AssetsStored(key.value, assets.addFigures(key.value, stored)))
       }
     )
 

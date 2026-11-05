@@ -79,10 +79,10 @@ plugins/media	production/local	413	309	319
 plugins/media	production/member	533	382	220
 plugins/media	test/local	138	57	71
 plugins/media	test/member	38	34	25
-server	production/local	9419	5149	4105
-server	production/member	16266	8945	7645
-server	test/local	10919	5155	2924
-server	test/member	6383	4372	2264
+server	production/local	9420	5149	4105
+server	production/member	16268	8944	7647
+server	test/local	10924	5155	2926
+server	test/member	6384	4371	2265
 upstreams	production/local	333	225	192
 upstreams	production/member	493	361	247
 upstreams	test/local	48	14	23

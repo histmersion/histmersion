@@ -6,5 +6,13 @@ package com.histmersion.domain.media
   */
 trait MediaSources:
   def current(citekey: String): Option[String]
-  def exists(citekey: String): Boolean
+  def lookup(citekey: String): Either[MediaSources.Error, MediaSources.Key]
   def markdown(citekey: String): String
+
+object MediaSources:
+  type Key = Key.T
+  object Key extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
+
+  enum Error:
+    case Invalid(message: String)
+    case NotFound

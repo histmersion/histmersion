@@ -45,7 +45,9 @@ class SourcesControllersSuite extends munit.FunSuite:
     val sources = SourceService.InMemory(state, LibraryStoreSuite.Ticking(), () => LibraryStoreSuite.Settings)
     val media = new MediaSources:
       def current(citekey: String): Option[String] = sources.current(citekey)
-      def exists(citekey: String): Boolean = sources.load(citekey).isDefined
+      def lookup(citekey: String): Either[MediaSources.Error, MediaSources.Key] =
+        if sources.load(citekey).isDefined then Right(MediaSources.Key(citekey))
+        else Left(MediaSources.Error.NotFound)
       def markdown(citekey: String): String = sources.markdown(citekey)
     val figures = AssetsControllers(
       AssetService.InMemory(AtomicReference(MediaState.empty), MediaStoreSuite.Ticking()),

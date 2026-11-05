@@ -1,0 +1,39 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-lib/histmersion-plugin-hello-lib_3-0.1.0.pom
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/histmersion-plugin-hello-deps_3-0.1.0.pom
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] done compiling
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+Test run com.histmersion.domain.library.sources.MediaSourceBoundarySuite started
+com.histmersion.domain.library.sources.MediaSourceBoundarySuite: finished 0.035s
+Test run com.histmersion.domain.library.sources.MediaSourceBoundarySuite finished: 0 failed, 0 ignored, 4 total 0.044s
+Test run com.histmersion.domain.media.assets.AssetsControllersSuite started
+com.histmersion.domain.media.assets.AssetsControllersSuite: finished 0.307s
+Test run com.histmersion.domain.media.assets.AssetsControllersSuite finished: 0 failed, 0 ignored, 3 total 0.313s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[success] elapsed time: 22 s, cache 97%, 486 disk cache hits, 14 onsite tasks

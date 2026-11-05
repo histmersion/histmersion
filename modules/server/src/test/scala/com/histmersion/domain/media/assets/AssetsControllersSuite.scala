@@ -19,7 +19,9 @@ class AssetsControllersSuite extends munit.FunSuite:
 
   private val sources = new MediaSources:
     def current(citekey: String): Option[String] = if citekey == "zqold" then Some("zqnew2001_x") else Some(citekey)
-    def exists(citekey: String): Boolean = citekey == "zqnew2001_x"
+    def lookup(citekey: String): Either[MediaSources.Error, MediaSources.Key] =
+      if citekey == "zqnew2001_x" then Right(MediaSources.Key(citekey))
+      else Left(MediaSources.Error.NotFound)
     def markdown(citekey: String): String = ""
 
   private def controllers(gate: WriteGate = WriteGate()) =

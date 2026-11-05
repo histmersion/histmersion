@@ -4,5 +4,5 @@ candidate	feature-restricted	211
 candidate	public	267
 consumer-production	inside-expected-feature	24467
 consumer-production	outside-expected-feature	7214
-consumer-test	inside-expected-feature	3135
-consumer-test	outside-expected-feature	4840
+consumer-test	inside-expected-feature	3138
+consumer-test	outside-expected-feature	4846
