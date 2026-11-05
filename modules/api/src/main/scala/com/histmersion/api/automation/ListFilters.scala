@@ -12,6 +12,11 @@ import com.histmersion.api.given
   */
 object ListFilters:
 
+  type UnescapeHexResult = UnescapeHexResult.T
+  object UnescapeHexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnescapeHexAt = UnescapeHexAt.T
+  object UnescapeHexAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ValuesResult = ValuesResult.T
   object ValuesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValuesVs = ValuesVs.T
@@ -343,7 +348,7 @@ object ListFilters:
     if !s.contains('%') then s
     else
       val out = new java.io.ByteArrayOutputStream
-      def hex(at: Int): Option[Int] =
+      def hex(at: com.histmersion.api.automation.ListFilters.UnescapeHexAt): Option[com.histmersion.api.automation.ListFilters.UnescapeHexResult] =
         Option
           .when(at + 3 <= s.length)(s.substring(at + 1, at + 3))
           .filter(_.forall(c => Character.digit(c, 16) >= 0))

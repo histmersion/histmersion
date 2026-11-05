@@ -15,6 +15,15 @@ object CompareRuns:
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
+  type UnionInOrderPlaceResult = UnionInOrderPlaceResult.T
+  object UnionInOrderPlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionInOrderPlaceRest = UnionInOrderPlaceRest.T
+  object UnionInOrderPlaceRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionInOrderPlaceA = UnionInOrderPlaceA.T
+  object UnionInOrderPlaceA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionInOrderPlacePos = UnionInOrderPlacePos.T
+  object UnionInOrderPlacePos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CompareResultPart1 = CompareResultPart1.T
   object CompareResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompareBillingArg1 = CompareBillingArg1.T
@@ -367,7 +376,7 @@ object CompareRuns:
   def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.UnionInOrderLists]]): List[com.histmersion.domain.CompareRuns.UnionInOrderResult] =
     lists
       .foldLeft(Vector.empty[String]) { (acc, names) =>
-        @tailrec def place(rest: List[String], a: Vector[String], pos: Int): Vector[String] =
+        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histmersion.domain.CompareRuns.UnionInOrderPlacePos): Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceResult] =
           rest match
             case Nil       => a
             case n :: tail =>

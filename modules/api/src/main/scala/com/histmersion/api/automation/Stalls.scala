@@ -7,6 +7,9 @@ import com.histmersion.api.given
 
 object Stalls:
 
+  type ClassifyWaitOfPResult = ClassifyWaitOfPResult.T
+  object ClassifyWaitOfPResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StalledResult = StalledResult.T
   object StalledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StalledDays = StalledDays.T
@@ -158,7 +161,7 @@ object Stalls:
 
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.ClassifyResultPart1, com.histmersion.api.automation.Stalls.ClassifyResultPart2, com.histmersion.api.automation.Stalls.ClassifyResultPart3) =
     val g = f.slug
-    def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
+    def waitOf(p: SchedWait => com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult) = f.waits.find(p)
     if f.draining then
       (Code.Drain, "the agents are draining: nothing new starts", "histmersion agent autopilot undrain")
     else if f.approvals.nonEmpty then

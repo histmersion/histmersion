@@ -13,6 +13,13 @@ import sttp.apispec.circe.*
 
 object Opencode:
 
+  type ParseFinalText = ParseFinalText.T
+  object ParseFinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseError = ParseError.T
+  object ParseError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStripT = ParseStripT.T
+  object ParseStripT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ArgvResult = ArgvResult.T
   object ArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArgvModel = ArgvModel.T
@@ -64,11 +71,11 @@ object Opencode:
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
-    var finalText: Option[String] = None
+    var finalText: Option[com.histmersion.server.agents.Opencode.ParseFinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[String] = None
+    var error: Option[com.histmersion.server.agents.Opencode.ParseError] = None
     var turns = 0
-    def strip(t: String) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
+    def strip(t: com.histmersion.server.agents.Opencode.ParseStripT) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
     events.foreach { e =>
       val c = e.hcursor
       val part = c.downField("part")

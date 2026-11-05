@@ -1,0 +1,1253 @@
+package com.histmersion.web
+
+import hearth.kindlings.optics.syntax.*
+
+import com.raquo.laminar.api.L.*
+import com.histmersion.api.{Api, BBox, Plural}
+import com.histmersion.web.ui.{AggregateBy, AggregateUnit, Layout}
+import org.scalajs.dom
+
+import scala.compiletime.uninitialized
+import scala.scalajs.js
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu}
+import com.histmersion.api.instance.{TimeConfig, UiConfig}
+import com.histmersion.api.library.TimeBucket
+
+object TimelineView:
+
+  type RenderDetailAxisXOfResult = RenderDetailAxisXOfResult.T
+  object RenderDetailAxisXOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailAxisXOfYr = RenderDetailAxisXOfYr.T
+  object RenderDetailAxisXOfYr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailOverlayXOfResult = RenderDetailOverlayXOfResult.T
+  object RenderDetailOverlayXOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailOverlayXOfYr = RenderDetailOverlayXOfYr.T
+  object RenderDetailOverlayXOfYr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type SpanFromResult = SpanFromResult.T
+  object SpanFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanToResult = SpanToResult.T
+  object SpanToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvWidth = LastOvWidth.T
+  object LastOvWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtWidth = LastDtWidth.T
+  object LastDtWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvHeight = LastOvHeight.T
+  object LastOvHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtHeight = LastDtHeight.T
+  object LastDtHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvBarsLen = LastOvBarsLen.T
+  object LastOvBarsLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtBarsLen = LastDtBarsLen.T
+  object LastDtBarsLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvResizeRaf = OvResizeRaf.T
+  object OvResizeRaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtResizeRaf = DtResizeRaf.T
+  object DtResizeRaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBarsRangePart1 = DtBarsRangePart1.T
+  object DtBarsRangePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBarsRangePart2 = DtBarsRangePart2.T
+  object DtBarsRangePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvFilterKey = LastOvFilterKey.T
+  object LastOvFilterKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart1 = DtDrawnPart1.T
+  object DtDrawnPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart2 = DtDrawnPart2.T
+  object DtDrawnPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart3 = DtDrawnPart3.T
+  object DtDrawnPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentSpanResultPart1 = CurrentSpanResultPart1.T
+  object CurrentSpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentSpanResultPart2 = CurrentSpanResultPart2.T
+  object CurrentSpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Folded = Folded.T
+  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetFoldedOn = SetFoldedOn.T
+  object SetFoldedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampResultPart1 = ClampResultPart1.T
+  object ClampResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampResultPart2 = ClampResultPart2.T
+  object ClampResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampA0 = ClampA0.T
+  object ClampA0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampB0 = ClampB0.T
+  object ClampB0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Locked = Locked.T
+  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetLockedOn = SetLockedOn.T
+  object SetLockedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanFrom = SetSpanFrom.T
+  object SetSpanFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanTo = SetSpanTo.T
+  object SetSpanTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanPush = SetSpanPush.T
+  object SetSpanPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtKey = LastDtKey.T
+  object LastDtKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailKeyResult = DetailKeyResult.T
+  object DetailKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForResult = BucketSizeForResult.T
+  object BucketSizeForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForSpanYears = BucketSizeForSpanYears.T
+  object BucketSizeForSpanYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForPixelWidth = BucketSizeForPixelWidth.T
+  object BucketSizeForPixelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadOverviewPixelWidth = LoadOverviewPixelWidth.T
+  object LoadOverviewPixelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElWidthResult = ElWidthResult.T
+  object ElWidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NiceIntervalResult = NiceIntervalResult.T
+  object NiceIntervalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NiceIntervalRaw = NiceIntervalRaw.T
+  object NiceIntervalRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElHeightResult = ElHeightResult.T
+  object ElHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElHeightFallback = ElHeightFallback.T
+  object ElHeightFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveFrom = DrawAreaCurveFrom.T
+  object DrawAreaCurveFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveTo = DrawAreaCurveTo.T
+  object DrawAreaCurveTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveW = DrawAreaCurveW.T
+  object DrawAreaCurveW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveBaseY = DrawAreaCurveBaseY.T
+  object DrawAreaCurveBaseY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveGradId = DrawAreaCurveGradId.T
+  object DrawAreaCurveGradId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtResultPart1 = HoverAtResultPart1.T
+  object HoverAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtPx = HoverAtPx.T
+  object HoverAtPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtTx = HoverAtTx.T
+  object HoverAtTx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtScale = HoverAtScale.T
+  object HoverAtScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverTextResult = HoverTextResult.T
+  object HoverTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowHoverAtPart1 = ShowHoverAtPart1.T
+  object ShowHoverAtPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowHoverW = ShowHoverW.T
+  object ShowHoverW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewLayerCls = NewLayerCls.T
+  object NewLayerCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignResultPart1 = RealignResultPart1.T
+  object RealignResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignResultPart2 = RealignResultPart2.T
+  object RealignResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart1 = RealignDrawnPart1.T
+  object RealignDrawnPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart2 = RealignDrawnPart2.T
+  object RealignDrawnPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart3 = RealignDrawnPart3.T
+  object RealignDrawnPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart1 = RealignNowPart1.T
+  object RealignNowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart2 = RealignNowPart2.T
+  object RealignNowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart3 = RealignNowPart3.T
+  object RealignNowPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformResult = ApplyTransformResult.T
+  object ApplyTransformResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformTx = ApplyTransformTx.T
+  object ApplyTransformTx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformScale = ApplyTransformScale.T
+  object ApplyTransformScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvHeightResult = OvHeightResult.T
+  object OvHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvBaseResult = OvBaseResult.T
+  object OvBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvBaseH = OvBaseH.T
+  object OvBaseH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtHeightResult = DtHeightResult.T
+  object DtHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBaseResult = DtBaseResult.T
+  object DtBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBaseH = DtBaseH.T
+  object DtBaseH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AlignOverviewCurveW = AlignOverviewCurveW.T
+  object AlignOverviewCurveW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderlayBucketsFrom = UnderlayBucketsFrom.T
+  object UnderlayBucketsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderlayBucketsTo = UnderlayBucketsTo.T
+  object UnderlayBucketsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AlignDetailW = AlignDetailW.T
+  object AlignDetailW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailAxisW = RenderDetailAxisW.T
+  object RenderDetailAxisW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private val OH = Layout.overviewHeight.value
+  private val O_BASE = Layout.overviewBase.value
+  private val DH = Layout.detailHeight.value
+  private val D_BASE = Layout.detailBase.value
+  private val MIN_SPAN = Layout.minSpan
+  private val HANDLE_W = Layout.handleWidth
+  private val ZOOM = 2.0
+
+  // ── state ─────────────────────────────────────────────────────────────────────────────────────
+  private var limits: TimeConfig = uninitialized
+
+  /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without committing, and commits once,
+    * on release.
+    */
+  private def spanFrom: com.histmersion.web.TimelineView.SpanFromResult = UiState.from.now().getOrElse(limits.defaultFrom)
+  private def spanTo: com.histmersion.web.TimelineView.SpanToResult = UiState.to.now().getOrElse(limits.defaultTo)
+  private val detailBars = Var(List.empty[TimeBucket])
+  private val overviewBars = Var(List.empty[TimeBucket])
+  private val loading = Var(false)
+  private val failedAt = Var(Option.empty[String])
+  private val periodPresets = Var(List.empty[HistoricalPeriod])
+  private val showPresets = Var(false)
+
+  /** What the map showed when the preset menu was opened: its region's presets come first. */
+  private val presetView = Var(Option.empty[BBox])
+
+  private val renderTick = Var(0)
+
+  // the detail strip's request a late answer must belong to
+  private val detailLatest = Latest()
+
+  /** Whether the detail strip is unfolded in the narrow layout (a wide screen always shows it). */
+  private val detailOpen = Var(false)
+  // the overview's: only the newest answer is drawn
+  private val overviewLatest = Latest()
+  private var timer: com.histmersion.web.TimelineView.Timer = 0
+  private var overviewSvg: dom.Element = uninitialized
+  private var detailSvg: dom.Element = uninitialized
+
+  // Persistent layers, bottom to top; each render replaces only its own layer's children.
+  private var ovCurveLayer: dom.Element = null
+  private var ovSelLayer: dom.Element = null
+  private var dtUnderLayer: dom.Element = null
+  private var dtCurveLayer: dom.Element = null
+  private var dtAxisLayer: dom.Element = null
+  private var dtOverlayLayer: dom.Element = null
+  // the hover markers, above everything of their strip
+  private var ovHoverLayer: dom.Element = null
+  private var dtHoverLayer: dom.Element = null
+  // the points each curve was drawn through (the hover reads them)
+  private var ovPts: Vector[TimelineCurve.Pt] = Vector.empty
+  private var dtPts: Vector[TimelineCurve.Pt] = Vector.empty
+  private var lastOvWidth: com.histmersion.web.TimelineView.LastOvWidth = 0
+  private var lastDtWidth: com.histmersion.web.TimelineView.LastDtWidth = 0
+  private var lastOvHeight: com.histmersion.web.TimelineView.LastOvHeight = 0
+  private var lastDtHeight: com.histmersion.web.TimelineView.LastDtHeight = 0
+  private var lastOvBarsLen: com.histmersion.web.TimelineView.LastOvBarsLen = -1
+  private var lastDtBarsLen: com.histmersion.web.TimelineView.LastDtBarsLen = -1
+  private var ovResizeRaf: com.histmersion.web.TimelineView.OvResizeRaf = 0
+  // `var`s: the strips' size observers, disconnected when their strip leaves the page
+  private var ovObserver: Option[js.Dynamic] = None
+  private var dtObserver: Option[js.Dynamic] = None
+  private var dtResizeRaf: com.histmersion.web.TimelineView.DtResizeRaf = 0
+
+  /** The span the current `detailBars` were fetched for — not the span on screen. */
+  private var dtBarsRange: (com.histmersion.web.TimelineView.DtBarsRangePart1, com.histmersion.web.TimelineView.DtBarsRangePart2) = (0L, 0L)
+  private var lastOvFilterKey: com.histmersion.web.TimelineView.LastOvFilterKey = ""
+
+  /** What the detail curve layer was drawn for: (from, to, width). */
+  private var dtDrawn: (com.histmersion.web.TimelineView.DtDrawnPart1, com.histmersion.web.TimelineView.DtDrawnPart2, com.histmersion.web.TimelineView.DtDrawnPart3) = (0L, 0L, 0.0)
+
+  private enum DragKind:
+    case LeftHandle, RightHandle, PanRange, ZoomDetail
+
+  private case class DragInfo(
+      startX: DragInfo.StartX,
+      curX: DragInfo.CurX,
+      kind: DragKind,
+      origFrom: DragInfo.OrigFrom,
+      origTo: DragInfo.OrigTo
+  )
+
+  object DragInfo:
+    type StartX = StartX.T
+    object StartX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CurX = CurX.T
+    object CurX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OrigFrom = OrigFrom.T
+    object OrigFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OrigTo = OrigTo.T
+    object OrigTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private val dragState = Var(Option.empty[DragInfo])
+
+  def currentSpan: (com.histmersion.web.TimelineView.CurrentSpanResultPart1, com.histmersion.web.TimelineView.CurrentSpanResultPart2) = (spanFrom, spanTo)
+
+  private val foldedKey = "histmersion.timelineFolded"
+
+  /** Whether the timeline is folded to its one line of controls (kept by this browser). */
+  val folded: Var[com.histmersion.web.TimelineView.Folded] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
+  catch case _: Exception => false)
+
+  def setFolded(on: com.histmersion.web.TimelineView.SetFoldedOn): Unit =
+    folded.set(on)
+    try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0")
+    catch case _: Exception => ()
+
+  // ── span algebra ──────────────────────────────────────────────────────────────────────────────
+
+  private def clamp(a0: com.histmersion.web.TimelineView.ClampA0, b0: com.histmersion.web.TimelineView.ClampB0): (com.histmersion.web.TimelineView.ClampResultPart1, com.histmersion.web.TimelineView.ClampResultPart2) =
+    var a = Math.round(Math.min(a0.toDouble, b0.toDouble))
+    var b = Math.round(Math.max(a0.toDouble, b0.toDouble))
+    if b - a < MIN_SPAN then
+      val mid = (a.toDouble + b.toDouble) / 2
+      a = Math.round(mid - MIN_SPAN.toDouble / 2)
+      b = a + MIN_SPAN
+    val width = Math.min(b - a, limits.max - limits.min)
+    if a < limits.min then { a = limits.min; b = a + width }
+    if b > limits.max then { b = limits.max; a = b - width }
+    (a, Math.max(a + MIN_SPAN, b))
+
+  /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
+  val locked: Var[com.histmersion.web.TimelineView.Locked] = Var(false)
+
+  def setLocked(on: com.histmersion.web.TimelineView.SetLockedOn): Unit =
+    locked.set(on)
+    ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it."
+    else "The timeline moves again.")
+
+  /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
+  private val namingPeriod = Var(Option.empty[String])
+
+  private def setSpan(from: com.histmersion.web.TimelineView.SetSpanFrom, to: com.histmersion.web.TimelineView.SetSpanTo, push: com.histmersion.web.TimelineView.SetSpanPush = true): Unit =
+    val (nf, nt) = clamp(from, to)
+    if locked.now() then bumpRender()
+    else if nf == spanFrom && nt == spanTo then ()
+    else
+      UiState.from.set(Some(nf))
+      UiState.to.set(Some(nt))
+      bumpRender()
+      scheduleDetail()
+      App.quickRenderIfCached(nf, nt)
+      if push then UiState.set(UiState.from := Some(nf), UiState.to := Some(nt))()
+
+  private def bumpRender(): Unit = renderTick.update(_ + 1)
+
+  // ── data loading ──────────────────────────────────────────────────────────────────────────────
+
+  private def scheduleDetail(): Unit =
+    dom.window.clearTimeout(timer)
+    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(150))
+
+  /** What the detail strip was last asked for: the filter over the span on screen. */
+  private var lastDtKey: com.histmersion.web.TimelineView.LastDtKey = ""
+  private def detailKey(): com.histmersion.web.TimelineView.DetailKeyResult = UiState.toFilter().copy(period = Some(Period(spanFrom, spanTo))).toString
+
+  private[web] val MAX_BUCKETS = Layout.maxBuckets
+
+  /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers), and never more than
+    * `Layout.maxBuckets`.
+    */
+  private[web] def bucketSizeFor(spanYears: com.histmersion.web.TimelineView.BucketSizeForSpanYears, pixelWidth: com.histmersion.web.TimelineView.BucketSizeForPixelWidth): com.histmersion.web.TimelineView.BucketSizeForResult =
+    val byPixels = Math.ceil(spanYears.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket)).toLong
+    val byLimit = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
+    Math.max(1L, Math.max(byPixels, byLimit))
+
+  private def loadOverview(pixelWidth: com.histmersion.web.TimelineView.LoadOverviewPixelWidth): Unit = overview(pixelWidth)
+
+  /** The overview follows every filter change — and every hovered suggestion — with ONE request in flight and the
+    * newest change next (it fired one per change, undebounced: sweeping the pointer down a suggestion list sent one per
+    * row). Only the newest answer is drawn.
+    */
+  private val overview = LatestOnly[Double] { (pixelWidth, done) =>
+    val ticket = overviewLatest.start()
+    val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
+    val span = limits.max - limits.min
+    val sz = bucketSizeFor(span, pixelWidth)
+    ApiClient
+      .aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz)))
+      .onComplete { result =>
+        if overviewLatest.isCurrent(ticket) then
+          result.fold(
+            e => dom.console.error("overview load failed", e.getMessage),
+            h => {
+              overviewBars.set(h.buckets)
+              bumpRender()
+            }
+          )
+        done()
+      }
+  }
+
+  private def loadDetail(): Unit =
+    // a load now answers whatever was scheduled: the strip's mount scheduled one and loaded at once,
+    // asking twice for the same strip on every page load
+    dom.window.clearTimeout(timer)
+    loading.set(true)
+    bumpRender()
+    val sf = spanFrom
+    val st = spanTo
+    val f = UiState.toFilter().copy(period = Some(Period(sf, st)))
+    lastDtKey = f.toString
+    val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
+    val sz = bucketSizeFor(st - sf, pw)
+    val q = Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))
+    detailLatest.onCurrent(ApiClient.aggregate(q)) { result =>
+      result.fold(
+        _ => failedAt.set(Some("counts unavailable")),
+        h => {
+          dtBarsRange = (sf, st)
+          lastDtBarsLen = -1
+          detailBars.set(h.buckets)
+          failedAt.set(None)
+        }
+      )
+      loading.set(false)
+      bumpRender()
+    }
+
+  /** The presets are the periods the seed files under a region heading ([[PresetMenu]]). */
+  private def loadPresets(): Unit =
+    if periodPresets.now().isEmpty then
+      ApiClient.periods().foreach(ps => periodPresets.set(ps.filter(_.preset.isDefined)))
+
+  // ── drawing helpers ───────────────────────────────────────────────────────────────────────────
+
+  /** The element's drawn width, fractions of a pixel included (the drawing is made at exactly this size: a whole-pixel
+    * `clientWidth` stretched it by the fraction).
+    */
+  private def elWidth(el: dom.Element): com.histmersion.web.TimelineView.ElWidthResult =
+    if el == null then 600.0
+    else
+      val r = el.getBoundingClientRect()
+      if r.width > 0 then r.width
+      else
+        val w = el.asInstanceOf[dom.SVGElement].clientWidth.toDouble
+        if w > 0 then w else 600.0
+
+  private def niceInterval(raw: com.histmersion.web.TimelineView.NiceIntervalRaw): com.histmersion.web.TimelineView.NiceIntervalResult =
+    val candidates =
+      List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0, 1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
+    candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
+
+  /** The element's drawn height (its stylesheet height: fixed on a wide screen, `clamp()` on a phone). */
+  private def elHeight(el: dom.Element, fallback: com.histmersion.web.TimelineView.ElHeightFallback): com.histmersion.web.TimelineView.ElHeightResult =
+    if el == null then fallback
+    else
+      val r = el.getBoundingClientRect()
+      if r.height > 0 then r.height
+      else
+        val h = el.asInstanceOf[dom.SVGElement].clientHeight.toDouble
+        if h > 0 then h else fallback
+
+  /** The area and line of the counts `bs` over `[from, to]`, `w` px wide, standing on `baseY`: a smooth monotone curve
+    * ([[TimelineCurve]]), no mark per bucket (the hover marker says one bucket's count). Answers the points drawn, for
+    * the hover.
+    */
+  private def drawAreaCurve(
+      svg: dom.Element,
+      bs: List[TimeBucket],
+      from: com.histmersion.web.TimelineView.DrawAreaCurveFrom,
+      to: com.histmersion.web.TimelineView.DrawAreaCurveTo,
+      w: com.histmersion.web.TimelineView.DrawAreaCurveW,
+      baseY: com.histmersion.web.TimelineView.DrawAreaCurveBaseY,
+      gradId: com.histmersion.web.TimelineView.DrawAreaCurveGradId
+  ): Vector[TimelineCurve.Pt] =
+    val ns = "http://www.w3.org/2000/svg"
+    val pts = TimelineCurve.points(bs, from, to, w, baseY, top = 4)
+    if pts.nonEmpty then
+      val defs = dom.document.createElementNS(ns, "defs")
+      val grad = dom.document.createElementNS(ns, "linearGradient")
+      grad.setAttribute("id", gradId)
+      grad.setAttribute("x1", "0%"); grad.setAttribute("x2", "100%")
+      grad.setAttribute("y1", "0%"); grad.setAttribute("y2", "0%")
+      for i <- 0 until 10 do
+        val stop = dom.document.createElementNS(ns, "stop")
+        stop.setAttribute("offset", s"${(i.toDouble / 9 * 100).round}%")
+        stop.setAttribute("stop-color", Fmt.color(i.toDouble / 9))
+        grad.appendChild(stop)
+      defs.appendChild(grad)
+      svg.appendChild(defs)
+
+      val path = dom.document.createElementNS(ns, "path")
+      path.setAttribute("class", "tl-area")
+      path.setAttribute("d", TimelineCurve.areaPath(pts, baseY))
+      path.setAttribute("fill", s"url(#$gradId)")
+      path.setAttribute("opacity", "0.85")
+      svg.appendChild(path)
+
+      val line = dom.document.createElementNS(ns, "path")
+      line.setAttribute("class", "tl-area-line")
+      line.setAttribute("d", TimelineCurve.linePath(pts))
+      line.setAttribute("fill", "none")
+      line.setAttribute("stroke", s"url(#$gradId)")
+      line.setAttribute("stroke-width", "1.5")
+      line.setAttribute("vector-effect", "non-scaling-stroke")
+      svg.appendChild(line)
+    pts
+
+  // ── the hover marker: ONE per strip, the bucket under the pointer and its exact count ─────────
+
+  /** The bucket nearest screen x `px` of a curve drawn as `pts` and moved on screen by (`tx`, `scale`), and where it
+    * stands on screen. Pure.
+    */
+  private[web] def hoverAt(
+      pts: IndexedSeq[TimelineCurve.Pt],
+      px: com.histmersion.web.TimelineView.HoverAtPx,
+      tx: com.histmersion.web.TimelineView.HoverAtTx,
+      scale: com.histmersion.web.TimelineView.HoverAtScale
+  ): Option[(com.histmersion.web.TimelineView.HoverAtResultPart1, TimelineCurve.Pt)] =
+    if scale <= 0 then None
+    else TimelineCurve.nearest(pts, (px - tx) / scale).map(p => (tx + p.x * scale, p))
+
+  /** Pure: what the hover marker says of a bucket. */
+  private[web] def hoverText(b: TimeBucket): com.histmersion.web.TimelineView.HoverTextResult =
+    val years = if b.start == b.end then Fmt.yr(b.start) else s"${Fmt.yr(b.start)}–${Fmt.yr(b.end)}"
+    s"$years: ${Plural.count(b.count, "source")}"
+
+  private def showHover(layer: dom.Element, at: Option[(com.histmersion.web.TimelineView.ShowHoverAtPart1, TimelineCurve.Pt)], w: com.histmersion.web.TimelineView.ShowHoverW): Unit =
+    if layer != null then
+      clearLayer(layer)
+      at.filter((_, p) => p.bucket.count > 0).foreach { (x, p) =>
+        val dot = dom.document.createElementNS(svgNs, "circle")
+        dot.setAttribute("class", "tl-hover-dot")
+        dot.setAttribute("cx", x.toString); dot.setAttribute("cy", p.y.toString); dot.setAttribute("r", "3")
+        val span = (spanTo - spanFrom).toDouble.max(1)
+        dot.setAttribute(
+          "fill",
+          Fmt.color((((p.bucket.start + p.bucket.end).toDouble / 2 - spanFrom) / span).max(0).min(1))
+        )
+        layer.appendChild(dot)
+        val label = dom.document.createElementNS(svgNs, "text")
+        label.setAttribute("class", "tl-hover-label")
+        val text = hoverText(p.bucket)
+        // beside the marker, on the side with room for it
+        val right = x + 6 + text.length * 6.2 <= w
+        label.setAttribute("x", (if right then x + 6 else x - 6).toString)
+        label.setAttribute("y", "10")
+        label.setAttribute("text-anchor", if right then "start" else "end")
+        label.textContent = text
+        layer.appendChild(label)
+      }
+
+  // ── overview rendering ────────────────────────────────────────────────────────────────────────
+
+  private val svgNs = "http://www.w3.org/2000/svg"
+
+  private def clearLayer(g: dom.Element): Unit =
+    while g.firstChild != null do g.removeChild(g.firstChild)
+
+  private def newLayer(svg: dom.Element, cls: com.histmersion.web.TimelineView.NewLayerCls): dom.Element =
+    val g = dom.document.createElementNS(svgNs, "g")
+    g.setAttribute("class", cls)
+    svg.appendChild(g)
+    g
+
+  /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
+  private[web] def realign(drawn: (com.histmersion.web.TimelineView.RealignDrawnPart1, com.histmersion.web.TimelineView.RealignDrawnPart2, com.histmersion.web.TimelineView.RealignDrawnPart3), now: (com.histmersion.web.TimelineView.RealignNowPart1, com.histmersion.web.TimelineView.RealignNowPart2, com.histmersion.web.TimelineView.RealignNowPart3)): (com.histmersion.web.TimelineView.RealignResultPart1, com.histmersion.web.TimelineView.RealignResultPart2) =
+    val (df, dt, dw) = drawn
+    val (nf, nt, nw) = now
+    val dSpan = (dt - df).toDouble.max(1)
+    val nSpan = (nt - nf).toDouble.max(1)
+    if dw <= 0 then (0.0, 1.0)
+    else
+      val scale = (dSpan / nSpan) * (nw / dw)
+      val tx = (df - nf).toDouble / nSpan * nw
+      (tx, scale)
+
+  private def applyTransform(g: dom.Element, tx: com.histmersion.web.TimelineView.ApplyTransformTx, scale: com.histmersion.web.TimelineView.ApplyTransformScale): com.histmersion.web.TimelineView.ApplyTransformResult =
+    val identity = Math.abs(tx) < 0.5 && Math.abs(scale - 1) < 0.002
+    if identity then g.removeAttribute("transform")
+    else g.setAttribute("transform", s"translate($tx 0) scale($scale 1)")
+    !identity
+
+  /** The strips' heights as drawn (the stylesheet's, a `clamp()` on a phone) and where the curve stands in them: the
+    * label band under it keeps its height, the curve takes the rest — drawn at the size it is shown, so nothing is
+    * stretched.
+    */
+  private def ovHeight: com.histmersion.web.TimelineView.OvHeightResult = elHeight(overviewSvg, OH.toDouble)
+  private def ovBase(h: com.histmersion.web.TimelineView.OvBaseH): com.histmersion.web.TimelineView.OvBaseResult = h - (OH - O_BASE)
+  private def dtHeight: com.histmersion.web.TimelineView.DtHeightResult = elHeight(detailSvg, DH.toDouble)
+  private def dtBase(h: com.histmersion.web.TimelineView.DtBaseH): com.histmersion.web.TimelineView.DtBaseResult = h - (DH - D_BASE)
+
+  private def renderOverviewCurve(): Unit =
+    if overviewSvg != null then
+      val w = elWidth(overviewSvg)
+      val h = ovHeight
+      val bs = overviewBars.now()
+      if lastOvBarsLen != bs.length || lastOvWidth <= 0 || h != lastOvHeight then
+        clearLayer(ovCurveLayer)
+        showHover(ovHoverLayer, None, w)
+        ovPts = drawAreaCurve(ovCurveLayer, bs, limits.min, limits.max, w, ovBase(h) - 2, "ov-grad")
+        lastOvWidth = w
+        lastOvHeight = h
+        lastOvBarsLen = bs.length
+      alignOverviewCurve(w)
+
+  /** Stretch the drawn overview curve to the current width at once; the exact redraw follows. */
+  private def alignOverviewCurve(w: com.histmersion.web.TimelineView.AlignOverviewCurveW): Unit =
+    val stale = applyTransform(ovCurveLayer, 0, if lastOvWidth > 0 then w / lastOvWidth else 1)
+    if stale then ovCurveLayer.classList.add("tl-stale") else ovCurveLayer.classList.remove("tl-stale")
+
+  private def renderOverviewSelection(): Unit =
+    if overviewSvg != null then
+      val svg = overviewSvg
+      val w = elWidth(svg)
+      val oh = ovHeight
+      val ovB = ovBase(oh)
+      // the drawing's own size: one unit a pixel, both ways
+      svg.setAttribute("viewBox", s"0 0 $w $oh")
+      alignOverviewCurve(w)
+      val ns = svgNs
+      clearLayer(ovSelLayer)
+      val g = ovSelLayer
+      val sf = spanFrom
+      val st = spanTo
+      val fullSpan = (limits.max - limits.min).toDouble.max(1)
+      val selX0 = Math.max(0.0, (sf - limits.min).toDouble / fullSpan * w)
+      val selX1 = Math.min(w, (st - limits.min).toDouble / fullSpan * w)
+      val dimLeft = dom.document.createElementNS(ns, "rect")
+      dimLeft.setAttribute("class", "tl-ov-dim")
+      dimLeft.setAttribute("x", "0"); dimLeft.setAttribute("y", "0")
+      dimLeft.setAttribute("width", selX0.toString); dimLeft.setAttribute("height", ovB.toString)
+      g.appendChild(dimLeft)
+      val dimRight = dom.document.createElementNS(ns, "rect")
+      dimRight.setAttribute("class", "tl-ov-dim")
+      dimRight.setAttribute("x", selX1.toString); dimRight.setAttribute("y", "0")
+      dimRight.setAttribute("width", (w - selX1).toString); dimRight.setAttribute("height", ovB.toString)
+      g.appendChild(dimRight)
+      for ex <- List(selX0, selX1) do
+        val edge = dom.document.createElementNS(ns, "line")
+        edge.setAttribute("class", "tl-ov-edge")
+        edge.setAttribute("x1", ex.toString); edge.setAttribute("y1", "0")
+        edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", ovB.toString)
+        g.appendChild(edge)
+      for hx <- List(selX0, selX1) do
+        val h = dom.document.createElementNS(ns, "rect")
+        h.setAttribute("class", "tl-ov-handle")
+        h.setAttribute("x", (hx - HANDLE_W / 2).toString); h.setAttribute("y", "0")
+        h.setAttribute("width", HANDLE_W.toString); h.setAttribute("height", ovB.toString)
+        h.setAttribute("rx", "2")
+        g.appendChild(h)
+      // the two years: inside the selection, outside its handles when they are close, else one label
+      val labels = RangeLabels.place(Fmt.yr(sf), Fmt.yr(st), selX0, selX1, w) match
+        case RangeLabels.Placement.Inside(f, t)  => List(f, t)
+        case RangeLabels.Placement.Outside(f, t) => List(f, t)
+        case RangeLabels.Placement.Joined(l)     => List(l)
+      for l <- labels do
+        val label = dom.document.createElementNS(ns, "text")
+        label.setAttribute("class", "tl-ov-label")
+        label.setAttribute("x", l.x.toString)
+        label.setAttribute("y", (ovB + 11).toString)
+        label.textContent = l.text
+        g.appendChild(label)
+
+  private def renderOverview(): Unit =
+    renderOverviewCurve()
+    renderOverviewSelection()
+
+  // ── detail rendering ──────────────────────────────────────────────────────────────────────────
+
+  /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
+    */
+  private[web] def underlayBuckets(bs: List[TimeBucket], from: com.histmersion.web.TimelineView.UnderlayBucketsFrom, to: com.histmersion.web.TimelineView.UnderlayBucketsTo): List[TimeBucket] =
+    val idx = bs.indices.filter(i => bs(i).end >= from && bs(i).start <= to)
+    if idx.isEmpty then Nil
+    else bs.slice(Math.max(0, idx.head - 1), Math.min(bs.length, idx.last + 2))
+
+  /** The exact curve, drawn for the span its data was fetched for; `alignDetail` maps it on screen. */
+  private def renderDetailCurve(): Unit =
+    if detailSvg != null then
+      val w = elWidth(detailSvg)
+      val h = dtHeight
+      val bs = detailBars.now()
+      if lastDtBarsLen != bs.length || lastDtWidth <= 0 || h != lastDtHeight then
+        clearLayer(dtCurveLayer)
+        showHover(dtHoverLayer, None, w)
+        val (bf, bt) = dtBarsRange
+        dtPts = drawAreaCurve(dtCurveLayer, bs, bf, bt, w, dtBase(h), "dt-grad")
+        dtDrawn = (bf, bt, w)
+        lastDtWidth = w
+        lastDtHeight = h
+        lastDtBarsLen = bs.length
+      alignDetail(w)
+
+  /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only partly covering a
+    * widened span) the overview curve shows beneath as a low-resolution stand-in.
+    */
+  private def alignDetail(w: com.histmersion.web.TimelineView.AlignDetailW): Unit =
+    val sf = spanFrom
+    val st = spanTo
+    val (tx, scale) = realign(dtDrawn, (sf, st, w))
+    val moved = applyTransform(dtCurveLayer, tx, scale)
+    if moved then dtCurveLayer.classList.add("tl-stale") else dtCurveLayer.classList.remove("tl-stale")
+    val stale = moved || loading.now() || detailBars.now().isEmpty
+    clearLayer(dtUnderLayer)
+    if stale then
+      val _ = drawAreaCurve(
+        dtUnderLayer,
+        underlayBuckets(overviewBars.now(), sf, st),
+        sf,
+        st,
+        w,
+        dtBase(dtHeight),
+        "dtu-grad"
+      )
+    renderDetailAxis(w)
+
+  private def renderDetailAxis(w: com.histmersion.web.TimelineView.RenderDetailAxisW): Unit =
+    val ns = svgNs
+    val g = dtAxisLayer
+    clearLayer(g)
+    val dtH = dtHeight
+    val dtB = dtBase(dtH)
+    val sf = spanFrom
+    val st = spanTo
+    val axisLine = dom.document.createElementNS(ns, "line")
+    axisLine.setAttribute("class", "tl-axis")
+    axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (dtB + 0.5).toString)
+    axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (dtB + 0.5).toString)
+    g.appendChild(axisLine)
+    val spanYears = (st - sf).toDouble.max(1)
+    val targetTicks = Math.max(3, (w / 120).toInt)
+    val major = niceInterval(spanYears / targetTicks)
+    val minor = major / (if major >= 10 then 5 else 1)
+    val textWidth = (label: String) => label.length * 6.2
+    def xOf(yr: com.histmersion.web.TimelineView.RenderDetailAxisXOfYr): com.histmersion.web.TimelineView.RenderDetailAxisXOfResult = (yr - sf.toDouble) / spanYears * w
+    val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
+    val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
+    var lastLabelEnd = 0.0
+    if minor < major then
+      var yr = firstMinor
+      while yr <= st do
+        if yr % major.toLong != 0 then
+          val x = xOf(yr.toDouble)
+          if x >= 0 && x <= w then
+            val tick = dom.document.createElementNS(ns, "line")
+            tick.setAttribute("class", "tl-tick tl-tick-minor")
+            tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (dtB + 1).toString)
+            tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (dtB + 3).toString)
+            g.appendChild(tick)
+        yr += minor.toLong
+    var yr = firstMajor
+    while yr <= st do
+      val x = xOf(yr.toDouble)
+      if x >= 0 && x <= w - 4 then
+        val tick = dom.document.createElementNS(ns, "line")
+        tick.setAttribute("class", "tl-tick")
+        tick.setAttribute("x1", x.toString); tick.setAttribute("y1", dtB.toString)
+        tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (dtB + 5).toString)
+        g.appendChild(tick)
+        val lbl = Fmt.yr(yr)
+        if x + 3 > lastLabelEnd then
+          val txt = dom.document.createElementNS(ns, "text")
+          txt.setAttribute("class", "tl-label")
+          txt.setAttribute("x", (x + 3).toString)
+          txt.setAttribute("y", (dtH - 2).toString)
+          txt.textContent = lbl
+          g.appendChild(txt)
+          lastLabelEnd = x + 3 + textWidth(lbl) + 8
+      yr += major.toLong
+
+  private def renderDetailOverlay(): Unit =
+    if detailSvg != null then
+      val svg = detailSvg
+      val w = elWidth(svg)
+      val dh = dtHeight
+      val dtB = dtBase(dh)
+      svg.setAttribute("viewBox", s"0 0 $w $dh")
+      if loading.now() then svg.classList.add("tl-loading")
+      else svg.classList.remove("tl-loading")
+      alignDetail(w)
+      val ns = svgNs
+      val g = dtOverlayLayer
+      clearLayer(g)
+      val sf = spanFrom
+      val st = spanTo
+      val spanYears = (st - sf).toDouble.max(1)
+      def xOf(yr: com.histmersion.web.TimelineView.RenderDetailOverlayXOfYr): com.histmersion.web.TimelineView.RenderDetailOverlayXOfResult = (yr - sf.toDouble) / spanYears * w
+      dragState.now().foreach { d =>
+        if d.kind == DragKind.ZoomDetail then
+          val dx0 = Math.min(d.startX, d.curX)
+          val dx1 = Math.max(d.startX, d.curX)
+          if Math.abs(d.curX - d.startX) >= 3 then
+            val dragRect = dom.document.createElementNS(ns, "rect")
+            dragRect.setAttribute("class", "tl-drag")
+            dragRect.setAttribute("x", dx0.toString); dragRect.setAttribute("y", "0")
+            dragRect.setAttribute("width", Math.max(1.0, dx1 - dx0).toString)
+            dragRect.setAttribute("height", dtB.toString)
+            g.appendChild(dragRect)
+      }
+      TimelinePlayback.playheadNow.foreach { ph =>
+        if ph >= sf && ph <= st then
+          val px = xOf(ph.toDouble)
+          val line = dom.document.createElementNS(ns, "line")
+          line.setAttribute("class", "tl-playhead")
+          line.setAttribute("x1", px.toString); line.setAttribute("y1", "0")
+          line.setAttribute("x2", px.toString); line.setAttribute("y2", dtB.toString)
+          g.appendChild(line)
+          val label = dom.document.createElementNS(ns, "text")
+          label.setAttribute("class", "tl-playhead-label")
+          label.setAttribute("x", (px + 3).toString)
+          label.setAttribute("y", "10")
+          label.textContent = Fmt.yr(ph)
+          g.appendChild(label)
+      }
+
+  private def renderDetail(): Unit =
+    renderDetailCurve()
+    renderDetailOverlay()
+
+  // ── the preset menu ───────────────────────────────────────────────────────────────────────────
+
+  /** One region heading, folded unless the map is looking at it; each row says the span, WHERE the definition applies
+    * (PeriodO's coverage) and WHO defines it, and its title says it in full.
+    */
+  private def presetGroup(g: PresetMenu.Group): HtmlElement =
+    htmlTag[dom.HTMLElement]("details")(
+      cls := "tl-preset-group",
+      onMountCallback(ctx => if g.inView then ctx.thisNode.ref.setAttribute("open", "")),
+      htmlTag("summary")(
+        cls := "tl-preset-region",
+        g.region.label,
+        span(cls := "tl-preset-count", s" ${g.presets.size}")
+      ),
+      g.presets.map { p =>
+        val years = s"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
+        val where = p.region.getOrElse("")
+        val who = PresetMenu.source(p).getOrElse("")
+        button(
+          typ := "button",
+          cls := "tl-preset-item",
+          title := List(
+            s"${p.label}, $years",
+            s"applies to: $where",
+            s"defined by: $who",
+            PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")
+          ).filter(_.nonEmpty).mkString("\n"),
+          span(cls := "tl-preset-line", span(cls := "tl-preset-label", p.label), span(cls := "tl-preset-years", years)),
+          span(cls := "tl-preset-meta", s"$where · $who"),
+          onClick --> { _ =>
+            setSpan(p.period.start, p.period.end)
+            showPresets.set(false)
+          }
+        )
+      }
+    )
+
+  /** The timeline's own actions: lock it, start it at the years shown, keep the years as one of my periods. */
+  private def menuEntries(config: UiConfig): List[ui.ContextMenu.Entry] =
+    val (a, b) = (spanFrom, spanTo)
+    List(
+      ui.ContextMenu.Entry(
+        if locked.now() then "Unlock the timeline" else "Lock the timeline",
+        () => setLocked(!locked.now()),
+        pressed = Some(locked.now())
+      ),
+      ui.ContextMenu.Entry(
+        s"Start the timeline at ${Fmt.periodStr(a, b)}",
+        () => marks.PeriodMarks.startAt(a, b),
+        hint = Some("The years the timeline opens on, for everyone who opens Histmersion from this server")
+      ),
+      ui.ContextMenu.Entry(
+        "Add these years to my periods…",
+        () => {
+          presetView.set(ViewportToggle.viewBox)
+          loadPresets()
+          namingPeriod.set(Some(Fmt.periodStr(a, b)))
+          showPresets.set(true)
+        }
+      )
+    )
+
+  // ── public entry point ────────────────────────────────────────────────────────────────────────
+
+  def init(config: UiConfig): HtmlElement =
+    limits = config.time
+    val sf = UiState.from.now().getOrElse(config.time.defaultFrom)
+    val st = UiState.to.now().getOrElse(config.time.defaultTo)
+    val (cf, ct) = clamp(sf, st)
+    if cf != sf || ct != st then UiState.set(UiState.from := Some(cf), UiState.to := Some(ct))()
+
+    val presetsDropdown = div(
+      cls := "tl-presets-dropdown",
+      aria.label := "period presets",
+      hidden <-- showPresets.signal.map(!_),
+      marks.PeriodMarks
+        .section(namingPeriod, () => (spanFrom, spanTo), (a, b) => { setSpan(a, b); showPresets.set(false) }),
+      children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
+        val groups = PresetMenu.groups(ps, view)
+        if groups.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
+        else
+          div(
+            cls := "tl-preset-note muted",
+            "Each age as one authority dates it for one region (PeriodO). ",
+            "The region the map shows comes first."
+          ) ::
+            groups.map(presetGroup)
+      },
+      // the document's events for as long as the menu is on the page — bound and unbound with it
+      // (they were added on mount and never removed: a remount added a second pair)
+      documentEvents(_.onPointerDown) --> { e =>
+        if showPresets.now() then
+          val target = e.target.asInstanceOf[dom.Element]
+          if target.closest(".tl-preset-wrap") == null then showPresets.set(false)
+      },
+      // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
+      documentEvents(_.onKeyDown) --> { e =>
+        if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
+          e.preventDefault()
+          showPresets.set(false)
+      }
+    )
+
+    val badgeEl = htmlTag("span")(
+      cls := "tl-badge",
+      hidden <-- failedAt.signal.map(_.isEmpty),
+      child.text <-- failedAt.signal.map(_.getOrElse(""))
+    )
+
+    div(
+      cls := "tl",
+      // the detail strip is folded away in the narrow layout until asked for
+      cls("tl-detail-open") <-- detailOpen.signal,
+      // folded to its line of controls (a wide screen), as this browser left it
+      cls("is-folded") <-- folded.signal,
+      cls("is-locked") <-- locked.signal,
+      ui.ContextMenu.on("Timeline actions", () => menuEntries(config)),
+      // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
+      div(
+        cls := "tl-overview-wrap",
+        onMountCallback { ctx =>
+          val ns = "http://www.w3.org/2000/svg"
+          val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
+          svg.setAttribute("class", "tl-overview-svg")
+          svg.setAttribute("width", "100%")
+          svg.setAttribute("height", OH.toString)
+          overviewSvg = svg
+          ctx.thisNode.ref.appendChild(svg)
+          ovCurveLayer = newLayer(svg, "tl-ov-curve")
+          ovSelLayer = newLayer(svg, "tl-ov-sel")
+          ovHoverLayer = newLayer(svg, "tl-hover")
+
+          renderOverview()
+          overviewBars.signal.foreach { _ => lastOvBarsLen = -1; renderOverviewCurve() }(using ctx.owner)
+          renderTick.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          UiState.from.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          UiState.to.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          lastOvFilterKey = UiState.toFilter().copy(period = None).toString
+          loadOverview(elWidth(svg))
+
+          svg.addEventListener(
+            "pointerdown",
+            (e: dom.PointerEvent) =>
+              if e.button == 0 && !locked.now() then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val x = e.clientX - rect.left
+                val fullSpan = (limits.max - limits.min).toDouble.max(1)
+                val sf = spanFrom
+                val st = spanTo
+                val selX0 = (sf - limits.min).toDouble / fullSpan * w
+                val selX1 = (st - limits.min).toDouble / fullSpan * w
+
+                val kind =
+                  if Math.abs(x - selX0) <= HANDLE_W then DragKind.LeftHandle
+                  else if Math.abs(x - selX1) <= HANDLE_W then DragKind.RightHandle
+                  else if x > selX0 && x < selX1 then DragKind.PanRange
+                  else
+                    val clickYear = limits.min.toDouble + (x / w) * fullSpan
+                    val half = (st - sf).toDouble / 2
+                    setSpan(Math.round(clickYear - half), Math.round(clickYear + half))
+                    DragKind.PanRange
+
+                dragState.set(Some(DragInfo(x, x, kind, sf, st)))
+                svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
+          )
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              if dragState.now().isEmpty then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                showHover(
+                  ovHoverLayer,
+                  hoverAt(ovPts, e.clientX - rect.left, 0, if lastOvWidth > 0 then w / lastOvWidth else 1),
+                  w
+                )
+          )
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(ovHoverLayer, None, 0))
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              dragState.now().foreach { d =>
+                showHover(ovHoverLayer, None, 0)
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val cur = e.clientX - rect.left
+                val fullSpan = (limits.max - limits.min).toDouble.max(1)
+                val pxToYear = fullSpan / w
+
+                d.kind match
+                  case DragKind.LeftHandle =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val nf = Math.max(limits.min, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
+                    setSpan(nf, d.origTo, push = false)
+                  case DragKind.RightHandle =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val nt = Math.min(limits.max, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
+                    setSpan(d.origFrom, nt, push = false)
+                  case DragKind.PanRange =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val rangeWidth = d.origTo - d.origFrom
+                    var nf = d.origFrom + yearDelta
+                    var nt = d.origTo + yearDelta
+                    if nf < limits.min then { nf = limits.min; nt = nf + rangeWidth }
+                    if nt > limits.max then { nt = limits.max; nf = nt - rangeWidth }
+                    setSpan(nf, nt, push = false)
+                  case _ => ()
+              }
+          )
+
+          val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
+            if dragState.now().isDefined then
+              dragState.set(None)
+              UiState.set(UiState.from := Some(spanFrom), UiState.to := Some(spanTo))()
+          }
+          svg.addEventListener("pointerup", endDrag)
+          svg.addEventListener("pointercancel", endDrag)
+
+          if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
+            val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
+              { (_: js.Any) =>
+                // stretch now, redraw exactly once the width settles
+                renderOverviewSelection()
+                dom.window.clearTimeout(ovResizeRaf)
+                ovResizeRaf = dom.window.setTimeout(
+                  () => {
+                    if elWidth(svg) != lastOvWidth || ovHeight != lastOvHeight then
+                      lastOvBarsLen = -1
+                      renderOverview()
+                  },
+                  Layout.resizeSettleMs.toDouble
+                )
+              }: js.Function1[js.Any, Unit]
+            )
+            obs.observe(svg)
+            ovObserver = Some(obs)
+        },
+        onUnmountCallback { _ =>
+          ovObserver.foreach { o =>
+            val _ = o.disconnect()
+          };
+          ovObserver = None
+        }
+      ),
+      // ── Detail bar (zoomed into selected range) ───────────────────────────────────────────
+      div(
+        cls := "tl-detail-wrap",
+        onMountCallback { ctx =>
+          val ns = "http://www.w3.org/2000/svg"
+          val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
+          svg.setAttribute("class", "tl-detail-svg")
+          svg.setAttribute("width", "100%")
+          svg.setAttribute("height", DH.toString)
+          detailSvg = svg
+          ctx.thisNode.ref.appendChild(svg)
+          dtUnderLayer = newLayer(svg, "tl-dt-under")
+          dtCurveLayer = newLayer(svg, "tl-dt-curve")
+          dtAxisLayer = newLayer(svg, "tl-dt-axis")
+          dtOverlayLayer = newLayer(svg, "tl-dt-overlay")
+          dtHoverLayer = newLayer(svg, "tl-hover")
+
+          renderDetail()
+          detailBars.signal.foreach { _ => lastDtBarsLen = -1; renderDetailCurve() }(using ctx.owner)
+          overviewBars.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
+          renderTick.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
+
+          svg.addEventListener(
+            "wheel",
+            { (e: dom.WheelEvent) =>
+              e.preventDefault()
+              if e.deltaY != 0 then
+                val rect = svg.getBoundingClientRect()
+                val px = e.clientX - rect.left
+                val w = if rect.width > 0 then rect.width else 600.0
+                val spanYears = (spanTo - spanFrom).toDouble
+                val anchor = spanFrom.toDouble + (px / w) * spanYears
+                val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
+                val nf = Math.round(anchor - (anchor - spanFrom.toDouble) * factor)
+                val nt = Math.round(anchor + (spanTo.toDouble - anchor) * factor)
+                setSpan(nf, nt)
+            },
+            js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions]
+          )
+
+          svg.addEventListener(
+            "pointerdown",
+            (e: dom.PointerEvent) =>
+              if e.button == 0 && !locked.now() then
+                val rect = svg.getBoundingClientRect()
+                val x = e.clientX - rect.left
+                dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom, spanTo)))
+                svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
+          )
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              if dragState.now().isEmpty then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val (tx, scale) = realign(dtDrawn, (spanFrom, spanTo, w))
+                showHover(dtHoverLayer, hoverAt(dtPts, e.clientX - rect.left, tx, scale), w)
+          )
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(dtHoverLayer, None, 0))
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              dragState.now().foreach { d =>
+                showHover(dtHoverLayer, None, 0)
+                if d.kind == DragKind.ZoomDetail then
+                  val rect = svg.getBoundingClientRect()
+                  val cur = e.clientX - rect.left
+                  dragState.set(Some(d.modify(_.curX).setTo(cur)))
+                  bumpRender()
+                  if Math.abs(cur - d.startX) >= 3 then
+                    val w = elWidth(detailSvg)
+                    val spanYears = (d.origTo - d.origFrom).toDouble
+                    val y0 = d.origFrom + (Math.min(d.startX, cur) / w * spanYears).toLong
+                    val y1 = d.origFrom + (Math.max(d.startX, cur) / w * spanYears).toLong
+                    App.quickRenderIfCached(y0, y1)
+              }
+          )
+
+          val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
+            dragState.now().foreach { d =>
+              if d.kind == DragKind.ZoomDetail then
+                dragState.set(None)
+                if Math.abs(d.curX - d.startX) >= 3 then
+                  val w = elWidth(detailSvg)
+                  val spanYears = (d.origTo - d.origFrom).toDouble
+                  val y0 = d.origFrom + (Math.min(d.startX, d.curX) / w * spanYears).toLong
+                  val y1 = d.origFrom + (Math.max(d.startX, d.curX) / w * spanYears).toLong
+                  setSpan(y0, y1)
+                else bumpRender()
+            }
+          }
+          svg.addEventListener("pointerup", endDrag)
+          svg.addEventListener("pointercancel", endDrag)
+
+          if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
+            val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
+              { (_: js.Any) =>
+                renderDetailOverlay()
+                dom.window.clearTimeout(dtResizeRaf)
+                dtResizeRaf = dom.window.setTimeout(
+                  () => {
+                    if elWidth(svg) != lastDtWidth || dtHeight != lastDtHeight then
+                      lastDtBarsLen = -1
+                      renderDetail()
+                  },
+                  Layout.resizeSettleMs.toDouble
+                )
+              }: js.Function1[js.Any, Unit]
+            )
+            obs.observe(svg)
+            dtObserver = Some(obs)
+
+          TimelinePlayback.playheadSignal.foreach(_ => renderDetailOverlay())(using ctx.owner)
+
+          UiState.signal.foreach { _ =>
+            // the overview spans all time but follows every other filter (and a hint preview)
+            val ovKey = UiState.toFilter().copy(period = None).toString
+            if ovKey != lastOvFilterKey then
+              lastOvFilterKey = ovKey
+              loadOverview(elWidth(overviewSvg))
+            // a span from the URL or back/forward may be out of bounds: clamp it in place
+            val (cf2, ct2) = clamp(spanFrom, spanTo)
+            if cf2 != spanFrom || ct2 != spanTo then
+              UiState.from.set(Some(cf2))
+              UiState.to.set(Some(ct2))
+            bumpRender()
+            // only when what the strip shows changed: a layer toggled, a window opened or a tab
+            // switched commits UiState too, and each refetched the strip for the same answer
+            if detailKey() != lastDtKey then scheduleDetail()
+          }(using ctx.owner)
+
+          loadDetail()
+        },
+        onUnmountCallback { _ =>
+          dtObserver.foreach { o =>
+            val _ = o.disconnect()
+          };
+          dtObserver = None
+          dom.window.clearTimeout(timer)
+          // an answer still on its way would draw into the strip that left the page
+          detailLatest.cancel()
+        }
+      ),
+      div(
+        cls := "tl-lock-note",
+        cls("is-hidden") <-- locked.signal.map(!_),
+        role := "status",
+        Icon(Icon.Lock),
+        span("The timeline is locked"),
+        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(false)))
+      ),
+      // ── Controls: playback · the span shown · zoom to a period, show all time, fold
+      div(
+        cls := "tl-ctl",
+        TimelinePlayback.element(config),
+        div(
+          cls := "tl-ctl-span",
+          span(
+            cls := "tl-span-label",
+            aria.live := "polite",
+            child.text <-- renderTick.signal.map(_ => Fmt.periodStr(spanFrom, spanTo))
+          )
+        ),
+        div(
+          cls := "btn-group tl-ctl-end",
+          role := "group",
+          aria.label := "time span",
+          div(
+            cls := "tl-preset-wrap",
+            button(
+              typ := "button",
+              cls := "btn btn--ghost tl-btn-presets",
+              idAttr := "tl-zoom-period",
+              title := "Choose a named period (as an authority dates it for a region) and show its years",
+              aria.expanded <-- showPresets.signal,
+              "Zoom to period ▾",
+              onClick --> { _ =>
+                presetView.set(ViewportToggle.viewBox)
+                loadPresets()
+                showPresets.update(!_)
+              }
+            ),
+            presetsDropdown
+          ),
+          ui.ContextMenu.button("Timeline actions", () => menuEntries(config), "tl-menu-btn"),
+          button(
+            typ := "button",
+            cls := "btn btn--ghost tl-all-time",
+            idAttr := "tl-all-time",
+            title := "Show every year the timeline holds",
+            "Show all time",
+            onClick --> { _ => setSpan(limits.min, limits.max) }
+          ),
+          // shown in the narrow layout only, where the detail strip starts folded
+          button(
+            cls := "btn tl-detail-btn",
+            typ := "button",
+            aria.expanded <-- detailOpen.signal,
+            title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
+            child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
+            onClick --> (_ => detailOpen.update(!_))
+          ),
+          button(
+            typ := "button",
+            cls := "btn btn--ghost tl-fold",
+            idAttr := "tl-fold",
+            aria.expanded <-- folded.signal.map(!_),
+            child.text <-- folded.signal.map(f => if f then "Show timeline ▴" else "Fold timeline ▾"),
+            onClick --> (_ => setFolded(!folded.now()))
+          ),
+          badgeEl
+        )
+      )
+    )

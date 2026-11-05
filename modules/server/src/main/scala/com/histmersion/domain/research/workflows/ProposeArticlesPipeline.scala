@@ -88,7 +88,7 @@ final class ProposeArticlesPipeline(
       .take(16)
       .flatten
       .toList
-    def down(s: String, depth: Int): List[String] =
+    def down(s: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilyDownS, depth: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilyDownDepth): List[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilyDownResult] =
       if depth > 16 then Nil else goals.children(s).flatMap(c => c.slug :: down(c.slug, depth + 1))
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
@@ -141,7 +141,7 @@ final class ProposeArticlesPipeline(
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
       case _                  => "not given"
-    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
+    def list(xs: List[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.InputListXs]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
     val area =
       s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.getOrElse("none")}\ntags: ${l.tags.mkString(", ")}\n" +
         s"regions: ${l.regions.mkString(", ")}\nperiod: $period"
@@ -198,6 +198,15 @@ object ProposeArticlesPipeline:
   /** How many of the most used topics and tags the planner is shown; how many sources of a filter an overlap is
     * measured on.
     */
+  type FamilyDownResult = FamilyDownResult.T
+  object FamilyDownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FamilyDownS = FamilyDownS.T
+  object FamilyDownS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FamilyDownDepth = FamilyDownDepth.T
+  object FamilyDownDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputListXs = InputListXs.T
+  object InputListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FamilyResult = FamilyResult.T

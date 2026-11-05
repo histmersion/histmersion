@@ -17,6 +17,9 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleReader:
 
+  type ReadLoopFirst = ReadLoopFirst.T
+  object ReadLoopFirst extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ReadHashBlobs = ReadHashBlobs.T
   object ReadHashBlobs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256OfResult = Sha256OfResult.T
@@ -54,7 +57,7 @@ object BundleReader:
     var manifest: Option[com.histmersion.api.exchange.Bundle.Manifest] = None
 
     @annotation.tailrec
-    def loop(first: Boolean): Unit =
+    def loop(first: com.histmersion.util.data.exchange.BundleReader.ReadLoopFirst): Unit =
       tar.next() match
         case Left(e)     => problems += e
         case Right(None) =>

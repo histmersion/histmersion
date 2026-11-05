@@ -15,6 +15,15 @@ import scala.annotation.tailrec
 object EnrichComparison extends OutputComparison:
 
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
+  type QuoteCheckLoopResultPart1 = QuoteCheckLoopResultPart1.T
+  object QuoteCheckLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuoteCheckLoopResultPart2 = QuoteCheckLoopResultPart2.T
+  object QuoteCheckLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuoteCheckLoopChecked = QuoteCheckLoopChecked.T
+  object QuoteCheckLoopChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuoteCheckLoopPassed = QuoteCheckLoopPassed.T
+  object QuoteCheckLoopPassed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsFindingsName = IsFindingsName.T
   object IsFindingsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QuoteCheckResultPart1 = QuoteCheckResultPart1.T
@@ -33,7 +42,7 @@ object EnrichComparison extends OutputComparison:
     * readable answer checked nothing.
     */
   def quoteCheck(steps: List[Step]): (com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckResultPart1, com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckResultPart2) =
-    @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
+    @tailrec def loop(rest: List[Step], checked: com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckLoopChecked, passed: com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckLoopPassed): (com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckLoopResultPart1, com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckLoopResultPart2) =
       rest match
         case Nil                                                                              => (checked, passed)
         case s :: tail if s.status == com.histmersion.domain.automation.Step.Status.Done.wire =>

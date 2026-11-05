@@ -33,6 +33,17 @@ import java.time.{Duration, Instant}
 object SchedulerPolicy:
 
   /** A pin is worth this many priority levels. */
+  type RunPoolFullResult = RunPoolFullResult.T
+  object RunPoolFullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunMgrFullResult = RunMgrFullResult.T
+  object RunMgrFullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderGoResultPart2 = OrderGoResultPart2.T
+  object OrderGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderGoGathering = OrderGoGathering.T
+  object OrderGoGathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderGoAccPart2 = OrderGoAccPart2.T
+  object OrderGoAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseTypeMapResultPart2 = ParseTypeMapResultPart2.T
   object ParseTypeMapResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseTypeMapS = ParseTypeMapS.T
@@ -527,9 +538,9 @@ object SchedulerPolicy:
           object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
           type StartedPart2 = StartedPart2.T
           object StartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-        def poolFull(x: Scored, a: Acc): Option[String] =
+        def poolFull(x: Scored, a: Acc): Option[com.histmersion.domain.SchedulerPolicy.RunPoolFullResult] =
           x.c.pools.find(p => res.poolCap.get(p).exists(cap => a.poolUsed.getOrElse(p, 0) >= cap))
-        def mgrFull(x: Scored, a: Acc): Boolean =
+        def mgrFull(x: Scored, a: Acc): com.histmersion.domain.SchedulerPolicy.RunMgrFullResult =
           res.managerCap.get(x.c.managerId).exists(cap => a.mgrUsed.getOrElse(x.c.managerId, 0) >= cap)
         @annotation.tailrec
         def go(a: Acc): Acc =
@@ -637,9 +648,9 @@ object SchedulerPolicy:
     def go(
         pool: List[Scored],
         recent: List[JobType],
-        gathering: Int,
-        acc: Vector[(Scored, String)]
-    ): Vector[(Scored, String)] =
+        gathering: com.histmersion.domain.SchedulerPolicy.OrderGoGathering,
+        acc: Vector[(Scored, com.histmersion.domain.SchedulerPolicy.OrderGoAccPart2)]
+    ): Vector[(Scored, com.histmersion.domain.SchedulerPolicy.OrderGoResultPart2)] =
       if pool.isEmpty then acc
       else
         val st = PassState(recent.groupMapReduce(identity)(_ => 1)(_ + _), acc.map(_._1).toList)

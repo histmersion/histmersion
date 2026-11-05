@@ -1,6 +1,9 @@
 package com.histmersion.api.text
 object WikiLinks:
 
+  type RetargetMovedResult = RetargetMovedResult.T
+  object RetargetMovedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsCitekeyShapedResult = IsCitekeyShapedResult.T
   object IsCitekeyShapedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsCitekeyShapedS = IsCitekeyShapedS.T
@@ -128,7 +131,7 @@ object WikiLinks:
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
   def retarget(md: com.histmersion.api.text.WikiLinks.RetargetMd, to: com.histmersion.api.text.WikiLinks.RetargetToArg1 => Option[com.histmersion.api.text.WikiLinks.RetargetToResult]): (com.histmersion.api.text.WikiLinks.RetargetResultPart1, com.histmersion.api.text.WikiLinks.RetargetResultPart2) =
-    def moved(m: scala.util.matching.Regex.Match): Option[String] =
+    def moved(m: scala.util.matching.Regex.Match): Option[com.histmersion.api.text.WikiLinks.RetargetMovedResult] =
       if m.group(1).nonEmpty then None
       else normalize(m.group(2).takeWhile(_ != '|')).flatMap(to)
     val count = Link.findAllMatchIn(md).count(moved(_).isDefined)

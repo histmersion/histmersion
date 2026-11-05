@@ -36,7 +36,7 @@ final class SourceRepairs(db: Transactor):
   /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
   def reindexAll(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllChunkChars): ReindexResult =
     @annotation.tailrec
-    def go(after: Option[String], sources: Int, chunks: Int): ReindexResult =
+    def go(after: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoAfter], sources: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoSources, chunks: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoChunks): ReindexResult =
       val r = reindexChunks(chunkChars, after)
       val (s, c) = (sources + r.sources, chunks + r.chunks)
       if r.remaining > 0 && r.lastCitekey.isDefined then go(r.lastCitekey, s, c)
@@ -113,6 +113,23 @@ final class SourceRepairs(db: Transactor):
 object SourceRepairs:
 
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
+  type ReindexAllGoAfter = ReindexAllGoAfter.T
+  object ReindexAllGoAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexAllGoSources = ReindexAllGoSources.T
+  object ReindexAllGoSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexAllGoChunks = ReindexAllGoChunks.T
+  object ReindexAllGoChunks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetLoopResult = BudgetLoopResult.T
+  object BudgetLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetLoopRestPart1 = BudgetLoopRestPart1.T
+  object BudgetLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetLoopRestPart2 = BudgetLoopRestPart2.T
+  object BudgetLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetLoopSpent = BudgetLoopSpent.T
+  object BudgetLoopSpent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetLoopOut = BudgetLoopOut.T
+  object BudgetLoopOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ReindexChunksChunkChars = ReindexChunksChunkChars.T
   object ReindexChunksChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReindexChunksAfter = ReindexChunksAfter.T
@@ -138,7 +155,7 @@ object SourceRepairs:
 
   def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart2)], maxChars: com.histmersion.domain.library.sources.SourceRepairs.BudgetMaxChars): List[com.histmersion.domain.library.sources.SourceRepairs.BudgetResult] =
     @annotation.tailrec
-    def loop(rest: List[(String, Int)], spent: Long, out: List[String]): List[String] = rest match
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)], spent: com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopSpent, out: List[com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopOut]): List[com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopResult] = rest match
       case (ck, len) :: tail if spent + len.toLong <= maxChars => loop(tail, spent + len.toLong, ck :: out)
       case _                                                   => out.reverse
     loop(pending.toList, 0L, Nil)

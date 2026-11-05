@@ -19,6 +19,15 @@ import java.util.concurrent.ConcurrentHashMap
   */
 object PmTiles:
 
+  type ParseHeaderLAt = ParseHeaderLAt.T
+  object ParseHeaderLAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderE7At = ParseHeaderE7At.T
+  object ParseHeaderE7At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderU8At = ParseHeaderU8At.T
+  object ParseHeaderU8At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeHeaderE7D = EncodeHeaderE7D.T
+  object EncodeHeaderE7D extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseHeaderB = ParseHeaderB.T
   object ParseHeaderB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeHeaderResult = EncodeHeaderResult.T
@@ -221,9 +230,9 @@ object PmTiles:
     else if b(7) != 3 then Left(s"PMTiles spec version ${b(7)} is not supported (only 3)")
     else
       val bb = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
-      def l(at: Int) = bb.getLong(at)
-      def e7(at: Int) = bb.getInt(at) / 1e7
-      def u8(at: Int) = b(at) & 0xff
+      def l(at: com.histmersion.util.basemap.PmTiles.ParseHeaderLAt) = bb.getLong(at)
+      def e7(at: com.histmersion.util.basemap.PmTiles.ParseHeaderE7At) = bb.getInt(at) / 1e7
+      def u8(at: com.histmersion.util.basemap.PmTiles.ParseHeaderU8At) = b(at) & 0xff
       Right(
         Header(
           l(8),
@@ -275,7 +284,7 @@ object PmTiles:
       .put(h.tileType.code.toByte)
       .put(h.minZoom.toByte)
       .put(h.maxZoom.toByte)
-    def e7(d: Double) = bb.putInt(math.round(d * 1e7).toInt)
+    def e7(d: com.histmersion.util.basemap.PmTiles.EncodeHeaderE7D) = bb.putInt(math.round(d * 1e7).toInt)
     e7(h.minLon); e7(h.minLat); e7(h.maxLon); e7(h.maxLat)
     bb.put(h.centerZoom.toByte)
     e7(h.centerLon); e7(h.centerLat)
@@ -478,7 +487,7 @@ object PmTiles:
       if z < header.minZoom || z > header.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
       else
         val id = PmTiles.tileId(z, x, y)
-        def walk(dir: Vector[PmTiles.Entry], depth: Int): Either[String, Option[PmTiles.Entry]] =
+        def walk(dir: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.PmTiles.File.EntryWalkDepth): Either[com.histmersion.util.basemap.PmTiles.File.EntryWalkResultPart1, Option[PmTiles.Entry]] =
           PmTiles.find(dir, id) match
             case None                  => Right(None)
             case Some(e) if !e.isLeaf  => Right(Some(e))
@@ -497,6 +506,11 @@ object PmTiles:
     def close(): Unit = reader.close()
 
   object File:
+
+    type EntryWalkResultPart1 = EntryWalkResultPart1.T
+    object EntryWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EntryWalkDepth = EntryWalkDepth.T
+    object EntryWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type ReadResult = ReadResult.T
     object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]

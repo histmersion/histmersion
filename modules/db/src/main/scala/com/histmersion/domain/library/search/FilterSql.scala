@@ -30,6 +30,11 @@ import com.histmersion.api.library.Finding
   */
 object FilterSql:
 
+  type FacetsQueryGazetteerCol = FacetsQueryGazetteerCol.T
+  object FacetsQueryGazetteerCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceWhyHitsS = SourceWhyHitsS.T
+  object SourceWhyHitsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EscapeLikeResult = EscapeLikeResult.T
   object EscapeLikeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EscapeLikeS = EscapeLikeS.T
@@ -576,7 +581,7 @@ object FilterSql:
     // (`min(lower(v))` rather than `lower(v)`: every row of the group has the same value, and an
     // aggregate is what makes the correlated sub-select legal under GROUP BY.) The two columns share
     // ONE definition and ONE ordering, so they always describe the same place.
-    def gazetteer(col: String) =
+    def gazetteer(col: com.histmersion.domain.library.search.FilterSql.FacetsQueryGazetteerCol) =
       s"(SELECT $col FROM place_names pn JOIN places p ON p.id = pn.place_id" +
         " WHERE lower(pn.name) = min(lower(v))" +
         " ORDER BY (lower(p.label) = min(lower(v))) DESC, p.id LIMIT 1)"
@@ -678,7 +683,7 @@ object FilterSql:
     val b = List.newBuilder[String]
     text(f).foreach { q =>
       val terms = queryTerms(q)
-      def hits(s: String) = terms.nonEmpty && terms.forall(s.toLowerCase.contains)
+      def hits(s: com.histmersion.domain.library.search.FilterSql.SourceWhyHitsS) = terms.nonEmpty && terms.forall(s.toLowerCase.contains)
       if hits(r.title) then b += s"title matches '$q'"
       if r.summary.exists(hits) then b += s"summary matches '$q'"
       if r.bodyHit then b += s"full text matches '$q'"

@@ -21,6 +21,17 @@ trait ApprovalEffects:
 
 object ApprovalEffects:
   /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
+  type OfProposalResultResultPart1 = OfProposalResultResultPart1.T
+  object OfProposalResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfProposalResultResultPart2 = OfProposalResultResultPart2.T
+  object OfProposalResultResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfProposalPayload = OfProposalPayload.T
+  object OfProposalPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfApplySubjectResultPart1 = OfApplySubjectResultPart1.T
+  object OfApplySubjectResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfApplySubjectResultPart2 = OfApplySubjectResultPart2.T
+  object OfApplySubjectResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProposalResultResultPart1 = ProposalResultResultPart1.T
   object ProposalResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProposalResultResultPart2 = ProposalResultResultPart2.T
@@ -33,9 +44,9 @@ object ApprovalEffects:
   object ApplySubjectResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(proposals: ProposalEffect, subjects: List[SubjectEffect]): ApprovalEffects = new ApprovalEffects:
-    def proposal(payload: String): Option[() => Either[String, String]] = proposals.proposal(payload)
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalResultResultPart1, com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalResultResultPart2]] = proposals.proposal(payload)
     val subjectKinds: Set[Approval.Kind] = subjects.map(_.kind).toSet
-    def applySubject(a: ApprovalInfo): Either[String, String] =
+    def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart1, com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart2] =
       subjects.find(s => Approval.Kind.parse(a.kind).contains(s.kind)) match
         case Some(s) => s.apply(a)
         case None    => Left(s"no domain applies a ${a.kind} approval")

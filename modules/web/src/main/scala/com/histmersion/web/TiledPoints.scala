@@ -11,6 +11,15 @@ object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
     * before that the read no longer has (the map let their tile go) and that `keep` (near the view).
     */
+  type ReadNearPPart1 = ReadNearPPart1.T
+  object ReadNearPPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadNearPPart2 = ReadNearPPart2.T
+  object ReadNearPPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InViewNowSeenPPart1 = InViewNowSeenPPart1.T
+  object InViewNowSeenPPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InViewNowSeenPPart2 = InViewNowSeenPPart2.T
+  object InViewNowSeenPPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxZoomResult = MaxZoomResult.T
   object MaxZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -131,7 +140,7 @@ final class TiledPoints[A](
         else
           val s = TheMap.surface
           val margin = math.max(s.size._1, s.size._2)
-          def near(p: (Double, Double)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
+          def near(p: (com.histmersion.web.TiledPoints.ReadNearPPart1, com.histmersion.web.TiledPoints.ReadNearPPart2)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
           (
             TiledPoints.merge(fresh._1, shown._1, items.kind.key, a => near(items.kind.at(a))),
             TiledPoints.merge(fresh._2, shown._2, (c: TileCellPoint) => c.key, c => near((c.lat, c.lon)))
@@ -154,7 +163,7 @@ final class TiledPoints[A](
     if !on || !TheMap.isUp then (Nil, 0)
     else
       val s = TheMap.surface
-      def seen(p: (Double, Double)) = Clustering.inView(s, LatLon(p._1, p._2), 0)
+      def seen(p: (com.histmersion.web.TiledPoints.InViewNowSeenPPart1, com.histmersion.web.TiledPoints.InViewNowSeenPPart2)) = Clustering.inView(s, LatLon(p._1, p._2), 0)
       (shown._1.filter(a => seen(items.kind.at(a))), shown._2.filter(c => seen((c.lat, c.lon))).map(_.n).sum)
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */

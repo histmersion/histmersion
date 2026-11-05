@@ -12,6 +12,9 @@ import org.scalajs.dom
 object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
+  type MenuGoI = MenuGoI.T
+  object MenuGoI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsOpenResult = IsOpenResult.T
   object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsMenuKeyResult = IsMenuKeyResult.T
@@ -204,7 +207,7 @@ object ContextMenu:
         val el = ev.currentTarget.asInstanceOf[dom.Element]
         val all = items(el)
         val at = all.indexWhere(_ == dom.document.activeElement)
-        def go(i: Int): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
+        def go(i: com.histmersion.web.ui.ContextMenu.MenuGoI): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
         ev.key match
           case "ArrowDown" => go(at + 1)
           case "ArrowUp"   => go(if at < 0 then all.size - 1 else at - 1)

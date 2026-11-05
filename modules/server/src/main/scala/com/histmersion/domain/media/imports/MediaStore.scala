@@ -52,6 +52,45 @@ trait MediaStore:
 object MediaStore:
 
   /** The import's store over media's services: its pictures and their links, its checks and the map's facts. */
+  type ApplyKnownProvider = ApplyKnownProvider.T
+  object ApplyKnownProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyKnownKeys = ApplyKnownKeys.T
+  object ApplyKnownKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySaveFirstTargetPart1 = ApplySaveFirstTargetPart1.T
+  object ApplySaveFirstTargetPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySaveFirstTargetPart2 = ApplySaveFirstTargetPart2.T
+  object ApplySaveFirstTargetPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRefreshRightsUid = ApplyRefreshRightsUid.T
+  object ApplyRefreshRightsUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkUid = ApplyLinkUid.T
+  object ApplyLinkUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkTargetType = ApplyLinkTargetType.T
+  object ApplyLinkTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkTargetId = ApplyLinkTargetId.T
+  object ApplyLinkTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkRole = ApplyLinkRole.T
+  object ApplyLinkRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkProperty = ApplyLinkProperty.T
+  object ApplyLinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkItem = ApplyLinkItem.T
+  object ApplyLinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinkRank = ApplyLinkRank.T
+  object ApplyLinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCommonsCategoryCategory = ApplyCommonsCategoryCategory.T
+  object ApplyCommonsCategoryCategory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCommonsCategoryQid = ApplyCommonsCategoryQid.T
+  object ApplyCommonsCategoryQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCheckedProvider = ApplyCheckedProvider.T
+  object ApplyCheckedProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCheckedTargetType = ApplyCheckedTargetType.T
+  object ApplyCheckedTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCheckedTargetId = ApplyCheckedTargetId.T
+  object ApplyCheckedTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCheckedFound = ApplyCheckedFound.T
+  object ApplyCheckedFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCheckedQid = ApplyCheckedQid.T
+  object ApplyCheckedQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KnownResultPart1 = KnownResultPart1.T
   object KnownResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KnownProvider = KnownProvider.T
@@ -150,21 +189,21 @@ object MediaStore:
   object MapPlacesWithIdsIdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(assets: AssetService, imports: ImportService): MediaStore = new MediaStore:
-    def known(provider: String, keys: List[String]) = assets.known(provider, keys)
-    def save(a: ProviderAsset, firstTarget: (String, String)) = assets.save(a, firstTarget)
-    def refreshRights(uid: String, r: Rights) = assets.refreshRights(uid, r)
+    def known(provider: com.histmersion.domain.media.imports.MediaStore.ApplyKnownProvider, keys: List[com.histmersion.domain.media.imports.MediaStore.ApplyKnownKeys]) = assets.known(provider, keys)
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.imports.MediaStore.ApplySaveFirstTargetPart1, com.histmersion.domain.media.imports.MediaStore.ApplySaveFirstTargetPart2)) = assets.save(a, firstTarget)
+    def refreshRights(uid: com.histmersion.domain.media.imports.MediaStore.ApplyRefreshRightsUid, r: Rights) = assets.refreshRights(uid, r)
     def link(
-        uid: String,
-        targetType: String,
-        targetId: String,
-        role: String,
-        property: Option[String],
-        item: Option[String],
-        rank: Int
+        uid: com.histmersion.domain.media.imports.MediaStore.ApplyLinkUid,
+        targetType: com.histmersion.domain.media.imports.MediaStore.ApplyLinkTargetType,
+        targetId: com.histmersion.domain.media.imports.MediaStore.ApplyLinkTargetId,
+        role: com.histmersion.domain.media.imports.MediaStore.ApplyLinkRole,
+        property: Option[com.histmersion.domain.media.imports.MediaStore.ApplyLinkProperty],
+        item: Option[com.histmersion.domain.media.imports.MediaStore.ApplyLinkItem],
+        rank: com.histmersion.domain.media.imports.MediaStore.ApplyLinkRank
     ) = assets.link(uid, targetType, targetId, role, property, item, rank, None)
-    def commonsCategory(placeId: String, category: String, qid: String) =
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.MediaStore.ApplyCommonsCategoryCategory, qid: com.histmersion.domain.media.imports.MediaStore.ApplyCommonsCategoryQid) =
       imports.commonsCategory(placeId, category, qid)
-    def checked(provider: String, targetType: String, targetId: String, found: Int, qid: Option[String]) =
+    def checked(provider: com.histmersion.domain.media.imports.MediaStore.ApplyCheckedProvider, targetType: com.histmersion.domain.media.imports.MediaStore.ApplyCheckedTargetType, targetId: com.histmersion.domain.media.imports.MediaStore.ApplyCheckedTargetId, found: com.histmersion.domain.media.imports.MediaStore.ApplyCheckedFound, qid: Option[com.histmersion.domain.media.imports.MediaStore.ApplyCheckedQid]) =
       imports.checked(provider, targetType, targetId, found, qid)
     override def linkBasis(
         uid: String,

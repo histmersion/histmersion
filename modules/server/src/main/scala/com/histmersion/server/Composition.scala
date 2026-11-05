@@ -37,6 +37,25 @@ object Composition:
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
+  type CollectionsControllersSourceCitekey = CollectionsControllersSourceCitekey.T
+  object CollectionsControllersSourceCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersCreateCitekey = CollectionsControllersCreateCitekey.T
+  object CollectionsControllersCreateCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersPatchCitekey = CollectionsControllersPatchCitekey.T
+  object CollectionsControllersPatchCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersPushMetaCitekey = CollectionsControllersPushMetaCitekey.T
+  object CollectionsControllersPushMetaCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersGapsLimit = CollectionsControllersGapsLimit.T
+  object CollectionsControllersGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersOriginalCitekey = CollectionsControllersOriginalCitekey.T
+  object CollectionsControllersOriginalCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersQueueItemId = CollectionsControllersQueueItemId.T
+  object CollectionsControllersQueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersIngestBytes = CollectionsControllersIngestBytes.T
+  object CollectionsControllersIngestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsControllersPutCoverBytes = CollectionsControllersPutCoverBytes.T
+  object CollectionsControllersPutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ServerHost = ServerHost.T
   object ServerHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ServerPort = ServerPort.T
@@ -267,13 +286,13 @@ object Composition:
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
-      def source(citekey: String) = h.library.sources.get(citekey, body = false)
-      def create(citekey: String, put: Source.Put) = h.library.sources.put(citekey, put)
-      def patch(citekey: String, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
-      def pushMeta(citekey: String) = h.calibreGaps.pushMeta(citekey)
+      def source(citekey: com.histmersion.server.Composition.CollectionsControllersSourceCitekey) = h.library.sources.get(citekey, body = false)
+      def create(citekey: com.histmersion.server.Composition.CollectionsControllersCreateCitekey, put: Source.Put) = h.library.sources.put(citekey, put)
+      def patch(citekey: com.histmersion.server.Composition.CollectionsControllersPatchCitekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
+      def pushMeta(citekey: com.histmersion.server.Composition.CollectionsControllersPushMetaCitekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
-      def gaps(limit: Option[Int]) = h.calibreGaps.gaps(limit)
-      def original(citekey: String) =
+      def gaps(limit: Option[com.histmersion.server.Composition.CollectionsControllersGapsLimit]) = h.calibreGaps.gaps(limit)
+      def original(citekey: com.histmersion.server.Composition.CollectionsControllersOriginalCitekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
             .Try(file.bytes())
@@ -282,13 +301,13 @@ object Composition:
             .map(e => Api.Error(s"cannot read the original of '$citekey': ${e.getMessage}"))
             .map(StoredOriginal(_, disposition))
         }
-      def queueItem(id: Int) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
-      def ingest(params: Ingest.Params, bytes: Array[Byte]) =
+      def queueItem(id: com.histmersion.server.Composition.CollectionsControllersQueueItemId) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
+      def ingest(params: Ingest.Params, bytes: com.histmersion.server.Composition.CollectionsControllersIngestBytes) =
         h.ingest.controllers.ingest(
           params,
           com.histmersion.domain.library.ingest.Upload.inline(params.filename.getOrElse("original"), bytes)
         )
-      def putCover(params: SourceCoverParams, bytes: Array[Byte]) = h.media.covers.putCover(params, bytes)
+      def putCover(params: SourceCoverParams, bytes: com.histmersion.server.Composition.CollectionsControllersPutCoverBytes) = h.media.covers.putCover(params, bytes)
       def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
       def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
         acq.archiveImport(item, file, req)

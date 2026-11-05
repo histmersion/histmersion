@@ -60,6 +60,13 @@ final case class Cron(
 
 object Cron:
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
+  type FieldNumResultPart1 = FieldNumResultPart1.T
+  object FieldNumResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldNumResultPart2 = FieldNumResultPart2.T
+  object FieldNumResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldNumS = FieldNumS.T
+  object FieldNumS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DayMatchesResult = DayMatchesResult.T
   object DayMatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShortestGapMinutesResult = ShortestGapMinutesResult.T
@@ -123,7 +130,7 @@ object Cron:
 
   /** One field → its values, or why not. */
   private def field(raw: com.histmersion.domain.Cron.FieldRaw, f: Field): Either[com.histmersion.domain.Cron.FieldResultPart1, Set[com.histmersion.domain.Cron.FieldResultPart2]] =
-    def num(s: String): Either[String, Int] =
+    def num(s: com.histmersion.domain.Cron.FieldNumS): Either[com.histmersion.domain.Cron.FieldNumResultPart1, com.histmersion.domain.Cron.FieldNumResultPart2] =
       s.toIntOption
         .filter(n => n >= f.min && n <= f.max)
         .toRight(s"${f.name}: '$s' is not a number from ${f.min} to ${f.max}")

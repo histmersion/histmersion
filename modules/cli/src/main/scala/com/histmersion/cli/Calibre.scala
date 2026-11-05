@@ -197,6 +197,23 @@ object Calibre:
   /** Values that mean "nobody filled this in". Pushing one of these into Calibre creates an entry nobody will ever find
     * again, so both `import` and `push` refuse.
     */
+  type UpdatePlanEmptyV = UpdatePlanEmptyV.T
+  object UpdatePlanEmptyV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatePlanChangeFrom = UpdatePlanChangeFrom.T
+  object UpdatePlanChangeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatePlanChangeTo = UpdatePlanChangeTo.T
+  object UpdatePlanChangeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeIdentifiersOkV = MergeIdentifiersOkV.T
+  object MergeIdentifiersOkV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownUpdateAllCellS = MarkdownUpdateAllCellS.T
+  object MarkdownUpdateAllCellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetCmdValueK = SetCmdValueK.T
+  object SetCmdValueK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSqliteJsonSF = ParseSqliteJsonSF.T
+  object ParseSqliteJsonSF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownGapsEscS = MarkdownGapsEscS.T
+  object MarkdownGapsEscS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GuiRunningResult = GuiRunningResult.T
   object GuiRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LibraryExistsResult = LibraryExistsResult.T
@@ -534,8 +551,8 @@ object Calibre:
   ): Either[com.histmersion.cli.Calibre.UpdatePlanResultPart1, List[com.histmersion.cli.Calibre.Change]] =
     val authors = normaliseAuthors(meta.authors)
     guard(meta.title, authors).map { _ =>
-      def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
-      def change(f: com.histmersion.cli.Calibre.Field, from: String, to: String) =
+      def empty(v: Option[com.histmersion.cli.Calibre.UpdatePlanEmptyV]) = v.forall(s => isBlank(s) || s.trim == "-")
+      def change(f: com.histmersion.cli.Calibre.Field, from: com.histmersion.cli.Calibre.UpdatePlanChangeFrom, to: com.histmersion.cli.Calibre.UpdatePlanChangeTo) =
         Option.when(from != to)(com.histmersion.cli.Calibre.Change(f, from, to))
       val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
       List(
@@ -598,7 +615,7 @@ object Calibre:
     * separates the pairs), so it is left out.
     */
   def mergeIdentifiers(current: Map[com.histmersion.cli.Calibre.MergeIdentifiersCurrentPart1, com.histmersion.cli.Calibre.MergeIdentifiersCurrentPart2], doi: Option[com.histmersion.cli.Calibre.MergeIdentifiersDoi], isbn: Option[com.histmersion.cli.Calibre.MergeIdentifiersIsbn]): Map[com.histmersion.cli.Calibre.MergeIdentifiersResultPart1, com.histmersion.cli.Calibre.MergeIdentifiersResultPart2] =
-    def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
+    def ok(v: com.histmersion.cli.Calibre.MergeIdentifiersOkV) = v.trim.nonEmpty && !v.contains(",")
     val sameDoi = (d: String) => current.get("doi").exists(_.trim.equalsIgnoreCase(d))
     current ++ doi.map(_.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
       isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
@@ -661,7 +678,7 @@ object Calibre:
 
   /** `update --all` as Markdown: what changes (or changed), then what was left alone and why. */
   def markdownUpdateAll(entries: List[UpdateEntry], applied: com.histmersion.cli.Calibre.MarkdownUpdateAllApplied): com.histmersion.cli.Calibre.MarkdownUpdateAllResult =
-    def cell(s: String) = s.replace("|", "\\|").replace("\n", " ").take(80)
+    def cell(s: com.histmersion.cli.Calibre.MarkdownUpdateAllCellS) = s.replace("|", "\\|").replace("\n", " ").take(80)
     val changing = entries.collect { e =>
       e.outcome match
         case UpdateOutcome.Change(cs)      => (e, cs, "")
@@ -711,7 +728,7 @@ object Calibre:
       fields: List[(com.histmersion.cli.Calibre.SetCmdFieldsPart1, com.histmersion.cli.Calibre.SetCmdFieldsPart2)]
   ): Either[com.histmersion.cli.Calibre.SetCmdResultPart1, List[com.histmersion.cli.Calibre.SetCmdResultPart2]] =
     val unknown = fields.map(_._1).filterNot(SettableFields.contains)
-    def value(k: String) = fields.collectFirst { case (`k`, v) => v }
+    def value(k: com.histmersion.cli.Calibre.SetCmdValueK) = fields.collectFirst { case (`k`, v) => v }
     for
       _ <- Either.cond(fields.nonEmpty, (), "nothing to set — pass --field <name>:<value>")
       _ <- Either.cond(
@@ -770,7 +787,7 @@ object Calibre:
         .map(e => s"sqlite3 returned unparseable JSON: ${e.getMessage}")
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.hcursor
-          def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
+          def s(f: com.histmersion.cli.Calibre.ParseSqliteJsonSF) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
           c.downField("id").as[Int].toOption.map { id =>
             com.histmersion.cli.Calibre.Book(
               id = id,
@@ -911,7 +928,7 @@ object Calibre:
     * rows of the table: they are not gaps).
     */
   def markdownGaps(entries: List[GapEntry]): com.histmersion.cli.Calibre.MarkdownGapsResult =
-    def esc(s: String) = s.replace("|", "\\|").replace("\n", " ").trim
+    def esc(s: com.histmersion.cli.Calibre.MarkdownGapsEscS) = s.replace("|", "\\|").replace("\n", " ").trim
     val counted = entries.filter(_.counted)
     val missing = entries.count(_.original == GapOriginal.Missing)
     val head =

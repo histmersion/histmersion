@@ -15,6 +15,11 @@ import java.util.Locale
   */
 object OpenContext:
 
+  type RecordRightsPart1 = RecordRightsPart1.T
+  object RecordRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemFileT = ItemFileT.T
+  object ItemFileT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Attributes = Attributes.T
   object Attributes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlResult = SearchUrlResult.T
@@ -127,7 +132,7 @@ object OpenContext:
       val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
       val licUrl = c.strs("License [URI]").headOption
       val licLabel = c.strs("License").headOption.getOrElse("")
-      val rights: Either[String, MediaRights] = licUrl match
+      val rights: Either[com.histmersion.plugins.media.OpenContext.RecordRightsPart1, MediaRights] = licUrl match
         case None    => Left("no licence on the record")
         case Some(u) =>
           val lic = licences.readUrl(u)
@@ -251,7 +256,7 @@ object OpenContext:
       val h = f.hcursor
       for t <- h.str("type"); u <- h.str("id") yield t -> u
     }
-    def file(t: String) = files.find(_._1 == t).map(_._2)
+    def file(t: com.histmersion.plugins.media.OpenContext.ItemFileT) = files.find(_._1 == t).map(_._2)
     val stated = c
       .downField("dc-terms:license")
       .focus

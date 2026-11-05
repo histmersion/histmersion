@@ -342,7 +342,7 @@ object ArticleService:
 
     def patch(slug: com.histmersion.domain.research.articles.ArticleService.InMemory.PatchSlug, patch: Article.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.research.articles.ArticleService.InMemory.PatchResultPart2] =
       val now = Instant.now(clock)
-      @tailrec def attempt(): Either[Api.Error, String] =
+      @tailrec def attempt(): Either[Api.Error, com.histmersion.domain.research.articles.ArticleService.InMemory.PatchAttemptResultPart2] =
         val st = state.get
         val outcome = st.articles.get(slug).map(loaded) match
           case None           => Left(Articles.notFound(slug))
@@ -394,7 +394,7 @@ object ArticleService:
     def rename(from: com.histmersion.domain.research.articles.ArticleService.InMemory.RenameFrom, to: com.histmersion.domain.research.articles.ArticleService.InMemory.RenameTo, caller: Caller): Either[Api.Error, List[com.histmersion.domain.research.articles.ArticleService.InMemory.RenameResultPart2]] =
       val (oldSlug, newSlug) = (from.trim, to.trim)
       val now = Instant.now(clock)
-      @tailrec def attempt(): Either[Api.Error, List[String]] =
+      @tailrec def attempt(): Either[Api.Error, List[com.histmersion.domain.research.articles.ArticleService.InMemory.RenameAttemptResultPart2]] =
         val st = state.get
         val aliasOf = st.aliases.get(newSlug)
         val outcome =
@@ -439,14 +439,14 @@ object ArticleService:
         .using(cs => cs.get(oldSlug).fold(cs)(rs => (cs - oldSlug).updated(newSlug, rs)))
         .modify(_.ledgers)
         .using(ls => ls.get(oldSlug).fold(ls)(l => (ls - oldSlug).updated(newSlug, l)))
-      val to: String => Option[String] = t => Option.when(t == oldSlug)(newSlug)
+      val to: com.histmersion.domain.research.articles.ArticleService.InMemory.RenamedToArg1 => Option[com.histmersion.domain.research.articles.ArticleService.InMemory.RenamedToResult] = t => Option.when(t == oldSlug)(newSlug)
       val needle = oldSlug.toLowerCase
       val rewritten = moved.articles.keys.toList.sorted.filter { s =>
         val a = moved.articles(s).article
         (a.body + " " + a.summary.getOrElse("") + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
           .contains(needle)
       }
-      @tailrec def loop(rest: List[String], acc: ResearchState, done: List[String]): (ResearchState, List[String]) =
+      @tailrec def loop(rest: List[com.histmersion.domain.research.articles.ArticleService.InMemory.RenamedLoopRest], acc: ResearchState, done: List[com.histmersion.domain.research.articles.ArticleService.InMemory.RenamedLoopDone]): (ResearchState, List[com.histmersion.domain.research.articles.ArticleService.InMemory.RenamedLoopResultPart2]) =
         rest match
           case Nil       => (acc, done.reverse)
           case s :: tail =>
@@ -465,6 +465,21 @@ object ArticleService:
       (after.modify(_.aliases).using(_.updated(oldSlug, newSlug)), done)
 
   object InMemory:
+    type PatchAttemptResultPart2 = PatchAttemptResultPart2.T
+    object PatchAttemptResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameAttemptResultPart2 = RenameAttemptResultPart2.T
+    object RenameAttemptResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedToArg1 = RenamedToArg1.T
+    object RenamedToArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedToResult = RenamedToResult.T
+    object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedLoopResultPart2 = RenamedLoopResultPart2.T
+    object RenamedLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedLoopRest = RenamedLoopRest.T
+    object RenamedLoopRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamedLoopDone = RenamedLoopDone.T
+    object RenamedLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TokenResult = TokenResult.T
     object TokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CanonicalInResult = CanonicalInResult.T

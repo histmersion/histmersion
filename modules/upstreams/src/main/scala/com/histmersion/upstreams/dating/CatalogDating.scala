@@ -2,6 +2,11 @@ package com.histmersion.upstreams.dating
 object CatalogDating:
 
   /** The years a start or an end may be, `lo ≤ hi`. */
+  type ClampCResult = ClampCResult.T
+  object ClampCResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampCY = ClampCY.T
+  object ClampCY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type YearY = YearY.T
   object YearY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearPlusMinus = YearPlusMinus.T
@@ -90,7 +95,7 @@ object CatalogDating:
 
   /** Pure: each of the four points held inside `l` — monotone, so the order of the points is kept. */
   def clamp(ts: Span, l: Limits): Span =
-    def c(y: Long): Long = l.floor.fold(y)(y.max).min(l.present)
+    def c(y: com.histmersion.upstreams.dating.CatalogDating.ClampCY): com.histmersion.upstreams.dating.CatalogDating.ClampCResult = l.floor.fold(y)(y.max).min(l.present)
     Span(ts.notBefore.map(c), ts.beginBy.map(c), ts.endFrom.map(c), ts.notAfter.map(c))
 
   /** Pure: a record stored before the central year and the ± were kept (V088), read back from its span: a start window

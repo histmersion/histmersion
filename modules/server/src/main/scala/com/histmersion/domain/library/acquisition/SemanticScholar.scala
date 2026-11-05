@@ -33,7 +33,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
       case None => openalexCiting(work, since, limit).map(("openalex", _))
 
   private def s2(doi: com.histmersion.domain.library.Doi, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.S2Since], limit: com.histmersion.domain.library.acquisition.SemanticScholar.S2Limit): Either[com.histmersion.domain.library.acquisition.SemanticScholar.S2ResultPart1, List[FollowupRow]] =
-    def page(offset: Int, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =
+    def page(offset: com.histmersion.domain.library.acquisition.SemanticScholar.S2PageOffset, acc: List[FollowupRow]): Either[com.histmersion.domain.library.acquisition.SemanticScholar.S2PageResultPart1, List[FollowupRow]] =
       if acc.size >= limit then Right(acc)
       else
         http
@@ -76,6 +76,11 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
           .map(AcquireParse.openalexCitations(_).map(_.wire))
 
 object SemanticScholar:
+  type S2PageResultPart1 = S2PageResultPart1.T
+  object S2PageResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type S2PageOffset = S2PageOffset.T
+  object S2PageOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CitingResultPart1 = CitingResultPart1.T
   object CitingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitingResultPart2Part1 = CitingResultPart2Part1.T

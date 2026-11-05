@@ -63,7 +63,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
 
   override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
-    def ascii(s: String) = s.getBytes("UTF-8")
+    def ascii(s: com.histmersion.util.ocr.HttpConverterClient.ThumbnailAsciiS) = s.getBytes("UTF-8")
     val body = java.io.ByteArrayOutputStream()
     body.write(
       ascii(
@@ -127,8 +127,8 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       filename: com.histmersion.util.ocr.HttpConverterClient.MultipartFilename,
       quality: com.histmersion.util.ocr.HttpConverterClient.MultipartQuality
   ): Either[com.histmersion.util.ocr.HttpConverterClient.MultipartResultPart1, HttpRequest.BodyPublisher] =
-    def ascii(s: String) = s.getBytes("UTF-8")
-    def field(name: String, value: String) =
+    def ascii(s: com.histmersion.util.ocr.HttpConverterClient.MultipartAsciiS) = s.getBytes("UTF-8")
+    def field(name: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldName, value: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldValue) =
       ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n")
     val head = ascii(
       s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
@@ -159,6 +159,15 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       )
 
 object HttpConverterClient:
+  type ThumbnailAsciiS = ThumbnailAsciiS.T
+  object ThumbnailAsciiS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MultipartAsciiS = MultipartAsciiS.T
+  object MultipartAsciiS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MultipartFieldName = MultipartFieldName.T
+  object MultipartFieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MultipartFieldValue = MultipartFieldValue.T
+  object MultipartFieldValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HealthResultPart1 = HealthResultPart1.T
   object HealthResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HealthResultPart2 = HealthResultPart2.T

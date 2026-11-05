@@ -94,7 +94,7 @@ final class KeePassXcVault(
 
   private def session(batched: List[(com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart1, (com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part2))]): Map[com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part2]] =
     val what = s"open $file for ${batched.size} references"
-    val opened: Either[String, Opened] =
+    val opened: Either[com.histmersion.plugins.vaults.KeePassXcVault.SessionOpenedPart1, Opened] =
       if yubikeys.nonEmpty then
         withYubiKey(what, s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})", "")(yk =>
           open(Some(yk), yubikeyTimeout)
@@ -121,11 +121,11 @@ final class KeePassXcVault(
   private def readAll(o: Opened, batched: List[(com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart1, (com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part2))]): Map[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart2Part2]] =
     val s = o.session
     @tailrec def read(
-        rest: List[(String, (String, String))],
-        acc: Map[String, Either[String, String]],
-        mark: Int,
-        broken: Option[String]
-    ): Map[String, Either[String, String]] =
+        rest: List[(com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadRestPart1, (com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadRestPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadRestPart2Part2))],
+        acc: Map[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadAccPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadAccPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadAccPart2Part2]],
+        mark: com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadMark,
+        broken: Option[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadBroken]
+    ): Map[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadResultPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadResultPart2Part2]] =
       (rest, broken) match
         case (Nil, _)                    => acc
         case ((ref, _) :: tail, Some(b)) =>
@@ -183,7 +183,7 @@ final class KeePassXcVault(
     val found = connected()
     val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
     val notConnected = absent.map(s => s"${s.shown}: not connected")
-    def report(tried: List[String], tail: String) =
+    def report(tried: List[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTried], tail: com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTail) =
       val parts = (tried ++ notConnected).mkString("; ")
       Left(s"$name: could not $what with a YubiKey — $parts$tail")
     if planned.isEmpty then
@@ -195,7 +195,7 @@ final class KeePassXcVault(
       )
     else
       @annotation.tailrec
-      def go(rest: List[YubiKey.Slot], tried: List[String]): Either[String, A] = rest match
+      def go(rest: List[YubiKey.Slot], tried: List[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyGoTried]): Either[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyGoResultPart1, A] = rest match
         case Nil        => report(tried, " — plug in (or touch) one of them")
         case yk :: more =>
           log.info(
@@ -226,6 +226,39 @@ final class KeePassXcVault(
     else None
 
 object KeePassXcVault:
+  type SessionOpenedPart1 = SessionOpenedPart1.T
+  object SessionOpenedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadResultPart1 = ReadAllReadResultPart1.T
+  object ReadAllReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadResultPart2Part1 = ReadAllReadResultPart2Part1.T
+  object ReadAllReadResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadResultPart2Part2 = ReadAllReadResultPart2Part2.T
+  object ReadAllReadResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadRestPart1 = ReadAllReadRestPart1.T
+  object ReadAllReadRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadRestPart2Part1 = ReadAllReadRestPart2Part1.T
+  object ReadAllReadRestPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadRestPart2Part2 = ReadAllReadRestPart2Part2.T
+  object ReadAllReadRestPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadAccPart1 = ReadAllReadAccPart1.T
+  object ReadAllReadAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadAccPart2Part1 = ReadAllReadAccPart2Part1.T
+  object ReadAllReadAccPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadAccPart2Part2 = ReadAllReadAccPart2Part2.T
+  object ReadAllReadAccPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadMark = ReadAllReadMark.T
+  object ReadAllReadMark extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllReadBroken = ReadAllReadBroken.T
+  object ReadAllReadBroken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyReportTried = WithYubiKeyReportTried.T
+  object WithYubiKeyReportTried extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyReportTail = WithYubiKeyReportTail.T
+  object WithYubiKeyReportTail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyGoResultPart1 = WithYubiKeyGoResultPart1.T
+  object WithYubiKeyGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyGoTried = WithYubiKeyGoTried.T
+  object WithYubiKeyGoTried extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Exe = Exe.T

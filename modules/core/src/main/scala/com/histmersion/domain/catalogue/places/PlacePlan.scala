@@ -45,8 +45,8 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   // ours. A bundle place matched to one here under another id: what points at it by id follows
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     renames ++= renamedPlaces(in.foreign.places, in.local.places, mapped.keySet)
-    val renameKept: Map[UUID, String] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
-    val placeIdMap: Map[String, String] =
+    val renameKept: Map[UUID, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedRenameKeptPart2] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
+    val placeIdMap: Map[com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart1, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart2] =
       in.foreign.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap ++
         renames.collect { case (p, ours, true) => p.id -> ours }
     val repointed = repoint(es, placeIdMap)
@@ -130,6 +130,13 @@ object PlacePlan:
   /** Events and places point at places by id: a bundle place matched to one here under another id is pointed at under
     * that id. Pure.
     */
+  type LocalizedRenameKeptPart2 = LocalizedRenameKeptPart2.T
+  object LocalizedRenameKeptPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalizedPlaceIdMapPart1 = LocalizedPlaceIdMapPart1.T
+  object LocalizedPlaceIdMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalizedPlaceIdMapPart2 = LocalizedPlaceIdMapPart2.T
+  object LocalizedPlaceIdMapPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InfoResult = InfoResult.T
   object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfoLabel = InfoLabel.T

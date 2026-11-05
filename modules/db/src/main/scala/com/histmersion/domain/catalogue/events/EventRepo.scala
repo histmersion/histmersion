@@ -32,6 +32,11 @@ import com.histmersion.api.catalogue.EventGeo
 private[events] object EventRepo:
 
   /** How many events the catalogue holds. */
+  type GeoOutlinesPart1 = GeoOutlinesPart1.T
+  object GeoOutlinesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoOutlinesPart2 = GeoOutlinesPart2.T
+  object GeoOutlinesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CountResult = CountResult.T
   object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListLimit = ListLimit.T
@@ -137,7 +142,7 @@ private[events] object EventRepo:
       listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(EventPrecision.ApproximateUpTo))).frag.query[Int].run().head
     val items = rows.map(r => (r, r.toGeo))
     val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => g.id }
-    val outlines: Map[String, String] =
+    val outlines: Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart1, com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart2] =
       if wanted.isEmpty then Map.empty
       else
         sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(

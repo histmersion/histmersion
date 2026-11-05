@@ -2,6 +2,11 @@ package com.histmersion.api
 
 /** WCAG 2.x contrast. */
 object Wcag:
+  type LuminanceLinResult = LuminanceLinResult.T
+  object LuminanceLinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LuminanceLinC = LuminanceLinC.T
+  object LuminanceLinC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LuminanceResult = LuminanceResult.T
   object LuminanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LuminanceR = LuminanceR.T
@@ -36,7 +41,7 @@ object Wcag:
   object AaText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def luminance(r: com.histmersion.api.Wcag.LuminanceR, g: com.histmersion.api.Wcag.LuminanceG, b: com.histmersion.api.Wcag.LuminanceB): com.histmersion.api.Wcag.LuminanceResult =
-    def lin(c: Int): Double =
+    def lin(c: com.histmersion.api.Wcag.LuminanceLinC): com.histmersion.api.Wcag.LuminanceLinResult =
       val v = c / 255.0
       if v <= 0.03928 then v / 12.92 else math.pow((v + 0.055) / 1.055, 2.4)
     0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)

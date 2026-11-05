@@ -51,6 +51,9 @@ object MergeView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** How the issue list is grouped, in the order it is shown. */
+  type ArticleViewLinesLs = ArticleViewLinesLs.T
+  object ArticleViewLinesLs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CounterResultPart1 = CounterResultPart1.T
   object CounterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CounterResultPart2 = CounterResultPart2.T
@@ -714,7 +717,7 @@ object MergeView:
     */
   private def articleView(i: MergeIssue, t: IssueText, edited: Option[com.histmersion.web.MergeView.ArticleViewEdited]): HtmlElement =
     val draft = Var(edited.getOrElse(markedText(t)))
-    def lines(ls: List[String]) = pre(cls := "merge-lines", ls.mkString("\n"))
+    def lines(ls: List[com.histmersion.web.MergeView.ArticleViewLinesLs]) = pre(cls := "merge-lines", ls.mkString("\n"))
     div(
       cls := "merge-diff",
       h5(if t.base.isDefined then "the two versions against their common version"

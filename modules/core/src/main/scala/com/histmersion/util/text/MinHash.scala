@@ -13,6 +13,9 @@ object MinHash:
   /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
     * hashed as one. Pure and deterministic.
     */
+  type OfShingles = OfShingles.T
+  object OfShingles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SimilarityResult = SimilarityResult.T
   object SimilarityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfText = OfText.T
@@ -27,7 +30,7 @@ object MinHash:
 
   def of(text: com.histmersion.util.text.MinHash.OfText, k: com.histmersion.util.text.MinHash.OfK = 64, shingle: com.histmersion.util.text.MinHash.OfShingle = 5): MinHash =
     val ws = Fingerprint.tokens(text)
-    val shingles: Iterator[String] =
+    val shingles: Iterator[com.histmersion.util.text.MinHash.OfShingles] =
       if ws.length <= shingle then Iterator.single(ws.mkString(" ")) else ws.sliding(shingle).map(_.mkString(" "))
     val mins = Array.fill(k)(Int.MaxValue)
     shingles.foreach { sh =>

@@ -17,6 +17,15 @@ import com.histmersion.api.automation.Queue
   */
 object QueueItemRef:
 
+  type AuthorsOfNamesResult = AuthorsOfNamesResult.T
+  object AuthorsOfNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsOfNamesGroup = AuthorsOfNamesGroup.T
+  object AuthorsOfNamesGroup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsOfIsGroupResult = AuthorsOfIsGroupResult.T
+  object AuthorsOfIsGroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsOfIsGroupP = AuthorsOfIsGroupP.T
+  object AuthorsOfIsGroupP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseText = ParseText.T
   object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TopLevelDashResult = TopLevelDashResult.T
@@ -132,9 +141,9 @@ object QueueItemRef:
     * part joins it when it is the initials of a `Surname, I.` or another group of names joined by `&`.
     */
   private def authorsOf(parts: List[com.histmersion.web.QueueItemRef.AuthorsOfParts]): (List[com.histmersion.web.QueueItemRef.AuthorsOfResultPart1], List[com.histmersion.web.QueueItemRef.AuthorsOfResultPart2]) =
-    def names(group: String): List[String] =
+    def names(group: com.histmersion.web.QueueItemRef.AuthorsOfNamesGroup): List[com.histmersion.web.QueueItemRef.AuthorsOfNamesResult] =
       group.replaceAll(EdMark, " ").split("""\s+&\s+""").toList.map(_.trim).filter(_.nonEmpty)
-    def isGroup(p: String): Boolean =
+    def isGroup(p: com.histmersion.web.QueueItemRef.AuthorsOfIsGroupP): com.histmersion.web.QueueItemRef.AuthorsOfIsGroupResult =
       p.contains(" & ") && !p.contains(":") &&
         p.replaceAll(EdMark, " ").split("""\s+""").forall(w => w == "&" || w.headOption.exists(_.isUpper))
     parts match

@@ -353,7 +353,7 @@ object PlaceService:
       val text = q.map(_.trim).filter(_.nonEmpty)
       val t = text.map(lower)
       def named(p: HeldPlace) = p.names.filter(n => HeldPlace.covers(n.period, asOf))
-      def matches(p: HeldPlace): Boolean = t.forall { w =>
+      def matches(p: HeldPlace): com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchMatchesResult = t.forall { w =>
         if w.length >= 3 then lower(p.place.label).contains(w) || named(p).exists(n => lower(n.name).contains(w))
         else lower(p.place.label) == w || named(p).exists(n => lower(n.name) == w)
       }
@@ -433,8 +433,8 @@ object PlaceService:
             InMemory.RootKinds(p.place.kind) && !places.exists(_.id == p.id && p.parents.nonEmpty) &&
               places.exists(_.parents.exists(_.parentId == p.id))
           )
-      def row(p: HeldPlace, d: Int) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.place.label, p.place.kind, d, 0, p.contested)
-      def walk(p: HeldPlace, d: Int, seen: Set[String]): List[Place.TreeRow] =
+      def row(p: HeldPlace, d: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyRowD) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.place.label, p.place.kind, d, 0, p.contested)
+      def walk(p: HeldPlace, d: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkD, seen: Set[com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkSeen]): List[Place.TreeRow] =
         row(p, d) :: (if d >= depth then Nil
                       else
                         kidsOf(p.id, asOf).filterNot(c => seen(c.id)).toList.flatMap(c => walk(c, d + 1, seen + c.id)))
@@ -455,7 +455,7 @@ object PlaceService:
       val known = wanted.filter(v => find(target(v)).isDefined)
       def overlaps(r: Place.Relation) =
         period.forall(w => r.period.forall(p => p.start <= w.end && w.start <= p.end))
-      @tailrec def down(frontier: List[String], seen: Vector[String]): Vector[String] = frontier match
+      @tailrec def down(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownFrontier], seen: Vector[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownSeen]): Vector[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownResult] = frontier match
         case Nil       => seen
         case id :: are =>
           val kids = places.filter(c => c.parents.exists(r => r.parentId == id && overlaps(r))).map(_.id)
@@ -469,7 +469,7 @@ object PlaceService:
         )
 
     def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
-      @tailrec def up(frontier: List[String], seen: Vector[String]): Vector[String] = frontier match
+      @tailrec def up(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpFrontier], seen: Vector[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpSeen]): Vector[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpResult] = frontier match
         case Nil       => seen
         case id :: are =>
           val parents = find(id).toVector.flatMap(_.parents.filter(_.kind == Place.Relation.PartOf).map(_.parentId))
@@ -730,6 +730,27 @@ object PlaceService:
 
   object InMemory:
     /** The kinds that may head the hierarchy. */
+    type SearchMatchesResult = SearchMatchesResult.T
+    object SearchMatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyRowD = HierarchyRowD.T
+    object HierarchyRowD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyWalkD = HierarchyWalkD.T
+    object HierarchyWalkD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyWalkSeen = HierarchyWalkSeen.T
+    object HierarchyWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScopeForDownResult = ScopeForDownResult.T
+    object ScopeForDownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScopeForDownFrontier = ScopeForDownFrontier.T
+    object ScopeForDownFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScopeForDownSeen = ScopeForDownSeen.T
+    object ScopeForDownSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GazetteerUpResult = GazetteerUpResult.T
+    object GazetteerUpResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GazetteerUpFrontier = GazetteerUpFrontier.T
+    object GazetteerUpFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GazetteerUpSeen = GazetteerUpSeen.T
+    object GazetteerUpSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type FindId = FindId.T
     object FindId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotFoundId = NotFoundId.T

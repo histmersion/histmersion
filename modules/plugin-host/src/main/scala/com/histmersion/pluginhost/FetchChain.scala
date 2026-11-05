@@ -67,10 +67,10 @@ final class FetchChain(
           s"${FetchChain.describe(work)} only because acquire.allow-unauthorised = true"
       )
     val ctx = new com.histmersion.plugin.Fetch.Context:
-      def memo[A](key: String)(compute: => A): A = shared.get(key)(compute)
+      def memo[A](key: com.histmersion.pluginhost.FetchChain.AttemptMemoKey)(compute: => A): A = shared.get(key)(compute)
       val log: Plugin.Log = new Plugin.Log:
-        def info(message: String) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
-        def warn(message: String) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
+        def info(message: com.histmersion.pluginhost.FetchChain.AttemptInfoMessage) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
+        def warn(message: com.histmersion.pluginhost.FetchChain.AttemptWarnMessage) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
       override def registered(pluginId: String): Boolean = FetchChain.this.registered(pluginId)
     val answer =
       try s.fetcher.fetch(work, ctx)
@@ -92,6 +92,13 @@ final class FetchChain(
 object FetchChain:
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
+  type AttemptMemoKey = AttemptMemoKey.T
+  object AttemptMemoKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptInfoMessage = AttemptInfoMessage.T
+  object AttemptInfoMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptWarnMessage = AttemptWarnMessage.T
+  object AttemptWarnMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LooksLikePdfB = LooksLikePdfB.T
   object LooksLikePdfB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

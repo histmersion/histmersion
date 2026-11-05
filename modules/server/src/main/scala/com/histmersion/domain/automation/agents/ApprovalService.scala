@@ -386,7 +386,7 @@ object ApprovalService:
         before: Option[com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageBefore],
         upTo: Option[com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageUpTo]
     ): Either[com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageResultPart1, (List[ApprovalInfo], com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageResultPart2Part2)] =
-      def cursor(c: String): Either[String, ApprovalRecord] =
+      def cursor(c: com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageCursorC): Either[com.histmersion.domain.automation.agents.ApprovalService.InMemory.ApprovalPageCursorResultPart1, ApprovalRecord] =
         c.trim.toLongOption.flatMap(id => rows.find(_.id == id)).toRight(s"No approval '$c' to page from")
       for
         b <- before.fold(Right(None))(cursor(_).map(Some(_)))
@@ -534,6 +534,11 @@ object ApprovalService:
       val _ = change(_.id == id)(_.modify(_.state).setTo(to.wire).modify(_.result).setTo(Some(result)))
 
   object InMemory:
+    type ApprovalPageCursorResultPart1 = ApprovalPageCursorResultPart1.T
+    object ApprovalPageCursorResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalPageCursorC = ApprovalPageCursorC.T
+    object ApprovalPageCursorC extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ApprovalInId = ApprovalInId.T
     object ApprovalInId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PayloadResult = PayloadResult.T

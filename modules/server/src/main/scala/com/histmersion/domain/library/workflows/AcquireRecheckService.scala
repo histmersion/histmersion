@@ -315,7 +315,7 @@ final class AcquireRecheckService(
         )
         progress(AcquireRecheck.progressLine(start))
         @annotation.tailrec
-        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[String]) =
+        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[com.histmersion.domain.library.workflows.AcquireRecheckService.RunJobLoopResultPart3]) =
           left match
             case Nil                          => (t, rows, None)
             case _ if agents.drain.draining   => (t, rows, Some(AcquireRecheck.StoppedDraining))
@@ -465,7 +465,7 @@ final class AcquireRecheckService(
     Tried(RecheckRow(f.item.id, Some(doi), outcome.wire, why, ck), outcome, detail)
 
   private def summary(r: RecheckResult): com.histmersion.domain.library.workflows.AcquireRecheckService.SummaryResult =
-    def ids(a: String) =
+    def ids(a: com.histmersion.domain.library.workflows.AcquireRecheckService.SummaryIdsA) =
       r.rows.filter(_.action == a).map(row => s"#${row.item}${row.citekey.fold("")(c => s" [[$c]]")}")
     val parts = List(
       Option.when(r.closed > 0)(s"${r.closed} closed (in the corpus already: ${ids(Closed).mkString(", ")})"),
@@ -490,7 +490,7 @@ final class AcquireRecheckService(
       val (tried, fetchedToday) = triedToday(now)
       val week = checks.countSince(now.minusSeconds(7L * 86400L))
       val room = AcquireRecheck.allowance(s, tried, shared(now, fetchedToday))
-      val next: Option[String] =
+      val next: Option[com.histmersion.domain.library.workflows.AcquireRecheckService.StatusNext] =
         if dueNow.isEmpty then
           AcquireRecheck
             .nextDue(
@@ -551,6 +551,13 @@ final class AcquireRecheckService(
   def fetchedToday(now: Instant): com.histmersion.domain.library.workflows.AcquireRecheckService.FetchedTodayResult = triedToday(now)._2
 
 object AcquireRecheckService:
+  type RunJobLoopResultPart3 = RunJobLoopResultPart3.T
+  object RunJobLoopResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryIdsA = SummaryIdsA.T
+  object SummaryIdsA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNext = StatusNext.T
+  object StatusNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type JobRunningResult = JobRunningResult.T
   object JobRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FactsOnly = FactsOnly.T

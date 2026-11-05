@@ -4,6 +4,13 @@ import com.histmersion.api.given
 import com.histmersion.api.research.Article
 
 object AgentsMarkdown:
+  type CompareTableResult = CompareTableResult.T
+  object CompareTableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareTableRowsPart1 = CompareTableRowsPart1.T
+  object CompareTableRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareTableRowsPart2 = CompareTableRowsPart2.T
+  object CompareTableRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UsdResult = UsdResult.T
   object UsdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UsdD = UsdD.T
@@ -562,7 +569,7 @@ object AgentsMarkdown:
   def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*
     val ids = c.runs.map(_.id.take(8))
-    def table(rows: List[(String, List[String])]): String =
+    def table(rows: List[(com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1, List[com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2])]): com.histmersion.api.automation.AgentsMarkdown.CompareTableResult =
       s"| | ${ids.mkString(" | ")} |\n|---|${ids.map(_ => "---").mkString("|")}|\n" +
         rows.map((k, vs) => s"| $k | ${vs.map(cell).mkString(" | ")} |").mkString("\n")
     val runs = table(

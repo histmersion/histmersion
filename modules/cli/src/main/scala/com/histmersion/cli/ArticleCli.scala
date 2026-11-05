@@ -37,6 +37,19 @@ object ArticleCli:
     * directory itself (articles are then one level up). Anything else is treated as a plain directory of notes, as
     * before.
     */
+  type ImportAllLoopRestPart2 = ImportAllLoopRestPart2.T
+  object ImportAllLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllLoopNumber = ImportAllLoopNumber.T
+  object ImportAllLoopNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllLoopImported = ImportAllLoopImported.T
+  object ImportAllLoopImported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllLoopFailed = ImportAllLoopFailed.T
+  object ImportAllLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllLoopSkipped = ImportAllLoopSkipped.T
+  object ImportAllLoopSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReadF = CheckReadF.T
+  object CheckReadF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FilesResultPart2 = FilesResultPart2.T
   object FilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilesSkip = FilesSkip.T
@@ -128,11 +141,11 @@ object ArticleCli:
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
     @tailrec def loop(
-        rest: List[(Path, String)],
-        number: Int,
-        imported: Int,
-        failed: List[String],
-        skipped: List[String]
+        rest: List[(Path, com.histmersion.cli.ArticleCli.ImportAllLoopRestPart2)],
+        number: com.histmersion.cli.ArticleCli.ImportAllLoopNumber,
+        imported: com.histmersion.cli.ArticleCli.ImportAllLoopImported,
+        failed: List[com.histmersion.cli.ArticleCli.ImportAllLoopFailed],
+        skipped: List[com.histmersion.cli.ArticleCli.ImportAllLoopSkipped]
     )(using console: Console): SeedResult =
       rest match
         case Nil               => SeedResult(imported, failed, 0, skipped)
@@ -289,7 +302,7 @@ object ArticleCli:
         .orNone,
       Output.jsonFlag
     ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
-      def read(f: String) =
+      def read(f: com.histmersion.cli.ArticleCli.CheckReadF) =
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Files.readString(p))
         else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))

@@ -31,6 +31,43 @@ import scala.util.control.NonFatal
   */
 object PluginHost:
 
+  type DiscoverLoopResultPart2 = DiscoverLoopResultPart2.T
+  object DiscoverLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverLoopErrs = DiscoverLoopErrs.T
+  object DiscoverLoopErrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverLoopLoadedPart1Part1 = DiscoverLoopLoadedPart1Part1.T
+  object DiscoverLoopLoadedPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAllOneR = ResolveAllOneR.T
+  object ResolveAllOneR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildStatusEnabled = BuildStatusEnabled.T
+  object BuildStatusEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildStatusError = BuildStatusError.T
+  object BuildStatusError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildStatusProvides = BuildStatusProvides.T
+  object BuildStatusProvides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildStatusWarns = BuildStatusWarns.T
+  object BuildStatusWarns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPreparedPart1 = BuildPreparedPart1.T
+  object BuildPreparedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesResultPart2Part1 = BuildPassesResultPart2Part1.T
+  object BuildPassesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesDonePart1 = BuildPassesDonePart1.T
+  object BuildPassesDonePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesPassResultPart2Part1 = BuildPassesPassResultPart2Part1.T
+  object BuildPassesPassResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesPassResultPart4 = BuildPassesPassResultPart4.T
+  object BuildPassesPassResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesPassDsPart1 = BuildPassesPassDsPart1.T
+  object BuildPassesPassDsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassesPassProg = BuildPassesPassProg.T
+  object BuildPassesPassProg extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterResolvedResultPart1 = RegisterResolvedResultPart1.T
+  object RegisterResolvedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterResolvedResultPart2 = RegisterResolvedResultPart2.T
+  object RegisterResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterFailE = RegisterFailE.T
+  object RegisterFailE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SpiGeneration = SpiGeneration.T
   object SpiGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DiscoverResultPart2 = DiscoverResultPart2.T
@@ -191,13 +228,13 @@ object PluginHost:
     val it = ServiceLoader.load(classOf[Plugin], loader).iterator
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
     @annotation.tailrec
-    def loop(acc: List[Plugin], errs: List[String]): (List[Plugin], List[String]) =
+    def loop(acc: List[Plugin], errs: List[com.histmersion.pluginhost.PluginHost.DiscoverLoopErrs]): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.DiscoverLoopResultPart2]) =
       val step =
         try Right(if it.hasNext then Some(it.next()) else None)
         catch
           case e: LinkageError => Left(e)
           case NonFatal(e)     => Left(e)
-      val loaded: Either[(Option[String], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
+      val loaded: Either[(Option[com.histmersion.pluginhost.PluginHost.DiscoverLoopLoadedPart1Part1], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
         case Some(p) => described(p).left.map(e => Some(p.getClass.getName) -> e).map(Some(_))
         case None    => Right(None)
       }
@@ -488,7 +525,7 @@ object PluginHost:
     */
   def resolveAll(name: com.histmersion.pluginhost.PluginHost.ResolveAllName, refs: List[com.histmersion.pluginhost.PluginHost.ResolveAllRefs], vault: Secret.Vault): Map[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart1, Either[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part1, com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part2]] =
     val asked = refs.distinct
-    def one(r: String) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
+    def one(r: com.histmersion.pluginhost.PluginHost.ResolveAllOneR) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
       val answers = Option(vault.resolveAll(asked)).getOrElse(Map.empty)
       asked.map { r =>
@@ -748,12 +785,12 @@ object PluginHost:
     val byId = accepted.map(p => p.info.id -> p).toMap
     def status(
         p: Plugin,
-        enabled: Boolean,
+        enabled: com.histmersion.pluginhost.PluginHost.BuildStatusEnabled,
         state: PluginState,
         block: Option[Config] = None,
-        error: Option[String] = None,
-        provides: List[String] = Nil,
-        warns: List[String] = Nil
+        error: Option[com.histmersion.pluginhost.PluginHost.BuildStatusError] = None,
+        provides: List[com.histmersion.pluginhost.PluginHost.BuildStatusProvides] = Nil,
+        warns: List[com.histmersion.pluginhost.PluginHost.BuildStatusWarns] = Nil
     ) =
       PluginStatus(
         p.info.id,
@@ -768,7 +805,7 @@ object PluginHost:
       )
 
     // the config of every accepted plugin, in order
-    val prepared: List[(String, Either[PluginStatus, Prepared])] = ordered.map { id =>
+    val prepared: List[(com.histmersion.pluginhost.PluginHost.BuildPreparedPart1, Either[PluginStatus, Prepared])] = ordered.map { id =>
       val p = byId(id)
       val r = carried.get(id) match
         case Some((st, _)) if st.state != PluginState.Registered.wire => Left(st)
@@ -812,16 +849,16 @@ object PluginHost:
     def passes(
         waiting: List[Prepared],
         regs: Registries,
-        done: Map[String, (PluginStatus, Registries)]
-    ): (Registries, Map[String, (PluginStatus, Registries)]) =
+        done: Map[com.histmersion.pluginhost.PluginHost.BuildPassesDonePart1, (PluginStatus, Registries)]
+    ): (Registries, Map[com.histmersion.pluginhost.PluginHost.BuildPassesResultPart2Part1, (PluginStatus, Registries)]) =
       @annotation.tailrec
       def pass(
           rest: List[Prepared],
           rs: Registries,
-          ds: Map[String, (PluginStatus, Registries)],
+          ds: Map[com.histmersion.pluginhost.PluginHost.BuildPassesPassDsPart1, (PluginStatus, Registries)],
           left: List[Prepared],
-          prog: Boolean
-      ): (Registries, Map[String, (PluginStatus, Registries)], List[Prepared], Boolean) =
+          prog: com.histmersion.pluginhost.PluginHost.BuildPassesPassProg
+      ): (Registries, Map[com.histmersion.pluginhost.PluginHost.BuildPassesPassResultPart2Part1, (PluginStatus, Registries)], List[Prepared], com.histmersion.pluginhost.PluginHost.BuildPassesPassResultPart4) =
         rest match
           case Nil        => (rs, ds, left, prog)
           case pr :: tail =>
@@ -892,7 +929,7 @@ object PluginHost:
   ): (PluginStatus, Registries) =
     val p = pr.p
     val id = p.info.id
-    def resolved(s: Secret): Either[String, String] = secrets(s.ref, regs.secretVaults)
+    def resolved(s: Secret): Either[com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart1, com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart2] = secrets(s.ref, regs.secretVaults)
     val literal = pr.secrets.exists(_.ref.isInstanceOf[Secret.Ref.Value])
     val warns = if !literal then Nil
     else
@@ -901,7 +938,7 @@ object PluginHost:
           "use env:<NAME> or a vault reference"
       )
     warns.foreach(w => services.log(id, true, w))
-    def fail(e: String) =
+    def fail(e: com.histmersion.pluginhost.PluginHost.RegisterFailE) =
       (
         PluginStatus(
           id,

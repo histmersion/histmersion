@@ -3,6 +3,15 @@ package com.histmersion.api.catalogue
 import com.histmersion.api.{TimeSpan, YearFmt, Years}
 import com.histmersion.api.given
 object EventPrecision:
+  type UncertaintyA2Y = UncertaintyA2Y.T
+  object UncertaintyA2Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertaintyWidthResult = UncertaintyWidthResult.T
+  object UncertaintyWidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertaintyWidthX = UncertaintyWidthX.T
+  object UncertaintyWidthX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertaintyWidthY = UncertaintyWidthY.T
+  object UncertaintyWidthY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type All = All.T
   object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PreciseUpTo = PreciseUpTo.T
@@ -52,8 +61,8 @@ object EventPrecision:
   /** Widths are taken in astronomical years: historical years have no year 0. */
   def uncertainty(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus]): Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyResult] =
     ts.outer.map { (a, b) =>
-      def a2(y: Long) = Years.toAstronomical(y)
-      def width(x: Option[Long], y: Option[Long]): Long = (for p <- x; q <- y yield a2(q) - a2(p)).getOrElse(0L).max(0)
+      def a2(y: com.histmersion.api.catalogue.EventPrecision.UncertaintyA2Y) = Years.toAstronomical(y)
+      def width(x: Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyWidthX], y: Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyWidthY]): com.histmersion.api.catalogue.EventPrecision.UncertaintyWidthResult = (for p <- x; q <- y yield a2(q) - a2(p)).getOrElse(0L).max(0)
       val derived =
         if ts.beginBy.isEmpty && ts.endFrom.isEmpty then (a2(b) - a2(a)).abs / 2
         else width(ts.notBefore, ts.beginBy).max(width(ts.endFrom, ts.notAfter)) / 2

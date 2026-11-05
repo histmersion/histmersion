@@ -15,6 +15,13 @@ object Mvt:
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
     */
+  type ThinLayerKindResult = ThinLayerKindResult.T
+  object ThinLayerKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThinLayerGeomTypeResult = ThinLayerGeomTypeResult.T
+  object ThinLayerGeomTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThinLayerDroppedResult = ThinLayerDroppedResult.T
+  object ThinLayerDroppedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FieldsB = FieldsB.T
   object FieldsB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StringB = StringB.T
@@ -285,18 +292,18 @@ object Mvt:
     val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(b, _))
     val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(b, v))
     val kindKey = keys.indexOf("kind")
-    def kind(feature: Field): Option[String] =
+    def kind(feature: Field): Option[com.histmersion.util.basemap.Mvt.ThinLayerKindResult] =
       if kindKey < 0 then None
       else
         tags(b, feature).grouped(2).collectFirst { case Vector(k, v) if k == kindKey => values.lift(v).flatten }.flatten
-    def geomType(feature: Field): Int =
+    def geomType(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerGeomTypeResult =
       fields(b, feature.payloadStart, feature.end)
         .find(f => f.number == 3 && f.wireType == 0)
         .map { f =>
           val r = Reader(b, f.start, f.end); r.varint(); r.varint().toInt
         }
         .getOrElse(0)
-    def dropped(feature: Field): Boolean =
+    def dropped(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerDroppedResult =
       !rule.keeps(kind(feature)) || (rule.geoms.nonEmpty && !rule.geoms(geomType(feature)))
     val features = fs.filter(f => f.number == 2 && f.wireType == 2)
     val gone = features.filter(dropped).map(_.start).toSet

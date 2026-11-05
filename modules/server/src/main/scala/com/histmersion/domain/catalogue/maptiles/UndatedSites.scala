@@ -114,14 +114,14 @@ object UndatedSites:
 
     private def square(gx: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareGx, gy: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareGy, in: List[(UndatedSite, com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareInPart2, com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareInPart3)]): GridCell =
       @tailrec def loop(
-          rest: List[(UndatedSite, Double, Double)],
-          sx: Double,
-          sy: Double,
-          w: Double,
-          s: Double,
-          e: Double,
-          n: Double,
-          one: String
+          rest: List[(UndatedSite, com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopRestPart2, com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopRestPart3)],
+          sx: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopSx,
+          sy: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopSy,
+          w: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopW,
+          s: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopS,
+          e: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopE,
+          n: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopN,
+          one: com.histmersion.domain.catalogue.maptiles.UndatedSites.InMemory.SquareLoopOne
       ): GridCell = rest match
         case (site, px, py) :: tail =>
           loop(
@@ -155,6 +155,25 @@ object UndatedSites:
       }
 
   object InMemory:
+    type SquareLoopRestPart2 = SquareLoopRestPart2.T
+    object SquareLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopRestPart3 = SquareLoopRestPart3.T
+    object SquareLoopRestPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopSx = SquareLoopSx.T
+    object SquareLoopSx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopSy = SquareLoopSy.T
+    object SquareLoopSy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopW = SquareLoopW.T
+    object SquareLoopW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopS = SquareLoopS.T
+    object SquareLoopS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopE = SquareLoopE.T
+    object SquareLoopE extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopN = SquareLoopN.T
+    object SquareLoopN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SquareLoopOne = SquareLoopOne.T
+    object SquareLoopOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type InTileResultPart2 = InTileResultPart2.T
     object InTileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type InTileResultPart3 = InTileResultPart3.T

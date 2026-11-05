@@ -34,10 +34,13 @@ trait Blob:
   final def asSource: ByteSource =
     val blob = this
     new ByteSource:
-      def size: Long = blob.size.value
+      def size: com.histmersion.util.storage.Blob.AsSourceSizeResult = blob.size.value
       def open(): InputStream = blob.open()
 
 object Blob:
+  type AsSourceSizeResult = AsSourceSizeResult.T
+  object AsSourceSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BytesResult = BytesResult.T
   object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadAtResult = ReadAtResult.T

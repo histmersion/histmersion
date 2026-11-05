@@ -139,7 +139,7 @@ object PeriodService:
     def children(id: com.histmersion.domain.catalogue.periods.PeriodService.InMemory.ChildrenId): List[HistoricalPeriod] = ordered(all.filter(_.parentId.contains(id)))
 
     def search(q: PeriodSearch): List[HistoricalPeriod] =
-      def lower(s: String) = s.toLowerCase(Locale.ROOT)
+      def lower(s: com.histmersion.domain.catalogue.periods.PeriodService.InMemory.SearchLowerS) = s.toLowerCase(Locale.ROOT)
       val text = q.text.map(_.trim).filter(_.nonEmpty).map(lower)
       val region = q.region.map(_.trim).filter(_.nonEmpty).map(lower)
       ordered(all.filter { p =>
@@ -196,6 +196,9 @@ object PeriodService:
       val _ = state.updateAndGet(_.modify(_.seedVersions).using(_.updated(name, version)))
 
   object InMemory:
+    type SearchLowerS = SearchLowerS.T
+    object SearchLowerS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GetId = GetId.T
     object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ChildrenId = ChildrenId.T

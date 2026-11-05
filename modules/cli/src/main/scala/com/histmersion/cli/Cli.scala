@@ -30,6 +30,15 @@ import com.histmersion.util.console.Console
   */
 object Cli:
 
+  type HostSeedLoopNumber = HostSeedLoopNumber.T
+  object HostSeedLoopNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostSeedLoopImported = HostSeedLoopImported.T
+  object HostSeedLoopImported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostSeedLoopFailed = HostSeedLoopFailed.T
+  object HostSeedLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostSeedLoopSkipped = HostSeedLoopSkipped.T
+  object HostSeedLoopSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HostSeedForce = HostSeedForce.T
   object HostSeedForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReindexLoopAfter = ReindexLoopAfter.T
@@ -139,10 +148,10 @@ object Cli:
     Cli.out.println(s"seeding $total note(s) from ${layout.sources}")
     @tailrec def loop(
         rest: List[Path],
-        number: Int,
-        imported: Int,
-        failed: List[String],
-        skipped: List[String]
+        number: com.histmersion.cli.Cli.HostSeedLoopNumber,
+        imported: com.histmersion.cli.Cli.HostSeedLoopImported,
+        failed: List[com.histmersion.cli.Cli.HostSeedLoopFailed],
+        skipped: List[com.histmersion.cli.Cli.HostSeedLoopSkipped]
     )(using console: Console): SeedResult =
       rest match
         case Nil       => SeedResult(imported, failed, 0, skipped)

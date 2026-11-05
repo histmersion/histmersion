@@ -16,6 +16,11 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 object AcquisitionSweepRules:
 
   /** A candidate a sweep found, as the ranking step sees it. */
+  type IngestOaLoopResultPart2Part2 = IngestOaLoopResultPart2Part2.T
+  object IngestOaLoopResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaLoopKoPart2 = IngestOaLoopKoPart2.T
+  object IngestOaLoopKoPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CandidatesResultPart2Part1 = CandidatesResultPart2Part1.T
   object CandidatesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CandidatesResultPart2Part2 = CandidatesResultPart2Part2.T
@@ -157,7 +162,7 @@ object AcquisitionSweepRules:
   def ingestOa[A, B](picks: List[A], isOa: A => com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIsOaResult, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaAllowed)(
       ingest: A => Either[com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIngestResultPart1, B]
   ): (List[(A, B)], List[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaResultPart2Part2)]) =
-    @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, String)]): (List[(A, B)], List[(A, String)]) =
+    @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaLoopKoPart2)]): (List[(A, B)], List[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaLoopResultPart2Part2)]) =
       rest match
         case p :: tail if ok.size < allowed =>
           ingest(p) match

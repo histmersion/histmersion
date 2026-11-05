@@ -11,6 +11,11 @@ object UndatedCells:
   /** The cells of tile `z`/`x`/`y` (`perSide` squares a side) from the `dated` and the `undated` counts: a square of
     * one site is that site, any other its count, with how many of it have no known date.
     */
+  type TotalLoopResult = TotalLoopResult.T
+  object TotalLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalLoopSum = TotalLoopSum.T
+  object TotalLoopSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MergeZ = MergeZ.T
   object MergeZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TotalResult = TotalResult.T
@@ -30,7 +35,7 @@ object UndatedCells:
 
   /** The total a tile would hold: every dated site and every undated one not counted among them. */
   def total(dated: List[GridCell], undated: List[GridCell]): com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalResult =
-    @tailrec def loop(rest: List[GridCell], sum: Long): Long = rest match
+    @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopSum): com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopResult = rest match
       case c :: tail => loop(tail, sum + c.n - c.dup)
       case Nil       => sum
     loop(dated, 0L) + undated.iterator.map(_.n.toLong).sum

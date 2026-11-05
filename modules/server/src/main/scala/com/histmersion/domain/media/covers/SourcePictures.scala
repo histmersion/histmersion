@@ -154,7 +154,7 @@ final class SourcePictures(
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
   private[covers] def sniff(b: com.histmersion.domain.media.covers.SourcePictures.SniffB): Option[com.histmersion.domain.media.covers.SourcePictures.SniffResult] =
-    def at(i: Int) = if b.length > i then b(i) & 0xff else -1
+    def at(i: com.histmersion.domain.media.covers.SourcePictures.SniffAtI) = if b.length > i then b(i) & 0xff else -1
     if at(0) == 0xff && at(1) == 0xd8 then Some("image/jpeg")
     else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some("image/png")
     else if at(0) == 'G' && at(1) == 'I' && at(2) == 'F' then Some("image/gif")
@@ -279,6 +279,9 @@ final class SourcePictures(
 
 object SourcePictures:
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
+  type SniffAtI = SniffAtI.T
+  object SniffAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ThumbnailBytes = ThumbnailBytes.T
   object ThumbnailBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbnailName = ThumbnailName.T

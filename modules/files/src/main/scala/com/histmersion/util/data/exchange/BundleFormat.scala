@@ -26,6 +26,9 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleFormat:
 
+  type CompatibleNumV = CompatibleNumV.T
+  object CompatibleNumV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Sha256HexBytes = Sha256HexBytes.T
   object Sha256HexBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HexBytes = HexBytes.T
@@ -172,7 +175,7 @@ object BundleFormat:
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
     */
   def compatible(m: Bundle.Manifest, serverSchema: Option[com.histmersion.util.data.exchange.BundleFormat.CompatibleServerSchema]): List[com.histmersion.util.data.exchange.BundleFormat.CompatibleResult] =
-    def num(v: String) = v.trim.toIntOption
+    def num(v: com.histmersion.util.data.exchange.BundleFormat.CompatibleNumV) = v.trim.toIntOption
     List(
       Option.when(m.format != Bundle.Format)(s"not a Histmersion bundle (format '${m.format}')"),
       Option.when(m.formatVersion > Bundle.FormatVersion)(

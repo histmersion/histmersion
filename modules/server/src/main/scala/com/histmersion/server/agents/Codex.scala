@@ -21,6 +21,11 @@ import scala.jdk.CollectionConverters.*
 object Codex:
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
+  type ParseFinalText = ParseFinalText.T
+  object ParseFinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseError = ParseError.T
+  object ParseError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SchemaJsonResult = SchemaJsonResult.T
   object SchemaJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OutputSchemaJsonResult = OutputSchemaJsonResult.T
@@ -109,9 +114,9 @@ object Codex:
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
-    var finalText: Option[String] = None
+    var finalText: Option[com.histmersion.server.agents.Codex.ParseFinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[String] = None
+    var error: Option[com.histmersion.server.agents.Codex.ParseError] = None
     var turns = 0
     events.foreach { e =>
       val c = e.hcursor

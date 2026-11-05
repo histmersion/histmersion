@@ -18,6 +18,31 @@ import com.histmersion.api.library.Finding
   * becomes ONE `SourcePatch`. The server runs the steps; every function here is pure and unit-tested.
   */
 object EnrichSource:
+  type WindowsWindowsResultPart1 = WindowsWindowsResultPart1.T
+  object WindowsWindowsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsResultPart2 = WindowsWindowsResultPart2.T
+  object WindowsWindowsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsRest = WindowsWindowsRest.T
+  object WindowsWindowsRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsAccPart1 = WindowsWindowsAccPart1.T
+  object WindowsWindowsAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsAccPart2 = WindowsWindowsAccPart2.T
+  object WindowsWindowsAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsBuf = WindowsWindowsBuf.T
+  object WindowsWindowsBuf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsBufHead = WindowsWindowsBufHead.T
+  object WindowsWindowsBufHead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsWindowsLastHead = WindowsWindowsLastHead.T
+  object WindowsWindowsLastHead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CenturyAsYearInMentionedY = CenturyAsYearInMentionedY.T
+  object CenturyAsYearInMentionedY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFindingsPerPart1 = CheckFindingsPerPart1.T
+  object CheckFindingsPerPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareMetadataSurnameResult = CompareMetadataSurnameResult.T
+  object CompareMetadataSurnameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareMetadataSurnameA = CompareMetadataSurnameA.T
+  object CompareMetadataSurnameA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WindowsBody = WindowsBody.T
   object WindowsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WindowsWindowChars = WindowsWindowChars.T
@@ -493,12 +518,12 @@ object EnrichSource:
       .flatMap(p => if p.length <= size then List(p) else p.grouped(size).toList)
     // fold paragraphs into windows, tracking the last heading seen
     @tailrec def windows(
-        rest: List[String],
-        acc: Vector[(Option[String], String)],
-        buf: String,
-        bufHead: Option[String],
-        lastHead: Option[String]
-    ): List[(Option[String], String)] =
+        rest: List[com.histmersion.domain.EnrichSource.WindowsWindowsRest],
+        acc: Vector[(Option[com.histmersion.domain.EnrichSource.WindowsWindowsAccPart1], com.histmersion.domain.EnrichSource.WindowsWindowsAccPart2)],
+        buf: com.histmersion.domain.EnrichSource.WindowsWindowsBuf,
+        bufHead: Option[com.histmersion.domain.EnrichSource.WindowsWindowsBufHead],
+        lastHead: Option[com.histmersion.domain.EnrichSource.WindowsWindowsLastHead]
+    ): List[(Option[com.histmersion.domain.EnrichSource.WindowsWindowsResultPart1], com.histmersion.domain.EnrichSource.WindowsWindowsResultPart2)] =
       rest match
         case Nil       => (if buf.isEmpty then acc else acc :+ (bufHead, buf)).toList
         case p :: tail =>
@@ -663,7 +688,7 @@ object EnrichSource:
     */
   def centuryAsYear(start: com.histmersion.domain.EnrichSource.CenturyAsYearStart, end: com.histmersion.domain.EnrichSource.CenturyAsYearEnd, text: com.histmersion.domain.EnrichSource.CenturyAsYearText, within: Option[Period], gap: com.histmersion.domain.EnrichSource.CenturyAsYearGap): Option[com.histmersion.domain.EnrichSource.CenturyAsYearResult] =
     val centuries = centuriesMentioned(text)
-    def inMentioned(y: Long) = centuries.exists { c =>
+    def inMentioned(y: com.histmersion.domain.EnrichSource.CenturyAsYearInMentionedY) = centuries.exists { c =>
       val a = math.abs(y)
       a >= (c - 1L) * 100 + 1 && a <= c * 100L
     }
@@ -720,7 +745,7 @@ object EnrichSource:
     val checked = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
       val label = s"finding ${i + 1} (${p.claim.take(60)})"
       val conf = AgentVerify.confidence(p.confidence)
-      val per: Either[String, Option[Period]] = (p.start, p.end) match
+      val per: Either[com.histmersion.domain.EnrichSource.CheckFindingsPerPart1, Option[Period]] = (p.start, p.end) match
         case (None, None)    => Right(None)
         case (Some(s), e)    => convert(StatedPeriod(s, e.getOrElse(s)), maxAbsYear, None).map(Some(_))
         case (None, Some(e)) => convert(StatedPeriod(e, e), maxAbsYear, None).map(Some(_))
@@ -851,7 +876,7 @@ object EnrichSource:
       year: Option[com.histmersion.Year],
       upstream: WorkRef
   ): List[com.histmersion.domain.EnrichSource.CompareMetadataResult] =
-    def surname(a: String): String =
+    def surname(a: com.histmersion.domain.EnrichSource.CompareMetadataSurnameA): com.histmersion.domain.EnrichSource.CompareMetadataSurnameResult =
       val t = a.trim
       val s = if t.contains(",") then t.takeWhile(_ != ',') else t.split("\\s+").lastOption.getOrElse(t)
       AgentVerify.normalise(s)

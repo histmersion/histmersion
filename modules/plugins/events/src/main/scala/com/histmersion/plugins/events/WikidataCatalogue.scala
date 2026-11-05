@@ -47,6 +47,13 @@ object WikidataCatalogue:
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).
     */
+  type ParseFirstK = ParseFirstK.T
+  object ParseFirstK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBoundDateKey = ParseBoundDateKey.T
+  object ParseBoundDateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBoundPrecKey = ParseBoundPrecKey.T
+  object ParseBoundPrecKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ClassesResultPart1 = ClassesResultPart1.T
   object ClassesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassesResultPart2 = ClassesResultPart2.T
@@ -141,8 +148,8 @@ object WikidataCatalogue:
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
           (uri, rs) =>
             val qid = uri.reverse.takeWhile(_ != '/').reverse
-            def first(k: String) = rs.flatMap(binding(_, k)).headOption
-            def bound(dateKey: String, precKey: String): Option[CatalogDating.Bound] =
+            def first(k: com.histmersion.plugins.events.WikidataCatalogue.ParseFirstK) = rs.flatMap(binding(_, k)).headOption
+            def bound(dateKey: com.histmersion.plugins.events.WikidataCatalogue.ParseBoundDateKey, precKey: com.histmersion.plugins.events.WikidataCatalogue.ParseBoundPrecKey): Option[CatalogDating.Bound] =
               rs.flatMap(r =>
                 binding(r, dateKey)
                   .flatMap(CatalogDating.isoYear)

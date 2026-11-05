@@ -115,7 +115,7 @@ final class PluginHarness private (
     */
   def workFromDoi(doi: com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiDoi): Either[com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiResultPart1, WorkKey] =
     val clean = doi.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
-    def json(url: String) = acquisition
+    def json(url: com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiJsonUrl) = acquisition
       .bytes(url)
       .flatMap(b =>
         io.circe.parser.parse(new String(b, UTF_8)).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}")
@@ -331,6 +331,11 @@ final class PluginHarness private (
 object PluginHarness:
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
+  type WorkFromDoiJsonUrl = WorkFromDoiJsonUrl.T
+  object WorkFromDoiJsonUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterSleepArg1 = RegisterSleepArg1.T
+  object RegisterSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Warnings = Warnings.T
@@ -604,7 +609,7 @@ object PluginHarness:
     val host = loaded.config
     val lines = Lines()
     val wire = Wire(mode, scrub)
-    val sleep: Long => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
+    val sleep: com.histmersion.plugin.testkit.PluginHarness.RegisterSleepArg1 => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
     val acquisition =
       PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), sleep, lines.host)
     val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)

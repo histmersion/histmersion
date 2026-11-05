@@ -22,6 +22,11 @@ import com.histmersion.api.research.Article
   */
 object PlanArticles:
 
+  type VerifyLoopAccPart2 = VerifyLoopAccPart2.T
+  object VerifyLoopAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyLoopDrop = VerifyLoopDrop.T
+  object VerifyLoopDrop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OverlapResult = OverlapResult.T
   object OverlapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OverlapMine = OverlapMine.T
@@ -189,8 +194,8 @@ object PlanArticles:
   ): ArticlePlan =
     @tailrec def loop(
         rest: List[Candidate],
-        acc: Vector[(ProposedArticle, Set[String])],
-        drop: Vector[String]
+        acc: Vector[(ProposedArticle, Set[com.histmersion.domain.PlanArticles.VerifyLoopAccPart2])],
+        drop: Vector[com.histmersion.domain.PlanArticles.VerifyLoopDrop]
     ): ArticlePlan =
       rest match
         case Nil       => ArticlePlan(goal, rationale.trim, acc.map(_._1).toList, dropped ++ drop)

@@ -42,6 +42,15 @@ import com.histmersion.util.console.Console
   */
 object CalibreCmd:
 
+  type UpdateHostUpdateCk = UpdateHostUpdateCk.T
+  object UpdateHostUpdateCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateHostUpdateJson = UpdateHostUpdateJson.T
+  object UpdateHostUpdateJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateHostUpdateAllApply = UpdateHostUpdateAllApply.T
+  object UpdateHostUpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateHostUpdateAllJson = UpdateHostUpdateAllJson.T
+  object UpdateHostUpdateAllJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FailMsg = FailMsg.T
   object FailMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HostSearchQ = HostSearchQ.T
@@ -601,7 +610,7 @@ object CalibreCmd:
     "update",
     "Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)"
   ) {
-    def hostUpdate(c: Client, ck: String, json: Boolean)(using console: Console) =
+    def hostUpdate(c: Client, ck: com.histmersion.cli.CalibreCmd.UpdateHostUpdateCk, json: com.histmersion.cli.CalibreCmd.UpdateHostUpdateJson)(using console: Console) =
       for
         s <- AcquireClient(c).calibreMeta(ck)
         id <- s.calibreId
@@ -612,7 +621,7 @@ object CalibreCmd:
         if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
         else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
       )
-    def hostUpdateAll(c: Client, apply: Boolean, json: Boolean)(using console: Console) =
+    def hostUpdateAll(c: Client, apply: com.histmersion.cli.CalibreCmd.UpdateHostUpdateAllApply, json: com.histmersion.cli.CalibreCmd.UpdateHostUpdateAllJson)(using console: Console) =
       for
         linked <- linkedRecords(c)
         entries <- calibre(c).updateAll(linked, apply).left.map(fail)

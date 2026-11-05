@@ -14,6 +14,11 @@ import scala.util.control.NonFatal
 object PluginGazetteers:
 
   /** The User-Agent of a gazetteer download (the outbound policy makes sure it names no person). */
+  type InputNamedWhy = InputNamedWhy.T
+  object InputNamedWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllLoopResultPart1 = AllLoopResultPart1.T
+  object AllLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardResultPart1 = GuardResultPart1.T
@@ -82,7 +87,7 @@ object PluginGazetteers:
       if p == null then Left("a place that is null")
       else
         val id = Option(p.id).getOrElse("")
-        def named(why: String) = s"place '$id': $why"
+        def named(why: com.histmersion.pluginhost.PluginGazetteers.InputNamedWhy) = s"place '$id': $why"
         if id.trim.isEmpty then Left("a place with no id")
         else if Option(p.kind).forall(_.trim.isEmpty) then Left(named("no kind"))
         else
@@ -150,7 +155,7 @@ object PluginGazetteers:
   /** Every element converted, or the first refusal. */
   private def all[A, B](as: List[A])(f: A => Either[com.histmersion.pluginhost.PluginGazetteers.AllFResultPart1, B]): Either[com.histmersion.pluginhost.PluginGazetteers.AllResultPart1, List[B]] =
     @annotation.tailrec
-    def loop(rest: List[A], acc: List[B]): Either[String, List[B]] = rest match
+    def loop(rest: List[A], acc: List[B]): Either[com.histmersion.pluginhost.PluginGazetteers.AllLoopResultPart1, List[B]] = rest match
       case Nil    => Right(acc.reverse)
       case h :: t =>
         f(h) match

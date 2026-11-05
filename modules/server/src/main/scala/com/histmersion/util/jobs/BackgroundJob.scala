@@ -28,6 +28,9 @@ import com.histmersion.api.Api
 object BackgroundJob:
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
+  type LaunchReportText = LaunchReportText.T
+  object LaunchReportText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BusyWhat = BusyWhat.T
   object BusyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BusyCurrent = BusyCurrent.T
@@ -192,7 +195,7 @@ object BackgroundJob:
     val work = pins.carryWork { () =>
       val last = AtomicReference[Option[String]](None)
       // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
-      def report(text: String): Unit =
+      def report(text: com.histmersion.util.jobs.BackgroundJob.LaunchReportText): Unit =
         last.set(Some(text))
         Transactor(ds).transact(JobRepo.progress(job.id, text))
         stops.flatMap(_.requestedFor(job.id)).foreach(stop => throw JobStopped(stop))

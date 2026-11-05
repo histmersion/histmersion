@@ -332,6 +332,11 @@ object Article:
 
   object Edits:
 
+    type ApplyAllLoopNumber = ApplyAllLoopNumber.T
+    object ApplyAllLoopNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyAllLoopCur = ApplyAllLoopCur.T
+    object ApplyAllLoopCur extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type SqueezeResultPart2 = SqueezeResultPart2.T
     object SqueezeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -587,7 +592,7 @@ object Article:
         edits: scala.List[EditAnswer],
         refuse: EditAnswer => Option[com.histmersion.api.research.Article.Edits.ApplyAllRefuseResult] = _ => None
     ): Applied =
-      @tailrec def loop(rest: scala.List[EditAnswer], number: Int, cur: String, acc: Vector[EditResult]): Applied =
+      @tailrec def loop(rest: scala.List[EditAnswer], number: com.histmersion.api.research.Article.Edits.ApplyAllLoopNumber, cur: com.histmersion.api.research.Article.Edits.ApplyAllLoopCur, acc: Vector[EditResult]): Applied =
         rest match
           case Nil       => Applied(cur, acc.toList)
           case a :: tail =>
@@ -696,7 +701,7 @@ object Article:
       )
 
     def line: com.histmersion.api.research.Article.Filter.LineResult =
-      def list(xs: scala.List[String]) = xs.map(Filter.quoted).mkString("[", ", ", "]")
+      def list(xs: scala.List[com.histmersion.api.research.Article.Filter.LineListXs]) = xs.map(Filter.quoted).mkString("[", ", ", "]")
       val parts = query.map(q => s"query: ${Filter.quoted(q)}").toList ++
         Option.when(topics.nonEmpty)(s"topics: ${list(topics)}") ++
         Option.when(tags.nonEmpty)(s"tags: ${list(tags)}") ++
@@ -707,6 +712,11 @@ object Article:
       s"search {${parts.mkString(", ")}}"
 
   object Filter:
+    type LineListXs = LineListXs.T
+    object LineListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NormaliseCleanXs = NormaliseCleanXs.T
+    object NormaliseCleanXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type IsEmptyResult = IsEmptyResult.T
     object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LineResult = LineResult.T
@@ -760,7 +770,7 @@ object Article:
     private[api] def quoted(s: com.histmersion.api.research.Article.Filter.QuotedS): com.histmersion.api.research.Article.Filter.QuotedResult = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
     def normalise(f: Filter): Either[com.histmersion.api.research.Article.Filter.NormaliseResultPart1, Option[Filter]] =
-      def clean(xs: scala.List[String]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty).distinct
+      def clean(xs: scala.List[com.histmersion.api.research.Article.Filter.NormaliseCleanXs]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty).distinct
       val status = clean(f.status).map(_.toLowerCase(java.util.Locale.ROOT))
       val unknown = status.filterNot(s => Source.Status.values.exists(_.wire == s))
       val tidy = Filter(

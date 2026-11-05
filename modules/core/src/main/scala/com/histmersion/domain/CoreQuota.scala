@@ -27,6 +27,9 @@ import scala.util.Try
 object CoreQuota:
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
+  type ObserveIntName = ObserveIntName.T
+  object ObserveIntName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ObserveCode = ObserveCode.T
   object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ObserveHeadersPart1 = ObserveHeadersPart1.T
@@ -215,7 +218,7 @@ object CoreQuota:
     * from now. A block is only ever lengthened by an answer.
     */
   def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
-    def int(name: String) = headers.get(name).flatMap(_.trim.toIntOption)
+    def int(name: com.histmersion.domain.CoreQuota.ObserveIntName) = headers.get(name).flatMap(_.trim.toIntOption)
     val window = Window(int("x-ratelimit-limit"), int("x-ratelimit-remaining"), now)
     val retry = retryAt(headers.get("x-ratelimit-retry-after"), now).orElse(retryAt(headers.get("retry-after"), now))
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.toLong.max(1L))

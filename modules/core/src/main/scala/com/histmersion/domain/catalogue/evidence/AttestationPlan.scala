@@ -62,7 +62,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       bodyIssue: Option[String],
       q: PairQuestions
   ): Unit =
-    val alternatives: List[(Option[MergeDecision.Kind], Option[String], Option[IssueCondition])] = bodyIssue match
+    val alternatives: List[(Option[MergeDecision.Kind], Option[com.histmersion.domain.catalogue.evidence.AttestationPlan.PairAlternativesPart2], Option[IssueCondition])] = bodyIssue match
       case Some(b) =>
         List(
           (Some(km.KeepLeft), l.bodySha256, Some(IssueCondition(b, km.KeepLeft))),
@@ -154,7 +154,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   ): Unit =
     val tries = anchors.get(r.uid).flatMap(_.get(alt)).getOrElse(Nil)
     val localAtts = localAttsOf.getOrElse(l.uid, Nil)
-    def targetKey(t: com.histmersion.api.exchange.Bundle.Attestation): String =
+    def targetKey(t: com.histmersion.api.exchange.Bundle.Attestation): com.histmersion.domain.catalogue.evidence.AttestationPlan.FoldPairTargetKeyResult =
       t.targetUid.map(u => f.foldedTo(u).getOrElse(f.toLocal(u)).toString).getOrElse(t.targetId)
     foreignAttsOf(f.here, f.toLocal).getOrElse(r.uid, Nil).foreach { t =>
       localAtts.find(x => x.targetType == t.targetType && targetKey(x) == targetKey(t) && x.quote == t.quote) match
@@ -202,6 +202,11 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 object AttestationPlan:
 
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
+  type PairAlternativesPart2 = PairAlternativesPart2.T
+  object PairAlternativesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldPairTargetKeyResult = FoldPairTargetKeyResult.T
+  object FoldPairTargetKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ForeignAttsOfHereResult = ForeignAttsOfHereResult.T
   object ForeignAttsOfHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AnchoredResult = AnchoredResult.T

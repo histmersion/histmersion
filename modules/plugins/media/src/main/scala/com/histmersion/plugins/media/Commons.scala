@@ -12,6 +12,9 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 object Commons:
 
   /** The `extmetadata` fields read — and asked for, so the answer stays small. */
+  type ImageInfoEntryPart1 = ImageInfoEntryPart1.T
+  object ImageInfoEntryPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MetaFields = MetaFields.T
   object MetaFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileTitleResult = FileTitleResult.T
@@ -96,7 +99,7 @@ object Commons:
           val h = p.hcursor
           val title = h.get[String]("title").getOrElse("")
           val info = h.downField("imageinfo").downArray
-          val entry: Either[String, com.histmersion.plugins.media.Commons.File] =
+          val entry: Either[com.histmersion.plugins.media.Commons.ImageInfoEntryPart1, com.histmersion.plugins.media.Commons.File] =
             if h.downField("missing").focus.isDefined || h.downField("invalid").focus.isDefined || info.focus.isEmpty
             then Left("missing on Commons")
             else
@@ -180,7 +183,7 @@ object Commons:
           .askJson(WikidataEntities.url(wikidata.apiUrl, ids, wikidata.maxlag))
           .flatMap(WikidataEntities.items(_, Set("P18")))
       }
-      val workImage: Map[String, String] = workAnswers
+      val workImage: Map[com.histmersion.plugins.media.Commons.Depictions.SearchTargetsWorkImagePart1, com.histmersion.plugins.media.Commons.Depictions.SearchTargetsWorkImagePart2] = workAnswers
         .flatMap(_._2.toOption)
         .flatMap(_.toList)
         .flatMap((q, item) =>
@@ -236,6 +239,12 @@ object Commons:
 
     override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
       Files(http, media, licences).thumbnails(items)
+
+  object Depictions:
+    type SearchTargetsWorkImagePart1 = SearchTargetsWorkImagePart1.T
+    object SearchTargetsWorkImagePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchTargetsWorkImagePart2 = SearchTargetsWorkImagePart2.T
+    object SearchTargetsWorkImagePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Wikimedia Commons files that DEPICT an event: structured data's `P180 depicts` searched by CirrusSearch's
     * documented `haswbstatement` keyword through the action API (no login), and Wikidata's `P1299 depicted by` on the
@@ -401,7 +410,7 @@ object Commons:
         case None              => bare
         case Some(Left(why))   => bare.copy(rights = Left(why))
         case Some(Right(info)) =>
-          def field(k: String) = info.meta.get(k).map(MediaText.plain(_)).filter(_.nonEmpty)
+          def field(k: com.histmersion.plugins.media.Commons.Files.ItemFieldK) = info.meta.get(k).map(MediaText.plain(_)).filter(_.nonEmpty)
           val licence = licences.readFirst(info.meta.get("License").toList ++ field("LicenseShortName").toList)
           val required = info.meta.get("AttributionRequired").exists(_.trim.equalsIgnoreCase("true")) ||
             licence.needsAttribution
@@ -459,6 +468,9 @@ object Commons:
       )
 
   object Files:
+    type ItemFieldK = ItemFieldK.T
+    object ItemFieldK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ImageInfoResultPart1Part1 = ImageInfoResultPart1Part1.T
     object ImageInfoResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ImageInfoResultPart1Part2Part1 = ImageInfoResultPart1Part2Part1.T

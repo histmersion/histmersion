@@ -4,6 +4,13 @@ import com.histmersion.api.Plural
 /** The collections' answers as Markdown, for the CLI and the MCP tools alike. */
 object CollectionsMarkdown:
 
+  type GapsEscS = GapsEscS.T
+  object GapsEscS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateAllCellS = UpdateAllCellS.T
+  object UpdateAllCellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuditCellS = AuditCellS.T
+  object AuditCellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CollectionsResult = CollectionsResult.T
   object CollectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionResult = CollectionResult.T
@@ -95,7 +102,7 @@ object CollectionsMarkdown:
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
   def gaps(rows: List[CollectionGapRow]): com.histmersion.api.library.CollectionsMarkdown.GapsResult =
-    def esc(s: String) = s.replace("|", "\\|").replace("\n", " ").trim
+    def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = s.replace("|", "\\|").replace("\n", " ").trim
     val counted = rows.filter(_.counted)
     val missing = rows.count(_.original == "none")
     val head =
@@ -137,7 +144,7 @@ object CollectionsMarkdown:
 
   /** An update of every linked item: what changes (or changed), then what was left alone and why. */
   def updateAll(rows: List[CollectionUpdateRow], applied: com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied): com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult =
-    def cell(s: String) = s.replace("|", "\\|").replace("\n", " ").take(80)
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS) = s.replace("|", "\\|").replace("\n", " ").take(80)
     val changing = rows.collect {
       case r if r.state == "would-change" => (r, "")
       case r if r.state == "updated"      => (r, "written")
@@ -173,7 +180,7 @@ object CollectionsMarkdown:
 
   /** An audit: the linked items that disagree with their records. */
   def audit(a: CollectionAudit): com.histmersion.api.library.CollectionsMarkdown.AuditResult =
-    def cell(s: String) = s.replace("|", "\\|").replace("\n", " ").take(90)
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.AuditCellS) = s.replace("|", "\\|").replace("\n", " ").take(90)
     def view(v: CollectionRecordView) = s"${v.title} — ${v.authors.mkString("; ")}${v.year.fold("")(y => s" ($y)")}"
     if a.findings.isEmpty then s"_All ${a.checked} linked Calibre entries agree with the corpus._"
     else

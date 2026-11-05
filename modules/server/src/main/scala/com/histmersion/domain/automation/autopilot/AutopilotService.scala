@@ -426,7 +426,7 @@ final class AutopilotService(
       )
     }
     val caps = cfg.approvals.auto
-    def rule(k: Agents.ApprovalKind, cap: String) =
+    def rule(k: Agents.ApprovalKind, cap: com.histmersion.domain.automation.autopilot.AutopilotService.StatusRuleCap) =
       ApprovalRule(
         k.wire,
         if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then "checked"
@@ -480,6 +480,9 @@ final class AutopilotService(
     agents.workflows.managerKinds.foldLeft(st)((s, k) => k.status(s, now))
 
 object AutopilotService:
+  type StatusRuleCap = StatusRuleCap.T
+  object StatusRuleCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OnResult = OnResult.T
   object OnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestCapResult = IngestCapResult.T

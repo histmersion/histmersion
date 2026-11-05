@@ -15,6 +15,13 @@ import sttp.tapir.Schema
 
 object Gazetteer:
 
+  type DatasetPickResult = DatasetPickResult.T
+  object DatasetPickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowGetResult = FromTsvRowGetResult.T
+  object FromTsvRowGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowGetK = FromTsvRowGetK.T
+  object FromTsvRowGetK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SourceKeyResult = SourceKeyResult.T
   object SourceKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceKeyDataset = SourceKeyDataset.T
@@ -293,7 +300,7 @@ object Gazetteer:
     }
 
   def dataset(top: JsonObject, sidecar: Option[JsonObject] = None): LpfDataset =
-    def pick(keys: String*): Option[String] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
+    def pick(keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.DatasetPickResult] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
     val when = sidecar.flatMap(_("when")).orElse(top("when")).fold(Span.always)(span)
     LpfDataset(
       pick("title", "name", "label"),
@@ -315,7 +322,7 @@ object Gazetteer:
   ): Either[com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1, GazRecord] =
     val row =
       header.map(_.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map(_.trim) ++ List.fill(header.size)("")).toMap
-    def get(k: String): Option[String] = row.get(k).filter(_.nonEmpty)
+    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get(k).filter(_.nonEmpty)
     (get("id"), get("title")) match
       case (None, _)                => Left(s"line $line: no id")
       case (_, None)                => Left(s"line $line: no title")

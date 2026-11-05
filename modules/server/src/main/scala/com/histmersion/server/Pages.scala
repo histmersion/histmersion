@@ -18,6 +18,15 @@ import com.histmersion.api.research.Article
   * done by [[PageBuilder]]) into the [[HtmlRender]] anchors.
   */
 object Pages:
+  type SourceHtmlResult = SourceHtmlResult.T
+  object SourceHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceHtmlMd = SourceHtmlMd.T
+  object SourceHtmlMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationsBlockAnchor = CitationsBlockAnchor.T
+  object CitationsBlockAnchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationsBlockTitle = CitationsBlockTitle.T
+  object CitationsBlockTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LinkProseResult = LinkProseResult.T
   object LinkProseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProseMd = LinkProseMd.T
@@ -174,7 +183,7 @@ object Pages:
     ).collect { case (l, c) if c.nonEmpty => s"""<p class="src-chips"><span class="lbl">$l</span> $c</p>""" }
     // the figure pipeline of plan §1.8 (legacy `figures/…` links, numbering, served paths, lazy
     // images) runs over every Markdown part of a source, as it did when the page was one document
-    def html(md: String): String =
+    def html(md: com.histmersion.server.Pages.SourceHtmlMd): com.histmersion.server.Pages.SourceHtmlResult =
       val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(linkProse(md, links)))
       AssetLinks.lazyImages(MarkdownHtml.render(AssetLinks.toWeb(linked, r.citekey)))
     val prose = (md: Option[String]) => md.map(_.trim).filter(_.nonEmpty).map(html)
@@ -204,7 +213,7 @@ object Pages:
 
   /** "Cites" and "Cited by", each omitted when empty — and nothing at all when both are. */
   def citations(cites: List[Citation], citedBy: List[Citation]): com.histmersion.server.Pages.CitationsResult =
-    def block(anchor: String, title: String, cs: List[Citation]) =
+    def block(anchor: com.histmersion.server.Pages.CitationsBlockAnchor, title: com.histmersion.server.Pages.CitationsBlockTitle, cs: List[Citation]) =
       if cs.isEmpty then ""
       else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
     block("cites", "Cites", cites) + block("cited-by", "Cited by", citedBy)

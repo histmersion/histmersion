@@ -147,12 +147,12 @@ final class SchedulerService(
         .filterNot(_.kind == OaIngest)
         .filter(i => i.notBefore.flatMap(ManagerPolicy.parseInstant).forall(!_.isAfter(now)))
     }
-    def targetsOf(id: String) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
+    def targetsOf(id: com.histmersion.domain.automation.scheduler.SchedulerService.InputsTargetsOfId) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
     val articleGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Article.wire, targetsOf(ReviewId))
     val sourceGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Source.wire, targetsOf(EnrichId))
 
     /** The goal an item advances: its manager's, else the best of the goals its target is linked to. */
-    def goalOf(m: ManagerInfo, i: ManagerItem): Option[String] =
+    def goalOf(m: ManagerInfo, i: ManagerItem): Option[com.histmersion.domain.automation.scheduler.SchedulerService.InputsGoalOfResult] =
       m.goal.orElse {
         val linked = if m.id == ReviewId then articleGoals.getOrElse(i.target, Nil)
         else if m.id == EnrichId then sourceGoals.getOrElse(i.target, Nil)
@@ -231,7 +231,7 @@ final class SchedulerService(
     }
     val runs = agents.managerStore.occupyingRuns()
     val pipePools = collection.mutable.Map.empty[Pipeline, List[PlanQuota.PoolId]] // per pass
-    def poolsOfRun(p: String): List[PlanQuota.PoolId] =
+    def poolsOfRun(p: com.histmersion.domain.automation.scheduler.SchedulerService.InputsPoolsOfRunP): List[PlanQuota.PoolId] =
       Pipeline.parse(p).toList.flatMap(pl => pipePools.getOrElseUpdate(pl, poolIds(Nil, now, List(pl)).getOrElse(Nil)))
     val caps = ms.flatMap(m => m.config.maxRuns.map(m.id -> _)).toMap
     val res = Resources(
@@ -513,7 +513,7 @@ final class SchedulerService(
   def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, SchedulerStatus] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val name = in.strategy.trim.toLowerCase(java.util.Locale.ROOT)
-    val done: Either[Api.Error, String] =
+    val done: Either[Api.Error, com.histmersion.domain.automation.scheduler.SchedulerService.SetDonePart2] =
       if name == "default" then
         agents.autopilotRow.setStrategy(None, by)
         Right(
@@ -535,6 +535,15 @@ final class SchedulerService(
     }
 
 object SchedulerService:
+  type InputsTargetsOfId = InputsTargetsOfId.T
+  object InputsTargetsOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsGoalOfResult = InputsGoalOfResult.T
+  object InputsGoalOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsPoolsOfRunP = InputsPoolsOfRunP.T
+  object InputsPoolsOfRunP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetDonePart2 = SetDonePart2.T
+  object SetDonePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ChosenResultPart1 = ChosenResultPart1.T
   object ChosenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChosenResultPart2 = ChosenResultPart2.T

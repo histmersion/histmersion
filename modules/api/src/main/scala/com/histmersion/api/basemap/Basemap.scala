@@ -7,6 +7,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 object Basemap:
 
+  type FocusNameOfFD = FocusNameOfFD.T
+  object FocusNameOfFD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ValidFocusNameResultPart1 = ValidFocusNameResultPart1.T
   object ValidFocusNameResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValidFocusNameResultPart2 = ValidFocusNameResultPart2.T
@@ -116,7 +119,7 @@ object Basemap:
       case _             => Left(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\"")
 
   def focusNameOf(b: BBox): com.histmersion.api.basemap.Basemap.FocusNameOfResult =
-    def f(d: Double) = java.math
+    def f(d: com.histmersion.api.basemap.Basemap.FocusNameOfFD) = java.math
       .BigDecimal(d)
       .setScale(2, java.math.RoundingMode.HALF_UP)
       .stripTrailingZeros

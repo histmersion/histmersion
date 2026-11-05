@@ -260,7 +260,7 @@ private[places] object GazetteerRepo:
         // go now, in this batch (it still counts as seen, so the sweep has nothing left of it and a dry
         // run counts it once). A place a person's evidence names (an attestation, an asset link) stays.
         val areas = rs.filter(Gazetteer.dropsPointArea(source, _, pointAreaKinds))
-        val doomed: Set[String] =
+        val doomed: Set[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDoomed] =
           val ids = areas.flatMap(r => own.get(r.ref)).map(_.id).distinct
           if ids.isEmpty then Set.empty
           else
@@ -520,6 +520,9 @@ private[places] object GazetteerRepo:
       (out.count(identity), removed, out.count(!_))
 
   object Session:
+    type WriteDoomed = WriteDoomed.T
+    object WriteDoomed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Source = Source.T
     object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Version = Version.T

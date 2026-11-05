@@ -133,7 +133,7 @@ final class ImportsControllers(
     progress(s"counting the ${imp.over} not asked yet")
     val total = if single then 1 else imp.pending(since).min(cap)
     @annotation.tailrec
-    def loop(acc: MediaImportReport, seen: Set[String]): MediaImportReport =
+    def loop(acc: MediaImportReport, seen: Set[com.histmersion.domain.media.imports.ImportsControllers.RunImportLoopSeen]): MediaImportReport =
       val left = cap - acc.targets
       if left <= 0 || jobs.held then acc
       else
@@ -171,6 +171,9 @@ final class ImportsControllers(
     out.modify(_.pending).setTo(imp.pending(since))
 
 object ImportsControllers:
+  type RunImportLoopSeen = RunImportLoopSeen.T
+  object RunImportLoopSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CollectionsResultPart1Key = CollectionsResultPart1Key.T
   object CollectionsResultPart1Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionsResultPart2Key = CollectionsResultPart2Key.T

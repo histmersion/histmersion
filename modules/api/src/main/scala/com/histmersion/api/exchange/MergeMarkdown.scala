@@ -6,6 +6,11 @@ import com.histmersion.api.given
 
 object MergeMarkdown:
 
+  type AppliedCountResult = AppliedCountResult.T
+  object AppliedCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AppliedCountFResult = AppliedCountFResult.T
+  object AppliedCountFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhoResult = WhoResult.T
   object WhoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanResult = PlanResult.T
@@ -92,7 +97,7 @@ object MergeMarkdown:
 
   def applied(r: MergeApplyResult): com.histmersion.api.exchange.MergeMarkdown.AppliedResult =
     val t = r.tally
-    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => Int): Int =
+    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => com.histmersion.api.exchange.MergeMarkdown.AppliedCountFResult): com.histmersion.api.exchange.MergeMarkdown.AppliedCountResult =
       r.counts.find(_.kind == k).fold(0)(f)
     val head =
       if r.applied && r.mergeId.isEmpty then

@@ -19,6 +19,11 @@ import com.histmersion.api.library.Ingest
 object JobsView:
 
   /** How many jobs a page lists. */
+  type FilterButtonsBtnLabel = FilterButtonsBtnLabel.T
+  object FilterButtonsBtnLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilterButtonsBtnCount = FilterButtonsBtnCount.T
+  object FilterButtonsBtnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LiveResult = LiveResult.T
   object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilterOfKinds = FilterOfKinds.T
@@ -293,7 +298,7 @@ object JobsView:
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.jobStatus.now()))
 
   private def filterButtons: HtmlElement =
-    def btn(label: String, value: Option[JobState], count: Signal[Int]) =
+    def btn(label: com.histmersion.web.JobsView.FilterButtonsBtnLabel, value: Option[JobState], count: Signal[com.histmersion.web.JobsView.FilterButtonsBtnCount]) =
       button(
         typ := "button",
         cls := "btn btn--toggle",

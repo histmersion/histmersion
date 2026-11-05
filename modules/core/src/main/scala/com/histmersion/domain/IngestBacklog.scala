@@ -17,6 +17,27 @@ object IngestBacklog:
   /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
     */
+  type DrainTakeLeftPart1 = DrainTakeLeftPart1.T
+  object DrainTakeLeftPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainTakeLeftPart2 = DrainTakeLeftPart2.T
+  object DrainTakeLeftPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainTakeSh = DrainTakeSh.T
+  object DrainTakeSh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoResult = DaysToDrainGoResult.T
+  object DaysToDrainGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoBs = DaysToDrainGoBs.T
+  object DaysToDrainGoBs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoDay = DaysToDrainGoDay.T
+  object DaysToDrainGoDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoDrainDayResult = DaysToDrainGoDrainDayResult.T
+  object DaysToDrainGoDrainDayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoDrainDayRest = DaysToDrainGoDrainDayRest.T
+  object DaysToDrainGoDrainDayRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoDrainDayCur = DaysToDrainGoDrainDayCur.T
+  object DaysToDrainGoDrainDayCur extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainGoDrainDayRoom = DaysToDrainGoDrainDayRoom.T
+  object DaysToDrainGoDrainDayRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsNoLegalCopyResult = IsNoLegalCopyResult.T
   object IsNoLegalCopyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsNoLegalCopyMessage = IsNoLegalCopyMessage.T
@@ -97,7 +118,7 @@ object IngestBacklog:
     */
   def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.DrainOwnLeftPart1, com.histmersion.domain.IngestBacklog.DrainOwnLeftPart2], shared: Option[com.histmersion.domain.IngestBacklog.DrainShared], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainMax): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority, e.id))
-    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[String, Int], sh: Option[Int]): List[Entry] =
+    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[com.histmersion.domain.IngestBacklog.DrainTakeLeftPart1, com.histmersion.domain.IngestBacklog.DrainTakeLeftPart2], sh: Option[com.histmersion.domain.IngestBacklog.DrainTakeSh]): List[Entry] =
       rest match
         case Nil       => acc.toList
         case e :: tail =>
@@ -197,14 +218,14 @@ object IngestBacklog:
       horizon: com.histmersion.domain.IngestBacklog.DaysToDrainHorizon = 3650
   ): Option[com.histmersion.domain.IngestBacklog.DaysToDrainResult] =
     @annotation.tailrec
-    def go(bs: Vector[Int], day: Int): Option[Int] =
+    def go(bs: Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoBs], day: com.histmersion.domain.IngestBacklog.DaysToDrainGoDay): Option[com.histmersion.domain.IngestBacklog.DaysToDrainGoResult] =
       if bs.forall(_ <= 0) then Some(math.max(0, day - 1))
       else if day > horizon then None
       else
         val caps = lanes.map(l => math.max(0, if day == 0 then l.leftToday else l.perDay)).toVector
         val share = (if day == 0 then sharedLeftToday.orElse(sharedPerDay) else sharedPerDay).map(math.max(0, _))
         val order = bs.indices.sortBy(i => -bs(i))
-        @tailrec def drainDay(rest: List[Int], cur: Vector[Int], room: Int): Vector[Int] =
+        @tailrec def drainDay(rest: List[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayRest], cur: Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayCur], room: com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayRoom): Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayResult] =
           rest match
             case Nil       => cur
             case i :: tail =>

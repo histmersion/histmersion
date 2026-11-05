@@ -19,6 +19,11 @@ import java.util.Locale
   */
 object Europeana:
 
+  type ValuesOfJsonResult = ValuesOfJsonResult.T
+  object ValuesOfJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordRightsPart1 = RecordRightsPart1.T
+  object RecordRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PhraseS = PhraseS.T
   object PhraseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AnyOfField = AnyOfField.T
@@ -187,7 +192,7 @@ object Europeana:
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
   def values(c: ACursor, field: com.histmersion.plugins.media.Europeana.ValuesField): List[com.histmersion.plugins.media.Europeana.ValuesResult] =
-    def ofJson(j: Json): List[String] =
+    def ofJson(j: Json): List[com.histmersion.plugins.media.Europeana.ValuesOfJsonResult] =
       j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
         val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
         langs.flatMap(k => o(k).toList.flatMap(ofJson))
@@ -229,7 +234,7 @@ object Europeana:
       val provider = values(c, "dataProvider").headOption
       val shownBy = values(c, "edmIsShownBy").headOption
       val media = values(c, "edmPreview").headOption.flatMap(previewSource).orElse(shownBy)
-      val rights: Either[String, MediaRights] = values(c, "rights").headOption match
+      val rights: Either[com.histmersion.plugins.media.Europeana.RecordRightsPart1, MediaRights] = values(c, "rights").headOption match
         case None    => Left("no rights statement on the record")
         case Some(u) =>
           val lic = licences.readUrl(u)

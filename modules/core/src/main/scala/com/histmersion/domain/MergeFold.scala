@@ -28,6 +28,13 @@ object MergeFold:
   /** The richer of two spellings of one value: more words (a subtitle), then more letters outside ASCII (diacritics
     * kept), then more capitals (title case); a tie keeps the left.
     */
+  type RicherScoreS = RicherScoreS.T
+  object RicherScoreS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NarrowerWidthResult = NarrowerWidthResult.T
+  object NarrowerWidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldGoalRankS = FoldGoalRankS.T
+  object FoldGoalRankS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RicherResult = RicherResult.T
   object RicherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RicherL = RicherL.T
@@ -84,7 +91,7 @@ object MergeFold:
   object FoldArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def richer(l: com.histmersion.domain.MergeFold.RicherL, r: com.histmersion.domain.MergeFold.RicherR): com.histmersion.domain.MergeFold.RicherResult =
-    def score(s: String) =
+    def score(s: com.histmersion.domain.MergeFold.RicherScoreS) =
       (Fingerprint.tokens(s).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
     if summon[Ordering[(Int, Int, Int, Int)]].gt(score(r), score(l)) then r else l
 
@@ -113,7 +120,7 @@ object MergeFold:
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
   def narrower(a: Option[Bundle.Range], b: Option[Bundle.Range]): Option[Bundle.Range] =
-    def width(r: Bundle.Range): Long = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
+    def width(r: Bundle.Range): com.histmersion.domain.MergeFold.NarrowerWidthResult = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
     (a, b) match
       case (Some(x), Some(y)) => Some(if width(y) < width(x) then y else x)
       case _                  => a.orElse(b)
@@ -131,7 +138,7 @@ object MergeFold:
       from: com.histmersion.domain.MergeFold.FoldGoalFrom,
       planDecision: Option[MergeDecision.Kind] = None
   ): Bundle.Goal =
-    def rank(s: String) = Goal.Status.all.indexOf(s)
+    def rank(s: com.histmersion.domain.MergeFold.FoldGoalRankS) = Goal.Status.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")

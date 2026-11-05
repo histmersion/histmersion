@@ -4,6 +4,9 @@ import com.histmersion.api.library.Confidence
 
 object ConfidenceStyle:
 
+  type DesaturateMixV = DesaturateMixV.T
+  object DesaturateMixV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SaturationResult = SaturationResult.T
   object SaturationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RankResult = RankResult.T
@@ -34,7 +37,7 @@ object ConfidenceStyle:
     "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
       case r :: g :: b :: Nil if s < 1.0 =>
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
-        def mix(v: Int) = (grey + (v - grey) * s).round.toInt
+        def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + (v - grey) * s).round.toInt
         s"rgb(${mix(r)},${mix(g)},${mix(b)})"
       case _ => rgb
 

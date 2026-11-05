@@ -41,6 +41,9 @@ object AppConfig:
   /** reference.conf with the environment's overrides — no user file. What tests and `about`-less tools read. Must run
     * on a platform thread (main), not an Ox virtual thread: the env read uses GraalVM StackValue under native-image.
     */
+  type LoadWithUserFileInFileMsg = LoadWithUserFileInFileMsg.T
+  object LoadWithUserFileInFileMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LoadWithUserFileResultPart1 = LoadWithUserFileResultPart1.T
   object LoadWithUserFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseUserFileResultPart1 = ParseUserFileResultPart1.T
@@ -91,7 +94,7 @@ object AppConfig:
     // `io.netty.allocator.type` then collide and blow up sconfig under native-image).
     val reference = ConfigLayers.reference
     // sconfig's parse errors already start with the file (their origin): not twice
-    def inFile(p: java.nio.file.Path)(msg: String) =
+    def inFile(p: java.nio.file.Path)(msg: com.histmersion.config.AppConfig.LoadWithUserFileInFileMsg) =
       s"Histmersion config file $p: ${msg.stripPrefix(s"$p: ")}"
     file match
       case None =>

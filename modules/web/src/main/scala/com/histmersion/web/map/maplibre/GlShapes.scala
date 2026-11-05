@@ -209,12 +209,12 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
     */
   private def sameGeometry(a: js.Any, b: js.Any): com.histmersion.web.map.maplibre.GlShapes.SameGeometryResult =
     (a eq b) || {
-      def sig(g: js.Any): String =
+      def sig(g: js.Any): com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigResult =
         val d = g.asInstanceOf[js.Dynamic]
         if js.isUndefined(d) || d == null then ""
         else
           val sb = StringBuilder(d.selectDynamic("type").toString)
-          def walk(c: js.Dynamic, depth: Int): Unit =
+          def walk(c: js.Dynamic, depth: com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth): Unit =
             if js.Array.isArray(c) && depth < 4 then
               val arr = c.asInstanceOf[js.Array[js.Dynamic]]
               sb.append('[').append(arr.length)
@@ -228,6 +228,11 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
     }
 
 object GlShapes:
+  type SameGeometrySigResult = SameGeometrySigResult.T
+  object SameGeometrySigResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameGeometrySigWalkDepth = SameGeometrySigWalkDepth.T
+  object SameGeometrySigWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

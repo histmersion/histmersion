@@ -7,6 +7,17 @@ import io.circe.Json
   */
 object Years:
 
+  type ParseIsBceEra = ParseIsBceEra.T
+  object ParseIsBceEra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSignedResultPart1 = ParseSignedResultPart1.T
+  object ParseSignedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSignedResultPart2 = ParseSignedResultPart2.T
+  object ParseSignedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSignedNum = ParseSignedNum.T
+  object ParseSignedNum extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSignedEra = ParseSignedEra.T
+  object ParseSignedEra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromAstronomicalResult = FromAstronomicalResult.T
   object FromAstronomicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAstronomicalA = FromAstronomicalA.T
@@ -63,8 +74,8 @@ object Years:
       .replaceFirstIn(Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT), "")
       .replace(",", "")
       .trim
-    def isBce(era: String) = era.matches(EraBce)
-    def signed(num: String, era: Option[String]): Either[String, Long] =
+    def isBce(era: com.histmersion.api.Years.ParseIsBceEra) = era.matches(EraBce)
+    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1, com.histmersion.api.Years.ParseSignedResultPart2] =
       num.toLongOption.toRight(s"'${raw.trim}' is not a year").flatMap { n =>
         era match
           case None                => Right(n)

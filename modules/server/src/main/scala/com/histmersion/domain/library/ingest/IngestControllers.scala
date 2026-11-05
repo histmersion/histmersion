@@ -44,7 +44,7 @@ final class IngestControllers(
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
     Citekey.parse(p.citekey).left.map(Write.invalid).flatMap { validated =>
-      val citekey: String = validated.value
+      val citekey: com.histmersion.domain.library.Citekey = validated.value
       val size = upload.size
       val limits = cfg().limits
       if size <= 0 then Left(Api.Error("the upload is empty"))
@@ -81,7 +81,7 @@ final class IngestControllers(
       doi: Option[com.histmersion.domain.library.Doi],
       acquireItem: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolAcquireItem] = None
   ): Either[Api.Error, Ingest.Accepted] =
-    def params(name: String) =
+    def params(name: com.histmersion.domain.library.ingest.IngestControllers.FromToolParamsName) =
       Ingest.Params(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
     (path.map(_.trim).filter(_.nonEmpty), base64.map(_.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
@@ -186,7 +186,7 @@ final class IngestControllers(
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
     val key = Store.Key.applyUnsafe(s"$sha.$ext")
-    def failed(why: String) = Api.Error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
+    def failed(why: com.histmersion.domain.library.ingest.IngestControllers.StoreFailedWhy) = Api.Error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
     val store = originals()
     if store.exists(key) then Right(key)
     else
@@ -244,6 +244,11 @@ final class IngestControllers(
       case _ => Right(())
 
 object IngestControllers:
+  type FromToolParamsName = FromToolParamsName.T
+  object FromToolParamsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreFailedWhy = StoreFailedWhy.T
+  object StoreFailedWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromToolPath = FromToolPath.T
   object FromToolPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromToolBase64 = FromToolBase64.T

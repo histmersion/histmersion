@@ -13,6 +13,17 @@ package com.histmersion.util.basemap
 object Vp8l:
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
+  type Vp8lChunkLe32I = Vp8lChunkLe32I.T
+  object Vp8lChunkLe32I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vp8lChunkTagI = Vp8lChunkTagI.T
+  object Vp8lChunkTagI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vp8lChunkFoundPart1 = Vp8lChunkFoundPart1.T
+  object Vp8lChunkFoundPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vp8lChunkFoundPart2Part1 = Vp8lChunkFoundPart2Part1.T
+  object Vp8lChunkFoundPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vp8lChunkFoundPart2Part2 = Vp8lChunkFoundPart2Part2.T
+  object Vp8lChunkFoundPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DecodeBytes = DecodeBytes.T
   object DecodeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Vp8lChunkB = Vp8lChunkB.T
@@ -155,14 +166,14 @@ object Vp8l:
     * starts with the VP8L signature. Pure.
     */
   private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part1, com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part2)] =
-    def le32(i: Int) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
-    def tag(i: Int) = new String(b, i, 4, "US-ASCII")
+    def le32(i: com.histmersion.util.basemap.Vp8l.Vp8lChunkLe32I) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
+    def tag(i: com.histmersion.util.basemap.Vp8l.Vp8lChunkTagI) = new String(b, i, 4, "US-ASCII")
     if b.length >= 5 && (b(0) & 0xff) == 0x2f then Right((0, b.length))
     else if b.length < 20 || tag(0) != "RIFF" || tag(8) != "WEBP" then Left("not a WebP file")
     else
       // the chunks after the header: the first VP8L one is the image
       var i = 12
-      var found: Either[String, (Int, Int)] = Left("no VP8L chunk: only lossless WebP is read")
+      var found: Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part1, com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part2)] = Left("no VP8L chunk: only lossless WebP is read")
       var done = false
       while !done && i + 8 <= b.length do
         val t = tag(i)
@@ -500,7 +511,7 @@ object Vp8l:
       val total = w * h
       var pos = 0
       var cached = 0 // pixels before this one are in the cache
-      def groupAt(p: Int): Group =
+      def groupAt(p: com.histmersion.util.basemap.Vp8l.Decoder.PixelsGroupAtP): Group =
         if meta.isEmpty then groups(0)
         else
           val x = p % w
@@ -556,6 +567,9 @@ object Vp8l:
       case _ => unindex(t, px, h)
 
   object Decoder:
+    type PixelsGroupAtP = PixelsGroupAtP.T
+    object PixelsGroupAtP extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type EntropyImageResult = EntropyImageResult.T
     object EntropyImageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PixelsResult = PixelsResult.T

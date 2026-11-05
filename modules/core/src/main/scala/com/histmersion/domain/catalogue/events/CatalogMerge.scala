@@ -13,6 +13,9 @@ object CatalogMerge:
   /** How close two records of the same kind must be to be one event: their outer spans overlap once each is widened by
     * `years`, and their points are within `km`.
     */
+  type PlaceRunMatchPickRuleResult = PlaceRunMatchPickRuleResult.T
+  object PlaceRunMatchPickRuleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OuterResultPart1 = OuterResultPart1.T
   object OuterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OuterResultPart2 = OuterResultPart2.T
@@ -163,7 +166,7 @@ object CatalogMerge:
       def runMatch: Option[Placement] =
         // the rules in order; within one rule, the best fit
         val prior = acc.toList.map((_, o, p) => (o, p))
-        def pick(rule: (CatalogRecord, Placement) => Boolean): Option[Placement] =
+        def pick(rule: (CatalogRecord, Placement) => com.histmersion.domain.catalogue.events.CatalogMerge.PlaceRunMatchPickRuleResult): Option[Placement] =
           best(prior.filter(rule.tupled))((o, p) => fit(r, o.timeSpan, o.lat, o.lon, p.eventId)).map(_._2)
         pick((o, _) => o.key == r.key)
           .orElse(pick((o, _) => o.wikidata.isDefined && o.wikidata == r.wikidata))

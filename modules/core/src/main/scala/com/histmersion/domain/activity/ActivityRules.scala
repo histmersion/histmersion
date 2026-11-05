@@ -13,6 +13,13 @@ import com.histmersion.api.Api
 object ActivityRules:
 
   /** The statuses of a run or job that is going now. */
+  type CountsLoopRunning = CountsLoopRunning.T
+  object CountsLoopRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLoopProblems = CountsLoopProblems.T
+  object CountsLoopProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryBadM = QueryBadM.T
+  object QueryBadM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunningStates = RunningStates.T
   object RunningStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProblemStates = ProblemStates.T
@@ -80,7 +87,7 @@ object ActivityRules:
 
   /** The chips' counts over `entries`: running now, and failed since `weekAgo`. */
   def counts(entries: List[Entry], weekAgo: Instant): Activity.Counts =
-    @tailrec def loop(rest: List[Entry], running: Int, problems: Int): Activity.Counts = rest match
+    @tailrec def loop(rest: List[Entry], running: com.histmersion.domain.activity.ActivityRules.CountsLoopRunning, problems: com.histmersion.domain.activity.ActivityRules.CountsLoopProblems): Activity.Counts = rest match
       case e :: tail =>
         val run = isRunOrJob(e) && RunningStates.contains(e.state)
         val fail = isRunOrJob(e) && ProblemStates.contains(e.state) && !instantOf(e).isBefore(weekAgo)
@@ -99,7 +106,7 @@ object ActivityRules:
       before: Option[com.histmersion.domain.activity.ActivityRules.QueryBefore],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: String) = Api.Error(m)
+    def bad(m: com.histmersion.domain.activity.ActivityRules.QueryBadM) = Api.Error(m)
     for
       s <- show
         .map(_.trim)

@@ -27,6 +27,13 @@ import scala.util.Try
 object LegacyPlugins:
 
   /** A former plugin id and the plugins that took its place, in their chain order. */
+  type BlockCarryResultPart2 = BlockCarryResultPart2.T
+  object BlockCarryResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockCarryRest = BlockCarryRest.T
+  object BlockCarryRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockCarryIgn = BlockCarryIgn.T
+  object BlockCarryIgn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IdsResult = IdsResult.T
   object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExpandResult = ExpandResult.T
@@ -118,7 +125,7 @@ object LegacyPlugins:
           )
         case Some(old) =>
           val keys = old.root.keySet.asScala.toList.sorted
-          @tailrec def carry(rest: List[String], acc: Config, ign: List[String]): (Config, List[String]) =
+          @tailrec def carry(rest: List[com.histmersion.util.plugins.LegacyPlugins.BlockCarryRest], acc: Config, ign: List[com.histmersion.util.plugins.LegacyPlugins.BlockCarryIgn]): (Config, List[com.histmersion.util.plugins.LegacyPlugins.BlockCarryResultPart2]) =
             rest match
               case Nil       => (acc, ign)
               case k :: tail =>

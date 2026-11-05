@@ -306,7 +306,7 @@ final class ArticlesControllers(
       .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
       .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
-    val resolve: String => Option[String] = t => links(t).collect { case r: Source.Ref => r.citekey }
+    val resolve: com.histmersion.domain.research.articles.ArticlesControllers.PairingResolveArg1 => Option[com.histmersion.domain.research.articles.ArticlesControllers.PairingResolveResult] = t => links(t).collect { case r: Source.Ref => r.citekey }
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
@@ -551,6 +551,11 @@ final class ArticlesControllers(
           }
 
 object ArticlesControllers:
+  type PairingResolveArg1 = PairingResolveArg1.T
+  object PairingResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairingResolveResult = PairingResolveResult.T
+  object PairingResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LedgersArg1 = LedgersArg1.T
   object LedgersArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LedgersResultPart1 = LedgersResultPart1.T

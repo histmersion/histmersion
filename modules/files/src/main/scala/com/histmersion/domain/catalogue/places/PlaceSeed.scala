@@ -9,6 +9,9 @@ import com.histmersion.domain.catalogue.Place
 object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
+  type FilesDirKindName = FilesDirKindName.T
+  object FilesDirKindName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FilesResultPart2 = FilesResultPart2.T
   object FilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -29,7 +32,7 @@ object PlaceSeed:
     def isSeed(e: Entry[K]) = !e.directory && (e.name.endsWith(".json") || e.name.endsWith(".geojson"))
 
     /** `polities` → `polity`, `sites` → `site`, `regions` → `region`; anything else → no override. */
-    def dirKind(name: String) =
+    def dirKind(name: com.histmersion.domain.catalogue.places.PlaceSeed.FilesDirKindName) =
       val singular = if name.endsWith("ies") then name.dropRight(3) + "y"
       else if name.endsWith("s") then name.dropRight(1)
       else name

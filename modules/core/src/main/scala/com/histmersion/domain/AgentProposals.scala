@@ -19,6 +19,13 @@ object AgentProposals:
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
     */
+  type CheckQuotedResultPart1 = CheckQuotedResultPart1.T
+  object CheckQuotedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckQuotedResultPart2 = CheckQuotedResultPart2.T
+  object CheckQuotedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckQuotedKeys = CheckQuotedKeys.T
+  object CheckQuotedKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CheckResultPart1 = CheckResultPart1.T
   object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckIsCitekeyArg1 = CheckIsCitekeyArg1.T
@@ -169,7 +176,7 @@ object AgentProposals:
   ): Either[com.histmersion.domain.AgentProposals.CheckResultPart1, Proposal] =
     val ck = a.citekey.trim
     val label = s"proposal for ${if ck.isEmpty then "?" else ck}"
-    def quoted(keys: List[String]): Either[String, String] =
+    def quoted(keys: List[com.histmersion.domain.AgentProposals.CheckQuotedKeys]): Either[com.histmersion.domain.AgentProposals.CheckQuotedResultPart1, com.histmersion.domain.AgentProposals.CheckQuotedResultPart2] =
       val q = a.quote.trim
       if q.isEmpty then Left(s"$label: no quote")
       else if keys.flatMap(text).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)

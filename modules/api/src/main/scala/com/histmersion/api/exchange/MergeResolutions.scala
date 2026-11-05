@@ -24,6 +24,11 @@ object MergeResolutions:
 
   object Text:
 
+    type TemplateOptsResult = TemplateOptsResult.T
+    object TemplateOptsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TemplateLineResult = TemplateLineResult.T
+    object TemplateLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type FlagResultPart1 = FlagResultPart1.T
     object FlagResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FlagS = FlagS.T
@@ -40,7 +45,7 @@ object MergeResolutions:
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult =
       val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
-      def opts(i: MergeIssue): String =
+      def opts(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateOptsResult =
         i.options
           .map { k =>
             val arg = (k, i.suggested) match
@@ -51,7 +56,7 @@ object MergeResolutions:
             MergeDecision.Kind.wireOf(k) + arg
           }
           .mkString(" | ")
-      def line(i: MergeIssue): String =
+      def line(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult =
         val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
         val cond = i.condition.fold("")(c => s"if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}: ")
         (chosen.get(i.id), i.condition, i.severity) match

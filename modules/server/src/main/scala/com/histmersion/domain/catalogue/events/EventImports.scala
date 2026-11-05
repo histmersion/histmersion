@@ -103,9 +103,9 @@ final class EventImports(
     var report =
       EventImportReport(provider, req.dryRun, licence = info.fold("")(_.licence), citation = info.fold("")(_.citation))
     val clients = scala.collection.mutable.ListBuffer.empty[Polite]
-    def client(ms: Int): Polite = { val p = polite(ms); clients += p; p }
+    def client(ms: com.histmersion.domain.catalogue.events.EventImports.RunImportClientMs): Polite = { val p = polite(ms); clients += p; p }
 
-    def handle(part: String, fetched: Fetched): Unit =
+    def handle(part: com.histmersion.domain.catalogue.events.EventImports.RunImportHandlePart, fetched: Fetched): Unit =
       fetched match
         case Left(why)   => report = report.modify(_.failed).using(_ :+ s"$part: $why")
         case Right(read) =>
@@ -205,7 +205,7 @@ final class EventImports(
       val c = client(PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000))
       val h = PluginEvents.http(c)
       val q = PluginEvents.query(from, to, area)
-      val read: String => Boolean =
+      val read: com.histmersion.domain.catalogue.events.EventImports.RunImportRunReadArg1 => com.histmersion.domain.catalogue.events.EventImports.RunImportRunReadResult =
         if PluginEvents.safe(cat.everyPartEachImport).contains(true) then _ => false else done
       PluginEvents.guard(Right(cat.parts(q))) match
         case Left(why)    => report = report.modify(_.failed).using(_ :+ s"parts: $why")
@@ -333,6 +333,15 @@ final class EventImports(
       )
 
 object EventImports:
+  type RunImportClientMs = RunImportClientMs.T
+  object RunImportClientMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunImportHandlePart = RunImportHandlePart.T
+  object RunImportHandlePart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunImportRunReadArg1 = RunImportRunReadArg1.T
+  object RunImportRunReadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunImportRunReadResult = RunImportRunReadResult.T
+  object RunImportRunReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RegisteredResultKey = RegisteredResultKey.T
   object RegisteredResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PresentYearResult = PresentYearResult.T

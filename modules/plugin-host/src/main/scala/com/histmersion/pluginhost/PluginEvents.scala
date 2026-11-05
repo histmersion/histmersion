@@ -20,6 +20,21 @@ object PluginEvents:
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
     * a floor is already held at it, so a looser limit changes nothing).
     */
+  type ReadPartFromPart = ReadPartFromPart.T
+  object ReadPartFromPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpGetUrl = HttpGetUrl.T
+  object HttpGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpGetHeadersPart1 = HttpGetHeadersPart1.T
+  object HttpGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpGetHeadersPart2 = HttpGetHeadersPart2.T
+  object HttpGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckedStatedResultPart1 = CheckedStatedResultPart1.T
+  object CheckedStatedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckedStatedFResultPart1 = CheckedStatedFResultPart1.T
+  object CheckedStatedFResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckedLeftWhy = CheckedLeftWhy.T
+  object CheckedLeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LimitsPresent = LimitsPresent.T
   object LimitsPresent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RereadProvider = RereadProvider.T
@@ -167,7 +182,7 @@ object PluginEvents:
       full: => Boolean
   )(each: (com.histmersion.pluginhost.PluginEvents.ReadPartEachArg1, Either[com.histmersion.pluginhost.PluginEvents.ReadPartEachArg2Part1, CataloguePage]) => Unit): Unit =
     @annotation.tailrec
-    def from(part: Option[String]): Unit = part match
+    def from(part: Option[com.histmersion.pluginhost.PluginEvents.ReadPartFromPart]): Unit = part match
       case Some(p) if !full =>
         val got = guard(cat.read(p, query, http))
         each(p, got)
@@ -176,7 +191,7 @@ object PluginEvents:
     from(Option(first).filter(p => !done(p)))
 
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
-    def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
+    def get(url: com.histmersion.pluginhost.PluginEvents.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1, com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart2]) = polite.get(url, headers).map(_.body)
 
   def safe[A](a: => A): Option[A] =
     try Option(a)
@@ -207,9 +222,9 @@ object PluginEvents:
   private def checked(provider: com.histmersion.pluginhost.PluginEvents.CheckedProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.CheckedResultPart1, Kept[CatalogRecord]] =
     val id = Option(e.id).getOrElse("").trim
     val label = Option(e.label).getOrElse("").trim
-    def stated[A, B](a: Option[A])(f: A => Either[String, B]): Either[String, Option[B]] =
+    def stated[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedFResultPart1, B]): Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedResultPart1, Option[B]] =
       SpiValues.optional(a)(f).left.map(why => s"$id: catalogue '$provider': $why")
-    def left(why: String) = s"$id: catalogue '$provider': $why, left out"
+    def left(why: com.histmersion.pluginhost.PluginEvents.CheckedLeftWhy) = s"$id: catalogue '$provider': $why, left out"
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
     val (lon0, lonWhy) = SpiValues.kept(e.lon)(SpiValues.longitudeOf)
     val (wikidata, wikidataWhy) = SpiValues.kept(e.wikidata)(SpiValues.wikidataOf)

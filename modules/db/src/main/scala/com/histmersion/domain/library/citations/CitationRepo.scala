@@ -21,6 +21,11 @@ import com.histmersion.api.library.SourceColumns.given
   */
 private[citations] object CitationRepo:
 
+  type GraphWalkD = GraphWalkD.T
+  object GraphWalkD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GraphWalkFrontier = GraphWalkFrontier.T
+  object GraphWalkFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NeighborsKinds = NeighborsKinds.T
   object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GraphMaxDepth = GraphMaxDepth.T
@@ -69,8 +74,8 @@ private[citations] object CitationRepo:
     val depth = maxDepth.max(0).min(4)
     @annotation.tailrec
     def walk(
-        d: Int,
-        frontier: List[String],
+        d: com.histmersion.domain.library.citations.CitationRepo.GraphWalkD,
+        frontier: List[com.histmersion.domain.library.citations.CitationRepo.GraphWalkFrontier],
         nodes: Vector[GraphNode],
         links: Set[GraphLink]
     ): (Vector[GraphNode], Set[GraphLink]) =

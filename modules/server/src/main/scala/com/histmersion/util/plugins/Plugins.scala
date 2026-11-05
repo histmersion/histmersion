@@ -21,6 +21,13 @@ object Plugins:
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
     */
+  type OfflineWithGetU = OfflineWithGetU.T
+  object OfflineWithGetU extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfflineWithGetHPart1 = OfflineWithGetHPart1.T
+  object OfflineWithGetHPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfflineWithGetHPart2 = OfflineWithGetHPart2.T
+  object OfflineWithGetHPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Keys = Keys.T
   object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadChanged = LoadChanged.T
@@ -225,7 +232,7 @@ object Plugins:
       all,
       user,
       env,
-      services(() => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") }, env),
+      services(() => new Plugin.Http { def get(u: com.histmersion.util.plugins.Plugins.OfflineWithGetU, h: Map[com.histmersion.util.plugins.Plugins.OfflineWithGetHPart1, com.histmersion.util.plugins.Plugins.OfflineWithGetHPart2]) = Left("offline") }, env),
       errors,
       carried,
       fallback = FirstPartySettings.fallback(_, host),

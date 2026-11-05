@@ -16,6 +16,9 @@ final case class AnthropicRequest(json: Json):
 object AnthropicRequest:
 
   /** The output cap when the step names none. */
+  type MessagesGoResultPart1 = MessagesGoResultPart1.T
+  object MessagesGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BodyResult = BodyResult.T
   object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResultPart1 = OfResultPart1.T
@@ -76,7 +79,7 @@ object AnthropicRequest:
 
   private def messages(ms: List[AiMessage]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesResultPart1, List[Json]] =
     @annotation.tailrec
-    def go(rest: List[AiMessage], acc: List[Json]): Either[String, List[Json]] = rest match
+    def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesGoResultPart1, List[Json]] = rest match
       case Nil                                      => Right(acc.reverse)
       case AiMessage.User(t) :: tail                => go(tail, message("user", List(text(t))) :: acc)
       case AiMessage.ToolResult(id, _, out) :: tail =>

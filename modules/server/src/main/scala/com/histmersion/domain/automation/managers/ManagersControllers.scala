@@ -115,7 +115,7 @@ final class ManagersControllers(
     val state =
       if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[Api.Error, ManagerInfo] =
+    def make(k: Kind, id: com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeId, g: Option[com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeG], cron: Option[com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeCron] = None): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
@@ -853,6 +853,13 @@ final class ManagersControllers(
     }
 
 object ManagersControllers:
+  type CreateMakeId = CreateMakeId.T
+  object CreateMakeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreateMakeG = CreateMakeG.T
+  object CreateMakeG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreateMakeCron = CreateMakeCron.T
+  object CreateMakeCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunsId = RunsId.T
   object RunsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunsStatus = RunsStatus.T

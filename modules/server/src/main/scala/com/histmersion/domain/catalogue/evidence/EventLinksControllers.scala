@@ -134,10 +134,10 @@ final class EventLinksControllers(
         val names = namesOf(d)
         val existing = attestations.list(None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
         @tailrec def confirm(
-            rest: List[String],
+            rest: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmRest],
             ok: List[Attestation],
-            no: List[String]
-        ): (List[Attestation], List[String]) =
+            no: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmNo]
+        ): (List[Attestation], List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmResultPart2]) =
           rest match
             case Nil         => (ok, no)
             case raw :: tail =>
@@ -319,6 +319,13 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
+  type ApplyLinksConfirmResultPart2 = ApplyLinksConfirmResultPart2.T
+  object ApplyLinksConfirmResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinksConfirmRest = ApplyLinksConfirmRest.T
+  object ApplyLinksConfirmRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinksConfirmNo = ApplyLinksConfirmNo.T
+  object ApplyLinksConfirmNo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InfoArg1 = InfoArg1.T
   object InfoArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

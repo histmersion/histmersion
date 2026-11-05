@@ -83,6 +83,21 @@ object AgentUpstream:
   /** Not connected (a test, or a server built without the acquisition toolset): every call says so, and the steps that
     * need it record that they were skipped.
     */
+  type OfRefsApply = OfRefsApply.T
+  object OfRefsApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfAssessApply = OfAssessApply.T
+  object OfAssessApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFollowupsId = OfFollowupsId.T
+  object OfFollowupsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFollowupsSince = OfFollowupsSince.T
+  object OfFollowupsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFollowupsLimit = OfFollowupsLimit.T
+  object OfFollowupsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfDiscoverQuery = OfDiscoverQuery.T
+  object OfDiscoverQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfDiscoverLimit = OfDiscoverLimit.T
+  object OfDiscoverLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MetaResultPart1 = MetaResultPart1.T
   object MetaResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefsResultPart1 = RefsResultPart1.T
@@ -166,13 +181,13 @@ object AgentUpstream:
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquisitionControllers): AgentUpstream = new AgentUpstream:
-    def meta(doi: String) = a.meta(doi).left.map(_.message)
-    def refs(citekey: String, apply: Boolean) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
-    def assess(citekey: String, apply: Boolean) =
+    def meta(doi: com.histmersion.domain.library.Doi) = a.meta(doi).left.map(_.message)
+    def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfRefsApply) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
+    def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfAssessApply) =
       (if apply then a.assess(AssessRequest(citekey, apply = true)) else a.assessReadOnly(citekey)).left.map(_.message)
-    def followups(id: String, since: Option[Int], limit: Option[Int]) =
+    def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsId, since: Option[com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsSince], limit: Option[com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsLimit]) =
       a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
-    def discover(query: String, limit: Int) =
+    def discover(query: com.histmersion.domain.library.workflows.AgentUpstream.OfDiscoverQuery, limit: com.histmersion.domain.library.workflows.AgentUpstream.OfDiscoverLimit) =
       a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
     override def ingestLegal(doi: String) = a.ingestLegal(Ingest.Request(doi)).left.map(_.message)
     override def ingestLegalInto(doi: String, into: Option[String]) =

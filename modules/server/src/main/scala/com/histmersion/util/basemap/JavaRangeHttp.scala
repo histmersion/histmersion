@@ -35,7 +35,7 @@ final class JavaRangeHttp(
     * which cancels it.
     */
   private def send(url: com.histmersion.util.basemap.JavaRangeHttp.SendUrl, req: HttpRequest): Either[com.histmersion.util.basemap.JavaRangeHttp.SendResultPart1, HttpResponse[InputStream]] =
-    def attempt(n: Int): Either[String, HttpResponse[InputStream]] =
+    def attempt(n: com.histmersion.util.basemap.JavaRangeHttp.SendAttemptN): Either[com.histmersion.util.basemap.JavaRangeHttp.SendAttemptResultPart1, HttpResponse[InputStream]] =
       scala.util.Try(client.send(req, HttpResponse.BodyHandlers.ofInputStream())) match
         case scala.util.Failure(e: InterruptedException) => throw e
         case scala.util.Failure(e)                       =>
@@ -121,6 +121,11 @@ final class JavaRangeHttp(
     )
 
 object JavaRangeHttp:
+  type SendAttemptResultPart1 = SendAttemptResultPart1.T
+  object SendAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SendAttemptN = SendAttemptN.T
+  object SendAttemptN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BytesResultPart2Part1 = BytesResultPart2Part1.T
   object BytesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

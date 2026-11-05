@@ -9,6 +9,13 @@ import java.util.zip.{CRC32, Deflater, Inflater}
   */
 object TerrariumPng:
 
+  type UnfilterLeftI = UnfilterLeftI.T
+  object UnfilterLeftI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfilterUpI = UnfilterUpI.T
+  object UnfilterUpI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfilterUpLeftI = UnfilterUpLeftI.T
+  object UnfilterUpLeftI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EncodeResult = EncodeResult.T
   object EncodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodePng = DecodePng.T
@@ -138,9 +145,9 @@ object TerrariumPng:
           val f = raw(y * (stride + 1))
           val src = y * (stride + 1) + 1
           val dst = y * stride
-          def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
-          def up(i: Int) = if y > 0 then out(dst - stride + i) & 0xff else 0
-          def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
+          def left(i: com.histmersion.util.basemap.TerrariumPng.UnfilterLeftI) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
+          def up(i: com.histmersion.util.basemap.TerrariumPng.UnfilterUpI) = if y > 0 then out(dst - stride + i) & 0xff else 0
+          def upLeft(i: com.histmersion.util.basemap.TerrariumPng.UnfilterUpLeftI) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
           if f < 0 || f > 4 then Left(s"PNG filter $f")
           else
             for i <- 0 until stride do

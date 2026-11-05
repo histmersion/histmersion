@@ -190,6 +190,19 @@ object Calibre:
   /** Values that mean "nobody filled this in". Pushing one of these into Calibre creates an entry nobody will ever find
     * again, so both `import` and `push` refuse.
     */
+  type UpdatePlanEmptyV = UpdatePlanEmptyV.T
+  object UpdatePlanEmptyV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatePlanChangeFrom = UpdatePlanChangeFrom.T
+  object UpdatePlanChangeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatePlanChangeTo = UpdatePlanChangeTo.T
+  object UpdatePlanChangeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeIdentifiersOkV = MergeIdentifiersOkV.T
+  object MergeIdentifiersOkV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetCmdValueK = SetCmdValueK.T
+  object SetCmdValueK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSqliteJsonSF = ParseSqliteJsonSF.T
+  object ParseSqliteJsonSF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GuiRunningResult = GuiRunningResult.T
   object GuiRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LibraryExistsResult = LibraryExistsResult.T
@@ -422,8 +435,8 @@ object Calibre:
   ): Either[com.histmersion.plugins.calibre.Calibre.UpdatePlanResultPart1, List[com.histmersion.plugins.calibre.Calibre.Change]] =
     val authors = normaliseAuthors(meta.authors)
     guard(meta.title, authors).map { _ =>
-      def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
-      def change(f: com.histmersion.plugins.calibre.Calibre.Field, from: String, to: String) =
+      def empty(v: Option[com.histmersion.plugins.calibre.Calibre.UpdatePlanEmptyV]) = v.forall(s => isBlank(s) || s.trim == "-")
+      def change(f: com.histmersion.plugins.calibre.Calibre.Field, from: com.histmersion.plugins.calibre.Calibre.UpdatePlanChangeFrom, to: com.histmersion.plugins.calibre.Calibre.UpdatePlanChangeTo) =
         Option.when(from != to)(com.histmersion.plugins.calibre.Calibre.Change(f, from, to))
       val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
       List(
@@ -491,7 +504,7 @@ object Calibre:
     * separates the pairs), so it is left out.
     */
   def mergeIdentifiers(current: Map[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersCurrentPart1, com.histmersion.plugins.calibre.Calibre.MergeIdentifiersCurrentPart2], doi: Option[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersDoi], isbn: Option[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersIsbn]): Map[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersResultPart1, com.histmersion.plugins.calibre.Calibre.MergeIdentifiersResultPart2] =
-    def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
+    def ok(v: com.histmersion.plugins.calibre.Calibre.MergeIdentifiersOkV) = v.trim.nonEmpty && !v.contains(",")
     val sameDoi = (d: String) => current.get("doi").exists(_.trim.equalsIgnoreCase(d))
     current ++ doi.map(_.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
       isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
@@ -569,7 +582,7 @@ object Calibre:
       fields: List[(com.histmersion.plugins.calibre.Calibre.SetCmdFieldsPart1, com.histmersion.plugins.calibre.Calibre.SetCmdFieldsPart2)]
   ): Either[com.histmersion.plugins.calibre.Calibre.SetCmdResultPart1, List[com.histmersion.plugins.calibre.Calibre.SetCmdResultPart2]] =
     val unknown = fields.map(_._1).filterNot(SettableFields.contains)
-    def value(k: String) = fields.collectFirst { case (`k`, v) => v }
+    def value(k: com.histmersion.plugins.calibre.Calibre.SetCmdValueK) = fields.collectFirst { case (`k`, v) => v }
     for
       _ <- Either.cond(fields.nonEmpty, (), "nothing to set — pass --field <name>:<value>")
       _ <- Either.cond(
@@ -631,7 +644,7 @@ object Calibre:
         .map(e => s"sqlite3 returned unparseable JSON: ${e.getMessage}")
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.hcursor
-          def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
+          def s(f: com.histmersion.plugins.calibre.Calibre.ParseSqliteJsonSF) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
           c.downField("id").as[Int].toOption.map { id =>
             com.histmersion.plugins.calibre.Calibre.Book(
               id = id,

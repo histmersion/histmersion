@@ -17,6 +17,13 @@ object IconSelect:
   /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under, and what it
     * means (its tooltip), when the label alone does not say.
     */
+  type ApplyChosenIndexResult = ApplyChosenIndexResult.T
+  object ApplyChosenIndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCloseRefocus = ApplyCloseRefocus.T
+  object ApplyCloseRefocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyChooseI = ApplyChooseI.T
+  object ApplyChooseI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TypeAheadResult = TypeAheadResult.T
   object TypeAheadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TypeAheadFrom = TypeAheadFrom.T
@@ -109,7 +116,7 @@ object IconSelect:
     var listEl: dom.html.Element = null
     var outside: Option[scala.scalajs.js.Function1[dom.Event, Unit]] = None
 
-    def chosenIndex(): Int = opts.now().indexWhere(_.value == field.now().getOrElse("")).max(0)
+    def chosenIndex(): com.histmersion.web.IconSelect.ApplyChosenIndexResult = opts.now().indexWhere(_.value == field.now().getOrElse("")).max(0)
 
     def place(): Unit =
       if buttonEl != null && listEl != null then
@@ -143,14 +150,14 @@ object IconSelect:
       outside = Some(f)
       dom.document.addEventListener("pointerdown", f, useCapture = true)
 
-    def close(refocus: Boolean): Unit =
+    def close(refocus: com.histmersion.web.IconSelect.ApplyCloseRefocus): Unit =
       if isOpen.now() then
         isOpen.set(false)
         outside.foreach(f => dom.document.removeEventListener("pointerdown", f, useCapture = true))
         outside = None
         if refocus && buttonEl != null then buttonEl.focus()
 
-    def choose(i: Int): Unit =
+    def choose(i: com.histmersion.web.IconSelect.ApplyChooseI): Unit =
       opts.now().lift(i).foreach(o => UiState.set(field := Option(o.value).filter(_.nonEmpty))())
       close(refocus = true)
 

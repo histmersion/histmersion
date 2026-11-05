@@ -6,6 +6,9 @@ package com.histmersion.web.marks
   */
 object NoteMarkdown:
 
+  type BlocksLoopLines = BlocksLoopLines.T
+  object BlocksLoopLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SafeHrefResult = SafeHrefResult.T
   object SafeHrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SafeHrefH = SafeHrefH.T
@@ -82,7 +85,7 @@ object NoteMarkdown:
 
   def blocks(text: com.histmersion.web.marks.NoteMarkdown.BlocksText): List[Block] =
     @annotation.tailrec
-    def loop(lines: List[String], out: List[Block]): List[Block] = lines match
+    def loop(lines: List[com.histmersion.web.marks.NoteMarkdown.BlocksLoopLines], out: List[Block]): List[Block] = lines match
       case Nil                                   => out.reverse
       case l :: rest if l.trim.isEmpty           => loop(rest, out)
       case l :: rest if l.trim.startsWith("```") =>

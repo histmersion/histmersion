@@ -19,6 +19,23 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
   */
 object BundleTar:
 
+  type HeaderPutOff = HeaderPutOff.T
+  object HeaderPutOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeaderPutS = HeaderPutS.T
+  object HeaderPutS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderFieldResult = ParseHeaderFieldResult.T
+  object ParseHeaderFieldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderFieldOff = ParseHeaderFieldOff.T
+  object ParseHeaderFieldOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderFieldLen = ParseHeaderFieldLen.T
+  object ParseHeaderFieldLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderOctalResult = ParseHeaderOctalResult.T
+  object ParseHeaderOctalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderOctalOff = ParseHeaderOctalOff.T
+  object ParseHeaderOctalOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderOctalLen = ParseHeaderOctalLen.T
+  object ParseHeaderOctalLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HeaderResultPart2 = HeaderResultPart2.T
   object HeaderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHeaderH = ParseHeaderH.T
@@ -52,7 +69,7 @@ object BundleTar:
     else if size < 0 || size > MaxSize then Left(s"$name: size $size is outside 0..$MaxSize")
     else
       val h = new Array[Byte](Block)
-      def put(off: Int, s: String): Unit =
+      def put(off: com.histmersion.util.data.exchange.BundleTar.HeaderPutOff, s: com.histmersion.util.data.exchange.BundleTar.HeaderPutS): Unit =
         val b = s.getBytes(US_ASCII)
         System.arraycopy(b, 0, h, off, b.length)
       System.arraycopy(nameBytes, 0, h, 0, nameBytes.length)
@@ -82,9 +99,9 @@ object BundleTar:
     if h.length != Block then Left(s"short header (${h.length} bytes)")
     else if h.forall(_ == 0) then Right(None)
     else
-      def field(off: Int, len: Int): String =
+      def field(off: com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldOff, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldLen): com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldResult =
         String(h.slice(off, off + len).takeWhile(_ != 0), UTF_8)
-      def octal(off: Int, len: Int): Option[Long] =
+      def octal(off: com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalOff, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalLen): Option[com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalResult] =
         val s = String(h.slice(off, off + len), US_ASCII).takeWhile(c => c != '\u0000').trim
         if s.isEmpty then Some(0L) else scala.util.Try(java.lang.Long.parseLong(s, 8)).toOption
       val stored = octal(148, 8)

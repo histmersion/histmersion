@@ -12,6 +12,9 @@ import com.histmersion.api.Api
 
 object GoalRepo:
 
+  type RenameInExistsS = RenameInExistsS.T
+  object RenameInExistsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ListInStatus = ListInStatus.T
   object ListInStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListInLimit = ListInLimit.T
@@ -145,7 +148,7 @@ object GoalRepo:
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
   private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInOldSlug, newSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInNewSlug)(using DbCon): Either[Api.Error, Unit] =
-    def exists(s: String) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+    def exists(s: com.histmersion.domain.automation.goals.GoalRepo.RenameInExistsS) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Api.Error(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
     else if exists(newSlug) then

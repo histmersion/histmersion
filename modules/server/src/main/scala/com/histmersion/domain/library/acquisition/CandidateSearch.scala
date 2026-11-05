@@ -76,7 +76,7 @@ final class CandidateSearch(
       // an index that may not be asked now (CORE's budget spent, CORE asked to wait) is left out of the rest
       // of this sweep: its watches keep their watermarks and are read next time
       val leftOut = scala.collection.mutable.LinkedHashMap.empty[String, (String, Int)] // this sweep's tally
-      def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[String, List[WorkRef]] =
+      def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[com.histmersion.domain.library.acquisition.CandidateSearch.SweepQueryResultPart1, List[WorkRef]] =
         leftOut.get(i.name).orElse(i.unavailable.map(_ -> 0)) match
           case Some((why, n)) =>
             leftOut.update(i.name, (why, n + 1))
@@ -87,7 +87,7 @@ final class CandidateSearch(
             got
       val read = (base ++ authorWatches).map { w =>
         val since = Candidates.since(w.watermark, now, c.lookbackDays.value)
-        val got: Either[String, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
+        val got: Either[com.histmersion.domain.library.acquisition.CandidateSearch.SweepGotPart1, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
           case Some(Candidates.WatchKind.Query) =>
             byIndex
               .get(w.index)
@@ -152,6 +152,11 @@ final class CandidateSearch(
     }
 
 object CandidateSearch:
+  type SweepQueryResultPart1 = SweepQueryResultPart1.T
+  object SweepQueryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepGotPart1 = SweepGotPart1.T
+  object SweepGotPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SweepGoal = SweepGoal.T
   object SweepGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SweepDryRun = SweepDryRun.T

@@ -32,6 +32,11 @@ import com.histmersion.domain.catalogue.Place
 object PlaceReview:
 
   /** Pleiades types that make a place an administrative unit. */
+  type ProposeToKind = ProposeToKind.T
+  object ProposeToKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProposeToReason = ProposeToReason.T
+  object ProposeToReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PolityTypes = PolityTypes.T
   object PolityTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeopleTypes = PeopleTypes.T
@@ -163,7 +168,7 @@ object PlaceReview:
 
     /** The line without the id — a lint item, which carries the id beside it. */
     def detail: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailResult =
-      def ev(e: List[String]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
+      def ev(e: List[com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailEvE]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
       this match
         case Reclassify(_, label, from, to, period, reason, evidence) =>
           val per =
@@ -180,6 +185,9 @@ object PlaceReview:
       case _         => true
 
   object Proposal:
+    type DetailEvE = DetailEvE.T
+    object DetailEvE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     object Reclassify:
       type Id = Id.T
       object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -265,7 +273,7 @@ object PlaceReview:
   def propose(e: Evidence, candidates: List[Candidate] = Nil): Option[Proposal] =
     val types = e.featureTypes.map(_.trim.toLowerCase(java.util.Locale.ROOT)).toSet
     val ev = evidenceOf(e)
-    def to(kind: String, reason: String, period: Option[Period] = None) =
+    def to(kind: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToKind, reason: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToReason, period: Option[Period] = None) =
       Option.when(kind != e.kind || period.isDefined)(
         Proposal.Reclassify(e.id, e.label, e.kind, kind, period, reason, ev)
       )

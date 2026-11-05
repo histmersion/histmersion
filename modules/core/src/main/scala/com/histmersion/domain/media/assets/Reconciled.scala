@@ -10,6 +10,17 @@ import scala.annotation.tailrec
 final case class Reconciled(renames: List[(Reconciled.RenamesPart1, Reconciled.RenamesPart2)], deletes: List[Reconciled.Deletes])
 
 object Reconciled:
+  type OfRenameRestPart1 = OfRenameRestPart1.T
+  object OfRenameRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRenameRestPart2 = OfRenameRestPart2.T
+  object OfRenameRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRenameAccPart1 = OfRenameAccPart1.T
+  object OfRenameAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRenameAccPart2 = OfRenameAccPart2.T
+  object OfRenameAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRenameUsed = OfRenameUsed.T
+  object OfRenameUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfExistingPart1 = OfExistingPart1.T
   object OfExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfExistingPart2 = OfExistingPart2.T
@@ -29,7 +40,7 @@ object Reconciled:
   def of(existing: List[(com.histmersion.domain.media.assets.Reconciled.OfExistingPart1, com.histmersion.domain.media.assets.Reconciled.OfExistingPart2)], incoming: List[(com.histmersion.domain.media.assets.Reconciled.OfIncomingPart1, com.histmersion.domain.media.assets.Reconciled.OfIncomingPart2)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
-    @tailrec def rename(rest: List[(String, String)], acc: List[(String, String)], used: Set[String]): Reconciled =
+    @tailrec def rename(rest: List[(com.histmersion.domain.media.assets.Reconciled.OfRenameRestPart1, com.histmersion.domain.media.assets.Reconciled.OfRenameRestPart2)], acc: List[(com.histmersion.domain.media.assets.Reconciled.OfRenameAccPart1, com.histmersion.domain.media.assets.Reconciled.OfRenameAccPart2)], used: Set[com.histmersion.domain.media.assets.Reconciled.OfRenameUsed]): Reconciled =
       rest match
         case Nil                 => Reconciled(acc.reverse, existing.map(_._1).filterNot(used))
         case (name, sha) :: tail =>

@@ -9,6 +9,13 @@ import scala.scalajs.js
 object Clustering:
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
+  type GroupCellResult = GroupCellResult.T
+  object GroupCellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupCellCx = GroupCellCx.T
+  object GroupCellCx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupCellCy = GroupCellCy.T
+  object GroupCellCy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GroupResult = GroupResult.T
   object GroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -74,7 +81,7 @@ object Clustering:
       val cells = js.Map.empty[Double, js.Array[Int]]
       val seedX = js.Array[Double]()
       val seedY = js.Array[Double]()
-      def cell(cx: Double, cy: Double): Double = cx * 67108864.0 + cy
+      def cell(cx: com.histmersion.web.map.Clustering.GroupCellCx, cy: com.histmersion.web.map.Clustering.GroupCellCy): com.histmersion.web.map.Clustering.GroupCellResult = cx * 67108864.0 + cy
       val r2 = radius * radius
       var i = 0
       while i < n do

@@ -9,6 +9,11 @@ import com.histmersion.api.library.Confidence
 object Fmt:
 
   /** Aliases of the ONE year formatter ([[YearFmt]]), kept for the many views that call them. */
+  type ColorOnLerpAv = ColorOnLerpAv.T
+  object ColorOnLerpAv extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ColorOnLerpBv = ColorOnLerpBv.T
+  object ColorOnLerpBv extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type YrResult = YrResult.T
   object YrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YrY = YrY.T
@@ -81,7 +86,7 @@ object Fmt:
       val g = f - i
       val a = stops(i)
       val b = stops(min(i + 1, stops.length - 1))
-      def lerp(av: Int, bv: Int) = (av + (bv - av) * g).round.toInt
+      def lerp(av: com.histmersion.web.Fmt.ColorOnLerpAv, bv: com.histmersion.web.Fmt.ColorOnLerpBv) = (av + (bv - av) * g).round.toInt
       s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})"
 
   /** A year a person typed ([[Years.parse]]); `None` when it is not one. */

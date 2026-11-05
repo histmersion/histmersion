@@ -49,6 +49,27 @@ import com.histmersion.util.console.Console
 
 object RelinkPlugins:
 
+  type DuplicatesLoopResult = DuplicatesLoopResult.T
+  object DuplicatesLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLoopRestPart1 = DuplicatesLoopRestPart1.T
+  object DuplicatesLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLoopRestPart2 = DuplicatesLoopRestPart2.T
+  object DuplicatesLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLoopSeenPart1 = DuplicatesLoopSeenPart1.T
+  object DuplicatesLoopSeenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLoopSeenPart2 = DuplicatesLoopSeenPart2.T
+  object DuplicatesLoopSeenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLoopAcc = DuplicatesLoopAcc.T
+  object DuplicatesLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckIdRefusalsResult = CheckIdRefusalsResult.T
+  object CheckIdRefusalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckIdRefusalsTPart1 = CheckIdRefusalsTPart1.T
+  object CheckIdRefusalsTPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckIdRefusalsTPart2 = CheckIdRefusalsTPart2.T
+  object CheckIdRefusalsTPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckIdRefusalsAcc = CheckIdRefusalsAcc.T
+  object CheckIdRefusalsAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ExitCodeResult = ExitCodeResult.T
   object ExitCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExitCodeArgs = ExitCodeArgs.T
@@ -265,7 +286,7 @@ object RelinkPlugins:
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
   def duplicates(kit: Set[com.histmersion.server.plugins.RelinkPlugins.DuplicatesKit], plugins: List[(com.histmersion.server.plugins.RelinkPlugins.DuplicatesPluginsPart1, Set[com.histmersion.server.plugins.RelinkPlugins.DuplicatesPluginsPart2])]): List[com.histmersion.server.plugins.RelinkPlugins.DuplicatesResult] =
-    @tailrec def loop(rest: List[(String, Set[String])], seen: Set[(String, String)], acc: List[String]): List[String] =
+    @tailrec def loop(rest: List[(com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopRestPart1, Set[com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopRestPart2])], seen: Set[(com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopSeenPart1, com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopSeenPart2)], acc: List[com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopAcc]): List[com.histmersion.server.plugins.RelinkPlugins.DuplicatesLoopResult] =
       rest match
         case Nil                     => acc
         case (name, classes) :: tail =>
@@ -291,7 +312,7 @@ object RelinkPlugins:
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
-    @tailrec def idRefusals(rest: List[PluginJar], t: Map[String, String], acc: List[String]): List[String] =
+    @tailrec def idRefusals(rest: List[PluginJar], t: Map[com.histmersion.server.plugins.RelinkPlugins.CheckIdRefusalsTPart1, com.histmersion.server.plugins.RelinkPlugins.CheckIdRefusalsTPart2], acc: List[com.histmersion.server.plugins.RelinkPlugins.CheckIdRefusalsAcc]): List[com.histmersion.server.plugins.RelinkPlugins.CheckIdRefusalsResult] =
       rest match
         case Nil       => acc
         case j :: tail =>

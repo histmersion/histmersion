@@ -11,6 +11,11 @@ object ShapeHits:
   /** Is (`lat`, `lon`) inside the polygon or multipolygon `g` (even–odd over every ring: holes are outside)? Points and
     * lines contain nothing. Pure.
     */
+  type ContainsRingResult = ContainsRingResult.T
+  object ContainsRingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsPolygonResult = ContainsPolygonResult.T
+  object ContainsPolygonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ContainsResult = ContainsResult.T
   object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContainsLat = ContainsLat.T
@@ -21,7 +26,7 @@ object ShapeHits:
   def contains(g: js.Dynamic, lat: com.histmersion.web.map.ShapeHits.ContainsLat, lon: com.histmersion.web.map.ShapeHits.ContainsLon): com.histmersion.web.map.ShapeHits.ContainsResult =
     if js.isUndefined(g) || g == null then false
     else
-      def ring(r: js.Array[js.Array[Double]]): Boolean =
+      def ring(r: js.Array[js.Array[Double]]): com.histmersion.web.map.ShapeHits.ContainsRingResult =
         // `var`s: the crossing count's walk over the ring's edges
         var inside = false
         var j = r.length - 1
@@ -32,7 +37,7 @@ object ShapeHits:
           j = i
           i += 1
         inside
-      def polygon(p: js.Array[js.Array[js.Array[Double]]]): Boolean = p.count(ring) % 2 == 1
+      def polygon(p: js.Array[js.Array[js.Array[Double]]]): com.histmersion.web.map.ShapeHits.ContainsPolygonResult = p.count(ring) % 2 == 1
       g.selectDynamic("type").toString match
         case "Polygon"      => polygon(g.coordinates.asInstanceOf[js.Array[js.Array[js.Array[Double]]]])
         case "MultiPolygon" =>

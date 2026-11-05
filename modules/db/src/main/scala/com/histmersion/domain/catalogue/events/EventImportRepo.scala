@@ -16,6 +16,15 @@ private[events] object EventImportRepo:
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
     */
+  type SaveOwnerInP = SaveOwnerInP.T
+  object SaveOwnerInP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshTextResult = RefreshTextResult.T
+  object RefreshTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshTextF = RefreshTextF.T
+  object RefreshTextF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshGeom = RefreshGeom.T
+  object RefreshGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RefreshId = RefreshId.T
   object RefreshId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshNames = RefreshNames.T
@@ -114,7 +123,7 @@ private[events] object EventImportRepo:
       val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
       val wd = recs.flatMap(_.wikidata).headOption
       val catalogue = sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[String]].run().headOption
-      def ownerIn(p: String): Option[CatalogRecord] =
+      def ownerIn(p: com.histmersion.domain.catalogue.events.EventImportRepo.SaveOwnerInP): Option[CatalogRecord] =
         val storedKeys = sql"SELECT provider, provider_id FROM event_catalogue WHERE event_id = $eventId"
           .query[(String, String)]
           .run()
@@ -147,7 +156,7 @@ private[events] object EventImportRepo:
       DbCon
   ): Correction.Counts =
     val (keep, outcomes) = CorrectionRepo.reconcile(Correction.Target.Event, id, EventFields.upstream(r))
-    def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
+    def text(f: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextF): Option[Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextResult]] = keep.get(f).map(_.asString)
     val label = text(EventFields.Label).flatten.getOrElse(r.label)
     val kind = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))
     val hist = text(EventFields.Historicity).flatten.getOrElse(r.historicity)
@@ -155,7 +164,7 @@ private[events] object EventImportRepo:
     val spanKept = keep.contains(EventFields.Span)
     val ts = keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
     val (central, pm, method) = if spanKept then (None, None, None) else (r.central, r.plusMinus, r.datingMethod)
-    val geom: Option[String] = keep.get(EventFields.Geometry) match
+    val geom: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshGeom] = keep.get(EventFields.Geometry) match
       case Some(g) => Option.when(!g.isNull)(g.noSpaces)
       case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
     sql"""UPDATE events SET label = $label, kind = $kind,

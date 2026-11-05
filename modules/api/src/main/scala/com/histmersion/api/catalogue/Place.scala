@@ -336,6 +336,9 @@ object Place:
 
   object Edits:
 
+    type CsvCellS = CsvCellS.T
+    object CsvCellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type InvalidMsg = InvalidMsg.T
     object InvalidMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NameResultPart2 = NameResultPart2.T
@@ -437,7 +440,7 @@ object Place:
         )
 
     def csv(rows: List[ManualPlaceName]): com.histmersion.api.catalogue.Place.Edits.CsvResult =
-      def cell(s: String) =
+      def cell(s: com.histmersion.api.catalogue.Place.Edits.CsvCellS) =
         if s.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + s.replace("\"", "\"\"") + "\"" else s
       ("place_id,name,lang,why" :: rows.map(r =>
         List(r.placeId, r.name, r.lang, s"added by hand to ${r.label}").map(cell).mkString(",")

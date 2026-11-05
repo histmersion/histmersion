@@ -11,6 +11,17 @@ import com.histmersion.api.given
   */
 object Geocode:
 
+  type StripQualifierIsQW = StripQualifierIsQW.T
+  object StripQualifierIsQW extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierGoResultPart1 = StripQualifierGoResultPart1.T
+  object StripQualifierGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierGoResultPart2 = StripQualifierGoResultPart2.T
+  object StripQualifierGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierGoRest = StripQualifierGoRest.T
+  object StripQualifierGoRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierGoDropped = StripQualifierGoDropped.T
+  object StripQualifierGoDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Separators = Separators.T
   object Separators extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Apostrophes = Apostrophes.T
@@ -226,9 +237,9 @@ object Geocode:
 
   def stripQualifier(name: com.histmersion.api.catalogue.Geocode.StripQualifierName): Option[(com.histmersion.api.catalogue.Geocode.StripQualifierResultPart1, com.histmersion.api.catalogue.Geocode.StripQualifierResultPart2)] =
     val words = name.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
-    def isQ(w: String) = QualifierWords.contains(key(w))
+    def isQ(w: com.histmersion.api.catalogue.Geocode.StripQualifierIsQW) = QualifierWords.contains(key(w))
     @annotation.tailrec
-    def go(rest: List[String], dropped: List[String]): (List[String], List[String]) = rest match
+    def go(rest: List[com.histmersion.api.catalogue.Geocode.StripQualifierGoRest], dropped: List[com.histmersion.api.catalogue.Geocode.StripQualifierGoDropped]): (List[com.histmersion.api.catalogue.Geocode.StripQualifierGoResultPart1], List[com.histmersion.api.catalogue.Geocode.StripQualifierGoResultPart2]) = rest match
       case w :: tail if isQ(w)                                                      => go(tail, dropped :+ w)
       case j :: w :: tail if dropped.nonEmpty && Joiners.contains(key(j)) && isQ(w) => go(tail, dropped :+ j :+ w)
       case _                                                                        => (dropped, rest)

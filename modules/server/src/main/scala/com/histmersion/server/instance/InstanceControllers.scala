@@ -89,7 +89,7 @@ final class InstanceControllers(
     * something looks wrong.
     */
   def about(now: Instant = Instant.now(deps.clock)): About =
-    def attempt[A](what: String)(a: => A): Either[String, A] =
+    def attempt[A](what: com.histmersion.server.instance.InstanceControllers.AboutAttemptWhat)(a: => A): Either[com.histmersion.server.instance.InstanceControllers.AboutAttemptResultPart1, A] =
       Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
     val jobs = attempt("job counts")(
       JobCounts.of(diagnostics.figures(JobsData.owner).counts.map(c => c.noun -> c.count.toInt))
@@ -127,7 +127,7 @@ final class InstanceControllers(
   /** The corpus About counts: what the owners count of their records. */
   private def corpusCounts: CorpusCounts =
     val figures = Deps.data.owners.filterNot(_ == JobsData.owner).map(diagnostics.figures)
-    def count(noun: String): Int = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
+    def count(noun: com.histmersion.server.instance.InstanceControllers.CorpusCountsCountNoun): com.histmersion.server.instance.InstanceControllers.CorpusCountsCountResult = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
     CorpusCounts(
       count("sources"),
       count("findings"),
@@ -196,6 +196,15 @@ final class InstanceControllers(
       case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
 
 object InstanceControllers:
+  type AboutAttemptResultPart1 = AboutAttemptResultPart1.T
+  object AboutAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AboutAttemptWhat = AboutAttemptWhat.T
+  object AboutAttemptWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorpusCountsCountResult = CorpusCountsCountResult.T
+  object CorpusCountsCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorpusCountsCountNoun = CorpusCountsCountNoun.T
+  object CorpusCountsCountNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SetupDueResult = SetupDueResult.T
   object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -16,6 +16,15 @@ import com.histmersion.api.given
   */
 object Query:
 
+  type StatementsAtResult = StatementsAtResult.T
+  object StatementsAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatementsAtK = StatementsAtK.T
+  object StatementsAtK extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadingKeywordAfterBlockCommentResult = LeadingKeywordAfterBlockCommentResult.T
+  object LeadingKeywordAfterBlockCommentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadingKeywordAfterBlockCommentText = LeadingKeywordAfterBlockCommentText.T
+  object LeadingKeywordAfterBlockCommentText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StatementsResult = StatementsResult.T
   object StatementsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatementsSql = StatementsSql.T
@@ -134,7 +143,7 @@ object Query:
     var i = 0
     val n = sql.length
     var depth = 0
-    def at(k: Int): Char = if k >= 0 && k < n then sql.charAt(k) else 0.toChar
+    def at(k: com.histmersion.api.library.Query.StatementsAtK): com.histmersion.api.library.Query.StatementsAtResult = if k >= 0 && k < n then sql.charAt(k) else 0.toChar
     while i < n do
       val c = sql.charAt(i)
       if depth > 0 then
@@ -174,7 +183,7 @@ object Query:
       else None
 
   def leadingKeyword(statement: com.histmersion.api.library.Query.LeadingKeywordStatement): com.histmersion.api.library.Query.LeadingKeywordResult =
-    def afterBlockComment(text: String): String =
+    def afterBlockComment(text: com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentText): com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentResult =
       var at = 2
       var depth = 1
       while at < text.length && depth > 0 do

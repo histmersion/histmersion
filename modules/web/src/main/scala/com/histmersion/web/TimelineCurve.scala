@@ -10,6 +10,23 @@ import com.histmersion.api.library.TimeBucket
 object TimelineCurve:
 
   /** How wide one bucket is drawn, px: coarse enough for a smooth line, fine enough for a peak. */
+  type TangentsSignResult = TangentsSignResult.T
+  object TangentsSignResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsSignV = TangentsSignV.T
+  object TangentsSignV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsSecantResult = TangentsSecantResult.T
+  object TangentsSecantResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsSecantI = TangentsSecantI.T
+  object TangentsSecantI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsEndResult = TangentsEndResult.T
+  object TangentsEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsEndA = TangentsEndA.T
+  object TangentsEndA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsEndB = TangentsEndB.T
+  object TangentsEndB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TangentsEndInner = TangentsEndInner.T
+  object TangentsEndInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PxPerBucket = PxPerBucket.T
   object PxPerBucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointsFrom = PointsFrom.T
@@ -73,8 +90,8 @@ object TimelineCurve:
     val n = xs.length
     val t = new Array[Double](n)
     if n >= 2 then
-      def sign(v: Double): Double = if v > 0 then 1.0 else if v < 0 then -1.0 else 0.0
-      def secant(i: Int): Double =
+      def sign(v: com.histmersion.web.TimelineCurve.TangentsSignV): com.histmersion.web.TimelineCurve.TangentsSignResult = if v > 0 then 1.0 else if v < 0 then -1.0 else 0.0
+      def secant(i: com.histmersion.web.TimelineCurve.TangentsSecantI): com.histmersion.web.TimelineCurve.TangentsSecantResult =
         val h = xs(i + 1) - xs(i)
         if h == 0 then 0.0 else (ys(i + 1) - ys(i)) / h
       var i = 1
@@ -87,7 +104,7 @@ object TimelineCurve:
         t(i) = (sign(s0) + sign(s1)) * math.min(math.min(math.abs(s0), math.abs(s1)), 0.5 * math.abs(p))
         i += 1
       // the ends: the one-sided three-point estimate, as d3's
-      def end(a: Int, b: Int, inner: Double): Double =
+      def end(a: com.histmersion.web.TimelineCurve.TangentsEndA, b: com.histmersion.web.TimelineCurve.TangentsEndB, inner: com.histmersion.web.TimelineCurve.TangentsEndInner): com.histmersion.web.TimelineCurve.TangentsEndResult =
         val h = xs(b) - xs(a)
         if h == 0 then inner else (3 * (ys(b) - ys(a)) / h - inner) / 2
       if n == 2 then

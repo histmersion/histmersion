@@ -22,6 +22,9 @@ import com.histmersion.api.library.Acquire
   * so the MCP output and the CLI output are the same bytes.
   */
 object OpsTools:
+  type RunQueueRenderList = RunQueueRenderList.T
+  object RunQueueRenderList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunQueueResult = RunQueueResult.T
   object RunQueueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -103,7 +106,7 @@ object OpsTools:
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
   private def runQueue(h: ServerWiring, in: QueueInput): com.histmersion.server.OpsTools.RunQueueResult =
-    def render(list: String) =
+    def render(list: com.histmersion.server.OpsTools.RunQueueRenderList) =
       h.workListView.list(list, in.all) match
         case Right(l) =>
           l.markdown.getOrElse(s"_unknown list ${l.list}_")

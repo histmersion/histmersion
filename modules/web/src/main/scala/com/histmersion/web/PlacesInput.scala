@@ -28,6 +28,9 @@ import com.histmersion.api.catalogue.Place
 object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
+  type DrawPendingPart1 = DrawPendingPart1.T
+  object DrawPendingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LearnId = LearnId.T
   object LearnId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActiveIdx = ActiveIdx.T
@@ -377,7 +380,7 @@ object PlacesInput:
       else
         drawn = key
         val currentIds = ids()
-        val pending: List[Future[Option[(String, PlaceDetail)]]] = currentIds.map { id =>
+        val pending: List[Future[Option[(com.histmersion.web.PlacesInput.DrawPendingPart1, PlaceDetail)]]] = currentIds.map { id =>
           ApiClient.place(id, asOf()).map(detail => Some((id, detail))).recover { case _ => None }
         }
         Future.sequence(pending).foreach { results =>

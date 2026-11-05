@@ -47,7 +47,7 @@ final class SearchControllers(
     * bucket and asks again, which is the same query with a smaller window.
     */
   def aggregate(q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
-    def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
+    def norm(o: Option[com.histmersion.domain.library.search.SearchControllers.AggregateNormO], dflt: com.histmersion.domain.library.search.SearchControllers.AggregateNormDflt) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
     val unit = norm(q.unit, "sources")
     Tree
       .parseBy(norm(q.by, Tree.KindTime))
@@ -166,6 +166,11 @@ final class SearchControllers(
       .setTo(tree)
 
 object SearchControllers:
+  type AggregateNormO = AggregateNormO.T
+  object AggregateNormO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateNormDflt = AggregateNormDflt.T
+  object AggregateNormDflt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchQ = SearchQ.T
   object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T

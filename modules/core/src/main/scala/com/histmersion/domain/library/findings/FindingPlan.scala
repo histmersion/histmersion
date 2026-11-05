@@ -192,6 +192,11 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 object FindingPlan:
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
+  type MatchesPairNearResultPart2Part2 = MatchesPairNearResultPart2Part2.T
+  object MatchesPairNearResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesPairNearAccPart2Part2 = MatchesPairNearAccPart2Part2.T
+  object MatchesPairNearAccPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextO = TextO.T
@@ -312,9 +317,9 @@ object FindingPlan:
     val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
     @tailrec def pairNear(
         rest: List[com.histmersion.api.exchange.Bundle.Finding],
-        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Double)],
+        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearAccPart2Part2)],
         taken: Set[UUID]
-    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Double)] =
+    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearResultPart2Part2)] =
       rest match
         case Nil       => acc
         case r :: tail =>

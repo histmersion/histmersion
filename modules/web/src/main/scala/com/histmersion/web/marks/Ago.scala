@@ -4,6 +4,11 @@ package com.histmersion.web.marks
   */
 object Ago:
 
+  type ApplyNV = ApplyNV.T
+  object ApplyNV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyNOne = ApplyNOne.T
+  object ApplyNOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApplyResult = ApplyResult.T
   object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyThenMs = ApplyThenMs.T
@@ -23,7 +28,7 @@ object Ago:
 
   def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.histmersion.web.marks.Ago.ApplyResult =
     val s = math.max(0.0, (nowMs - thenMs) / 1000)
-    def n(v: Double, one: String) =
+    def n(v: com.histmersion.web.marks.Ago.ApplyNV, one: com.histmersion.web.marks.Ago.ApplyNOne) =
       val k = math.floor(v).toInt
       s"$k $one${if k == 1 then "" else "s"} ago"
     if s < 60 then "just now"

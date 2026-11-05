@@ -7,6 +7,11 @@ package com.histmersion.config.edit
 object SettingPolicy:
 
   /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
+  type AllLoopResultPart2 = AllLoopResultPart2.T
+  object AllLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllLoopNotes = AllLoopNotes.T
+  object AllLoopNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AllResultPart2 = AllResultPart2.T
   object AllResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AllLiteralConsent = AllLiteralConsent.T
@@ -22,7 +27,7 @@ object SettingPolicy:
 
   def all(edits: List[SettingEdit], schema: ConfigSchema, literalConsent: com.histmersion.config.edit.SettingPolicy.AllLiteralConsent): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.AllResultPart2]] =
     @scala.annotation.tailrec
-    def loop(rest: List[SettingEdit], notes: List[String]): Either[SettingError, List[String]] = rest match
+    def loop(rest: List[SettingEdit], notes: List[com.histmersion.config.edit.SettingPolicy.AllLoopNotes]): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.AllLoopResultPart2]] = rest match
       case Nil       => Right(notes)
       case e :: tail =>
         check(e, schema, literalConsent) match

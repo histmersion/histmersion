@@ -17,6 +17,9 @@ import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
   */
 object MediaPopup:
   /** Pure: what the picture's full-size view shows. */
+  type HtmlTitleInner = HtmlTitleInner.T
+  object HtmlTitleInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type HtmlResult = HtmlResult.T
   object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HtmlPeriod = HtmlPeriod.T
@@ -41,7 +44,7 @@ object MediaPopup:
 
   def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.HtmlPeriod, caption: com.histmersion.web.MediaPopup.HtmlCaption): com.histmersion.web.MediaPopup.HtmlResult =
     val kind = Fmt.display(h.kind.getOrElse("media"))
-    def title(inner: String) =
+    def title(inner: com.histmersion.web.MediaPopup.HtmlTitleInner) =
       s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(CardIcons.Media)}$inner</div>"""
     h.citekey match
       case Some(ck) =>

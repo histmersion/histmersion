@@ -198,18 +198,29 @@ object MemoryStore:
     def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtResult = reader().read(offset, length)
     def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
-      def where: String = MemoryBlob.this.where
+      def where: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderWhereResult = MemoryBlob.this.where
       def size: ByteCount = entry.size
-      def read(offset: ByteOffset, length: Int): Array[Byte] =
+      def read(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadResult =
         if offset.value + length > entry.bytes.length then
           throw java.io.EOFException(s"$where ends before byte ${offset.value + length}")
         java.util.Arrays.copyOfRange(entry.bytes, offset.value.toInt, offset.value.toInt + length)
-      def readUpTo(offset: ByteOffset, length: Int): Array[Byte] =
+      def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToResult =
         val from = math.min(offset.value, entry.bytes.length.toLong).toInt
         java.util.Arrays.copyOfRange(entry.bytes, from, math.min(entry.bytes.length, from + length))
       def close(): Unit = ()
 
   object MemoryBlob:
+    type ReaderWhereResult = ReaderWhereResult.T
+    object ReaderWhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReaderReadResult = ReaderReadResult.T
+    object ReaderReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReaderReadLength = ReaderReadLength.T
+    object ReaderReadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReaderReadUpToResult = ReaderReadUpToResult.T
+    object ReaderReadUpToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReaderReadUpToLength = ReaderReadUpToLength.T
+    object ReaderReadUpToLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type BytesResult = BytesResult.T
     object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadAtResult = ReadAtResult.T

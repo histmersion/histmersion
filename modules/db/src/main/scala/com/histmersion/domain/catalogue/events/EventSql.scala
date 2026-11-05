@@ -14,6 +14,9 @@ import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
 object EventSql:
 
   /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. */
+  type ListWhereCleanO = ListWhereCleanO.T
+  object ListWhereCleanO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TierSql = TierSql.T
   object TierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AnchorSql = AnchorSql.T
@@ -79,7 +82,7 @@ object EventSql:
       placeId: Option[com.histmersion.domain.catalogue.Place.Id],
       more: Narrow = Narrow()
   ): Sql =
-    def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
+    def clean(o: Option[com.histmersion.domain.catalogue.events.EventSql.ListWhereCleanO]) = o.map(_.trim).filter(_.nonEmpty)
     val ps = List.newBuilder[Sql]
     val selected = related.eventWhere(filter, scope)
     val catalogueOnly = s"($TierSql) = '${EventTier.Catalogue}'"

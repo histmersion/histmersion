@@ -29,6 +29,9 @@ import com.histmersion.api.views.{EventDetail, PlaceDetail}
 object Preview:
 
   /** What an element asks to preview. */
+  type EventSectionsKmX = EventSectionsKmX.T
+  object EventSectionsKmX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TargetOfCk = TargetOfCk.T
   object TargetOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetOfSlug = TargetOfSlug.T
@@ -455,7 +458,7 @@ object Preview:
     * Empty sections are left out.
     */
   def eventSections(d: EventDetail): List[Section] =
-    def km(x: Double) = s"${math.round(x)} km"
+    def km(x: com.histmersion.web.Preview.EventSectionsKmX) = s"${math.round(x)} km"
     List(
       Section(
         "Attested by",

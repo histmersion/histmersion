@@ -122,7 +122,7 @@ final class OnDemandTiles(
             }
             .toOption
             .filter(_._1 == u)
-          val head: Either[String, (Array[Byte], RemoteFile)] = fromDisk match
+          val head: Either[com.histmersion.util.basemap.OnDemandTiles.DescribedHeadPart1, (com.histmersion.util.basemap.OnDemandTiles.DescribedHeadPart2Part1, RemoteFile)] = fromDisk match
             case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
             case None                     =>
               val _ = remoteFiles.deleteTree(Store.Key.Root)
@@ -177,7 +177,7 @@ final class OnDemandTiles(
   /** The planet's entry for a tile, through its leaf directories. */
   private def entry(r: Remote, z: com.histmersion.util.basemap.OnDemandTiles.EntryZ, x: com.histmersion.util.basemap.OnDemandTiles.EntryX, y: com.histmersion.util.basemap.OnDemandTiles.EntryY): Either[com.histmersion.util.basemap.OnDemandTiles.EntryResultPart1, Option[PmTiles.Entry]] =
     val id = PmTiles.tileId(z, x, y)
-    def walk(d: Vector[PmTiles.Entry], depth: Int): Either[String, Option[PmTiles.Entry]] =
+    def walk(d: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.OnDemandTiles.EntryWalkDepth): Either[com.histmersion.util.basemap.OnDemandTiles.EntryWalkResultPart1, Option[PmTiles.Entry]] =
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
@@ -193,7 +193,7 @@ final class OnDemandTiles(
     raw.flatMap(_.fold(Right(None))(transform))
 
   private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart2]] =
-    def once(): Either[String, Option[Array[Byte]]] =
+    def once(): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetOnceResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetOnceResultPart2]] =
       for
         r <- described()
         e <- entry(r, z, x, y)
@@ -245,6 +245,19 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
+  type DescribedHeadPart1 = DescribedHeadPart1.T
+  object DescribedHeadPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribedHeadPart2Part1 = DescribedHeadPart2Part1.T
+  object DescribedHeadPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryWalkResultPart1 = EntryWalkResultPart1.T
+  object EntryWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryWalkDepth = EntryWalkDepth.T
+  object EntryWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetOnceResultPart1 = ReadPlanetOnceResultPart1.T
+  object ReadPlanetOnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetOnceResultPart2 = ReadPlanetOnceResultPart2.T
+  object ReadPlanetOnceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ReadResultPart2 = ReadResultPart2.T
   object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadPlanetResultPart2 = ReadPlanetResultPart2.T

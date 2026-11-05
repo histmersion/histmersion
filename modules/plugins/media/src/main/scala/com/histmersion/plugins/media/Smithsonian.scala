@@ -18,6 +18,11 @@ import java.util.Locale
 object Smithsonian:
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
+  type RecordRightsPart1 = RecordRightsPart1.T
+  object RecordRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResourceLabel = RecordResourceLabel.T
+  object RecordResourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type QueryResult = QueryResult.T
   object QueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueryName = QueryName.T
@@ -152,13 +157,13 @@ object Smithsonian:
           .map(_.hcursor)
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
-        val rights: Either[String, MediaRights] = cc0 match
+        val rights: Either[com.histmersion.plugins.media.Smithsonian.RecordRightsPart1, MediaRights] = cc0 match
           case Some(_)               => Right(MediaRights.cc0(maker, credit))
           case None if media.isEmpty => Left("no image on the record")
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
             Left(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
-        def resource(m: ACursor, label: String) =
+        def resource(m: ACursor, label: com.histmersion.plugins.media.Smithsonian.RecordResourceLabel) =
           m.downField("resources")
             .focus
             .flatMap(_.asArray)

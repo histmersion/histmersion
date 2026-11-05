@@ -13,6 +13,19 @@ object MergeText:
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
   /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): [[Fingerprint.fold]]. */
+  type SamePersonSplitsResultPart1 = SamePersonSplitsResultPart1.T
+  object SamePersonSplitsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamePersonSplitsResultPart2 = SamePersonSplitsResultPart2.T
+  object SamePersonSplitsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsPairResult = AuthorsPairResult.T
+  object AuthorsPairResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsPairN = AuthorsPairN.T
+  object AuthorsPairN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Isbn13Check13Result = Isbn13Check13Result.T
+  object Isbn13Check13Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Isbn13Check13D = Isbn13Check13D.T
+  object Isbn13Check13D extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FoldResult = FoldResult.T
   object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldS = FoldS.T
@@ -248,7 +261,7 @@ object MergeText:
     * compatible. Pure.
     */
   def samePerson(a: Person, b: Person): com.histmersion.domain.library.sources.MergeText.SamePersonResult =
-    def splits(p: Person): List[(List[String], List[String])] =
+    def splits(p: Person): List[(List[com.histmersion.domain.library.sources.MergeText.SamePersonSplitsResultPart1], List[com.histmersion.domain.library.sources.MergeText.SamePersonSplitsResultPart2])] =
       if p.surnameKnown then List(p.surname -> p.forenames)
       else
         val all = p.all
@@ -271,7 +284,7 @@ object MergeText:
     if pa.isEmpty || pb.isEmpty then AuthorAgreement.Unknown
     else
       // a greedy one-to-one pairing; author lists are short
-      @tailrec def pair(rest: List[Person], n: Int, left: List[Person]): Int =
+      @tailrec def pair(rest: List[Person], n: com.histmersion.domain.library.sources.MergeText.AuthorsPairN, left: List[Person]): com.histmersion.domain.library.sources.MergeText.AuthorsPairResult =
         rest match
           case Nil       => n
           case p :: tail =>
@@ -328,7 +341,7 @@ object MergeText:
   /** An ISBN as ISBN-13 digits; an ISBN-10 is converted. `None` when it is not a valid ISBN. */
   def isbn13(raw: com.histmersion.domain.library.sources.MergeText.Isbn13Raw): Option[com.histmersion.domain.library.sources.MergeText.Isbn13Result] =
     val s = raw.filter(c => c.isDigit || c == 'X' || c == 'x').toUpperCase(java.util.Locale.ROOT)
-    def check13(d: String): Boolean =
+    def check13(d: com.histmersion.domain.library.sources.MergeText.Isbn13Check13D): com.histmersion.domain.library.sources.MergeText.Isbn13Check13Result =
       d.length == 13 && d.forall(_.isDigit) &&
         d.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum % 10 == 0
     if s.length == 13 then Option.when(check13(s))(s)

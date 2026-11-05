@@ -17,6 +17,9 @@ import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 object HintProposals:
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
+  type CheckFailPs = CheckFailPs.T
+  object CheckFailPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CheckResultPart1 = CheckResultPart1.T
   object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckResultPart2Part2 = CheckResultPart2Part2.T
@@ -94,7 +97,7 @@ object HintProposals:
     val targets = a.targets.map(_.trim).filter(_.nonEmpty).distinct
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.trim).filter(_.nonEmpty)
-    def fail(ps: List[String]) = if last then Right((None, ps.map(p => s"nothing proposed: $p"))) else Left(ps)
+    def fail(ps: List[com.histmersion.domain.HintProposals.CheckFailPs]) = if last then Right((None, ps.map(p => s"nothing proposed: $p"))) else Left(ps)
     if action == "none" || action.isEmpty then Right((None, Nil))
     else if !HintEffect.Proposable.contains(action) then
       fail(List(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})"))

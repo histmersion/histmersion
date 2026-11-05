@@ -38,6 +38,13 @@ object GazetteerLoad:
     * dir>/gazetteer`, until 2026-10-17: a pinned extract found there and not in `extracts` is moved over once,
     * [[extract]]), the drop folder, and the manifest's text (`manifestAt` names it in messages).
     */
+  type LinesNextN = LinesNextN.T
+  object LinesNextN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfFileParsedPart1 = LoadLpfFileParsedPart1.T
+  object LoadLpfFileParsedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfFileHeader = LoadLpfFileHeader.T
+  object LoadLpfFileHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LocateFile = LocateFile.T
   object LocateFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Names = Names.T
@@ -247,7 +254,7 @@ object GazetteerLoad:
   /** Lines of a (gzip) text file, handed to `each` with their 1-based number. */
   private def lines(f: Blob)(each: (com.histmersion.domain.catalogue.places.GazetteerLoad.LinesEachArg1, com.histmersion.domain.catalogue.places.GazetteerLoad.LinesEachArg2) => Unit): Unit =
     Using.resource(new BufferedReader(new InputStreamReader(open(f), StandardCharsets.UTF_8), 1 << 16)) { r =>
-      @tailrec def next(n: Int): Unit =
+      @tailrec def next(n: com.histmersion.domain.catalogue.places.GazetteerLoad.LinesNextN): Unit =
         val line = r.readLine()
         if line != null then
           if line.trim.nonEmpty then each(line, n)
@@ -455,11 +462,11 @@ object GazetteerLoad:
     val lower = name.toLowerCase
     val isTsv = lower.endsWith(".tsv") || lower.endsWith(".tsv.gz")
     val isLines = lower.matches(".*\\.(ndjson|jsonl)(\\.gz)?$")
-    val parsed: Either[String, (LpfDataset, Batcher => Unit)] =
+    val parsed: Either[com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileParsedPart1, (LpfDataset, Batcher => Unit)] =
       if isTsv then
         val meta = Gazetteer.dataset(JsonObject.empty, side)
         Right(meta -> { (b: Batcher) =>
-          var header: List[String] = Nil // the first line
+          var header: List[com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileHeader] = Nil // the first line
           lines(f) { (line, n) =>
             if header.isEmpty then header = Gazetteer.tsvCells(line)
             else

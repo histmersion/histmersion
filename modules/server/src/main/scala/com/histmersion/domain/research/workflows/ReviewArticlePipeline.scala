@@ -535,7 +535,7 @@ final class ReviewArticlePipeline(
       confirming: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelConfirming
   ): Either[Halt, List[Report]] =
     val user = reviewInput(s) + (if confirming then FinalNote else "")
-    def ledger(lookups: Boolean, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
+    def ledger(lookups: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelLedgerLookups, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
     val (checklist, shown) = checklistText(s, confirming)
     // the final pass owes no rulings: it verifies the checklist, it does not work through it (§6.9)
     val critique =
@@ -716,10 +716,10 @@ final class ReviewArticlePipeline(
     val extra = if ctx.dryRun then reasons else Nil
     val pairsMemo = java.util.concurrent.ConcurrentHashMap[String, List[CritiquePair]]()
     val citedMemo = java.util.concurrent.ConcurrentHashMap[String, Set[String]]()
-    def pairsOf(b: String) =
+    def pairsOf(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerPairsOfB) =
       if b == s.body then s.critiques else pairsMemo.computeIfAbsent(b, x => site.articles.critiques(s.slug, x, extra))
-    def cites(b: String, ck: String) = citedMemo.computeIfAbsent(b, x => site.articles.citedSources(x).toSet)(ck)
-    def answered(b: String, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
+    def cites(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesB, ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesCk) = citedMemo.computeIfAbsent(b, x => site.articles.citedSources(x).toSet)(ck)
+    def answered(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerAnsweredB, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
     val guards = FixGuards(
       pairsOf,
       (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, lib.verify.quoteMinRatio),
@@ -909,6 +909,17 @@ final class ReviewArticlePipeline(
     l.modify(_.task).setTo(kept)
 
 object ReviewArticlePipeline:
+  type PanelLedgerLookups = PanelLedgerLookups.T
+  object PanelLedgerLookups extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerPairsOfB = FixerPairsOfB.T
+  object FixerPairsOfB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerCitesB = FixerCitesB.T
+  object FixerCitesB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerCitesCk = FixerCitesCk.T
+  object FixerCitesCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerAnsweredB = FixerAnsweredB.T
+  object FixerAnsweredB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoopSlug = LoopSlug.T

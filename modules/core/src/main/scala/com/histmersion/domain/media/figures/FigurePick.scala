@@ -16,6 +16,15 @@ object FigurePick:
   /** One stored figure of a source. `refs`: how many times the text links it; `firstAt`: where the first link sits, as
     * a share of the text (0 = its start); both `None`/0 when the text has none.
     */
+  type PageScanSizesNearAPart1 = PageScanSizesNearAPart1.T
+  object PageScanSizesNearAPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageScanSizesNearAPart2 = PageScanSizesNearAPart2.T
+  object PageScanSizesNearAPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageScanSizesNearBPart1 = PageScanSizesNearBPart1.T
+  object PageScanSizesNearBPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageScanSizesNearBPart2 = PageScanSizesNearBPart2.T
+  object PageScanSizesNearBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PageResult = PageResult.T
   object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageName = PageName.T
@@ -115,7 +124,7 @@ object FigurePick:
     val portrait = figs.flatMap(f =>
       for w <- f.width; h <- f.height if w > 0 && h.toDouble / w >= 1.2 && h.toDouble / w <= 1.6 yield (w, h)
     )
-    def near(a: (Int, Int), b: (Int, Int)) =
+    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart2)) =
       math.abs(a._1 - b._1) <= a._1 * 0.02 && math.abs(a._2 - b._2) <= a._2 * 0.02
     portrait.distinct.filter(s => portrait.count(near(s, _)) >= rules.pageScanMin.max(2)).toSet
 

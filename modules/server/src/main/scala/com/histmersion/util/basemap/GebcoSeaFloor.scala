@@ -90,7 +90,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
       if Thread.interrupted() then throw InterruptedException()
       if i % 200 == 0 then note(s"writing tile ${i + 1} of ${p.tiles.size}")
-      lazy val etopo: Option[(Array[Float], Int)] =
+      lazy val etopo: Option[(Array[Float], com.histmersion.util.basemap.GebcoSeaFloor.BuildEtopoPart2)] =
         http
           .file(etopoUrl.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString))
           .toOption
@@ -115,6 +115,13 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
 object GebcoSeaFloor:
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
+  type BuildEtopoPart2 = BuildEtopoPart2.T
+  object BuildEtopoPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlOfFV = UrlOfFV.T
+  object UrlOfFV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundsLatT = BoundsLatT.T
+  object BoundsLatT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BuildAddArg2 = BuildAddArg2.T
   object BuildAddArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -203,7 +210,7 @@ object GebcoSeaFloor:
   object SampleSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfSouth, deg: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfDeg): com.histmersion.util.basemap.GebcoSeaFloor.UrlOfResult =
-    def f(v: Int) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
+    def f(v: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfFV) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
     template
       .replace("{north}", f(south + deg))
       .replace("{south}", f(south))
@@ -222,7 +229,7 @@ object GebcoSeaFloor:
   /** The west, south, east and north of a tile, in degrees (Web Mercator). */
   def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.BoundsY): (com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart2, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart3, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart4) =
     val n = math.pow(2, z)
-    def lat(t: Double) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
+    def lat(t: com.histmersion.util.basemap.GebcoSeaFloor.BoundsLatT) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
     (x / n * 360 - 180, lat(y + 1.0), (x + 1) / n * 360 - 180, lat(y.toDouble))
 
   /** A tile wholly inside `b`. */

@@ -53,7 +53,7 @@ object Transactor:
           throw error
       finally
         var cleanup: Throwable = null
-        def attempt(action: => Unit): Boolean =
+        def attempt(action: => Unit): com.histmersion.util.database.Transactor.Session.RunAttemptResult =
           try
             action
             true
@@ -73,6 +73,9 @@ object Transactor:
           else if primary ne cleanup then primary.addSuppressed(cleanup)
 
   object Session:
+    type RunAttemptResult = RunAttemptResult.T
+    object RunAttemptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ReadOnlyRollbackTimeoutMs = ReadOnlyRollbackTimeoutMs.T
     object ReadOnlyRollbackTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RunCommit = RunCommit.T

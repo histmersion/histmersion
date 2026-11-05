@@ -9,6 +9,23 @@ object HotPlan:
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).
     */
+  type OrderGoResultPart1 = OrderGoResultPart1.T
+  object OrderGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderGoResultPart2 = OrderGoResultPart2.T
+  object OrderGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderGoDone = OrderGoDone.T
+  object OrderGoDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CycleWalkResult = CycleWalkResult.T
+  object CycleWalkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CycleWalkAt = CycleWalkAt.T
+  object CycleWalkAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CycleWalkPath = CycleWalkPath.T
+  object CycleWalkPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DependentsGrowResult = DependentsGrowResult.T
+  object DependentsGrowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DependentsGrowAcc = DependentsGrowAcc.T
+  object DependentsGrowAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KeyMatchesResult = KeyMatchesResult.T
   object KeyMatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeyMatchesChanged = KeyMatchesChanged.T
@@ -57,7 +74,7 @@ object HotPlan:
       val byName = nodes.map(n => n.name -> n).toMap
       // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
       @annotation.tailrec
-      def go(left: List[HotNode], done: Vector[String]): Either[String, List[String]] =
+      def go(left: List[HotNode], done: Vector[com.histmersion.config.HotPlan.OrderGoDone]): Either[com.histmersion.config.HotPlan.OrderGoResultPart1, List[com.histmersion.config.HotPlan.OrderGoResultPart2]] =
         if left.isEmpty then Right(done.toList)
         else
           val doneSet = done.toSet
@@ -70,7 +87,7 @@ object HotPlan:
   private def cycle(left: List[HotNode], byName: Map[com.histmersion.config.HotPlan.CycleByNamePart1, HotNode]): List[com.histmersion.config.HotPlan.CycleResult] =
     val waiting = left.map(_.name).toSet
     @annotation.tailrec
-    def walk(at: String, path: Vector[String]): List[String] =
+    def walk(at: com.histmersion.config.HotPlan.CycleWalkAt, path: Vector[com.histmersion.config.HotPlan.CycleWalkPath]): List[com.histmersion.config.HotPlan.CycleWalkResult] =
       val i = path.indexOf(at)
       if i >= 0 then (path.drop(i) :+ at).toList
       else
@@ -86,7 +103,7 @@ object HotPlan:
   /** `roots` and every node that depends on one of them, transitively. */
   def dependents(nodes: List[HotNode], roots: Set[com.histmersion.config.HotPlan.DependentsRoots]): Set[com.histmersion.config.HotPlan.DependentsResult] =
     @annotation.tailrec
-    def grow(acc: Set[String]): Set[String] =
+    def grow(acc: Set[com.histmersion.config.HotPlan.DependentsGrowAcc]): Set[com.histmersion.config.HotPlan.DependentsGrowResult] =
       val more = nodes.filter(n => !acc(n.name) && n.deps.exists(acc)).map(_.name)
       if more.isEmpty then acc else grow(acc ++ more)
     grow(roots)

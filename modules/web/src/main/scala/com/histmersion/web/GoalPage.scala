@@ -18,6 +18,17 @@ import com.histmersion.api.instance.UiConfig
 object GoalPage:
 
   /** How many of the goal's steps the plan lists, and how many entries its history. */
+  type DaysDayMs = DaysDayMs.T
+  object DaysDayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProducedCountLinkN = ProducedCountLinkN.T
+  object ProducedCountLinkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProducedCountLinkOne = ProducedCountLinkOne.T
+  object ProducedCountLinkOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProducedCountLinkMany = ProducedCountLinkMany.T
+  object ProducedCountLinkMany extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProducedCountLinkTo = ProducedCountLinkTo.T
+  object ProducedCountLinkTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StepNameResult = StepNameResult.T
   object StepNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DaysResult = DaysResult.T
@@ -92,7 +103,7 @@ object GoalPage:
 
   /** `3 days ago`, `today`, `in 2 days`, from two instants in epoch ms: calendar days in the reader's time zone. */
   def days(thenMs: com.histmersion.web.GoalPage.DaysThenMs, nowMs: com.histmersion.web.GoalPage.DaysNowMs): com.histmersion.web.GoalPage.DaysResult =
-    def day(ms: Double) = ((ms - new js.Date(ms).getTimezoneOffset() * 60000) / 86400000).floor.toLong
+    def day(ms: com.histmersion.web.GoalPage.DaysDayMs) = ((ms - new js.Date(ms).getTimezoneOffset() * 60000) / 86400000).floor.toLong
     val d = day(nowMs) - day(thenMs)
     if d == 0 then "today"
     else if d > 0 then (if d == 1 then "yesterday" else s"$d days ago")
@@ -373,7 +384,7 @@ object GoalPage:
   ): HtmlElement =
     val articles = v.links.filter(_.kind == LinkKind.Article)
     val sources = v.links.count(_.kind == LinkKind.Source)
-    def countLink(n: Signal[Option[Int]], one: String, many: String, to: String) =
+    def countLink(n: Signal[Option[com.histmersion.web.GoalPage.ProducedCountLinkN]], one: com.histmersion.web.GoalPage.ProducedCountLinkOne, many: com.histmersion.web.GoalPage.ProducedCountLinkMany, to: com.histmersion.web.GoalPage.ProducedCountLinkTo) =
       a(
         href := to,
         child.text <-- n.map(_.fold("…")(c => if c == 1 then s"1 $one" else s"$c $many")),

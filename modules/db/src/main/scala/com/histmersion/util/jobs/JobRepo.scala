@@ -22,6 +22,9 @@ object JobRepo:
   /** ONE projection, reused by both reads (AGENTS.md: no duplicated column lists). Magnum's `sql""` cannot splice a
     * `Frag`, so composition goes through the module's own [[Sql]] fragment type.
     */
+  type FacetsFromExcept = FacetsFromExcept.T
+  object FacetsFromExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type JsonResult = JsonResult.T
   object JsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CreateKind = CreateKind.T
@@ -330,7 +333,7 @@ object JobRepo:
     */
   def facets(q: JobQuery, facetMax: com.histmersion.util.jobs.JobRepo.FacetsFacetMax)(using DbCon): (List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart1Part1, com.histmersion.util.jobs.JobRepo.FacetsResultPart1Part2)], List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart2Part1, List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart2Part2Part1, com.histmersion.util.jobs.JobRepo.FacetsResultPart2Part2Part2)])]) =
     val c = conds(q)
-    def from(except: String) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
+    def from(except: com.histmersion.util.jobs.JobRepo.FacetsFromExcept) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
     (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */

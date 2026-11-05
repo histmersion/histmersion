@@ -29,6 +29,33 @@ import com.histmersion.api.exchange.Bundle
 object SourceMatcher:
 
   /** A source with the old citekeys (aliases) that still name it. */
+  type EvidenceTitlePart1 = EvidenceTitlePart1.T
+  object EvidenceTitlePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceTitlePart2 = EvidenceTitlePart2.T
+  object EvidenceTitlePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceAuthorsPart1 = EvidenceAuthorsPart1.T
+  object EvidenceAuthorsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceAuthorsPart2 = EvidenceAuthorsPart2.T
+  object EvidenceAuthorsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceYearPart1 = EvidenceYearPart1.T
+  object EvidenceYearPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceYearPart2 = EvidenceYearPart2.T
+  object EvidenceYearPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceVenuePart1 = EvidenceVenuePart1.T
+  object EvidenceVenuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceVenuePart2 = EvidenceVenuePart2.T
+  object EvidenceVenuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceBodyPart1 = EvidenceBodyPart1.T
+  object EvidenceBodyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceBodyPart2 = EvidenceBodyPart2.T
+  object EvidenceBodyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceAliasPart1 = EvidenceAliasPart1.T
+  object EvidenceAliasPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceAliasPart2 = EvidenceAliasPart2.T
+  object EvidenceAliasPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssignByKeyPart1 = AssignByKeyPart1.T
+  object AssignByKeyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FixedResult = FixedResult.T
   object FixedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FixedX = FixedX.T
@@ -165,7 +192,7 @@ object SourceMatcher:
       (MergeText.fingerprint(MergeText.mainTitle(r.title)), MergeText.fingerprint(MergeText.mainTitle(l.title)))
     val jw = MergeText.jaroWinkler(MergeText.tokens(r.title).mkString(" "), MergeText.tokens(l.title).mkString(" "))
     val tj = MergeText.jaccard(MergeText.tokens(r.title).toSet, MergeText.tokens(l.title).toSet)
-    val title: (String, Double) =
+    val title: (com.histmersion.domain.library.sources.SourceMatcher.EvidenceTitlePart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceTitlePart2) =
       if fr.nonEmpty && fr == fl then "title the same" -> w.titleFingerprint
       else if mr.nonEmpty && (mr == ml || mr == fl || fr == ml) then
         "main title the same, the subtitle differs" -> w.titleMain
@@ -175,7 +202,7 @@ object SourceMatcher:
 
     // authors
     val ag = MergeText.authors(r.authors, l.authors)
-    val authors: Option[(String, Double)] = ag match
+    val authors: Option[(com.histmersion.domain.library.sources.SourceMatcher.EvidenceAuthorsPart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceAuthorsPart2)] = ag match
       case AuthorAgreement.Same        => Some("authors the same" -> w.authorsSame)
       case AuthorAgreement.FirstAuthor => Some("first author the same" -> w.authorsFirst)
       case AuthorAgreement.Overlap     => Some("authors overlap" -> w.authorsOverlap)
@@ -184,7 +211,7 @@ object SourceMatcher:
 
     // year
     val gap = r.year.zip(l.year).map((a, b) => math.abs(a - b))
-    val year: Option[(String, Double)] = gap.map {
+    val year: Option[(com.histmersion.domain.library.sources.SourceMatcher.EvidenceYearPart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceYearPart2)] = gap.map {
       case 0                             => "year the same" -> w.yearEqual
       case 1                             => "years one apart" -> w.yearNear
       case _ if reprintHint(right, left) =>
@@ -193,7 +220,7 @@ object SourceMatcher:
     }
 
     // venue
-    val venue: Option[(String, Double)] =
+    val venue: Option[(com.histmersion.domain.library.sources.SourceMatcher.EvidenceVenuePart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceVenuePart2)] =
       r.venue
         .map(MergeText.fingerprint)
         .filter(_.nonEmpty)
@@ -201,7 +228,7 @@ object SourceMatcher:
         .map((a, b) => if a == b then "venue the same" -> w.venueEqual else "venues differ" -> w.venueDiffers)
 
     // body
-    val body: Option[(String, Double)] =
+    val body: Option[(com.histmersion.domain.library.sources.SourceMatcher.EvidenceBodyPart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceBodyPart2)] =
       (r.bodySha256, l.bodySha256) match
         case (Some(a), Some(b)) if a == b => Some("the same OCR body" -> w.bodySame)
         case (Some(a), Some(b))           =>
@@ -215,7 +242,7 @@ object SourceMatcher:
         case _ => None
 
     // a citekey of one side is an old citekey of the other
-    val alias: Option[(String, Double)] =
+    val alias: Option[(com.histmersion.domain.library.sources.SourceMatcher.EvidenceAliasPart1, com.histmersion.domain.library.sources.SourceMatcher.EvidenceAliasPart2)] =
       val shared = (right.aliases.intersect(left.labels) ++ left.aliases.intersect(right.labels)).toList.sorted
       shared.headOption.map(a => s"'$a' is an old citekey of the other" -> w.alias)
 
@@ -264,7 +291,7 @@ object SourceMatcher:
       cfg: MergeSettings,
       editions: Option[EditionsPolicy]
   ): Matching =
-    val byKey: Map[String, List[Side]] =
+    val byKey: Map[com.histmersion.domain.library.sources.SourceMatcher.AssignByKeyPart1, List[Side]] =
       lefts.flatMap(l => blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
     final case class Scored(right: Side, left: Side, ev: Evidence, rank: Scored.Rank, flags: List[Scored.Flags])
 

@@ -293,7 +293,7 @@ final class ModelPicker(
       // `planHit`: an earlier model drew on a plan pool below its floor — a PAID model after it is
       // passed over unless the role may fall through (a weekly floor must not become an API bill)
       @annotation.tailrec
-      def go(rest: List[ModelRef], notReady: List[String], exhausted: List[Exhaust], planHit: Boolean)
+      def go(rest: List[ModelRef], notReady: List[com.histmersion.domain.automation.agents.ModelPicker.PickGoNotReady], exhausted: List[Exhaust], planHit: com.histmersion.domain.automation.agents.ModelPicker.PickGoPlanHit)
           : Either[PickFailure, Picked] =
         rest match
           case Nil =>
@@ -431,6 +431,11 @@ object ModelPicker:
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.
     */
+  type PickGoNotReady = PickGoNotReady.T
+  object PickGoNotReady extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickGoPlanHit = PickGoPlanHit.T
+  object PickGoPlanHit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KnownResult = KnownResult.T

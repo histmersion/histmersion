@@ -12,6 +12,23 @@ package com.histmersion.util.data.exchange
 object Diff3:
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
+  type MergeLinesChunkCo = MergeLinesChunkCo.T
+  object MergeLinesChunkCo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesChunkCa = MergeLinesChunkCa.T
+  object MergeLinesChunkCa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesChunkCb = MergeLinesChunkCb.T
+  object MergeLinesChunkCb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesWalkIo = MergeLinesWalkIo.T
+  object MergeLinesWalkIo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesWalkIa = MergeLinesWalkIa.T
+  object MergeLinesWalkIa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesWalkIb = MergeLinesWalkIb.T
+  object MergeLinesWalkIb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchingTraceI = MatchingTraceI.T
+  object MatchingTraceI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchingTraceJ = MatchingTraceJ.T
+  object MatchingTraceJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MatchingResult = MatchingResult.T
   object MatchingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -109,7 +126,7 @@ object Diff3:
       val ls = agreed.result()
       agreed.clear()
       if ls.nonEmpty then out += Hunk.Agreed(ls)
-    def chunk(co: Vector[String], ca: Vector[String], cb: Vector[String]): Unit =
+    def chunk(co: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo], ca: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa], cb: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCb]): Unit =
       if ca == co then agreed ++= cb
       else if cb == co then agreed ++= ca
       else if ca == cb then agreed ++= ca
@@ -118,7 +135,7 @@ object Diff3:
         out += Hunk.Conflict(co, ca, cb)
     // positions in base, left, right; each round consumes at least one line of one of them
     @annotation.tailrec
-    def walk(io: Int, ia: Int, ib: Int): Unit =
+    def walk(io: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo, ia: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa, ib: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIb): Unit =
       // the next base line matched on both sides
       val next = (io until o.length).find(j => ma(j) >= 0 && mb(j) >= 0)
       next match
@@ -161,7 +178,7 @@ object Diff3:
           j -= 1
         i -= 1
       @annotation.tailrec
-      def trace(i: Int, j: Int): Unit =
+      def trace(i: com.histmersion.util.data.exchange.Diff3.MatchingTraceI, j: com.histmersion.util.data.exchange.Diff3.MatchingTraceJ): Unit =
         if i < n && j < k then
           if o(o0 + i) == x(x0 + j) then
             m(o0 + i) = x0 + j

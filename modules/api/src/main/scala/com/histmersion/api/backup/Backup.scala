@@ -13,6 +13,13 @@ import sttp.tapir.Schema
 
 object Backup:
 
+  type NewestFirstSuffixN = NewestFirstSuffixN.T
+  object NewestFirstSuffixN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJdbcPortPart1 = ParseJdbcPortPart1.T
+  object ParseJdbcPortPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJdbcPortPart2 = ParseJdbcPortPart2.T
+  object ParseJdbcPortPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TimestampResult = TimestampResult.T
   object TimestampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileNameResult = FileNameResult.T
@@ -99,7 +106,7 @@ object Backup:
     case _ => mtime
 
   def newestFirst(bs: List[com.histmersion.api.backup.Backup.Info]): List[com.histmersion.api.backup.Backup.Info] =
-    def suffix(n: String) = n match
+    def suffix(n: com.histmersion.api.backup.Backup.NewestFirstSuffixN) = n match
       case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
       case _                => 0
     def at(b: com.histmersion.api.backup.Backup.Info) =
@@ -157,7 +164,7 @@ object Backup:
       val (host, portText) =
         if colon >= 0 && hasPort then (authority.take(colon), Some(authority.drop(colon + 1)))
         else (authority, None)
-      val port: Either[String, Option[Int]] = portText match
+      val port: Either[com.histmersion.api.backup.Backup.ParseJdbcPortPart1, Option[com.histmersion.api.backup.Backup.ParseJdbcPortPart2]] = portText match
         case None    => Right(None)
         case Some(p) => p.toIntOption.map(Some(_)).toRight(s"'$p' is not a port number in '$u'")
       for

@@ -366,6 +366,25 @@ object Managers:
   object ItemCounts:
 
 
+    type OfLoopRestPart1 = OfLoopRestPart1.T
+    object OfLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopRestPart2 = OfLoopRestPart2.T
+    object OfLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopPending = OfLoopPending.T
+    object OfLoopPending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopHeld = OfLoopHeld.T
+    object OfLoopHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopActive = OfLoopActive.T
+    object OfLoopActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopDone = OfLoopDone.T
+    object OfLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopStopped = OfLoopStopped.T
+    object OfLoopStopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopFailed = OfLoopFailed.T
+    object OfLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLoopCancelled = OfLoopCancelled.T
+    object OfLoopCancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OpenResult = OpenResult.T
     object OpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfRowsPart1 = OfRowsPart1.T
@@ -390,14 +409,14 @@ object Managers:
 
     def of(rows: List[(com.histmersion.api.automation.Managers.ItemCounts.OfRowsPart1, com.histmersion.api.automation.Managers.ItemCounts.OfRowsPart2)]): ItemCounts =
       @tailrec def loop(
-          rest: List[(String, Int)],
-          pending: Int,
-          held: Int,
-          active: Int,
-          done: Int,
-          stopped: Int,
-          failed: Int,
-          cancelled: Int
+          rest: List[(com.histmersion.api.automation.Managers.ItemCounts.OfLoopRestPart1, com.histmersion.api.automation.Managers.ItemCounts.OfLoopRestPart2)],
+          pending: com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending,
+          held: com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld,
+          active: com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive,
+          done: com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone,
+          stopped: com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped,
+          failed: com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed,
+          cancelled: com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled
       ): ItemCounts =
         rest match
           case Nil            => ItemCounts(pending, held, active, done, stopped, failed, cancelled)

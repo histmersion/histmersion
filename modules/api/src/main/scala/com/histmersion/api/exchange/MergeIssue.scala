@@ -175,6 +175,9 @@ object MergeIssue:
 
   object Detail:
 
+    type SourceFieldsListXs = SourceFieldsListXs.T
+    object SourceFieldsListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DescribeResult = DescribeResult.T
     object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RangeTextResult = RangeTextResult.T
@@ -228,7 +231,7 @@ object MergeIssue:
 
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
       def range(p: Option[Bundle.Range]) = p.map(x => rangeText(Some(x)))
-      def list(xs: List[String]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
+      def list(xs: List[com.histmersion.api.exchange.MergeIssue.Detail.SourceFieldsListXs]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
       List(
         IssueField("citekey", Some(l.citekey), Some(r.citekey)),
         IssueField("title", Some(l.title), Some(r.title)),
