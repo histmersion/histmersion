@@ -1,0 +1,49 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-core/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] done compiling
+[info] compiling 40 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] done compiling
+[success] elapsed time: 26 s, cache 96%, 390 disk cache hits, 14 onsite tasks
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-core/test-classes ...
+[info] done compiling
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/test-classes ...
+[info] done compiling
+[info] compiling 78 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/agents/AcquireRecheckDbSuite.scala:70:6 
+[info] 70 |      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for com.histmersion.api.library.Acquire.Checks.RecheckJob.JobKind. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/agents/AcquireRecheckDbSuite.scala:70:6 
+[info] 70 |      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for com.histmersion.api.library.Acquire.Checks.RecheckJob.JobKind. Using PreparedStatement::setObject instead.
+[info] done compiling
+[success] elapsed time: 22 s, cache 96%, 606 disk cache hits, 24 onsite tasks
+Test run com.histmersion.util.time.TimerSuite started
+com.histmersion.util.time.TimerSuite: finished 0.019s
+Test run com.histmersion.util.time.TimerSuite finished: 0 failed, 0 ignored, 3 total 0.024s
+Test run com.histmersion.domain.PassageFinderSuite started
+com.histmersion.domain.PassageFinderSuite: finished 0.228s
+Test run com.histmersion.domain.PassageFinderSuite finished: 0 failed, 0 ignored, 21 total 0.232s
+[info] Passed: Total 24, Failed 0, Errors 0, Passed 24
+[success] elapsed time: 3 s, cache 97%, 145 disk cache hits, 3 onsite tasks

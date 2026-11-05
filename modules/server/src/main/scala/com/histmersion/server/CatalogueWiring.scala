@@ -105,7 +105,7 @@ final class CatalogueWiring(
   lazy val placeStore: PlaceService = PlaceService(deps.transactor)
 
   /** The gazetteer's geometry: findings matched to places, the hierarchy, the land. */
-  lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)
+  lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)(using deps.timer)
 
   lazy val places: PlacesControllers =
     PlacesControllers(
@@ -142,7 +142,7 @@ object CatalogueWiring:
     GazetteerImports(
       deps.transactor,
       places,
-      PlaceGeometry(deps.transactor),
+      PlaceGeometry(deps.transactor)(using deps.timer),
       () =>
         val paths = GazetteerPaths.of(deps.cfg, deps.environment.lookup, deps.userPaths.osName)
         GazetteerLoad.Stores(

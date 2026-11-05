@@ -10,6 +10,8 @@ import com.histmersion.api.library.{PassageHit, PassageResult, PassagesMarkdown}
 
 class PassageFinderSuite extends munit.FunSuite:
 
+  private given com.histmersion.util.time.Timer = new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
+
   private val Ck = "zz2020_body"
 
   // three sections as the Chunker stores them: heading lines removed, breadcrumbs kept
@@ -109,7 +111,7 @@ class PassageFinderSuite extends munit.FunSuite:
   test("a pathological regex is refused when it runs past the timeout"):
     // Java memoises the textbook (a+)+b; nested greedy .* still backtracks for seconds on 28 chars
     val segs = List(Chunk(0, None, "a" * 28 + "!"))
-    val r = PassageFinder.find(Ck, segs, "(.*a){12}x", true, 10, 600, 10000, 50)
+    val r = PassageFinder.find(Ck, segs, "(.*a){12}x", true, 10, 600, 10000, 50)(using new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.FiniteDuration(51, scala.concurrent.duration.MILLISECONDS) } })
     assert(r.left.exists(_.contains("ran longer than 50 ms")), r)
 
   test("context bounds: whole lines when a line break is in reach, else whole words, never past the budget"):

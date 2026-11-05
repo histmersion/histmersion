@@ -111,6 +111,8 @@ final class AgentsControllers(
 
   /** The time the managers' tick, the autopilot, the scheduler and the digest decide by. */
   val clock: java.time.Clock = site.clock
+  val timer: com.histmersion.util.time.Timer = site.timer
+  val pause: com.histmersion.util.time.Pause = site.pause
 
   /** What the daily approval digest also reads the hour on ([[EngineSite.digestClock]]). */
   val digestClock: Option[java.time.Clock] = site.digestClock
@@ -922,7 +924,7 @@ final class AgentsControllers(
       agent = Some(d)
     )
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
-    val t0 = System.nanoTime()
+    val t0 = timer.start()
     @annotation.tailrec
     def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
       AgentsControllers.attempt(client.model)(client.run(call(user))) match
@@ -953,7 +955,7 @@ final class AgentsControllers(
                 finish = LlmClient.finish(res.finishReason),
                 usage = use,
                 costUsd = Some(billing.cost(use).toDouble),
-                millis = (System.nanoTime() - t0) / 1000000,
+                millis = t0.elapsed.toMillis,
                 problems = problems,
                 attempts = attempt
               )

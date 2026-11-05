@@ -86,7 +86,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
       () => AppConfig.load(),
       gate,
       Clock.fixed(Instant.parse("2026-11-02T12:00:00Z"), ZoneOffset.UTC)
-    )
+    )(using new com.histmersion.util.time.SystemTimer)
     val places =
       PlaceService.InMemory(AtomicReference(CatalogueState.empty), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
     val store = ArticleService.InMemory(AtomicReference(ResearchState.empty), LibraryStoreSuite.Ticking())

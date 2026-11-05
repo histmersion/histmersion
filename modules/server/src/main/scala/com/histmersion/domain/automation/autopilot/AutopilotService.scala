@@ -369,9 +369,9 @@ final class AutopilotService(
       case Right(st0) =>
         // the request answers `running` after a while: follow the job to its end
         var st = st0 // the job's last status, polled until it settles
-        val deadline = System.currentTimeMillis() + 3L * 3600L * 1000L
-        while st.stateOf.contains(Backup.State.Running) && System.currentTimeMillis() < deadline do
-          Thread.sleep(10000)
+        val deadline = agents.timer.after(scala.concurrent.duration.FiniteDuration(3L, scala.concurrent.duration.HOURS))
+        while st.stateOf.contains(Backup.State.Running) && !deadline.reached do
+          agents.pause.sleep(scala.concurrent.duration.FiniteDuration(10000L, scala.concurrent.duration.MILLISECONDS))
           st = agents.host.backupStatus.getOrElse(st)
         st.result match
           case Some(r) =>

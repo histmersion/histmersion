@@ -20,11 +20,11 @@ final class CheckControllers(
     format: (String => Boolean) => FormatChecker,
     write: GuardedWrite,
     maintenance: WriteGate
-):
+)(using timer: com.histmersion.util.time.Timer):
   /** The rule names, in report order. */
   def lintRules: List[String] = checks.names
 
-  private def context: CheckContext = CheckContext(config(), ds, format, write)
+  private def context: CheckContext = CheckContext(config(), ds, format, write, timer)
 
   /** `GET /api/lint` — read-only. */
   def lint(rules: List[String]): Either[Api.Error, LintReport] =

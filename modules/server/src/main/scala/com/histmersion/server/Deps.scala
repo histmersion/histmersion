@@ -46,7 +46,7 @@ final class Deps(
     /** The time, the environment and the per-user paths: read once by the entry point, never globally. */
     val clock: Clock = Clock.systemUTC(),
     val environment: Environment = Environment.empty,
-    val userPaths: UserPaths = UserPaths(Environment.empty, "")
+    val userPaths: UserPaths = UserPaths(Environment.empty, ""), val timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, val pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
 ):
 
   /** Transactions on the application role ([[ds]]). */
@@ -66,7 +66,7 @@ final class Deps(
 
   /** The sources' texts as the catalogue's evidence searches them (the library's). */
   lazy val passages: com.histmersion.domain.catalogue.evidence.passages.Passage.Source =
-    com.histmersion.domain.library.sources.SourcePassages(transactor)
+    com.histmersion.domain.library.sources.SourcePassages(transactor)(using timer)
 
   /** The events related to what a filter selects, as the library reads the filter's sources. */
   lazy val eventSources: com.histmersion.domain.catalogue.events.EventSourceFilter =
@@ -108,9 +108,9 @@ object Deps:
       maintenance: WriteGate = WriteGate(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
-      clock: Clock = Clock.systemUTC()
+      clock: Clock = Clock.systemUTC(), timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
   ): Deps =
-    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins, clock = clock)
+    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins, clock = clock, timer = timer, pause = pause)
 
   /** A fixed `Deps` whose read-only DataSource is the application one: for a test that does not exercise `query` (a
     * second role would need a second pool someone has to own and close).

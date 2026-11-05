@@ -41,9 +41,9 @@ trait PlaceGeometry:
   def removePointAreas(settings: PointAreaRepo.Settings): PointAreaRepo.Removal
 
 object PlaceGeometry:
-  def apply(db: Transactor): PlaceGeometry = Implementation(db)
+  def apply(db: Transactor)(using timer: com.histmersion.util.time.Timer): PlaceGeometry = Implementation(db)
 
-  final private class Implementation(db: Transactor) extends PlaceGeometry:
+  final private class Implementation(db: Transactor)(using timer: com.histmersion.util.time.Timer) extends PlaceGeometry:
     def rebuildFindingPlaces(toleranceKm: Double): Place.RebuildResult =
       db.transact(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy(): SpatialHierarchyResult = db.transact(PlaceRepo.buildSpatialHierarchy())
@@ -64,7 +64,7 @@ object PlaceGeometry:
       if s.kinds.isEmpty then PointAreaRepo.Removal(0, 0, 0, 0)
       else
         val kinds = s.kinds
-        val deadline = System.nanoTime() + math.max(0L, s.budgetMs) * 1000000L
+        val deadline = timer.after(scala.concurrent.duration.FiniteDuration(math.max(0L, s.budgetMs), scala.concurrent.duration.MILLISECONDS))
         val todo = db.read(PointAreaRepo.removableIn(kinds))
         val chunks = todo.grouped(math.max(1, s.batch)).toList
         val named = if todo.isEmpty then Map.empty[String, Set[String]] else db.read(PointAreaRepo.nameKeysIn())
@@ -76,7 +76,7 @@ object PlaceGeometry:
             case ids :: more =>
               val (n, f, c) = db.transact(PointAreaRepo.removeIn(ids, kinds, s.toleranceKm, named))
               val acc = (removed + n, findings + f, cks ++ c)
-              if System.nanoTime() >= deadline then acc else go(more, acc._1, acc._2, acc._3)
+              if deadline.reached then acc else go(more, acc._1, acc._2, acc._3)
         val (removed, findings, cks) = go(chunks, 0, 0, Set.empty)
         val remaining = db.read(PointAreaRepo.removableIn(kinds)).size
         PointAreaRepo.Removal(removed, remaining, findings, cks.size)

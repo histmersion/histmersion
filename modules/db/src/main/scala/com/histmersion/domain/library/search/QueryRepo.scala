@@ -30,18 +30,18 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
-  def run(statement: String, maxRows: Int, maxCellChars: Int)(using DbCon): Either[String, QueryResult] =
+  def run(statement: String, maxRows: Int, maxCellChars: Int)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
     com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, maxRows, maxCellChars))
 
-  private def exec(text: String, maxRows: Int, maxCellChars: Int)(using con: DbCon): Either[String, QueryResult] =
+  private def exec(text: String, maxRows: Int, maxCellChars: Int)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
     val c: Connection = con.connection
     try
       val st = c.createStatement()
       try
         st.setMaxRows(math.max(1, maxRows) + 1)
-        val started = System.nanoTime()
+        val started = timer.start()
         val hasRs = st.execute(text)
-        val elapsed = (System.nanoTime() - started) / 1000000L
+        val elapsed = started.elapsed.toMillis
         if !hasRs then
           // unreachable in a READ ONLY transaction (nothing that updates rows can run), but an
           // honest answer beats a NullPointerException if Postgres ever allows one.

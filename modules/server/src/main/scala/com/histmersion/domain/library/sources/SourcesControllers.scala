@@ -40,7 +40,7 @@ final class SourcesControllers(
     cfg: () => AppConfig,
     maintenance: WriteGate,
     clock: Clock
-):
+)(using timer: com.histmersion.util.time.Timer):
 
   /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was renamed from;
     * otherwise `id` unchanged (and a later lookup reports it unknown).

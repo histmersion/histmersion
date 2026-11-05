@@ -431,7 +431,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(isCitekey))),
       (slug, body, token) => research.articles.writeRepairedBody(slug, body, token),
       maintenance
-    )
+    )(using deps.timer)
 
   /** Markdown that is not stored yet, checked as the field it is about to be. */
   lazy val formats: com.histmersion.server.views.FormatView =

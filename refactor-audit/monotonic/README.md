@@ -1,4 +1,40 @@
-# Monotonic timing batch: contracts validated, wiring pending
+# Monotonic timing batch: wired and remeasured
+
+The 28-file Scalafix wiring batch compiles for all production and test modules.
+TimerSuite (3) and PassageFinderSuite (21) pass without skips, including the
+pathological regex timeout with an explicitly supplied elapsed duration. Ordinary
+passage tests use a frozen timer; the timeout case uses an already-exceeded timer.
+Their original behavioral assertions are retained. Database query, geometry and
+backup-job runtime tests have not been run in this checkpoint.
+
+measurement-2 covers all 2,377 production files and passes all 31 source assertions.
+Identity reconciliation proves exactly the thirteen reviewed timing occurrences
+removed, with no other added identities or changed residual multiplicities:
+118 → 105 capability occurrences. All 42 occurrences in the clock treatment review
+are now recorded fixed across the wall-clock and timing batches. This is bounded
+repair evidence, not whole-family sampled acceptance or 90% migration completion.
+
+The two SystemTimer raw clock reads and six selections of real adapters in Deps
+and SystemContext are explicit allowed adapter/composition evidence, retained in
+reconciliation-1/accepted-boundaries.tsv. These are policy-boundary identities with
+multiplicities, not eight independently disambiguated source anchors. The policy
+now forbids concrete timing adapter types outside the specified composition owners.
+The fixture preserves two positive consumers, a supplied-capability negative and
+allowed composition. Exact fixture matching passes; normal enforcement rejects both
+consumer factories (CLI exit 64). No original finding baseline was reset.
+
+The first prefix-based factory policy also matched ThreadPause's duration parameter.
+measurement-1 retains that false positive. The final exact-type policy fixes it
+without granting a self-permission. Both policy versions and unchanged source
+assertions are retained in capability-history/corrections/monotonic-timing, which is
+chained into the history configuration. This consumes capability refinement round
+1 of 2. It is development-fixture validation, not an independent quality sample.
+
+The full multi-family assessment/history gate and independent detector acceptance
+remain outstanding. Production and test compilation covered 3,149 files; the
+capability scan covers production only. Test-policy findings remain unmeasured.
+
+## Retained foundation checkpoint (superseded by evidence above)
 
 The remaining reviewed timing batch is thirteen production occurrences, with
 original IDs in capability-treatment/review-2 and outstanding status retained in

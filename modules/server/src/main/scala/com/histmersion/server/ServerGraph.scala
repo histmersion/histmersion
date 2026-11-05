@@ -62,7 +62,7 @@ final class ServerGraph private (
       restart = restart,
       clock = system.clock,
       environment = system.environment,
-      userPaths = system.userPaths
+      userPaths = system.userPaths, timer = system.timer, pause = system.pause
     )
 
   /** Throw away the pooled connections of the pools in use now (after a restore: see [[Db.evict]]). */
