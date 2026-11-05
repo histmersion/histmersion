@@ -3,9 +3,24 @@ import metaconfig.{ConfDecoder, Configured, generic}
 import java.nio.file.{Files, Path, Paths}
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters._
+import com.typesafe.config.ConfigFactory
 
 object ProjectAssessment {
-  case class Policy(compile: Boolean = true, zero: List[String] = Nil, noRegression: Boolean = false, captureBaseline: Boolean = false)
+  case class Invocation(config: String = "", files: List[String] = Nil, semantic: Boolean = false)
+  object Invocation {
+    implicit val surface: generic.Surface[Invocation] = generic.deriveSurface[Invocation]
+    implicit val decoder: ConfDecoder[Invocation] = generic.deriveDecoder(Invocation()).noTypos
+  }
+  case class Pipeline(mode: String = "plan", report: String = "", scopeReview: String = "",
+    prepare: List[Invocation] = Nil, rewrites: List[Invocation] = Nil,
+    baselineTests: List[String] = Nil, afterTests: List[String] = Nil,
+    compileConfig: String = "", identityChecks: List[Invocation] = Nil)
+  object Pipeline {
+    implicit val surface: generic.Surface[Pipeline] = generic.deriveSurface[Pipeline]
+    implicit val decoder: ConfDecoder[Pipeline] = generic.deriveDecoder(Pipeline()).noTypos
+  }
+  case class Policy(compile: Boolean = true, zero: List[String] = Nil, noRegression: Boolean = false,
+    captureBaseline: Boolean = false, pipeline: Option[Pipeline] = None)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -48,7 +63,89 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
     require(code == 0, s"$label failed with exit $code; see ${current.resolve(label + ".log")}")
   }
   private val cli = List("scala-cli", "run", "--server=false", "-q", "-S", "2.13.18", "--dep", "ch.epfl.scala:scalafix-cli_2.13.18:0.14.9", "--main-class", "scalafix.cli.Cli", "--")
+  private def migration(p: Pipeline): Unit = {
+    require(Set("plan", "apply")(p.mode), "Pipeline mode must be plan or apply")
+    require(!policy.captureBaseline, "Migration cannot recapture the aggregate baseline")
+    def local(value: String): Path = {
+      val path = Paths.get(value)
+      require(value.nonEmpty && !path.isAbsolute && path.normalize == path && !path.startsWith(".."), "Expected worktree-relative path: " + value)
+      path
+    }
+    require(Files.isRegularFile(local(p.scopeReview)), "Missing eligibility/exclusions review")
+    require(p.rewrites.nonEmpty && p.identityChecks.nonEmpty, "Require rewrites and original-ID reconciliation")
+    require(p.baselineTests.nonEmpty && p.baselineTests.size == p.afterTests.size, "Require paired behavioral tests")
+    def config(path: String) = {
+      require(Files.isRegularFile(local(path)), "Missing configuration: " + path)
+      ConfigFactory.parseFile(Paths.get(path).toFile).resolve()
+    }
+    def rule(path: String, name: String) = {
+      val c = config(path)
+      require(c.getStringList("rules").asScala.toList == List("file:tools/refactor/" + name + ".scala"), "Expected existing " + name + " entry point: " + path)
+      c.getConfig(name)
+    }
+    p.baselineTests.zip(p.afterTests).foreach { case (before, after) =>
+      val b = rule(before, "BatchTestVerification"); val a = rule(after, "BatchTestVerification")
+      require((!b.hasPath("phase") || b.getString("phase") == "baseline") && a.getString("phase") == "after", "Incorrect test phases")
+      List("module", "report", "suites", "artifact", "environment", "knownSkips").foreach { k =>
+        def value(c: com.typesafe.config.Config) = if (c.hasPath(k)) Some(c.getValue(k)) else None
+        require(value(b) == value(a), "Test scope changed: " + k)
+      }
+      if (p.mode == "apply") require(!Files.exists(local(b.getString("report")).resolve("baseline.tsv")), "Test observation already exists; use a new observation directory")
+    }
+    val build = rule(p.compileConfig, "CompileBatch")
+    require(build.getStringList("commands").asScala.toList == List("compile", "Test/compile"), "Pipeline requires full production and test compilation")
+    if (p.mode == "apply") require(!Files.exists(local(build.getString("report"))), "Build observation already exists")
+    val invocations = p.prepare ++ p.rewrites ++ p.identityChecks
+    invocations.foreach { i =>
+      val c = config(i.config)
+      require(!c.getStringList("rules").asScala.exists(_.contains("ProjectAssessment")), "Recursive pipeline stage")
+      require(i.files.nonEmpty, "Stage needs explicit input scope")
+      i.files.foreach(f => require(Files.exists(local(f)), "Missing stage input: " + f))
+    }
+    val output = local(p.report)
+    require(!Files.exists(output), "Never overwrite a pipeline observation")
+    if (p.mode == "plan") {
+      println("PIPELINE_CONFIG_VALID; plan checks configuration only, not preview freshness or observation reuse; no stages executed; no repair or verification credit")
+      return
+    }
+    Files.createDirectories(output)
+    write(output.resolve("status.txt"), List("RUNNING"))
+    def stage(label: String, i: Invocation): Unit = {
+      val args = cli ++ List("--config", i.config, "--scala-version", "3.10.0") ++
+        (if (i.semantic) List("--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out") else Nil) ++
+        i.files.flatMap(f => List("--files", f))
+      println("Migration: " + label)
+      val code = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(output.resolve(label + ".log").toFile).start().waitFor()
+      require(code == 0, label + " failed; inspect " + output.resolve(label + ".log"))
+    }
+    def stages(label: String, xs: List[Invocation]): Unit = xs.zipWithIndex.foreach { case (i,n) => stage(label + "-" + n, i) }
+    def tests(label: String, xs: List[String]): Unit = stages(label, xs.map(c => Invocation(c, List("tools/refactor/BatchTestVerification.scala"))))
+    try {
+      new ProjectAssessment(policy.copy(compile = true, zero = Nil, pipeline = None)).afterComplete()
+      val before = fingerprint(sourceFiles)
+      val rulesBefore = fingerprint(policyInputs)
+      val reviewBefore = hash(Files.readString(local(p.scopeReview)))
+      tests("baseline-tests", p.baselineTests)
+      stages("prepare", p.prepare)
+      require(before == fingerprint(sourceFiles), "Preparation/tests changed application sources")
+      stages("rewrite", p.rewrites)
+      stage("compile", Invocation(p.compileConfig, List("tools/refactor/CompileBatch.scala")))
+      val rewritten = fingerprint(sourceFiles)
+      tests("after-tests", p.afterTests)
+      new ProjectAssessment(policy.copy(compile = false, pipeline = None)).afterComplete()
+      stages("identity", p.identityChecks)
+      require(rewritten == fingerprint(sourceFiles), "Verification changed application sources")
+      require(rulesBefore == fingerprint(policyInputs), "Policy/configuration changed during migration")
+      require(reviewBefore == hash(Files.readString(local(p.scopeReview))), "Eligibility review changed during migration")
+      write(output.resolve("status.txt"), List("PASS", "Compilation, selected tests, assessment and configured original-ID checks passed.", "Repair counts remain in the existing family histories; no overall percentage implied."))
+    } catch {
+      case e: Exception =>
+        write(output.resolve("status.txt"), List("FAILED", Option(e.getMessage).getOrElse(e.toString), "Stopped without rollback; inspect the worktree and stage logs before resuming."))
+        throw e
+    }
+  }
   override def afterComplete(): Unit = {
+    if (policy.pipeline.nonEmpty) { migration(policy.pipeline.get); return }
     // Preserve the evidence preceding each measurement, including explicit baseline corrections.
     if (Files.exists(current) || Files.exists(root.resolve("baseline.tsv"))) {
       val archive = root.resolve("history").resolve(java.time.Instant.now().toString.replace(':','-'))
