@@ -54,7 +54,7 @@ object Patches:
       body <- bodyFile.fold[Either[Cli.Error, Option[String]]](Right(base.body))(
         readFile("--body-file", _).map(Some(_))
       )
-      meta = mergeMetadata(base.metadata, title, status)
+      meta = mergeMetadata(base.metadata, title.map(com.histmersion.api.library.Title.apply), status)
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds = mergeFindings(base.findings, adds, removeFindings)
       edges = mergeEdges(base.edges, eAdd, eRem)
@@ -63,7 +63,7 @@ object Patches:
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
-  private def mergeMetadata(base: Option[MetadataPatch], title: Option[String], status: Option[Source.Status]) =
+  private def mergeMetadata(base: Option[MetadataPatch], title: Option[com.histmersion.api.library.Title], status: Option[Source.Status]) =
     if title.isEmpty && status.isEmpty then base
     else
       val m = base.getOrElse(MetadataPatch())

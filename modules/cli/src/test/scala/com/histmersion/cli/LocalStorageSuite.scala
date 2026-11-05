@@ -53,7 +53,7 @@ class LocalStorageSuite extends munit.FunSuite:
       None
     )
     val local = a.storage.entries.filter(_.host == "cli")
-    assertEquals(local.map(e => (e.key, e.bytes)), List("calibre-originals" -> Some(1234L), "install" -> Some(100L)))
+    assertEquals(local.map(e => (e.key, e.bytes)), List("calibre-originals" -> Some(com.histmersion.api.ByteCount(1234L)), "install" -> Some(com.histmersion.api.ByteCount(100L))))
     assert(a.storage.volumes.nonEmpty)
     val md = AboutMarkdown.render(a)
     assert(md.contains("- originals folder (cli.calibre.originals-dir) [on this machine]: 1.2 kB · 1 file"), md)

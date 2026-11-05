@@ -90,7 +90,7 @@ class DirSizeSuite extends munit.FunSuite:
     val v = DirSize.volume(d.resolve("not/made/yet"))
     assert(v.isDefined)
     assertEquals(v.map(_.id), DirSize.volume(d).map(_.id))
-    assert(v.forall(x => x.totalBytes > 0 && x.freeBytes >= 0 && x.freeBytes <= x.totalBytes), v)
+    assert(v.forall(x => x.totalBytes.value > 0 && x.freeBytes.value >= 0 && x.freeBytes.value <= x.totalBytes.value), v)
 
   tmp.test("children are listed by name; a missing directory has none"): d =>
     file(d.resolve("b/x"), 1); file(d.resolve("a"), 1)

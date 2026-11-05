@@ -9,6 +9,7 @@ import com.histmersion.config.CalibreCliConfig
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.CollectionAudit
 import com.histmersion.api.library.{CollectionEntry, CollectionGapRow, CollectionGaps, CollectionUpdateRow}
@@ -898,13 +899,13 @@ object Calibre:
         Book(e.id.toIntOption.getOrElse(0), e.title, e.authors, e.year, e.publisher, e.tags, e.identifiers, e.formats)
 
     /** `calibre link --json`, `calibre push --json`. */
-    final case class Linked(citekey: String, calibreId: Int) derives KindlingsCodecAsObject
+    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Int) derives KindlingsCodecAsObject
 
     /** `calibre push --replace --json`: `replaced` is the format swapped in. */
-    final case class Replaced(citekey: String, calibreId: Int, replaced: String) derives KindlingsCodecAsObject
+    final case class Replaced(citekey: com.histmersion.api.library.Citekey, calibreId: Int, replaced: String) derives KindlingsCodecAsObject
 
     /** `calibre update <citekey> --json`: the fields written. */
-    final case class Updated(citekey: String, calibreId: Int, changed: List[String]) derives KindlingsCodecAsObject
+    final case class Updated(citekey: com.histmersion.api.library.Citekey, calibreId: Int, changed: List[String]) derives KindlingsCodecAsObject
 
     final case class Change(field: String, from: String, to: String) derives KindlingsCodecAsObject
 

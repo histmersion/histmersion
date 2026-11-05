@@ -2,6 +2,25 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+CLI now passes production compilation, test compilation and 95 selected behavioral
+tests (zero failed/ignored), recorded in applied-cli-build-3. The selected suites
+cover Calibre, job following, patch assembly, directory sizes and local storage.
+caller-calibre-1 types the citekey in Linked/Replaced/Updated JSON records and
+all raw constructor inputs; an already-typed source citekey passes through.
+caller-cli-flags-1 types the metadata merge helper and wraps the title flag on
+entry. caller-cli-tests-1 preserves the numeric predicates and exact 1234/100-byte
+expectations while adapting assertions to ByteCount. All five changed production
+and test files were edited through the existing AST recipe/application pipeline,
+with exact applied-hash verification. These are targeted caller repairs, not a
+new detector refinement or a general-purpose transformation claim.
+
+applied-cli-build-1 retains the later optics expansion failure exposed after the
+Calibre fix; applied-cli-build-2 retains production success followed by two test
+type errors. No assertion was removed or relaxed. The whole cohort is still
+unverified: core's last observed 22 diagnostics and web's 36 remain, and no fresh
+stable-ID repair measurement has been credited. Production/test counts and the
+87 confirmed cohort identities remain separate from these compiler/test counts.
+
 Caller follow-up caller-state-1 is applied: ten exact AST recipes across
 EventLayer, EventPlayback and MapLabels. Event identity collections/helpers now
 use Event.Id; coordinate anchor keys remain String. slots is generic in its key

@@ -342,7 +342,7 @@ object CalibreCmd:
           case Some(s) =>
             s.link(CollectionLinkRequest(ck, id.toString))
               .map(l =>
-                Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(l.citekey, id))(_ =>
+                Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(com.histmersion.api.library.Citekey(l.citekey), id))(_ =>
                   s"linked `${l.citekey}` to Calibre id $id — ${l.title}"
                 )
               )
@@ -383,11 +383,11 @@ object CalibreCmd:
           s.push(CollectionPushRequest(ck, replace)).map { p =>
             p.replaced match
               case Some(fmt) =>
-                Output.emit(json, com.histmersion.cli.Calibre.Json.Replaced(ck, p.id.toIntOption.getOrElse(0), fmt))(
+                Output.emit(json, com.histmersion.cli.Calibre.Json.Replaced(com.histmersion.api.library.Citekey(ck), p.id.toIntOption.getOrElse(0), fmt))(
                   _ => s"replaced the ${fmt.toUpperCase} of Calibre id ${p.id} with `$ck`'s original"
                 )
               case None =>
-                Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(ck, p.id.toIntOption.getOrElse(0)))(_ =>
+                Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(com.histmersion.api.library.Citekey(ck), p.id.toIntOption.getOrElse(0)))(_ =>
                   s"added `$ck` to Calibre as id ${p.id} — ${p.title}"
                 )
           }
@@ -400,13 +400,13 @@ object CalibreCmd:
   ) =
     if replace then
       replaceOne(c, ck, file.map(Path.of(_))).map { case (id, fmt) =>
-        Output.emit(json, com.histmersion.cli.Calibre.Json.Replaced(ck, id, fmt))(_ =>
+        Output.emit(json, com.histmersion.cli.Calibre.Json.Replaced(com.histmersion.api.library.Citekey(ck), id, fmt))(_ =>
           s"replaced the ${fmt.toUpperCase} of Calibre id $id with `$ck`'s original"
         )
       }
     else
       pushOne(c, ck, file.map(Path.of(_))).map { case (id, title) =>
-        Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(ck, id))(_ =>
+        Output.emit(json, com.histmersion.cli.Calibre.Json.Linked(com.histmersion.api.library.Citekey(ck), id))(_ =>
           s"added `$ck` to Calibre as id $id — $title"
         )
       }
@@ -499,7 +499,7 @@ object CalibreCmd:
           .flatMap(_.toIntOption)
           .toRight(fail(s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
         changes <- Calibre(Settings.app.cli.calibre).update(id, pushMeta(s)).left.map(fail)
-      yield Output.emit(json, com.histmersion.cli.Calibre.Json.Updated(ck, id, changes.map(_.field.name)))(u =>
+      yield Output.emit(json, com.histmersion.cli.Calibre.Json.Updated(com.histmersion.api.library.Citekey(ck), id, changes.map(_.field.name)))(u =>
         if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
         else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
       )
@@ -517,7 +517,7 @@ object CalibreCmd:
       server(c) match
         case Some(srv) =>
           srv.updateOne(ck).map { u =>
-            Output.emit(json, com.histmersion.cli.Calibre.Json.Updated(ck, u.id.toIntOption.getOrElse(0), u.changed))(
+            Output.emit(json, com.histmersion.cli.Calibre.Json.Updated(com.histmersion.api.library.Citekey(ck), u.id.toIntOption.getOrElse(0), u.changed))(
               x =>
                 if x.changed.isEmpty then s"Calibre id ${u.id} already agrees with `$ck` — nothing written"
                 else s"updated Calibre id ${u.id} from `$ck` (${x.changed.mkString(", ")}) — ${u.title}"
