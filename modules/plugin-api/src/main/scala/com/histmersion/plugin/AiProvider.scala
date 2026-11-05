@@ -19,14 +19,14 @@ trait AiProvider:
   /** What to call it: "Google Gemini API". */
   def title: com.histmersion.plugin.AiProvider.TitleResult
 
-  def description: com.histmersion.plugin.AiProvider.DescriptionResult = ""
+  def description: com.histmersion.plugin.AiProvider.DescriptionResult = _root_.com.histmersion.plugin.AiProvider.DescriptionResult("")
 
   def capabilities: AiCapabilities = AiCapabilities()
 
   /** The provider spends the PERSON'S own subscription (a login, not an API key): refused while the server listens
     * beyond loopback, where another client could spend it.
     */
-  def spendsPersonalPlan: com.histmersion.plugin.AiProvider.SpendsPersonalPlanResult = false
+  def spendsPersonalPlan: com.histmersion.plugin.AiProvider.SpendsPersonalPlanResult = _root_.com.histmersion.plugin.AiProvider.SpendsPersonalPlanResult(false)
 
   /** Whether a client for `model` can be used now (a key configured, a URL given) — asked before a model is picked, so
     * a provider that cannot run is passed over with its reason. Spends nothing.

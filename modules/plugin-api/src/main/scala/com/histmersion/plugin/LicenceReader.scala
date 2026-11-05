@@ -29,7 +29,7 @@ object LicenceReader:
   object ReadFirstStatements extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Unread: LicenceReader = new LicenceReader:
-    def readName(name: com.histmersion.plugin.LicenceReader.ReadNameName) = Licence.Read.unknown(name)
-    def readUrl(url: com.histmersion.plugin.LicenceReader.ReadUrlUrl) = Licence.Read.unknown(url)
+    def readName(name: com.histmersion.plugin.LicenceReader.ReadNameName) = Licence.Read.unknown(_root_.com.histmersion.plugin.Licence.Read.UnknownStatement((name).value))
+    def readUrl(url: com.histmersion.plugin.LicenceReader.ReadUrlUrl) = Licence.Read.unknown(_root_.com.histmersion.plugin.Licence.Read.UnknownStatement((url).value))
     def readFirst(statements: List[com.histmersion.plugin.LicenceReader.ReadFirstStatements]) =
-      Licence.Read.unknown(statements.map(_.trim).find(_.nonEmpty).getOrElse(""))
+      Licence.Read.unknown(_root_.com.histmersion.plugin.Licence.Read.UnknownStatement(statements.map((_).value.trim).find(_.nonEmpty).getOrElse("")))

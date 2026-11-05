@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object AstRecipe {
-  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false)
+  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false, constructorProperties: Boolean = false)
   object Consolidation {
     implicit val surface: generic.Surface[Consolidation] = generic.deriveSurface[Consolidation]
     implicit val decoder: ConfDecoder[Consolidation] = generic.deriveDecoder(Consolidation()).noTypos
@@ -236,11 +236,16 @@ object InterfaceSignatures {
     val patches = scala.collection.mutable.ListBuffer.empty[(String,(Int,Int,String))]
     trees.foreach { case(path,tree) => tree.collect { case template: Template =>
       template.inits.foreach { init =>
-        val raw = init.tpe.syntax.stripPrefix("_root_.")
+        val raw = (init.tpe match { case a: Type.Apply => a.tpe.syntax; case t => t.syntax }).stripPrefix("_root_.")
         val local = tree.collect { case t: Defn.Trait if types.owner(t) + "." + t.name.value == raw || t.name.value == raw => types.owner(t) + "." + t.name.value }.distinct
         val resolved = if(contracts.contains(raw)) Some(raw) else if(local.size == 1 && contracts.contains(local.head)) Some(local.head) else None
         resolved.foreach { contract =>
-          val signatures = interfaces(contract).head._2.templ.stats.collect {
+          val parent = interfaces(contract).head._2
+          val variables = parent.tparamClause.values.map(_.name.value)
+          val arguments = init.tpe match { case a: Type.Apply => a.argClause.values.map(_.syntax); case _ => Nil }
+          if(variables != arguments) evidence += List(path,(init.pos.startLine + 1).toString,"UNRESOLVED interface " + contract,"generic substitution requires semantic evidence")
+          else {
+          val signatures = parent.templ.stats.collect {
             case d: Decl.Def => (d.name.value,d.paramClauseGroups.flatMap(_.paramClauses).map(_.values),d.decltpe)
             case d: Defn.Def if d.decltpe.nonEmpty => (d.name.value,d.paramClauseGroups.flatMap(_.paramClauses).map(_.values),d.decltpe.get)
           }
@@ -250,16 +255,26 @@ object InterfaceSignatures {
             if(matching.size == 1) {
               val (_,expectedParams,result) = matching.head
               val pairs = params.flatten.zip(expectedParams.flatten).flatMap { case(p,q) => p.decltpe.zip(q.decltpe) } ++ method.decltpe.toList.map(_ -> result)
-              val hasNominal = pairs.exists { case(_,t) => t.collect { case x: Type if types.pure(x.syntax,t).nonEmpty => true }.nonEmpty }
-              if(hasNominal && pairs.forall { case(a,b) => types.shape(a,a) == types.shape(b,b) }) pairs.foreach { case(a,b) =>
+              val hasNominal = (pairs.map(_._2) :+ result).exists(t => t.collect { case x: Type if types.pure(x.syntax,t).nonEmpty => true }.nonEmpty)
+              if(hasNominal && pairs.forall { case(a,b) => types.shape(a,a) == types.shape(b,b) }) {
+              if(method.decltpe.isEmpty) {
+                val insertion = method.paramClauseGroups.flatMap(_.paramClauses).lastOption.map(_.pos.end).orElse(if(method.paramClauseGroups.isEmpty) Some(method.name.pos.end) else None)
+                insertion.foreach { at =>
+                  evidence += List(path,(method.pos.startLine + 1).toString,"INTERFACE_RESULT " + contract + "." + method.name.value,types.qualified(result))
+                  patches += path -> ((at,at,": " + types.qualified(result)))
+                }
+              }
+              pairs.foreach { case(a,b) =>
                 val next = types.qualified(b)
                 if(a.syntax.stripPrefix("_root_.") != next.stripPrefix("_root_.")) {
                   evidence += List(path,(a.pos.startLine + 1).toString,"INTERFACE " + contract + "." + method.name.value + " " + a.structure,next)
                   patches += path -> ((a.pos.start,a.pos.end,next))
                 }
               }
+              }
               else if(hasNominal) evidence += List(path,(method.pos.startLine + 1).toString,"UNRESOLVED interface " + contract + "." + method.name.value,"incompatible parameter/result shape")
             }
+          }
           }
         }
       }
@@ -331,16 +346,33 @@ object CompilerRepairs {
           val messages = block.linesIterator.filter(_.contains('|')).map(s => s.substring(s.indexOf('|') + 1).trim).toList
           val locations = messages.indices.filter(i => messages(i).startsWith(label + ":")).toList
           locations match {
-            case List(at) => Some((messages(at).stripPrefix(label + ":").trim :: messages.drop(at + 1).takeWhile(s => s.nonEmpty && !s.startsWith("Found:") && !s.startsWith("Required:") && !s.startsWith("where:") && !s.startsWith("longer "))).mkString(" "))
+            case List(at) => Some((messages(at).stripPrefix(label + ":").trim :: messages.drop(at + 1).takeWhile(s => s.nonEmpty && !s.startsWith("Found:") && !s.startsWith("Required:") && !s.startsWith("where:") && !s.startsWith("Note ") && !s.startsWith("longer "))).mkString(" "))
             case _ => None
           }
         }
         def diagnosticType(s: String, nullable: Boolean = false): Option[Type] = {
           val input = s.replace(" : => "," : ")
-          val parsed = input.parse[Term].toOption.collect { case Term.Ascribe(_,t) => t }.orElse(input.parse[Type].toOption)
-          parsed.map { case a: Type.ApplyInfix if nullable && a.op.value == "|" && a.rhs.syntax == "Null" => a.lhs; case t => t }
+          val literalBase = input.tokenize.toOption.flatMap { tokens =>
+            var depth = 0
+            val colon = tokens.find { token =>
+              if(token.is[Token.LeftParen]) { depth += 1; false }
+              else if(token.is[Token.RightParen]) { depth -= 1; false }
+              else token.is[Token.Colon] && depth == 1
+            }
+            colon.filter(_ => input.startsWith("(") && input.endsWith(")")).flatMap { token =>
+              input.substring(token.pos.end,input.length - 1).trim.parse[Term].toOption.collect { case Term.Ascribe(_: Lit,t) => t }
+            }
+          }
+          val parsed = input.parse[Term].toOption.collect { case Term.Ascribe(_,t) => t }.orElse(literalBase).orElse(input.parse[Type].toOption)
+          parsed.map { case a: Type.ApplyInfix if nullable && a.op.value == "|" && a.rhs.syntax == "Null" => a.lhs; case t => t }.map { t =>
+            t.syntax.parse[Term].toOption.collect { case Term.Ascribe(_: Lit,base) => base }.getOrElse(t)
+          }
         }
         def normalize(t: Type): String = types.pure(t.syntax,tree).map(_.name).getOrElse(types.clean(t.syntax).stripSuffix(".T"))
+        def refinedBase(t: Type): Option[Type] = t match {
+          case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "io.github.iltotore.iron.IronType" && a.argClause.values.size == 2 => Some(a.argClause.values.head)
+          case _ => None
+        }
         def contextual(t: Type): String = t match {
           case a: Type.Apply => types.clean(a.tpe.syntax) + a.argClause.values.map(contextual).mkString("[",",","]")
           case a: Type.Tuple => a.args.map(contextual).mkString("(",",",")")
@@ -353,9 +385,11 @@ object CompilerRepairs {
             }
         }
         def convert(from: Type, to: Type, value: String): Option[String] = {
-          if(normalize(from) == normalize(to) || to.syntax == "Any") Some(value) else {
+          if(normalize(from) == normalize(to) || to.syntax == "Any" || refinedBase(from).exists(b => normalize(b) == normalize(to))) Some(value) else {
             val a = types.pure(from.syntax,tree); val b = types.pure(to.syntax,tree)
             if(a.isEmpty && b.exists(_.base == types.clean(from.syntax))) b.map(n => "_root_." + n.name + "(" + value + ")")
+            else if(a.isEmpty && types.clean(from.syntax) == "Null" && b.exists(_.base == "String")) b.map(n => "_root_." + n.name + "(" + value + ")")
+            else if(a.isEmpty && types.clean(from.syntax) == "Int" && b.exists(_.base == "Long")) b.map(n => "_root_." + n.name + "((" + value + ").toLong)")
             else if(b.isEmpty && a.exists(n => n.base == types.clean(to.syntax) || (n.base == "String" && Set("CharSequence","java.lang.CharSequence")(to.syntax)))) Some("(" + value + ").value")
             else if(a.nonEmpty && b.exists(n => n.base == a.get.base && rawInputs.contains(n.name))) b.map(n => "_root_." + n.name + "((" + value + ").value)")
             else (from,to) match {
@@ -402,20 +436,25 @@ object CompilerRepairs {
             if(at < 0) None else diagnosticType((messages(at).stripPrefix(label + " type:").trim :: messages.drop(at + 1).takeWhile(s =>
               s.nonEmpty && !s.startsWith("Second type:") && !s.startsWith("Possible "))).mkString(" "))
           }
-          def projection(t: Type): Type = types.pure(t.syntax,tree) match {
+          def projection(t: Type): Type = if(refinedBase(t).nonEmpty) refinedBase(t).get else types.pure(t.syntax,tree) match {
             case Some(n) => n.base.parse[Type].get
             case None => t match {
-              case a: Type.Apply if Set("List","Option","Some","Map","Either")(types.clean(a.tpe.syntax)) =>
-                val container = if(types.clean(a.tpe.syntax) == "Some") "Option" else types.clean(a.tpe.syntax)
+              case a: Type.Apply if Set("List","Option","Some","Map","Either","Left","Right")(types.clean(a.tpe.syntax)) =>
+                val container = types.clean(a.tpe.syntax) match { case "Some" => "Option"; case "Left" | "Right" => "Either"; case n => n }
                 (container + a.argClause.values.map(projection).map(_.syntax).mkString("[",", ", "]")).parse[Type].get
               case a: Type.Tuple => a.args.map(projection).map(_.syntax).mkString("(",", ", ")").parse[Type].get
               case _ => t
             }
           }
+          def comparable(a: Type,b: Type): Boolean = normalize(a) == normalize(b) || b.syntax == "Nothing" || ((a,b) match {
+            case (x: Type.Apply,y: Type.Apply) if normalize(x.tpe) == normalize(y.tpe) && x.argClause.values.size == y.argClause.values.size => x.argClause.values.zip(y.argClause.values).forall { case(c,d) => comparable(c,d) }
+            case (x: Type.Tuple,y: Type.Tuple) if x.args.size == y.args.size => x.args.zip(y.args).forall { case(c,d) => comparable(c,d) }
+            case _ => false
+          })
           val comparison = tree.collect { case a: Term.Apply if a.fun.syntax == "assertEquals" && a.argClause.values.size >= 2 &&
             a.pos.start <= offset && offset <= a.pos.end => a }.sortBy(a => a.pos.end - a.pos.start).headOption
           for(a <- comparison; first <- comparisonType("First"); second <- comparisonType("Second") if
-            normalize(projection(first)) == normalize(projection(second)) && second.collect { case t: Type if types.pure(t.syntax,tree).nonEmpty => true }.isEmpty &&
+            comparable(projection(first),projection(second)) && second.collect { case t: Type if types.pure(t.syntax,tree).nonEmpty => true }.isEmpty &&
             displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
             val obtained = a.argClause.values.head
             val original = source.substring(obtained.pos.start,obtained.pos.end)
@@ -435,8 +474,31 @@ object CompilerRepairs {
           }
         }
         if(sourceDisplayMatches && d.group(1) == "E008") {
-          val member = "value ([^ ]+) is not a member of ([_A-Za-z][_A-Za-z0-9.]*)".r.findFirstMatchIn(block)
-          member.foreach { m => types.pure(m.group(2).stripSuffix("."),tree).foreach { n =>
+          val member = "value ([^ ]+) is not a member of ([^\\r\\n]+)".r.findFirstMatchIn(block)
+          def reported(m: scala.util.matching.Regex.Match): String = m.group(2).split(", but",2).head.trim.stripSuffix(".")
+          member.foreach { m =>
+            val union = reported(m).parse[Type].toOption.collect { case t: Type.ApplyInfix if t.op.value == "|" => t }
+            val nominal = union.toList.flatMap(t => List(t.lhs -> t.rhs,t.rhs -> t.lhs)).collectFirst {
+              case (a,b) if types.clean(b.syntax) == "String" && types.pure(a.syntax,tree).exists(_.base == "String") => types.pure(a.syntax,tree).get
+            }
+            for(n <- nominal; selection <- terms.collectFirst { case s: Term.Select if s.name.value == m.group(1) => s }) {
+              selection.qual match {
+                case fallback: Term.Apply if fallback.argClause.values.size == 1 && fallback.argClause.values.head.is[Lit.String] => fallback.fun match {
+                  case Term.Select(option: Term.Apply,Term.Name("getOrElse")) if Set("Option","scala.Option")(option.fun.syntax) && option.argClause.values.size == 1 => option.argClause.values.head match {
+                    case arg: Term.Name if parameterType(arg,selection).flatMap(types.pure(_,selection)).exists(_.name == n.name) =>
+                      val original = source.substring(fallback.pos.start,fallback.pos.end)
+                      val next = original.patch(arg.pos.start - fallback.pos.start,"(" + arg.syntax + ").value",arg.pos.end - arg.pos.start)
+                      val target: Tree = if(m.group(1) == "value") selection else fallback
+                      proposed += ((path,target,next,"E008 nullable Pure/raw fallback")); supported = true
+                    case _ => ()
+                  }
+                  case _ => ()
+                }
+                case _ => ()
+              }
+            }
+          }
+          member.foreach { m => types.pure(reported(m),tree).foreach { n =>
             val method = m.group(1)
             val encoded = scala.reflect.NameTransformer.encode(method)
             val stringMember = n.base == "String" && (method == "+" || (classOf[String].getMethods ++ classOf[scala.collection.StringOps].getMethods).exists(_.getName == encoded))
@@ -446,6 +508,15 @@ object CompilerRepairs {
             } else if(n.base == "Boolean" && method == "unary_!") terms.collectFirst { case a: Term.ApplyUnary if a.op.value == "!" => a.arg } else None
             receiver.foreach { r => proposed += ((path,r,"(" + source.substring(r.pos.start,r.pos.end) + ").value","E008 primitive member " + method)); supported = true }
           }}
+        }
+        if(sourceDisplayMatches && d.group(1) == "E049") {
+          tree.collect { case p: Pat.Extract if p.fun.is[Term.Name] && p.fun.pos.start <= offset && offset < p.fun.pos.end => p }.foreach { p =>
+            types.parents(p).collectFirst { case e: Defn.Enum => e }.foreach { e =>
+              if(e.templ.stats.collect { case c: Defn.EnumCase if c.name.value == p.fun.syntax => c }.size == 1 && block.contains("Reference to " + p.fun.syntax + " is ambiguous")) {
+                proposed += ((path,p.fun,"_root_." + types.owner(e) + "." + e.name.value + "." + p.fun.syntax,"E049 enclosing enum case")); supported = true
+              }
+            }
+          }
         }
         if(sourceDisplayMatches && d.group(1) == "E134") {
           terms.collectFirst { case a: Term.Apply => a }.foreach { app =>
@@ -554,7 +625,10 @@ object CompilerRepairs {
     if(errorType.nonEmpty) frozen.keys.filter(p => p.endsWith(".scala") && roots.exists(p.startsWith)).foreach { path =>
       val tree = types.tree(path)
       val error = types.pure(errorType,tree).filter(_.base == "String").getOrElse(throw new IllegalArgumentException("Expected Pure String error type"))
-      tree.collect { case a: Term.Apply =>
+      tree.collect { case a: Term.Apply if !types.parents(a).exists {
+        case outer: Term.Apply => outer.fun.syntax == "assertEquals"
+        case _ => false
+      } =>
         val payload = if(Set("Either.cond","scala.Either.cond")(a.fun.syntax) && a.argClause.values.size == 3) a.argClause.values.lift(2)
           else if(a.fun.syntax == "Left" && a.argClause.values.size == 1) a.argClause.values.headOption
           else a.fun match {
@@ -618,7 +692,13 @@ object TypeConsolidation {
     implicit val dialect: Dialect = dialects.Scala3
     def rows(file: String) = Files.readAllLines(Paths.get(file)).asScala.drop(1).map(_.split("\t",-1).toList).toList
     val snapshot = rows(index + "/sources.tsv").map(r => r.head -> r(1)).toMap
-    require(snapshot.forall { case(p,h) => frozen.get(p).contains(h) } && (frozen.keySet -- snapshot.keySet).subsetOf(Set("build.sbt")),"Consolidation index is not the current frozen snapshot")
+    require(snapshot.keySet.subsetOf(frozen.keySet),"Consolidation index contains sources outside the frozen universe")
+    val current = new NewtypeIndex(Nil, "")
+    val currentTrees = frozen.keys.filter(_.endsWith(".scala")).toList.sorted.map { p =>
+      val tree = Files.readString(Paths.get(p)).parse[Source].get
+      current.inspect(tree,p,p.stripPrefix("modules/").split("/src/").head,if(p.contains("/src/test/")) "test" else "production")
+      p -> tree
+    }.toMap
     val additions = new NewtypeIndex(Nil, "")
     val newTrees = creates.map { case(p,s) =>
       require(!Files.exists(Paths.get(p)),"Canonical source already exists: " + p)
@@ -626,9 +706,42 @@ object TypeConsolidation {
       additions.inspect(tree,p,p.stripPrefix("modules/").split("/src/").head,if(p.contains("/src/test/")) "test" else "production")
       p -> tree
     }
-    val definitions = rows(index + "/newtypes.tsv") ++ additions.entries
-    require(additions.entries.map(_(5)).distinct.size == additions.entries.size && !rows(index + "/newtypes.tsv").exists(r => additions.entries.exists(_(5) == r(5))),"Created canonical definition already exists or is ambiguous")
-    val selected = roles.flatMap { role =>
+    val definitions = current.entries ++ additions.entries
+    require(additions.entries.map(_(5)).distinct.size == additions.entries.size && !current.entries.exists(r => additions.entries.exists(_(5) == r(5))),"Created canonical definition already exists or is ambiguous")
+    val resolver = new RepairTypes(frozen,index)
+    def forwardingPairs(from: Type, to: Type): List[(String,String)] = (from,to) match {
+      case (a: Type.Apply,b: Type.Apply) if a.tpe.syntax == b.tpe.syntax && a.argClause.values.size == b.argClause.values.size =>
+        a.argClause.values.zip(b.argClause.values).flatMap { case(x,y) => forwardingPairs(x,y) }
+      case (a: Type.Tuple,b: Type.Tuple) if a.args.size == b.args.size => a.args.zip(b.args).flatMap { case(x,y) => forwardingPairs(x,y) }
+      case _ => (for(a <- resolver.pure(from.syntax,from); b <- resolver.pure(to.syntax,to) if a.name != b.name) yield a.name -> b.name).toList
+    }
+    val factoryRoles = roles.filter(_.constructorProperties).flatMap { role =>
+      require(role.within.nonEmpty && role.target.isEmpty && role.targetOwner.isEmpty && role.names.isEmpty,"Constructor projection takes a namespace, not individual type mappings")
+      val pairs = currentTrees.values.toList.flatMap { tree =>
+        val classes = tree.collect { case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) => c }
+        tree.collect { case m: Defn.Def if m.name.value == "apply" && resolver.owner(m).startsWith(role.within + ".") && m.body.is[Term.New] => m }.flatMap { m =>
+          val namespace = resolver.owner(m)
+          val init = m.body.asInstanceOf[Term.New].init
+          val matching = classes.filter(c => resolver.owner(c) + "." + c.name.value == namespace &&
+            Set(c.name.value,namespace,"_root_." + namespace)(init.tpe.syntax))
+          if(matching.size != 1 || init.argClauses.size != 1 || matching.head.ctor.paramClauses.size != 1) Nil else {
+            val fields = matching.head.ctor.paramClauses.head.values
+            val args = init.argClauses.head.values
+            val parameters = m.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values)
+            if(args.size > fields.size || fields.drop(args.size).exists(_.default.isEmpty)) Nil else args.zip(fields).flatMap {
+              case (arg: Term.Name,field) if arg.value == field.name.value =>
+                parameters.filter(_.name.value == arg.value).flatMap(p => p.decltpe.toList.flatMap(a => field.decltpe.toList.flatMap(b => forwardingPairs(a,b)))).filter {
+                  case(a,b) => a.startsWith(namespace + ".Apply") && b.startsWith(namespace + ".") && !b.startsWith(namespace + ".Apply")
+                }
+              case _ => Nil
+            }
+          }
+        }
+      }.distinct
+      require(role.expected < 0 || pairs.size == role.expected,"Constructor projection count differs: expected=" + role.expected + " actual=" + pairs.size)
+      pairs.map { case(a,b) => AstRecipe.Consolidation(within = a.substring(0,a.lastIndexOf('.')), names = List(a.split('.').last), target = b, expected = 1) }
+    }
+    val selected = (roles.filterNot(_.constructorProperties) ++ factoryRoles).flatMap { role =>
       require(role.within.nonEmpty && (role.target.nonEmpty != role.targetOwner.nonEmpty),"Choose one canonical type or projection owner")
       require(role.target.isEmpty || (role.names.nonEmpty && role.target.contains(".")),"Canonical role needs names and a qualified type")
       val candidates = definitions.filter { d =>
@@ -660,7 +773,7 @@ object TypeConsolidation {
       case e: Defn.Enum => e.name.value
     }.mkString(".")
     def ancestors(t: Tree): List[Tree] = t :: t.parent.toList.flatMap(ancestors)
-    val trees = paths.map(p => p -> newTrees.getOrElse(p,Files.readString(Paths.get(p)).parse[Source].get)).toMap
+    val trees = paths.map(p => p -> newTrees.getOrElse(p,currentTrees(p))).toMap
     def definition(d: List[String], canonical: Boolean = false): (Defn.Object,Defn.Type,Type.Apply) = {
       val matches = trees(d(1)).collect { case o: Defn.Object if owner(o) + "." + o.name.value == d(5) => o }
       require(matches.size == 1,"Definition does not resolve uniquely in AST: " + d.head)
@@ -693,9 +806,22 @@ object TypeConsolidation {
       val path = "_root_." + target(5)
       val replacementAlias = "type " + obj.name.value + " = " + path
       val replacementObject = "val " + obj.name.value + ": " + path + ".type = " + path
-      List((alias,replacementAlias),(obj,replacementObject)).map { case(tree,next) =>
-        evidence += List(d(1),(tree.pos.startLine + 1).toString,"CONSOLIDATE " + d.head + " " + tree.structure,next.parse[Stat].get.structure)
-        d(1) -> (tree.pos.start,tree.pos.end,next)
+      val values = obj.parent.toList.flatMap(_.children).collect {
+        case v: Defn.Val if v.pats.exists { case Pat.Var(n) => n.value == obj.name.value; case _ => false } => v
+      }
+      require(values.size <= 1,"Ambiguous existing value beside newtype: " + d.head)
+      val references = trees(d(1)).collect { case a: Term.Apply if a.fun.syntax.stripPrefix("_root_.") == d(5) => a.fun }
+      if(values.nonEmpty) require(values.head.decltpe.exists(_.collect { case t: Type if t.syntax.stripPrefix("_root_.") == d(5) => true }.nonEmpty) &&
+        references.forall(t => values.head.rhs.pos.start <= t.pos.start && t.pos.end <= values.head.rhs.pos.end),"Constructor/value collision needs semantic review: " + d.head)
+      val changes: List[(Tree,String)] = List(alias -> replacementAlias, obj -> (if(values.isEmpty) replacementObject else "")) ++
+        (if(values.isEmpty) Nil else references.map(_ -> path))
+      changes.map { case(tree,next) =>
+        evidence += List(d(1),(tree.pos.startLine + 1).toString,"CONSOLIDATE " + d.head + " " + tree.structure,if(next.isEmpty) "remove conflicting empty companion; preserve existing value" else next.parse[Stat].get.structure)
+        val source = Files.readString(Paths.get(d(1)))
+        val start = if(next.isEmpty) source.lastIndexOf('\n',tree.pos.start - 1) + 1 else tree.pos.start
+        val end = if(next.isEmpty) trees(d(1)).tokens.find(t => t.pos.start == tree.pos.end && t.is[Token.LF]).map(_.pos.end).getOrElse(tree.pos.end) else tree.pos.end
+        require(next.nonEmpty || source.substring(start,tree.pos.start).forall(_ == ' '),"Companion removal is not a complete statement")
+        d(1) -> (start,end,next)
       }
     }
     val primitives = roles.filter(_.primitiveEitherLeft).flatMap { role =>

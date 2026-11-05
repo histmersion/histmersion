@@ -11,9 +11,9 @@ class ValuesSuite extends munit.FunSuite:
 
   test("a period runs from its start to its end, both included; one ending before it starts is none"):
     val p = Period.from(Year(-1700), Year(-1600)).toOption.get
-    assertEquals((p.start.value, p.end.value, p.isPoint), (-1700, -1600, false))
-    assert(Period.point(Year(-1600)).isPoint)
-    assertEquals(Period.from(Year(-1600), Year(-1700)), Left("the period ends (-1700) before it starts (-1600)"))
+    assertEquals(({ val refactorTuple = (p.start.value, p.end.value, p.isPoint); (refactorTuple._1, refactorTuple._2, (refactorTuple._3).value) }: (Int, Int, Boolean)), (-1700, -1600, false))
+    assert((Period.point(Year(-1600)).isPoint).value)
+    assertEquals(((Period.from(Year(-1600), Year(-1700))).left.map(refactorError => (refactorError).value): Either[String, com.histmersion.plugin.Period]), Left("the period ends (-1700) before it starts (-1600)"))
 
   test("coordinates are on the globe"):
     assertEquals((Latitude(36.4).value, Longitude(-25.4).value), (36.4, -25.4))

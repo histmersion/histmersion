@@ -13,7 +13,7 @@ package com.histmersion.plugin
   */
 final case class GazetteerName(
     name: GazetteerName.Name,
-    lang: GazetteerName.Lang = "",
+    lang: GazetteerName.Lang = _root_.com.histmersion.plugin.GazetteerName.Lang(""),
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None
 )

@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Registry.scala	6ee1119a60636b41f5e119c6ba22cba85bd0372beec623e362cab05ddcb9f171	46851ceabaebf32bdc6f67dfb8270a126039a8482fc2667c47ec33388a9cad66

@@ -12,20 +12,20 @@ package com.histmersion.plugin
   *   off, it adds them
   */
 final case class AiCapabilities(
-    tools: AiCapabilities.Tools = true,
-    structuredOutput: AiCapabilities.StructuredOutput = false,
-    iterationMarkers: AiCapabilities.IterationMarkers = false,
-    verbatimFailures: AiCapabilities.VerbatimFailures = false
+    tools: AiCapabilities.Tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true),
+    structuredOutput: AiCapabilities.StructuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(false),
+    iterationMarkers: AiCapabilities.IterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false),
+    verbatimFailures: AiCapabilities.VerbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false)
 ):
   /** The constructor of a provider compiled before the loop's notes and verbatim failures existed. */
-  def this(tools: Boolean, structuredOutput: Boolean) = this(tools, structuredOutput, false, false)
+  def this(tools: Boolean, structuredOutput: Boolean) = this(_root_.com.histmersion.plugin.AiCapabilities.Tools(tools), _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(structuredOutput), _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false), _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false))
 
 object AiCapabilities:
   /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */
-  type ApplyTools = ApplyTools.T
-  object ApplyTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyStructuredOutput = ApplyStructuredOutput.T
-  object ApplyStructuredOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTools = _root_.com.histmersion.plugin.AiCapabilities.Tools
+  val ApplyTools: _root_.com.histmersion.plugin.AiCapabilities.Tools.type = _root_.com.histmersion.plugin.AiCapabilities.Tools
+  type ApplyStructuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput
+  val ApplyStructuredOutput: _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput.type = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput
 
   type Tools = Tools.T
   object Tools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -37,4 +37,4 @@ object AiCapabilities:
   object VerbatimFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(tools: com.histmersion.plugin.AiCapabilities.ApplyTools, structuredOutput: com.histmersion.plugin.AiCapabilities.ApplyStructuredOutput): AiCapabilities =
-    new AiCapabilities(tools, structuredOutput, false, false)
+    new AiCapabilities(tools, structuredOutput, _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false), _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false))

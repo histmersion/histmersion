@@ -18,7 +18,7 @@ trait GazetteerSource:
   def title: com.histmersion.plugin.GazetteerSource.TitleResult
 
   /** One sentence: what it brings and on what terms. */
-  def description: com.histmersion.plugin.GazetteerSource.DescriptionResult = ""
+  def description: com.histmersion.plugin.GazetteerSource.DescriptionResult = _root_.com.histmersion.plugin.GazetteerSource.DescriptionResult("")
 
   /** The dataset's licence and credit, as its provider states them. The credit is the provenance line stored with each
     * place that does not state its own ([[GazetteerPlace.source]]).

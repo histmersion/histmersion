@@ -1,0 +1,5 @@
+path	line	before-ast	after-ast
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	94	COMPILER E007 String -> com.histmersion.plugin.Secret.Ref.Value.Literal Term.Name("rest")	_root_.com.histmersion.plugin.Secret.Ref.Value.Literal(rest)
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	100	COMPILER E007 String -> com.histmersion.plugin.Secret.Ref.Vault.Value Term.Name("scheme")	_root_.com.histmersion.plugin.Secret.Ref.Vault.Value(scheme)
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	97	COMPILER E007 String -> com.histmersion.plugin.Secret.Ref.Env.Name Term.Select(Term.Name("rest"), Term.Name("trim"))	_root_.com.histmersion.plugin.Secret.Ref.Env.Name(rest.trim)
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	100	COMPILER E007 String -> com.histmersion.plugin.Secret.Ref.Vault.Ref Term.Select(Term.Name("rest"), Term.Name("trim"))	_root_.com.histmersion.plugin.Secret.Ref.Vault.Ref(rest.trim)

@@ -1,5 +1,104 @@
 # Priority-family status
 
+## Verified locally: plugin API production compilation; test migration incomplete
+
+pluginApi/compile now passes. Scalafix repaired 28 production files and applied
+supported caller repairs across all eight API test files. No application or
+application-test source was edited by hand. AstRecipe, ApplyFrozenPreview and
+CompileBatch remain the existing rewrite/application/build pipeline; only rules,
+fixtures and batch configuration were extended.
+
+The newtype census records 67 removed opaque definitions and no introductions.
+Their public names remain transparent aliases with singleton constructor forwards,
+except the generated MediaCollection.Roles companion: it conflicted with the
+existing Roles set. The rule preserves that set and redirects only its own
+fully-qualified constructor initializers to the canonical MediaItem.Role.
+
+* 26 duplicates are discovered by a reusable direct-constructor-forwarding rule in
+  five companions: AiCapabilities, AiTurn.Request, AiUsage, MediaItem and MediaPlace.
+  It matches argument/field names, current declared container shapes and Pure
+  definitions, preserving omitted defaults. Non-forwarding factories, ambiguous
+  owners, constrained constructors and changed base types remain outside this proof.
+* 41 reviewed duplicates reuse existing HTTP, secret-reference, media-role,
+  completed-item-key and unavailable-capability contracts. The unavailable files
+  and processes implementations now use their interfaces' types. Registry.refusing
+  also uses its interface's parameter/result contract; its refusal message is kept.
+
+Consolidation rebuilds its declaration index from the complete current frozen AST
+universe instead of requiring a new persisted census after every compiler repair.
+The prior index is a locator; current declarations, modifiers, base/constraint,
+owners, source sets, candidate counts and source hashes still gate application.
+Three explicit nominal boundary targets are configured: an unread licence statement,
+its fallback stored identifier, and a place/event's tagged target identifier. This
+does not permit arbitrary same-base nominal conversions or add policy exceptions.
+
+The reusable compiler repairs additionally handle exact Int-to-Long widening,
+nullable String construction/fallbacks, singleton literal type diagnostics,
+enclosing enum-case qualification, and primitive comparisons of nested containers,
+Either branches and already-unwrapped refinements. Typed ascriptions are checked by
+the compiler; casts, Compare[Any, Any], autoRefine and assume are not introduced.
+Failure-payload adaptation skips assertions so it cannot alter comparison fixtures'
+expected payloads. Callback factories remain evaluated once.
+
+resolver-test-build-4 retains the original 143 reported API errors (100 positioned
+diagnostics printed). plugin-api-build-1 through -7 record
+86 → 36 → 8 → 4 → 8 → 1 → 0. The later eight are override checks exposed after
+expression typing succeeded, not eight newly established policy regressions.
+All build observations retain 3168 Scala source hashes plus build.sbt and disable
+formatting. No compiler checks were weakened.
+
+Test observations preserve 239 → 61 → 35 → 33 reported compilation errors.
+plugin-api-test-build-2 raises only the session's reporting limit to 1000 and replays
+all 239 positioned diagnostics from the same cached failed compilation; the original
+100-diagnostic observation is retained. Applied previews -3, -4 and -5 contain
+209, 27 and two expression patches respectively, across all eligible test files.
+These patch counts are not distinct verified policy repairs or an automation rate.
+The 33 remaining errors include constructor overloads, different nominal meanings,
+Set/collection comparisons and unsupported signatures. They stay detected and are
+targeted rewrite/design work, not accepted exceptions or compliant cases.
+
+plugin-api-values-secret-tests-1 explicitly selects two of the eight test sources:
+13 tests execute, ten pass and three fail. All six SecretSuite tests pass, including
+null input, masking, error messages and derived configuration. Four ValuesSuite
+tests pass, including the period invariant and the SPI version. Coordinate-range,
+DOI-format and Wikidata-format assertions fail because the existing client types
+are Pure. Those definitions and the failing expectations are unchanged in this
+batch. Their conflict with the Pure-client contract needs review alongside host
+validation coverage; no expectation was silently relaxed. CompileBatch's generic
+COMPILE_FAILED status covers this nonzero test exit; its log distinguishes the
+successful compilation from the three behavioral failures.
+
+Resolver integration was retried. It gets past plugin-api and now stops at seven
+hello-deps fixture compilation errors (plugin-api-resolver-tests-1). Its integration
+tests have not executed. The prior 15 pure resolver tests remain historical evidence.
+
+Compiler, canonical-consolidation and interface fixtures match exact expected
+output and compile/run with Scala 3.10, -source:future and fatal E165. Six compiler
+negative cases remain unresolved: constrained construction, wrong nominal meaning,
+wrong primitive base, narrowing, null-to-Int and unrelated nominal comparison.
+Canonical fixtures verify default-preserving forwarding, a non-forwarding exclusion,
+type identity and preservation of an existing value. Interface fixtures verify a
+generic registry with matching type variables and an explicit inferred-result
+annotation; incompatible overloads and generic substitution remain unsupported.
+The fixture exposed and corrected nullable-union receiver handling and compiler
+literal-type/explanatory-note parsing without changing the expected outcomes.
+
+type-positions-after-plugin-api-2 retains all 3168 Scala files and the original
+comparison baseline, with zero removed/new raw declaration IDs. Counts remain
+production594/test6051 (6645 total). Definitions are production27634/test15, with
+3014 overlap candidate groups and 16095 unresolved candidate references. Earlier
+counts and identities remain in the ledger and immutable observations. Flattening
+the final measurement configuration resolved a configuration-loading failure while
+retaining every applied plan and all source hashes. The complete chain and final
+frozen previews verify; no denominator or baseline was replaced.
+
+Inventory acceptance and other policy families remain frozen partial. No fresh
+whole-project semantic inference, unwrap/capability/layer regression scan, native
+build, complete test pass or overall repair percentage is claimed. Next prioritize
+one reusable constructor-overload transformation across eligible callers, then the
+remaining collection/signature shapes and the seven fixture errors. The three
+client-validation expectation conflicts remain explicit design/test work.
+
 ## Verified locally: resolver vocabulary and compiler repair
 
 The resolver production module and all three resolver test sources now compile.

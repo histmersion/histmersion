@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	5791c1d8e2c51cf0a8fb81fdfa4a09f9898da6219649ca4473e1b898df2a08f2	144e30edc75ac36b4ddc214a40863fa16cb50d3a00403f11b6d202ae9e47dd1f

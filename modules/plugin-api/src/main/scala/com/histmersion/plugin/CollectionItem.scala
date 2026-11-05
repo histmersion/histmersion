@@ -40,7 +40,7 @@ final case class CollectionItem(
     identifiers: Map[CollectionItem.IdentifiersKey, CollectionItem.IdentifiersValue] = Map.empty,
     files: List[CollectionFile] = Nil,
     cover: Option[CollectionItem.Cover] = None,
-    restricted: CollectionItem.Restricted = false
+    restricted: CollectionItem.Restricted = _root_.com.histmersion.plugin.CollectionItem.Restricted(false)
 )
 
 object CollectionItem:

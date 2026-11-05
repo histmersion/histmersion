@@ -38,7 +38,7 @@ object Fetch:
       * another plugin's behalf, what that plugin's upstream holds asks it only while that plugin is on. `false` from a
       * host that does not say.
       */
-    def registered(pluginId: com.histmersion.plugin.Fetch.Context.RegisteredPluginId): com.histmersion.plugin.Fetch.Context.RegisteredResult = false
+    def registered(pluginId: com.histmersion.plugin.Fetch.Context.RegisteredPluginId): com.histmersion.plugin.Fetch.Context.RegisteredResult = _root_.com.histmersion.plugin.Fetch.Context.RegisteredResult(false)
 
   object Context:
     type MemoKey = MemoKey.T

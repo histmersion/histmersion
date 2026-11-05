@@ -1,0 +1,8 @@
+sbt
+--server
+-batch
+set every scalafmtOnCompile := false
+set ThisBuild / scalacOptions += "-Xsemanticdb"
+set every maxErrors := 1000
+set pluginApi / Test / unmanagedSources ~= (_.filter(f => Set("ValuesSuite.scala", "SecretSuite.scala")(f.getName)))
+pluginApi/testOnly *ValuesSuite *SecretSuite

@@ -61,34 +61,34 @@ final case class MediaItem(
       period: Option[Period],
       ids: List[(String, String)],
       withheld: Option[String]
-  ) = this(key, title, pageUrl, imageUrl, rights, thumbUrl, originalUrl, geography, period, ids, withheld, None, None)
+  ) = this(_root_.com.histmersion.plugin.MediaItem.Key(key), _root_.com.histmersion.plugin.MediaItem.Title(title), _root_.com.histmersion.plugin.MediaItem.PageUrl(pageUrl), (imageUrl).map(refactorValue => _root_.com.histmersion.plugin.MediaItem.ImageUrl(refactorValue)), (rights).left.map(refactorError => _root_.com.histmersion.plugin.MediaItem.RightsPart1(refactorError)), (thumbUrl).map(refactorValue3 => _root_.com.histmersion.plugin.MediaItem.ThumbUrl(refactorValue3)), (originalUrl).map(refactorValue4 => _root_.com.histmersion.plugin.MediaItem.OriginalUrl(refactorValue4)), (geography).map(refactorValue5 => { val refactorTuple = refactorValue5; (_root_.com.histmersion.plugin.MediaItem.GeographyPart1(refactorTuple._1), _root_.com.histmersion.plugin.MediaItem.GeographyPart2(refactorTuple._2)) }), period, (ids).map(refactorValue6 => { val refactorTuple2 = refactorValue6; (_root_.com.histmersion.plugin.MediaItem.IdsPart1(refactorTuple2._1), _root_.com.histmersion.plugin.MediaItem.IdsPart2(refactorTuple2._2)) }), (withheld).map(refactorValue7 => _root_.com.histmersion.plugin.MediaItem.Withheld(refactorValue7)), None, None)
 
 object MediaItem:
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
-  type ApplyKey = ApplyKey.T
-  object ApplyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyTitle = ApplyTitle.T
-  object ApplyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPageUrl = ApplyPageUrl.T
-  object ApplyPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyImageUrl = ApplyImageUrl.T
-  object ApplyImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyRightsPart1 = ApplyRightsPart1.T
-  object ApplyRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyThumbUrl = ApplyThumbUrl.T
-  object ApplyThumbUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyOriginalUrl = ApplyOriginalUrl.T
-  object ApplyOriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyGeographyPart1 = ApplyGeographyPart1.T
-  object ApplyGeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyGeographyPart2 = ApplyGeographyPart2.T
-  object ApplyGeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyIdsPart1 = ApplyIdsPart1.T
-  object ApplyIdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyIdsPart2 = ApplyIdsPart2.T
-  object ApplyIdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyWithheld = ApplyWithheld.T
-  object ApplyWithheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyKey = _root_.com.histmersion.plugin.MediaItem.Key
+  val ApplyKey: _root_.com.histmersion.plugin.MediaItem.Key.type = _root_.com.histmersion.plugin.MediaItem.Key
+  type ApplyTitle = _root_.com.histmersion.plugin.MediaItem.Title
+  val ApplyTitle: _root_.com.histmersion.plugin.MediaItem.Title.type = _root_.com.histmersion.plugin.MediaItem.Title
+  type ApplyPageUrl = _root_.com.histmersion.plugin.MediaItem.PageUrl
+  val ApplyPageUrl: _root_.com.histmersion.plugin.MediaItem.PageUrl.type = _root_.com.histmersion.plugin.MediaItem.PageUrl
+  type ApplyImageUrl = _root_.com.histmersion.plugin.MediaItem.ImageUrl
+  val ApplyImageUrl: _root_.com.histmersion.plugin.MediaItem.ImageUrl.type = _root_.com.histmersion.plugin.MediaItem.ImageUrl
+  type ApplyRightsPart1 = _root_.com.histmersion.plugin.MediaItem.RightsPart1
+  val ApplyRightsPart1: _root_.com.histmersion.plugin.MediaItem.RightsPart1.type = _root_.com.histmersion.plugin.MediaItem.RightsPart1
+  type ApplyThumbUrl = _root_.com.histmersion.plugin.MediaItem.ThumbUrl
+  val ApplyThumbUrl: _root_.com.histmersion.plugin.MediaItem.ThumbUrl.type = _root_.com.histmersion.plugin.MediaItem.ThumbUrl
+  type ApplyOriginalUrl = _root_.com.histmersion.plugin.MediaItem.OriginalUrl
+  val ApplyOriginalUrl: _root_.com.histmersion.plugin.MediaItem.OriginalUrl.type = _root_.com.histmersion.plugin.MediaItem.OriginalUrl
+  type ApplyGeographyPart1 = _root_.com.histmersion.plugin.MediaItem.GeographyPart1
+  val ApplyGeographyPart1: _root_.com.histmersion.plugin.MediaItem.GeographyPart1.type = _root_.com.histmersion.plugin.MediaItem.GeographyPart1
+  type ApplyGeographyPart2 = _root_.com.histmersion.plugin.MediaItem.GeographyPart2
+  val ApplyGeographyPart2: _root_.com.histmersion.plugin.MediaItem.GeographyPart2.type = _root_.com.histmersion.plugin.MediaItem.GeographyPart2
+  type ApplyIdsPart1 = _root_.com.histmersion.plugin.MediaItem.IdsPart1
+  val ApplyIdsPart1: _root_.com.histmersion.plugin.MediaItem.IdsPart1.type = _root_.com.histmersion.plugin.MediaItem.IdsPart1
+  type ApplyIdsPart2 = _root_.com.histmersion.plugin.MediaItem.IdsPart2
+  val ApplyIdsPart2: _root_.com.histmersion.plugin.MediaItem.IdsPart2.type = _root_.com.histmersion.plugin.MediaItem.IdsPart2
+  type ApplyWithheld = _root_.com.histmersion.plugin.MediaItem.Withheld
+  val ApplyWithheld: _root_.com.histmersion.plugin.MediaItem.Withheld.type = _root_.com.histmersion.plugin.MediaItem.Withheld
 
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

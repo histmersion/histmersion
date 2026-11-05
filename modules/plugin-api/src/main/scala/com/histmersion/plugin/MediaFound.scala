@@ -22,7 +22,7 @@ final case class MediaFound(
     uses: List[MediaUse],
     asked: List[MediaTarget.Id],
     unanswered: Set[MediaTarget.Id] = Set.empty,
-    read: MediaFound.Read = 0,
+    read: MediaFound.Read = _root_.com.histmersion.plugin.MediaFound.Read(0),
     failed: List[MediaFound.Failed] = Nil,
     notTaken: List[MediaFound.NotTaken] = Nil,
     categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)] = Nil

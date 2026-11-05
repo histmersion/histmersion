@@ -49,7 +49,7 @@ final case class CatalogueEvent(
     endFrom: Option[Year] = None,
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
-    historicity: CatalogueEvent.Historicity = "attested",
+    historicity: CatalogueEvent.Historicity = _root_.com.histmersion.plugin.CatalogueEvent.Historicity("attested"),
     vei: Option[CatalogueEvent.Vei] = None,
     magnitude: Option[CatalogueEvent.Magnitude] = None,
     deaths: Option[CatalogueEvent.Deaths] = None,

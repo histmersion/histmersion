@@ -1,0 +1,2 @@
+path	line	before-ast	after-ast
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Registry.scala	22	COMPILER E007 String -> com.histmersion.plugin.Registry.AddResultPart1.T Term.Interpolate(\n  Term.Name("s"),\n  List(Lit.String("'"), Lit.String("': "), Lit.String("")),\n  List(Term.Name("id"), Term.Name("why"))\n)	_root_.com.histmersion.plugin.Registry.AddResultPart1(s"'$id': $why")

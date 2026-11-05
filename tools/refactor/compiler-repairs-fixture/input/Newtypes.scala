@@ -1,6 +1,8 @@
 package compilerfixture
 
 object Values:
+  type Large = Large.T
+  object Large extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Count = Count.T
