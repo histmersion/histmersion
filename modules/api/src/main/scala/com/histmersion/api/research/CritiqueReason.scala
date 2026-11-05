@@ -6,11 +6,16 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CritiqueReason(src: String, dst: String, reason: String, by: Option[String] = None)
+final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReason.By] = None)
     derives KindlingsCodecAsObject:
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type By = By.T
+  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given Schema[CritiqueReason] = KindlingsSchema
     .derived[CritiqueReason]
     .schema

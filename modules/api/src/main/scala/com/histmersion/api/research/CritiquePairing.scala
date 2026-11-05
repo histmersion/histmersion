@@ -7,18 +7,22 @@ import com.histmersion.api.given
 
 object CritiquePairing:
 
-  final case class Work(citekey: String, names: List[String], year: Option[Int])
+  final case class Work(citekey: com.histmersion.api.library.Citekey, names: List[Work.Names], year: Option[com.histmersion.api.catalogue.Year])
+
+  object Work:
+    type Names = Names.T
+    object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Hit(
-      unit: Int,
-      from: Int,
-      to: Int,
-      where: String,
-      cited: String,
-      missing: String,
-      edges: List[String],
-      named: String,
-      mechanical: Boolean
+      unit: Hit.Unit,
+      from: Hit.From,
+      to: Hit.To,
+      where: Hit.Where,
+      cited: com.histmersion.api.library.Citekey,
+      missing: com.histmersion.api.library.Citekey,
+      edges: List[Hit.Edges],
+      named: Hit.Named,
+      mechanical: Hit.Mechanical
   ) derives KindlingsCodecAsObject:
     def ref: CritiqueRef = CritiqueRef(cited, missing)
 
@@ -27,6 +31,22 @@ object CritiquePairing:
         (if mechanical then s"cite [[$missing]] there (fixable)"
          else
            s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)")
+
+  object Hit:
+    type Unit = Unit.T
+    object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Edges = Edges.T
+    object Edges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Named = Named.T
+    object Named extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mechanical = Mechanical.T
+    object Mechanical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')

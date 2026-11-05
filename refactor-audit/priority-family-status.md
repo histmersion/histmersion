@@ -1,5 +1,81 @@
 # Priority-family status
 
+## Definition sweep applied: research API
+
+The reusable case-class transformation in AstRecipe converted 207 explicit
+primitive leaves across 44 models in 17 production research API files. The
+existing ApplyFrozenPreview rule applied definitions-research-2 with source-hash
+checks. No caller or test repair was included. Existing changes remain applied.
+Configuration contains scope, concept reuse and two collision-resolving names;
+it contains no before/after expressions. Local companion ownership is the default.
+Shared source citekeys, bibliographic types and article properties are reused.
+
+The fixture exercises existing and absent companions, nested records, Option,
+Map key/value roles, Boolean, shared-type reuse, unchanged nonprimitive fields
+and a blocked name collision. Generated output matches the expected file exactly;
+the expected definitions compile with Scala 3.10.0 and Iron 3.4.1. The final rule
+reports six converted fixture leaves and one blocked collision. Research preview
+1 exposed Article.Kind and Article.Summary collisions; preview 2 resolves them
+through explicit KindValue/SummaryText names and preserves the existing members.
+
+The post-application run definitions-research-remaining-1 validates the full source
+hash chain and produces zero patches and zero blocked explicit primitive leaves
+in this scope. This is idempotence and syntactic coverage evidence, not independent
+semantic coverage or behavioral verification. Recognition covers explicit primitive
+names, scala-qualified primitives, applied type arguments and tuples. It does not
+resolve aliases/import renames or inspect all possible type syntax, enum cases,
+non-case-class models, method signatures or inferred types. Those are not compliant
+by implication. Defaults, methods, callers and tests may now fail compilation;
+whole-project compilation was deliberately not run as a gate for this sweep.
+
+The 207 converted leaves are not added to the historical repaired-ID count and
+are not assumed disjoint from existing inventory entries. Historical identities,
+denominators and observations remain intact. The new evidence records owner,
+field and container role alongside original source/line/AST and frozen hashes.
+Next apply this same transformation to further model scopes, with semantic reuse
+decisions in configuration. Compiler repair remains after the definition sweep.
+
+## Execution correction: model definitions before caller repair
+
+The user's revised sequence supersedes the caller-closure work below. Stop
+adding expression-specific before/after recipes. The pending acquisition preview
+is not applied. Preserve the already applied model changes and their history.
+
+First traverse production case-class model definitions across modules, using the
+existing inventory as an index and reconciling it with current source. Replace
+primitive model fields, including primitive leaves inside containers, with Iron
+newtypes. Default ownership is the record's companion; reuse an established
+shared or other-record-owned type when its meaning is known. Equal primitive
+representations or equal field names alone do not establish shared meaning.
+Uncertain equivalences may remain distinct initially and be consolidated later.
+
+Use a reusable definition transformation, with configuration limited to ownership,
+concept reuse and explicit exclusions. Do not configure individual expressions
+or caller patches. Preserve containers and distinguish their independent leaf
+roles. Detect name collisions, aliases and unsupported shapes explicitly rather
+than counting them as migrated. Preserve existing newtypes and constraints;
+new types initially use Pure unless the constraint is already established.
+
+Whole-project compilation is deliberately not a gate for applying these model
+definition changes. Validate the transformation on representative definitions,
+then apply it to all supported eligible definitions. Do not restore changes for
+low coverage or expected caller failures. The first milestone is the definition
+sweep with a current-source account of converted, remaining and unresolved model
+fields, linked to existing identities. It is not completed behavioral repair.
+
+After the definition sweep, repair compilation, move existing construction and
+validation rules into the owning newtypes, consolidate duplicate concepts and
+remove redundant validation-only objects when their behavior is preserved.
+Then repair and run tests, investigate behavioral failures, and remeasure stable
+findings. Keep client types unrefined under the existing layer policy. Report
+definition conversion separately from verified repairs and automation coverage.
+
+The semantic inventory is a historical index, not current exhaustive evidence:
+its snapshot predates recent edits and includes unresolved types. Retain it and
+its denominators; reconcile changes without requiring a compiling project or
+silently treating unresolved cases as compliant. No new repair credit is claimed
+by this execution correction. The historical observations below remain intact.
+
 ## Current model batch: seventeen concepts reviewed together
 
 Citation and place caller adaptations are applied through the existing AST

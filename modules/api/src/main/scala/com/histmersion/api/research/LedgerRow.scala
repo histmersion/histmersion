@@ -8,13 +8,27 @@ import com.histmersion.api.given
 
 final case class LedgerRow(
     foreignUid: UUID,
-    kind: String,
+    kind: LedgerRow.Kind,
     mergeId: UUID,
-    foreignRev: String,
+    foreignRev: LedgerRow.ForeignRev,
     localUid: UUID,
-    label: Option[String],
-    localRevAfter: Option[String],
-    decision: String,
-    recordedAt: String
+    label: Option[LedgerRow.Label],
+    localRevAfter: Option[LedgerRow.LocalRevAfter],
+    decision: LedgerRow.Decision,
+    recordedAt: LedgerRow.RecordedAt
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object LedgerRow:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForeignRev = ForeignRev.T
+  object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalRevAfter = LocalRevAfter.T
+  object LocalRevAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Decision = Decision.T
+  object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordedAt = RecordedAt.T
+  object RecordedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
