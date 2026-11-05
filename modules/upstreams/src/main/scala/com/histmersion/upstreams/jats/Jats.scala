@@ -31,7 +31,7 @@ object Jats:
 
   /** The document's root element (an empty `article` when the text has none). */
   def parse(xml: String): Elem =
-    final case class Frame(name: String, attrs: Map[String, String], kids: Vector[Node])
+    final case class Frame(name: com.histmersion.upstreams.jats.Jats.Elem.Name, attrs: Map[com.histmersion.upstreams.jats.Jats.Elem.AttrsKey, com.histmersion.upstreams.jats.Jats.Elem.AttrsValue], kids: Vector[Node])
     // a hand-rolled reader walks the text once; the open elements are the one mutable state
     var stack = List(Frame("#document", Map.empty, Vector.empty))
     def add(n: Node): Unit = stack = stack.head.copy(kids = stack.head.kids :+ n) :: stack.tail

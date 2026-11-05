@@ -227,7 +227,13 @@ object SourceMatcher:
   ): Matching =
     val byKey: Map[String, List[Side]] =
       lefts.flatMap(l => blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
-    final case class Scored(right: Side, left: Side, ev: Evidence, rank: Int, flags: List[String])
+    final case class Scored(right: Side, left: Side, ev: Evidence, rank: Scored.Rank, flags: List[Scored.Flags])
+
+    object Scored:
+      type Rank = Rank.T
+      object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Flags = Flags.T
+      object Flags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     val scored: List[Scored] = rights.flatMap { r =>
       val candidates = blockingKeys(r).toList.flatMap(k => byKey.getOrElse(k, Nil)).distinctBy(_.uid)
       candidates.flatMap { l =>

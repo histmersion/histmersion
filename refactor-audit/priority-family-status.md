@@ -1,5 +1,38 @@
 # Priority-family status
 
+## Local helper definition conversion applied
+
+definitions-locals-1 converts fifteen primitive leaves in four method-local
+records across four production files. Local companion objects are valid Scala 3:
+the rule now permits explicitly reviewed local owners, emitting their newtypes in
+the same local scope. No relocation is necessary, so LabelPlacement.Cell retains
+its captured flat polygon buffer and all method bodies/calls retain their lexical
+scope. This supersedes the earlier proposed dependency extraction. Jats.Frame
+reuses Elem's name/attribute types; Cell reuses Pt's coordinate types. The other
+properties receive local companion-owned Pure newtypes. Cumulative raw-leaf
+definition conversion is 7801; the four newly converted records bring the batch
+model tally to 1556. These remain definition conversions without repair credit.
+
+The fixture adds a local record that captures a method parameter, retaining all
+prior cases. Generated output exactly matches expected source; the expected
+definitions compile with Scala 3.10.0/Iron 3.4.1. The fixture reports ten conversions,
+two intentionally blocked leaves and the existing buffer correction. The frozen
+applicator checks and applies all four files; application whitespace checks pass.
+definitions-locals-residual-1 validates ten source-plan links and reports zero
+further supported conversions, corrections or unresolved explicit leaves across
+the manifest's configured production roots. No application compile/test success
+is claimed.
+
+A bounded text search for direct primitive aliases found three callback aliases
+(MediaMatch.Resolve, PlanGoal.Lookup, HostServices.Quotas) and the opaque Px and
+CssClass definitions. No primitive import-renaming matches were found by that
+specific search. These searches are samples, not semantic resolution or proof
+that alias gaps are closed. Callback/function types, other unsupported type
+shapes, enum parameters, non-case-class models and manifest completeness remain
+unverified. Px/CssClass already provide opaque separation, with Iron-convention
+compliance a separate concern. Next inspect callback and remaining type shapes
+using the existing detection/rewrite tools before caller compilation repair.
+
 ## Whole-buffer definition conversion applied
 
 definitions-buffers-1 converts fourteen previously deferred array fields to
