@@ -403,14 +403,30 @@ object SchedulerPolicy:
         // a `var`-free loop: each step picks one, tries it, and carries the counters on
         final case class Acc(
             pool: List[Scored],
-            room: Int,
-            poolUsed: Map[String, Int],
-            mgrUsed: Map[String, Int],
-            gathering: Int,
+            room: Acc.Room,
+            poolUsed: Map[Acc.PoolUsedKey, Acc.PoolUsedValue],
+            mgrUsed: Map[Acc.MgrUsedKey, Acc.MgrUsedValue],
+            gathering: Acc.Gathering,
             recent: List[JobType],
-            started: List[(Scored, String)],
+            started: List[(Scored, Acc.StartedPart2)],
             waits: List[(Scored, Wait)]
         )
+
+        object Acc:
+          type Room = Room.T
+          object Room extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type PoolUsedKey = PoolUsedKey.T
+          object PoolUsedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type PoolUsedValue = PoolUsedValue.T
+          object PoolUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type MgrUsedKey = MgrUsedKey.T
+          object MgrUsedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type MgrUsedValue = MgrUsedValue.T
+          object MgrUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type Gathering = Gathering.T
+          object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+          type StartedPart2 = StartedPart2.T
+          object StartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
         def poolFull(x: Scored, a: Acc): Option[String] =
           x.c.pools.find(p => res.poolCap.get(p).exists(cap => a.poolUsed.getOrElse(p, 0) >= cap))
         def mgrFull(x: Scored, a: Acc): Boolean =

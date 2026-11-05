@@ -47,3 +47,13 @@ final case class Legacy(bytes: Legacy.Bytes)
 object Legacy:
   type Bytes = Bytes.T
   object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+object Sampling:
+  def sample(captured: Int): Unit =
+    final case class Local(x: Local.X):
+      def snapshot: Int = captured
+
+    object Local:
+      type X = X.T
+      object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    ()

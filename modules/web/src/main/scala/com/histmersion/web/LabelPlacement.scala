@@ -232,9 +232,13 @@ object LabelPlacement:
       // `Vector[Pt]` cost an index walk and a cast per vertex — a whole range's 1 600 shapes took
       // ~600 ms of the load's one task (#1949)
       val flat = flatten(rings)
-      final case class Cell(x: Double, y: Double, half: Double):
+      final case class Cell(x: com.histmersion.web.LabelPlacement.Pt.X, y: com.histmersion.web.LabelPlacement.Pt.Y, half: Cell.Half):
         val d: Double = signedDistanceFlat(x, y, flat)
         val max: Double = d + half * math.sqrt(2)
+
+      object Cell:
+        type Half = Half.T
+        object Half extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
       val queue = mutable.PriorityQueue.empty[Cell](using Ordering.by[Cell, Double](_.max))
       var cx = minX
       while cx < maxX do
