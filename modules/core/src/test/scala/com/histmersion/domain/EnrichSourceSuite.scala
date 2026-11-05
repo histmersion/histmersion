@@ -228,12 +228,12 @@ class EnrichSourceSuite extends munit.FunSuite:
         "Bronze Age Tin: a Review",
         List("Knapp, A. Bernard"),
         Some(2016),
-        w.modify(_.year).setTo(Some(2016))
+        w.modify(_.year).setTo(Some(com.histmersion.api.catalogue.Year(2016)))
       ),
       Nil
     )
     val other =
-      compareMetadata("knapp2016_tin", "Another title", List("Smith, J."), Some(2016), w.modify(_.year).setTo(Some(2016)))
+      compareMetadata("knapp2016_tin", "Another title", List("Smith, J."), Some(2016), w.modify(_.year).setTo(Some(com.histmersion.api.catalogue.Year(2016))))
     assert(other.exists(_.startsWith("title differs")), other)
     assert(other.exists(_.contains("A. Bernard Knapp is not among")), other)
     assert(

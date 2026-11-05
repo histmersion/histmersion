@@ -55,7 +55,7 @@ class CandidatesSuite extends munit.FunSuite:
         "10.48550/arxiv.2401.00001" -> List("arxiv query \"x\"")
       )
     )
-    assertEquals(kept.head._2.authors, List("Ann"), "the first record, filled from the others")
+    assertEquals(kept.head._2.authors, List(com.histmersion.api.library.AuthorName("Ann")), "the first record, filled from the others")
     assertEquals(skipped, Map("no DOI" -> 1, "retracted" -> 1, "in the corpus or queued" -> 1))
 
   test("Europe PMC's answer: DOI, title, authors, year, journal, open access, abstract"):

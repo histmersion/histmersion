@@ -331,7 +331,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("ranking: a pick with an empty DOI fails; its reason stays optional"):
     import com.histmersion.domain.library.workflows.AcquisitionSweepRules.*
-    val offered = List(Candidate("10.1000/a", "A", Some(2020), Nil, None, false, "q", None))
+    val offered = List(Candidate("10.1000/a", com.histmersion.api.library.Title("A"), Some(com.histmersion.api.catalogue.Year(2020)), Nil, None, false, "q", None))
     assert(
       checkRanking(Ranking(List(Pick("", "fits"))), offered, last = false).left
         .exists(_.head.contains("is not one of the listed candidates"))

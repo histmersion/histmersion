@@ -240,7 +240,7 @@ class AcquireSuite extends munit.FunSuite:
       )
     )
     // the DOI link is not repeated as the location; no status says just "open access"; a closed work gets none
-    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.authors).setTo(List("A", "B"))
+    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.authors).setTo(List("A", "B").map(com.histmersion.api.library.AuthorName.apply))
     assert(
       Acquire
         .browserDownloadText(doiOnly, "10.3390/REL10040258", "k")

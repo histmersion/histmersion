@@ -2,6 +2,22 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Core production and test compilation now pass, followed by 115 selected behavioral
+tests with zero failures or ignored tests (applied-core-build-2). The run covers
+acquisition candidates, empty answers, gazetteer parsing, event matching, seed
+classification, browser downloads, enrichment, sweep rules and acquisition text.
+caller-core-tests-1 applies seventeen AST matches across eight test files with
+exact hash verification. Expected values/order and the existing seed dataset
+checks are retained; author/year optics updates were included in the same pass.
+Unrelated same-named model fields were excluded after source review.
+
+These targeted test adaptations do not add verified policy repairs or change the
+87 confirmed cohort identities. PlaceReview.Evidence's raw identifier remains a
+legacy boundary, explicitly supplied by the fixture. Core passing does not prove
+server caller closure; the server candidate construction sites and the remaining
+web failures still need migration and verification. The previous failed API/core
+test observations below remain historical evidence. No source rollback occurred.
+
 API JVM test compilation now passes, with 109 selected behavioral tests passing
 and none ignored in applied-api-tests-build-3. These cover PlaceEdits, Places,
 Storage, Write, AcquireMarkdown, WireSnapshot and JobKindsRegistry. The existing

@@ -31,7 +31,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     )
 
   test("a ranking may only pick listed candidates"):
-    val c = Candidate("10.1000/a", "A", Some(2020), Nil, None, isOa = true, "q", None)
+    val c = Candidate("10.1000/a", com.histmersion.api.library.Title("A"), Some(com.histmersion.api.catalogue.Year(2020)), Nil, None, isOa = true, "q", None)
     val ok = checkRanking(
       Ranking(List(Pick("https://doi.org/10.1000/A", "fits"), Pick("10.1000/a", "twice"))),
       List(c),
