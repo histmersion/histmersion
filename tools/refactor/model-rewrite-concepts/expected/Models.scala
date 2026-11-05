@@ -21,6 +21,9 @@ object Calls:
   def unrelated: Unrelated = Unrelated("raw", 3L)
 
 object Rendering:
+  def below(rs: List[Report], limit: Report): List[Report] = rs.filter(_.bytes.value.toLong < limit.bytes.value.toLong)
+  def sorted(rs: List[Report]): List[Report] = rs.sortBy(_.bytes.value.toLong)
+  def total(rs: List[Report]): Long = rs.map(_.bytes.value.toLong).sum
   var evaluations = 0
   def observed(r: Report): Report =
     evaluations += 1

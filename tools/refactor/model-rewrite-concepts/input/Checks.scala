@@ -26,3 +26,6 @@ import scala.compiletime.testing.typeChecks
   assert(Rendering.render(Calls.defaults) == "missing")
   assert(Rendering.normalized(r).contains("d"))
   assert(Rendering.forwarded(r) == r)
+  assert(Rendering.sorted(List(r, Calls.defaults)) == List(Calls.defaults, r))
+  assert(Rendering.total(List(r, Calls.defaults, r)) == 10L)
+  assert(Rendering.below(List(r, Calls.defaults), r) == List(Calls.defaults))
