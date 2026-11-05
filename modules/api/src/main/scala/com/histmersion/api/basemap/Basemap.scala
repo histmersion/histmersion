@@ -67,11 +67,21 @@ object Basemap:
       }
 
   final case class DropRule(
-      layer: String,
-      whole: Boolean,
-      drop: Set[String] = Set.empty,
-      spare: Set[String] = Set.empty
+      layer: DropRule.Layer,
+      whole: DropRule.Whole,
+      drop: Set[DropRule.Drop] = Set.empty,
+      spare: Set[DropRule.Spare] = Set.empty
   )
+
+  object DropRule:
+    type Layer = Layer.T
+    object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Whole = Whole.T
+    object Whole extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Drop = Drop.T
+    object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Spare = Spare.T
+    object Spare extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parseDrop(s: String): Either[String, List[DropRule]] =
     val parts = s.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
@@ -88,12 +98,18 @@ object Basemap:
       Left(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other")
     else Right(rules)
 
-  final case class Read(geoms: Set[Int] = Set.empty, kinds: Set[String] = Set.empty):
+  final case class Read(geoms: Set[Read.Geoms] = Set.empty, kinds: Set[Read.Kinds] = Set.empty):
     def merge(o: Read): Read =
       Read(
         if geoms.isEmpty || o.geoms.isEmpty then Set.empty else geoms ++ o.geoms,
         if kinds.isEmpty || o.kinds.isEmpty then Set.empty else kinds ++ o.kinds
       )
+
+  object Read:
+    type Geoms = Geoms.T
+    object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kinds = Kinds.T
+    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
@@ -175,26 +191,58 @@ object Basemap:
         case None                      => "earth, water and land cover only (fetched before the drop list)"
 
   final case class FetchQuery(
-      layer: String = "all",
-      maxZoom: Option[Int] = None,
-      terrainMaxZoom: Option[Int] = None,
-      bbox: Option[String] = None,
-      dryRun: Boolean = false,
-      keepAll: Boolean = false,
-      focus: Option[String] = None
+      layer: FetchQuery.Layer = "all",
+      maxZoom: Option[FetchQuery.MaxZoom] = None,
+      terrainMaxZoom: Option[FetchQuery.TerrainMaxZoom] = None,
+      bbox: Option[FetchQuery.Bbox] = None,
+      dryRun: FetchQuery.DryRun = false,
+      keepAll: FetchQuery.KeepAll = false,
+      focus: Option[FetchQuery.Focus] = None
   )
 
+  object FetchQuery:
+    type Layer = Layer.T
+    object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerrainMaxZoom = TerrainMaxZoom.T
+    object TerrainMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KeepAll = KeepAll.T
+    object KeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Focus = Focus.T
+    object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Focus(
-      name: String,
-      file: String,
-      bytes: Long,
-      bbox: String,
-      minZoom: Int,
-      maxZoom: Int,
-      tiles: Long,
-      fetchedAt: Option[String] = None
+      name: Focus.Name,
+      file: Focus.File,
+      bytes: com.histmersion.api.ByteCount,
+      bbox: Focus.Bbox,
+      minZoom: Focus.MinZoom,
+      maxZoom: Focus.MaxZoom,
+      tiles: Focus.Tiles,
+      fetchedAt: Option[Focus.FetchedAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Focus:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tiles = Tiles.T
+    object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchedAt = FetchedAt.T
+    object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -220,23 +268,23 @@ object Basemap:
           parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
 
   final case class LayerInfo(
-      layer: String,
-      present: Boolean,
-      file: String,
-      bytes: Long = 0,
-      minZoom: Option[Int] = None,
-      maxZoom: Option[Int] = None,
-      bbox: Option[String] = None,
-      tiles: Option[Long] = None,
-      tileType: Option[String] = None,
-      source: Option[String] = None,
-      fetchedAt: Option[String] = None,
+      layer: LayerInfo.Layer,
+      present: LayerInfo.Present,
+      file: LayerInfo.File,
+      bytes: com.histmersion.api.ByteCount = 0,
+      minZoom: Option[LayerInfo.MinZoom] = None,
+      maxZoom: Option[LayerInfo.MaxZoom] = None,
+      bbox: Option[LayerInfo.Bbox] = None,
+      tiles: Option[LayerInfo.Tiles] = None,
+      tileType: Option[LayerInfo.TileType] = None,
+      source: Option[LayerInfo.Source] = None,
+      fetchedAt: Option[LayerInfo.FetchedAt] = None,
       /** Changes with every fetch: the tile URLs carry it, so a browser never shows a stale cached tile. */
-      version: Option[String] = None,
-      attribution: String = "",
-      kept: Option[String] = None,
-      dropped: List[String] = Nil,
-      error: Option[String] = None,
+      version: Option[LayerInfo.Version] = None,
+      attribution: LayerInfo.Attribution = "",
+      kept: Option[LayerInfo.Kept] = None,
+      dropped: List[LayerInfo.Dropped] = Nil,
+      error: Option[LayerInfo.Error] = None,
       onDemand: Option[OnDemand] = None,
       focus: List[Focus] = Nil
   ) derives KindlingsCodecAsObject,
@@ -244,49 +292,139 @@ object Basemap:
     def deepest: Option[Int] =
       (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
 
+  object LayerInfo:
+    type Layer = Layer.T
+    object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Present = Present.T
+    object Present extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tiles = Tiles.T
+    object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TileType = TileType.T
+    object TileType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchedAt = FetchedAt.T
+    object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attribution = Attribution.T
+    object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kept = Kept.T
+    object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dropped = Dropped.T
+    object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
 
   final case class OnDemand(
-      enabled: Boolean,
-      maxZoom: Int,
-      dir: String,
-      tiles: Long,
-      bytes: Long,
-      maxBytes: Long,
-      offlineUntil: Option[String] = None
+      enabled: OnDemand.Enabled,
+      maxZoom: OnDemand.MaxZoom,
+      dir: OnDemand.Dir,
+      tiles: OnDemand.Tiles,
+      bytes: com.histmersion.api.ByteCount,
+      maxBytes: OnDemand.MaxBytes,
+      offlineUntil: Option[OnDemand.OfflineUntil] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object OnDemand:
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dir = Dir.T
+    object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tiles = Tiles.T
+    object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxBytes = MaxBytes.T
+    object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfflineUntil = OfflineUntil.T
+    object OfflineUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class Region(name: String, bbox: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Region:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
-  final case class RemoveQuery(layer: String = "all", focus: Option[String] = None, cache: Boolean = false)
+  final case class RemoveQuery(layer: RemoveQuery.Layer = "all", focus: Option[RemoveQuery.Focus] = None, cache: RemoveQuery.Cache = false)
 
-  final case class Removed(removed: List[String], bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  object RemoveQuery:
+    type Layer = Layer.T
+    object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Focus = Focus.T
+    object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cache = Cache.T
+    object Cache extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Removed(removed: List[Removed.Value], bytes: com.histmersion.api.ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Removed:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
   final case class Status(
-      available: Boolean,
-      dir: String,
-      bbox: String,
+      available: Status.Available,
+      dir: Status.Dir,
+      bbox: Status.Bbox,
       layers: List[LayerInfo],
-      fetchCommand: String,
-      freeBytes: Long = 0,
-      running: Option[String] = None,
-      hints: List[String] = Nil,
+      fetchCommand: Status.FetchCommand,
+      freeBytes: Status.FreeBytes = 0,
+      running: Option[Status.Running] = None,
+      hints: List[Status.Hints] = Nil,
       styles: List[StyleState] = Nil,
-      mapMaxZoom: Int = 16,
+      mapMaxZoom: Status.MapMaxZoom = 16,
       regions: List[Region] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
 
+  object Status:
+    type Available = Available.T
+    object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dir = Dir.T
+    object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchCommand = FetchCommand.T
+    object FetchCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreeBytes = FreeBytes.T
+    object FreeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Running = Running.T
+    object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hints = Hints.T
+    object Hints extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MapMaxZoom = MapMaxZoom.T
+    object MapMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class StyleState(id: String, name: String, missing: List[String] = Nil)
+
+  final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object StyleState:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Missing = Missing.T
+    object Missing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

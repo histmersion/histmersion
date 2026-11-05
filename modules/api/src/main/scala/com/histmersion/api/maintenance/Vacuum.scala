@@ -50,8 +50,13 @@ object Vacuum:
   /** A re-seed or a gazetteer load leaves the old row versions behind as dead tuples, which autovacuum reaches only
     * slowly on tables that size.
     */
-  final case class Request(analyze: Boolean = false, tables: List[String] = Nil)
+  final case class Request(analyze: Request.Analyze = false, tables: List[Request.Tables] = Nil)
   object Request:
+    type Analyze = Analyze.T
+    object Analyze extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tables = Tables.T
+    object Tables extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[Request] = KindlingsSchema
       .derived[Request]
       .schema

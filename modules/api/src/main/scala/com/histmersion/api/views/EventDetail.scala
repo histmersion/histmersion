@@ -23,16 +23,16 @@ import com.histmersion.api.given
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
 final case class EventDetail(
     event: EventSummary,
-    geometry: Option[String] = None,
+    geometry: Option[com.histmersion.api.catalogue.EventEntry.Geometry] = None,
     parent: Option[EventSummary] = None,
     children: List[EventSummary] = Nil,
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
-    wikidata: Option[String] = None,
+    wikidata: Option[com.histmersion.api.catalogue.EventEntry.Wikidata] = None,
     media: List[MediaThumb] = Nil,
-    tier: String = EventTier.Attested,
-    names: List[String] = Nil,
+    tier: com.histmersion.api.catalogue.EventEntry.Tier = EventTier.Attested,
+    names: List[EventDetail.Names] = Nil,
     catalogue: List[EventCatalogueRef] = Nil,
     sources: List[EventSourceRef] = Nil,
     findings: List[EventFindingRef] = Nil,
@@ -43,3 +43,7 @@ final case class EventDetail(
 ) extends EventCard derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   /** The page in Markdown, with its pictures. */
   def markdown: String = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine))
+
+object EventDetail:
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -5,10 +5,13 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.given
 
-final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[String] = None):
+final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
   def wire: String = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
 
 object MergeDecision:
+
+  type Argument = Argument.T
+  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Kind:
     /** Keep this collection's version. */

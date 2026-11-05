@@ -9,17 +9,28 @@ import com.histmersion.api.given
   *   `None` in a record written before dependencies were recorded
   */
 final case class PluginSet(
-    digest: String,
-    spiVersion: Int,
+    digest: PluginSet.Digest,
+    spiVersion: PluginSet.SpiVersion,
     jars: List[PluginJar] = Nil,
-    mode: String = "native",
-    kit: Option[String] = None,
-    linkedAt: Option[String] = None,
+    mode: PluginSet.Mode = "native",
+    kit: Option[PluginSet.Kit] = None,
+    linkedAt: Option[PluginSet.LinkedAt] = None,
     dependencies: Option[List[PluginFile]] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object PluginSet:
 
+
+  type Digest = Digest.T
+  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiVersion = SpiVersion.T
+  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mode = Mode.T
+  object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kit = Kit.T
+  object Kit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedAt = LinkedAt.T
+  object LinkedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Resource = "META-INF/histmersion/plugin-set.json"
 

@@ -6,7 +6,7 @@ import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 import sttp.tapir.Schema
 
 /** `minLon > maxLon`: the box crosses the antimeridian. */
-final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double)
+final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: com.histmersion.api.catalogue.Latitude, maxLon: com.histmersion.api.catalogue.Longitude, maxLat: com.histmersion.api.catalogue.Latitude)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def crossesAntimeridian: Boolean = minLon > maxLon

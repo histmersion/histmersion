@@ -25,7 +25,13 @@ object ConfidenceStyle:
         s"rgb(${mix(r)},${mix(g)},${mix(b)})"
       case _ => rgb
 
-  final case class IconPart(d: String, filled: Boolean)
+  final case class IconPart(d: IconPart.D, filled: IconPart.Filled)
+
+  object IconPart:
+    type D = D.T
+    object D extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Filled = Filled.T
+    object Filled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Ring = IconPart("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z", filled = false)
 

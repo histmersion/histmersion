@@ -22,16 +22,28 @@ object UiNotices:
     def wires: List[String] = values.toList.map(_.wire)
 
   final case class Counter(
-      key: String,
-      count: Option[Int] = None,
-      latest: Option[String] = None,
-      seen: Option[String] = None,
-      fresh: Boolean = false
+      key: Counter.Key,
+      count: Option[Counter.Count] = None,
+      latest: Option[Counter.Latest] = None,
+      seen: Option[Counter.Seen] = None,
+      fresh: Counter.Fresh = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Counter:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Latest = Latest.T
+    object Latest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Seen = Seen.T
+    object Seen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fresh = Fresh.T
+    object Fresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
+
+  final case class AgentsGlance(running: AgentsGlance.Running = 0, queued: AgentsGlance.Queued = 0, on: AgentsGlance.On = false, draining: AgentsGlance.Draining = false)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
 
@@ -44,13 +56,27 @@ object UiNotices:
       else if queued > 0 then s"Agents working · $queued waiting"
       else "Agents on · nothing to do"
 
+  object AgentsGlance:
+    type Running = Running.T
+    object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queued = Queued.T
+    object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type On = On.T
+    object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Draining = Draining.T
+    object Draining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class SeenMark(at: Option[SeenMark.At] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object SeenMark:
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   def fresh(latest: Option[String], seen: Option[String]): Boolean =

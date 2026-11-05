@@ -1,5 +1,35 @@
 # Priority-family status
 
+## Definition sweep applied: remaining shared API records
+
+definitions-api-support-1 converts 810 explicit primitive leaves in 172 production
+models across 87 files. The cumulative sweep is 3185 leaves in 622 models across
+291 production files. This pass scans the entire shared API source directory,
+including earlier migrated scopes. The existing frozen applicator checks all 87
+changed files against their source hashes before applying. No implementation,
+caller or test repairs are included, and verified repair credit is unchanged.
+
+Reviewed reuse includes coordinates, hashes, byte counts, source metadata and
+identifiers, queue/job references and temporal bounds. TimeSpan, Span, Validity,
+BBox, exchange ranges and time configuration reuse existing Year/coordinate
+newtypes. Other explicit primitive properties receive companion-owned Pure
+newtypes. Existing newtypes are preserved and uncertain concept equivalences
+remain for later consolidation.
+
+definitions-api-support-remaining-1 validates the six-step source hash chain and
+reports zero further supported primitive leaves or blocked matches across
+modules/api/src/main/scala/com/histmersion/api. Application whitespace checks pass.
+The rule and fixtures are unchanged, so fixture checks were not repeated. This
+does not establish all-model compliance: alias/import resolution, unsupported
+type shapes, inferred types, enums, non-case-class models and other source roots
+remain unverified. Application compilation and behavioral verification remain
+deferred. Next: domain model definitions in core and server, retaining the same
+transformation and preserving established domain constraints and ownership.
+
+The full staged whitespace check reports two inherited extra-EOF-blank-line
+warnings in verbatim Storage.scala before/preview snapshots. The application
+source diff check passes. Historical snapshot bytes and hashes are preserved.
+
 ## Definition sweep applied: automation and personal API
 
 definitions-automation-personal-2 converts 814 explicit primitive leaves across

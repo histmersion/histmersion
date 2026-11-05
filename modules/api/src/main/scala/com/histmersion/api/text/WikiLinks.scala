@@ -13,13 +13,27 @@ object WikiLinks:
 
   /** One link in a text: where it is, what was written, whether it is an embed or escaped, and its target. */
   final case class Occurrence(
-      start: Int,
-      end: Int,
-      raw: String,
-      embed: Boolean,
-      escaped: Boolean,
-      target: Option[String]
+      start: Occurrence.Start,
+      end: Occurrence.End,
+      raw: Occurrence.Raw,
+      embed: Occurrence.Embed,
+      escaped: Occurrence.Escaped,
+      target: Option[Occurrence.Target]
   )
+
+  object Occurrence:
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Raw = Raw.T
+    object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Embed = Embed.T
+    object Embed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Escaped = Escaped.T
+    object Escaped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def occurrences(md: String): List[Occurrence] =
     Link

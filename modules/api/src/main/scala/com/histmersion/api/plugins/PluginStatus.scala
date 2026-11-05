@@ -5,14 +5,32 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class PluginStatus(
-    id: String,
-    version: String,
-    spiVersion: Int,
-    enabled: Boolean,
-    state: String,
-    provides: List[String] = Nil,
+    id: PluginStatus.Id,
+    version: PluginStatus.Version,
+    spiVersion: PluginStatus.SpiVersion,
+    enabled: PluginStatus.Enabled,
+    state: PluginStatus.State,
+    provides: List[PluginStatus.Provides] = Nil,
     settings: List[PluginSetting] = Nil,
-    warnings: List[String] = Nil,
-    error: Option[String] = None
+    warnings: List[PluginStatus.Warnings] = Nil,
+    error: Option[PluginStatus.Error] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object PluginStatus:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Version = Version.T
+  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiVersion = SpiVersion.T
+  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type State = State.T
+  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provides = Provides.T
+  object Provides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warnings = Warnings.T
+  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

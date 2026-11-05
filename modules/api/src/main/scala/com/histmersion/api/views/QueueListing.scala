@@ -10,7 +10,7 @@ import com.histmersion.api.library.Acquire
   * check of each ACQUIRE item, and the goals each item belongs to or is linked from.
   */
 final case class QueueListing(
-    list: String,
+    list: QueueListing.List,
     items: List[Queue.QueueItem],
     checks: List[Acquire.Checks.AcquireCheck] = Nil,
     goals: List[Queue.ItemGoals] = Nil
@@ -20,3 +20,7 @@ final case class QueueListing(
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
   def markdown: Option[String] =
     Queue.Kind.parse(list).map(k => Queue.markdown(k, items, checks.map(c => c.item -> c.reason).toMap))
+
+object QueueListing:
+  type List = List.T
+  object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

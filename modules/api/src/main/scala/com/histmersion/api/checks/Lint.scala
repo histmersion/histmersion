@@ -6,38 +6,86 @@ import com.histmersion.api.given
 
 object Lint:
 
-  final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class LintItem(citekey: com.histmersion.api.library.Citekey, detail: LintItem.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object LintItem:
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class LintRuleReport(rule: String, description: String, count: Int, items: List[LintItem])
+  final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object LintRuleReport:
+    type Rule = Rule.T
+    object Rule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Description = Description.T
+    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class LintReport(rules: List[LintRuleReport], fixed: List[String] = Nil)
+
+  final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def total: Int = rules.map(_.count).sum
 
+  object LintReport:
+    type Fixed = Fixed.T
+    object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class LintFixResult(
-      applied: List[String],
-      edgesResolved: Int,
-      sourcesReindexed: Int,
-      chunksWritten: Int,
-      remaining: Int,
-      findingsRegeocoded: Int = 0,
-      findingsPlaced: Int = 0,
-      placesReclassified: Int = 0,
-      placesMerged: Int = 0,
-      placesRelocated: Int = 0,
-      pointAreasRemoved: Int = 0,
-      pointAreasRemaining: Int = 0
+      applied: List[LintFixResult.Applied],
+      edgesResolved: LintFixResult.EdgesResolved,
+      sourcesReindexed: LintFixResult.SourcesReindexed,
+      chunksWritten: LintFixResult.ChunksWritten,
+      remaining: LintFixResult.Remaining,
+      findingsRegeocoded: LintFixResult.FindingsRegeocoded = 0,
+      findingsPlaced: LintFixResult.FindingsPlaced = 0,
+      placesReclassified: LintFixResult.PlacesReclassified = 0,
+      placesMerged: LintFixResult.PlacesMerged = 0,
+      placesRelocated: LintFixResult.PlacesRelocated = 0,
+      pointAreasRemoved: LintFixResult.PointAreasRemoved = 0,
+      pointAreasRemaining: LintFixResult.PointAreasRemaining = 0
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object LintFixResult:
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EdgesResolved = EdgesResolved.T
+    object EdgesResolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SourcesReindexed = SourcesReindexed.T
+    object SourcesReindexed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChunksWritten = ChunksWritten.T
+    object ChunksWritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remaining = Remaining.T
+    object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FindingsRegeocoded = FindingsRegeocoded.T
+    object FindingsRegeocoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FindingsPlaced = FindingsPlaced.T
+    object FindingsPlaced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesReclassified = PlacesReclassified.T
+    object PlacesReclassified extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesMerged = PlacesMerged.T
+    object PlacesMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesRelocated = PlacesRelocated.T
+    object PlacesRelocated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointAreasRemoved = PointAreasRemoved.T
+    object PointAreasRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointAreasRemaining = PointAreasRemaining.T
+    object PointAreasRemaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Rule(name: String, description: String)
+
+  final case class Rule(name: Rule.Name, description: Rule.Description)
+
+  object Rule:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Description = Description.T
+    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val DanglingEdges = "dangling-edges"
   val UnresolvedShortCitekeys = "unresolved-short-citekeys"

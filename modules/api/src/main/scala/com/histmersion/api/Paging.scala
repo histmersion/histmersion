@@ -11,10 +11,10 @@ object Paging:
   val CountsHeader = "X-State-Counts"
 
   final case class Page(
-      total: Int,
-      next: Option[String],
-      counts: List[(String, Int)],
-      facets: List[(String, List[(String, Int)])] = Nil
+      total: Page.Total,
+      next: Option[Page.Next],
+      counts: List[(Page.CountsPart1, Page.CountsPart2)],
+      facets: List[(Page.FacetsPart1, List[(Page.FacetsPart2Part1, Page.FacetsPart2Part2)])] = Nil
   ):
     def hasMore: Boolean = next.isDefined
     def count(state: String): Int = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
@@ -24,6 +24,21 @@ object Paging:
     def facet(name: String): List[(String, Int)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
 
   object Page:
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Next = Next.T
+    object Next extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CountsPart1 = CountsPart1.T
+    object CountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CountsPart2 = CountsPart2.T
+    object CountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetsPart1 = FacetsPart1.T
+    object FacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetsPart2Part1 = FacetsPart2Part1.T
+    object FacetsPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetsPart2Part2 = FacetsPart2Part2.T
+    object FacetsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val empty: Page = Page(0, None, Nil)
 
     def of(counts: List[(String, Int)], state: Option[String], last: Option[String]): Page =

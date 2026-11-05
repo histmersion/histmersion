@@ -5,10 +5,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 final case class TimeSpan(
-    notBefore: Option[Long] = None,
-    beginBy: Option[Long] = None,
-    endFrom: Option[Long] = None,
-    notAfter: Option[Long] = None
+    notBefore: Option[com.histmersion.api.catalogue.Year] = None,
+    beginBy: Option[com.histmersion.api.catalogue.Year] = None,
+    endFrom: Option[com.histmersion.api.catalogue.Year] = None,
+    notAfter: Option[com.histmersion.api.catalogue.Year] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
 

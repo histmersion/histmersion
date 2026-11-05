@@ -72,12 +72,20 @@ object Backup:
     else Right(n)
 
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
-  final case class PgTarget(host: Option[String], port: Option[Int], database: String):
+  final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
     /** `-w`: a missing password fails instead of `pg_dump` prompting forever. */
     def args: List[String] =
       host.toList.flatMap(h => List("-h", h)) ++
         port.toList.flatMap(p => List("-p", p.toString)) ++
         List("-d", database, "-w")
+
+  object PgTarget:
+    type Host = Host.T
+    object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Port = Port.T
+    object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Database = Database.T
+    object Database extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val JdbcScheme = "jdbc:postgresql:"
 
@@ -142,17 +150,31 @@ object Backup:
       val v = n.toDouble / math.pow(1000, exp.toDouble)
       String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
 
-  final case class Info(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Info(file: Info.File, bytes: com.histmersion.api.ByteCount, createdAt: Info.CreatedAt) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Info:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Result(
-      file: String,
-      bytes: Long,
-      sha256: String,
-      durationMs: Long,
-      pruned: List[String] = Nil
+      file: Result.File,
+      bytes: com.histmersion.api.ByteCount,
+      sha256: com.histmersion.api.Sha256,
+      durationMs: Result.DurationMs,
+      pruned: List[Result.Pruned] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Result:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DurationMs = DurationMs.T
+    object DurationMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pruned = Pruned.T
+    object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum State:
@@ -163,13 +185,13 @@ object Backup:
     def parse(s: String): Option[State] = values.find(_.wire == s)
 
   final case class Status(
-      file: String,
-      state: String,
-      durationMs: Long,
-      bytes: Option[Long] = None,
-      sha256: Option[String] = None,
-      error: Option[String] = None,
-      pruned: List[String] = Nil
+      file: Status.File,
+      state: Status.State,
+      durationMs: Status.DurationMs,
+      bytes: Option[com.histmersion.api.ByteCount] = None,
+      sha256: Option[com.histmersion.api.Sha256] = None,
+      error: Option[Status.Error] = None,
+      pruned: List[Status.Pruned] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def stateOf: Option[State] = State.parse(state)
@@ -177,6 +199,17 @@ object Backup:
       for b <- bytes; h <- sha256 if stateOf.contains(State.Done) yield Result(file, b, h, durationMs, pruned)
 
   object Status:
+
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DurationMs = DurationMs.T
+    object DurationMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pruned = Pruned.T
+    object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def running(file: String, elapsedMs: Long): Status = Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
