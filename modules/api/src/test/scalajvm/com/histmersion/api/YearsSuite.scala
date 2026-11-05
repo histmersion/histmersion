@@ -109,8 +109,8 @@ class YearsSuite extends munit.FunSuite:
   test("goal periods print in BCE/CE, not as raw signed years (#1798)"):
     val g = Goal("g", "A goal", "active", None, Nil, Nil, Some(-1200), Some(-1000), None, None)
     assert(
-      GoalsMarkdown.goalList(Goal.List(1, List(g))).contains("(1200 BCE–1000 BCE)"),
-      GoalsMarkdown.goalList(Goal.List(1, List(g)))
+      GoalsMarkdown.goalList(Goal.List(com.histmersion.api.RowCount(1), List(g))).contains("(1200 BCE–1000 BCE)"),
+      GoalsMarkdown.goalList(Goal.List(com.histmersion.api.RowCount(1), List(g)))
     )
     assert(GoalsMarkdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), GoalsMarkdown.goal(g))
     assert(!GoalsMarkdown.goal(g).contains("-1200"))

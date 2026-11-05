@@ -8,7 +8,8 @@ object ModelTypeRewrite {
     implicit val surface: generic.Surface[Record] = generic.deriveSurface[Record]
     implicit val decoder: ConfDecoder[Record] = generic.deriveDecoder(Record("",Nil,Map.empty)).noTypos
   }
-  case class Policy(records: List[Record] = Nil, results: Map[String,String] = Map.empty, optionalResults: List[String] = Nil)
+  case class Policy(records: List[Record] = Nil, results: Map[String,String] = Map.empty, optionalResults: List[String] = Nil,
+    scalarBoundaryOwners: List[String] = Nil, scalarBoundaryCalls: Map[String,List[Int]] = Map.empty, codecImport: Option[String] = None)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -18,11 +19,13 @@ object ModelTypeRewrite {
 class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule("ModelTypeRewrite") {
   def this() = this(ModelTypeRewrite.Policy())
   import ModelTypeRewrite._
+  private implicit val dialect: Dialect = dialects.Scala3
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("ModelTypeRewrite")(Policy()).andThen { p =>
     require(p.records.nonEmpty,"Explicit reviewed records required")
     require(p.records.map(_.owner).distinct.size == p.records.size)
     p.records.foreach(r => require(r.owner.endsWith("#") && r.parameters.distinct.size == r.parameters.size && r.fields.keySet.subsetOf(r.parameters.toSet) && r.optionalFields.toSet.subsetOf(r.fields.keySet)))
     require(p.optionalResults.toSet.subsetOf(p.results.keySet))
+    require(p.scalarBoundaryCalls.values.forall(_.forall(_ >= 0)))
     Configured.ok(new ModelTypeRewrite(p))
   }
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -34,6 +37,16 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     }
     val fields = policy.records.flatMap(r => r.fields.map { case(n,t) => (r.owner + n + ".") -> t }).toMap
     val optionalSymbols = policy.records.flatMap(r => r.optionalFields.map(r.owner + _ + ".")).toSet ++ policy.optionalResults
+    def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
+    def scalarBoundary(t: Term): Boolean = {
+      val parents = ancestors(t)
+      parents.collectFirst { case d: Defn.Def => d.name.symbol.value }.exists(policy.scalarBoundaryOwners.contains) ||
+        parents.exists {
+          case a: Term.Apply => policy.scalarBoundaryCalls.get(a.fun.symbol.value).exists(indices =>
+            indices.exists(i => a.argClause.values.lift(i).exists(arg => arg.pos.start <= t.pos.start && arg.pos.end >= t.pos.end)))
+          case _ => false
+        }
+    }
     def base(t: Type): Boolean = t.symbol.value == "scala/Int#"
     def change(t: Type, replacement: String, optional: Boolean): Patch = {
       val leaf = if(optional) t match {
@@ -49,7 +62,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     }
     def wrap(t: Term, replacement: String, optional: Boolean): Patch = {
       val symbol = resultSymbol(t)
-      if((fields.get(symbol).contains(replacement) || policy.results.get(symbol).contains(replacement)) && optionalSymbols(symbol) == optional) Patch.empty
+      if((fields.get(symbol).contains(replacement) || policy.results.get(symbol).contains(replacement)) && optionalSymbols(symbol) == optional && !scalarBoundary(t)) Patch.empty
       else if(optional && t.symbol.value == "scala/None.") Patch.empty
       else if(optional) Patch.addLeft(t,"(") + Patch.addRight(t,").map(" + replacement + ".apply)")
       else Patch.addLeft(t,replacement + "(") + Patch.addRight(t,")")
@@ -78,6 +91,17 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         }.asPatch
       }.getOrElse(Patch.empty)
     }
-    (declarations ++ calls).asPatch.atomic
+    val boundaries = doc.tree.collect {
+      case t: Term.Select if fields.contains(t.symbol.value) && !optionalSymbols(t.symbol.value) && scalarBoundary(t) => Patch.addRight(t,".value")
+      case n: Term.Name if fields.contains(n.symbol.value) && !optionalSymbols(n.symbol.value) && scalarBoundary(n) && !n.parent.exists {
+        case s: Term.Select => s.name eq n
+        case p: Term.Param => p.name eq n
+        case _ => false
+      } => Patch.addRight(n,".value")
+    }
+    val codec = policy.codecImport.filter(_ => doc.tree.collect {
+      case c: Defn.Class if policy.records.exists(_.owner == c.name.symbol.value) && c.templ.derives.nonEmpty => c
+    }.nonEmpty).map(i => Patch.addGlobalImport(i.parse[Importer].get)).getOrElse(Patch.empty)
+    ((declarations ++ calls ++ boundaries).asPatch + codec).atomic
   }
 }

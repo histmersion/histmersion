@@ -162,3 +162,32 @@ Next: supply explicit pagination-mechanism arithmetic and rendering conversions,
 propagate typed factory signatures, and recompile the preview. Keep numeric boundary
 operations local; do not scatter unwrapping through domain code or silently weaken
 the newtypes. Preserve this failed preview and compiler evidence when generating v2.
+
+## Applied batch and actual build verification
+
+The boundary rewrite adds raw-value access only under configured pagination method
+symbols or selected rendering-call arguments. Its real-Iron fixture covers arithmetic,
+zero patterns, optional results, unchanged typed forwarding and unrelated text offsets.
+The first arithmetic errors disappeared; preview v2 then exposed sixteen missing
+generic codec/schema imports. The rule now adds NewtypeCodecs.given only in files
+containing configured records with derivations. Preview v3's full 479-source API
+production overlay compiles. Both failed previews remain sealed alongside v3.
+
+The pre-application six-suite test baseline has 115 identities: 113 passed, two
+ArticlesSuite tests failed and none skipped. The failures expect client slug
+normalization and input validation; their exact evidence is retained in tests/baseline.tsv.
+This is not an all-green baseline and no assertions were weakened or removed.
+
+The frozen nineteen-file v3 preview is now applied using ApplyFrozenPreview, and all
+nineteen application files exactly match its hashes. Actual project compile and
+Test/compile are tracked in build-v1; consult its status and log for the result, not
+the narrower overlay success. No primitive findings are credited as verified fixes
+before dependent-module compilation, behavior comparison and remeasurement finish.
+The previous full-project inventory remains historical evidence while this batch is
+in progress. Filter's sentinel/offset design and PassageHit's distinct text offset
+remain outstanding, as do factory parameter propagation and wider model candidates.
+
+Actual build-v1 finished with fourteen dependent production errors: eleven web and
+three server. API JVM/JS compiled; Test/compile did not run after production failed.
+`residual-compilation.md` records the required propagation scope. This is an applied,
+in-progress migration checkpoint, not a passing build or verified repair count.

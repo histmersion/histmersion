@@ -171,9 +171,9 @@ class ArticlesSuite extends munit.FunSuite:
       Some(-1220),
       Some(-1100)
     )
-    assert(ArticleMarkdown.list(Article.List(1, List(row))).startsWith("### 1 article(s)"))
-    assert(ArticleMarkdown.list(Article.List(9, List(row))).startsWith("### 1 of 9 article(s)"))
-    assertEquals(ArticleMarkdown.list(Article.List(0, Nil)), "_No matching articles._")
+    assert(ArticleMarkdown.list(Article.List(com.histmersion.api.RowCount(1), List(row))).startsWith("### 1 article(s)"))
+    assert(ArticleMarkdown.list(Article.List(com.histmersion.api.RowCount(9), List(row))).startsWith("### 1 of 9 article(s)"))
+    assertEquals(ArticleMarkdown.list(Article.List(com.histmersion.api.RowCount(0), Nil)), "_No matching articles._")
 
   test("a cut article list carries the offset page fields and says where the next page starts"):
     val row = Article.Summary("sea_peoples", "The Sea Peoples", "concept", None, Nil, Nil, None, None)

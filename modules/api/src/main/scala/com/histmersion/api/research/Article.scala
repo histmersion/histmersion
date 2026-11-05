@@ -24,6 +24,7 @@ import io.circe.Codec
 import io.circe.{Decoder, Encoder}
 import scala.annotation.tailrec
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 final case class Article(
     slug: String,
     title: String,
@@ -696,18 +697,18 @@ object Article:
         .sortBy(_.citekey)
 
   final case class List(
-      total: Int,
+      total: com.histmersion.api.RowCount,
       articles: scala.List[Summary],
-      offset: Int = 0,
-      next: Option[Int] = None,
+      offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
+      next: Option[com.histmersion.api.Offset] = None,
       kinds: scala.List[KindCount] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def page: OffsetPage = OffsetPage(total, offset, articles.size)
+    def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(articles.size))
   object List:
 
     def of(total: Int, rows: scala.List[Summary], offset: Int, kinds: scala.List[KindCount] = Nil): List =
-      List(total, rows, offset, OffsetPage(total, offset, rows.size).next, kinds)
+      List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next, kinds)
 
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
       counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))

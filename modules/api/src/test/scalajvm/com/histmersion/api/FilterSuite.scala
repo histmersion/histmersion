@@ -143,7 +143,7 @@ class FilterSuite extends munit.FunSuite:
   )
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):
-    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit)))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(1), List(hit)))
     assert(md.startsWith("### 1 source(s)"), md)
     assert(md.contains("- **cline2014_collapse** — 1177 BC"), md)
     assert(md.contains("why: tag: sea-peoples"), md)
@@ -152,11 +152,11 @@ class FilterSuite extends munit.FunSuite:
     assert(md.contains("Ugarit (35.6, 35.8) · 1190 BCE–1185 BCE · period, bbox"), md)
 
   test("searchResults shows the page size against the total when paging"):
-    assert(SearchMarkdown.searchResults(SearchResult(42, List(hit))).startsWith("### 1 of 42 source(s)"))
-    assertEquals(SearchMarkdown.searchResults(SearchResult(0, Nil)), "_No matching sources._")
+    assert(SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(42), List(hit))).startsWith("### 1 of 42 source(s)"))
+    assertEquals(SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(0), Nil)), "_No matching sources._")
 
   test("a hit with no matched findings renders without a matches: list"):
-    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit.modify(_.matched).setTo(Nil).modify(_.why).setTo(Nil))))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(1), List(hit.modify(_.matched).setTo(Nil).modify(_.why).setTo(Nil))))
     assert(!md.contains("matches:"), md)
     assert(!md.contains("why:"), md)
 

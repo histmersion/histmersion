@@ -10,6 +10,7 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.research.Coverage
 import io.circe.Codec
 import io.circe.{Codec, Decoder, Encoder}
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class Goal(
     slug: String,
@@ -64,18 +65,18 @@ object Goal:
 
 
   final case class List(
-      total: Int,
+      total: com.histmersion.api.RowCount,
       goals: scala.List[Goal],
-      offset: Int = 0,
-      next: Option[Int] = None
+      offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
+      next: Option[com.histmersion.api.Offset] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def page: OffsetPage = OffsetPage(total, offset, goals.size)
+    def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(goals.size))
 
   object List:
 
     def of(total: Int, rows: scala.List[Goal], offset: Int): List =
-      List(total, rows, offset, OffsetPage(total, offset, rows.size).next)
+      List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(
       title: Option[String] = None,

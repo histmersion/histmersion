@@ -83,22 +83,22 @@ class MarkdownSuite extends munit.FunSuite:
       snippet = Some("…the **Uluburun** wreck…"),
       matchedHeading = Some("CHAPTER 3")
     )
-    val md = SearchMarkdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(1), List(Hit(hit, Nil, List("full text matches 'x'")))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 
   // ── paging footer (A6) ────────────────────────────────────────────────────────────────────────
 
   test("pagingFooter shows next and full set when the page does not cover the whole result"):
-    val f = Markdown.pagingFooter(OffsetPage(54, 0, 20))
+    val f = Markdown.pagingFooter(OffsetPage(com.histmersion.api.RowCount(54), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(20)))
     assert(f.contains("showing 1–20 of 54"), f)
     assert(f.contains("next: offset=20"), f)
     assert(f.contains("full set: limit=54"), f)
 
   test("pagingFooter is empty when everything fits on one page"):
-    assertEquals(Markdown.pagingFooter(OffsetPage(10, 0, 10)), "")
+    assertEquals(Markdown.pagingFooter(OffsetPage(com.histmersion.api.RowCount(10), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(10))), "")
 
   test("pagingFooter omits next when showing the last page"):
-    val f = Markdown.pagingFooter(OffsetPage(54, 40, 14))
+    val f = Markdown.pagingFooter(OffsetPage(com.histmersion.api.RowCount(54), com.histmersion.api.Offset(40), com.histmersion.api.RowCount(14)))
     assert(f.contains("showing 41–54 of 54"), f)
     assert(!f.contains("next:"), f)
 
@@ -107,7 +107,7 @@ class MarkdownSuite extends munit.FunSuite:
       val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
-    val md = SearchMarkdown.searchResults(SearchResult(50, hits))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(50), hits))
     assert(md.contains("showing 1–3 of 50"), md)
     assert(md.contains("next: offset=3"), md)
 
@@ -126,7 +126,7 @@ class MarkdownSuite extends munit.FunSuite:
       val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
-    val md = SearchMarkdown.searchResults(SearchResult(3, hits))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(3), hits))
     assert(!md.contains("showing"), md)
 
   test("missing year is rendered as n.d."):
