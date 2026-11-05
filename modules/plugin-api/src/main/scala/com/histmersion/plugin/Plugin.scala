@@ -45,7 +45,7 @@ trait Plugin:
     * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
     * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
     */
-  def defaultsResource: com.histmersion.plugin.Plugin.DefaultsResourceResult = s"META-INF/histmersion/plugins/${info.id}.conf"
+  def defaultsResource: com.histmersion.plugin.Plugin.DefaultsResourceResult = _root_.com.histmersion.plugin.Plugin.DefaultsResourceResult(s"META-INF/histmersion/plugins/${info.id}.conf")
 
   /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
     * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
@@ -81,14 +81,14 @@ object Plugin:
               ConfigReader.stringReader
                 .from(v)
                 .flatMap(s =>
-                  parse(s.trim).toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
+                  parse(_root_.com.histmersion.plugin.Plugin.Config.LenientParseArg1(s.trim)).toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
                 )
             )
 
-    given ConfigReader[Int] = lenient("int", ConfigReader.intReader, _.toIntOption)
-    given ConfigReader[Long] = lenient("long", ConfigReader.longReader, _.toLongOption)
-    given ConfigReader[Double] = lenient("double", ConfigReader.doubleReader, _.toDoubleOption)
-    given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.toBooleanOption)
+    given ConfigReader[Int] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("int"), ConfigReader.intReader, (_).value.toIntOption)
+    given ConfigReader[Long] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("long"), ConfigReader.longReader, (_).value.toLongOption)
+    given ConfigReader[Double] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("double"), ConfigReader.doubleReader, (_).value.toDoubleOption)
+    given ConfigReader[Boolean] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("boolean"), ConfigReader.booleanReader, (_).value.toBooleanOption)
 
   /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point
     * is a new registry here, not a new service type, so existing plugin jars keep loading. (Seven: [[secretVaults]],
@@ -123,24 +123,24 @@ object Plugin:
       * may add several (one per step). A host that has no acquisition chain refuses every addition — the default, so a
       * context written for an earlier extension point (a test's) still compiles.
       */
-    def sourceFetchers: Registry[SourceFetcher] = Registry.refusing("this host has no acquisition chain")
+    def sourceFetchers: Registry[SourceFetcher] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no acquisition chain"))
 
     /** The media collections `histmersion media import <id>` runs: each under its own id — the name the import is asked
       * for, and the provider its pictures are stored under. The host judges every licence and every match itself
       * ([[MediaCollection]]).
       */
-    def mediaCollections: Registry[MediaCollection] = Registry.refusing("this host has no media import")
+    def mediaCollections: Registry[MediaCollection] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no media import"))
 
     /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's name and the
       * catalogue its records are stored under.
       */
-    def eventCatalogues: Registry[EventCatalogue] = Registry.refusing("this host has no event catalogues")
+    def eventCatalogues: Registry[EventCatalogue] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no event catalogues"))
 
     /** The AI providers the embedded agents call, each under its PROVIDER NAME — the part before the colon of a
       * `provider:model` reference. The host runs the tool loop, the tools, the validation and every budget; the
       * provider answers one model call at a time.
       */
-    def aiProviders: Registry[AiProvider] = Registry.refusing("this host has no AI providers")
+    def aiProviders: Registry[AiProvider] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no AI providers"))
 
     /** The host's budget for the metered upstream `upstream` (`core`: CORE's API), shared with the host's own calls to
       * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] —
@@ -158,13 +158,13 @@ object Plugin:
       * asked for. A host that imports no gazetteers refuses every addition — the default, so a context written for an
       * earlier extension point still compiles.
       */
-    def gazetteerSources: Registry[GazetteerSource] = Registry.refusing("this host has no gazetteer import")
+    def gazetteerSources: Registry[GazetteerSource] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no gazetteer import"))
 
     /** The collections of sources the library searches and imports from, and may write back to, each under its own name
       * — the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has
       * no library refuses every addition — the default, so a context written before collections existed still compiles.
       */
-    def sourceCollections: Registry[SourceCollection] = Registry.refusing("this host has no source collections")
+    def sourceCollections: Registry[SourceCollection] = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("this host has no source collections"))
 
   object Context:
     type EnvResult = EnvResult.T
@@ -193,11 +193,11 @@ object Plugin:
       * A host that has only bodies answers through [[get]]: status 200 and no headers, or its `Left`.
       */
     def fetch(url: com.histmersion.plugin.Plugin.Http.FetchUrl, headers: Map[com.histmersion.plugin.Plugin.Http.FetchHeadersPart1, com.histmersion.plugin.Plugin.Http.FetchHeadersPart2] = Map.empty): Either[com.histmersion.plugin.Plugin.Http.FetchResultPart1, HttpResponse] =
-      get(url, headers).map(HttpResponse(200, Map.empty, _))
+      get(url, headers).map(HttpResponse(_root_.com.histmersion.plugin.Plugin.HttpResponse.Status(200), Map.empty, _))
 
   object Http:
-    type GetResultPart2 = GetResultPart2.T
-    object GetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetResultPart2 = _root_.com.histmersion.plugin.Plugin.HttpResponse.Body
+    val GetResultPart2: _root_.com.histmersion.plugin.Plugin.HttpResponse.Body.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.Body
 
     type GetResultPart1 = GetResultPart1.T
     object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -207,14 +207,14 @@ object Plugin:
     object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GetHeadersPart2 = GetHeadersPart2.T
     object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FetchResultPart1 = FetchResultPart1.T
-    object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FetchUrl = FetchUrl.T
-    object FetchUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FetchHeadersPart1 = FetchHeadersPart1.T
-    object FetchHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FetchHeadersPart2 = FetchHeadersPart2.T
-    object FetchHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchResultPart1 = _root_.com.histmersion.plugin.Plugin.Http.GetResultPart1
+    val FetchResultPart1: _root_.com.histmersion.plugin.Plugin.Http.GetResultPart1.type = _root_.com.histmersion.plugin.Plugin.Http.GetResultPart1
+    type FetchUrl = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
+    val FetchUrl: _root_.com.histmersion.plugin.Plugin.Http.GetUrl.type = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
+    type FetchHeadersPart1 = _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1
+    val FetchHeadersPart1: _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1.type = _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1
+    type FetchHeadersPart2 = _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2
+    val FetchHeadersPart2: _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2.type = _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *
@@ -227,11 +227,11 @@ object Plugin:
     */
   final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: HttpResponse.Body):
     /** A header by name, in any case. */
-    def header(name: com.histmersion.plugin.Plugin.HttpResponse.HeaderName): Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult] = headers.get(name.toLowerCase(Locale.ROOT))
+    def header(name: com.histmersion.plugin.Plugin.HttpResponse.HeaderName): Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult] = headers.get(_root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey((name).value.toLowerCase(Locale.ROOT)))
 
   object HttpResponse:
-    type HeaderResult = HeaderResult.T
-    object HeaderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeaderResult = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
+    val HeaderResult: _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
     type HeaderName = HeaderName.T
     object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -1,6 +1,12 @@
 package compilerfixture
 
 object Positive:
+  inline val version = 2
+  def singleton: Values.Count = version
+  def nullText: Values.Text = null
+  def widened(value: Int): Values.Large = value
+  def fallback(text: Values.Text): String = Option(text).getOrElse("").value.trim
+  def unionMember(text: Values.Text): String = Option(text).getOrElse("").trim
   def produce(raw: String): Values.Text = raw
   def consume(text: Values.Text): String = text
   def number: Values.Count = 7

@@ -43,8 +43,8 @@ object AiHttp:
   object GetTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Offline: AiHttp = new AiHttp:
-    def post(url: com.histmersion.plugin.AiHttp.PostUrl, headers: Map[com.histmersion.plugin.AiHttp.PostHeadersPart1, com.histmersion.plugin.AiHttp.PostHeadersPart2], body: com.histmersion.plugin.AiHttp.PostBody, timeoutSeconds: com.histmersion.plugin.AiHttp.PostTimeoutSeconds) = Left("offline")
-    def get(url: com.histmersion.plugin.AiHttp.GetUrl, headers: Map[com.histmersion.plugin.AiHttp.GetHeadersPart1, com.histmersion.plugin.AiHttp.GetHeadersPart2], timeoutSeconds: com.histmersion.plugin.AiHttp.GetTimeoutSeconds) = Left("offline")
+    def post(url: com.histmersion.plugin.AiHttp.PostUrl, headers: Map[com.histmersion.plugin.AiHttp.PostHeadersPart1, com.histmersion.plugin.AiHttp.PostHeadersPart2], body: com.histmersion.plugin.AiHttp.PostBody, timeoutSeconds: com.histmersion.plugin.AiHttp.PostTimeoutSeconds) = Left(_root_.com.histmersion.plugin.AiHttp.PostResultPart1("offline"))
+    def get(url: com.histmersion.plugin.AiHttp.GetUrl, headers: Map[com.histmersion.plugin.AiHttp.GetHeadersPart1, com.histmersion.plugin.AiHttp.GetHeadersPart2], timeoutSeconds: com.histmersion.plugin.AiHttp.GetTimeoutSeconds) = Left(_root_.com.histmersion.plugin.AiHttp.GetResultPart1("offline"))
 
   /** One HTTP answer. */
   final case class Response(status: Response.Status, body: Response.Body, headers: Map[Response.HeadersKey, Response.HeadersValue] = Map.empty)

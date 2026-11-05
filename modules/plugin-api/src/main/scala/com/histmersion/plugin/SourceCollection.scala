@@ -17,7 +17,7 @@ trait SourceCollection:
   def title: com.histmersion.plugin.SourceCollection.TitleResult
 
   /** One sentence: what it holds and on what terms. */
-  def description: com.histmersion.plugin.SourceCollection.DescriptionResult = ""
+  def description: com.histmersion.plugin.SourceCollection.DescriptionResult = _root_.com.histmersion.plugin.SourceCollection.DescriptionResult("")
 
   /** What the host may do with it; [[CollectionCapability.Read]] alone by default. */
   def capabilities: Set[CollectionCapability] = Set(CollectionCapability.Read)
@@ -25,7 +25,7 @@ trait SourceCollection:
   /** Why the collection does not write, for the host's refusal of a write it did not declare: the setting that turns
     * writing on, when there is one.
     */
-  def readOnlyReason: com.histmersion.plugin.SourceCollection.ReadOnlyReasonResult = "it is read-only"
+  def readOnlyReason: com.histmersion.plugin.SourceCollection.ReadOnlyReasonResult = _root_.com.histmersion.plugin.SourceCollection.ReadOnlyReasonResult("it is read-only")
 
   /** Whether the collection can be reached from here: `Left` says what is missing (the library's folder, a permission
     * the operating system has not granted, a mount). The host asks before it runs an operation and in its diagnostics.
@@ -54,27 +54,27 @@ trait SourceCollection:
 
   /** Add `file` as a new item described by `metadata`; the new item's id. */
   def add(metadata: CollectionMetadata, file: FetchedFile): Either[com.histmersion.plugin.SourceCollection.AddResultPart1, CollectionId] =
-    Left(s"$title does not take new items: $readOnlyReason")
+    Left(_root_.com.histmersion.plugin.SourceCollection.AddResultPart1(s"$title does not take new items: $readOnlyReason"))
 
   /** Replace the file of the same format in item `id` with `file` (the original of the host's source `key`), keeping
     * the item and every link to it; the format replaced.
     */
   def replace(id: CollectionId, key: com.histmersion.plugin.SourceCollection.ReplaceKey, file: FetchedFile): Either[com.histmersion.plugin.SourceCollection.ReplaceResultPart1, com.histmersion.plugin.SourceCollection.ReplaceResultPart2] =
-    Left(s"$title does not take new files: $readOnlyReason")
+    Left(_root_.com.histmersion.plugin.SourceCollection.ReplaceResultPart1(s"$title does not take new files: $readOnlyReason"))
 
   /** Bring item `id` in line with `metadata`; the fields written (none when it already agrees). */
   def update(id: CollectionId, metadata: CollectionMetadata): Either[com.histmersion.plugin.SourceCollection.UpdateResultPart1, List[CollectionChange]] =
-    Left(s"$title does not rewrite its items: $readOnlyReason")
+    Left(_root_.com.histmersion.plugin.SourceCollection.UpdateResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Plan the update of every linked item at once (against one reading of the collection), and with `apply` write the
     * items that would change; one entry per item, in id order.
     */
   def updateAll(links: List[CollectionLink], apply: com.histmersion.plugin.SourceCollection.UpdateAllApply): Either[com.histmersion.plugin.SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
-    Left(s"$title does not rewrite its items: $readOnlyReason")
+    Left(_root_.com.histmersion.plugin.SourceCollection.UpdateAllResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Set named fields on item `id`, as `name -> value` pairs in the collection's own field names. */
   def set(id: CollectionId, fields: List[(com.histmersion.plugin.SourceCollection.SetFieldsPart1, com.histmersion.plugin.SourceCollection.SetFieldsPart2)]): Either[com.histmersion.plugin.SourceCollection.SetResultPart1, Unit] =
-    Left(s"$title does not rewrite its items: $readOnlyReason")
+    Left(_root_.com.histmersion.plugin.SourceCollection.SetResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Compare every linked item with the host's record of it; the items that disagree, in id order. */
   def audit(records: List[CollectionRecord]): Either[com.histmersion.plugin.SourceCollection.AuditResultPart1, List[CollectionFinding]] = Right(Nil)

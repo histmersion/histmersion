@@ -18,7 +18,7 @@ package com.histmersion.plugin
 final case class GazetteerRelation(
     childId: GazetteerRelation.ChildId,
     parentId: GazetteerRelation.ParentId,
-    kind: GazetteerRelation.Kind = GazetteerRelation.PartOf,
+    kind: GazetteerRelation.Kind = _root_.com.histmersion.plugin.GazetteerRelation.Kind(GazetteerRelation.PartOf),
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None
 )

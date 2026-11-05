@@ -35,14 +35,14 @@ final case class MediaPlace(
       lat: Option[Latitude],
       lon: Option[Longitude],
       period: Option[Period]
-  ) = this(id, label, wikidata, lat, lon, period, Nil)
+  ) = this(_root_.com.histmersion.plugin.MediaPlace.Id(id), _root_.com.histmersion.plugin.MediaPlace.Label(label), wikidata, lat, lon, period, Nil)
 
 object MediaPlace:
   /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
-  type ApplyId = ApplyId.T
-  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLabel = ApplyLabel.T
-  object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyId = _root_.com.histmersion.plugin.MediaPlace.Id
+  val ApplyId: _root_.com.histmersion.plugin.MediaPlace.Id.type = _root_.com.histmersion.plugin.MediaPlace.Id
+  type ApplyLabel = _root_.com.histmersion.plugin.MediaPlace.Label
+  val ApplyLabel: _root_.com.histmersion.plugin.MediaPlace.Label.type = _root_.com.histmersion.plugin.MediaPlace.Label
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

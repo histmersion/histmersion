@@ -6,7 +6,7 @@ package com.histmersion.plugin
 final case class MediaCompleted(items: Map[MediaCompleted.ItemsKey, MediaItem], failed: List[MediaCompleted.Failed] = Nil)
 
 object MediaCompleted:
-  type ItemsKey = ItemsKey.T
-  object ItemsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsKey = _root_.com.histmersion.plugin.MediaItem.Key
+  val ItemsKey: _root_.com.histmersion.plugin.MediaItem.Key.type = _root_.com.histmersion.plugin.MediaItem.Key
   type Failed = Failed.T
   object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -12,10 +12,10 @@ final class Secret private (val ref: com.histmersion.plugin.Secret.Ref):
   override def hashCode: Int = ref.hashCode
 
 object Secret:
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = _root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1
+  val ParseResultPart1: _root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1.type = _root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1
+  type ParseText = _root_.com.histmersion.plugin.Secret.Ref.ParseText
+  val ParseText: _root_.com.histmersion.plugin.Secret.Ref.ParseText.type = _root_.com.histmersion.plugin.Secret.Ref.ParseText
 
   def apply(ref: com.histmersion.plugin.Secret.Ref): Secret = new Secret(ref)
 
@@ -28,7 +28,7 @@ object Secret:
     def from(v: org.ekrich.config.ConfigValue) =
       ConfigReader.stringReader
         .from(v)
-        .flatMap(s => parse(s).left.map(e => ConfigDecodingError.CannotConvert(Nil, e, None)))
+        .flatMap(s => parse(_root_.com.histmersion.plugin.Secret.ParseText(s)).left.map(e => ConfigDecodingError.CannotConvert(Nil, (e).value, None)))
 
   /** Where a secret's value comes from. The config holds only this reference, never the value (except the discouraged
     * `value:` form, which is masked wherever it is shown).
@@ -45,9 +45,9 @@ object Secret:
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
     def shown: com.histmersion.plugin.Secret.Ref.ShownResult = this match
-      case Value(_)    => s"${Ref.ValueScheme}:${Ref.Mask}"
-      case Env(n)      => s"${Ref.EnvScheme}:$n"
-      case Vault(v, r) => s"$v:$r"
+      case Value(_)    => _root_.com.histmersion.plugin.Secret.Ref.ShownResult(s"${Ref.ValueScheme}:${Ref.Mask}")
+      case Env(n)      => _root_.com.histmersion.plugin.Secret.Ref.ShownResult(s"${Ref.EnvScheme}:$n")
+      case _root_.com.histmersion.plugin.Secret.Ref.Vault(v, r) => _root_.com.histmersion.plugin.Secret.Ref.ShownResult(s"$v:$r")
 
   object Ref:
     object Value:
@@ -84,21 +84,21 @@ object Secret:
 
     /** Pure: a reference from its text. Never echoes the text back in an error (it may be a value). */
     def parse(text: com.histmersion.plugin.Secret.Ref.ParseText): Either[com.histmersion.plugin.Secret.Ref.ParseResultPart1, Ref] =
-      val t = Option(text).getOrElse("").trim
+      val t = Option((text).value).getOrElse("").trim
       t.indexOf(':') match
-        case i if i <= 0 => Left(s"a secret is a reference ($Forms), not a bare value")
+        case i if i <= 0 => Left(_root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1(s"a secret is a reference ($Forms), not a bare value"))
         case i           =>
           val (scheme, rest) = (t.take(i), t.drop(i + 1))
           scheme match
             case ValueScheme =>
-              if rest.isEmpty then Left("value: has no value") else Right(Value(rest))
+              if rest.isEmpty then Left(_root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1("value: has no value")) else Right(Value(_root_.com.histmersion.plugin.Secret.Ref.Value.Literal(rest)))
             case EnvScheme =>
               rest.trim match
-                case EnvName() => Right(Env(rest.trim))
-                case _         => Left(s"env:${rest.trim} is not an environment variable name")
+                case EnvName() => Right(Env(_root_.com.histmersion.plugin.Secret.Ref.Env.Name(rest.trim)))
+                case _         => Left(_root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1(s"env:${rest.trim} is not an environment variable name"))
             case VaultName() =>
-              if rest.trim.isEmpty then Left(s"$scheme: names no entry") else Right(Vault(scheme, rest.trim))
-            case _ => Left(s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)")
+              if rest.trim.isEmpty then Left(_root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1(s"$scheme: names no entry")) else Right(Vault(_root_.com.histmersion.plugin.Secret.Ref.Vault.Value(scheme), _root_.com.histmersion.plugin.Secret.Ref.Vault.Ref(rest.trim)))
+            case _ => Left(_root_.com.histmersion.plugin.Secret.Ref.ParseResultPart1(s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)"))
 
   /** A secret backend (KeePassXC, 1Password, Bitwarden, …), registered by a plugin under its [[name]]: the host hands
     * it the part of a `<name>:<ref>` reference after the colon. `Left` names what went wrong (locked, no such entry,
@@ -127,11 +127,11 @@ object Secret:
     object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResolveRef = ResolveRef.T
     object ResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveAllResultPart1 = ResolveAllResultPart1.T
-    object ResolveAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveAllResultPart2Part1 = ResolveAllResultPart2Part1.T
-    object ResolveAllResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveAllResultPart2Part2 = ResolveAllResultPart2Part2.T
-    object ResolveAllResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveAllRefs = ResolveAllRefs.T
-    object ResolveAllRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveAllResultPart1 = _root_.com.histmersion.plugin.Secret.Vault.ResolveRef
+    val ResolveAllResultPart1: _root_.com.histmersion.plugin.Secret.Vault.ResolveRef.type = _root_.com.histmersion.plugin.Secret.Vault.ResolveRef
+    type ResolveAllResultPart2Part1 = _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart1
+    val ResolveAllResultPart2Part1: _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart1.type = _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart1
+    type ResolveAllResultPart2Part2 = _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart2
+    val ResolveAllResultPart2Part2: _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart2.type = _root_.com.histmersion.plugin.Secret.Vault.ResolveResultPart2
+    type ResolveAllRefs = _root_.com.histmersion.plugin.Secret.Vault.ResolveRef
+    val ResolveAllRefs: _root_.com.histmersion.plugin.Secret.Vault.ResolveRef.type = _root_.com.histmersion.plugin.Secret.Vault.ResolveRef

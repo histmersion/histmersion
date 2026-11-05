@@ -82,31 +82,31 @@ object Processes:
     object ExitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Unavailable extends Processes:
-    type RunResultPart1 = RunResultPart1.T
-    object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunArgv = RunArgv.T
-    object RunArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunEnvPart1 = RunEnvPart1.T
-    object RunEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunEnvPart2 = RunEnvPart2.T
-    object RunEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunStdin = RunStdin.T
-    object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartResultPart1 = StartResultPart1.T
-    object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartArgv = StartArgv.T
-    object StartArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartEnvPart1 = StartEnvPart1.T
-    object StartEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartEnvPart2 = StartEnvPart2.T
-    object StartEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CaptureResultPart1 = CaptureResultPart1.T
-    object CaptureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CaptureArgv = CaptureArgv.T
-    object CaptureArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunResultPart1 = _root_.com.histmersion.plugin.Processes.RunResultPart1
+    val RunResultPart1: _root_.com.histmersion.plugin.Processes.RunResultPart1.type = _root_.com.histmersion.plugin.Processes.RunResultPart1
+    type RunArgv = _root_.com.histmersion.plugin.Processes.RunArgv
+    val RunArgv: _root_.com.histmersion.plugin.Processes.RunArgv.type = _root_.com.histmersion.plugin.Processes.RunArgv
+    type RunEnvPart1 = _root_.com.histmersion.plugin.Processes.RunEnvPart1
+    val RunEnvPart1: _root_.com.histmersion.plugin.Processes.RunEnvPart1.type = _root_.com.histmersion.plugin.Processes.RunEnvPart1
+    type RunEnvPart2 = _root_.com.histmersion.plugin.Processes.RunEnvPart2
+    val RunEnvPart2: _root_.com.histmersion.plugin.Processes.RunEnvPart2.type = _root_.com.histmersion.plugin.Processes.RunEnvPart2
+    type RunStdin = _root_.com.histmersion.plugin.Processes.RunStdin
+    val RunStdin: _root_.com.histmersion.plugin.Processes.RunStdin.type = _root_.com.histmersion.plugin.Processes.RunStdin
+    type StartResultPart1 = _root_.com.histmersion.plugin.Processes.StartResultPart1
+    val StartResultPart1: _root_.com.histmersion.plugin.Processes.StartResultPart1.type = _root_.com.histmersion.plugin.Processes.StartResultPart1
+    type StartArgv = _root_.com.histmersion.plugin.Processes.StartArgv
+    val StartArgv: _root_.com.histmersion.plugin.Processes.StartArgv.type = _root_.com.histmersion.plugin.Processes.StartArgv
+    type StartEnvPart1 = _root_.com.histmersion.plugin.Processes.StartEnvPart1
+    val StartEnvPart1: _root_.com.histmersion.plugin.Processes.StartEnvPart1.type = _root_.com.histmersion.plugin.Processes.StartEnvPart1
+    type StartEnvPart2 = _root_.com.histmersion.plugin.Processes.StartEnvPart2
+    val StartEnvPart2: _root_.com.histmersion.plugin.Processes.StartEnvPart2.type = _root_.com.histmersion.plugin.Processes.StartEnvPart2
+    type CaptureResultPart1 = _root_.com.histmersion.plugin.Processes.CaptureResultPart1
+    val CaptureResultPart1: _root_.com.histmersion.plugin.Processes.CaptureResultPart1.type = _root_.com.histmersion.plugin.Processes.CaptureResultPart1
+    type CaptureArgv = _root_.com.histmersion.plugin.Processes.CaptureArgv
+    val CaptureArgv: _root_.com.histmersion.plugin.Processes.CaptureArgv.type = _root_.com.histmersion.plugin.Processes.CaptureArgv
 
     def run(argv: List[com.histmersion.plugin.Processes.Unavailable.RunArgv], env: Map[com.histmersion.plugin.Processes.Unavailable.RunEnvPart1, com.histmersion.plugin.Processes.Unavailable.RunEnvPart2], stdin: Option[com.histmersion.plugin.Processes.Unavailable.RunStdin], timeout: FiniteDuration): Either[com.histmersion.plugin.Processes.Unavailable.RunResultPart1, Result] =
-      Left("this host supplies no processes")
+      Left(_root_.com.histmersion.plugin.Processes.Unavailable.RunResultPart1("this host supplies no processes"))
     def start(argv: List[com.histmersion.plugin.Processes.Unavailable.StartArgv], env: Map[com.histmersion.plugin.Processes.Unavailable.StartEnvPart1, com.histmersion.plugin.Processes.Unavailable.StartEnvPart2]): Either[com.histmersion.plugin.Processes.Unavailable.StartResultPart1, Session] =
-      Left("this host supplies no processes")
-    def capture(argv: List[com.histmersion.plugin.Processes.Unavailable.CaptureArgv]): Either[com.histmersion.plugin.Processes.Unavailable.CaptureResultPart1, Result] = Left("this host supplies no processes")
+      Left(_root_.com.histmersion.plugin.Processes.Unavailable.StartResultPart1("this host supplies no processes"))
+    def capture(argv: List[com.histmersion.plugin.Processes.Unavailable.CaptureArgv]): Either[com.histmersion.plugin.Processes.Unavailable.CaptureResultPart1, Result] = Left(_root_.com.histmersion.plugin.Processes.Unavailable.CaptureResultPart1("this host supplies no processes"))

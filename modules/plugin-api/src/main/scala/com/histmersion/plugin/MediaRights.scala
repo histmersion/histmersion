@@ -16,7 +16,7 @@ final case class MediaRights(
     licence: Licence,
     licenceUrl: Option[MediaRights.LicenceUrl] = None,
     author: Option[MediaRights.Author] = None,
-    credit: MediaRights.Credit = ""
+    credit: MediaRights.Credit = _root_.com.histmersion.plugin.MediaRights.Credit("")
 )
 
 object MediaRights:

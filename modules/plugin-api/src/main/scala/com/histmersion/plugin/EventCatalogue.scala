@@ -28,7 +28,7 @@ trait EventCatalogue:
   def home: com.histmersion.plugin.EventCatalogue.HomeResult
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
-  def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult = 1000
+  def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult = _root_.com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(1000)
 
   /** The earliest year any of its events can be, when the catalogue covers a period that starts there — as the
     * Smithsonian's list is of HOLOCENE eruptions (`events.gvp.floor-year`). A dating whose uncertainty reaches further
@@ -48,7 +48,7 @@ trait EventCatalogue:
     * of a list that changes (page 2 of the newest records is other records next week), so a part's key does not stand
     * for the same records next time. `false` (the default): a part read and recorded is not read again.
     */
-  def everyPartEachImport: com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult = false
+  def everyPartEachImport: com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult = _root_.com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult(false)
 
   /** One stored record read again, without the network, for `histmersion events rederive`: its dating (and what the
     * catalogue derives with it) computed again from the catalogue's own record ([[CatalogueEvent.raw]]) by today's

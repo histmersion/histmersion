@@ -21,7 +21,7 @@ trait MediaCollection:
   def title: com.histmersion.plugin.MediaCollection.TitleResult
 
   /** One sentence for `histmersion media providers`: what it brings and on what terms. */
-  def description: com.histmersion.plugin.MediaCollection.DescriptionResult = ""
+  def description: com.histmersion.plugin.MediaCollection.DescriptionResult = _root_.com.histmersion.plugin.MediaCollection.DescriptionResult("")
 
   /** The role its pictures play for a place: [[MediaCollection.Object]] (a museum's object), [[MediaCollection.Map]] or
     * [[MediaCollection.Image]] (a photograph of the place itself).
@@ -31,10 +31,10 @@ trait MediaCollection:
   def matchRule: MediaMatchRule = MediaMatchRule.Museum
 
   /** Records kept per place at most, in the collection's own relevance order. */
-  def perPlace: com.histmersion.plugin.MediaCollection.PerPlaceResult = 3
+  def perPlace: com.histmersion.plugin.MediaCollection.PerPlaceResult = _root_.com.histmersion.plugin.MediaCollection.PerPlaceResult(3)
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
-  def requestIntervalMs: com.histmersion.plugin.MediaCollection.RequestIntervalMsResult = 1000
+  def requestIntervalMs: com.histmersion.plugin.MediaCollection.RequestIntervalMsResult = _root_.com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(1000)
 
   /** The records a search for `place` answers; one record may be unreadable on its own (`Left` inside). `http` is the
     * host's polite client of this import (its pace, the User-Agent, Retry-After; a bot challenge stops the request) —
@@ -82,17 +82,17 @@ trait MediaCollection:
     * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
     */
   def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
-    val asked = places.map(p => MediaTarget.Id(MediaTarget.Places, p.id) -> search(p, http)) ++
-      events.map(e => MediaTarget.Id(MediaTarget.Events, e.id) -> searchEvent(e, http))
+    val asked = places.map(p => MediaTarget.Id(MediaTarget.Places, _root_.com.histmersion.plugin.MediaTarget.Id.Value((p.id).value)) -> search(p, http)) ++
+      events.map(e => MediaTarget.Id(MediaTarget.Events, _root_.com.histmersion.plugin.MediaTarget.Id.Value((e.id).value)) -> searchEvent(e, http))
     MediaFound(
       uses = asked.flatMap((t, r) =>
-        r.toOption.toList.flatMap(_.collect { case Right(it) => it }.zipWithIndex.map((it, i) => MediaUse(t, it, i)))
+        r.toOption.toList.flatMap(_.collect { case Right(it) => it }.zipWithIndex.map((it, i) => MediaUse(t, it, _root_.com.histmersion.plugin.MediaUse.Rank(i))))
       ),
       asked = asked.map(_._1),
       unanswered = asked.collect { case (t, Left(_)) => t }.toSet,
-      read = asked.map(_._2.fold(_ => 0, _.size)).sum,
+      read = _root_.com.histmersion.plugin.MediaFound.Read(asked.map(_._2.fold(_ => 0, _.size)).sum),
       failed = asked.flatMap((t, r) =>
-        r.fold(e => List(s"$title search for ${t.id}: $e"), _.collect { case Left(e) => s"${t.id}: $e" })
+        r.fold(e => List(_root_.com.histmersion.plugin.MediaFound.Failed(s"$title search for ${t.id}: $e")), _.collect { case Left(e) => _root_.com.histmersion.plugin.MediaFound.Failed(s"${t.id}: $e") })
       )
     )
 
@@ -103,7 +103,7 @@ trait MediaCollection:
     val done = items.map(it => it.key -> complete(it, http))
     MediaCompleted(
       done.collect { case (k, Right(it)) => k -> it }.toMap,
-      done.collect { case (k, Left(e)) => s"$k: $e" }
+      done.collect { case (k, Left(e)) => _root_.com.histmersion.plugin.MediaCompleted.Failed(s"$k: $e") }
     )
 
 object MediaCollection:
@@ -111,8 +111,8 @@ object MediaCollection:
   object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescriptionResult = DescriptionResult.T
   object DescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RoleResult = RoleResult.T
-  object RoleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoleResult = _root_.com.histmersion.plugin.MediaItem.Role
+  val RoleResult: _root_.com.histmersion.plugin.MediaItem.Role.type = _root_.com.histmersion.plugin.MediaItem.Role
   type PerPlaceResult = PerPlaceResult.T
   object PerPlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestIntervalMsResult = RequestIntervalMsResult.T
@@ -123,20 +123,19 @@ object MediaCollection:
   object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompleteResultPart1 = CompleteResultPart1.T
   object CompleteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RolesResult = RolesResult.T
-  object RolesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchEventResultPart1 = SearchEventResultPart1.T
-  object SearchEventResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchEventResultPart2Part1 = SearchEventResultPart2Part1.T
-  object SearchEventResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RolesResult = _root_.com.histmersion.plugin.MediaItem.Role
+  val RolesResult: _root_.com.histmersion.plugin.MediaItem.Role.type = _root_.com.histmersion.plugin.MediaItem.Role
+  type SearchEventResultPart1 = _root_.com.histmersion.plugin.MediaCollection.SearchResultPart1
+  val SearchEventResultPart1: _root_.com.histmersion.plugin.MediaCollection.SearchResultPart1.type = _root_.com.histmersion.plugin.MediaCollection.SearchResultPart1
+  type SearchEventResultPart2Part1 = _root_.com.histmersion.plugin.MediaCollection.SearchResultPart2Part1
+  val SearchEventResultPart2Part1: _root_.com.histmersion.plugin.MediaCollection.SearchResultPart2Part1.type = _root_.com.histmersion.plugin.MediaCollection.SearchResultPart2Part1
   type CheckResultPart1 = CheckResultPart1.T
   object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefusalBackoffMsResult = RefusalBackoffMsResult.T
   object RefusalBackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlacesCarryingResult = PlacesCarryingResult.T
   object PlacesCarryingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Roles = Roles.T
-  object Roles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Roles = _root_.com.histmersion.plugin.MediaItem.Role
 
   val Object = "object"
   val Map = "map"
@@ -148,4 +147,4 @@ object MediaCollection:
   val Depiction = "depiction"
 
   /** The roles a collection's pictures may play: the ones the host stores. */
-  val Roles: Set[com.histmersion.plugin.MediaCollection.Roles] = Set(Object, Map, Image, LocatorMap, Plan, AerialView, RouteMap, Depiction)
+  val Roles: Set[com.histmersion.plugin.MediaCollection.Roles] = Set(_root_.com.histmersion.plugin.MediaItem.Role(Object), _root_.com.histmersion.plugin.MediaItem.Role(Map), _root_.com.histmersion.plugin.MediaItem.Role(Image), _root_.com.histmersion.plugin.MediaItem.Role(LocatorMap), _root_.com.histmersion.plugin.MediaItem.Role(Plan), _root_.com.histmersion.plugin.MediaItem.Role(AerialView), _root_.com.histmersion.plugin.MediaItem.Role(RouteMap), _root_.com.histmersion.plugin.MediaItem.Role(Depiction))

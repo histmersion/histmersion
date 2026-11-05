@@ -17,7 +17,7 @@ import io.github.iltotore.iron.*
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
 final case class Period private (start: Year, end: Year):
-  def isPoint: com.histmersion.plugin.Period.IsPointResult = start.value == end.value
+  def isPoint: com.histmersion.plugin.Period.IsPointResult = _root_.com.histmersion.plugin.Period.IsPointResult(start.value == end.value)
 
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
@@ -30,7 +30,7 @@ object Period:
     Either.cond(
       start.value <= end.value,
       new Period(start, end),
-      s"the period ends (${end.value}) before it starts (${start.value})"
+      _root_.com.histmersion.plugin.Period.FromResultPart1(s"the period ends (${end.value}) before it starts (${start.value})")
     )
 
   /** The period of one year. */

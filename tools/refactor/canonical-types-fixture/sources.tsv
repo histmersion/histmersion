@@ -1,2 +1,3 @@
 path	sha256
 tools/refactor/canonical-types-fixture/src/main/Models.scala	5d7596100e7a00c6d58e729b495de12e1ed3a5084d63f9e6d867a38d3647a9bd
+tools/refactor/canonical-types-fixture/src/main/Factories.scala	5b638a359ce368e7e73cff3bc8cebd2b49ea75954db1c8750fce7be981a9ab61

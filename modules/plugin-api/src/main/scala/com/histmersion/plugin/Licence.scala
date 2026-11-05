@@ -23,7 +23,7 @@ object Licence extends RefinedType[String, Pure]:
     * @param needsAttribution
     *   whether the licence requires the author to be named (every CC BY variant and the GFDL)
     */
-  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = false)
+  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = _root_.com.histmersion.plugin.Licence.Read.NeedsAttribution(false))
 
   object Read:
     type UnknownStatement = UnknownStatement.T
@@ -42,4 +42,4 @@ object Licence extends RefinedType[String, Pure]:
     val Unknown = "unknown"
 
     /** A statement nothing reads. */
-    def unknown(statement: com.histmersion.plugin.Licence.Read.UnknownStatement): Read = Read(statement, Unknown)
+    def unknown(statement: com.histmersion.plugin.Licence.Read.UnknownStatement): Read = Read(_root_.com.histmersion.plugin.Licence.Read.Id((statement).value), _root_.com.histmersion.plugin.Licence.Read.Family(Unknown))

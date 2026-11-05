@@ -10,17 +10,17 @@ class GazetteerSpiSuite extends munit.FunSuite:
     def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
     def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
     def env(name: String) = None
-    def secret(s: Secret) = Left("none")
-    def secretVaults = Registry.refusing("no vaults")
+    def secret(s: Secret) = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
+    def secretVaults = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("no vaults"))
 
   private object Nowhere extends GazetteerSource:
-    def title = "Nowhere"
-    def rights = GazetteerRights(Licence("CC0-1.0"), "Nowhere atlas")
-    def fetch(http: Plugin.Http) = Right(List(GazetteerPlace("nowhere_1", "Nowhere", "region")))
+    def title = _root_.com.histmersion.plugin.GazetteerSource.TitleResult("Nowhere")
+    def rights = GazetteerRights(Licence("CC0-1.0"), _root_.com.histmersion.plugin.GazetteerRights.Credit("Nowhere atlas"))
+    def fetch(http: Plugin.Http) = Right(List(GazetteerPlace(_root_.com.histmersion.plugin.GazetteerPlace.Id("nowhere_1"), _root_.com.histmersion.plugin.GazetteerPlace.Label("Nowhere"), _root_.com.histmersion.plugin.GazetteerPlace.Kind("region"))))
 
   test("a host without gazetteers refuses a source, saying why"):
     assertEquals(
-      EarlyContext.gazetteerSources.add("nowhere", Nowhere),
+      ((EarlyContext.gazetteerSources.add(_root_.com.histmersion.plugin.Registry.AddId("nowhere"), Nowhere)).left.map(refactorError => (refactorError).value): Either[String, Unit]),
       Left("'nowhere': this host has no gazetteer import")
     )
 
@@ -28,7 +28,7 @@ class GazetteerSpiSuite extends munit.FunSuite:
     val p = Nowhere.fetch(EarlyContext.http).toOption.get.head
     assertEquals((p.geometry, p.period, p.open, p.source, p.properties), (None, None, None, None, None))
     assertEquals((p.names, p.relations), (Nil, Nil))
-    assertEquals(GazetteerRelation("a", "b"), GazetteerRelation("a", "b", "part_of", None, None))
-    assertEquals(GazetteerName("Hatti"), GazetteerName("Hatti", "", None, None))
-    assertEquals(Nowhere.description, "")
+    assertEquals(GazetteerRelation(_root_.com.histmersion.plugin.GazetteerRelation.ChildId("a"), _root_.com.histmersion.plugin.GazetteerRelation.ParentId("b")), GazetteerRelation(_root_.com.histmersion.plugin.GazetteerRelation.ChildId("a"), _root_.com.histmersion.plugin.GazetteerRelation.ParentId("b"), _root_.com.histmersion.plugin.GazetteerRelation.Kind("part_of"), None, None))
+    assertEquals(GazetteerName(_root_.com.histmersion.plugin.GazetteerName.Name("Hatti")), GazetteerName(_root_.com.histmersion.plugin.GazetteerName.Name("Hatti"), _root_.com.histmersion.plugin.GazetteerName.Lang(""), None, None))
+    assertEquals(((Nowhere.description).value: String), "")
     assertEquals(Nowhere.rights.licenceUrl, None)

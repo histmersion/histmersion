@@ -24,3 +24,13 @@ object Other extends OtherPort:
 
 abstract class WrongOverload extends Port:
   def echo(value: Int): Option[String] = None
+
+trait Registry[A]:
+  def add(id: Values.Text, a: A): Either[Values.Text, Unit]
+
+object Generic:
+  def create[A](): Registry[A] = new Registry[A]:
+    def add(id: _root_.interfacefixture.Values.Text, a: A): Either[_root_.interfacefixture.Values.Text, Unit] = Right(())
+
+abstract class WrongGeneric extends Registry[String]:
+  def add(id: Int, a: String) = Right(())
