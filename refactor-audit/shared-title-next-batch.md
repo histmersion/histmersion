@@ -1,5 +1,8 @@
 # Shared Title ownership: next bounded batch
 
+Completed checkpoint: see `shared-title/README.md` for the applied batch, tests and
+original-ID reconciliation. The proposal below is retained as pre-rewrite history.
+
 This is a proposed treatment, not a verified fix or an accepted exception.
 Copy automation remains paused. Do not broaden the detector to complete this batch.
 

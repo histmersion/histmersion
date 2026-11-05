@@ -1,5 +1,26 @@
 # Priority-family status
 
+## Shared Title ownership repaired
+
+One configured semantic relocation batch moved the existing domain Title to the
+shared kernel and updated fourteen consumer files. Full production/test compilation
+passes; all fourteen selected codec/personal-model tests pass without skips.
+Fresh isolation/model scans cover the same 3,149 source files as the build.
+
+Reconciliation verifies 36 production dependency relationships repaired, representing
+one ownership defect; eight test relationships are caller propagation without repair
+credit. All other 346 identities remain, with zero new/reopened findings. Isolation
+candidates are now 155 production / 191 test, with 81 ambiguous owners. Kernel-target
+references are explicitly reviewed, not silently accepted by the generic detector;
+unclassified-direction evidence increases from 182,152 to 182,218 rows.
+
+Model counts are unchanged: 30,387 production member primitive leaves, 62,218 across
+all scopes and 46,893 unresolved leaves. Transaction/capability/copy evidence retains
+the preceding full assessment below. No new exception, detector refinement round,
+independent quality acceptance or migration-wide percentage is claimed. See
+`shared-title/README.md` and its original-ID reconciliation. DB runtime/native-image
+checks remain outside this batch's evidence.
+
 ## Full assessment after clock repairs
 
 The assessment completed on 3,149 source/test files in 28 modules after full

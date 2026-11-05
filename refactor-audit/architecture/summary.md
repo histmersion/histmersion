@@ -4,7 +4,7 @@ Full source and test coverage. Candidate inventories preserve declarations, sign
 
 - files: 3149
 - declarations: 56347
-- references: 807784
+- references: 807777
 - unresolved-references: 8939
 - signature-type-references: 163799
 - alias-expanded-references: 6959

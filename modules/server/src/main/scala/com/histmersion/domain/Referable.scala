@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference

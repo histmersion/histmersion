@@ -1,0 +1,1 @@
+List(Move(modules/values/src/main/scala/com/histmersion/domain/library/Title.scala,modules/values/src/main/scala/com/histmersion/domain/Title.scala,com.histmersion.domain.library,com.histmersion.domain,List(Title),Map(com/histmersion/domain/library/Title$package.Title. -> Title, com/histmersion/domain/library/Title$package.Title# -> Title)))

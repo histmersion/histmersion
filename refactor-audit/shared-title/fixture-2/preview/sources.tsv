@@ -1,0 +1,6 @@
+path	sha256
+refactor-audit/shared-title/fixture-2/work/src/main/scala/ApiTitle.scala	a1d965218e061f76c69bc4ea2c439b1eb198d7081353d3773b02a125ddd64e0e
+refactor-audit/shared-title/fixture-2/work/src/main/scala/Client.scala	1b134ad54719f70307b5e8e603b888be6273a0f9c378f893aab1cf1e1a2248f5
+refactor-audit/shared-title/fixture-2/work/src/main/scala/Other.scala	78e7ac9cde26fc4112686a4e94880505b2ef279c806b6dcb1518205b3784bfa0
+refactor-audit/shared-title/fixture-2/work/src/main/scala/SamePackage.scala	f4ae5568b3f338a5414fffdcaf0e7966de6d87663aa95c70e364adeeb2c21060
+refactor-audit/shared-title/fixture-2/work/src/main/scala/Title.scala	2d57e7fa383899fe77b1c650b3dea0bb6003a9af24249347bdf8741b7bb4bd24

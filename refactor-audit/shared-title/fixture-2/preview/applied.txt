@@ -1,0 +1,1 @@
+PASS: patches match preview; files relocated without overwrite
