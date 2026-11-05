@@ -1,0 +1,8 @@
+format=1
+unit=resolved-symbol-dependency-relationship;not-occurrence
+identity=scope,module,path,owner,target;line-independent
+classification=candidate-until-source-adjudication
+package-qualifiers=retained-in-raw-evidence-counts;not-symbol-relationships
+ArchitectureInventory.scala=1a207e4362579fa9d510636d26aa1dbe4685318fc5f9771f9429b9f15d8b5bf1
+architecture-inventory.conf=2c6489f975101dc51edbf8b98b5ed63c3a7f2fc8417b21f25786c9d266acdbb4
+dependency-directions.conf=4e86785fe725cb456c46ad973a360b52bd456a0588a1403e9841c1db2d31cbe1

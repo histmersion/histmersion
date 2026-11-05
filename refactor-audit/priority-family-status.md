@@ -1,5 +1,24 @@
 # Priority-family status
 
+## Isolation identity and treatment checkpoint
+
+The existing architecture scan now has a separate frozen relationship baseline and
+append-only observations in `isolation-history`. Its 788 forbidden-direction evidence
+rows represent 434 symbol relationships plus 130 package-qualifier rows. Scope totals
+are 245 production and 189 test relationships; 110 have ambiguous owners. All 181,340
+unclassified-direction evidence rows remain unresolved. This is a different unit from
+the evaluated build's dependency edges, which retain their own evidence.
+
+A bounded source review confirms 32 production relationships representing one
+ApprovalService engine/library coupling requiring redesign and repair. It explicitly
+accepts 21 relationships implementing the documented SourceReferrer contribution
+contract and identifies 51 legitimate codec-test relationships. Remaining candidates:
+192 production and 138 test. No isolation fixes or independent quality result claimed.
+The CLI gate passes unchanged input and rejects equal-count substitution and reopening
+with exact identity evidence; automatic assessment integration remains outstanding.
+The initial local-owner confidence error and correction are both retained. No detector
+refinement round was consumed, and no original findings or baselines were removed.
+
 ## Checkpoint after note/upload repair
 
 The integrated assessment completed on 3,138 source/test files. Production
