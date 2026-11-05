@@ -31,5 +31,5 @@ class JobKindsRegistrySuite extends munit.FunSuite:
   test("what a job is about: its source first, else the first registered reading of its detail"):
     val job = JobInfo(com.histmersion.api.jobs.JobInfo.Id("j"), com.histmersion.api.jobs.JobInfo.Kind("alpha"), "done", detail = Some(JobDetail.Purpose(Some("the map"))))
     assertEquals(kinds.subject(job), Some("the map"))
-    assertEquals(kinds.subject(job.modify(_.citekey).setTo(Some("ck"))), Some("ck"))
+    assertEquals(kinds.subject(job.modify(_.citekey).setTo(Some(com.histmersion.api.library.Citekey("ck")))), Some("ck"))
     assertEquals(kinds.subject(job.modify(_.detail).setTo(None)), None)

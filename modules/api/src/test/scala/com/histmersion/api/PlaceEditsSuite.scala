@@ -50,7 +50,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       _.names).setTo(List("Gornij", " Gornji  Grad ")).modify(_.lang).setTo(Some("HR")).modify(_.periodStart).setTo((Some(-1300): _root_.scala.Option[_root_.scala.Long])).modify(_.periodEnd).setTo((Some(-1100): _root_.scala.Option[_root_.scala.Long])
     )
     val r = com.histmersion.api.catalogue.Place.Edits.toInput(in).fold(e => fail(e.message), identity)
-    assertEquals(r.place.id, "local_gornji_grad")
+    assertEquals(r.place.id, com.histmersion.api.catalogue.Place.Id("local_gornji_grad"))
     assertEquals(r.place.kind, Place.Kind.Site)
     assertEquals(r.place.period, Some(Period(-1300, -1100)))
     assertEquals(r.place.source, Some("Wikidata Q1003020"))
@@ -72,10 +72,10 @@ class PlaceEditsSuite extends munit.FunSuite:
 
   test("an explicit id is kept; one end of a period is a single year"):
     val r = com.histmersion.api.catalogue.Place.Edits
-      .toInput(add().modify(_.id).setTo(Some("my.place-1")).modify(_.periodEnd).setTo((Some(-700): _root_.scala.Option[_root_.scala.Long])))
+      .toInput(add().modify(_.id).setTo(Some(com.histmersion.api.catalogue.Place.Id("my.place-1"))).modify(_.periodEnd).setTo((Some(-700): _root_.scala.Option[_root_.scala.Long])))
       .toOption
       .get
-    assertEquals((r.place.id, r.place.period), ("my.place-1", Some(Period(-700, -700))))
+    assertEquals((r.place.id, r.place.period), (com.histmersion.api.catalogue.Place.Id("my.place-1"), Some(Period(-700, -700))))
 
   test("a hand-added place needs a source, a known kind, real coordinates, a usable id and an ordered period"):
     def refused(in: com.histmersion.api.catalogue.Place.Add, says: String) =
@@ -89,7 +89,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     refused(add(lat = Double.NaN), "longitude/latitude")
     refused(add(label = " "), "label is empty")
     refused(add(label = "Ἀθῆναι"), "gives no id")
-    refused(add().modify(_.id).setTo(Some("Bad Id")), "is not a place id")
+    refused(add().modify(_.id).setTo(Some(com.histmersion.api.catalogue.Place.Id("Bad Id"))), "is not a place id")
     refused(add().modify(_.periodStart).setTo((Some(-100): _root_.scala.Option[_root_.scala.Long])).modify(_.periodEnd).setTo((Some(-200): _root_.scala.Option[_root_.scala.Long])), "starts (-100) after it ends (-200)")
     refused(add().modify(_.lang).setTo(Some("??")), "language tag")
 

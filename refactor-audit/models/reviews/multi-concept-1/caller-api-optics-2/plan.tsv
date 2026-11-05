@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala	44a04e5ce5cdb2ab0bc021d4f2033fc5b764f04aefe0f09c110434b330498d7a	94488c53c719edcb6fd50bd2ba9eb33269b062cbaa85c8184512df61d71672ff

@@ -173,7 +173,7 @@ class WriteSuite extends munit.FunSuite:
     )
     val out = Source.Write.applyPatch(existing, p).toOption.get
     assertEquals(out.status, com.histmersion.api.library.Source.Status.Superseded)
-    assertEquals(out.year, Some(2016))
+    assertEquals(out.year, Some(com.histmersion.api.catalogue.Year(2016)))
     assertEquals(out.title, existing.title)
     assertEquals(out.authors, existing.authors)
     assertEquals(out.doi, existing.doi)
@@ -201,7 +201,7 @@ class WriteSuite extends munit.FunSuite:
     )
     val out = Source.Write.applyEdges(com.histmersion.api.library.Citekey(ck), existing.edges, p).toOption.get
     assertEquals(out, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("cline2014_1177"), "supersedes")))
-    assert(out.forall(_.src == ck))
+    assert(out.forall(_.src == com.histmersion.api.library.Citekey(ck)))
 
   // #698: a src naming ANOTHER source was rewritten to the patched one — a critic → target edge
   // sent to the target's patch became target → target
@@ -361,11 +361,11 @@ class WriteSuite extends munit.FunSuite:
     import io.circe.parser.decode
     val put = Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_blank"), Source.Put(com.histmersion.api.library.Title("T"), doi = (Some("  ")).map(com.histmersion.api.library.Doi.apply), venue = (Some("")).map(com.histmersion.api.library.Venue.apply)))
     assertEquals(put.map(s => (s.doi, s.venue)), Right((None, None)))
-    val existing = put.toOption.get.copy(doi = Some("10.1/x"), venue = Some("V"))
+    val existing = put.toOption.get.copy(doi = Some(com.histmersion.api.library.Doi("10.1/x")), venue = Some(com.histmersion.api.library.Venue("V")))
     val cleared = decode[Source.Patch]("""{"metadata":{"doi":"","venue":" "}}""").toOption.get
     assertEquals(Source.Write.applyPatch(existing, cleared).map(s => (s.doi, s.venue)), Right((None, None)))
     val kept = decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get
-    assertEquals(Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some("10.1/x"), Some("V"))))
+    assertEquals(Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some(com.histmersion.api.library.Doi("10.1/x")), Some(com.histmersion.api.library.Venue("V")))))
 
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):

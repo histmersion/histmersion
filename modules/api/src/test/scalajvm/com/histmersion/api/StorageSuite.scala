@@ -43,18 +43,18 @@ class StorageSuite extends munit.FunSuite:
     val es = Storage.nest(
       List(e("install", Some("/h"), 10 * GB), e("kit", Some("/h/kit"), 2 * GB), e("logs", Some("/d/logs"), GB))
     )
-    assertEquals(Storage.total(es), 11 * GB)
+    assertEquals(Storage.total(es), com.histmersion.api.ByteCount(11 * GB))
     // the same path twice: the later one is within the earlier
     val twice = Storage.nest(List(e("a", Some("/x"), 5), e("b", Some("/x"), 5)))
     assertEquals(twice.map(_.within), List(None, Some("a")))
-    assertEquals(Storage.total(twice), 5L)
+    assertEquals(Storage.total(twice), com.histmersion.api.ByteCount(5L))
 
   test("shown: children follow their parent, missing locations are left out"):
     val es = Storage.nest(
       List(
         Storage.Entry("database", "db", "database", None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some("cluster")),
         e("cluster", Some("/d/pg"), 6),
-        e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long])),
+        e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])),
         e("logs", Some("/d/logs"), 1)
       )
     )
@@ -85,7 +85,7 @@ class StorageSuite extends munit.FunSuite:
     assert(h.contains("basemap 3.0 GB (histmersion basemap rm"), h)
     assert(h.contains("gazetteer 1.0 GB"), h)
     assert(!h.contains("logs") && !h.contains("originals"), h)
-    assertEquals(Storage.hints(r.modify(_.lowFreeBytes).setTo((GB: _root_.scala.Long))), Nil)
+    assertEquals(Storage.hints(r.modify(_.lowFreeBytes).setTo(com.histmersion.api.ByteCount(GB))), Nil)
     assertEquals(Storage.hints(r.modify(_.entries).setTo(Nil)), List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB."))
 
   test("every location with something to do about it says what"):
@@ -99,8 +99,8 @@ class StorageSuite extends munit.FunSuite:
   test("sizes: at least for a capped walk, a dash for nothing measured, not there for a missing path"):
     assertEquals(Storage.size(e("a", Some("/a"), 2 * GB)), "2.0 GB")
     assertEquals(Storage.size(e("a", Some("/a"), 2 * GB).modify(_.partial).setTo(true)), "at least 2.0 GB")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long]))), "—")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.exists).setTo(false)), "not there")
+    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount]))), "—")
+    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])).modify(_.exists).setTo(false)), "not there")
 
   test("the CLI's own locations join the report; one the server reports already is not listed twice"):
     val server = Storage.Report(

@@ -79,7 +79,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     com.histmersion.api.RowCount(3),
     List(
       Hit(hit, Nil, List("tag zq")),
-      Hit(hit.modify(_.citekey).setTo("zq_beta_1999").modify(_.year).setTo(None), Nil, Nil)
+      Hit(hit.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("zq_beta_1999")).modify(_.year).setTo(None), Nil, Nil)
     ),
     offset = com.histmersion.api.Offset(0),
     next = (Some(2)).map(com.histmersion.api.Offset.apply)
