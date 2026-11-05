@@ -1,5 +1,77 @@
 # Priority-family status
 
+## Applied: canonical type aliases for reviewed projections and console input
+
+type-consolidation-1 consolidates 26 duplicate opaque definitions in three
+production files: 17 in core CompareRuns, four in API RunCompare and five in
+Console. Existing property names become transparent aliases of their canonical
+type. Their constructor names become stable singleton-typed forwards to the
+canonical companion. Callers, imported names, containers and callbacks therefore
+share the same nominal type without expression-specific rewrite recipes or
+primitive unwrapping. Alias names remain; this is not deletion of all redundant
+names or implementation/caller compilation repair.
+
+The reusable transformation lives in the existing AstRecipe pipeline. A policy
+can select a reviewed owner-scoped concept, or a source/canonical projection
+owner pair. Projection rules discover matching property definitions themselves;
+the policy does not enumerate caller expressions. All eligible members of the
+configured groups are applied together. Exact expected cohort sizes guard the
+reviewed scope. The rule validates the frozen index/source snapshot, unique
+definitions, matching primitive bases, qualified Iron RefinedType parents and
+identical qualified Pure constraints. Nonempty companions, modifiers, local
+definitions, ambiguous owners, overlapping/cyclic roles and cross-module or
+source-set merges are rejected rather than silently omitted.
+
+The reviewed projection evidence is CompareRuns.runSide, stepSide and compare:
+RunSide takes id/status/dryRun/model from RunHead; StepSide takes model,
+actualModel, costUsd, firstCallTokens and turns from Step; both side records
+use the same duration, monetary unit and attempts/failures counts; StepRow
+names come from Step; Comparison takes pipeline/target from RunHead. API
+RunCompare's two side records retain their own layer's cost/duration/count
+types. Console's five input/result types all describe read lines and now alias
+Console.ReadLineResult; prompt types remain distinct. No run/step status merge,
+configured/actual model merge, domain/API merge, or constraint strengthening is
+performed. Goal.Slug, broad Limit/Offset/Title groups, native/override propagation
+and unrelated seconds groups remain excluded for the reasons in the index review.
+
+Fixture output matches the expected source exactly. Both expected and actual
+preview code compile and execute under Scala 3.10.0/Iron 3.4.1. Type equality,
+constructor forwarding (including either), .T references, lists and callbacks
+pass; outside-owner and different-unit lookalikes remain distinct. Separate
+negative configurations fail for different base types, a stricter constraint
+and a behavior-bearing companion, before writing a preview. The existing frozen
+applicator verifies all three applied sources byte-for-byte. Source/config/docs
+whitespace checks pass. No new runner or verification framework was introduced.
+
+newtype-index-after-consolidation-1 validates all 3167 current main/test files
+and the seventeen-plan chain. Stable definition IDs record exactly 26 removed
+newtype shapes and zero introductions in newtype-changes.tsv, retaining original
+IDs and previous-index provenance. Current definitions are production27741/test15
+(27756 total), with 3023 production overlap candidate groups. These decreases
+measure applied type consolidation, not verified policy repairs. Explicit raw
+primitive stable IDs are unchanged: zero removed/introduced; production598/test6054
+(6652 total). The index now records 16040 unresolved candidate declaration-type
+references, 23 more than before, because added forwarding/alias declarations
+also expose unresolved syntax. They remain unresolved evidence, not compliance.
+
+Application compilation has not passed. The command
+`sbt --server -batch 'set console / scalafmtOnCompile := false' 'console/compile'`
+fails with seven diagnostics: console has no Iron dependency, so its remaining
+newtype parents cannot resolve, with cascading errors. A diagnostic rerun adding
+Iron 3.4.1 through an sbt session setting reaches four input/prompt mismatches:
+two StdIn reads require construction, terminal prompt access requires a boundary
+conversion, and the own-interface override still has a raw prompt signature.
+This session setting was not persisted; build.sbt remains unchanged. Neither
+attempt proves these are the only remaining errors, and there is no prior
+compiler-error baseline from which to claim a reduction. No application tests,
+native-image success, accepted exceptions or verified repair credit are added.
+
+Next repair compilation by reusable boundary construction/access and own-interface
+signature propagation, including required module dependencies. Preserve this
+batch and its evidence; do not re-expand overlap detection before using the
+confirmed compiler failures. Existing confirmed baselines and other policy-family
+acceptance states remain unchanged.
+
 ## Measured: newtype overlap candidates and residual treatment proposals
 
 newtype-index-2 indexes the current definitions through the existing AstRecipe

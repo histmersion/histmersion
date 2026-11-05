@@ -164,18 +164,18 @@ object CompareRuns:
   )
 
   object RunSide:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostUsd = CostUsd.T
-    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Seconds = Seconds.T
-    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = _root_.com.histmersion.domain.CompareRuns.RunHead.Id
+    val Id: _root_.com.histmersion.domain.CompareRuns.RunHead.Id.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Id
+    type Status = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
+    val Status: _root_.com.histmersion.domain.CompareRuns.RunHead.Status.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
+    type DryRun = _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun
+    val DryRun: _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun.type = _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun
+    type Model = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
+    val Model: _root_.com.histmersion.domain.CompareRuns.RunHead.Model.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
+    type CostUsd = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+    type Seconds = _root_.com.histmersion.domain.CompareRuns.Seconds
+    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
     type Attempts = Attempts.T
     object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Failures = Failures.T
@@ -196,31 +196,31 @@ object CompareRuns:
   )
 
   object StepSide:
-    type Models = Models.T
-    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Actual = Actual.T
-    object Actual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Models = _root_.com.histmersion.domain.CompareRuns.Step.Model
+    val Models: _root_.com.histmersion.domain.CompareRuns.Step.Model.type = _root_.com.histmersion.domain.CompareRuns.Step.Model
+    type Actual = _root_.com.histmersion.domain.CompareRuns.Step.ActualModel
+    val Actual: _root_.com.histmersion.domain.CompareRuns.Step.ActualModel.type = _root_.com.histmersion.domain.CompareRuns.Step.ActualModel
     type Billing = Billing.T
     object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostUsd = CostUsd.T
-    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Seconds = Seconds.T
-    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Attempts = Attempts.T
-    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Failures = Failures.T
-    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+    type Seconds = _root_.com.histmersion.domain.CompareRuns.Seconds
+    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
+    type Attempts = _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts
+    val Attempts: _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts
+    type Failures = _root_.com.histmersion.domain.CompareRuns.RunSide.Failures
+    val Failures: _root_.com.histmersion.domain.CompareRuns.RunSide.Failures.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Failures
+    type FirstCallTokens = _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens
+    val FirstCallTokens: _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens.type = _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens
+    type Turns = _root_.com.histmersion.domain.CompareRuns.Step.Turns
+    val Turns: _root_.com.histmersion.domain.CompareRuns.Step.Turns.type = _root_.com.histmersion.domain.CompareRuns.Step.Turns
 
   /** One step name, and that step in each run (None = the run has no such step). */
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
 
   object StepRow:
-    type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = _root_.com.histmersion.domain.CompareRuns.Step.Name
+    val Name: _root_.com.histmersion.domain.CompareRuns.Step.Name.type = _root_.com.histmersion.domain.CompareRuns.Step.Name
 
   /** enrich-source's outputs; the period is the classify step's, in signed years. */
   final case class EnrichSide(
@@ -323,10 +323,10 @@ object CompareRuns:
   )
 
   object Comparison:
-    type Pipeline = Pipeline.T
-    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline
+    val Pipeline: _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline
+    type Target = _root_.com.histmersion.domain.CompareRuns.RunHead.Target
+    val Target: _root_.com.histmersion.domain.CompareRuns.RunHead.Target.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Target
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -5,6 +5,11 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object AstRecipe {
+  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1)
+  object Consolidation {
+    implicit val surface: generic.Surface[Consolidation] = generic.deriveSurface[Consolidation]
+    implicit val decoder: ConfDecoder[Consolidation] = generic.deriveDecoder(Consolidation()).noTypos
+  }
   case class Edit(path: String = "", before: String = "", after: String = "", count: Int = 1, kind: String = "stat")
   object Edit {
     implicit val surface: generic.Surface[Edit] = generic.deriveSurface[Edit]
@@ -14,7 +19,8 @@ object AstRecipe {
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
     measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false,
     signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false, indexNewtypes: Boolean = false,
-    expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty)
+    expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
+    consolidationIndex: String = "", consolidations: List[Consolidation] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -48,11 +54,12 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     }
     frozen.foreach { case(p,h) => require(hash(read(p)) == h, "Stale source: " + p) }
     val out = Paths.get(policy.report)
-    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes))
+    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty))
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
+    val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
-    val selected = policy.edits.groupBy(_.path) ++ definitionPaths.filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
+    val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     val bufferTargets = policy.bufferHistory.flatMap(p => rows(p).filter(r => r.length == 4 && r(2).contains("Type.Name(\"Byte\")")).map(r => r(0) -> r(3))).groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2).distinct }
     val targetPaths = bufferTargets.toList.flatMap { case(p,ts) => ts.map(_ -> p) }.toMap
     val externalBufferRefs = if(targetPaths.isEmpty) Map.empty[String,List[String]] else frozen.keys.toList.flatMap { p =>
@@ -81,7 +88,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
           } else ps
         }
       } else Nil
-      val patches = definitionPatches ++ recipes.flatMap { recipe =>
+      val patches = definitionPatches ++ consolidated.getOrElse(path,Nil) ++ recipes.flatMap { recipe =>
         require(Set("stat","type")(recipe.kind))
         val pattern: Tree = if(recipe.kind == "type") recipe.before.parse[Type].get else recipe.before.parse[Stat].get
         val replacementAst = if(recipe.kind == "type") recipe.after.parse[Type].get.structure else fragment(recipe.after)
@@ -132,7 +139,88 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
   }
 }
 
-class NewtypeIndex(histories: List[String]) {
+object TypeConsolidation {
+  def patches(frozen: Map[String,String], index: String, roles: List[AstRecipe.Consolidation], evidence: scala.collection.mutable.ListBuffer[List[String]]): Map[String,List[(Int,Int,String)]] = {
+    if(roles.isEmpty) return Map.empty
+    implicit val dialect: Dialect = dialects.Scala3
+    def rows(file: String) = Files.readAllLines(Paths.get(file)).asScala.drop(1).map(_.split("\t",-1).toList).toList
+    require(rows(index + "/sources.tsv").map(r => r.head -> r(1)).toMap == frozen,"Consolidation index is not the current frozen snapshot")
+    val definitions = rows(index + "/newtypes.tsv")
+    val selected = roles.flatMap { role =>
+      require(role.within.nonEmpty && (role.target.nonEmpty != role.targetOwner.nonEmpty),"Choose one canonical type or projection owner")
+      require(role.target.isEmpty || (role.names.nonEmpty && role.target.contains(".")),"Canonical role needs names and a qualified type")
+      val candidates = definitions.filter { d =>
+        val scope = if(role.targetOwner.nonEmpty) d(5).stripSuffix("." + d(6)) == role.within else d(5).startsWith(role.within + ".")
+        scope && (role.names.isEmpty || role.names.contains(d(6))) && d(5) != role.target
+      }.flatMap { d =>
+        val name = if(role.targetOwner.nonEmpty) role.targetOwner + "." + d(6) else role.target
+        val targets = definitions.filter(_(5) == name)
+        require(targets.size <= 1,"Canonical definition ambiguous: " + name)
+        if(role.target.nonEmpty) require(targets.nonEmpty,"Canonical definition missing: " + name)
+        targets.map(target => (d,target))
+      }
+      require(role.expected < 0 || candidates.size == role.expected,"Consolidation candidate count differs: " + role.within)
+      candidates.map { case(d,target) =>
+        require(d(2) == target(2) && d(3) == target(3),"Consolidation cannot cross module or source-set boundaries")
+        require(d(12) == "member" && target(12) == "member","Local consolidation requires semantic evidence")
+        (d,target)
+      }
+    }
+    require(selected.map(_._1.head).distinct.size == selected.size,"Overlapping consolidation roles")
+    val sourceNames = selected.map(_._1(5)).toSet
+    require(!selected.exists(p => sourceNames(p._2(5))),"Canonical type cannot itself be consolidated")
+    val paths = selected.flatMap(p => List(p._1(1),p._2(1))).distinct
+    def owner(t: Tree): String = t.parent.toList.flatMap(p => ancestors(p)).reverse.collect {
+      case p: Pkg => p.ref.syntax
+      case o: Defn.Object => o.name.value
+      case c: Defn.Class => c.name.value
+      case c: Defn.Trait => c.name.value
+      case e: Defn.Enum => e.name.value
+    }.mkString(".")
+    def ancestors(t: Tree): List[Tree] = t :: t.parent.toList.flatMap(ancestors)
+    val trees = paths.map(p => p -> Files.readString(Paths.get(p)).parse[Source].get).toMap
+    def definition(d: List[String]): (Defn.Object,Defn.Type,Type.Apply) = {
+      val matches = trees(d(1)).collect { case o: Defn.Object if owner(o) + "." + o.name.value == d(5) => o }
+      require(matches.size == 1,"Definition does not resolve uniquely in AST: " + d.head)
+      val obj = matches.head
+      require(!ancestors(obj).tail.exists(t => t.is[Defn.Class] || t.is[Defn.Trait] || t.is[Defn.Def]),"Consolidation owner is not a stable object path: " + d.head)
+      require(obj.mods.isEmpty && obj.templ.stats.isEmpty && obj.templ.inits.size == 1,"Companion has behavior or unsupported modifiers: " + d.head)
+      val init = obj.templ.inits.head
+      require(init.argClauses.isEmpty,"Newtype parent constructor has arguments: " + d.head)
+      val parent = init.tpe match {
+        case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "io.github.iltotore.iron.RefinedType" && a.argClause.values.size == 2 => a
+        case _ => throw new IllegalArgumentException("Expected qualified Iron RefinedType parent: " + d.head)
+      }
+      val aliases = obj.parent.toList.flatMap(_.children).collect {
+        case t: Defn.Type if t.name.value == obj.name.value && t.body.syntax == obj.name.value + ".T" && t.mods.isEmpty && t.tparamClause.values.isEmpty => t
+      }
+      require(aliases.size == 1,"Canonical .T alias missing or ambiguous: " + d.head)
+      (obj,aliases.head,parent)
+    }
+    def base(t: Type): String = t.syntax.replace("_root_.","") match {
+      case "java.lang.String" => "String"
+      case s if s.startsWith("scala.") && Set("Boolean","Byte","Short","Int","Long","Float","Double","Char")(s.stripPrefix("scala.")) => s.stripPrefix("scala.")
+      case s => s
+    }
+    val patches = selected.flatMap { case(d,target) =>
+      val (obj,alias,parent) = definition(d)
+      val (_,_,canonical) = definition(target)
+      require(base(parent.argClause.values.head) == base(canonical.argClause.values.head),"Consolidation base mismatch: " + d.head)
+      val constraint = parent.argClause.values(1).syntax.stripPrefix("_root_.")
+      require(constraint == "io.github.iltotore.iron.constraint.any.Pure" && constraint == canonical.argClause.values(1).syntax.stripPrefix("_root_."),"Consolidation constraint needs separate construction review: " + d.head)
+      val path = "_root_." + target(5)
+      val replacementAlias = "type " + obj.name.value + " = " + path
+      val replacementObject = "val " + obj.name.value + ": " + path + ".type = " + path
+      List((alias,replacementAlias),(obj,replacementObject)).map { case(tree,next) =>
+        evidence += List(d(1),(tree.pos.startLine + 1).toString,"CONSOLIDATE " + d.head + " " + tree.structure,next.parse[Stat].get.structure)
+        d(1) -> (tree.pos.start,tree.pos.end,next)
+      }
+    }
+    patches.groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
+  }
+}
+
+class NewtypeIndex(histories: List[String], previous: String) {
   private val definitions = scala.collection.mutable.ListBuffer.empty[List[String]]
   private val references = scala.collection.mutable.ListBuffer.empty[List[String]]
   private val definitionOrdinals = scala.collection.mutable.Map.empty[String,Int]
@@ -233,6 +321,13 @@ class NewtypeIndex(histories: List[String]) {
     }.sortBy(r => (-r(9).toInt,r(1),r(2)))
     expectedGroups.foreach { case(p,n) => require(membership.filter(_(2) == p).map(_(1)).distinct.size == n,"Overlap fixture membership differs: " + p) }
     write("newtypes.tsv","id\tpath\tmodule\tscope\tline\tlexical-name\tname\tkind\tbase\tconstraint\tbase-bucket\tconstraint-syntax\tlocality\talias\tast",ds)
+    if(previous.nonEmpty && Files.exists(Paths.get(previous,"newtypes.tsv"))) {
+      val before = Files.readAllLines(Paths.get(previous,"newtypes.tsv")).asScala.drop(1).map(_.takeWhile(_ != '\t')).toSet
+      val after = ds.map(_.head).toSet
+      write("newtype-changes.tsv","definition\tstatus\tprevious-index",
+        (before -- after).toList.sorted.map(id => List(id,"removed-newtype-shape-unverified",previous)) ++
+        (after -- before).toList.sorted.map(id => List(id,"introduced-newtype-shape",previous)))
+    }
     write("newtype-origins.tsv","definition\tdeclaration-origin\tevidence\tmatching",origin)
     write("newtype-uses.tsv","path\tmodule\tscope\tline\tcontext\tkind\tsyntax\tdefinition\tmatching",uses)
     write("overlap-groups.tsv","group\tpurpose-token\tbase-bucket\tdefinitions\tconstraint-variants\tmodules\tconstraints\tconstraint-review\tboundary-review\tpriority",groups)
@@ -252,7 +347,7 @@ object TypeMeasurement {
     val positions = scala.collection.mutable.ListBuffer.empty[List[String]]
     val leaves = scala.collection.mutable.ListBuffer.empty[List[String]]
     val contexts = scala.collection.mutable.Map.empty[String,List[String]]
-    val index = if(indexTypes) Some(new NewtypeIndex(histories)) else None
+    val index = if(indexTypes) Some(new NewtypeIndex(histories,previous)) else None
     def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
     def owner(t: Tree): String = parents(t).reverse.collect {
       case p: Pkg => p.ref.syntax
