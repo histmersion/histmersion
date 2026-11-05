@@ -1,5 +1,37 @@
 # Priority-family status
 
+## Definition sweep applied: media API
+
+definitions-media-1 applies the same reusable transformation to 170 explicit
+primitive leaves in 23 production models across 21 media API files. Together with
+research this is 377 converted leaves in 67 models across 38 production files;
+these are definition conversions, not verified behavioral repairs or an overall
+migration percentage. Tests have not been rewritten or run for this batch.
+
+Reviewed reuse includes source citekeys, catalogue identifiers, hashes, byte
+counts, coordinates and years, and shared asset dimensions, MIME/name, media
+identity/provider/licence properties, link properties and import flags. ByteCount
+uses its existing Long representation where legacy byte fields were Int; later
+caller repair must preserve the actual byte count without narrowing. Uncertain
+equivalences remain separate companion-owned types for later consolidation.
+
+AstRecipe now recognizes a reuse mapping to the field's own generated companion
+type as its definition site. This permits one scoped mapping for both the owner
+and its consumers without generating a self-reference instead of a declaration.
+The fixture now includes this mapping; its generated output still exactly matches
+the unchanged expected source previously compiled with Scala 3.10.0/Iron 3.4.1.
+It reports six converted leaves and one deliberately blocked collision.
+
+The existing frozen-preview applicator checked and applied all 21 files. The
+definitions-media-remaining-1 rerun validates the research-plus-media hash chain
+and reports zero further supported primitive leaves and zero blocked matches.
+Source diffs pass whitespace checks. Alias/import resolution and unsupported type
+shapes remain outside this syntactic coverage, as recorded below. Defaults and
+call sites intentionally remain for the later compilation-repair phase. No
+historical findings, unresolved evidence, exceptions or repaired-ID counts were
+removed or credited by this batch. Source/AST evidence and plans remain alongside
+the earlier observations in the existing models review directory.
+
 ## Definition sweep applied: research API
 
 The reusable case-class transformation in AstRecipe converted 207 explicit

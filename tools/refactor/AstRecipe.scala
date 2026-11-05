@@ -151,7 +151,7 @@ object ModelDefinitions {
           val mappings = reuse.toList.collect { case(pattern,value) if
             key.matches(pattern.split("\\*",-1).map(java.util.regex.Pattern.quote).mkString(".*")) => value }.distinct
           require(mappings.size <= 1,"Conflicting concept mappings: " + key)
-          val target = mappings.headOption
+          val target = mappings.headOption.filterNot(_ == owner + "." + name)
           val shadowed = tree.collect { case n: Type.Name if n.value == b && n.pos.start != t.pos.start &&
             n.parent.exists {
               case d: Defn.Type => d.name eq n

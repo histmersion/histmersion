@@ -64,12 +64,26 @@ object MediaProvider:
     case other             => other
 
   final case class Info(
-      name: String,
-      title: String,
-      over: String,
-      description: String,
-      plugin: String,
-      builtin: Boolean,
-      licences: String
+      name: com.histmersion.api.media.MediaItem.Provider,
+      title: Info.Title,
+      over: Info.Over,
+      description: Info.Description,
+      plugin: Info.Plugin,
+      builtin: Info.Builtin,
+      licences: Info.Licences
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Info:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Over = Over.T
+    object Over extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Description = Description.T
+    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Plugin = Plugin.T
+    object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Builtin = Builtin.T
+    object Builtin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Licences = Licences.T
+    object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

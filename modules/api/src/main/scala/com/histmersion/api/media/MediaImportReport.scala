@@ -5,29 +5,54 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaImportReport(
-    provider: String,
-    dryRun: Boolean,
-    targets: Int = 0,
-    items: Int = 0,
-    statements: Int = 0,
-    files: Int = 0,
+    provider: com.histmersion.api.media.MediaItem.Provider,
+    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun,
+    targets: MediaImportReport.Targets = 0,
+    items: MediaImportReport.Items = 0,
+    statements: MediaImportReport.Statements = 0,
+    files: MediaImportReport.Files = 0,
     byLicence: List[MediaCount] = Nil,
     byRole: List[MediaCount] = Nil,
     rejected: List[MediaCount] = Nil,
-    stored: Int = 0,
-    updated: Int = 0,
-    linked: Int = 0,
-    categories: Int = 0,
-    revoked: List[String] = Nil,
-    failed: List[String] = Nil,
-    pending: Int = 0,
-    batches: Int = 0,
+    stored: MediaImportReport.Stored = 0,
+    updated: MediaImportReport.Updated = 0,
+    linked: MediaImportReport.Linked = 0,
+    categories: MediaImportReport.Categories = 0,
+    revoked: List[MediaImportReport.Revoked] = Nil,
+    failed: List[MediaImportReport.Failed] = Nil,
+    pending: MediaImportReport.Pending = 0,
+    batches: MediaImportReport.Batches = 0,
     samples: List[MediaSample] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaImportReport:
 
+
+  type Targets = Targets.T
+  object Targets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Items = Items.T
+  object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Statements = Statements.T
+  object Statements extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Files = Files.T
+  object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Stored = Stored.T
+  object Stored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Updated = Updated.T
+  object Updated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Linked = Linked.T
+  object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Categories = Categories.T
+  object Categories extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Revoked = Revoked.T
+  object Revoked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failed = Failed.T
+  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pending = Pending.T
+  object Pending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Batches = Batches.T
+  object Batches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
     def add(x: List[MediaCount], y: List[MediaCount]) =
