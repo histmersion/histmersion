@@ -1,5 +1,40 @@
 # Domain codec consumer evidence
 
+## Extraction verified
+
+The configured `ExtractGivens` Scalafix batch moved three codecs into feature-owned
+objects, propagated imports to five generated row-codec consumers and three probe
+suites, removed the unused edge codec, and removed the reviewed domain imports.
+The three codec definition ASTs are unchanged. The generic list codec remains.
+Preview 1 is retained as an intermediate whitespace result; preview 2 coalesces
+adjacent AST-token removals and is the applied, hash-checked patch.
+
+Full production and test compilation passes across 3,156 source files. Nine fixed
+codec probes pass both before and after extraction, without skips; their assertion
+ASTs are unchanged. These exercise JDBC read/write and null/fallback behavior using
+a narrow proxy, not a live database. The compiled scan finds all five generated
+consumers using the new providers and all 89 generic consumers unchanged. Edge-codec
+removal compiles without an observed external reference before or after. Reflection,
+external consumers and native-image behavior remain outside this evidence.
+
+Fresh architecture/model scans and the isolation history gate cover the same source
+hashes as the successful build. `reconciliation-1` verifies exactly 29 original
+production IDs removed, no unexpected removals, no new or reopened IDs, and all 317
+remaining relationships preserved. These are dependency relationships, not 29
+independent design defects. Current production treatment is 13 confirmed, 109
+accepted and four unresolved; tests retain 59 prior non-violations and 132 candidates.
+`current-treatment.tsv` retains original review hashes as historical evidence.
+
+Production model candidates remain 30,387 leaves. All-scope primitives are 62,221
+and unresolved leaves 46,903; test additions and ownership changes do not establish
+model repairs. No detector refinement, independent quality acceptance, new exception
+or migration-wide automation percentage is claimed.
+
+Reproduce the final gate with the established Scala 2.13.18 Scalafix CLI and
+`--rules file:tools/refactor/CodecReconciliation.scala --scala-version 3.10.0
+--files tools/refactor/CodecReconciliation.scala`. It refuses to overwrite its
+evidence directory; preserve each observation before using a new output destination.
+
 ## Compiled evidence changes the repair decision
 
 The bounded JDK classfile scan (`compiled-1`) covers 9,889 current JVM main/test class
@@ -25,7 +60,7 @@ source was changed by either attempt. Reflection here is tooling API access, not
 claim to detect reflective application consumers. The class manifest preserves the
 scanned artifact hashes; stale classes may conservatively contribute references.
 
-Next: one AST batch extracts the three required definitions, updates all five known
+The planned AST batch extracts the three required definitions, updates all five known
 derivation sites, removes the obsolete edge definition only under a compiler probe,
 and removes the three reviewed unused imports. Preserve codec bodies and fallback
 semantics. Recompile all production/tests, inspect fallback diagnostics, verify the

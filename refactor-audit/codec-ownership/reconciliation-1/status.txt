@@ -1,0 +1,11 @@
+PASS
+verified-production-relationships=29
+remaining-production=126
+remaining-test=191
+new=0
+generated-consumers-preserved=5
+generic-consumers-preserved=89
+codec-tests-before-and-after=9
+source-files=3156
+isolation-observation=refactor-audit/isolation-history/observations/2026-11-05T04-36-14.896071Z
+JVM compiled references are bounded evidence; reflection, external consumers and native-image behavior remain unestablished. No family precision/recall claim or aggregate automation percentage follows from this batch.

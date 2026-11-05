@@ -1,6 +1,6 @@
 # Primitive and existing-type inventory
 
-3149 files; 28 source modules; 107409 declared/inferred positions; 62218 primitive leaves in 57157 positions; 46893 unresolved leaves.
+3156 files; 28 source modules; 107423 declared/inferred positions; 62221 primitive leaves in 57160 positions; 46903 unresolved leaves.
 128 Iron companions; 2 opaque definitions; 226 aliases; 11476 unreviewed name/base proposals.
 
 30387 primitive leaves in 28199 production member positions (excluding alias definitions). See model-candidates.tsv; module layer hints are configuration, not verified ownership.

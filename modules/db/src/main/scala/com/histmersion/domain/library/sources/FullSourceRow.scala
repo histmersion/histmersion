@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.domain.library.sources.SourceColumns.given
+
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*

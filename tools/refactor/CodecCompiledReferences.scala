@@ -1,19 +1,30 @@
 import scalafix.v1._
 import java.nio.file.{Files,Paths}
 import scala.jdk.CollectionConverters._
+import metaconfig.{ConfDecoder,Configured,generic}
 
-class CodecCompiledReferences extends SyntacticRule("CodecCompiledReferences") {
+object CodecCompiledReferences {
+  case class Policy(build: String = "refactor-audit/shared-title/build-1", report: String = "refactor-audit/codec-ownership/compiled-1", prefixes: List[String] = List("com/histmersion/util/database/Codecs$package"))
+  object Policy {
+    implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
+    implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
+  }
+}
+class CodecCompiledReferences(val policy: CodecCompiledReferences.Policy) extends SyntacticRule("CodecCompiledReferences") {
+  def this() = this(CodecCompiledReferences.Policy())
+  override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("CodecCompiledReferences")(CodecCompiledReferences.Policy()).map(new CodecCompiledReferences(_))
   override def afterComplete(): Unit = {
     def hash(bytes: Array[Byte]) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 255}%02x").mkString
-    val built = Files.readAllLines(Paths.get("refactor-audit/shared-title/build-1/sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).toList
-    require(Files.readString(Paths.get("refactor-audit/shared-title/build-1/status.txt")).startsWith("PASS\n"))
+    val built = Files.readAllLines(Paths.get(policy.build,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).toList
+    require(Files.readString(Paths.get(policy.build,"status.txt")).startsWith("PASS\n"))
     built.foreach(r => require(hash(Files.readAllBytes(Paths.get(r(0)))) == r(1),"Source differs from successful build"))
     val base = Paths.get("target/out/jvm/scala-3.10.0")
     val stream = Files.walk(base)
     val paths = try stream.iterator.asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".class") &&
       (p.toString.contains("/classes/") || p.toString.contains("/test-classes/"))).toList.sortBy(_.toString) finally stream.close()
     require(paths.nonEmpty)
-    val prefix = "com/histmersion/util/database/Codecs$package"
+    require(policy.prefixes.nonEmpty)
+    def tracked(s: String) = policy.prefixes.exists(s.startsWith)
     def call(api: String, value: AnyRef, method: String): AnyRef = Class.forName("java.lang.classfile." + api).getMethod(method).invoke(value)
     val classFile = Class.forName("java.lang.classfile.ClassFile")
     val parser = classFile.getMethod("of").invoke(null)
@@ -27,13 +38,13 @@ class CodecCompiledReferences extends SyntacticRule("CodecCompiledReferences") {
       val pool = call("ClassModel",model,"constantPool").asInstanceOf[java.lang.Iterable[AnyRef]]
       pool.iterator().asScala.filter(member.isInstance).foreach { r =>
         val owner = call("constantpool.ClassEntry",call("constantpool.MemberRefEntry",r,"owner"),"asInternalName").toString
-        if(owner.startsWith(prefix)) refs += List(path.toString,origin,if(origin.startsWith(prefix)) "definition-internal" else "external-consumer",
+        if(tracked(owner)) refs += List(path.toString,origin,if(tracked(origin)) "definition-internal" else "external-consumer",
           owner,call("constantpool.Utf8Entry",call("constantpool.MemberRefEntry",r,"name"),"stringValue").toString,
           call("constantpool.Utf8Entry",call("constantpool.MemberRefEntry",r,"type"),"stringValue").toString)
       }
       List(path.toString,hash(bytes))
     }
-    val out = Paths.get("refactor-audit/codec-ownership/compiled-1"); require(!Files.exists(out)); Files.createDirectories(out)
+    val out = Paths.get(policy.report); require(!Files.exists(out)); Files.createDirectories(out)
     Files.write(out.resolve("classes.tsv"),("path\tsha256" :: manifest.map(_.mkString("\t"))).asJava)
     Files.write(out.resolve("references.tsv"),("path\tclass\trole\ttarget-owner\ttarget-member\tdescriptor" :: refs.toList.distinct.map(_.mkString("\t")).sorted).asJava)
     val summary = refs.toList.distinct.groupBy(r => (r(2),r(4))).toList.sortBy(_._1).map { case((role,name),rs) => List(role,name,rs.size.toString,rs.map(_.head).distinct.size.toString).mkString("\t") }

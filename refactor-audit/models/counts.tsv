@@ -22,9 +22,9 @@ core	production/member	4218	2754	1780
 core	test/local	2041	727	720
 core	test/member	822	463	249
 db	production/local	2262	1434	1059
-db	production/member	5507	3176	3573
-db	test/local	1638	784	560
-db	test/member	1843	1068	591
+db	production/member	5506	3176	3572
+db	test/local	1647	785	568
+db	test/member	1849	1070	594
 files	production/local	319	193	130
 files	production/member	430	306	217
 files	test/local	137	72	35

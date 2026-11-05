@@ -12,7 +12,7 @@ production	console	top-level-owner-review	2
 production	core	nested-owner-review	312
 production	core	top-level-owner-review	155
 production	db	nested-owner-review	60
-production	db	top-level-owner-review	272
+production	db	top-level-owner-review	275
 production	files	nested-owner-review	19
 production	files	top-level-owner-review	17
 production	plugin-api	nested-owner-review	21
@@ -61,7 +61,7 @@ test	config	top-level-owner-review	11
 test	core	nested-owner-review	6
 test	core	top-level-owner-review	96
 test	db	nested-owner-review	5
-test	db	top-level-owner-review	92
+test	db	top-level-owner-review	96
 test	files	top-level-owner-review	10
 test	plugin-api	nested-owner-review	13
 test	plugin-api	top-level-owner-review	10

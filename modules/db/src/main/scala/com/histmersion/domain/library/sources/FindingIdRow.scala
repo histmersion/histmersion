@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.domain.library.findings.FindingColumns.given
+
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Confidence
 

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.domain.catalogue.places.PlaceColumns.given
+
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
