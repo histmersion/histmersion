@@ -94,6 +94,29 @@ Zero linked construction sites does not prove a class is unused. All explicit no
 
 ### Primitive and existing-type inventory
 
+`ModelTypeRewrite` uses exact configured record/method symbols and parameter order.
+`primitiveTypes` maps each target newtype to its expected semantic base (String,
+Int, Long or Double); omitted mappings retain the legacy Int behavior. It fails on
+a mismatched source base rather than widening or narrowing values. `optionalFields`
+and `listFields` select distinct container shapes; matching result/known-value lists
+support typed forwarding. Nested containers and arbitrary collection types remain
+unsupported. Scalar unwrapping still requires explicit boundary owners/call slots.
+
+`model-concepts-rewrite-guards.conf` invokes the existing configurable
+RewriteVerification on seven Iron Pure concepts in one fixture. It checks exact
+expected output, definitions/callers compilation, values, single evaluation, list
+order, concept separation, wrong-base rejection and wrong-parameter-order rejection.
+`model-concepts-legacy-verification.conf` proves the old Int fixture remains valid.
+No new batch-specific verification runner was introduced. The purpose review and
+impact tools also accept configuration, retaining their historical default paths.
+
+`model-concepts-impact.conf` joins the current model inventory against the 79-ID
+review and verifies source freshness across the whole project. Its reference and
+one-hop caller tables are preparation evidence, not confirmed findings or complete
+transitive propagation. Production preview generation and boundary compilation
+remain necessary before application; passing fixtures alone do not authorize a
+claim that the multi-concept production rewrite is complete.
+
 The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
 
 `positions.tsv` records fields, constructor/method/lambda parameters, return values, vals/vars, givens, aliases and type bounds, including inferred symbol signatures. `leaves.tsv` follows nested type arguments, transparent aliases, functions, tuples, unions, by-name/repeated types and singleton primitives. A cross-file symbol catalogue resolves project declarations before classification. Opaque and Iron types are distinguished from their primitive representation; custom types named String or Int are not primitives. Unit and bottom/top types are not model-value primitive candidates.
