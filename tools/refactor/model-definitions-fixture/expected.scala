@@ -34,3 +34,16 @@ object Choice:
     case One
 
 final case class Payload(bytes: Array[Byte])
+
+final case class Packet(bytes: Packet.Bytes, pixels: Option[Packet.Pixels])
+
+object Packet:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pixels = Pixels.T
+  object Pixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+final case class Legacy(bytes: Legacy.Bytes)
+object Legacy:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -17,12 +17,15 @@ package com.histmersion.plugin
 final case class FetchedFile(
     source: FetchedFile.Source,
     url: Option[FetchedFile.Url],
-    bytes: Array[Byte],
+    bytes: FetchedFile.Bytes,
     extension: FetchedFile.Extension,
     licence: Option[Licence] = None
 )
 
 object FetchedFile:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Source = Source.T
   object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Url = Url.T

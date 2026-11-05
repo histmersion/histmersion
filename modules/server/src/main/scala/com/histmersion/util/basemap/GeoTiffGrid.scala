@@ -73,9 +73,12 @@ object GeoTiffGrid:
   private val TypeSize =
     Map(1 -> 1, 2 -> 1, 3 -> 2, 4 -> 4, 5 -> 8, 6 -> 1, 7 -> 1, 8 -> 2, 9 -> 4, 10 -> 8, 11 -> 4, 12 -> 8)
 
-  final private case class Entry(tag: Entry.Tag, kind: Entry.Kind, count: Entry.Count, at: Entry.At, inline: Array[Byte])
+  final private case class Entry(tag: Entry.Tag, kind: Entry.Kind, count: Entry.Count, at: Entry.At, inline: Entry.Inline)
 
   object Entry:
+    type Inline = Inline.T
+    object Inline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Tag = Tag.T
     object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T

@@ -1,5 +1,43 @@
 # Priority-family status
 
+## Whole-buffer definition conversion applied
+
+definitions-buffers-1 converts fourteen previously deferred array fields to
+companion-owned Pure newtypes over Array[Byte] or Array[Int], preserving Option
+around optional buffers. It also corrects StoredOriginal.Bytes from a newtype
+over Byte to one over Array[Byte] and changes its field to StoredOriginal.Bytes.
+That correction is reported separately, not counted as another converted raw
+leaf. The batch changes fourteen records in thirteen production files; these
+records already occur in the previous model count. Cumulative raw-leaf definition
+conversion is 7786; no additional distinct-model count or verified repair credit
+is claimed. Compilation and application behavioral repair remain deferred.
+
+The existing definition transformation now accepts reviewed field-to-element
+buffer mappings. It rewrites the whole Array subtree and emits the corresponding
+array-based newtype. For a prior per-element wrapper, it checks the expected
+RefinedType base and Pure constraint before changing the base; unexpected shapes
+fail rather than being overwritten. No expression-specific caller edits or new
+runner/verifier framework was added.
+
+The fixture adds direct/optional array definitions and a prior per-element
+wrapper, while retaining all earlier cases. Generated output exactly matches
+expected source and compiles with Scala 3.10.0/Iron 3.4.1. BufferProof checks array
+identity, mutation visibility, packed pixel contents and compile-time rejection
+of raw arrays or another record's newtype. All pass. These prove the fixture's
+representation and nominal boundaries, not application caller closure.
+
+The existing frozen applicator checks and applies thirteen files. Remeasurement
+definitions-buffers-residual-1 validates nine source-plan links and reports zero
+further conversions/corrections with fifteen unresolved leaves. The previous
+fourteen raw buffers and StoredOriginal correction are absent from that residual.
+Application whitespace checks pass. The remaining leaves belong to four local
+classes: SchedulerPolicy.Acc (seven), SourceMatcher.Scored (two), Jats.Frame
+(three), LabelPlacement.Cell (three). Initial review finds Cell captures its
+method's flat polygon buffer, so moving it requires making that dependency
+explicit. The other three contain constructor data without comparable captured
+term bodies. All fifteen remain unresolved, not accepted exceptions. Alias,
+inferred-type, enum and other earlier detection gaps remain unverified.
+
 ## Definition sweep applied: remaining module roots
 
 definitions-remaining-2 applies the unchanged rule to 2889 explicit primitive

@@ -9,10 +9,10 @@ final case class ProviderAsset(
     key: ProviderAsset.Key,
     name: ProviderAsset.Name,
     mime: ProviderAsset.Mime,
-    bytes: Array[Byte],
+    bytes: ProviderAsset.Bytes,
     width: Option[ProviderAsset.Width],
     height: Option[ProviderAsset.Height],
-    thumb: Option[Array[Byte]],
+    thumb: Option[ProviderAsset.Thumb],
     thumbMime: Option[ProviderAsset.ThumbMime],
     thumbWidth: Option[ProviderAsset.ThumbWidth],
     thumbHeight: Option[ProviderAsset.ThumbHeight],
@@ -28,6 +28,11 @@ final case class ProviderAsset(
 object ProviderAsset:
 
   /** Pure: the media kind (the layer's colour) of a picture shown in `role`. */
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Thumb = Thumb.T
+  object Thumb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T

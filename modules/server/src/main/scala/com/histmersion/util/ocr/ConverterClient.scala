@@ -29,9 +29,12 @@ trait ConverterClient:
 object ConverterClient:
 
   /** A thumbnail the sidecar made. */
-  final case class Thumb(bytes: Array[Byte], mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+  final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
 
   object Thumb:
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Mime = Mime.T
     object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Width = Width.T
