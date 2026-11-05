@@ -16,7 +16,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Isbn
 import com.histmersion.domain.library.Pmcid
 import com.histmersion.domain.library.Pmid
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.Licence
 import com.histmersion.domain.automation.Goal

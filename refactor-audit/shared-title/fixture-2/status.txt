@@ -1,0 +1,2 @@
+PASS
+Input/expected/output compile and run; exact AST patch output; old owner rejected before, absent after; repeated application unchanged.

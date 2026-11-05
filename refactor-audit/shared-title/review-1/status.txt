@@ -1,0 +1,5 @@
+REVIEWED_NOT_FIXED
+production-confirmed-relationships=36
+test-candidate-relationships=8
+other-relationships-retained=346
+One ownership move; relationship count is not an independent conceptual defect count. Ambiguous identities remain ambiguous. No independent detector quality claim.

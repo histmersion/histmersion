@@ -1,7 +1,8 @@
 package com.histmersion.domain.personal.marks
 
 import com.histmersion.domain.ItemKey
-import com.histmersion.domain.library.{AuthorName, Title}
+import com.histmersion.domain.library.AuthorName
+import com.histmersion.domain.Title
 import com.histmersion.Year
 import com.histmersion.domain.library.Source
 

@@ -12,7 +12,7 @@ import com.histmersion.domain.ItemKind
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.

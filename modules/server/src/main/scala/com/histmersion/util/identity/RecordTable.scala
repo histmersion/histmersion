@@ -3,7 +3,7 @@ package com.histmersion.util.identity
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid, RecordState}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 
 import com.augustnagro.magnum.*
 

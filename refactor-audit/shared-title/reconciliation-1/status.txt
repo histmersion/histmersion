@@ -1,0 +1,10 @@
+PASS
+production-relationships-fixed=36
+test-relationships-updated-no-repair-credit=8
+other-identities-preserved=346
+new=0
+reopened=0
+source-files=3149
+isolation-observation=refactor-audit/isolation-history/observations/2026-11-05T04-09-21.771592Z
+One shared-type ownership defect repaired. Kernel direction is not classified by the generic region detector; explicit ownership review and unchanged String/Pure evidence establish this repair. Other unclassified directions remain unresolved.
+Fourteen tests passed without skips. Database runtime and independent family precision/recall remain unestablished.

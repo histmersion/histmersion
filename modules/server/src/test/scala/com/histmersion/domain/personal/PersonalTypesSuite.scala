@@ -6,7 +6,7 @@ import com.histmersion.api.personal.{MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemRef, ItemUid, RecordState}
 import com.histmersion.{Latitude, Longitude, Year}
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 
 import java.time.Instant
 import java.util.UUID

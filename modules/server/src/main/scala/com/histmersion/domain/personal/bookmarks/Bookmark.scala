@@ -4,7 +4,7 @@ import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}

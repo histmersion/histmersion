@@ -4,7 +4,7 @@ import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
-import com.histmersion.domain.library.Title
+import com.histmersion.domain.Title
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.domain.personal.MarkTime
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
