@@ -17,10 +17,24 @@ package com.histmersion.plugin
   *   its height
   */
 final case class MediaRendition(
-    mime: String,
-    width: Option[Int] = None,
-    height: Option[Int] = None,
-    bytes: Option[Long] = None,
-    thumbWidth: Option[Int] = None,
-    thumbHeight: Option[Int] = None
+    mime: MediaRendition.Mime,
+    width: Option[MediaRendition.Width] = None,
+    height: Option[MediaRendition.Height] = None,
+    bytes: Option[MediaRendition.Bytes] = None,
+    thumbWidth: Option[MediaRendition.ThumbWidth] = None,
+    thumbHeight: Option[MediaRendition.ThumbHeight] = None
 )
+
+object MediaRendition:
+  type Mime = Mime.T
+  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Width = Width.T
+  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Height = Height.T
+  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbWidth = ThumbWidth.T
+  object ThumbWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbHeight = ThumbHeight.T
+  object ThumbHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

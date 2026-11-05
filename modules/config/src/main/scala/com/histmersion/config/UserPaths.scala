@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
   * trees) and the user config file. ONE resolver, so the server, the bundle supervisor, the agent trees and the CLI
   * cannot disagree about a path. Built once by the entry point from the environment and the `os.name` property.
   */
-final case class UserPaths(environment: Environment, osName: String):
+final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def isMac: Boolean = UserPaths.isMac(osName)
   def defaultDataDir: Option[Path] = UserPaths.defaultDataDir(environment.lookup, osName)
   def dataDir(configured: String): Option[Path] = UserPaths.dataDir(configured, environment.lookup, osName)
@@ -20,6 +20,9 @@ final case class UserPaths(environment: Environment, osName: String):
 object UserPaths:
 
   /** Names the config file outright, wherever it is. */
+  type OsName = OsName.T
+  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ConfigEnv = "HISTMERSION_CONFIG"
 
   val ConfigFileName = "histmersion.conf"

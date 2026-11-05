@@ -15,19 +15,45 @@ object FocusRepo:
 
   /** A goal with what the focus recorded about it. */
   final case class GoalRow(
-      slug: String,
-      title: String,
-      parent: Option[String],
-      status: String,
-      createdAt: String,
-      active: Boolean,
-      pinned: Boolean,
-      priority: Int,
-      since: Option[String],
-      why: Option[String],
-      leftAt: Option[String],
-      leftWhy: Option[String]
+      slug: GoalRow.Slug,
+      title: GoalRow.Title,
+      parent: Option[GoalRow.Parent],
+      status: GoalRow.Status,
+      createdAt: GoalRow.CreatedAt,
+      active: GoalRow.Active,
+      pinned: GoalRow.Pinned,
+      priority: GoalRow.Priority,
+      since: Option[GoalRow.Since],
+      why: Option[GoalRow.Why],
+      leftAt: Option[GoalRow.LeftAt],
+      leftWhy: Option[GoalRow.LeftWhy]
   ) derives DbCodec
+
+  object GoalRow:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Parent = Parent.T
+    object Parent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Active = Active.T
+    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftAt = LeftAt.T
+    object LeftAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftWhy = LeftWhy.T
+    object LeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def goals()(using DbCon): List[GoalRow] =
     Sql
@@ -46,20 +72,48 @@ object FocusRepo:
     * it), its kind, and the manager's `autoApprove` setting.
     */
   final case class WorkRow(
-      id: Long,
-      managerId: String,
-      managerKind: String,
-      kind: String,
-      target: String,
-      status: String,
-      person: Boolean,
-      focusHeld: Boolean,
-      personHeld: Boolean,
-      approval: Option[Long],
-      approvalKind: Option[String],
-      autoApprove: Option[String],
-      goals: List[String]
+      id: WorkRow.Id,
+      managerId: WorkRow.ManagerId,
+      managerKind: WorkRow.ManagerKind,
+      kind: WorkRow.Kind,
+      target: WorkRow.Target,
+      status: WorkRow.Status,
+      person: WorkRow.Person,
+      focusHeld: WorkRow.FocusHeld,
+      personHeld: WorkRow.PersonHeld,
+      approval: Option[WorkRow.Approval],
+      approvalKind: Option[WorkRow.ApprovalKind],
+      autoApprove: Option[WorkRow.AutoApprove],
+      goals: List[WorkRow.Goals]
   ) derives DbCodec
+
+  object WorkRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerKind = ManagerKind.T
+    object ManagerKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Person = Person.T
+    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FocusHeld = FocusHeld.T
+    object FocusHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PersonHeld = PersonHeld.T
+    object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approval = Approval.T
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalKind = ApprovalKind.T
+    object ApprovalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoApprove = AutoApprove.T
+    object AutoApprove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goals = Goals.T
+    object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def work(using DbCon): List[WorkRow] =
     sql"""SELECT i.id, i.manager_id, m.kind, i.kind, i.target, i.status, i.origin = 'person',

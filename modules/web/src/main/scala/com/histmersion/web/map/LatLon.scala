@@ -20,4 +20,10 @@ import scala.scalajs.js
   * ZOOM is the app's unit: the zoom of the 256-pixel raster grid (OSM Carto's, every `Layout` value and link the app
   * had). An adapter converts to its library's own.
   */
-final case class LatLon(lat: Double, lon: Double)
+final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
+
+object LatLon:
+  type Lat = Lat.T
+  object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lon = Lon.T
+  object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

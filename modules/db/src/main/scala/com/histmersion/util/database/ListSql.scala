@@ -9,12 +9,16 @@ import java.time.Instant
 private[histmersion] object ListSql:
 
   /** The named conditions of one filtered list, in order. */
-  final case class Conds(parts: List[(String, Sql)]):
+  final case class Conds(parts: List[(Conds.PartsPart1, Sql)]):
     /** Every condition. */
     def all: Sql = parts.foldLeft(Sql.empty)(_ ++ _._2)
 
     /** Every condition but the one named `name` — what that facet is counted under. */
     def except(name: String): Sql = parts.filterNot(_._1 == name).foldLeft(Sql.empty)(_ ++ _._2)
+
+  object Conds:
+    type PartsPart1 = PartsPart1.T
+    object PartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** ` AND <expr> = ANY(?)` — nothing for no values. */
   def anyOf(expr: String, vs: List[String]): Sql =

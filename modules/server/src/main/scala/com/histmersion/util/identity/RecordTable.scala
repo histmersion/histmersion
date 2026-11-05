@@ -17,10 +17,10 @@ import java.time.Instant
   */
 final case class RecordTable(
     kind: ItemKind,
-    table: String,
-    key: String,
-    title: String,
-    uid: Option[String],
+    table: RecordTable.Table,
+    key: RecordTable.Key,
+    title: RecordTable.Title,
+    uid: Option[RecordTable.Uid],
     aliases: Option[AliasColumns]
 ):
   private val uidCol = uid.getOrElse("NULL::uuid")
@@ -140,4 +140,13 @@ final case class RecordTable(
 
 object RecordTable:
   /** How many merges in a row are followed. */
+  type Table = Table.T
+  object Table extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Uid = Uid.T
+  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val MaxHops = 16

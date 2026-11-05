@@ -7,7 +7,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * and the hours after which a check that got no answer is due again.
   */
 final case class RecheckConfig(
-    enabled: Boolean,
+    enabled: RecheckConfig.Enabled,
     everyDays: Days,
     perDay: ItemCount,
     perPass: ItemCount,
@@ -15,3 +15,7 @@ final case class RecheckConfig(
     sharePercent: Percent,
     retryHours: Hours
 ) derives ConfigReader
+
+object RecheckConfig:
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

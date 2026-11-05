@@ -13,7 +13,13 @@ object TimelineCurve:
   val PxPerBucket: Double = 5.0
 
   /** A bucket's point on the strip: `x`, `y` in the strip's pixels (y down), and the bucket it draws. */
-  final case class Pt(x: Double, y: Double, bucket: TimeBucket)
+  final case class Pt(x: Pt.X, y: Pt.Y, bucket: TimeBucket)
+
+  object Pt:
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
     * largest count between `baseY` (none) and `top` (the largest).
@@ -62,7 +68,21 @@ object TimelineCurve:
     t
 
   /** One cubic segment: its two control points and its end. */
-  final case class Segment(c1x: Double, c1y: Double, c2x: Double, c2y: Double, x: Double, y: Double)
+  final case class Segment(c1x: Segment.C1x, c1y: Segment.C1y, c2x: Segment.C2x, c2y: Segment.C2y, x: Segment.X, y: Segment.Y)
+
+  object Segment:
+    type C1x = C1x.T
+    object C1x extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type C1y = C1y.T
+    object C1y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type C2x = C2x.T
+    object C2x extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type C2y = C2y.T
+    object C2y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the cubic segments from each point to the next (none for fewer than two). */
   def segments(pts: IndexedSeq[Pt]): Vector[Segment] =

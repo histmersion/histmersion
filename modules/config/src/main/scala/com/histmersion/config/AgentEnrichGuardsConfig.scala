@@ -9,6 +9,14 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * (comma-separated, matched as whole words, ignoring case) points at a table instead of standing alone. Each is sent
   * back while attempts remain and kept with a warning on the last one ([[EnrichSource.FindingGuards]]).
   */
-final case class AgentEnrichGuardsConfig(minPlacedShare: Double, centuryGapYears: Int, pointerPhrases: String)
+final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases: AgentEnrichGuardsConfig.PointerPhrases)
     derives ConfigReader:
   def phrases: List[String] = PeriodsConfig.split(pointerPhrases).map(_.toLowerCase(java.util.Locale.ROOT)).distinct
+
+object AgentEnrichGuardsConfig:
+  type MinPlacedShare = MinPlacedShare.T
+  object MinPlacedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CenturyGapYears = CenturyGapYears.T
+  object CenturyGapYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointerPhrases = PointerPhrases.T
+  object PointerPhrases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

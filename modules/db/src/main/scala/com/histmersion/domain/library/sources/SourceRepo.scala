@@ -583,7 +583,7 @@ private[sources] object SourceRepo:
       .map(r => r.doi -> r.citekey)
       .toMap
 
-  final private case class DoiKey(doi: String, citekey: String) derives DbCodec
+  final private case class DoiKey(doi: com.histmersion.domain.library.Doi, citekey: com.histmersion.domain.library.Citekey) derives DbCodec
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
   def citekeyOfDoi(doi: String)(using DbCon): Option[String] =
@@ -608,20 +608,38 @@ private[sources] object SourceRepo:
   // ── Calibre: the sources not in it yet, and the id written back after a push ────────────────
 
   final private case class GapRow(
-      citekey: String,
-      title: String,
-      authors: List[String],
-      doi: Option[String],
-      year: Option[Int],
-      venue: Option[String],
-      summary: Option[String],
-      topics: List[String],
-      provenance: Option[String],
-      calibreId: Option[String],
-      isbn: Option[String]
+      citekey: com.histmersion.domain.library.Citekey,
+      title: GapRow.Title,
+      authors: List[GapRow.Authors],
+      doi: Option[com.histmersion.domain.library.Doi],
+      year: Option[com.histmersion.Year],
+      venue: Option[GapRow.Venue],
+      summary: Option[GapRow.Summary],
+      topics: List[GapRow.Topics],
+      provenance: Option[GapRow.Provenance],
+      calibreId: Option[GapRow.CalibreId],
+      isbn: Option[GapRow.Isbn]
   ) derives DbCodec:
     def gap: CalibreGap =
       CalibreGap(citekey, title, authors, doi, year, venue, summary, topics, provenance, calibreId, isbn)
+
+  object GapRow:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Venue = Venue.T
+    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provenance = Provenance.T
+    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CalibreId = CalibreId.T
+    object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Isbn = Isbn.T
+    object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
     * has been written back, in citekey order, at most `limit`.

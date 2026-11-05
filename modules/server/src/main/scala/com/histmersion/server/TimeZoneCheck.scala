@@ -14,7 +14,11 @@ import scala.util.Try
 object TimeZoneCheck:
 
   /** A zone, an instant, and the offset the zone has then (tzdb rules in force since 2008 or earlier). */
-  final case class Probe(zone: String, at: Instant, offset: ZoneOffset)
+  final case class Probe(zone: Probe.Zone, at: Instant, offset: ZoneOffset)
+
+  object Probe:
+    type Zone = Zone.T
+    object Zone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Winter = Instant.parse("2026-01-15T12:00:00Z")
   private val Summer = Instant.parse("2026-07-15T12:00:00Z")

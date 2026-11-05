@@ -161,11 +161,11 @@ object Codex:
 
     /** What a pass did: `skipped` says why it did nothing. */
     final case class Report(
-        skipped: Option[String] = None,
-        deleted: Int = 0,
-        freedBytes: Long = 0,
-        vacuumed: List[(String, Long, Long)] = Nil,
-        problems: List[String] = Nil
+        skipped: Option[Report.Skipped] = None,
+        deleted: Report.Deleted = 0,
+        freedBytes: Report.FreedBytes = 0,
+        vacuumed: List[(Report.VacuumedPart1, Report.VacuumedPart2, Report.VacuumedPart3)] = Nil,
+        problems: List[Report.Problems] = Nil
     ):
       def summary: String = skipped.getOrElse {
         val v = vacuumed.map((n, b, a) =>
@@ -176,6 +176,22 @@ object Codex:
         ) ++
           Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems).mkString("; ")
       }
+
+    object Report:
+      type Skipped = Skipped.T
+      object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Deleted = Deleted.T
+      object Deleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type FreedBytes = FreedBytes.T
+      object FreedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type VacuumedPart1 = VacuumedPart1.T
+      object VacuumedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type VacuumedPart2 = VacuumedPart2.T
+      object VacuumedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type VacuumedPart3 = VacuumedPart3.T
+      object VacuumedPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Problems = Problems.T
+      object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     /** Every regular file under `dir` (none when it is missing), relative to `home`. */
     private def filesUnder(home: Path, dir: Path): List[FileInfo] =

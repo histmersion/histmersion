@@ -61,4 +61,12 @@ object ConfigReload:
       if running.hasPath(k) then c.withValue(k, running.getValue(k)) else c.withoutPath(k)
     }
 
-  final case class Config(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
+  final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader
+
+  object Config:
+    type Watch = Watch.T
+    object Watch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WatchDebounceMs = WatchDebounceMs.T
+    object WatchDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DrainSeconds = DrainSeconds.T
+    object DrainSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

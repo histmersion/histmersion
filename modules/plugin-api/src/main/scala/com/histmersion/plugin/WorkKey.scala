@@ -26,15 +26,33 @@ package com.histmersion.plugin
   */
 final case class WorkKey(
     doi: Option[Doi] = None,
-    arxiv: Option[String] = None,
-    pmid: Option[String] = None,
-    pmcid: Option[String] = None,
-    archive: Option[String] = None,
-    isbn: Option[String] = None,
-    title: Option[String] = None,
-    authors: List[String] = Nil,
+    arxiv: Option[WorkKey.Arxiv] = None,
+    pmid: Option[WorkKey.Pmid] = None,
+    pmcid: Option[WorkKey.Pmcid] = None,
+    archive: Option[WorkKey.Archive] = None,
+    isbn: Option[WorkKey.Isbn] = None,
+    title: Option[WorkKey.Title] = None,
+    authors: List[WorkKey.Authors] = Nil,
     year: Option[Year] = None,
-    format: Option[String] = None
+    format: Option[WorkKey.Format] = None
 ):
   /** No identifier at all (title, authors, year and format alone identify nothing to fetch). */
   def isEmpty: Boolean = List(doi, arxiv, pmid, pmcid, archive, isbn).forall(_.isEmpty)
+
+object WorkKey:
+  type Arxiv = Arxiv.T
+  object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pmid = Pmid.T
+  object Pmid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pmcid = Pmcid.T
+  object Pmcid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Archive = Archive.T
+  object Archive extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Isbn = Isbn.T
+  object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Format = Format.T
+  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

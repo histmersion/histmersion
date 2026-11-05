@@ -16,23 +16,53 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * a network gazetteer's download (the answer, the connection).
   */
 final case class PlacesConfig(
-    pointToleranceKm: Double,
-    searchLimit: Int,
-    childrenLimit: Int,
-    treeLimit: Int,
-    treeDepth: Int,
-    seedDir: String,
-    importBatch: Int,
-    geocodePlaceholderMin: Int,
-    geocodeRepairKm: Double,
-    modernFrom: Long,
+    pointToleranceKm: PlacesConfig.PointToleranceKm,
+    searchLimit: PlacesConfig.SearchLimit,
+    childrenLimit: PlacesConfig.ChildrenLimit,
+    treeLimit: PlacesConfig.TreeLimit,
+    treeDepth: PlacesConfig.TreeDepth,
+    seedDir: PlacesConfig.SeedDir,
+    importBatch: PlacesConfig.ImportBatch,
+    geocodePlaceholderMin: PlacesConfig.GeocodePlaceholderMin,
+    geocodeRepairKm: PlacesConfig.GeocodeRepairKm,
+    modernFrom: PlacesConfig.ModernFrom,
     sources: PlaceSourcesConfig,
-    placeholderAreaShare: Double,
-    geoMaxLimit: Int,
-    fetchTimeoutSeconds: Int,
-    fetchConnectTimeoutSeconds: Int
+    placeholderAreaShare: PlacesConfig.PlaceholderAreaShare,
+    geoMaxLimit: PlacesConfig.GeoMaxLimit,
+    fetchTimeoutSeconds: PlacesConfig.FetchTimeoutSeconds,
+    fetchConnectTimeoutSeconds: PlacesConfig.FetchConnectTimeoutSeconds
 ) derives ConfigReader:
   /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
   def geoLimit(requested: Option[Int], dflt: Int): Int =
     val cap = math.max(1, geoMaxLimit)
     requested.filter(_ > 0).getOrElse(dflt).max(1).min(cap)
+
+object PlacesConfig:
+  type PointToleranceKm = PointToleranceKm.T
+  object PointToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenLimit = ChildrenLimit.T
+  object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeLimit = TreeLimit.T
+  object TreeLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeDepth = TreeDepth.T
+  object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedDir = SeedDir.T
+  object SeedDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportBatch = ImportBatch.T
+  object ImportBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeocodePlaceholderMin = GeocodePlaceholderMin.T
+  object GeocodePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeocodeRepairKm = GeocodeRepairKm.T
+  object GeocodeRepairKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModernFrom = ModernFrom.T
+  object ModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholderAreaShare = PlaceholderAreaShare.T
+  object PlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoMaxLimit = GeoMaxLimit.T
+  object GeoMaxLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchTimeoutSeconds = FetchTimeoutSeconds.T
+  object FetchTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchConnectTimeoutSeconds = FetchConnectTimeoutSeconds.T
+  object FetchConnectTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -25,14 +25,28 @@ package com.histmersion.plugin
   *   the places it is part of
   */
 final case class GazetteerPlace(
-    id: String,
-    label: String,
-    kind: String,
-    geometry: Option[String] = None,
+    id: GazetteerPlace.Id,
+    label: GazetteerPlace.Label,
+    kind: GazetteerPlace.Kind,
+    geometry: Option[GazetteerPlace.Geometry] = None,
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None,
-    source: Option[String] = None,
-    properties: Option[String] = None,
+    source: Option[GazetteerPlace.Source] = None,
+    properties: Option[GazetteerPlace.Properties] = None,
     names: List[GazetteerName] = Nil,
     relations: List[GazetteerRelation] = Nil
 )
+
+object GazetteerPlace:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Geometry = Geometry.T
+  object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Source = Source.T
+  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Properties = Properties.T
+  object Properties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

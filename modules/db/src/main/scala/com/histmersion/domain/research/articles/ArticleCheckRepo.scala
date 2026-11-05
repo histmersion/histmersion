@@ -123,11 +123,19 @@ private[articles] object ArticleCheckRepo:
 
   /** One article the pairing repair would change: its token, the repaired body, the hits applied. */
   final case class PairingRepair(
-      slug: String,
-      updatedAt: Option[String],
-      body: String,
+      slug: PairingRepair.Slug,
+      updatedAt: Option[PairingRepair.UpdatedAt],
+      body: PairingRepair.Body,
       applied: List[CritiquePairing.Hit]
   )
+
+  object PairingRepair:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not written:
     * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its

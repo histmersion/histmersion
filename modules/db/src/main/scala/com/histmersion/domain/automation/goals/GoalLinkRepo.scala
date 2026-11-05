@@ -15,13 +15,27 @@ object GoalLinkRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class LinkRow(
-      kind: String,
-      ref: String,
-      note: Option[String],
-      title: Option[String],
-      createdAt: String,
-      queue: Option[String]
+      kind: LinkRow.Kind,
+      ref: LinkRow.Ref,
+      note: Option[LinkRow.Note],
+      title: Option[LinkRow.Title],
+      createdAt: LinkRow.CreatedAt,
+      queue: Option[LinkRow.Queue]
   ) derives DbCodec
+
+  object LinkRow:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queue = Queue.T
+    object Queue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query has no title).
     * Sources, then articles, queries, queue items; oldest first within a kind.
@@ -108,16 +122,34 @@ object GoalLinkRepo:
   // ── schedules ──────────────────────────────────────────────────────────────────────────────────
 
   final private case class ScheduleRow(
-      goal: String,
-      kind: String,
-      cron: String,
-      enabled: Boolean,
+      goal: ScheduleRow.Goal,
+      kind: ScheduleRow.Kind,
+      cron: ScheduleRow.Cron,
+      enabled: ScheduleRow.Enabled,
       budgetUsd: Option[BigDecimal],
-      nextRunAt: Option[String],
-      lastRunAt: Option[String],
-      lastJob: Option[String],
-      lastNote: Option[String]
+      nextRunAt: Option[ScheduleRow.NextRunAt],
+      lastRunAt: Option[ScheduleRow.LastRunAt],
+      lastJob: Option[ScheduleRow.LastJob],
+      lastNote: Option[ScheduleRow.LastNote]
   ) derives DbCodec
+
+  object ScheduleRow:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NextRunAt = NextRunAt.T
+    object NextRunAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastRunAt = LastRunAt.T
+    object LastRunAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastJob = LastJob.T
+    object LastJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastNote = LastNote.T
+    object LastNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val scheduleSelect = Sql.raw(s"""SELECT goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),

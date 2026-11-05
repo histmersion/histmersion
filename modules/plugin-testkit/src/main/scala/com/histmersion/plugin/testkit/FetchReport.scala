@@ -16,7 +16,7 @@ final case class FetchReport(
     outcome: FetchOutcome,
     answers: List[FetcherAnswer],
     log: List[LogLine],
-    requests: List[String]
+    requests: List[FetchReport.Requests]
 ):
   /** The file found, if any. */
   def file: Option[FetchedFile] = outcome match
@@ -34,3 +34,7 @@ final case class FetchReport(
         case l if !l.source.startsWith("acquire") && l.message.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
           l.message
       })
+
+object FetchReport:
+  type Requests = Requests.T
+  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

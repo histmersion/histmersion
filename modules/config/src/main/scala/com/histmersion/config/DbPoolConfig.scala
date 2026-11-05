@@ -6,4 +6,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the whole startup
   * handshake.
   */
-final case class DbPoolConfig(max: Int) derives ConfigReader
+final case class DbPoolConfig(max: DbPoolConfig.Max) derives ConfigReader
+
+object DbPoolConfig:
+  type Max = Max.T
+  object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

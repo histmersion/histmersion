@@ -479,13 +479,24 @@ object McpTools:
 
   /** The `config` tool's input: what to do with the server's configuration. */
   final case class ConfigInput(
-      action: String,
-      key: Option[String] = None,
-      value: Option[String] = None,
-      prefix: Option[String] = None,
-      literalConsent: Option[Boolean] = None
+      action: ConfigInput.Action,
+      key: Option[ConfigInput.Key] = None,
+      value: Option[ConfigInput.Value] = None,
+      prefix: Option[ConfigInput.Prefix] = None,
+      literalConsent: Option[ConfigInput.LiteralConsent] = None
   ) derives KindlingsCodecAsObject
   object ConfigInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Prefix = Prefix.T
+    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LiteralConsent = LiteralConsent.T
+    object LiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ConfigInput] = KindlingsSchema
       .derived[ConfigInput]
       .schema
@@ -501,20 +512,45 @@ object McpTools:
 
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
   final case class IngestInput(
-      citekey: String,
-      path: Option[String] = None,
-      base64: Option[String] = None,
-      filename: Option[String] = None,
-      quality: Boolean = false,
-      force: Boolean = false,
-      title: Option[String] = None,
-      authors: List[String] = Nil,
-      year: Option[Int] = None,
-      doi: Option[String] = None,
-      provenance: Option[String] = None,
-      acquireItem: Option[Int] = None
+      citekey: IngestInput.Citekey,
+      path: Option[IngestInput.Path] = None,
+      base64: Option[IngestInput.Base64] = None,
+      filename: Option[IngestInput.Filename] = None,
+      quality: IngestInput.Quality = false,
+      force: IngestInput.Force = false,
+      title: Option[IngestInput.Title] = None,
+      authors: List[IngestInput.Authors] = Nil,
+      year: Option[IngestInput.Year] = None,
+      doi: Option[IngestInput.Doi] = None,
+      provenance: Option[IngestInput.Provenance] = None,
+      acquireItem: Option[IngestInput.AcquireItem] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Path = Path.T
+    object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Base64 = Base64.T
+    object Base64 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Filename = Filename.T
+    object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quality = Quality.T
+    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Force = Force.T
+    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provenance = Provenance.T
+    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcquireItem = AcquireItem.T
+    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
       .schema
@@ -530,31 +566,66 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
-  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class JobControlInput(id: JobControlInput.Id, action: JobControlInput.Action) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object JobControlInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ActivityInput(
-      show: Option[String] = None,
-      since: Option[String] = None,
-      goal: Option[String] = None,
-      limit: Option[Int] = None,
-      before: Option[String] = None
+      show: Option[ActivityInput.Show] = None,
+      since: Option[ActivityInput.Since] = None,
+      goal: Option[ActivityInput.Goal] = None,
+      limit: Option[ActivityInput.Limit] = None,
+      before: Option[ActivityInput.Before] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ActivityInput:
+    type Show = Show.T
+    object Show extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class JobStatusInput(
-      id: Option[String] = None,
-      status: Option[String] = None,
-      limit: Option[Int] = None,
-      before: Option[String] = None,
-      kind: List[String] = Nil,
-      since: Option[String] = None,
-      until: Option[String] = None,
-      subject: Option[String] = None
+      id: Option[JobStatusInput.Id] = None,
+      status: Option[JobStatusInput.Status] = None,
+      limit: Option[JobStatusInput.Limit] = None,
+      before: Option[JobStatusInput.Before] = None,
+      kind: List[JobStatusInput.Kind] = Nil,
+      since: Option[JobStatusInput.Since] = None,
+      until: Option[JobStatusInput.Until] = None,
+      subject: Option[JobStatusInput.Subject] = None
   ) derives KindlingsCodecAsObject:
     def filter: ListFilters.JobFilter = ListFilters.JobFilter(status.toList, kind, since, until, subject)
   object JobStatusInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[JobStatusInput] = KindlingsSchema
       .derived[JobStatusInput]
       .schema
@@ -573,12 +644,21 @@ object McpTools:
       .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
   final case class GoalsInput(
-      slug: Option[String] = None,
-      status: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      slug: Option[GoalsInput.Slug] = None,
+      status: Option[GoalsInput.Status] = None,
+      limit: Option[GoalsInput.Limit] = None,
+      offset: Option[GoalsInput.Offset] = None
   ) derives KindlingsCodecAsObject
   object GoalsInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GoalsInput] = KindlingsSchema
       .derived[GoalsInput]
       .schema
@@ -586,17 +666,36 @@ object McpTools:
       .modify(_.status)(_.description("Filter: planned|seeding|compiled|reviewed|done"))
 
   final case class GoalPutInput(
-      slug: String,
-      title: String,
-      status: String = "planned",
-      notes: Option[String] = None,
-      tags: List[String] = Nil,
-      regions: List[String] = Nil,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None,
-      parentSlug: Option[String] = None
+      slug: GoalPutInput.Slug,
+      title: GoalPutInput.Title,
+      status: GoalPutInput.Status = "planned",
+      notes: Option[GoalPutInput.Notes] = None,
+      tags: List[GoalPutInput.Tags] = Nil,
+      regions: List[GoalPutInput.Regions] = Nil,
+      periodStart: Option[GoalPutInput.PeriodStart] = None,
+      periodEnd: Option[GoalPutInput.PeriodEnd] = None,
+      parentSlug: Option[GoalPutInput.ParentSlug] = None
   )
   object GoalPutInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodStart = PeriodStart.T
+    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodEnd = PeriodEnd.T
+    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentSlug = ParentSlug.T
+    object ParentSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GoalPutInput] = KindlingsSchema
       .derived[GoalPutInput]
       .schema
@@ -607,18 +706,39 @@ object McpTools:
     given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
-      slug: String,
-      title: Option[String] = None,
-      status: Option[String] = None,
-      notes: Option[String] = None,
-      tags: Option[List[String]] = None,
-      regions: Option[List[String]] = None,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None,
-      parentSlug: Option[String] = None,
-      budgetUsd: Option[Double] = None
+      slug: GoalPatchInput.Slug,
+      title: Option[GoalPatchInput.Title] = None,
+      status: Option[GoalPatchInput.Status] = None,
+      notes: Option[GoalPatchInput.Notes] = None,
+      tags: Option[List[GoalPatchInput.Tags]] = None,
+      regions: Option[List[GoalPatchInput.Regions]] = None,
+      periodStart: Option[GoalPatchInput.PeriodStart] = None,
+      periodEnd: Option[GoalPatchInput.PeriodEnd] = None,
+      parentSlug: Option[GoalPatchInput.ParentSlug] = None,
+      budgetUsd: Option[GoalPatchInput.BudgetUsd] = None
   )
   object GoalPatchInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodStart = PeriodStart.T
+    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodEnd = PeriodEnd.T
+    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentSlug = ParentSlug.T
+    object ParentSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GoalPatchInput] = KindlingsSchema
       .derived[GoalPatchInput]
       .schema
@@ -633,18 +753,26 @@ object McpTools:
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
   final case class AgentStateInput(
-      key: Option[String] = None,
-      value: Option[String] = None
+      key: Option[AgentStateInput.Key] = None,
+      value: Option[AgentStateInput.Value] = None
   ) derives KindlingsCodecAsObject
   object AgentStateInput:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[AgentStateInput] = KindlingsSchema
       .derived[AgentStateInput]
       .schema
       .modify(_.key)(_.description("State key to get or set (omit for listing all keys)"))
       .modify(_.value)(_.description("JSON string value to set (omit to just read the key)"))
 
-  final case class DeleteAgentStateInput(key: String) derives KindlingsCodecAsObject
+  final case class DeleteAgentStateInput(key: DeleteAgentStateInput.Key) derives KindlingsCodecAsObject
   object DeleteAgentStateInput:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[DeleteAgentStateInput] = KindlingsSchema
       .derived[DeleteAgentStateInput]
       .schema
@@ -652,12 +780,23 @@ object McpTools:
 
   /** Input of the `merge_plan` tool (docs/research-merge-import.md §6, M3). */
   final case class MergePlanInput(
-      bundle: String,
-      resolve: Map[String, String] = Map.empty,
-      editions: Option[String] = None,
-      all: Boolean = false
+      bundle: MergePlanInput.Bundle,
+      resolve: Map[MergePlanInput.ResolveKey, MergePlanInput.ResolveValue] = Map.empty,
+      editions: Option[MergePlanInput.Editions] = None,
+      all: MergePlanInput.All = false
   )
   object MergePlanInput:
+    type Bundle = Bundle.T
+    object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveKey = ResolveKey.T
+    object ResolveKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveValue = ResolveValue.T
+    object ResolveValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Editions = Editions.T
+    object Editions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[MergePlanInput] = KindlingsSchema
       .derived[MergePlanInput]
       .schema
@@ -680,12 +819,21 @@ object McpTools:
 
   /** Input of the `merges` tool (docs/research-merge-import.md §6.1, M7). */
   final case class MergesInput(
-      action: Option[String] = None,
-      id: Option[String] = None,
-      uid: Option[String] = None,
-      limit: Option[Int] = None
+      action: Option[MergesInput.Action] = None,
+      id: Option[MergesInput.Id] = None,
+      uid: Option[MergesInput.Uid] = None,
+      limit: Option[MergesInput.Limit] = None
   )
   object MergesInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Uid = Uid.T
+    object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[MergesInput] = KindlingsSchema
       .derived[MergesInput]
       .schema
@@ -696,8 +844,15 @@ object McpTools:
     given Codec.AsObject[MergesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergesInput])
 
   /** Input of the `rename_label` tool (V042, V053, V055). */
-  final case class RenameLabelInput(kind: String, from: String, to: String)
+  final case class RenameLabelInput(kind: RenameLabelInput.Kind, from: RenameLabelInput.From, to: RenameLabelInput.To)
   object RenameLabelInput:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RenameLabelInput] = KindlingsSchema
       .derived[RenameLabelInput]
       .schema

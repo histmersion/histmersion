@@ -134,14 +134,25 @@ object OpsTools:
 
   // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
   final case class LintInput(
-      rules: List[String] = Nil,
-      fix: Boolean = false,
-      article: Option[String] = None,
-      source: Option[String] = None,
-      text: Option[String] = None,
+      rules: List[LintInput.Rules] = Nil,
+      fix: LintInput.Fix = false,
+      article: Option[LintInput.Article] = None,
+      source: Option[LintInput.Source] = None,
+      text: Option[LintInput.Text] = None,
       field: Option[FormatField] = None
   ) derives KindlingsCodecAsObject
   object LintInput:
+    type Rules = Rules.T
+    object Rules extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Article = Article.T
+    object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]
       .schema
@@ -157,17 +168,36 @@ object OpsTools:
       .modify(_.field)(_.description("What `text` is: body (an article body, the default), summary or notes"))
 
   final case class QueueInput(
-      action: String,
-      list: Option[String] = None,
-      text: Option[String] = None,
-      topic: Option[String] = None,
-      reason: Option[String] = None,
-      id: Option[Int] = None,
-      all: Boolean = false,
-      dryRun: Boolean = false,
-      limit: Option[Int] = None
+      action: QueueInput.Action,
+      list: Option[QueueInput.List] = None,
+      text: Option[QueueInput.Text] = None,
+      topic: Option[QueueInput.Topic] = None,
+      reason: Option[QueueInput.Reason] = None,
+      id: Option[QueueInput.Id] = None,
+      all: QueueInput.All = false,
+      dryRun: QueueInput.DryRun = false,
+      limit: Option[QueueInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object QueueInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type List = List.T
+    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topic = Topic.T
+    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[QueueInput] = KindlingsSchema
       .derived[QueueInput]
       .schema

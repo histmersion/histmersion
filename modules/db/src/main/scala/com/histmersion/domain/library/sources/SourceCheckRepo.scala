@@ -137,9 +137,12 @@ private[sources] object SourceCheckRepo:
   /** What the rules read besides the database: how many prefix candidates a dangling target is offered
     * (`lint.suggestions`), the formatting check and the geocoder's knobs (`finding-geocode`, `finding-unplaced`).
     */
-  final case class Context(suggestions: Int, format: FormatChecker, geocode: GeocodeSettings)
+  final case class Context(suggestions: Context.Suggestions, format: FormatChecker, geocode: GeocodeSettings)
 
   object Context:
+    type Suggestions = Suggestions.T
+    object Suggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(cfg: AppConfig, format: FormatChecker): Context = Context(cfg.lint.suggestions, format, geocodeOf(cfg))
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */

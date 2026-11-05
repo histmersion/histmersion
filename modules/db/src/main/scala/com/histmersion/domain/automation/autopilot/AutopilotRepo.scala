@@ -14,14 +14,30 @@ object AutopilotRepo:
 
   /** The row as read. Times are ISO instants (UTC). */
   final case class Row(
-      enabled: Boolean,
-      changedAt: String,
-      changedBy: String,
-      paused: List[String],
-      lastEnsureAt: Option[String],
-      lastBackupAt: Option[String],
-      lastLintAt: Option[String]
+      enabled: Row.Enabled,
+      changedAt: Row.ChangedAt,
+      changedBy: Row.ChangedBy,
+      paused: List[Row.Paused],
+      lastEnsureAt: Option[Row.LastEnsureAt],
+      lastBackupAt: Option[Row.LastBackupAt],
+      lastLintAt: Option[Row.LastLintAt]
   ) derives DbCodec
+
+  object Row:
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChangedAt = ChangedAt.T
+    object ChangedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChangedBy = ChangedBy.T
+    object ChangedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Paused = Paused.T
+    object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastEnsureAt = LastEnsureAt.T
+    object LastEnsureAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastBackupAt = LastBackupAt.T
+    object LastBackupAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastLintAt = LastLintAt.T
+    object LastLintAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The row, made first if it is not there yet. */
   def get()(using DbCon): Row =

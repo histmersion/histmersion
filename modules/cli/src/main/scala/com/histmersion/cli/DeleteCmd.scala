@@ -18,7 +18,15 @@ import com.histmersion.util.console.Console
   */
 object DeleteCmd:
 
-  final case class Args(citekey: String, apply: Boolean, json: Boolean)
+  final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json)
+
+  object Args:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Json = Json.T
+    object Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val args: Opts[Args] =
     (

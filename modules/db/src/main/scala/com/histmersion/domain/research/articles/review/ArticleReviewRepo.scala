@@ -15,21 +15,59 @@ import com.augustnagro.magnum.*
 private[review] object ArticleReviewRepo:
 
   final private case class FactsRow(
-      slug: String,
-      itemStatus: Option[String],
-      outcome: Option[String],
-      attempts: Option[Int],
-      updatedAt: Option[String],
-      findings: Option[Int],
-      openMajors: Option[Int],
-      openMinors: Option[Int],
-      runs: Option[Int],
-      round: Option[Int]
+      slug: FactsRow.Slug,
+      itemStatus: Option[FactsRow.ItemStatus],
+      outcome: Option[FactsRow.Outcome],
+      attempts: Option[FactsRow.Attempts],
+      updatedAt: Option[FactsRow.UpdatedAt],
+      findings: Option[FactsRow.Findings],
+      openMajors: Option[FactsRow.OpenMajors],
+      openMinors: Option[FactsRow.OpenMinors],
+      runs: Option[FactsRow.Runs],
+      round: Option[FactsRow.Round]
   ) derives DbCodec
 
-  final private case class ApprovalRow(subject: String, id: Long, kind: String) derives DbCodec
+  object FactsRow:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemStatus = ItemStatus.T
+    object ItemStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Outcome = Outcome.T
+    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenMajors = OpenMajors.T
+    object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenMinors = OpenMinors.T
+    object OpenMinors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Runs = Runs.T
+    object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final private case class GoalRow(slug: String, title: String, status: String) derives DbCodec
+  final private case class ApprovalRow(subject: ApprovalRow.Subject, id: ApprovalRow.Id, kind: ApprovalRow.Kind) derives DbCodec
+
+  object ApprovalRow:
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final private case class GoalRow(slug: GoalRow.Slug, title: GoalRow.Title, status: GoalRow.Status) derives DbCodec
+
+  object GoalRow:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The approval kinds that leave an article waiting for a person. */
   val WaitingKinds: List[String] = List("article-filter", "article-publish")

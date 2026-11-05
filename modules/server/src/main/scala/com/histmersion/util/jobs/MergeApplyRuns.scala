@@ -39,7 +39,15 @@ object MergeApplyRuns:
     def status(id: String): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
-  final case class Run(bundle: String, planHash: String, outcome: Option[Either[String, MergeApplyResult]])
+  final case class Run(bundle: Run.Bundle, planHash: Run.PlanHash, outcome: Option[Either[Run.OutcomePart1, MergeApplyResult]])
+
+  object Run:
+    type Bundle = Bundle.T
+    object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanHash = PlanHash.T
+    object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OutcomePart1 = OutcomePart1.T
+    object OutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The rows in memory, keyed by id; ids are numbered in start order. */
   final class InMemory(state: AtomicReference[Map[String, Run]] = AtomicReference(Map.empty[String, Run]))

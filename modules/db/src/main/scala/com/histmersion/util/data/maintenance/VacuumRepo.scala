@@ -11,7 +11,13 @@ object VacuumRepo:
 
   /** One table's dead row versions (the statistics collector's count) and its size with indexes and TOAST.
     */
-  final case class TableState(deadRows: Long, bytes: Long)
+  final case class TableState(deadRows: TableState.DeadRows, bytes: TableState.Bytes)
+
+  object TableState:
+    type DeadRows = DeadRows.T
+    object DeadRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The ordinary tables of the `public` schema — what a vacuum may name. */
   def tables(using DbCon): Set[String] =

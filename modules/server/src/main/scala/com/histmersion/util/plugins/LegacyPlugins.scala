@@ -27,7 +27,13 @@ import scala.util.Try
 object LegacyPlugins:
 
   /** A former plugin id and the plugins that took its place, in their chain order. */
-  final case class Split(id: String, into: List[String])
+  final case class Split(id: Split.Id, into: List[Split.Into])
+
+  object Split:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Into = Into.T
+    object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val OaIndex: Split = Split("oa-index", List("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing"))
 
@@ -43,7 +49,11 @@ object LegacyPlugins:
   def enabledEnv(id: String): String =
     s"HISTMERSION_PLUGIN_${id.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
 
-  final case class Migrated(user: Config, env: Config, warnings: List[String])
+  final case class Migrated(user: Config, env: Config, warnings: List[Migrated.Warnings])
+
+  object Migrated:
+    type Warnings = Warnings.T
+    object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Map every former id's settings onto its successors. `known(id)`: the keys of plugin `id`'s defaults (`enabled`
     * aside), which decide where a key other than `enabled` goes.

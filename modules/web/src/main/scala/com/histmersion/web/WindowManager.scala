@@ -13,16 +13,34 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object WindowManager:
 
   private case class WinState(
-      id: Int,
+      id: WinState.Id,
       key: WindowKey,
-      title: String,
-      x: Double,
-      y: Double,
-      w: Double,
-      h: Double,
-      z: Int,
-      minimized: Boolean
+      title: WinState.Title,
+      x: WinState.X,
+      y: WinState.Y,
+      w: WinState.W,
+      h: WinState.H,
+      z: WinState.Z,
+      minimized: WinState.Minimized
   )
+
+  object WinState:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type W = W.T
+    object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type H = H.T
+    object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Z = Z.T
+    object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Minimized = Minimized.T
+    object Minimized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val windows = Var[List[WinState]](Nil)
 
@@ -276,7 +294,15 @@ object WindowManager:
   // ── Escape ──────────────────────────────────────────────────────────────────────────────────────
 
   /** An open window as the Escape key sees it. */
-  final private[web] case class Stacked(id: Int, z: Int, minimized: Boolean)
+  final private[web] case class Stacked(id: Stacked.Id, z: Stacked.Z, minimized: Stacked.Minimized)
+
+  object Stacked:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Z = Z.T
+    object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Minimized = Minimized.T
+    object Minimized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The window Escape closes: the one holding the focus, else the topmost one showing; never a minimized one. Pure.
     */

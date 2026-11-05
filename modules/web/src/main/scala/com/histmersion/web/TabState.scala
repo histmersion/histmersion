@@ -10,10 +10,10 @@ final case class TabState[Row](
     rows: List[Row] = Nil,
     total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
     shown: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
-    loading: Boolean = false,
-    error: Option[String] = None,
-    loaded: Boolean = false,
-    extras: List[String] = Nil
+    loading: TabState.Loading = false,
+    error: Option[TabState.Error] = None,
+    loaded: TabState.Loaded = false,
+    extras: List[TabState.Extras] = Nil
 ):
 
   /** Rows the list does not show yet — loaded or still on the server. */
@@ -29,6 +29,15 @@ final case class TabState[Row](
 
 object TabState:
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
+  type Loading = Loading.T
+  object Loading extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Loaded = Loaded.T
+  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extras = Extras.T
+  object Extras extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = true, error = None)
 
   /** The first page of a query's answer. */

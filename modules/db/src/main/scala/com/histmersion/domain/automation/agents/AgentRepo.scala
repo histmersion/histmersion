@@ -28,58 +28,150 @@ object AgentRepo:
   private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = true)
 
   final private case class RunRow(
-      id: String,
-      pipeline: Option[String],
-      target: Option[String],
-      status: String,
-      progress: Option[String],
-      error: Option[String],
-      model: Option[String],
+      id: RunRow.Id,
+      pipeline: Option[RunRow.Pipeline],
+      target: Option[RunRow.Target],
+      status: RunRow.Status,
+      progress: Option[RunRow.Progress],
+      error: Option[RunRow.Error],
+      model: Option[RunRow.Model],
       budgetUsd: Option[BigDecimal],
-      budgetTokens: Option[Long],
-      warnings: List[String],
-      createdAt: String,
-      updatedAt: String,
-      tin: Long,
-      tout: Long,
-      tcr: Long,
-      tcw: Long,
+      budgetTokens: Option[RunRow.BudgetTokens],
+      warnings: List[RunRow.Warnings],
+      createdAt: RunRow.CreatedAt,
+      updatedAt: RunRow.UpdatedAt,
+      tin: RunRow.Tin,
+      tout: RunRow.Tout,
+      tcr: RunRow.Tcr,
+      tcw: RunRow.Tcw,
       cost: BigDecimal,
-      targetKind: Option[String],
+      targetKind: Option[RunRow.TargetKind],
       params: RunParams,
-      acquireItem: Option[Int],
-      goal: Option[String],
-      parent: Option[String],
-      origin: Option[String],
-      resumeAt: Option[String],
-      dryRun: Boolean,
-      managerId: Option[String],
-      managerItem: Option[Long],
-      heartbeatAt: Option[String]
+      acquireItem: Option[RunRow.AcquireItem],
+      goal: Option[RunRow.Goal],
+      parent: Option[RunRow.Parent],
+      origin: Option[RunRow.Origin],
+      resumeAt: Option[RunRow.ResumeAt],
+      dryRun: RunRow.DryRun,
+      managerId: Option[RunRow.ManagerId],
+      managerItem: Option[RunRow.ManagerItem],
+      heartbeatAt: Option[RunRow.HeartbeatAt]
   ) derives DbCodec
 
+  object RunRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Progress = Progress.T
+    object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetTokens = BudgetTokens.T
+    object BudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Warnings = Warnings.T
+    object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tin = Tin.T
+    object Tin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tout = Tout.T
+    object Tout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tcr = Tcr.T
+    object Tcr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tcw = Tcw.T
+    object Tcw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetKind = TargetKind.T
+    object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcquireItem = AcquireItem.T
+    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Parent = Parent.T
+    object Parent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResumeAt = ResumeAt.T
+    object ResumeAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerItem = ManagerItem.T
+    object ManagerItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeartbeatAt = HeartbeatAt.T
+    object HeartbeatAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class StepRow(
-      seq: Int,
-      name: String,
-      kind: String,
-      attempt: Int,
-      status: String,
-      model: Option[String],
-      promptHash: Option[String],
-      tin: Long,
-      tout: Long,
-      tcr: Long,
-      tcw: Long,
+      seq: StepRow.Seq,
+      name: StepRow.Name,
+      kind: StepRow.Kind,
+      attempt: StepRow.Attempt,
+      status: StepRow.Status,
+      model: Option[StepRow.Model],
+      promptHash: Option[StepRow.PromptHash],
+      tin: StepRow.Tin,
+      tout: StepRow.Tout,
+      tcr: StepRow.Tcr,
+      tcw: StepRow.Tcw,
       cost: BigDecimal,
-      error: Option[String],
-      output: Option[String],
-      startedAt: String,
-      finishedAt: String,
-      actualModel: Option[String],
-      wouldWrite: Option[String],
-      firstCallTokens: Option[Long],
-      turns: Option[Int]
+      error: Option[StepRow.Error],
+      output: Option[StepRow.Output],
+      startedAt: StepRow.StartedAt,
+      finishedAt: StepRow.FinishedAt,
+      actualModel: Option[StepRow.ActualModel],
+      wouldWrite: Option[StepRow.WouldWrite],
+      firstCallTokens: Option[StepRow.FirstCallTokens],
+      turns: Option[StepRow.Turns]
   ) derives DbCodec
+
+  object StepRow:
+    type Seq = Seq.T
+    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempt = Attempt.T
+    object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PromptHash = PromptHash.T
+    object PromptHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tin = Tin.T
+    object Tin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tout = Tout.T
+    object Tout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tcr = Tcr.T
+    object Tcr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tcw = Tcw.T
+    object Tcw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartedAt = StartedAt.T
+    object StartedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FinishedAt = FinishedAt.T
+    object FinishedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ActualModel = ActualModel.T
+    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WouldWrite = WouldWrite.T
+    object WouldWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[MessageInfo] = DbCodec.derived
 
@@ -304,33 +396,71 @@ object AgentRepo:
     * it took.
     */
   final case class StepRecord(
-      seq: Int,
-      attempt: Int,
-      name: String,
+      seq: StepRecord.Seq,
+      attempt: StepRecord.Attempt,
+      name: StepRecord.Name,
       kind: StepKind,
       status: StepStatus,
-      output: Option[String],
-      promptHash: Option[String],
-      model: Option[String],
+      output: Option[StepRecord.Output],
+      promptHash: Option[StepRecord.PromptHash],
+      model: Option[StepRecord.Model],
       usage: Usage,
       costUsd: BigDecimal,
-      error: Option[String],
+      error: Option[StepRecord.Error],
       startedAt: java.time.Instant,
-      actualModel: Option[String] = None,
+      actualModel: Option[StepRecord.ActualModel] = None,
       wouldWrite: List[WouldWrite] = Nil,
-      firstCallTokens: Option[Long] = None,
-      turns: Option[Int] = None
+      firstCallTokens: Option[StepRecord.FirstCallTokens] = None,
+      turns: Option[StepRecord.Turns] = None
   )
 
+  object StepRecord:
+    type Seq = Seq.T
+    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempt = Attempt.T
+    object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PromptHash = PromptHash.T
+    object PromptHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ActualModel = ActualModel.T
+    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class MessageRecord(
-      n: Int,
-      role: String,
-      content: Option[String],
-      toolName: Option[String],
-      toolInput: Option[String],
-      toolResult: Option[String],
-      latencyMs: Option[Int]
+      n: MessageRecord.N,
+      role: MessageRecord.Role,
+      content: Option[MessageRecord.Content],
+      toolName: Option[MessageRecord.ToolName],
+      toolInput: Option[MessageRecord.ToolInput],
+      toolResult: Option[MessageRecord.ToolResult],
+      latencyMs: Option[MessageRecord.LatencyMs]
   )
+
+  object MessageRecord:
+    type N = N.T
+    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Content = Content.T
+    object Content extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolName = ToolName.T
+    object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolInput = ToolInput.T
+    object ToolInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolResult = ToolResult.T
+    object ToolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LatencyMs = LatencyMs.T
+    object LatencyMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse, is never visible).
     */
@@ -416,23 +546,53 @@ object AgentRepo:
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
   final case class ApprovalRow(
-      id: Long,
-      jobId: Option[String],
-      kind: String,
-      citekey: Option[String],
-      status: Option[String],
-      current: Option[String],
-      edgeKind: Option[String],
-      target: Option[String],
-      proposal: String,
-      state: String,
-      note: Option[String],
-      result: Option[String],
-      createdAt: String,
-      decidedAt: Option[String],
-      subject: Option[String],
-      seq: Option[Int]
+      id: ApprovalRow.Id,
+      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      kind: ApprovalRow.Kind,
+      citekey: Option[com.histmersion.domain.library.Citekey],
+      status: Option[ApprovalRow.Status],
+      current: Option[ApprovalRow.Current],
+      edgeKind: Option[ApprovalRow.EdgeKind],
+      target: Option[ApprovalRow.Target],
+      proposal: ApprovalRow.Proposal,
+      state: ApprovalRow.State,
+      note: Option[ApprovalRow.Note],
+      result: Option[ApprovalRow.Result],
+      createdAt: ApprovalRow.CreatedAt,
+      decidedAt: Option[ApprovalRow.DecidedAt],
+      subject: Option[ApprovalRow.Subject],
+      seq: Option[ApprovalRow.Seq]
   ) derives DbCodec
+
+  object ApprovalRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Current = Current.T
+    object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EdgeKind = EdgeKind.T
+    object EdgeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Proposal = Proposal.T
+    object Proposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Result = Result.T
+    object Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecidedAt = DecidedAt.T
+    object DecidedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Seq = Seq.T
+    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val approvalSelect = Sql.raw(
     s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,

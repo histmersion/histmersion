@@ -391,17 +391,35 @@ object Hot:
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
       */
-    final case class Outcome(generation: Long, rebuilt: List[String], draining: List[String], warnings: List[String])
+    final case class Outcome(generation: Outcome.Generation, rebuilt: List[Outcome.Rebuilt], draining: List[Outcome.Draining], warnings: List[Outcome.Warnings])
+
+    object Outcome:
+      type Generation = Generation.T
+      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Rebuilt = Rebuilt.T
+      object Rebuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Draining = Draining.T
+      object Draining extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Warnings = Warnings.T
+      object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final private[hot] case class Def[C](
-        name: String,
-        deps: List[String],
-        keys: List[String],
+        name: Def.Name,
+        deps: List[Def.Deps],
+        keys: List[Def.Keys],
         build: BuildCtx[C, Any] => Ox ?=> Either[String, Any],
         idle: Any => Boolean,
         onPublish: Any => Unit
     ):
       def spec: HotNode = HotNode(name, deps, keys)
+
+    object Def:
+      type Name = Name.T
+      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Deps = Deps.T
+      object Deps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Keys = Keys.T
+      object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     /** One built value, the users pinning it and the scope holding it open. */
     final private[hot] class Instance(
@@ -432,6 +450,12 @@ object Hot:
     private val CloseWaitSeconds = 60L
 
     /** One generation: its number, its config and the instance of every node. */
-    final private[hot] case class Snap[C](generation: Long, config: C, nodes: Map[String, Instance]):
+    final private[hot] case class Snap[C](generation: Snap.Generation, config: C, nodes: Map[Snap.NodesKey, Instance]):
       def acquire(): Unit = nodes.values.foreach(_.users.incrementAndGet())
       def release(): Unit = nodes.values.foreach(_.users.decrementAndGet())
+
+    object Snap:
+      type Generation = Generation.T
+      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type NodesKey = NodesKey.T
+      object NodesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

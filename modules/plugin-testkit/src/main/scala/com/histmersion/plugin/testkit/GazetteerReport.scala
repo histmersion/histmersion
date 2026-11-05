@@ -12,8 +12,16 @@ package com.histmersion.plugin.testkit
   */
 final case class GazetteerReport(
     accepted: List[AcceptedPlace],
-    refused: List[String],
-    failure: Option[String],
+    refused: List[GazetteerReport.Refused],
+    failure: Option[GazetteerReport.Failure],
     log: List[LogLine],
-    requests: List[String]
+    requests: List[GazetteerReport.Requests]
 )
+
+object GazetteerReport:
+  type Refused = Refused.T
+  object Refused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failure = Failure.T
+  object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Requests = Requests.T
+  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

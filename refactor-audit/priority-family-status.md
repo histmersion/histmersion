@@ -1,5 +1,41 @@
 # Priority-family status
 
+## Definition sweep applied: remaining module roots
+
+definitions-remaining-2 applies the unchanged rule to 2889 explicit primitive
+leaves across 566 production models in 468 files. The roots now cover modules/,
+using the existing manifest's production sources. Cumulative conversion is 7772
+leaves across 1552 models (916 file changes across batches). This is a conversion
+count, not a verified repair count or a percentage of the historical policy
+denominator. Compilation, behavioral testing and concept consolidation remain
+deferred. The pipeline and rule implementation are unchanged; this batch uses
+configuration for scope and explicit deferral only.
+
+The final preview retains 29 unresolved leaves: fifteen in method-local helpers
+and fourteen in binary or packed buffers. The previous ten domain leaves remain
+within those counts. The additional local helpers are Jats.Frame (three leaves)
+and LabelPlacement.Cell (three leaves). Binary HTTP/file/image payloads, inline
+TIFF data and packed ARGB buffers require whole-payload/buffer modeling rather
+than per-element wrapping. The initial preview is retained; the applied preview
+defers these shapes with explicit reasons. None is accepted as compliant.
+
+Review also found StoredOriginal.bytes was wrapped per element by the preceding
+domain batch (Array[StoredOriginal.Bytes], newtype over Byte). That is a required
+correction to whole-payload modeling, separate from the 29 remaining raw leaves.
+It remains applied and unverified, with no repair credit. The earlier statement
+about preserving binary representation was incomplete; this observation records
+the correction without deleting the historical batch or its evidence.
+
+The frozen applicator checks and applies all 468 files. The full configured-root
+rerun definitions-remaining-residual-1 validates all eight source-plan links and
+reports zero further supported conversions with the same 29 unresolved leaves.
+Application whitespace checks pass. Unchanged fixtures were not rerun. This
+syntactic sweep still does not resolve aliases/import renames, inferred types,
+enum cases, non-case-class models or files absent from the frozen manifest.
+Those remain unverified; model migration is not declared complete. Next address
+whole-payload modeling and local helpers, then audit the stated detection gaps
+before beginning caller compilation repair.
+
 ## Definition sweep applied: core and server domain packages
 
 definitions-domain-1 converts 1698 explicit primitive leaves across 364 production

@@ -12,5 +12,15 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * that tool once first (when the step offers it), then answers. The model `limited` reports its plan's usage limit, so
   * a chain can be seen to move on.
   */
-final case class Reply(when: String, text: String, tool: Option[String] = None, input: Option[String] = None)
+final case class Reply(when: Reply.When, text: Reply.Text, tool: Option[Reply.Tool] = None, input: Option[Reply.Input] = None)
     derives ConfigReader
+
+object Reply:
+  type When = When.T
+  object When extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tool = Tool.T
+  object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Input = Input.T
+  object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

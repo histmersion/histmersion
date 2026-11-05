@@ -16,13 +16,20 @@ package com.histmersion.plugin
   *   the end of [[period]] the dataset does not know, if one
   */
 final case class GazetteerRelation(
-    childId: String,
-    parentId: String,
-    kind: String = GazetteerRelation.PartOf,
+    childId: GazetteerRelation.ChildId,
+    parentId: GazetteerRelation.ParentId,
+    kind: GazetteerRelation.Kind = GazetteerRelation.PartOf,
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None
 )
 
 object GazetteerRelation:
   /** The plain hierarchy edge: the child lies within the parent. */
+  type ChildId = ChildId.T
+  object ChildId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentId = ParentId.T
+  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val PartOf = "part_of"

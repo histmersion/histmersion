@@ -13,7 +13,13 @@ package com.histmersion.util.basemap
 object Vp8l:
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
-  final case class Image(width: Int, height: Int, pixels: Array[Int])
+  final case class Image(width: Image.Width, height: Image.Height, pixels: Array[Int])
+
+  object Image:
+    type Width = Width.T
+    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Height = Height.T
+    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A WebP file (`RIFF … WEBP VP8L …`) or a bare `VP8L` bitstream, decoded. */
   def decode(bytes: Array[Byte]): Either[String, Image] =
@@ -198,7 +204,15 @@ object Vp8l:
   /** One group of prefix codes: green (with lengths and the cache), red, blue, alpha, distance. */
   final private class Group(val green: Code, val red: Code, val blue: Code, val alpha: Code, val dist: Code)
 
-  final private case class Transform(kind: Int, width: Int, bits: Int, data: Array[Int])
+  final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Array[Int])
+
+  object Transform:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Width = Width.T
+    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bits = Bits.T
+    object Bits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private class Decoder(b: Array[Byte], from: Int, until: Int):
     private val r = Bits(b, from, until)

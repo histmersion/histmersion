@@ -6,13 +6,13 @@ import com.augustnagro.magnum.DbCodec
 /** One event on the map before its outline is read (the map's events). */
 final private[events] case class EventGeoRow(
     row: EventRow,
-    lat: Double,
-    lon: Double,
-    anchor: String,
-    placeLabel: Option[String],
-    hasArea: Boolean,
-    vei: Option[Int],
-    magnitude: Option[Double]
+    lat: com.histmersion.Latitude,
+    lon: com.histmersion.Longitude,
+    anchor: EventGeoRow.Anchor,
+    placeLabel: Option[EventGeoRow.PlaceLabel],
+    hasArea: EventGeoRow.HasArea,
+    vei: Option[EventGeoRow.Vei],
+    magnitude: Option[EventGeoRow.Magnitude]
 ) derives DbCodec:
   /** The event as the map draws it, without its outline. */
   def toGeo: EventGeo =
@@ -36,3 +36,15 @@ final private[events] case class EventGeoRow(
       e.precision,
       e.datingNote
     )
+
+object EventGeoRow:
+  type Anchor = Anchor.T
+  object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceLabel = PlaceLabel.T
+  object PlaceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasArea = HasArea.T
+  object HasArea extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vei = Vei.T
+  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Magnitude = Magnitude.T
+  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

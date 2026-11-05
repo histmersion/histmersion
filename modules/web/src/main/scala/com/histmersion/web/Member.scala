@@ -11,15 +11,23 @@ import com.histmersion.api.library.GeoHit
   */
 final case class Member(
     kind: DotKind,
-    n: Int,
-    mids: List[Double],
+    n: Member.N,
+    mids: List[Member.Mids],
     certainty: Certainty,
     findings: List[GeoHit] = Nil,
     entry: Option[DotEntry] = None,
     cell: Option[com.histmersion.web.map.GeoBounds] = None,
-    undated: Int = 0
+    undated: Member.Undated = 0
 ):
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
     * where a click zooms.
     */
   def aggregate: Boolean = cell.isDefined
+
+object Member:
+  type N = N.T
+  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mids = Mids.T
+  object Mids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

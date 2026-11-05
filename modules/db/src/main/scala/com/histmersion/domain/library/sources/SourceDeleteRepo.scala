@@ -43,8 +43,14 @@ private[sources] object SourceDeleteRepo:
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log)))
     }
 
-  final private case class Row(citekey: String, title: String, calibreId: Option[String], sha256: Option[String])
+  final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[com.histmersion.Sha256])
       derives DbCodec
+
+  object Row:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CalibreId = CalibreId.T
+    object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def keysOf(ck: String, keys: List[String])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))

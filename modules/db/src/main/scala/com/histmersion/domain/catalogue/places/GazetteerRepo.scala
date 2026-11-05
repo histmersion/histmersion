@@ -101,8 +101,16 @@ private[places] object GazetteerRepo:
   // ── placement (pure) ───────────────────────────────────────────────────────────────────────────
 
   /** A stored place a lookup returned, with who wrote it. */
-  final case class Stored(id: String, importSource: Option[String], importRef: Option[String]):
+  final case class Stored(id: Stored.Id, importSource: Option[Stored.ImportSource], importRef: Option[Stored.ImportRef]):
     def toMatch: Place.Match = Place.Match(id, importSource)
+
+  object Stored:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportSource = ImportSource.T
+    object ImportSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportRef = ImportRef.T
+    object ImportRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where one record's names go. */
   enum Placement:

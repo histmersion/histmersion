@@ -34,18 +34,18 @@ package com.histmersion.plugin
   *   the host measures the file it downloads
   */
 final case class MediaItem(
-    key: String,
-    title: String,
-    pageUrl: String,
-    imageUrl: Option[String],
-    rights: Either[String, MediaRights],
-    thumbUrl: Option[String] = None,
-    originalUrl: Option[String] = None,
-    geography: List[(String, String)] = Nil,
+    key: MediaItem.Key,
+    title: MediaItem.Title,
+    pageUrl: MediaItem.PageUrl,
+    imageUrl: Option[MediaItem.ImageUrl],
+    rights: Either[MediaItem.RightsPart1, MediaRights],
+    thumbUrl: Option[MediaItem.ThumbUrl] = None,
+    originalUrl: Option[MediaItem.OriginalUrl] = None,
+    geography: List[(MediaItem.GeographyPart1, MediaItem.GeographyPart2)] = Nil,
     period: Option[Period] = None,
-    ids: List[(String, String)] = Nil,
-    withheld: Option[String] = None,
-    role: Option[String] = None,
+    ids: List[(MediaItem.IdsPart1, MediaItem.IdsPart2)] = Nil,
+    withheld: Option[MediaItem.Withheld] = None,
+    role: Option[MediaItem.Role] = None,
     rendition: Option[MediaRendition] = None
 ):
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
@@ -65,6 +65,33 @@ final case class MediaItem(
 
 object MediaItem:
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageUrl = PageUrl.T
+  object PageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageUrl = ImageUrl.T
+  object ImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RightsPart1 = RightsPart1.T
+  object RightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbUrl = ThumbUrl.T
+  object ThumbUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalUrl = OriginalUrl.T
+  object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographyPart1 = GeographyPart1.T
+  object GeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographyPart2 = GeographyPart2.T
+  object GeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsPart1 = IdsPart1.T
+  object IdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsPart2 = IdsPart2.T
+  object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Withheld = Withheld.T
+  object Withheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Role = Role.T
+  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(
       key: String,
       title: String,

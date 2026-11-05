@@ -13,11 +13,19 @@ import com.histmersion.api.library.{Filter, GeoHit, Hit, SearchResult}
 object ResultsList:
 
   case class SourceRenderOpts(
-      findings: Int = 0,
-      total: Int = 0,
-      inView: Boolean = false,
+      findings: SourceRenderOpts.Findings = 0,
+      total: SourceRenderOpts.Total = 0,
+      inView: SourceRenderOpts.InView = false,
       params: Option[Filter] = None
   )
+
+  object SourceRenderOpts:
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InView = InView.T
+    object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   sealed private trait LastRender
   private case class LastSources(result: SearchResult, opts: SourceRenderOpts) extends LastRender

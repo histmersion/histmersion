@@ -6,10 +6,24 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * the map and the sea floor outside it, #3760), cached to `cacheGb`.
   */
 final case class BasemapOnDemandConfig(
-    enabled: Boolean,
-    maxZoom: Int,
-    cacheGb: Double,
-    concurrency: Int,
-    requestsPerSecond: Double,
-    retryAfterSeconds: Int
+    enabled: BasemapOnDemandConfig.Enabled,
+    maxZoom: BasemapOnDemandConfig.MaxZoom,
+    cacheGb: BasemapOnDemandConfig.CacheGb,
+    concurrency: BasemapOnDemandConfig.Concurrency,
+    requestsPerSecond: BasemapOnDemandConfig.RequestsPerSecond,
+    retryAfterSeconds: BasemapOnDemandConfig.RetryAfterSeconds
 ) derives ConfigReader
+
+object BasemapOnDemandConfig:
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CacheGb = CacheGb.T
+  object CacheGb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Concurrency = Concurrency.T
+  object Concurrency extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestsPerSecond = RequestsPerSecond.T
+  object RequestsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetryAfterSeconds = RetryAfterSeconds.T
+  object RetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

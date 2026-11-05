@@ -24,4 +24,14 @@ object AiHttp:
     def get(url: String, headers: Map[String, String], timeoutSeconds: Int) = Left("offline")
 
   /** One HTTP answer. */
-  final case class Response(status: Int, body: String, headers: Map[String, String] = Map.empty)
+  final case class Response(status: Response.Status, body: Response.Body, headers: Map[Response.HeadersKey, Response.HeadersValue] = Map.empty)
+
+  object Response:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeadersKey = HeadersKey.T
+    object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeadersValue = HeadersValue.T
+    object HeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

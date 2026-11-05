@@ -5,7 +5,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
-final case class GeoBounds(south: Double, west: Double, north: Double, east: Double):
+final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
   def contains(p: LatLon): Boolean = p.lat >= south && p.lat <= north && p.lon >= west && p.lon <= east
   def extend(o: GeoBounds): GeoBounds =
     GeoBounds(math.min(south, o.south), math.min(west, o.west), math.max(north, o.north), math.max(east, o.east))
@@ -13,6 +13,15 @@ final case class GeoBounds(south: Double, west: Double, north: Double, east: Dou
 
 object GeoBounds:
   /** The bounds of a GeoJSON geometry's coordinates (`None` for none). Pure over the parsed object. */
+  type South = South.T
+  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type West = West.T
+  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type North = North.T
+  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type East = East.T
+  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def ofGeometry(g: js.Dynamic): Option[GeoBounds] =
     // `var`s: one pass over every coordinate of the geometry
     var s = Double.MaxValue

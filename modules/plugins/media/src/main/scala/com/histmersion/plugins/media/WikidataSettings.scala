@@ -7,17 +7,28 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * with the role each plays (`P18:image,P242:locator-map`).
   */
 final case class WikidataSettings(
-    apiUrl: String,
-    batch: Int,
-    maxlag: Int,
-    placeProperties: String,
-    eventProperties: String
+    apiUrl: WikidataSettings.ApiUrl,
+    batch: WikidataSettings.Batch,
+    maxlag: WikidataSettings.Maxlag,
+    placeProperties: WikidataSettings.PlaceProperties,
+    eventProperties: WikidataSettings.EventProperties
 ) derives ConfigReader:
   def placeRoles: List[(String, String)] = WikidataSettings.roles(placeProperties)
   def eventRoles: List[(String, String)] = WikidataSettings.roles(eventProperties)
 
 object WikidataSettings:
   /** The roles a picture of a place or an event may play. */
+  type ApiUrl = ApiUrl.T
+  object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Batch = Batch.T
+  object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Maxlag = Maxlag.T
+  object Maxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceProperties = PlaceProperties.T
+  object PlaceProperties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventProperties = EventProperties.T
+  object EventProperties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val PictureRoles: List[String] = List(
     MediaCollection.Image,
     MediaCollection.AerialView,

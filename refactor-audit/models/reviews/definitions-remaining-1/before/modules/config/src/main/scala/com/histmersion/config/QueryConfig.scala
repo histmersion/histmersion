@@ -1,0 +1,14 @@
+package com.histmersion.config
+
+import hearth.kindlings.sconfigderivation.ConfigReader
+
+/** `histmersion query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails. `timeoutMs` becomes
+  * `SET LOCAL statement_timeout` inside the READ ONLY transaction, `maxRows` caps the rows returned (one extra is
+  * fetched to detect truncation) and `maxCellChars` caps one cell — `select ocr_markdown from sources` is otherwise 84
+  * MB of JSON.
+  */
+/** `user`/`password` are the DEDICATED read-only login (`histmersion_query`, created by migration V011), not the
+  * application role — see the three layers documented on [[Query]].
+  */
+final case class QueryConfig(user: String, password: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
+    derives ConfigReader

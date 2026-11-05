@@ -411,10 +411,13 @@ object PlanPools:
       readCodex: (String, java.nio.file.Path, Int) => Either[String, Json],
       runProbe: (List[String], java.util.Map[String, String] => Unit, String, Int) => Either[String, CliProcess.Run],
       runCommand: (List[String], Map[String, Option[String]], Int) => Either[String, (Int, String)],
-      refreshes: Boolean = true
+      refreshes: Seams.Refreshes = true
   )
 
   object Seams:
+    type Refreshes = Refreshes.T
+    object Refreshes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Real: Seams = Seams(PlanPools.readCodex, PlanPools.runProbe, AgentDoctor.runCommand)
 
     /** Nothing is started: no read, no fresh reading taken, logins not known (so nothing is made unavailable).

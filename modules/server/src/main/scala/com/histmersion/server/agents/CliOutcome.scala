@@ -11,8 +11,16 @@ import sttp.apispec.circe.*
 final case class CliOutcome(
     entries: Vector[ConversationEntry],
     toolCalls: Vector[ToolCallRecord],
-    finalText: Option[String],
+    finalText: Option[CliOutcome.FinalText],
     usage: TokenUsage,
-    error: Option[String],
-    turns: Int
+    error: Option[CliOutcome.Error],
+    turns: CliOutcome.Turns
 )
+
+object CliOutcome:
+  type FinalText = FinalText.T
+  object FinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Turns = Turns.T
+  object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

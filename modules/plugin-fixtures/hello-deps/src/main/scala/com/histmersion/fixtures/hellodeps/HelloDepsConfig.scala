@@ -8,4 +8,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * it, as a plugin author publishes one. It registers only when that library's class loads, so a registered
   * `hello-deps` proves the dependency was installed and linked with it.
   */
-final case class HelloDepsConfig(greeting: String) derives ConfigReader
+final case class HelloDepsConfig(greeting: HelloDepsConfig.Greeting) derives ConfigReader
+
+object HelloDepsConfig:
+  type Greeting = Greeting.T
+  object Greeting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

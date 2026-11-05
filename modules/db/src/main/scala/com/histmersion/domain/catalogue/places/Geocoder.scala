@@ -120,15 +120,27 @@ private[places] object Geocoder:
   // ── the repair ─────────────────────────────────────────────────────────────────────────────────
 
   final private case class Placed(
-      id: String,
-      citekey: String,
-      name: String,
-      region: Option[String],
-      lon: Double,
-      lat: Double,
-      from: Option[Long],
-      to: Option[Long]
+      id: Placed.Id,
+      citekey: com.histmersion.domain.library.Citekey,
+      name: Placed.Name,
+      region: Option[Placed.Region],
+      lon: com.histmersion.Longitude,
+      lat: com.histmersion.Latitude,
+      from: Option[Placed.From],
+      to: Option[Placed.To]
   ) derives DbCodec
+
+  object Placed:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The findings whose stored point is EXACTLY the one the pre-#981 geocoder chose for their place name — the only
     * points the repair may move, so a hand-placed coordinate is never touched.
@@ -213,8 +225,18 @@ private[places] object Geocoder:
 
   // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
 
-  final private case class Unplaced(id: String, citekey: String, region: String, from: Option[Long], to: Option[Long])
+  final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unplaced.To])
       derives DbCodec
+
+  object Unplaced:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =

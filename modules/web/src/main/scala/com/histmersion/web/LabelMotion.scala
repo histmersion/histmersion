@@ -49,7 +49,7 @@ object LabelMotion:
       if (target - x > 0) == (nx > target) then (target, 0.0) else (nx, nv)
 
   /** A point moving with its velocity (both zoom-0). */
-  final case class Motion(p: Pt, vx: Double, vy: Double):
+  final case class Motion(p: Pt, vx: Motion.Vx, vy: Motion.Vy):
     /** Toward `target` by `dt` seconds; snaps when `reduced`. */
     def toward(target: Pt, dt: Double, reduced: Boolean): Motion =
       if reduced then Motion(target, 0, 0)
@@ -71,6 +71,11 @@ object LabelMotion:
         math.abs(vx) * scale < RestPx && math.abs(vy) * scale < RestPx
 
   object Motion:
+    type Vx = Vx.T
+    object Vx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Vy = Vy.T
+    object Vy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def at(p: Pt): Motion = Motion(p, 0, 0)
 
   /** The visibility `a` (0 hidden … 1 shown) after `dt` seconds of fading toward `shown`: linear, so a name reversed

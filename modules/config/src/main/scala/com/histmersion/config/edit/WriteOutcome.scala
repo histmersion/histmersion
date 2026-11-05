@@ -20,14 +20,14 @@ import org.ekrich.config.Config
   *   what works but should be known: a `value:` credential, an environment variable that overrides the new value
   */
 final case class WriteOutcome(
-    file: String,
+    file: WriteOutcome.File,
     changed: List[SettingKey],
     unchanged: List[SettingKey],
-    backup: Option[String],
+    backup: Option[WriteOutcome.Backup],
     version: FileVersion,
-    created: Boolean,
-    restart: List[(SettingKey, String)],
-    warnings: List[String]
+    created: WriteOutcome.Created,
+    restart: List[(SettingKey, WriteOutcome.RestartPart2)],
+    warnings: List[WriteOutcome.Warnings]
 ):
   def wrote: Boolean = changed.nonEmpty
 
@@ -35,6 +35,17 @@ object WriteOutcome:
   /** What `edited` did to `file`, now at `version`: the restart-only settings among the changed ones, and the warnings
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
+  type File = File.T
+  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Backup = Backup.T
+  object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Created = Created.T
+  object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartPart2 = RestartPart2.T
+  object RestartPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warnings = Warnings.T
+  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(
       file: String,
       schema: ConfigSchema,

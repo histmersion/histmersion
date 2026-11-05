@@ -7,10 +7,10 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * each collection's block.
   */
 final case class MediaSettings(
-    requestIntervalMs: Int,
-    displayPx: Int,
-    thumbPx: Int,
-    perProperty: Int,
+    requestIntervalMs: MediaSettings.RequestIntervalMs,
+    displayPx: MediaSettings.DisplayPx,
+    thumbPx: MediaSettings.ThumbPx,
+    perProperty: MediaSettings.PerProperty,
     wikidata: WikidataSettings,
     commons: Commons.Settings,
     depicts: DepictsSettings,
@@ -23,3 +23,13 @@ final case class MediaSettings(
     smithsonian: CollectionSettings,
     europeana: CollectionSettings
 ) derives ConfigReader
+
+object MediaSettings:
+  type RequestIntervalMs = RequestIntervalMs.T
+  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisplayPx = DisplayPx.T
+  object DisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbPx = ThumbPx.T
+  object ThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerProperty = PerProperty.T
+  object PerProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

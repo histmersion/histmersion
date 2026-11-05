@@ -19,13 +19,13 @@ package com.histmersion.plugin
   *   ([[MediaCollection.placesCarrying]]): `("pleiades", "570491")`
   */
 final case class MediaPlace(
-    id: String,
-    label: String,
+    id: MediaPlace.Id,
+    label: MediaPlace.Label,
     wikidata: Option[WikidataId] = None,
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
     period: Option[Period] = None,
-    ids: List[(String, String)] = Nil
+    ids: List[(MediaPlace.IdsPart1, MediaPlace.IdsPart2)] = Nil
 ):
   /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
   def this(
@@ -39,6 +39,15 @@ final case class MediaPlace(
 
 object MediaPlace:
   /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsPart1 = IdsPart1.T
+  object IdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsPart2 = IdsPart2.T
+  object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(
       id: String,
       label: String,

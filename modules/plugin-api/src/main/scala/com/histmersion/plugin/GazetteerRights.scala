@@ -11,4 +11,10 @@ package com.histmersion.plugin
   * @param licenceUrl
   *   the licence's URL, when the provider gives one
   */
-final case class GazetteerRights(licence: Licence, credit: String, licenceUrl: Option[String] = None)
+final case class GazetteerRights(licence: Licence, credit: GazetteerRights.Credit, licenceUrl: Option[GazetteerRights.LicenceUrl] = None)
+
+object GazetteerRights:
+  type Credit = Credit.T
+  object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LicenceUrl = LicenceUrl.T
+  object LicenceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

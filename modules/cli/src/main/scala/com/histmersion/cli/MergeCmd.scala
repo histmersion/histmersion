@@ -33,8 +33,16 @@ import com.histmersion.util.console.Console
 object MergeCmd:
 
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
-  final case class ResolutionFlags(file: Option[String], resolve: List[String], editions: Option[String]):
+  final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[ResolutionFlags.Resolve], editions: Option[ResolutionFlags.Editions]):
     def isEmpty: Boolean = file.isEmpty && resolve.isEmpty && editions.isEmpty
+
+  object ResolutionFlags:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Resolve = Resolve.T
+    object Resolve extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Editions = Editions.T
+    object Editions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val resolutionOpts: Opts[ResolutionFlags] =
     (

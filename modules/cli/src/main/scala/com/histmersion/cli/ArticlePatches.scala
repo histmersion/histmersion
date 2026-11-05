@@ -50,17 +50,35 @@ object ArticlePatches:
 
   /** The `--filter-*` flags as given; [[withCoverage]] turns them into the patch's `filter`. */
   final case class FilterFlags(
-      query: Option[String] = None,
-      topics: Option[String] = None,
-      tags: Option[String] = None,
-      status: Option[String] = None,
-      places: Option[String] = None,
-      period: Option[String] = None,
-      extraQueries: List[String] = Nil,
-      clear: Boolean = false
+      query: Option[FilterFlags.Query] = None,
+      topics: Option[FilterFlags.Topics] = None,
+      tags: Option[FilterFlags.Tags] = None,
+      status: Option[FilterFlags.Status] = None,
+      places: Option[FilterFlags.Places] = None,
+      period: Option[FilterFlags.Period] = None,
+      extraQueries: List[FilterFlags.ExtraQueries] = Nil,
+      clear: FilterFlags.Clear = false
   ):
     def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
       places.isDefined || period.isDefined || extraQueries.nonEmpty
+
+  object FilterFlags:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Period = Period.T
+    object Period extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExtraQueries = ExtraQueries.T
+    object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Clear = Clear.T
+    object Clear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The coverage flags (#958) over a built patch: any `--filter-*` flag REPLACES the filter with the one the flags
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`

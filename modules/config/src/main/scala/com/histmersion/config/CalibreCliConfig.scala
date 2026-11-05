@@ -15,7 +15,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   optional host directory holding the fetched originals as `<citekey>/paper.*`, an override for
   *   `calibre push`/`sync`, which otherwise download the original the server stored
   */
-final case class CalibreCliConfig(libraryDir: String, calibredb: String, sqlite: String, originalsDir: String)
+final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCliConfig.OriginalsDir)
     derives ConfigReader:
 
   private def expand(p: String): String =
@@ -23,3 +23,13 @@ final case class CalibreCliConfig(libraryDir: String, calibredb: String, sqlite:
 
   def library: String = expand(libraryDir)
   def originals: Option[String] = Option(originalsDir).map(expand).map(_.trim).filter(_.nonEmpty)
+
+object CalibreCliConfig:
+  type LibraryDir = LibraryDir.T
+  object LibraryDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Calibredb = Calibredb.T
+  object Calibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sqlite = Sqlite.T
+  object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalsDir = OriginalsDir.T
+  object OriginalsDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

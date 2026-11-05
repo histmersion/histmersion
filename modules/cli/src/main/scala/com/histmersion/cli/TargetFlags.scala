@@ -14,15 +14,33 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 object TargetFlags:
 
   final case class Raw(
-      kind: String,
-      id: Option[String],
-      lat: Option[Double],
-      lon: Option[Double],
-      zoom: Option[Double],
-      from: Option[Int],
-      to: Option[Int],
-      view: Option[String]
+      kind: Raw.Kind,
+      id: Option[Raw.Id],
+      lat: Option[Raw.Lat],
+      lon: Option[Raw.Lon],
+      zoom: Option[Raw.Zoom],
+      from: Option[Raw.From],
+      to: Option[Raw.To],
+      view: Option[Raw.View]
   )
+
+  object Raw:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lat = Lat.T
+    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lon = Lon.T
+    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Zoom = Zoom.T
+    object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type View = View.T
+    object View extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `views`: the flags of a saved view (`--zoom`, `--view`) too. */
   def opts(kinds: Set[ItemKind], views: Boolean): Opts[Raw] =

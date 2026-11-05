@@ -377,7 +377,13 @@ object FilterSql:
     Search.snippetsQuery(q, snippetWords, citekeys)
 
   /** One snippet row: (citekey, heading, snippet). */
-  final case class SnippetRow(citekey: String, heading: Option[String], snippet: String) derives DbCodec
+  final case class SnippetRow(citekey: com.histmersion.domain.library.Citekey, heading: Option[SnippetRow.Heading], snippet: SnippetRow.Snippet) derives DbCodec
+
+  object SnippetRow:
+    type Heading = Heading.T
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Snippet = Snippet.T
+    object Snippet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
@@ -496,21 +502,21 @@ object FilterSql:
 
   /** One row of [[sourcesQuery]]: a `SearchHit` plus the extra columns `why` needs. */
   final case class SourceRow(
-      citekey: String,
-      title: String,
-      year: Option[Int],
+      citekey: com.histmersion.domain.library.Citekey,
+      title: SourceRow.Title,
+      year: Option[com.histmersion.Year],
       status: Source.Status,
-      topics: List[String],
-      regions: List[String],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      summary: Option[String],
-      tags: List[String],
-      authors: List[String],
-      doi: Option[String] = None,
-      bodyHit: Boolean,
-      snippet: Option[String] = None,
-      matchedHeading: Option[String] = None
+      topics: List[SourceRow.Topics],
+      regions: List[SourceRow.Regions],
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
+      summary: Option[SourceRow.Summary],
+      tags: List[SourceRow.Tags],
+      authors: List[SourceRow.Authors],
+      doi: Option[com.histmersion.domain.library.Doi] = None,
+      bodyHit: SourceRow.BodyHit,
+      snippet: Option[SourceRow.Snippet] = None,
+      matchedHeading: Option[SourceRow.MatchedHeading] = None
   ) derives DbCodec:
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
@@ -529,6 +535,26 @@ object FilterSql:
         (doi).map(com.histmersion.api.library.Doi.apply),
         (authors).map(com.histmersion.api.library.AuthorName.apply)
       )
+
+  object SourceRow:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BodyHit = BodyHit.T
+    object BodyHit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Snippet = Snippet.T
+    object Snippet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MatchedHeading = MatchedHeading.T
+    object MatchedHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def ci(a: String, b: String) = a.equalsIgnoreCase(b)
   private def has(values: List[String], v: String) = values.exists(ci(_, v))

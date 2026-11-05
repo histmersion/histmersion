@@ -570,19 +570,19 @@ object Calibre:
     * `sqlite3 -readonly` fallback normalise to this same record).
     */
   final case class Book(
-      id: Int,
-      title: String,
-      authors: List[String],
-      pubdate: Option[String],
-      publisher: Option[String],
-      tags: List[String],
-      comments: Option[String],
-      identifiers: Map[String, String],
-      formats: List[String],
+      id: Book.Id,
+      title: Book.Title,
+      authors: List[Book.Authors],
+      pubdate: Option[Book.Pubdate],
+      publisher: Option[Book.Publisher],
+      tags: List[Book.Tags],
+      comments: Option[Book.Comments],
+      identifiers: Map[Book.IdentifiersKey, Book.IdentifiersValue],
+      formats: List[Book.Formats],
       /** The cover Calibre keeps beside the book (`<book dir>/cover.jpg`), absolute — `None` when the entry has none.
         * Read-only: `media covers` uploads a copy, the file stays as it is.
         */
-      cover: Option[String] = None
+      cover: Option[Book.Cover] = None
   ):
     /** Calibre writes `0101-01-01` for "no date"; a year below [[CalibreBook.FirstYear]] is that placeholder, not a
       * publication year.
@@ -606,10 +606,39 @@ object Calibre:
     /** The first year a pubdate is taken as one: Calibre's "no date" is year 101, and the library cites nothing older
       * by its printing (the host's citekeys use the same bound).
       */
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pubdate = Pubdate.T
+    object Pubdate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Publisher = Publisher.T
+    object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Comments = Comments.T
+    object Comments extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdentifiersKey = IdentifiersKey.T
+    object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdentifiersValue = IdentifiersValue.T
+    object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Formats = Formats.T
+    object Formats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cover = Cover.T
+    object Cover extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val FirstYear: Int = 1000
 
   /** One field `calibre update` changes: what Calibre has now and what it writes. */
-  final case class Change(field: Field, from: String, to: String)
+  final case class Change(field: Field, from: Change.From, to: Change.To)
+
+  object Change:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: String):
@@ -625,19 +654,47 @@ object Calibre:
     * expanded), the `calibredb` and `sqlite3` to run, and the process whose presence means the Calibre GUI holds the
     * library.
     */
-  final case class Library(library: String, calibredb: String, sqlite: String, guiProcess: String)
+  final case class Library(library: Library.Value, calibredb: Library.Calibredb, sqlite: Library.Sqlite, guiProcess: Library.GuiProcess)
+
+  object Library:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Calibredb = Calibredb.T
+    object Calibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sqlite = Sqlite.T
+    object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GuiProcess = GuiProcess.T
+    object GuiProcess extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `calibre push` sends into Calibre for one source. */
   final case class Push(
-      title: String,
-      authors: List[String],
-      doi: Option[String] = None,
-      isbn: Option[String] = None,
-      year: Option[Int] = None,
-      publisher: Option[String] = None,
-      summary: Option[String] = None,
-      tags: List[String] = Nil
+      title: Push.Title,
+      authors: List[Push.Authors],
+      doi: Option[Push.Doi] = None,
+      isbn: Option[Push.Isbn] = None,
+      year: Option[Push.Year] = None,
+      publisher: Option[Push.Publisher] = None,
+      summary: Option[Push.Summary] = None,
+      tags: List[Push.Tags] = Nil
   )
+
+  object Push:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Isbn = Isbn.T
+    object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Publisher = Publisher.T
+    object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The `calibre` plugin's block (`histmersion.plugins.calibre`).
     *
@@ -654,11 +711,11 @@ object Calibre:
     *   the process whose presence means the Calibre GUI holds the library
     */
   final case class Settings(
-      libraryPath: String,
-      calibredb: String,
-      sqlite: String,
-      writeBack: Boolean,
-      guiProcess: String
+      libraryPath: Settings.LibraryPath,
+      calibredb: Settings.Calibredb,
+      sqlite: Settings.Sqlite,
+      writeBack: Settings.WriteBack,
+      guiProcess: Settings.GuiProcess
   ) derives ConfigReader:
     /** The settings as the library is reached, `~` read against `home`, a bare `calibredb` found on `searchPath` or in
       * Calibre's install directories (kept bare when it is in none, so the failure names it as configured).
@@ -682,6 +739,17 @@ object Calibre:
     /** Where Calibre's installers put `calibredb`: the macOS app (system-wide or the user's), Homebrew on Apple silicon
       * and Intel, and the Linux installer's `/opt/calibre`.
       */
+    type LibraryPath = LibraryPath.T
+    object LibraryPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Calibredb = Calibredb.T
+    object Calibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sqlite = Sqlite.T
+    object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WriteBack = WriteBack.T
+    object WriteBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GuiProcess = GuiProcess.T
+    object GuiProcess extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val InstallDirs: List[String] = List(
       "/Applications/calibre.app/Contents/MacOS",
       "~/Applications/calibre.app/Contents/MacOS",

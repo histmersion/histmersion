@@ -21,7 +21,17 @@ import scala.jdk.CollectionConverters.*
 object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
-  final case class Run(lines: List[String], exit: Int, stderr: String, stopped: Option[String])
+  final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
+
+  object Run:
+    type Lines = Lines.T
+    object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Exit = Exit.T
+    object Exit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Stderr = Stderr.T
+    object Stderr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Stopped = Stopped.T
+    object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Raised when the executable cannot be started at all. */
   def cannotStart(command: String, e: java.io.IOException, hint: String): java.io.IOException =

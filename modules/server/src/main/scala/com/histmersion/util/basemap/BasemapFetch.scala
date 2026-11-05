@@ -38,10 +38,26 @@ object BasemapFetch:
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
     */
-  final case class Source(url: String, label: String, expectedSize: Option[Long] = None)
+  final case class Source(url: Source.Url, label: Source.Label, expectedSize: Option[Source.ExpectedSize] = None)
+
+  object Source:
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExpectedSize = ExpectedSize.T
+    object ExpectedSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One stored tile of the remote archive that the region needs. */
-  final case class Wanted(id: Long, offset: Long, length: Int)
+  final case class Wanted(id: Wanted.Id, offset: Wanted.Offset, length: Wanted.Length)
+
+  object Wanted:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Length = Length.T
+    object Length extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Plan(
       source: Source,
@@ -51,27 +67,49 @@ object BasemapFetch:
       /** Sorted by tile id. */
       tiles: Vector[Wanted],
       /** The merged range requests, as (offset, length) in the remote tile data section, by offset. */
-      requests: Vector[(Long, Long)],
+      requests: Vector[(Plan.RequestsPart1, Plan.RequestsPart2)],
       /** The distinct contents' bytes (what the requests carry, without the gaps they read over). */
-      contentBytes: Long,
+      contentBytes: Plan.ContentBytes,
       /** Requests the plan itself made (header, metadata, directories). */
-      directoryRequests: Int,
+      directoryRequests: Plan.DirectoryRequests,
       bbox: BBox,
-      maxZoom: Int,
+      maxZoom: Plan.MaxZoom,
       /** The shallowest zoom planned (a focus region starts below the extract's depth). */
-      minZoom: Int = 0
+      minZoom: Plan.MinZoom = 0
   ):
     def requestBytes: Long = requests.map(_._2).sum
+
+  object Plan:
+    type RequestsPart1 = RequestsPart1.T
+    object RequestsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RequestsPart2 = RequestsPart2.T
+    object RequestsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContentBytes = ContentBytes.T
+    object ContentBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DirectoryRequests = DirectoryRequests.T
+    object DirectoryRequests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The politeness of the requests: the pause between two, the largest, and how much of a gap is read through rather
     * than split.
     */
   final case class Pace(
-      gapMs: Long,
-      maxRequestBytes: Long,
-      overfetch: Double,
+      gapMs: Pace.GapMs,
+      maxRequestBytes: Pace.MaxRequestBytes,
+      overfetch: Pace.Overfetch,
       sleep: Long => Unit = ms => Thread.sleep(ms)
   )
+
+  object Pace:
+    type GapMs = GapMs.T
+    object GapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxRequestBytes = MaxRequestBytes.T
+    object MaxRequestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Overfetch = Overfetch.T
+    object Overfetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
 

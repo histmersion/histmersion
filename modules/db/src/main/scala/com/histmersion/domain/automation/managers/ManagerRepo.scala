@@ -28,18 +28,40 @@ object ManagerRepo:
   // ── managers ───────────────────────────────────────────────────────────────────────────────────
 
   final private case class ManagerRow(
-      id: String,
-      kind: String,
-      goal: Option[String],
-      state: String,
-      pauseRuns: Boolean,
+      id: ManagerRow.Id,
+      kind: ManagerRow.Kind,
+      goal: Option[ManagerRow.Goal],
+      state: ManagerRow.State,
+      pauseRuns: ManagerRow.PauseRuns,
       config: ManagerConfig,
-      statusNote: Option[String],
-      cron: Option[String],
-      nextTickAt: Option[String],
-      createdAt: String,
-      updatedAt: String
+      statusNote: Option[ManagerRow.StatusNote],
+      cron: Option[ManagerRow.Cron],
+      nextTickAt: Option[ManagerRow.NextTickAt],
+      createdAt: ManagerRow.CreatedAt,
+      updatedAt: ManagerRow.UpdatedAt
   ) derives DbCodec
+
+  object ManagerRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PauseRuns = PauseRuns.T
+    object PauseRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusNote = StatusNote.T
+    object StatusNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NextTickAt = NextTickAt.T
+    object NextTickAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val managerSelect =
     Sql.raw(s"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${at("next_tick_at")},
@@ -264,24 +286,54 @@ object ManagerRepo:
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
   final private case class ItemRow(
-      id: Long,
-      managerId: String,
-      kind: String,
-      target: String,
-      status: String,
-      priority: Int,
-      attempts: Int,
-      failures: Int,
-      runId: Option[String],
-      evaluatedRun: Option[String],
-      notBefore: Option[String],
+      id: ItemRow.Id,
+      managerId: ItemRow.ManagerId,
+      kind: ItemRow.Kind,
+      target: ItemRow.Target,
+      status: ItemRow.Status,
+      priority: ItemRow.Priority,
+      attempts: ItemRow.Attempts,
+      failures: ItemRow.Failures,
+      runId: Option[com.histmersion.domain.automation.Run.Id],
+      evaluatedRun: Option[ItemRow.EvaluatedRun],
+      notBefore: Option[ItemRow.NotBefore],
       hold: Option[Hold],
       state: ItemState,
-      outcome: Option[String],
-      origin: String,
-      createdAt: String,
-      updatedAt: String
+      outcome: Option[ItemRow.Outcome],
+      origin: ItemRow.Origin,
+      createdAt: ItemRow.CreatedAt,
+      updatedAt: ItemRow.UpdatedAt
   ) derives DbCodec
+
+  object ItemRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failures = Failures.T
+    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EvaluatedRun = EvaluatedRun.T
+    object EvaluatedRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotBefore = NotBefore.T
+    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Outcome = Outcome.T
+    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val itemSelect =
     Sql.raw(s"""SELECT id, manager_id, kind, target, status, priority, attempts, failures, run_id, evaluated_run,
@@ -899,19 +951,41 @@ object ManagerRepo:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   final private case class HintRow(
-      id: Long,
-      managerId: String,
-      itemId: Option[Long],
-      text: String,
+      id: HintRow.Id,
+      managerId: HintRow.ManagerId,
+      itemId: Option[HintRow.ItemId],
+      text: HintRow.Text,
       effect: Option[HintEffect],
-      author: String,
-      standing: Boolean,
-      createdAt: String,
-      retiredAt: Option[String],
-      uses: Int,
-      proposal: Option[Long],
+      author: HintRow.Author,
+      standing: HintRow.Standing,
+      createdAt: HintRow.CreatedAt,
+      retiredAt: Option[HintRow.RetiredAt],
+      uses: HintRow.Uses,
+      proposal: Option[HintRow.Proposal],
       proposed: Option[HintEffect]
   ) derives DbCodec
+
+  object HintRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemId = ItemId.T
+    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Author = Author.T
+    object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Standing = Standing.T
+    object Standing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RetiredAt = RetiredAt.T
+    object RetiredAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Uses = Uses.T
+    object Uses extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Proposal = Proposal.T
+    object Proposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A hint, with the newest OPEN `hint-effect` approval about it (a model's proposed action waiting for a person) and
     * that action.

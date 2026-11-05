@@ -18,9 +18,15 @@ package com.histmersion.plugin
   */
 final case class CollectionFinding(
     id: CollectionId,
-    keys: List[String],
+    keys: List[CollectionFinding.Keys],
     issues: List[CollectionIssue],
     item: Option[CollectionItem],
     record: CollectionRecord,
-    fixable: Boolean
+    fixable: CollectionFinding.Fixable
 )
+
+object CollectionFinding:
+  type Keys = Keys.T
+  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fixable = Fixable.T
+  object Fixable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

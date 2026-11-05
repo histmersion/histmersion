@@ -4,14 +4,32 @@ package com.histmersion.domain.automation.agents
   * `since` / `until` bound `created_at` (until exclusive); `q` = text in the target.
   */
 final case class RunQuery(
-    status: List[String] = Nil,
-    pipelines: List[String] = Nil,
-    managers: List[String] = Nil,
-    goal: Option[String] = None,
-    models: List[String] = Nil,
-    providers: List[String] = Nil,
-    origins: List[String] = Nil,
+    status: List[RunQuery.Status] = Nil,
+    pipelines: List[RunQuery.Pipelines] = Nil,
+    managers: List[RunQuery.Managers] = Nil,
+    goal: Option[RunQuery.Goal] = None,
+    models: List[RunQuery.Models] = Nil,
+    providers: List[RunQuery.Providers] = Nil,
+    origins: List[RunQuery.Origins] = Nil,
     since: Option[java.time.Instant] = None,
     until: Option[java.time.Instant] = None,
-    q: Option[String] = None
+    q: Option[RunQuery.Q] = None
 )
+
+object RunQuery:
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pipelines = Pipelines.T
+  object Pipelines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Managers = Managers.T
+  object Managers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Goal = Goal.T
+  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Models = Models.T
+  object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Providers = Providers.T
+  object Providers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Origins = Origins.T
+  object Origins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Q = Q.T
+  object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

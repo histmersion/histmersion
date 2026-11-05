@@ -5,7 +5,7 @@ import org.yaml.snakeyaml.{DumperOptions, Yaml}
 /** A Markdown mirror note's YAML frontmatter: its keys in the order they are written (a value is a plain or Java value
   * snakeyaml writes; `null` writes `null`), and the note it heads.
   */
-final case class Frontmatter(fields: List[(String, Any)]):
+final case class Frontmatter(fields: List[(Frontmatter.FieldsPart1, Any)]):
 
   /** The YAML block between the `---` fences, with a trailing newline.
     *
@@ -23,3 +23,7 @@ final case class Frontmatter(fields: List[(String, Any)]):
 
   /** The whole note: the fenced frontmatter, then the body after a blank line when there is one. */
   def note(body: Option[String]): String = s"---\n$yaml---\n" + body.fold("")(b => s"\n$b\n")
+
+object Frontmatter:
+  type FieldsPart1 = FieldsPart1.T
+  object FieldsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

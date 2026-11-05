@@ -57,13 +57,25 @@ object MarkdownLint:
     *   is this token a stored citekey? `None` = do not look for bare citekeys
     */
   final case class Context(
-      article: Boolean = false,
+      article: Context.Article = false,
       resolves: Option[String => Boolean] = None,
       isCitekey: Option[String => Boolean] = None
   )
 
+  object Context:
+    type Article = Article.T
+    object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One text replacement on the STORED text: `[start, end)` becomes `replacement`. */
-  final case class Edit(start: Int, end: Int, replacement: String)
+  final case class Edit(start: Edit.Start, end: Edit.End, replacement: Edit.Replacement)
+
+  object Edit:
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Replacement = Replacement.T
+    object Replacement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An issue and the edits that repair it (empty = not mechanically fixable). */
   final case class Finding(issue: FormatIssue, edits: List[Edit])

@@ -27,7 +27,15 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
     Left("the Wikidata pictures are found for a batch of targets at once")
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
-  final private case class Asked(target: MediaTarget.Id, qid: String, roles: List[(String, String)])
+  final private case class Asked(target: MediaTarget.Id, qid: Asked.Qid, roles: List[(Asked.RolesPart1, Asked.RolesPart2)])
+
+  object Asked:
+    type Qid = Qid.T
+    object Qid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RolesPart1 = RolesPart1.T
+    object RolesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RolesPart2 = RolesPart2.T
+    object RolesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // the events first, then the places: the order the host lists them in

@@ -23,32 +23,72 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *     lists the next `focusQueueShown` waiting goals.
   */
 final case class AgentAutopilotConfig(
-    ensureMinutes: Int = 5,
-    ingestPerDay: Int = 20,
-    watchIngestPerDay: Int = 5,
-    watchCron: String = "@weekly",
-    seedCron: String = "@weekly",
-    finishedWatchCron: String = "@monthly",
-    extendMinNew: Int = 3,
-    backupHours: Int = 24,
-    lintHours: Int = 24,
-    maxActiveGoals: Int = 8,
-    focusRatio: Int = 3,
-    maxOpenSubGoals: Int = 5,
-    focusQueueShown: Int = 10,
+    ensureMinutes: AgentAutopilotConfig.EnsureMinutes = 5,
+    ingestPerDay: AgentAutopilotConfig.IngestPerDay = 20,
+    watchIngestPerDay: AgentAutopilotConfig.WatchIngestPerDay = 5,
+    watchCron: AgentAutopilotConfig.WatchCron = "@weekly",
+    seedCron: AgentAutopilotConfig.SeedCron = "@weekly",
+    finishedWatchCron: AgentAutopilotConfig.FinishedWatchCron = "@monthly",
+    extendMinNew: AgentAutopilotConfig.ExtendMinNew = 3,
+    backupHours: AgentAutopilotConfig.BackupHours = 24,
+    lintHours: AgentAutopilotConfig.LintHours = 24,
+    maxActiveGoals: AgentAutopilotConfig.MaxActiveGoals = 8,
+    focusRatio: AgentAutopilotConfig.FocusRatio = 3,
+    maxOpenSubGoals: AgentAutopilotConfig.MaxOpenSubGoals = 5,
+    focusQueueShown: AgentAutopilotConfig.FocusQueueShown = 10,
     /** `ingestPerDay` scaled to the ingest backlog ([[AutopilotPolicy.scaledCap]]; 0 = fixed), at most the ceiling. */
-    ingestBacklogShare: Double = 0,
-    ingestCeiling: Int = 100,
+    ingestBacklogShare: AgentAutopilotConfig.IngestBacklogShare = 0,
+    ingestCeiling: AgentAutopilotConfig.IngestCeiling = 100,
     /** The UTC hour after which the day's approval digest is written to the worklog (-1 = never). */
-    digestHour: Int = 7,
+    digestHour: AgentAutopilotConfig.DigestHour = 7,
     /** The stall report's default: a goal with no progress in this many days is stalled. */
-    stallDays: Int = 3,
+    stallDays: AgentAutopilotConfig.StallDays = 3,
     /** #3763: once a goal's articles are all compiled and reviewed, its next article is proposed — at most once per
       * this many hours after its last proposal settled (0 = never by itself; the seeding cron still fires).
       */
-    nextArticleHours: Int = 24,
+    nextArticleHours: AgentAutopilotConfig.NextArticleHours = 24,
     /** Goal plans are offered (a plan-goal run started, an open goal plan decided by code) only while at most this many
       * goals with an approved plan are unfinished (0 = no limit).
       */
-    maxUnfinishedGoals: Int = 10
+    maxUnfinishedGoals: AgentAutopilotConfig.MaxUnfinishedGoals = 10
 ) derives ConfigReader
+
+object AgentAutopilotConfig:
+  type EnsureMinutes = EnsureMinutes.T
+  object EnsureMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestPerDay = IngestPerDay.T
+  object IngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WatchIngestPerDay = WatchIngestPerDay.T
+  object WatchIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WatchCron = WatchCron.T
+  object WatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedCron = SeedCron.T
+  object SeedCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedWatchCron = FinishedWatchCron.T
+  object FinishedWatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtendMinNew = ExtendMinNew.T
+  object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupHours = BackupHours.T
+  object BackupHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LintHours = LintHours.T
+  object LintHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxActiveGoals = MaxActiveGoals.T
+  object MaxActiveGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRatio = FocusRatio.T
+  object FocusRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxOpenSubGoals = MaxOpenSubGoals.T
+  object MaxOpenSubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusQueueShown = FocusQueueShown.T
+  object FocusQueueShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestBacklogShare = IngestBacklogShare.T
+  object IngestBacklogShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestCeiling = IngestCeiling.T
+  object IngestCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestHour = DigestHour.T
+  object DigestHour extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StallDays = StallDays.T
+  object StallDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextArticleHours = NextArticleHours.T
+  object NextArticleHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxUnfinishedGoals = MaxUnfinishedGoals.T
+  object MaxUnfinishedGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

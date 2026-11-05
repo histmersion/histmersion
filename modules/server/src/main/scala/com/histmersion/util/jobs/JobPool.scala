@@ -31,7 +31,11 @@ final class JobPool(
   /** A job id and the generation it was submitted on: it runs there — on the database its row is in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: String, work: com.histmersion.util.jobs.Carried[Unit])
+  final private case class Queued(id: Queued.Id, work: com.histmersion.util.jobs.Carried[Unit])
+
+  object Queued:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val queue = LinkedBlockingQueue[Queued]()
 
   /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a config reload that

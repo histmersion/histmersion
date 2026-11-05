@@ -24,29 +24,71 @@ private[places] object PointAreaRepo:
     * spend before it returns what is left (an HTTP request must end well inside netty's idle timeout); `toleranceKm`
     * the point tolerance the re-match uses.
     */
-  final case class Settings(kinds: List[String], batch: Int, budgetMs: Long, toleranceKm: Double)
+  final case class Settings(kinds: List[Settings.Kinds], batch: Settings.Batch, budgetMs: Settings.BudgetMs, toleranceKm: Settings.ToleranceKm)
+
+  object Settings:
+    type Kinds = Kinds.T
+    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Batch = Batch.T
+    object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetMs = BudgetMs.T
+    object BudgetMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToleranceKm = ToleranceKm.T
+    object ToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What one [[remove]] call did. */
-  final case class Removal(removed: Int, remaining: Int, findings: Int, sources: Int):
+  final case class Removal(removed: Removal.Removed, remaining: Removal.Remaining, findings: Removal.Findings, sources: Removal.Sources):
     /** The line `lint --fix` reports it with. */
     def line: String = PointAreas.fixed(removed, remaining, findings, sources)
+
+  object Removal:
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remaining = Remaining.T
+    object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sources = Sources.T
+    object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val sources: List[String] = Gazetteer.PointAreaSources
 
   final private case class Row(
-      id: String,
-      label: String,
-      source: String,
-      kind: String,
-      startUnknown: Boolean,
-      lowerInf: Boolean,
-      upperInf: Boolean,
-      findings: Int,
-      alone: Int,
-      pinned: Int
+      id: Row.Id,
+      label: Row.Label,
+      source: Row.Source,
+      kind: Row.Kind,
+      startUnknown: Row.StartUnknown,
+      lowerInf: Row.LowerInf,
+      upperInf: Row.UpperInf,
+      findings: Row.Findings,
+      alone: Row.Alone,
+      pinned: Row.Pinned
   ) derives DbCodec:
     def listed: Listed =
       Listed(id, label, source, kind, Dating.of(startUnknown, lowerInf, upperInf), findings, alone, pinned)
+
+  object Row:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartUnknown = StartUnknown.T
+    object StartUnknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LowerInf = LowerInf.T
+    object LowerInf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpperInf = UpperInf.T
+    object UpperInf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Alone = Alone.T
+    object Alone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The counts by source, kind and dating. */
   def groupsIn(kinds: List[String])(using DbCon): List[Group] =

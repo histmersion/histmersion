@@ -12,8 +12,18 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * be a string: `roles.*` are `provider:model` references (`Agents.ModelRef`) and `prices` is a price table
   * (`Agents.Prices`).
   */
-final case class AgentProviderConfig(baseUrl: String, apiKey: String, strictTools: Boolean, timeoutSeconds: Int)
+final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSeconds: AgentProviderConfig.TimeoutSeconds)
     derives ConfigReader:
   override def toString: String =
     s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"
+
+object AgentProviderConfig:
+  type BaseUrl = BaseUrl.T
+  object BaseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApiKey = ApiKey.T
+  object ApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrictTools = StrictTools.T
+  object StrictTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

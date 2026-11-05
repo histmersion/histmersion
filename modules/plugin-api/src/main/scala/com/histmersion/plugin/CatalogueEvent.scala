@@ -39,26 +39,56 @@ package com.histmersion.plugin
   *   the catalogue's own record as read (JSON text), kept with the event
   */
 final case class CatalogueEvent(
-    id: String,
-    url: String,
-    label: String,
-    kind: String,
+    id: CatalogueEvent.Id,
+    url: CatalogueEvent.Url,
+    label: CatalogueEvent.Label,
+    kind: CatalogueEvent.Kind,
     notBefore: Option[Year],
     notAfter: Option[Year],
     beginBy: Option[Year] = None,
     endFrom: Option[Year] = None,
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
-    historicity: String = "attested",
-    vei: Option[Int] = None,
-    magnitude: Option[Double] = None,
-    deaths: Option[Long] = None,
+    historicity: CatalogueEvent.Historicity = "attested",
+    vei: Option[CatalogueEvent.Vei] = None,
+    magnitude: Option[CatalogueEvent.Magnitude] = None,
+    deaths: Option[CatalogueEvent.Deaths] = None,
     wikidata: Option[WikidataId] = None,
-    names: List[String] = Nil,
-    description: Option[String] = None,
-    group: Option[String] = None,
+    names: List[CatalogueEvent.Names] = Nil,
+    description: Option[CatalogueEvent.Description] = None,
+    group: Option[CatalogueEvent.Group] = None,
     central: Option[Year] = None,
-    plusMinus: Option[Long] = None,
-    datingMethod: Option[String] = None,
-    raw: Option[String] = None
+    plusMinus: Option[CatalogueEvent.PlusMinus] = None,
+    datingMethod: Option[CatalogueEvent.DatingMethod] = None,
+    raw: Option[CatalogueEvent.Raw] = None
 )
+
+object CatalogueEvent:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Historicity = Historicity.T
+  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vei = Vei.T
+  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Magnitude = Magnitude.T
+  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Deaths = Deaths.T
+  object Deaths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Group = Group.T
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlusMinus = PlusMinus.T
+  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatingMethod = DatingMethod.T
+  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Raw = Raw.T
+  object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

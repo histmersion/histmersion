@@ -9,11 +9,25 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * free space below which it says what to delete (`low-free-gb`).
   */
 final case class StorageConfig(
-    ttlSeconds: Int,
-    waitMillis: Int,
-    maxMillis: Int,
-    maxEntries: Int,
-    topTables: Int,
-    lowFreeGb: Double
+    ttlSeconds: StorageConfig.TtlSeconds,
+    waitMillis: StorageConfig.WaitMillis,
+    maxMillis: StorageConfig.MaxMillis,
+    maxEntries: StorageConfig.MaxEntries,
+    topTables: StorageConfig.TopTables,
+    lowFreeGb: StorageConfig.LowFreeGb
 ) derives ConfigReader:
   def lowFreeBytes: Long = (lowFreeGb * 1e9).toLong
+
+object StorageConfig:
+  type TtlSeconds = TtlSeconds.T
+  object TtlSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitMillis = WaitMillis.T
+  object WaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxMillis = MaxMillis.T
+  object MaxMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxEntries = MaxEntries.T
+  object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopTables = TopTables.T
+  object TopTables extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LowFreeGb = LowFreeGb.T
+  object LowFreeGb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

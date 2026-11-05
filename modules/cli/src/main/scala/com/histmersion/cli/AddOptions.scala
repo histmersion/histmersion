@@ -10,9 +10,21 @@ import scala.jdk.CollectionConverters.*
   * configured ones — for the plugin itself and for its dependencies.
   */
 final case class AddOptions(
-    yes: Boolean = false,
-    unsigned: Boolean = false,
-    verify: Boolean = false,
-    sha256: Option[String] = None,
-    repos: List[String] = Nil
+    yes: AddOptions.Yes = false,
+    unsigned: AddOptions.Unsigned = false,
+    verify: AddOptions.Verify = false,
+    sha256: Option[AddOptions.Sha256] = None,
+    repos: List[AddOptions.Repos] = Nil
 )
+
+object AddOptions:
+  type Yes = Yes.T
+  object Yes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unsigned = Unsigned.T
+  object Unsigned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Verify = Verify.T
+  object Verify extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256 = Sha256.T
+  object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Repos = Repos.T
+  object Repos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

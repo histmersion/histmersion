@@ -14,8 +14,16 @@ import scala.concurrent.duration.*
   * only.
   */
 final case class OnePasswordConfig(
-    cli: String,
-    account: String,
+    cli: OnePasswordConfig.Cli,
+    account: OnePasswordConfig.Account,
     serviceAccountToken: Option[Secret],
-    timeoutSeconds: Int
+    timeoutSeconds: OnePasswordConfig.TimeoutSeconds
 ) derives ConfigReader
+
+object OnePasswordConfig:
+  type Cli = Cli.T
+  object Cli extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Account = Account.T
+  object Account extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

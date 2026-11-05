@@ -8,9 +8,19 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * are the findings step's extra checks ([[AgentEnrichGuardsConfig]]).
   */
 final case class AgentEnrichConfig(
-    windowChars: Int,
-    maxWindows: Int,
-    headChars: Int,
-    upstream: Boolean,
+    windowChars: AgentEnrichConfig.WindowChars,
+    maxWindows: AgentEnrichConfig.MaxWindows,
+    headChars: AgentEnrichConfig.HeadChars,
+    upstream: AgentEnrichConfig.Upstream,
     guards: AgentEnrichGuardsConfig
 ) derives ConfigReader
+
+object AgentEnrichConfig:
+  type WindowChars = WindowChars.T
+  object WindowChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxWindows = MaxWindows.T
+  object MaxWindows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadChars = HeadChars.T
+  object HeadChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Upstream = Upstream.T
+  object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

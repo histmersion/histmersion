@@ -24,7 +24,15 @@ object MapRegions:
     def parse(s: String): Content = values.find(_.toString == s).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
-  final case class RegionChoice(id: String, label: String, bbox: Option[String])
+  final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[RegionChoice.Bbox])
+
+  object RegionChoice:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val OwnBox = "own"
 
@@ -69,7 +77,13 @@ object MapRegions:
         )
 
   /** One layer of a dry run's answer: its line, and what each zoom would download. */
-  final case class LayerSizes(line: String, zooms: List[String])
+  final case class LayerSizes(line: LayerSizes.Line, zooms: List[LayerSizes.Zooms])
+
+  object LayerSizes:
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Zooms = Zooms.T
+    object Zooms extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).

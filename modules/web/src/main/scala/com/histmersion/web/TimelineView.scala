@@ -91,12 +91,22 @@ object TimelineView:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
 
   private case class DragInfo(
-      startX: Double,
-      curX: Double,
+      startX: DragInfo.StartX,
+      curX: DragInfo.CurX,
       kind: DragKind,
-      origFrom: Long,
-      origTo: Long
+      origFrom: DragInfo.OrigFrom,
+      origTo: DragInfo.OrigTo
   )
+
+  object DragInfo:
+    type StartX = StartX.T
+    object StartX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CurX = CurX.T
+    object CurX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OrigFrom = OrigFrom.T
+    object OrigFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OrigTo = OrigTo.T
+    object OrigTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val dragState = Var(Option.empty[DragInfo])
 
   def currentSpan: (Long, Long) = (spanFrom, spanTo)

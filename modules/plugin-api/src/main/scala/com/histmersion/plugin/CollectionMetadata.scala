@@ -23,13 +23,31 @@ package com.histmersion.plugin
   *   its topics
   */
 final case class CollectionMetadata(
-    key: String,
-    title: String,
-    authors: List[String],
-    doi: Option[String] = None,
-    isbn: Option[String] = None,
+    key: CollectionMetadata.Key,
+    title: CollectionMetadata.Title,
+    authors: List[CollectionMetadata.Authors],
+    doi: Option[CollectionMetadata.Doi] = None,
+    isbn: Option[CollectionMetadata.Isbn] = None,
     year: Option[Year] = None,
-    publisher: Option[String] = None,
-    summary: Option[String] = None,
-    tags: List[String] = Nil
+    publisher: Option[CollectionMetadata.Publisher] = None,
+    summary: Option[CollectionMetadata.Summary] = None,
+    tags: List[CollectionMetadata.Tags] = Nil
 )
+
+object CollectionMetadata:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Doi = Doi.T
+  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Isbn = Isbn.T
+  object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Publisher = Publisher.T
+  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

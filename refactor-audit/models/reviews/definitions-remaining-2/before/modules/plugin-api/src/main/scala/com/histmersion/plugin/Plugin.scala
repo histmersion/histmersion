@@ -1,0 +1,201 @@
+package com.histmersion.plugin
+
+import hearth.kindlings.sconfigderivation.ConfigReader
+import scala.compiletime.deferred
+import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
+import java.util.Locale
+
+/** The plugin SPI: everything a plugin author compiles against, and nothing else — no domain model, no database, no
+  * server. The host (`com.histmersion.server.plugins`) owns discovery, config layering, secret resolution and the
+  * registries' contents.
+  */
+
+/** The ONE ServiceLoader service (`META-INF/services/com.histmersion.plugin.Plugin`). A plugin may add to several parts
+  * of the app at once; it does so in [[register]], through the context's registries.
+  *
+  * The provider is a public class with a no-argument constructor (ServiceLoader needs one; a Scala `object` has none),
+  * and constructing it must be cheap and side-effect free: real work starts in [[register]], and only for an enabled
+  * plugin.
+  *
+  * {{{
+  * final case class PortalConfig(baseUrl: String, perHost: Int, token: Secret) derives ConfigReader
+  *
+  * final class PortalPlugin extends Plugin:
+  *   type Config = PortalConfig
+  *   val info = Plugin.Info("portal", "0.1.0", Spi.Version)
+  *   def register(c: PortalConfig, ctx: Plugin.Context) = …
+  * }}}
+  */
+trait Plugin:
+  /** The plugin's own settings, decoded by [[configReader]] from its block. */
+  type Config
+
+  def info: com.histmersion.plugin.Plugin.Info
+
+  /** Path-dependent: the host decodes `histmersion.plugins.<id>` with THIS reader and hands the value to THIS plugin's
+    * [[register]], so no cast is needed and the value cannot reach another plugin. A `deferred` given: a plugin whose
+    * `Config` `derives ConfigReader` gets it filled in by the compiler; derive with
+    * `import com.histmersion.plugin.Plugin.Config.given` in scope (lenient numbers and booleans: an env override is
+    * always a string).
+    */
+  given configReader: ConfigReader[Config] = deferred
+
+  /** The plugin's defaults (HOCON, keys relative to its block), read through the plugin's class loader. Its own name
+    * per plugin — never `reference.conf`, which every jar would claim. The file is also the plugin's type schema: every
+    * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
+    * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
+    */
+  def defaultsResource: String = s"META-INF/histmersion/plugins/${info.id}.conf"
+
+  /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
+    * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
+    * an exception) discards everything this plugin added.
+    */
+  def register(config: Config, ctx: com.histmersion.plugin.Plugin.Context): Either[String, Unit]
+
+object Plugin:
+
+  /** The readers a plugin's config derivation must see: an `${?ENV}` override always arrives as a HOCON STRING, so a
+    * number or boolean setting has to accept a numeric or boolean string too — the same givens `core/Config.scala`
+    * declares for Histmersion's own settings. A plugin imports them where it derives (`import
+    * com.histmersion.plugin.Plugin.Config.given`); lexical-scope givens win over the companion defaults. Without them
+    * an env override of a number fails with "Expected NUMBER but got STRING".
+    */
+  object Config:
+    private def lenient[A](name: String, strict: ConfigReader[A], parse: String => Option[A]): ConfigReader[A] =
+      new ConfigReader[A]:
+        def from(v: org.ekrich.config.ConfigValue) =
+          strict
+            .from(v)
+            .orElse(
+              ConfigReader.stringReader
+                .from(v)
+                .flatMap(s =>
+                  parse(s.trim).toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
+                )
+            )
+
+    given ConfigReader[Int] = lenient("int", ConfigReader.intReader, _.toIntOption)
+    given ConfigReader[Long] = lenient("long", ConfigReader.longReader, _.toLongOption)
+    given ConfigReader[Double] = lenient("double", ConfigReader.doubleReader, _.toDoubleOption)
+    given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.toBooleanOption)
+
+  /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point
+    * is a new registry here, not a new service type, so existing plugin jars keep loading. (Seven: [[secretVaults]],
+    * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]], [[gazetteerSources]] and
+    * [[sourceCollections]]. Each one added after the first has a default that refuses every addition, so a context
+    * written for an earlier extension point — a test's — still compiles, and adding them changed no `Spi.Version`.)
+    */
+  trait Context:
+    /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After, bot challenges stop
+      * the request). A plugin never opens its own sockets.
+      */
+    def files: LocalFiles = LocalFiles.Unavailable
+    def processes: Processes = Processes.Unavailable
+    def http: Http
+
+    def log: Log
+
+    /** The host's environment as it was read at startup (on the main thread: a native image reads it once). For what a
+      * plugin needs to run a tool (`PATH`), never for credentials — those are [[Secret]]s in the config.
+      */
+    def env(name: String): Option[String]
+
+    /** A secret's value. Every [[Secret]] inside the decoded config was resolved before [[Plugin.register]] was called,
+      * so for those this is a lookup; another one is resolved now. Never log the value.
+      */
+    def secret(s: Secret): Either[String, String]
+
+    /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
+    def secretVaults: Registry[Secret.Vault]
+
+    /** The acquisition chain: each fetcher under its own id, which is what `histmersion.acquire.chain` orders. A plugin
+      * may add several (one per step). A host that has no acquisition chain refuses every addition — the default, so a
+      * context written for an earlier extension point (a test's) still compiles.
+      */
+    def sourceFetchers: Registry[SourceFetcher] = Registry.refusing("this host has no acquisition chain")
+
+    /** The media collections `histmersion media import <id>` runs: each under its own id — the name the import is asked
+      * for, and the provider its pictures are stored under. The host judges every licence and every match itself
+      * ([[MediaCollection]]).
+      */
+    def mediaCollections: Registry[MediaCollection] = Registry.refusing("this host has no media import")
+
+    /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's name and the
+      * catalogue its records are stored under.
+      */
+    def eventCatalogues: Registry[EventCatalogue] = Registry.refusing("this host has no event catalogues")
+
+    /** The AI providers the embedded agents call, each under its PROVIDER NAME — the part before the colon of a
+      * `provider:model` reference. The host runs the tool loop, the tools, the validation and every budget; the
+      * provider answers one model call at a time.
+      */
+    def aiProviders: Registry[AiProvider] = Registry.refusing("this host has no AI providers")
+
+    /** The host's budget for the metered upstream `upstream` (`core`: CORE's API), shared with the host's own calls to
+      * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] —
+      * the default, so a context written before budgets existed still compiles.
+      */
+    def quota(upstream: String): UpstreamQuota = UpstreamQuota.Unlimited
+
+    /** The host's reading of licence statements ([[LicenceReader]]), for a media collection that must decide on a
+      * licence before it states it. A host that lends none reads every statement as unknown — the default, so a context
+      * written before it existed still compiles.
+      */
+    def licences: LicenceReader = LicenceReader.Unread
+
+    /** The gazetteer datasets `histmersion places fetch <id>` imports, each under its own id — the name the import is
+      * asked for. A host that imports no gazetteers refuses every addition — the default, so a context written for an
+      * earlier extension point still compiles.
+      */
+    def gazetteerSources: Registry[GazetteerSource] = Registry.refusing("this host has no gazetteer import")
+
+    /** The collections of sources the library searches and imports from, and may write back to, each under its own name
+      * — the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has
+      * no library refuses every addition — the default, so a context written before collections existed still compiles.
+      */
+    def sourceCollections: Registry[SourceCollection] = Registry.refusing("this host has no source collections")
+
+  /** The host's HTTP client, as a plugin sees it. Failures are `Left(message)`, never exceptions. */
+  trait Http:
+    /** One GET under the host's outbound policy (its User-Agent, `Retry-After`, a slow-down asked again, a bot
+      * challenge ending the request): the body of a 2xx answer, or why there is none.
+      */
+    def get(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]]
+
+    /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
+      * included — and never asked again: for an upstream whose own budget decides when to ask again (an
+      * [[UpstreamQuota]] reads the answer), where a retry would spend what the budget is keeping. `Left` only when the
+      * host could not talk to the upstream at all.
+      *
+      * A host that has only bodies answers through [[get]]: status 200 and no headers, or its `Left`.
+      */
+    def fetch(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpResponse] =
+      get(url, headers).map(HttpResponse(200, Map.empty, _))
+
+  /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
+    *
+    * @param status
+    *   the HTTP status, a slow-down (`429`) or an error answer included
+    * @param headers
+    *   the answer's headers, by lower-case name
+    * @param body
+    *   the answer's bytes
+    */
+  final case class HttpResponse(status: Int, headers: Map[String, String], body: Array[Byte]):
+    /** A header by name, in any case. */
+    def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
+
+  /** @param id
+    *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`
+    * @param version
+    *   the plugin's own version, as reported
+    * @param spiVersion
+    *   the SPI generation the plugin was compiled against ([[Spi.Version]]); the host refuses any other
+    */
+  final case class Info(id: String, version: String, spiVersion: Int)
+
+  /** The host's log, with the plugin's id on every line. */
+  trait Log:
+    def info(message: String): Unit
+    def warn(message: String): Unit

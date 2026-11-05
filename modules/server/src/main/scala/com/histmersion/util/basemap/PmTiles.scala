@@ -46,37 +46,91 @@ object PmTiles:
     def of(code: Int): TileType = values.find(_.code == code).getOrElse(Unknown)
 
   final case class Header(
-      rootOffset: Long,
-      rootLength: Long,
-      metadataOffset: Long,
-      metadataLength: Long,
-      leafOffset: Long,
-      leafLength: Long,
-      dataOffset: Long,
-      dataLength: Long,
-      addressedTiles: Long,
-      tileEntries: Long,
-      tileContents: Long,
-      clustered: Boolean,
+      rootOffset: Header.RootOffset,
+      rootLength: Header.RootLength,
+      metadataOffset: Header.MetadataOffset,
+      metadataLength: Header.MetadataLength,
+      leafOffset: Header.LeafOffset,
+      leafLength: Header.LeafLength,
+      dataOffset: Header.DataOffset,
+      dataLength: Header.DataLength,
+      addressedTiles: Header.AddressedTiles,
+      tileEntries: Header.TileEntries,
+      tileContents: Header.TileContents,
+      clustered: Header.Clustered,
       internalCompression: Compression,
       tileCompression: Compression,
       tileType: TileType,
-      minZoom: Int,
-      maxZoom: Int,
-      minLon: Double,
-      minLat: Double,
-      maxLon: Double,
-      maxLat: Double,
-      centerZoom: Int,
-      centerLon: Double,
-      centerLat: Double
+      minZoom: Header.MinZoom,
+      maxZoom: Header.MaxZoom,
+      minLon: Header.MinLon,
+      minLat: Header.MinLat,
+      maxLon: Header.MaxLon,
+      maxLat: Header.MaxLat,
+      centerZoom: Header.CenterZoom,
+      centerLon: Header.CenterLon,
+      centerLat: Header.CenterLat
   )
+
+  object Header:
+    type RootOffset = RootOffset.T
+    object RootOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RootLength = RootLength.T
+    object RootLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MetadataOffset = MetadataOffset.T
+    object MetadataOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MetadataLength = MetadataLength.T
+    object MetadataLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeafOffset = LeafOffset.T
+    object LeafOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeafLength = LeafLength.T
+    object LeafLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DataOffset = DataOffset.T
+    object DataOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DataLength = DataLength.T
+    object DataLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddressedTiles = AddressedTiles.T
+    object AddressedTiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TileEntries = TileEntries.T
+    object TileEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TileContents = TileContents.T
+    object TileContents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Clustered = Clustered.T
+    object Clustered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLon = MinLon.T
+    object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLat = MinLat.T
+    object MinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CenterZoom = CenterZoom.T
+    object CenterZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CenterLon = CenterLon.T
+    object CenterLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CenterLat = CenterLat.T
+    object CenterLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One directory entry: `runLength` consecutive tile ids share the content at `offset`/`length` (relative to the tile
     * data section); `runLength == 0` points to a LEAF directory instead (relative to the leaf section).
     */
-  final case class Entry(tileId: Long, offset: Long, length: Int, runLength: Int):
+  final case class Entry(tileId: Entry.TileId, offset: Entry.Offset, length: Entry.Length, runLength: Entry.RunLength):
     def isLeaf: Boolean = runLength == 0
+
+  object Entry:
+    type TileId = TileId.T
+    object TileId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Length = Length.T
+    object Length extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunLength = RunLength.T
+    object RunLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Magic = "PMTiles".getBytes(StandardCharsets.US_ASCII)
 

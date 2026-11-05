@@ -59,7 +59,13 @@ object BundleFormat:
   /** A line that is not a stamped record carries no rev: it is printed as it is. */
   def line[A](a: A)(using enc: Encoder.AsObject[A]): String = printer.print(enc(a))
 
-  final case class Stamped(rev: String, line: String)
+  final case class Stamped(rev: Stamped.Rev, line: Stamped.Line)
+
+  object Stamped:
+    type Rev = Rev.T
+    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
   def decodeLine[A](line: String, stamped: Boolean)(using dec: Decoder[A]): Either[String, A] =

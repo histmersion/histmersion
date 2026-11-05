@@ -4,4 +4,12 @@ package com.histmersion.config
   * and the config keys it is built from — each a HOCON path prefix (`histmersion.db` covers `histmersion.db.url` and
   * `histmersion.db.pool.max`).
   */
-final case class HotNode(name: String, deps: List[String], keys: List[String])
+final case class HotNode(name: HotNode.Name, deps: List[HotNode.Deps], keys: List[HotNode.Keys])
+
+object HotNode:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Deps = Deps.T
+  object Deps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Keys = Keys.T
+  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

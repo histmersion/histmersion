@@ -64,7 +64,13 @@ private[config] object ConfigLayers:
     * sets (single values), and the keys that are no setting. A single value where a block of settings belongs is an
     * error — it would hide every setting of the block.
     */
-  final case class Keys(settings: List[String], unknown: List[String])
+  final case class Keys(settings: List[Keys.Settings], unknown: List[Keys.Unknown])
+
+  object Keys:
+    type Settings = Settings.T
+    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unknown = Unknown.T
+    object Unknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's environment), not a fixed
     * set of settings: any key under one is known, and its value — any string, or null — is left to the reader.

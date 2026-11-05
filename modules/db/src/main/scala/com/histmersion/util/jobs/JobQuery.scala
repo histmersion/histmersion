@@ -5,9 +5,17 @@ package com.histmersion.util.jobs
   * target or pipeline, its stored detail — or the start of its id.
   */
 final case class JobQuery(
-    status: List[String] = Nil,
-    kinds: List[String] = Nil,
+    status: List[JobQuery.Status] = Nil,
+    kinds: List[JobQuery.Kinds] = Nil,
     since: Option[java.time.Instant] = None,
     until: Option[java.time.Instant] = None,
-    q: Option[String] = None
+    q: Option[JobQuery.Q] = None
 )
+
+object JobQuery:
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kinds = Kinds.T
+  object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Q = Q.T
+  object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,11 +9,25 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `probeTimeoutSeconds`. `refreshEveryMinutes` also reads it on a schedule while the autopilot has queued work for it.
   */
 final case class ClaudePlanConfig(
-    floors: String,
-    maxCallsInFlight: Int,
-    refresh: String,
-    probeModel: String,
-    probeMaxTokens: Int,
-    probeTimeoutSeconds: Int,
+    floors: ClaudePlanConfig.Floors,
+    maxCallsInFlight: ClaudePlanConfig.MaxCallsInFlight,
+    refresh: ClaudePlanConfig.Refresh,
+    probeModel: ClaudePlanConfig.ProbeModel,
+    probeMaxTokens: ClaudePlanConfig.ProbeMaxTokens,
+    probeTimeoutSeconds: ClaudePlanConfig.ProbeTimeoutSeconds,
     refreshEveryMinutes: ScheduledRefresh = ScheduledRefresh.Off
 ) derives ConfigReader
+
+object ClaudePlanConfig:
+  type Floors = Floors.T
+  object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxCallsInFlight = MaxCallsInFlight.T
+  object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Refresh = Refresh.T
+  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeModel = ProbeModel.T
+  object ProbeModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeMaxTokens = ProbeMaxTokens.T
+  object ProbeMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeTimeoutSeconds = ProbeTimeoutSeconds.T
+  object ProbeTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

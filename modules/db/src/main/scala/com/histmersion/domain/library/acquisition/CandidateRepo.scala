@@ -15,15 +15,33 @@ private[acquisition] object CandidateRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class WatchRow(
-      goal: String,
-      kind: String,
-      subject: String,
-      index: String,
-      watermark: Option[String],
-      lastRun: Option[String],
-      lastError: Option[String],
-      lastFound: Int
+      goal: WatchRow.Goal,
+      kind: WatchRow.Kind,
+      subject: WatchRow.Subject,
+      index: WatchRow.Index,
+      watermark: Option[WatchRow.Watermark],
+      lastRun: Option[WatchRow.LastRun],
+      lastError: Option[WatchRow.LastError],
+      lastFound: WatchRow.LastFound
   ) derives DbCodec
+
+  object WatchRow:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Index = Index.T
+    object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Watermark = Watermark.T
+    object Watermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastRun = LastRun.T
+    object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastError = LastError.T
+    object LastError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastFound = LastFound.T
+    object LastFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's watches as they were last read. */
   def watches(goal: String)(using DbCon): List[CandidateWatch] =
@@ -71,21 +89,47 @@ private[acquisition] object CandidateRepo:
     sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[String].run().toSet
 
   final private case class Row(
-      id: Long,
-      goal: String,
-      doi: String,
-      title: String,
-      year: Option[Int],
-      authors: List[String],
-      venue: Option[String],
-      abstractText: Option[String],
-      isOa: Boolean,
-      arxivId: Option[String],
-      foundBy: List[String],
-      state: String,
-      firstSeen: String,
-      lastSeen: String
+      id: Row.Id,
+      goal: Row.Goal,
+      doi: com.histmersion.domain.library.Doi,
+      title: Row.Title,
+      year: Option[com.histmersion.Year],
+      authors: List[Row.Authors],
+      venue: Option[Row.Venue],
+      abstractText: Option[Row.AbstractText],
+      isOa: Row.IsOa,
+      arxivId: Option[Row.ArxivId],
+      foundBy: List[Row.FoundBy],
+      state: Row.State,
+      firstSeen: Row.FirstSeen,
+      lastSeen: Row.LastSeen
   ) derives DbCodec
+
+  object Row:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Venue = Venue.T
+    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AbstractText = AbstractText.T
+    object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsOa = IsOa.T
+    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArxivId = ArxivId.T
+    object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FoundBy = FoundBy.T
+    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstSeen = FirstSeen.T
+    object FirstSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastSeen = LastSeen.T
+    object LastSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
   def list(goal: Option[String], state: String, limit: Int, offset: Int)(using DbCon): List[Source.Candidate] =

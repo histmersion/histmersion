@@ -11,6 +11,10 @@ final case class SettingReading(
     effective: Option[SettingValue],
     source: SettingSource,
     credential: Option[SecretForm],
-    shown: Option[String],
+    shown: Option[SettingReading.Shown],
     locked: Option[SettingError]
 )
+
+object SettingReading:
+  type Shown = Shown.T
+  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

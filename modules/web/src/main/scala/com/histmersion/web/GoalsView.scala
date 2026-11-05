@@ -72,12 +72,20 @@ object GoalsView:
     * open-access ingest and its daily cap).
     */
   final case class NewArea(
-      slug: String,
+      slug: NewArea.Slug,
       put: Goal.Put,
-      plan: Boolean,
-      seed: Boolean,
+      plan: NewArea.Plan,
+      seed: NewArea.Seed,
       watch: Option[Managers.ManagerConfig] = None
   )
+
+  object NewArea:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Plan = Plan.T
+    object Plan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Seed = Seed.T
+    object Seed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching: auto-ingest is
     * OFF unless ticked; its cap (blank = the server's default) a whole number.

@@ -9,12 +9,30 @@ import java.util.UUID
 final private[histmersion] case class BQueueRow(
     uid: UUID,
     origin: UUID,
-    list: String,
-    text: String,
-    topic: Option[String],
-    status: String,
-    reason: Option[String],
-    createdAt: String,
-    doneAt: Option[String],
-    updatedAt: String
+    list: BQueueRow.List,
+    text: BQueueRow.Text,
+    topic: Option[BQueueRow.Topic],
+    status: BQueueRow.Status,
+    reason: Option[BQueueRow.Reason],
+    createdAt: BQueueRow.CreatedAt,
+    doneAt: Option[BQueueRow.DoneAt],
+    updatedAt: BQueueRow.UpdatedAt
 ) derives DbCodec
+
+object BQueueRow:
+  type List = List.T
+  object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Topic = Topic.T
+  object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedAt = CreatedAt.T
+  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoneAt = DoneAt.T
+  object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

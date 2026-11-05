@@ -22,7 +22,13 @@ final class BackupJobs(
     pins: WorkCarrier = WorkCarrier.none
 ):
 
-  final private case class Job(file: String, started: Long, result: CompletableFuture[Either[Api.Error, Backup.Result]])
+  final private case class Job(file: Job.File, started: Job.Started, result: CompletableFuture[Either[Api.Error, Backup.Result]])
+
+  object Job:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Started = Started.T
+    object Started extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val current = AtomicReference[Option[Job]](None)
 
   def running: Boolean = current.get().exists(!_.result.isDone)

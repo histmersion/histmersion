@@ -10,7 +10,7 @@ import com.histmersion.api.aliases.AliasKind
   * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot
   * differ between them. The names are the owner's constants, never input.
   */
-final case class AliasTable(kind: AliasKind, table: String, idColumn: String, aliasTable: String, targetColumn: String):
+final case class AliasTable(kind: AliasKind, table: AliasTable.Table, idColumn: AliasTable.IdColumn, aliasTable: AliasTable.Value, targetColumn: AliasTable.TargetColumn):
 
   /** The identifier an OLD one was renamed to — `None` when `id` is a live identifier, or names nothing. */
   def renamedTo(ds: DataSource, id: String): Option[String] = connect(ds)(renamedToIn(id))
@@ -32,3 +32,13 @@ final case class AliasTable(kind: AliasKind, table: String, idColumn: String, al
   def current(ds: DataSource, id: String): String =
     val t = id.trim
     if t.isEmpty then t else renamedTo(ds, t).getOrElse(t)
+
+object AliasTable:
+  type Table = Table.T
+  object Table extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdColumn = IdColumn.T
+  object IdColumn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Value = Value.T
+  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetColumn = TargetColumn.T
+  object TargetColumn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

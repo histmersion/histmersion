@@ -16,19 +16,19 @@ final case class Generation(
     registries: Registries,
     report: PluginsReport,
     /** What each registered plugin contributed — what a partial rebuild carries over unchanged. */
-    contributions: Map[String, Registries] = Map.empty,
+    contributions: Map[Generation.ContributionsKey, Registries] = Map.empty,
     /** The plugins this build registered afresh (all of them on a full build); the others were carried over from the
       * previous generation (config reload, §3.5).
       */
-    rebuilt: List[String] = Nil,
+    rebuilt: List[Generation.Rebuilt] = Nil,
     /** The registered plugins whose config holds a secret: never carried over, so a reload resolves their secrets again
       * (a rotated password needs only `config reload`, §3.7).
       */
-    withSecrets: Set[String] = Set.empty,
+    withSecrets: Set[Generation.WithSecrets] = Set.empty,
     /** The effective block of each plugin this build registered (its own block over its defaults, as reported). */
-    blocks: Map[String, Config] = Map.empty,
+    blocks: Map[Generation.BlocksKey, Config] = Map.empty,
     /** The secrets each plugin this build registered was given, by reference, as this build resolved them. */
-    secretValues: Map[String, Map[Secret.Ref, String]] = Map.empty
+    secretValues: Map[Generation.SecretValuesKey, Map[Secret.Ref, Generation.SecretValuesValueValue]] = Map.empty
 ):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
   def carry(id: String): Option[(PluginStatus, Registries)] =
@@ -49,4 +49,17 @@ final case class Generation(
     yield value
 
 object Generation:
+  type ContributionsKey = ContributionsKey.T
+  object ContributionsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rebuilt = Rebuilt.T
+  object Rebuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithSecrets = WithSecrets.T
+  object WithSecrets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksKey = BlocksKey.T
+  object BlocksKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecretValuesKey = SecretValuesKey.T
+  object SecretValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecretValuesValueValue = SecretValuesValueValue.T
+  object SecretValuesValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: Generation = Generation(Registries.empty, PluginsReport(Spi.Version))

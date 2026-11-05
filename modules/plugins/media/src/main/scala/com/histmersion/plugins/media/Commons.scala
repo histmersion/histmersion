@@ -279,18 +279,44 @@ object Commons:
     * (`thumburl`; the original itself when that is smaller). `meta` is `extmetadata`, by name.
     */
   final case class File(
-      title: String,
-      pageUrl: String,
-      originalUrl: String,
-      renditionUrl: Option[String],
-      renditionWidth: Option[Int],
-      renditionHeight: Option[Int],
-      mime: String,
-      width: Option[Int],
-      height: Option[Int],
-      size: Option[Long],
-      meta: Map[String, String]
+      title: File.Title,
+      pageUrl: File.PageUrl,
+      originalUrl: File.OriginalUrl,
+      renditionUrl: Option[File.RenditionUrl],
+      renditionWidth: Option[File.RenditionWidth],
+      renditionHeight: Option[File.RenditionHeight],
+      mime: File.Mime,
+      width: Option[File.Width],
+      height: Option[File.Height],
+      size: Option[File.Size],
+      meta: Map[File.MetaKey, File.MetaValue]
   )
+
+  object File:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PageUrl = PageUrl.T
+    object PageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OriginalUrl = OriginalUrl.T
+    object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenditionUrl = RenditionUrl.T
+    object RenditionUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenditionWidth = RenditionWidth.T
+    object RenditionWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenditionHeight = RenditionHeight.T
+    object RenditionHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mime = Mime.T
+    object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Width = Width.T
+    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Height = Height.T
+    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Size = Size.T
+    object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MetaKey = MetaKey.T
+    object MetaKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MetaValue = MetaValue.T
+    object MetaValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The Commons half every Commons-backed collection shares: what Commons says about each file — licence, author and
     * credit from `imageinfo` + `extmetadata`, read and never assumed, as the item to state — and, for the files to
@@ -389,4 +415,12 @@ object Commons:
       )
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
-  final case class Settings(apiUrl: String, batch: Int, maxlag: Int) derives ConfigReader
+  final case class Settings(apiUrl: Settings.ApiUrl, batch: Settings.Batch, maxlag: Settings.Maxlag) derives ConfigReader
+
+  object Settings:
+    type ApiUrl = ApiUrl.T
+    object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Batch = Batch.T
+    object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Maxlag = Maxlag.T
+    object Maxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

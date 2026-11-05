@@ -5,11 +5,11 @@ package com.histmersion.plugin
   * says.
   */
 final case class AiTurn(
-    text: String,
+    text: AiTurn.Text,
     toolCalls: List[AiTool.Call] = Nil,
     stop: AiStop = AiStop.EndTurn,
     usage: Option[AiUsage] = None,
-    servedBy: Option[String] = None
+    servedBy: Option[AiTurn.ServedBy] = None
 )
 
 object AiTurn:
@@ -40,17 +40,22 @@ object AiTurn:
     * @param answerDescription
     *   what the answer is, when the step's schema says (a provider's structured-output field for it)
     */
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServedBy = ServedBy.T
+  object ServedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Request(
-      model: String,
-      system: String,
+      model: Request.Model,
+      system: Request.System,
       messages: List[AiMessage],
       tools: List[AiTool],
-      answerSchema: Option[String],
-      maxTokens: Int,
-      iteration: Int,
-      maxIterations: Int,
-      answerSchemaRendered: Option[String] = None,
-      answerDescription: Option[String] = None
+      answerSchema: Option[Request.AnswerSchema],
+      maxTokens: Request.MaxTokens,
+      iteration: Request.Iteration,
+      maxIterations: Request.MaxIterations,
+      answerSchemaRendered: Option[Request.AnswerSchemaRendered] = None,
+      answerDescription: Option[Request.AnswerDescription] = None
   ):
     /** The constructor of a host or a test compiled before the rendered schema and its description were passed. */
     def this(
@@ -66,6 +71,23 @@ object AiTurn:
 
   object Request:
     /** The request as a host or a test compiled before the rendered schema and its description were passed wrote it. */
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type System = System.T
+    object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AnswerSchema = AnswerSchema.T
+    object AnswerSchema extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxTokens = MaxTokens.T
+    object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Iteration = Iteration.T
+    object Iteration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxIterations = MaxIterations.T
+    object MaxIterations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AnswerSchemaRendered = AnswerSchemaRendered.T
+    object AnswerSchemaRendered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AnswerDescription = AnswerDescription.T
+    object AnswerDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def apply(
         model: String,
         system: String,

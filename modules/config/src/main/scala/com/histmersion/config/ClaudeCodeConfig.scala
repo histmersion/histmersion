@@ -23,17 +23,41 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *     removed, also one the server inherited ([[ClaudeCodeConfig.envChanges]]).
   */
 final case class ClaudeCodeConfig(
-    command: String,
-    configDir: String,
-    extraArgs: String,
-    useApiKey: Boolean,
-    allowNonLoopback: Boolean,
-    mcpUrl: String,
-    timeoutSeconds: Int,
-    limitCooldownMinutes: Int,
-    disableSlashCommands: Boolean,
-    env: Map[String, Option[String]]
+    command: ClaudeCodeConfig.Command,
+    configDir: ClaudeCodeConfig.ConfigDir,
+    extraArgs: ClaudeCodeConfig.ExtraArgs,
+    useApiKey: ClaudeCodeConfig.UseApiKey,
+    allowNonLoopback: ClaudeCodeConfig.AllowNonLoopback,
+    mcpUrl: ClaudeCodeConfig.McpUrl,
+    timeoutSeconds: ClaudeCodeConfig.TimeoutSeconds,
+    limitCooldownMinutes: ClaudeCodeConfig.LimitCooldownMinutes,
+    disableSlashCommands: ClaudeCodeConfig.DisableSlashCommands,
+    env: Map[ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue]]
 ) derives ConfigReader:
   /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
   def envChanges: List[(String, Option[String])] =
     env.toList.map((k, v) => k.trim -> v.filter(_.trim.nonEmpty)).filter(_._1.nonEmpty).sortBy(_._1)
+
+object ClaudeCodeConfig:
+  type Command = Command.T
+  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigDir = ConfigDir.T
+  object ConfigDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtraArgs = ExtraArgs.T
+  object ExtraArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UseApiKey = UseApiKey.T
+  object UseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowNonLoopback = AllowNonLoopback.T
+  object AllowNonLoopback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type McpUrl = McpUrl.T
+  object McpUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitCooldownMinutes = LimitCooldownMinutes.T
+  object LimitCooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisableSlashCommands = DisableSlashCommands.T
+  object DisableSlashCommands extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvKey = EnvKey.T
+  object EnvKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvValue = EnvValue.T
+  object EnvValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

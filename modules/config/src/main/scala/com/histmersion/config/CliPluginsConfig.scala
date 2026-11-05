@@ -7,5 +7,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * default; `mavenRepos` is comma-separated (an env override is one string), tried in order for
   * `plugin add group:artifact:version`; `curl` downloads (`plugin add <url>`).
   */
-final case class CliPluginsConfig(installDir: String, mavenRepos: String, curl: String) derives ConfigReader:
+final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
   def repos: List[String] = mavenRepos.split(",").toList.map(_.trim).filter(_.nonEmpty)
+
+object CliPluginsConfig:
+  type InstallDir = InstallDir.T
+  object InstallDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MavenRepos = MavenRepos.T
+  object MavenRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Curl = Curl.T
+  object Curl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

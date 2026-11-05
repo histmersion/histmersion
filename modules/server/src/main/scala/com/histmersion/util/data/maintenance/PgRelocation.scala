@@ -21,7 +21,15 @@ object PgRelocation:
 
   val Marker = ".prefix"
 
-  final case class Result(files: Int, signed: Int, tooLong: Int)
+  final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
+
+  object Result:
+    type Files = Files.T
+    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Signed = Signed.T
+    object Signed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TooLong = TooLong.T
+    object TooLong extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.

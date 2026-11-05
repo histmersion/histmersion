@@ -7,10 +7,20 @@ import com.histmersion.config.edit.{FileVersion, SettingReading}
   * the first-run setup is due.
   */
 final case class SettingsSnapshot(
-    file: Option[String],
-    exists: Boolean,
+    file: Option[SettingsSnapshot.File],
+    exists: SettingsSnapshot.Exists,
     version: FileVersion,
     readings: List[SettingReading],
-    problems: List[String],
-    setupDue: Boolean
+    problems: List[SettingsSnapshot.Problems],
+    setupDue: SettingsSnapshot.SetupDue
 )
+
+object SettingsSnapshot:
+  type File = File.T
+  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Exists = Exists.T
+  object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problems = Problems.T
+  object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetupDue = SetupDue.T
+  object SetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

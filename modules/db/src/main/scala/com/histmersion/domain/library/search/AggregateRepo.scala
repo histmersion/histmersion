@@ -69,14 +69,22 @@ private[search] object AggregateRepo:
 
   /** One row as SQL returns it — the place ids arrive as a `text[]`. */
   final private[search] case class TreeRowRaw(
-      key: String,
-      citekey: String,
-      title: String,
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      placeIds: List[String]
+      key: TreeRowRaw.Key,
+      citekey: com.histmersion.domain.library.Citekey,
+      title: TreeRowRaw.Title,
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
+      placeIds: List[TreeRowRaw.PlaceIds]
   ) derives DbCodec:
     def toRow: Tree.TreeRow = Tree.TreeRow(key, citekey, title, periodStart, periodEnd, placeIds.distinct)
+
+  object TreeRowRaw:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceIds = PlaceIds.T
+    object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 

@@ -11,7 +11,7 @@ import com.histmersion.plugin.AiTool
   * usage with its cached prompt and reasoning tokens; or the failure — an error status by the error's message (else the
   * first 500 characters of its body), a success answer that cannot be read by why.
   */
-final case class ChatAnswer(status: Int, body: String):
+final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[String, AiTurn] =
@@ -21,6 +21,11 @@ final case class ChatAnswer(status: Int, body: String):
 object ChatAnswer:
 
   /** The most of an unreadable error answer's body its description keeps. */
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val MaxRawErrorBody = 500
 
   /** An error status's description: the `error.message`; for an error without one, the status and the body; for an

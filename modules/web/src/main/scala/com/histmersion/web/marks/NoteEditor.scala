@@ -14,7 +14,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object NoteEditor:
 
-  final private case class Session(target: Target, title: String, note: Option[Note], back: Option[dom.HTMLElement])
+  final private case class Session(target: Target, title: Session.Title, note: Option[Note], back: Option[dom.HTMLElement])
+
+  object Session:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val session = Var(Option.empty[Session])
 

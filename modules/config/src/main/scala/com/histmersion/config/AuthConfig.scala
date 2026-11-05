@@ -6,4 +6,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * behind `Authorization: Bearer <key>`. GET/HEAD/OPTIONS (the web UI, all read APIs) stay open. Empty = no auth
   * (local-only mode).
   */
-final case class AuthConfig(apiKey: String) derives ConfigReader
+final case class AuthConfig(apiKey: AuthConfig.ApiKey) derives ConfigReader
+
+object AuthConfig:
+  type ApiKey = ApiKey.T
+  object ApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -47,7 +47,11 @@ final class OnDemandTiles(
   private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
-  final private case class Remote(url: String, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
+  final private case class Remote(url: Remote.Url, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
+
+  object Remote:
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // the open remote description (re-read when the file changes) and when requests may start again; under the lock
   @volatile private var remote: Option[Remote] = None

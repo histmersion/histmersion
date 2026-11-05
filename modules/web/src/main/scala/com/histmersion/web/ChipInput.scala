@@ -21,10 +21,10 @@ object ChipInput:
   private var seq: Int = 0
 
   case class Config(
-      field: String,
-      label: String,
-      placeholder: String,
-      debounceMs: Int,
+      field: Config.Field,
+      label: Config.Label,
+      placeholder: Config.Placeholder,
+      debounceMs: Config.DebounceMs,
       getSuggestions: String => Future[List[Facet]],
       onChange: List[String] => Unit,
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
@@ -34,6 +34,16 @@ object ChipInput:
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
       mark: String => Option[String] = _ => None
   )
+
+  object Config:
+    type Field = Field.T
+    object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Placeholder = Placeholder.T
+    object Placeholder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DebounceMs = DebounceMs.T
+    object DebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.

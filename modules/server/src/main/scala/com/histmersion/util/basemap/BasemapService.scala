@@ -511,12 +511,24 @@ final class BasemapService(
   final private case class Ask(
       layers: List[Basemap.Layer],
       bbox: BBox,
-      vectorZoom: Int,
-      terrainZoom: Int,
-      dryRun: Boolean,
-      keepAll: Boolean,
-      focus: Option[(String, BBox)] = None
+      vectorZoom: Ask.VectorZoom,
+      terrainZoom: Ask.TerrainZoom,
+      dryRun: Ask.DryRun,
+      keepAll: Ask.KeepAll,
+      focus: Option[(Ask.FocusPart1, BBox)] = None
   )
+
+  object Ask:
+    type VectorZoom = VectorZoom.T
+    object VectorZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerrainZoom = TerrainZoom.T
+    object TerrainZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KeepAll = KeepAll.T
+    object KeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FocusPart1 = FocusPart1.T
+    object FocusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def ask(q: Basemap.FetchQuery): Either[String, Ask] =
     def zoom(z: Int, what: String) =

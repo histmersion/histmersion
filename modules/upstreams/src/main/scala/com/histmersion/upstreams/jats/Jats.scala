@@ -3,12 +3,24 @@ object Jats:
 
   // ── the tree ────────────────────────────────────────────────────────────────────────────────
   sealed trait Node
-  final case class Elem(name: String, attrs: Map[String, String], children: Vector[Node]) extends Node:
+  final case class Elem(name: Elem.Name, attrs: Map[Elem.AttrsKey, Elem.AttrsValue], children: Vector[Node]) extends Node:
     def kids(n: String): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
     def kid(n: String): Option[Elem] = kids(n).headOption
     def attr(n: String): Option[String] = attrs.get(n)
     def elems: Vector[Elem] = children.collect { case e: Elem => e }
-  final case class Text(s: String) extends Node
+
+  object Elem:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AttrsKey = AttrsKey.T
+    object AttrsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AttrsValue = AttrsValue.T
+    object AttrsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Text(s: Text.S) extends Node
+
+  object Text:
+    type S = S.T
+    object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The document starts — after an XML declaration, comments and a DOCTYPE — with `<article>`. */
   def isJats(xml: String): Boolean =

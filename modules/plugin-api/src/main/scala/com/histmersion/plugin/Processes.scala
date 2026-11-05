@@ -13,7 +13,15 @@ trait Processes:
   def capture(argv: List[String]): Either[String, Processes.Result]
 
 object Processes:
-  final case class Result(exit: Int, out: String, err: String)
+  final case class Result(exit: Result.Exit, out: Result.Out, err: Result.Err)
+
+  object Result:
+    type Exit = Exit.T
+    object Exit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Out = Out.T
+    object Out extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Err = Err.T
+    object Err extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Owned by the caller, which must close it. Output is kept in memory and never logged by the implementation. */
   trait Session:

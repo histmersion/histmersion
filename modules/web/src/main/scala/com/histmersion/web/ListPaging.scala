@@ -21,10 +21,13 @@ import com.raquo.laminar.api.L.*
 object ListPaging:
 
   /** What is shown: the rows, newest first, and the last page's word on the rest of the list. */
-  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Boolean = false):
+  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Listing.Extended = false):
     def hasOlder: Boolean = page.hasMore
 
   object Listing:
+    type Extended = Extended.T
+    object Extended extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def empty[A]: Listing[A] = Listing(Nil, Paging.Page.empty)
 
   /** The newest page — a first load, a restart, or a poll of a listing that was not extended. */

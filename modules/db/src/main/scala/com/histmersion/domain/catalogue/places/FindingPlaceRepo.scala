@@ -109,14 +109,24 @@ private[places] object FindingPlaceRepo:
       s" AND NOT ${importedSql("q")} AND ${explicitOnlySql("q")} AND ST_DWithin(q.geom, $f.geom, 1e-6)) END)"
 
   final private case class Placeholder(
-      id: String,
-      name: Option[String],
-      from: Option[Long],
-      to: Option[Long],
-      citekey: String,
-      lon: Double,
-      lat: Double
+      id: Placeholder.Id,
+      name: Option[Placeholder.Name],
+      from: Option[Placeholder.From],
+      to: Option[Placeholder.To],
+      citekey: com.histmersion.domain.library.Citekey,
+      lon: com.histmersion.Longitude,
+      lat: com.histmersion.Latitude
   ) derives DbCodec
+
+  object Placeholder:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
   val placeholderFindingsSql: String =
@@ -295,7 +305,17 @@ private[places] object FindingPlaceRepo:
             WHERE f.period IS NULL OR f.period && a.period
             ON CONFLICT DO NOTHING""".update.run()
 
-  final private case class Named(id: String, name: String, from: Option[Long], to: Option[Long]) derives DbCodec
+  final private case class Named(id: Named.Id, name: Named.Name, from: Option[Named.From], to: Option[Named.To]) derives DbCodec
+
+  object Named:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The explicit NAME match for explicit-only points: a finding whose place name the geocoder ([[Geocoder.resolveIn]])
     * resolves to such a place belongs to it — whatever point the finding was given by hand. Only the names one of whose

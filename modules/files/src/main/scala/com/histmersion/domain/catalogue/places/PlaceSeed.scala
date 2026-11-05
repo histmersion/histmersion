@@ -9,7 +9,13 @@ import com.histmersion.domain.catalogue.Place
 object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
-  final case class Entry[K](name: String, directory: Boolean, at: K)
+  final case class Entry[K](name: Entry.Name, directory: Entry.Directory, at: K)
+
+  object Entry:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Directory = Directory.T
+    object Directory extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every JSON/GeoJSON file of a seed directory, in import order: the top-level files by name first (Natural Earth
     * defines the `continent_*` ids everything else hangs off), then each subdirectory by name. The fallback `kind` for

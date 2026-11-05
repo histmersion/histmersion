@@ -11,13 +11,29 @@ import scala.scalajs.js
   * dates and their box.
   */
 final case class TileCellPoint(
-    key: String,
+    key: TileCellPoint.Key,
     kind: DotKind,
-    lat: Double,
-    lon: Double,
-    n: Int,
-    midLo: Option[Double],
-    midHi: Option[Double],
+    lat: TileCellPoint.Lat,
+    lon: TileCellPoint.Lon,
+    n: TileCellPoint.N,
+    midLo: Option[TileCellPoint.MidLo],
+    midHi: Option[TileCellPoint.MidHi],
     box: GeoBounds,
-    undated: Int = 0
+    undated: TileCellPoint.Undated = 0
 )
+
+object TileCellPoint:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lat = Lat.T
+  object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lon = Lon.T
+  object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type N = N.T
+  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidLo = MidLo.T
+  object MidLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidHi = MidHi.T
+  object MidHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
