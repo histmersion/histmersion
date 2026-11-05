@@ -164,23 +164,55 @@ object InferFilterPipeline:
 
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
-      slug: String,
-      title: String,
-      kind: String,
-      summary: Option[String],
-      tags: List[String],
-      hasFilter: Boolean,
-      cited: List[String],
-      citedLines: List[String],
-      excerpt: String,
-      topics: List[String],
-      tags0: List[String]
+      slug: Loaded.Slug,
+      title: Loaded.Title,
+      kind: Loaded.Kind,
+      summary: Option[Loaded.Summary],
+      tags: List[Loaded.Tags],
+      hasFilter: Loaded.HasFilter,
+      cited: List[Loaded.Cited],
+      citedLines: List[Loaded.CitedLines],
+      excerpt: Loaded.Excerpt,
+      topics: List[Loaded.Topics],
+      tags0: List[Loaded.Tags0]
   ) derives KindlingsCodecAsObject
+
+  object Loaded:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasFilter = HasFilter.T
+    object HasFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cited = Cited.T
+    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitedLines = CitedLines.T
+    object CitedLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Excerpt = Excerpt.T
+    object Excerpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags0 = Tags0.T
+    object Tags0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the record step did: the approval it opened (or recorded approved), whether the filter is on the article now,
     * and the line for the log.
     */
-  final case class Recorded(approval: Option[Long], applied: Boolean, line: String) derives KindlingsCodecAsObject
+  final case class Recorded(approval: Option[Recorded.Approval], applied: Recorded.Applied, line: Recorded.Line) derives KindlingsCodecAsObject
+
+  object Recorded:
+    type Approval = Approval.T
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.

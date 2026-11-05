@@ -28,7 +28,15 @@ object AutopilotPolicy:
     case Leave(why: String)
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
-  final case class PlannedFacts(slug: String, slugFree: Boolean, hits: Int)
+  final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
+
+  object PlannedFacts:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SlugFree = SlugFree.T
+    object SlugFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hits = Hits.T
+    object Hits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An `article-plan` (propose-articles): approved when every article's slug is still free and its filter returns at
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
@@ -59,14 +67,30 @@ object AutopilotPolicy:
   /** A draft to publish (compile-article), as code reads it. `hits` = what the run's filter returned (None: not known).
     */
   final case class DraftFacts(
-      slug: String,
-      create: Boolean,
-      filterRecorded: Boolean,
-      hits: Option[Int],
-      problems: List[String],
-      cited: Int,
-      slugFree: Boolean
+      slug: DraftFacts.Slug,
+      create: DraftFacts.Create,
+      filterRecorded: DraftFacts.FilterRecorded,
+      hits: Option[DraftFacts.Hits],
+      problems: List[DraftFacts.Problems],
+      cited: DraftFacts.Cited,
+      slugFree: DraftFacts.SlugFree
   )
+
+  object DraftFacts:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Create = Create.T
+    object Create extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilterRecorded = FilterRecorded.T
+    object FilterRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hits = Hits.T
+    object Hits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cited = Cited.T
+    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SlugFree = SlugFree.T
+    object SlugFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An `article-publish`: approved when the run recorded a filter that returns at least `minSources` sources, the code
     * self-check left no problem, the text cites a source and (a new article) the slug is still free — within `cap`
@@ -93,7 +117,19 @@ object AutopilotPolicy:
       )
 
   /** A goal's plan (plan-goal), as code reads it; `depth` = how far below a root goal it is (0 = a root). */
-  final case class GoalPlanFacts(goal: String, subGoals: Int, queries: Int, works: Int, depth: Int)
+  final case class GoalPlanFacts(goal: GoalPlanFacts.Goal, subGoals: GoalPlanFacts.SubGoals, queries: GoalPlanFacts.Queries, works: GoalPlanFacts.Works, depth: GoalPlanFacts.Depth)
+
+  object GoalPlanFacts:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SubGoals = SubGoals.T
+    object SubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Works = Works.T
+    object Works extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
     * within `cap` plans a day.
@@ -175,15 +211,31 @@ object AutopilotPolicy:
     * status and when it settled.
     */
   final case class NextFacts(
-      goal: String,
-      status: String,
-      articles: Int,
-      unreviewed: Int,
-      compileOpen: Int,
-      seedState: Option[String],
-      proposeStatus: Option[String],
+      goal: NextFacts.Goal,
+      status: NextFacts.Status,
+      articles: NextFacts.Articles,
+      unreviewed: NextFacts.Unreviewed,
+      compileOpen: NextFacts.CompileOpen,
+      seedState: Option[NextFacts.SeedState],
+      proposeStatus: Option[NextFacts.ProposeStatus],
       proposeSettled: Option[java.time.Instant]
   )
+
+  object NextFacts:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Articles = Articles.T
+    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unreviewed = Unreviewed.T
+    object Unreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CompileOpen = CompileOpen.T
+    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SeedState = SeedState.T
+    object SeedState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ProposeStatus = ProposeStatus.T
+    object ProposeStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
     * still has unfinished articles); None when they are all done (or it has none).
@@ -241,14 +293,30 @@ object AutopilotPolicy:
     * and no review item open; `children` = the statuses of its sub-goals.
     */
   final case class GoalFacts(
-      slug: String,
-      status: String,
-      managed: Boolean,
-      articles: Int,
-      compileOpen: Boolean,
-      reviewed: Boolean,
-      children: List[String]
+      slug: GoalFacts.Slug,
+      status: GoalFacts.Status,
+      managed: GoalFacts.Managed,
+      articles: GoalFacts.Articles,
+      compileOpen: GoalFacts.CompileOpen,
+      reviewed: GoalFacts.Reviewed,
+      children: List[GoalFacts.Children]
   )
+
+  object GoalFacts:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Managed = Managed.T
+    object Managed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Articles = Articles.T
+    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CompileOpen = CompileOpen.T
+    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reviewed = Reviewed.T
+    object Reviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Children = Children.T
+    object Children extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def rank(s: String): Int = Goal.Status.all.indexOf(s)
 
@@ -290,28 +358,66 @@ object AutopilotPolicy:
   /** A goal as the autopilot sees it: its status, and whether it still needs a plan (it records none and links no
     * query).
     */
-  final case class GoalRow(slug: String, status: String, needsPlan: Boolean)
+  final case class GoalRow(slug: GoalRow.Slug, status: GoalRow.Status, needsPlan: GoalRow.NeedsPlan)
+
+  object GoalRow:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NeedsPlan = NeedsPlan.T
+    object NeedsPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A manager as the autopilot sees it. `planItem` = it has a plan-goal item (any status). */
   final case class ManagerRow(
-      id: String,
-      kind: String,
-      goal: Option[String],
-      state: String,
-      cron: Option[String],
-      autoIngest: Option[Boolean],
-      planItem: Boolean = false,
-      extendMinNew: Option[Int] = None
+      id: ManagerRow.Id,
+      kind: ManagerRow.Kind,
+      goal: Option[ManagerRow.Goal],
+      state: ManagerRow.State,
+      cron: Option[ManagerRow.Cron],
+      autoIngest: Option[ManagerRow.AutoIngest],
+      planItem: ManagerRow.PlanItem = false,
+      extendMinNew: Option[ManagerRow.ExtendMinNew] = None
   )
+
+  object ManagerRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoIngest = AutoIngest.T
+    object AutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanItem = PlanItem.T
+    object PlanItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExtendMinNew = ExtendMinNew.T
+    object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The settings `ensure` works with. */
   final case class Settings(
-      watchCron: String,
-      seedCron: String,
-      finishedWatchCron: String,
-      watchIngestPerDay: Int,
-      extendMinNew: Int
+      watchCron: Settings.WatchCron,
+      seedCron: Settings.SeedCron,
+      finishedWatchCron: Settings.FinishedWatchCron,
+      watchIngestPerDay: Settings.WatchIngestPerDay,
+      extendMinNew: Settings.ExtendMinNew
   )
+
+  object Settings:
+    type WatchCron = WatchCron.T
+    object WatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SeedCron = SeedCron.T
+    object SeedCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FinishedWatchCron = FinishedWatchCron.T
+    object FinishedWatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WatchIngestPerDay = WatchIngestPerDay.T
+    object WatchIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExtendMinNew = ExtendMinNew.T
+    object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One change `ensure` asks for. */
   enum Step:

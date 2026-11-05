@@ -14,7 +14,15 @@ object CodexRetention:
   val SessionDirs: List[String] = List("sessions", "archived_sessions")
 
   /** One file under the home: its path relative to the home (`/`-separated), size, last change. */
-  final case class FileInfo(rel: String, bytes: Long, modifiedMs: Long)
+  final case class FileInfo(rel: FileInfo.Rel, bytes: FileInfo.Bytes, modifiedMs: FileInfo.ModifiedMs)
+
+  object FileInfo:
+    type Rel = Rel.T
+    object Rel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ModifiedMs = ModifiedMs.T
+    object ModifiedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val DayMs = 24L * 60 * 60 * 1000
 

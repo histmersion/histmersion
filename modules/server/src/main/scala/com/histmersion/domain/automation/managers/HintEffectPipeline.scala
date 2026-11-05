@@ -134,13 +134,33 @@ object HintEffectPipeline:
 
   /** The manager and the hint as the step sees them (checkpointed). `known` = what a target may name. */
   final case class Loaded(
-      managerId: String,
-      kind: String,
-      goal: Option[String],
-      hint: Long,
-      text: String,
-      itemTarget: Option[String],
-      items: List[String],
-      known: List[String],
-      settings: String
+      managerId: Loaded.ManagerId,
+      kind: Loaded.Kind,
+      goal: Option[Loaded.Goal],
+      hint: Loaded.Hint,
+      text: Loaded.Text,
+      itemTarget: Option[Loaded.ItemTarget],
+      items: List[Loaded.Items],
+      known: List[Loaded.Known],
+      settings: Loaded.Settings
   ) derives KindlingsCodecAsObject
+
+  object Loaded:
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemTarget = ItemTarget.T
+    object ItemTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Items = Items.T
+    object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Known = Known.T
+    object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Settings = Settings.T
+    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

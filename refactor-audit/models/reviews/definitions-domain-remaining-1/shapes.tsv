@@ -1,0 +1,11 @@
+path	line	before-ast	after-ast
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	406	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.room	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	409	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.gathering	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	411	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.started.Part2	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.rank	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.flags	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/media/assets/NewFigure.scala	10	UNRESOLVED com.histmersion.domain.media.assets.NewFigure.bytes	Type.Name("Byte") deferred: Decoded binary payload needs a whole-payload type; per-byte wrapping changes representation

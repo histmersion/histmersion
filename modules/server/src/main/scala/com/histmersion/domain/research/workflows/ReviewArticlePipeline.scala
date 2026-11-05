@@ -93,11 +93,19 @@ final class ReviewArticlePipeline(
     */
   final private case class Carry(
       ledger: Ledger,
-      applied: Int,
-      rejectedCount: Int,
-      fixed: Boolean,
+      applied: Carry.Applied,
+      rejectedCount: Carry.RejectedCount,
+      fixed: Carry.Fixed,
       reasons: List[CritiqueReason] = Nil
   )
+
+  object Carry:
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RejectedCount = RejectedCount.T
+    object RejectedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fixed = Fixed.T
+    object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where a pass leaves the run: its merged result (the open findings), the snapshot it reviewed, the totals, a dry
     * run's unwritten body (what the next snapshot reads instead of the stored one), and whether it was a targeted pass
@@ -107,14 +115,28 @@ final class ReviewArticlePipeline(
       merged: Merged,
       snap: Snapshot,
       carry: Carry,
-      unwritten: Option[String],
-      targeted: Boolean = false
+      unwritten: Option[State.Unwritten],
+      targeted: State.Targeted = false
   )
+
+  object State:
+    type Unwritten = Unwritten.T
+    object Unwritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Targeted = Targeted.T
+    object Targeted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The last pass: its number, whether it was the confirming full panel, and the MAJORs that panel found new and
     * deferred to the next run (§6.9).
     */
-  final private case class End(state: State, round: Int, confirmed: Boolean, deferred: List[String] = Nil)
+  final private case class End(state: State, round: End.Round, confirmed: End.Confirmed, deferred: List[End.Deferred] = Nil)
+
+  object End:
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Confirmed = Confirmed.T
+    object Confirmed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Deferred = Deferred.T
+    object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 

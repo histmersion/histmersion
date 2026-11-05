@@ -3,9 +3,16 @@ package com.histmersion.domain
 /** Whom and how a reuse must credit: the licence, its URL, the author to name and the credit line in the provider's own
   * form. A picture carries one, and so does a dataset (its licence and credit).
   */
-final case class Attribution(licence: Licence, licenceUrl: Option[String], author: Option[String], credit: String)
+final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
 
 object Attribution:
+  type LicenceUrl = LicenceUrl.T
+  object LicenceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Author = Author.T
+  object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Credit = Credit.T
+  object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Cc0Url = "https://creativecommons.org/publicdomain/zero/1.0/"
   val PdmUrl = "https://creativecommons.org/publicdomain/mark/1.0/"
 

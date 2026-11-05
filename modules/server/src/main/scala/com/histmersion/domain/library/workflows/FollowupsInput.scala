@@ -6,9 +6,16 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
-final case class FollowupsInput(id: String, since: Option[Int] = None, limit: Option[Int] = None)
+final case class FollowupsInput(id: FollowupsInput.Id, since: Option[FollowupsInput.Since] = None, limit: Option[FollowupsInput.Limit] = None)
     derives KindlingsCodecAsObject
 object FollowupsInput:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Since = Since.T
+  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given Schema[FollowupsInput] = KindlingsSchema
     .derived[FollowupsInput]
     .schema

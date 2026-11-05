@@ -21,13 +21,24 @@ object PlacesTools:
 
   /** Input of the `places` tool. */
   final case class PlacesInput(
-      query: Option[String] = None,
-      name: Option[String] = None,
-      id: Option[String] = None,
-      asOf: Option[Long] = None,
-      limit: Option[Int] = None
+      query: Option[PlacesInput.Query] = None,
+      name: Option[PlacesInput.Name] = None,
+      id: Option[PlacesInput.Id] = None,
+      asOf: Option[PlacesInput.AsOf] = None,
+      limit: Option[PlacesInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object PlacesInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOf = AsOf.T
+    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PlacesInput] = KindlingsSchema
       .derived[PlacesInput]
       .schema
@@ -38,18 +49,33 @@ object PlacesTools:
 
   /** Input of the `place_override` tool (V080). */
   final case class PlaceOverrideInput(
-      placeId: Option[String] = None,
-      kind: Option[String] = None,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None,
-      reason: Option[String] = None,
-      reset: Option[Boolean] = None,
-      mergeInto: Option[String] = None,
-      remove: Option[Boolean] = None,
-      pointLat: Option[Double] = None,
-      pointLon: Option[Double] = None
+      placeId: Option[com.histmersion.domain.catalogue.Place.Id] = None,
+      kind: Option[PlaceOverrideInput.Kind] = None,
+      periodStart: Option[com.histmersion.Year] = None,
+      periodEnd: Option[com.histmersion.Year] = None,
+      reason: Option[PlaceOverrideInput.Reason] = None,
+      reset: Option[PlaceOverrideInput.Reset] = None,
+      mergeInto: Option[PlaceOverrideInput.MergeInto] = None,
+      remove: Option[PlaceOverrideInput.Remove] = None,
+      pointLat: Option[PlaceOverrideInput.PointLat] = None,
+      pointLon: Option[PlaceOverrideInput.PointLon] = None
   )
   object PlaceOverrideInput:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reset = Reset.T
+    object Reset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeInto = MergeInto.T
+    object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remove = Remove.T
+    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointLat = PointLat.T
+    object PointLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointLon = PointLon.T
+    object PointLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PlaceOverrideInput] = KindlingsSchema
       .derived[PlaceOverrideInput]
       .schema
@@ -71,12 +97,19 @@ object PlacesTools:
 
   /** Input of the `place_names` tool (#987). */
   final case class PlaceNamesInput(
-      placeId: Option[String] = None,
-      name: Option[String] = None,
-      lang: Option[String] = None,
-      remove: Option[Boolean] = None
+      placeId: Option[com.histmersion.domain.catalogue.Place.Id] = None,
+      name: Option[PlaceNamesInput.Name] = None,
+      lang: Option[PlaceNamesInput.Lang] = None,
+      remove: Option[PlaceNamesInput.Remove] = None
   )
   object PlaceNamesInput:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lang = Lang.T
+    object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remove = Remove.T
+    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PlaceNamesInput] = KindlingsSchema
       .derived[PlaceNamesInput]
       .schema

@@ -6,8 +6,13 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 /** `facets` as an agent calls it: one field's values, optionally by prefix. */
-final case class AgentFacetsInput(field: String, prefix: Option[String] = None) derives KindlingsCodecAsObject
+final case class AgentFacetsInput(field: AgentFacetsInput.Field, prefix: Option[AgentFacetsInput.Prefix] = None) derives KindlingsCodecAsObject
 object AgentFacetsInput:
+  type Field = Field.T
+  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prefix = Prefix.T
+  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given Schema[AgentFacetsInput] = KindlingsSchema
     .derived[AgentFacetsInput]
     .schema

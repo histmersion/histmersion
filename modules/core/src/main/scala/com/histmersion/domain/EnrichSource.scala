@@ -23,8 +23,13 @@ object EnrichSource:
   // ── LLM answers (their JSON schemas are what the provider is asked to fill) ─────────────────────
 
   /** A year as the source states it. The model never converts; [[AgentVerify.toSignedYear]] does. */
-  final case class StatedYear(value: Long, unit: String) derives KindlingsCodecAsObject
+  final case class StatedYear(value: StatedYear.Value, unit: StatedYear.Unit) derives KindlingsCodecAsObject
   object StatedYear:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unit = Unit.T
+    object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[StatedYear] = KindlingsSchema
       .derived[StatedYear]
       .schema
@@ -33,21 +38,38 @@ object EnrichSource:
         _.description("BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)")
       )
 
-  final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[String] = None)
+  final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object StatedPeriod:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class Classification(
-      summary: String,
-      topics: List[String] = Nil,
-      regions: List[String] = Nil,
-      tags: List[String] = Nil,
+      summary: Classification.Summary,
+      topics: List[Classification.Topics] = Nil,
+      regions: List[Classification.Regions] = Nil,
+      tags: List[Classification.Tags] = Nil,
       period: Option[StatedPeriod],
-      status: String,
-      statusEvidence: String
+      status: Classification.Status,
+      statusEvidence: Classification.StatusEvidence
   ) derives KindlingsCodecAsObject
   object Classification:
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusEvidence = StatusEvidence.T
+    object StatusEvidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[Classification] = KindlingsSchema
       .derived[Classification]
       .schema
@@ -62,17 +84,32 @@ object EnrichSource:
       .modify(_.statusEvidence)(_.description("Why that status, from the text; empty if unassessed"))
 
   final case class FindingProposal(
-      claim: String,
-      quote: String,
-      place: Option[String],
-      placeKind: Option[String],
+      claim: FindingProposal.Claim,
+      quote: FindingProposal.Quote,
+      place: Option[FindingProposal.Place],
+      placeKind: Option[FindingProposal.PlaceKind],
       start: Option[StatedYear],
       end: Option[StatedYear],
-      periodName: Option[String],
-      tags: List[String] = Nil,
-      confidence: String
+      periodName: Option[FindingProposal.PeriodName],
+      tags: List[FindingProposal.Tags] = Nil,
+      confidence: FindingProposal.Confidence
   ) derives KindlingsCodecAsObject
   object FindingProposal:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = Place.T
+    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceKind = PlaceKind.T
+    object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodName = PeriodName.T
+    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Confidence = Confidence.T
+    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[FindingProposal] = KindlingsSchema
       .derived[FindingProposal]
       .schema
@@ -89,51 +126,91 @@ object EnrichSource:
   final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class Notes(notes: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Notes(notes: Notes.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Notes:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
 
   /** One stretch of the body sent to the findings step; `heading` is the nearest heading above it. */
-  final case class Window(index: Int, heading: Option[String], text: String) derives KindlingsCodecAsObject
+  final case class Window(index: Window.Index, heading: Option[Window.Heading], text: Window.Text) derives KindlingsCodecAsObject
+
+  object Window:
+    type Index = Index.T
+    object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Heading = Heading.T
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `load` records: enough of the source for every later step, and its `updatedAt` for the final patch's
     * precondition.
     */
   final case class Loaded(
-      citekey: String,
-      title: String,
-      authors: List[String],
-      year: Option[Int],
-      venue: Option[String],
-      status: String,
-      hasSummary: Boolean,
-      hasNotes: Boolean,
-      hasPeriod: Boolean,
+      citekey: com.histmersion.domain.library.Citekey,
+      title: Loaded.Title,
+      authors: List[Loaded.Authors],
+      year: Option[com.histmersion.Year],
+      venue: Option[Loaded.Venue],
+      status: Loaded.Status,
+      hasSummary: Loaded.HasSummary,
+      hasNotes: Loaded.HasNotes,
+      hasPeriod: Loaded.HasPeriod,
       period: Option[Period],
-      topics: List[String],
-      regions: List[String],
-      existingClaims: List[String],
-      updatedAt: Option[String],
-      head: String,
+      topics: List[Loaded.Topics],
+      regions: List[Loaded.Regions],
+      existingClaims: List[Loaded.ExistingClaims],
+      updatedAt: Option[Loaded.UpdatedAt],
+      head: Loaded.Head,
       windows: List[Window],
-      tags: List[String] = Nil,
-      doi: Option[String] = None
+      tags: List[Loaded.Tags] = Nil,
+      doi: Option[com.histmersion.domain.library.Doi] = None
   ) derives KindlingsCodecAsObject
+
+  object Loaded:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Venue = Venue.T
+    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasSummary = HasSummary.T
+    object HasSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasNotes = HasNotes.T
+    object HasNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasPeriod = HasPeriod.T
+    object HasPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExistingClaims = ExistingClaims.T
+    object ExistingClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Head = Head.T
+    object Head extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A finding that passed verification, with its quote's match ratio. `placeKind` is the model's judgement of what
     * `place` is (`None` = no hint; absent from checkpoints older than #981).
     */
   final case class VerifiedFinding(
-      claim: String,
-      quote: String,
-      ratio: Double,
-      place: Option[String],
-      start: Option[Long],
-      end: Option[Long],
-      periodName: Option[String],
-      tags: List[String],
-      confidence: String,
+      claim: VerifiedFinding.Claim,
+      quote: VerifiedFinding.Quote,
+      ratio: VerifiedFinding.Ratio,
+      place: Option[VerifiedFinding.Place],
+      start: Option[VerifiedFinding.Start],
+      end: Option[VerifiedFinding.End],
+      periodName: Option[VerifiedFinding.PeriodName],
+      tags: List[VerifiedFinding.Tags],
+      confidence: VerifiedFinding.Confidence,
       placeKind: Option[Geocode.KindHint] = None
   ) derives KindlingsCodecAsObject:
     /** The finding's own period, for a time-aware choice among dated places. */
@@ -143,63 +220,153 @@ object EnrichSource:
       case (None, Some(e))    => Some(Period(e, e))
       case _                  => None
 
+  object VerifiedFinding:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = Ratio.T
+    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = Place.T
+    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodName = PeriodName.T
+    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Confidence = Confidence.T
+    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One window's verified findings. `proposed` = how many the accepted answer held, `quoteFailed` = how many of those
     * quotes were not found in the window (dropped on a last attempt) — what `agent compare` reads the verifier's pass
     * ratio from (None in checkpoints older than #992).
     */
   final case class VerifiedFindings(
       findings: List[VerifiedFinding],
-      proposed: Option[Int] = None,
-      quoteFailed: Option[Int] = None
+      proposed: Option[VerifiedFindings.Proposed] = None,
+      quoteFailed: Option[VerifiedFindings.QuoteFailed] = None
   ) derives KindlingsCodecAsObject
+
+  object VerifiedFindings:
+    type Proposed = Proposed.T
+    object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type QuoteFailed = QuoteFailed.T
+    object QuoteFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the geocoder chose for one finding's place, for a person to audit in the run trace: `placeId`/`label` empty
     * when the name is unknown, `approximate` saying why the point is only near what was asked (a qualifier dropped, a
     * placeholder point).
     */
   final case class GeocodeChoice(
-      claim: String,
-      asked: String,
-      placeId: Option[String],
-      label: Option[String],
-      approximate: Option[String]
+      claim: GeocodeChoice.Claim,
+      asked: GeocodeChoice.Asked,
+      placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+      label: Option[GeocodeChoice.Label],
+      approximate: Option[GeocodeChoice.Approximate]
   ) derives KindlingsCodecAsObject
+
+  object GeocodeChoice:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Asked = Asked.T
+    object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approximate = Approximate.T
+    object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The `geocode` step: the findings with their points, and every choice behind them. */
   final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
 
   /** A classification whose period has been converted to signed years. */
   final case class Classified(
-      summary: String,
-      topics: List[String],
-      regions: List[String],
-      tags: List[String],
+      summary: Classified.Summary,
+      topics: List[Classified.Topics],
+      regions: List[Classified.Regions],
+      tags: List[Classified.Tags],
       period: Option[Period],
-      periodName: Option[String],
+      periodName: Option[Classified.PeriodName],
       status: Source.Status,
-      statusEvidence: String
+      statusEvidence: Classified.StatusEvidence
   ) derives KindlingsCodecAsObject
 
-  final case class Patched(findingsAdded: Int, fieldsSet: List[String], statusProposal: Option[String])
+  object Classified:
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodName = PeriodName.T
+    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusEvidence = StatusEvidence.T
+    object StatusEvidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Patched(findingsAdded: Patched.FindingsAdded, fieldsSet: List[Patched.FieldsSet], statusProposal: Option[Patched.StatusProposal])
       derives KindlingsCodecAsObject
+
+  object Patched:
+    type FindingsAdded = FindingsAdded.T
+    object FindingsAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FieldsSet = FieldsSet.T
+    object FieldsSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusProposal = StatusProposal.T
+    object StatusProposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it could not be
     * (no DOI, upstream off or down); the differences are run warnings, never writes.
     */
-  final case class MetaChecked(checked: Boolean, differences: List[String], note: String = "")
+  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = "")
       derives KindlingsCodecAsObject
 
+  object MetaChecked:
+    type Checked = Checked.T
+    object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Differences = Differences.T
+    object Differences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** What `refs` / `assess` did (or why they were skipped). */
-  final case class Upstreamed(ran: Boolean, summary: String, retracted: Boolean = false) derives KindlingsCodecAsObject
+  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = false) derives KindlingsCodecAsObject
+
+  object Upstreamed:
+    type Ran = Ran.T
+    object Ran extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Retracted = Retracted.T
+    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The `status` step: whether the classify step's status proposal was applied, recorded for a person (`approval` id),
     * or needed nothing.
     */
-  final case class StatusRouted(applied: Option[String], approval: Option[Long], note: String)
+  final case class StatusRouted(applied: Option[StatusRouted.Applied], approval: Option[StatusRouted.Approval], note: StatusRouted.Note)
       derives KindlingsCodecAsObject
 
+  object StatusRouted:
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approval = Approval.T
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The `close` step: the per-source lint, the acquisition item and the log line. */
-  final case class Closed(line: String, lint: List[String], acquire: Option[String]) derives KindlingsCodecAsObject
+  final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives KindlingsCodecAsObject
+
+  object Closed:
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lint = Lint.T
+    object Lint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Acquire = Acquire.T
+    object Acquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure logic ─────────────────────────────────────────────────────────────────────────────────
 
@@ -300,11 +467,19 @@ object EnrichSource:
     * `geocode` step asks later, put while the answer can still be sent back.
     */
   final case class FindingGuards(
-      minPlacedShare: Double,
-      centuryGapYears: Long,
-      pointerPhrases: List[String],
+      minPlacedShare: FindingGuards.MinPlacedShare,
+      centuryGapYears: FindingGuards.CenturyGapYears,
+      pointerPhrases: List[FindingGuards.PointerPhrases],
       resolves: (String, Geocode.KindHint, Option[Period]) => Boolean
   )
+
+  object FindingGuards:
+    type MinPlacedShare = MinPlacedShare.T
+    object MinPlacedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CenturyGapYears = CenturyGapYears.T
+    object CenturyGapYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointerPhrases = PointerPhrases.T
+    object PointerPhrases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val CenturyMention = "(?i)\\bcentur(?:y|ies)\\b|\\b\\d{1,2}\\s*(?:st|nd|rd|th)\\s*c\\.".r
   private val OrdinalDigits = "(?i)\\b(\\d{1,2})\\s*(?:st|nd|rd|th)\\b".r

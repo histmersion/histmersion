@@ -14,7 +14,15 @@ import com.histmersion.api.catalogue.Gazetteer
 object BuiltinGazetteers:
 
   /** A first-party gazetteer: its plugin, the name it registers, and what to call it. */
-  final case class Entry(plugin: String, name: String, title: String)
+  final case class Entry(plugin: Entry.Plugin, name: Entry.Name, title: Entry.Title)
+
+  object Entry:
+    type Plugin = Plugin.T
+    object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val entries: List[Entry] = List(
     Entry("gazetteer-cliopatria", "cliopatria", "Seshat Cliopatria polity polygons"),

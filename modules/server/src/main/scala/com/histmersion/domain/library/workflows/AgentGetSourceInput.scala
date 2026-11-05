@@ -9,11 +9,11 @@ import sttp.tapir.Schema
   * `chars`, `heading`) without a section reads the body — the MCP tool would answer the summary and ignore the slice.
   */
 final case class AgentGetSourceInput(
-    citekey: String,
-    section: Option[String] = None,
-    heading: Option[String] = None,
-    offset: Option[Int] = None,
-    chars: Option[Int] = None
+    citekey: com.histmersion.domain.library.Citekey,
+    section: Option[AgentGetSourceInput.Section] = None,
+    heading: Option[AgentGetSourceInput.Heading] = None,
+    offset: Option[AgentGetSourceInput.Offset] = None,
+    chars: Option[AgentGetSourceInput.Chars] = None
 ) derives KindlingsCodecAsObject:
   def sectionOrBody: Option[String] =
     section
@@ -21,6 +21,15 @@ final case class AgentGetSourceInput(
       .filter(_.nonEmpty)
       .orElse(Option.when(offset.isDefined || chars.isDefined || heading.isDefined)("body"))
 object AgentGetSourceInput:
+  type Section = Section.T
+  object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Heading = Heading.T
+  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offset = Offset.T
+  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Chars = Chars.T
+  object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given Schema[AgentGetSourceInput] = KindlingsSchema
     .derived[AgentGetSourceInput]
     .schema

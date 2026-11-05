@@ -504,4 +504,16 @@ object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),
     * and in all.
     */
-  final case class Snapshot(perManager: Map[String, (Int, Option[Int])], total: Int, totalDays: Option[Int])
+  final case class Snapshot(perManager: Map[Snapshot.PerManagerKey, (Snapshot.PerManagerValuePart1, Option[Snapshot.PerManagerValuePart2])], total: Snapshot.Total, totalDays: Option[Snapshot.TotalDays])
+
+  object Snapshot:
+    type PerManagerKey = PerManagerKey.T
+    object PerManagerKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PerManagerValuePart1 = PerManagerValuePart1.T
+    object PerManagerValuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PerManagerValuePart2 = PerManagerValuePart2.T
+    object PerManagerValuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TotalDays = TotalDays.T
+    object TotalDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

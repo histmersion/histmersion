@@ -32,3 +32,5 @@ final case class Choice(kind: fixture.Choice.Kind)
 object Choice:
   enum Kind:
     case One
+
+final case class Payload(bytes: Array[Byte])

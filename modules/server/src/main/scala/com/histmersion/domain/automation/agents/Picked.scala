@@ -12,7 +12,13 @@ import com.histmersion.api.automation.ModelChains.*
 final case class Picked(
     client: LlmClient,
     billing: Billing,
-    headroomTokens: Option[Long],
+    headroomTokens: Option[Picked.HeadroomTokens],
     headroomUsd: Option[BigDecimal],
-    skipped: List[String]
+    skipped: List[Picked.Skipped]
 )
+
+object Picked:
+  type HeadroomTokens = HeadroomTokens.T
+  object HeadroomTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Skipped = Skipped.T
+  object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

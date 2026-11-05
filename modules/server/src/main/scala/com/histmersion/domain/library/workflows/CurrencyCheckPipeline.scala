@@ -104,6 +104,20 @@ final class CurrencyCheckPipeline(
     Followed(counts.map(_._1).sum, counts.map(_._2).sum, counts.map(_._3).sum)
 
 object CurrencyCheckPipeline:
-  final case class Target(citekey: String, doi: Option[String]) derives KindlingsCodecAsObject
-  final case class Assessed(checked: Int, retracted: List[String]) derives KindlingsCodecAsObject
-  final case class Followed(citing: Int, proposed: Int, queued: Int) derives KindlingsCodecAsObject
+  final case class Target(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]) derives KindlingsCodecAsObject
+  final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
+
+  object Assessed:
+    type Checked = Checked.T
+    object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Retracted = Retracted.T
+    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued) derives KindlingsCodecAsObject
+
+  object Followed:
+    type Citing = Citing.T
+    object Citing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Proposed = Proposed.T
+    object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queued = Queued.T
+    object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

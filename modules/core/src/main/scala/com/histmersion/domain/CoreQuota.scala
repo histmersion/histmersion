@@ -36,23 +36,49 @@ object CoreQuota:
 
   /** The limits Histmersion keeps to (`acquire.core.*`). */
   final case class Limits(
-      perMinute: Int,
-      dailyTokens: Int,
-      searchDailyTokens: Int,
-      lookupCost: Int,
-      searchCost: Int,
-      exhaustedPauseSeconds: Int,
-      maxWaitSeconds: Int
+      perMinute: Limits.PerMinute,
+      dailyTokens: Limits.DailyTokens,
+      searchDailyTokens: Limits.SearchDailyTokens,
+      lookupCost: Limits.LookupCost,
+      searchCost: Limits.SearchCost,
+      exhaustedPauseSeconds: Limits.ExhaustedPauseSeconds,
+      maxWaitSeconds: Limits.MaxWaitSeconds
   ):
     def cost(p: Purpose): Int = p match
       case Purpose.Lookup => lookupCost.max(0)
       case Purpose.Search => searchCost.max(0)
 
+  object Limits:
+    type PerMinute = PerMinute.T
+    object PerMinute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DailyTokens = DailyTokens.T
+    object DailyTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchDailyTokens = SearchDailyTokens.T
+    object SearchDailyTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LookupCost = LookupCost.T
+    object LookupCost extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchCost = SearchCost.T
+    object SearchCost extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExhaustedPauseSeconds = ExhaustedPauseSeconds.T
+    object ExhaustedPauseSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxWaitSeconds = MaxWaitSeconds.T
+    object MaxWaitSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** CORE asked not to be called until `until`; `why` says what it answered. */
-  final case class Block(until: Instant, why: String)
+  final case class Block(until: Instant, why: Block.Why)
+
+  object Block:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the last answer's rate-limit headers said. */
-  final case class Window(limit: Option[Int], remaining: Option[Int], at: Instant)
+  final case class Window(limit: Option[Window.Limit], remaining: Option[Window.Remaining], at: Instant)
+
+  object Window:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remaining = Remaining.T
+    object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The budget's state. `recent` — the slots of the calls of the last minute — lives in memory only: a restart forgets
     * at most one minute of pacing, which CORE's own 429 then covers. The rest is kept in the database, so a restart
@@ -60,8 +86,8 @@ object CoreQuota:
     */
   final case class State(
       day: LocalDate,
-      lookupTokens: Int,
-      searchTokens: Int,
+      lookupTokens: State.LookupTokens,
+      searchTokens: State.SearchTokens,
       block: Option[Block],
       window: Option[Window],
       recent: Vector[Instant] = Vector.empty
@@ -72,6 +98,11 @@ object CoreQuota:
       case Purpose.Search => searchTokens
 
   object State:
+    type LookupTokens = LookupTokens.T
+    object LookupTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchTokens = SearchTokens.T
+    object SearchTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def fresh(day: LocalDate): State = State(day, 0, 0, None, None)
 
   /** Why a call is not made. */
@@ -90,7 +121,11 @@ object CoreQuota:
           "acquire.core.max-wait-seconds"
 
   /** A call may go out after `waitMs`; `state` already counts it. */
-  final case class Grant(state: State, waitMs: Long)
+  final case class Grant(state: State, waitMs: Grant.WaitMs)
+
+  object Grant:
+    type WaitMs = WaitMs.T
+    object WaitMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Minute = 60_000L
 

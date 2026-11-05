@@ -28,12 +28,12 @@ object AgentProposals:
     */
   final case class Proposal(
       kind: Approval.Kind,
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       status: Option[Source.Status] = None,
       edgeKind: Option[Edge.Kind] = None,
-      target: Option[String] = None,
-      evidence: String = "",
-      quote: Option[String] = None
+      target: Option[Proposal.Target] = None,
+      evidence: Proposal.Evidence = "",
+      quote: Option[Proposal.Quote] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
@@ -52,6 +52,14 @@ object AgentProposals:
         com.histmersion.api.library.Source.Patch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target
         yield com.histmersion.api.library.Edge.Input(t, k)).toList)))
       case _ => com.histmersion.api.library.Source.Patch()
+
+  object Proposal:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Evidence = Evidence.T
+    object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -87,15 +95,28 @@ object AgentProposals:
 
   /** A change a model proposes, as it states it. */
   final case class ProposalAnswer(
-      kind: String,
-      citekey: String,
-      status: Option[String] = None,
-      edgeKind: Option[String] = None,
-      target: Option[String] = None,
-      evidence: String,
-      quote: String
+      kind: ProposalAnswer.Kind,
+      citekey: com.histmersion.domain.library.Citekey,
+      status: Option[ProposalAnswer.Status] = None,
+      edgeKind: Option[ProposalAnswer.EdgeKind] = None,
+      target: Option[ProposalAnswer.Target] = None,
+      evidence: ProposalAnswer.Evidence,
+      quote: ProposalAnswer.Quote
   ) derives KindlingsCodecAsObject
   object ProposalAnswer:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EdgeKind = EdgeKind.T
+    object EdgeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Evidence = Evidence.T
+    object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ProposalAnswer] = KindlingsSchema
       .derived[ProposalAnswer]
       .schema

@@ -47,13 +47,20 @@ object HeldPlace:
 
   /** One name: `manual` when a person added it. */
   final case class Name(
-      name: String,
-      lang: String,
+      name: Name.Value,
+      lang: Name.Lang,
       period: Option[com.histmersion.api.catalogue.Period],
-      manual: Boolean
+      manual: Name.Manual
   )
 
   object Name:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lang = Lang.T
+    object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Manual = Manual.T
+    object Manual extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = false)
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */

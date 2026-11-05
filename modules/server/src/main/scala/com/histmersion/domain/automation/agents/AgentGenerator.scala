@@ -23,9 +23,17 @@ object AgentGenerator:
   val QuotaUrlEnv = "HISTMERSION_QUOTA_URL"
 
   /** The canonical inputs, loaded and checked. */
-  final case class Defs(agents: List[AgentDef], fragments: Map[String, String], skills: Map[String, SkillDef]):
+  final case class Defs(agents: List[AgentDef], fragments: Map[Defs.FragmentsKey, Defs.FragmentsValue], skills: Map[Defs.SkillsKey, SkillDef]):
     def system(d: AgentDef, style: ToolStyle): String =
       AgentDefinitions.system(d, fragments, skills, style).fold(m => throw IllegalStateException(m), identity)
+
+  object Defs:
+    type FragmentsKey = FragmentsKey.T
+    object FragmentsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FragmentsValue = FragmentsValue.T
+    object FragmentsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkillsKey = SkillsKey.T
+    object SkillsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a placeholder naming no
     * MCP tool (`known`), a skill whose name or description runtimes reject.

@@ -208,8 +208,16 @@ object AttestationPlan:
   /** An attestation of a pair tried against the body one alternative keeps. */
   final private case class AnchorTry(
       att: com.histmersion.api.exchange.Bundle.Attestation,
-      foreign: Boolean,
+      foreign: AnchorTry.Foreign,
       anchor: Option[Anchor],
-      chunkOrd: Option[Int],
-      issue: Option[String]
+      chunkOrd: Option[AnchorTry.ChunkOrd],
+      issue: Option[AnchorTry.Issue]
   )
+
+  object AnchorTry:
+    type Foreign = Foreign.T
+    object Foreign extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChunkOrd = ChunkOrd.T
+    object ChunkOrd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Issue = Issue.T
+    object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

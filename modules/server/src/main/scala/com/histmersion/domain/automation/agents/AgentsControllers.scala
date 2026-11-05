@@ -551,14 +551,28 @@ final class AgentsControllers(
     */
   final case class Prepared(
       pipeline: Pipeline,
-      target: String,
-      model: Option[String],
-      usd: Double,
-      tokens: Long,
+      target: Prepared.Target,
+      model: Option[Prepared.Model],
+      usd: Prepared.Usd,
+      tokens: Prepared.Tokens,
       params: RunParams,
-      goal: Option[String],
-      dryRun: Boolean
+      goal: Option[Prepared.Goal],
+      dryRun: Prepared.DryRun
   )
+
+  object Prepared:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usd = Usd.T
+    object Usd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tokens = Tokens.T
+    object Tokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Everything [[startRunAs]] checks before it queues a run — pipeline, target, models, options, goal, budgets —
     * without creating it.

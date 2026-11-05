@@ -212,12 +212,12 @@ object ArticleTools:
   // The write tools reuse the REST DTOs verbatim, so the MCP schema and the HTTP body are the same shape — one
   // contract, two transports.
   final case class ListArticlesInput(
-      kind: Option[String] = None,
-      query: Option[String] = None,
-      tag: Option[String] = None,
-      title: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      kind: Option[ListArticlesInput.Kind] = None,
+      query: Option[ListArticlesInput.Query] = None,
+      tag: Option[ListArticlesInput.Tag] = None,
+      title: Option[ListArticlesInput.Title] = None,
+      limit: Option[ListArticlesInput.Limit] = None,
+      offset: Option[ListArticlesInput.Offset] = None
   ) derives KindlingsCodecAsObject:
     /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the article's own full
       * text — see [[Api.ArticleQuery]].
@@ -225,6 +225,19 @@ object ArticleTools:
     def toQuery: Api.ArticleQuery =
       Api.ArticleQuery(Filter.of(tags = tag.toList, limit = limit, offset = offset, title = title), kind, query)
   object ListArticlesInput:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tag = Tag.T
+    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ListArticlesInput] = KindlingsSchema
       .derived[ListArticlesInput]
       .schema
@@ -233,8 +246,13 @@ object ArticleTools:
       .modify(_.tag)(_.description("Only articles citing a source that carries this tag"))
       .modify(_.title)(_.description("Case-insensitive substring of the article's title"))
 
-  final case class GetArticleInput(slug: String, parts: Option[String] = None) derives KindlingsCodecAsObject
+  final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Parts = Parts.T
+    object Parts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GetArticleInput] = KindlingsSchema
       .derived[GetArticleInput]
       .schema
@@ -271,15 +289,21 @@ object ArticleTools:
   def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): String =
     articles.review(in.slug).fold(McpOut.refusal, Article.ReviewView.markdown)
 
-  final case class ArticleReviewInput(slug: String) derives KindlingsCodecAsObject
+  final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives KindlingsCodecAsObject
   object ArticleReviewInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticleReviewInput] = KindlingsSchema
       .derived[ArticleReviewInput]
       .schema
       .modify(_.slug)(_.description("The article's slug"))
 
-  final case class ArticleCoverageInput(slug: String) derives KindlingsCodecAsObject
+  final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives KindlingsCodecAsObject
   object ArticleCoverageInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticleCoverageInput] = KindlingsSchema
       .derived[ArticleCoverageInput]
       .schema
@@ -302,12 +326,19 @@ object ArticleTools:
       .fold(McpOut.refusal, Article.Edits.markdown)
 
   final case class CheckEditsInput(
-      slug: String,
+      slug: CheckEditsInput.Slug,
       edits: List[Article.Edits.EditAnswer] = Nil,
-      body: Option[String] = None,
-      kind: Option[String] = None
+      body: Option[CheckEditsInput.Body] = None,
+      kind: Option[CheckEditsInput.Kind] = None
   ) derives KindlingsCodecAsObject
   object CheckEditsInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[CheckEditsInput] = KindlingsSchema
       .derived[CheckEditsInput]
       .schema
@@ -320,16 +351,26 @@ object ArticleTools:
         )
       )
 
-  final case class PutArticleInput(slug: String, article: Article.Put, strict: Boolean = false)
+  final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = false)
   object PutArticleInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Strict = Strict.T
+    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
       .schema
       .modify(_.strict)(_.description(com.histmersion.domain.library.LibraryTools.StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: String, patch: Article.Patch, strict: Boolean = false)
+  final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = false)
   object PatchArticleInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Strict = Strict.T
+    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]
       .schema
@@ -337,18 +378,30 @@ object ArticleTools:
     given Codec.AsObject[PatchArticleInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
-  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ExportArticleInput(slug: ExportArticleInput.Slug) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ExportArticleInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class ArticleVersionsInput(slug: String) derives KindlingsCodecAsObject
+  final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticleVersionsInput] = KindlingsSchema
       .derived[ArticleVersionsInput]
       .schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
 
-  final case class ArticleVersionInput(slug: String, versionId: Long) derives KindlingsCodecAsObject
+  final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId) derives KindlingsCodecAsObject
   object ArticleVersionInput:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type VersionId = VersionId.T
+    object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticleVersionInput] = KindlingsSchema
       .derived[ArticleVersionInput]
       .schema

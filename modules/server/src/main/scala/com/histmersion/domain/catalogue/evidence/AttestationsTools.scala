@@ -17,14 +17,25 @@ object AttestationsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class AttestationsInput(
-      id: Option[Long] = None,
-      citekey: Option[String] = None,
-      targetType: Option[String] = None,
-      targetId: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      id: Option[AttestationsInput.Id] = None,
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      targetType: Option[AttestationsInput.TargetType] = None,
+      targetId: Option[AttestationsInput.TargetId] = None,
+      limit: Option[AttestationsInput.Limit] = None,
+      offset: Option[AttestationsInput.Offset] = None
   ) derives KindlingsCodecAsObject
   object AttestationsInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetType = TargetType.T
+    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetId = TargetId.T
+    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[AttestationsInput] = KindlingsSchema
       .derived[AttestationsInput]
       .schema
@@ -34,22 +45,49 @@ object AttestationsTools:
       .modify(_.targetId)(_.description("Filter by target entity id"))
 
   final case class AttestationPutInput(
-      citekey: String,
-      targetType: String,
-      targetId: String,
-      quote: Option[String] = None,
-      prefix: Option[String] = None,
-      suffix: Option[String] = None,
-      charStart: Option[Int] = None,
-      charEnd: Option[Int] = None,
-      chunkOrd: Option[Int] = None,
-      page: Option[String] = None,
-      canvas: Option[String] = None,
-      xywh: Option[String] = None,
-      ctsUrn: Option[String] = None,
-      note: Option[String] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      targetType: AttestationPutInput.TargetType,
+      targetId: AttestationPutInput.TargetId,
+      quote: Option[AttestationPutInput.Quote] = None,
+      prefix: Option[AttestationPutInput.Prefix] = None,
+      suffix: Option[AttestationPutInput.Suffix] = None,
+      charStart: Option[AttestationPutInput.CharStart] = None,
+      charEnd: Option[AttestationPutInput.CharEnd] = None,
+      chunkOrd: Option[AttestationPutInput.ChunkOrd] = None,
+      page: Option[AttestationPutInput.Page] = None,
+      canvas: Option[AttestationPutInput.Canvas] = None,
+      xywh: Option[AttestationPutInput.Xywh] = None,
+      ctsUrn: Option[AttestationPutInput.CtsUrn] = None,
+      note: Option[AttestationPutInput.Note] = None
   )
   object AttestationPutInput:
+    type TargetType = TargetType.T
+    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetId = TargetId.T
+    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Prefix = Prefix.T
+    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Suffix = Suffix.T
+    object Suffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CharStart = CharStart.T
+    object CharStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CharEnd = CharEnd.T
+    object CharEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChunkOrd = ChunkOrd.T
+    object ChunkOrd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Page = Page.T
+    object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Canvas = Canvas.T
+    object Canvas extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Xywh = Xywh.T
+    object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CtsUrn = CtsUrn.T
+    object CtsUrn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[AttestationPutInput] = KindlingsSchema
       .derived[AttestationPutInput]
       .schema
@@ -69,8 +107,11 @@ object AttestationsTools:
     given Codec.AsObject[AttestationPutInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
 
-  final case class DeleteAttestationInput(id: Long) derives KindlingsCodecAsObject
+  final case class DeleteAttestationInput(id: DeleteAttestationInput.Id) derives KindlingsCodecAsObject
   object DeleteAttestationInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[DeleteAttestationInput] = KindlingsSchema
       .derived[DeleteAttestationInput]
       .schema

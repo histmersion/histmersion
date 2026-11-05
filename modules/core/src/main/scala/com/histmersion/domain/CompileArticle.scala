@@ -29,13 +29,24 @@ object CompileArticle:
   // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
   final case class ClaimAnswer(
-      claim: String,
-      quote: String,
-      date: Option[String] = None,
-      place: Option[String] = None,
-      confidence: String
+      claim: ClaimAnswer.Claim,
+      quote: ClaimAnswer.Quote,
+      date: Option[ClaimAnswer.Date] = None,
+      place: Option[ClaimAnswer.Place] = None,
+      confidence: ClaimAnswer.Confidence
   ) derives KindlingsCodecAsObject
   object ClaimAnswer:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Date = Date.T
+    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = Place.T
+    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Confidence = Confidence.T
+    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ClaimAnswer] = KindlingsSchema
       .derived[ClaimAnswer]
       .schema
@@ -47,9 +58,14 @@ object CompileArticle:
       .modify(_.place)(_.description("The place the claim is about, as the record names it; null if none"))
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the record states it"))
 
-  final case class ExtractAnswer(relevant: Boolean, reason: String, claims: List[ClaimAnswer] = Nil)
+  final case class ExtractAnswer(relevant: ExtractAnswer.Relevant, reason: ExtractAnswer.Reason, claims: List[ClaimAnswer] = Nil)
       derives KindlingsCodecAsObject
   object ExtractAnswer:
+    type Relevant = Relevant.T
+    object Relevant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ExtractAnswer] = KindlingsSchema
       .derived[ExtractAnswer]
       .schema
@@ -61,18 +77,34 @@ object CompileArticle:
 
   /** A claim whose quote code found in the record. `ratio` is the OCR-tolerant match share. */
   final case class Claim(
-      citekey: String,
-      claim: String,
-      quote: String,
-      date: Option[String],
-      place: Option[String],
+      citekey: com.histmersion.domain.library.Citekey,
+      claim: Claim.Value,
+      quote: Claim.Quote,
+      date: Option[Claim.Date],
+      place: Option[Claim.Place],
       confidence: Confidence,
-      ratio: Double
+      ratio: Claim.Ratio
   ) derives KindlingsCodecAsObject
 
+  object Claim:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Date = Date.T
+    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = Place.T
+    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = Ratio.T
+    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: String, claims: List[Claim], notUsed: Option[String])
+  final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Extracted.NotUsed])
       derives KindlingsCodecAsObject
+
+  object Extracted:
+    type NotUsed = NotUsed.T
+    object NotUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
     * in the vocabulary; a source judged irrelevant must say why. Unverifiable claims send the answer back; on the last
@@ -125,29 +157,47 @@ object CompileArticle:
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
 
   /** What the database says about one source the filter returned. */
-  final case class SourceFact(citekey: String, title: String, year: Option[Int], status: Source.Status)
+  final case class SourceFact(citekey: com.histmersion.domain.library.Citekey, title: com.histmersion.domain.Title, year: Option[com.histmersion.Year], status: Source.Status)
       derives KindlingsCodecAsObject
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
-  final case class EdgeFact(from: String, kind: String, to: String) derives KindlingsCodecAsObject
+  final case class EdgeFact(from: com.histmersion.domain.library.Citekey, kind: EdgeFact.Kind, to: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
+
+  object EdgeFact:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The evidence model: the sources with their statuses and claim counts (due weight), the disagreement edges among
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
     * for the `_Method_` note.
     */
   /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: String, reason: String) derives KindlingsCodecAsObject
+  final case class NotUsed(citekey: com.histmersion.domain.library.Citekey, reason: NotUsed.Reason) derives KindlingsCodecAsObject
+
+  object NotUsed:
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Evidence(
-      filter: String,
+      filter: Evidence.Filter,
       total: com.histmersion.RowCount,
       sources: List[SourceFact],
-      claims: Map[String, Int],
+      claims: Map[Evidence.ClaimsKey, Evidence.ClaimsValue],
       edges: List[EdgeFact],
-      disputed: List[String],
+      disputed: List[Evidence.Disputed],
       notUsed: List[NotUsed]
   ) derives KindlingsCodecAsObject:
     def used: List[String] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
+
+  object Evidence:
+    type Filter = Filter.T
+    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClaimsKey = ClaimsKey.T
+    object ClaimsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClaimsValue = ClaimsValue.T
+    object ClaimsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Disputed = Disputed.T
+    object Disputed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The statuses a first citation must state (writing guide rule 2). */
   val StatedStatuses: Set[Source.Status] = Set(
@@ -214,13 +264,22 @@ object CompileArticle:
   // ── phase 3: the draft ──────────────────────────────────────────────────────────────────────────
 
   final case class DraftAnswer(
-      title: String,
-      summary: String,
-      body: String,
-      section: Option[String] = None,
+      title: DraftAnswer.Title,
+      summary: DraftAnswer.Summary,
+      body: DraftAnswer.Body,
+      section: Option[DraftAnswer.Section] = None,
       reasons: List[Coverage.Reason] = Nil
   ) derives KindlingsCodecAsObject
   object DraftAnswer:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Section = Section.T
+    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[DraftAnswer] = KindlingsSchema
       .derived[DraftAnswer]
       .schema

@@ -24,7 +24,15 @@ import java.util.Locale
 object MediaMatch:
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
-  final case class PlaceInfo(id: String, label: String, keys: Set[String], period: Option[Period])
+  final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
+
+  object PlaceInfo:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Keys = Keys.T
+    object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Uncertain =
     List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")

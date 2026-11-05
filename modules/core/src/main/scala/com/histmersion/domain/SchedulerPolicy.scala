@@ -88,25 +88,53 @@ object SchedulerPolicy:
     * a daily cap, an item it waits for); `managerCap` = the manager's own saved `maxRuns`, if a person set one.
     */
   final case class Candidate(
-      id: Long,
-      managerId: String,
-      kind: String,
-      target: String,
-      goal: Option[String] = None,
-      goalPriority: Int = 0,
+      id: Candidate.Id,
+      managerId: Candidate.ManagerId,
+      kind: Candidate.Kind,
+      target: Candidate.Target,
+      goal: Option[Candidate.Goal] = None,
+      goalPriority: Candidate.GoalPriority = 0,
       goalCreated: Option[Instant] = None,
-      gathering: Boolean = false,
-      itemPriority: Int = 0,
+      gathering: Candidate.Gathering = false,
+      itemPriority: Candidate.ItemPriority = 0,
       waitingSince: Instant = Instant.EPOCH,
-      pools: List[String] = Nil,
+      pools: List[Candidate.Pools] = Nil,
       block: Option[Block] = None,
-      person: Boolean = false
+      person: Candidate.Person = false
   ):
     def jobType: JobType = JobType.of(kind)
     def label: String = s"#$id $kind $target"
 
+  object Candidate:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GoalPriority = GoalPriority.T
+    object GoalPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Gathering = Gathering.T
+    object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemPriority = ItemPriority.T
+    object ItemPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pools = Pools.T
+    object Pools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Person = Person.T
+    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** Why an item cannot start now whatever the order: a code and a sentence. */
-  final case class Block(code: String, why: String)
+  final case class Block(code: Block.Code, why: Block.Why)
+
+  object Block:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The [[Block]] code of an item whose role chains are all below their plans' floors. */
   val QuotaBlock = "quota"
@@ -129,37 +157,85 @@ object SchedulerPolicy:
     * starts, newest first.
     */
   final case class Resources(
-      maxRuns: Int,
-      occupied: Int,
-      poolCap: Map[String, Int] = Map.empty,
-      poolUsed: Map[String, Int] = Map.empty,
-      managerCap: Map[String, Int] = Map.empty,
-      managerUsed: Map[String, Int] = Map.empty,
-      gatheringUsed: Int = 0,
+      maxRuns: Resources.MaxRuns,
+      occupied: Resources.Occupied,
+      poolCap: Map[Resources.PoolCapKey, Resources.PoolCapValue] = Map.empty,
+      poolUsed: Map[Resources.PoolUsedKey, Resources.PoolUsedValue] = Map.empty,
+      managerCap: Map[Resources.ManagerCapKey, Resources.ManagerCapValue] = Map.empty,
+      managerUsed: Map[Resources.ManagerUsedKey, Resources.ManagerUsedValue] = Map.empty,
+      gatheringUsed: Resources.GatheringUsed = 0,
       stop: Option[Block] = None,
       recent: List[JobType] = Nil
   ):
     def room: Int = math.max(0, maxRuns - occupied)
 
+  object Resources:
+    type MaxRuns = MaxRuns.T
+    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Occupied = Occupied.T
+    object Occupied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PoolCapKey = PoolCapKey.T
+    object PoolCapKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PoolCapValue = PoolCapValue.T
+    object PoolCapValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PoolUsedKey = PoolUsedKey.T
+    object PoolUsedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PoolUsedValue = PoolUsedValue.T
+    object PoolUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerCapKey = ManagerCapKey.T
+    object ManagerCapKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerCapValue = ManagerCapValue.T
+    object ManagerCapValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerUsedKey = ManagerUsedKey.T
+    object ManagerUsedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerUsedValue = ManagerUsedValue.T
+    object ManagerUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GatheringUsed = GatheringUsed.T
+    object GatheringUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The scheduler's settings ([[AgentSchedulerConfig]] parsed). */
   final case class Settings(
       strategy: Strategy,
-      agingHours: Int = 24,
-      maxWaitHours: Int = 72,
-      minShare: Double = 0.05,
-      weights: Map[JobType, Int] = Map.empty,
-      typePriority: Map[JobType, Int] = Map.empty,
-      gatheringSlots: Int = 1
+      agingHours: Settings.AgingHours = 24,
+      maxWaitHours: Settings.MaxWaitHours = 72,
+      minShare: Settings.MinShare = 0.05,
+      weights: Map[JobType, Settings.WeightsValue] = Map.empty,
+      typePriority: Map[JobType, Settings.TypePriorityValue] = Map.empty,
+      gatheringSlots: Settings.GatheringSlots = 1
   ):
     def weight(t: JobType): Int = math.max(0, weights.getOrElse(t, 1))
     def priorityOf(t: JobType): Int = typePriority.getOrElse(t, 0)
+
+  object Settings:
+    type AgingHours = AgingHours.T
+    object AgingHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxWaitHours = MaxWaitHours.T
+    object MaxWaitHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinShare = MinShare.T
+    object MinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WeightsValue = WeightsValue.T
+    object WeightsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TypePriorityValue = TypePriorityValue.T
+    object TypePriorityValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GatheringSlots = GatheringSlots.T
+    object GatheringSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── scoring ────────────────────────────────────────────────────────────────────────────────────
 
   /** A candidate with what the pass computed: the hours it waited, its aging levels, its effective goal priority (the
     * goal's plus aging), and whether it waited past `max-wait-hours`.
     */
-  final case class Scored(c: Candidate, waitedMinutes: Long, aging: Int, effective: Int, overdue: Boolean)
+  final case class Scored(c: Candidate, waitedMinutes: Scored.WaitedMinutes, aging: Scored.Aging, effective: Scored.Effective, overdue: Scored.Overdue)
+
+  object Scored:
+    type WaitedMinutes = WaitedMinutes.T
+    object WaitedMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Aging = Aging.T
+    object Aging extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Effective = Effective.T
+    object Effective extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Overdue = Overdue.T
+    object Overdue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def score(c: Candidate, s: Settings, now: Instant): Scored =
     val mins = math.max(0L, Duration.between(c.waitingSince, now).toMinutes)
@@ -185,7 +261,11 @@ object SchedulerPolicy:
   /** What a pass has decided so far (the strategy's view): the starts per type, counted from the recent ones plus this
     * pass's.
     */
-  final case class PassState(started: Map[JobType, Int], admitted: List[Scored])
+  final case class PassState(started: Map[JobType, PassState.StartedValue], admitted: List[Scored])
+
+  object PassState:
+    type StartedValue = StartedValue.T
+    object StartedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A strategy picks the next candidate from those that may still start, and says why. The rest of the pass — the
     * resources, aging, max wait, minimum shares, the gathering places and the explanations — is the same for every
@@ -263,7 +343,17 @@ object SchedulerPolicy:
   /** Why a candidate did not start: a code ([[Code]]), a sentence, the items it waits behind (labels), and its place in
     * the order (1 = next).
     */
-  final case class Wait(code: String, why: String, behind: List[String] = Nil, position: Int = 0)
+  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = 0)
+
+  object Wait:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Behind = Behind.T
+    object Behind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Position = Position.T
+    object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Code:
     val Blocked = "blocked"
@@ -276,8 +366,12 @@ object SchedulerPolicy:
   /** What one pass decided: the items started (with why they were chosen), the ones that wait (why), and the order the
     * waiting ones would start in.
     */
-  final case class Decision(started: List[(Scored, String)], waiting: List[(Scored, Wait)]):
+  final case class Decision(started: List[(Scored, Decision.StartedPart2)], waiting: List[(Scored, Wait)]):
     def waitOf(id: Long): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
+
+  object Decision:
+    type StartedPart2 = StartedPart2.T
+    object StartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Does a job type with work need its minimum share now: among the last ⌈1/minShare⌉ starts (the recent ones, newest
     * first, and this pass's) none was of type `t` — and that many starts have been made.

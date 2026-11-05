@@ -806,7 +806,7 @@ final class AcquisitionControllers(
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 
-  final private case class Target(doi: Option[String], citekey: Option[String])
+  final private case class Target(doi: Option[com.histmersion.domain.library.Doi], citekey: Option[com.histmersion.domain.library.Citekey])
 
   /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the writes),
     * whichever of the two the caller happened to give us.

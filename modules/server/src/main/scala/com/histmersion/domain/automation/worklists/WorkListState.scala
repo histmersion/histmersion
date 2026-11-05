@@ -16,7 +16,7 @@ import java.time.{Instant, ZoneOffset}
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times
   * read as `to_char` writes them (UTC, microseconds).
   */
-final case class WorkListState(items: Vector[QueueItem], lastId: Int):
+final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.LastId):
 
   def listed(kind: Kind, scope: QueueScope): Vector[QueueItem] =
     val ofKind = items.filter(_.list == kind.label)
@@ -66,6 +66,9 @@ final case class WorkListState(items: Vector[QueueItem], lastId: Int):
   def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
 
 object WorkListState:
+  type LastId = LastId.T
+  object LastId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: WorkListState = WorkListState(Vector.empty, 0)
 
   private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)

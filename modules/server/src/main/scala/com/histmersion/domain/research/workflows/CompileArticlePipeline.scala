@@ -362,22 +362,54 @@ object CompileArticlePipeline:
     * and records (#958); `reasons` the reasons the article stores already.
     */
   final case class Snap(
-      slug: String,
+      slug: Snap.Slug,
       mode: DraftMode,
-      title: String,
-      kind: String,
-      body: String,
-      updatedAt: Option[String],
-      query: Option[String],
-      topics: List[String],
-      tags: List[String],
+      title: Snap.Title,
+      kind: Snap.Kind,
+      body: Snap.Body,
+      updatedAt: Option[Snap.UpdatedAt],
+      query: Option[Snap.Query],
+      topics: List[Snap.Topics],
+      tags: List[Snap.Tags],
       filter: Option[Article.Filter] = None,
       reasons: List[Coverage.Reason] = Nil
   ) derives KindlingsCodecAsObject
 
+  object Snap:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
-  final case class Found(filter: String, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[String])
+  final case class Found(filter: Found.Filter, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[Found.ToExtract])
       derives KindlingsCodecAsObject
 
+  object Found:
+    type Filter = Filter.T
+    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToExtract = ToExtract.T
+    object ToExtract extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
-  final case class Written(written: Boolean, why: String, previousVersion: Option[Long]) derives KindlingsCodecAsObject
+  final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
+
+  object Written:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PreviousVersion = PreviousVersion.T
+    object PreviousVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

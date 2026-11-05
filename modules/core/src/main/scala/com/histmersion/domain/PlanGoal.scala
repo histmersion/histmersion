@@ -19,9 +19,18 @@ object PlanGoal:
 
   // ── the model's answer ──────────────────────────────────────────────────────────────────────────
 
-  final case class SubGoalAnswer(slug: String, title: String, notes: Option[String] = None, tags: List[String] = Nil)
+  final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
       derives KindlingsCodecAsObject
   object SubGoalAnswer:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SubGoalAnswer] = KindlingsSchema
       .derived[SubGoalAnswer]
       .schema
@@ -30,8 +39,11 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
-  final case class WorkAnswer(doi: String, why: String) derives KindlingsCodecAsObject
+  final case class WorkAnswer(doi: com.histmersion.domain.library.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
   object WorkAnswer:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[WorkAnswer] = KindlingsSchema
       .derived[WorkAnswer]
       .schema
@@ -39,12 +51,17 @@ object PlanGoal:
       .modify(_.why)(_.description("Why this work matters for the goal, in one sentence"))
 
   final case class PlanAnswer(
-      rationale: String,
+      rationale: PlanAnswer.Rationale,
       subGoals: List[SubGoalAnswer] = Nil,
-      queries: List[String] = Nil,
+      queries: List[PlanAnswer.Queries] = Nil,
       works: List[WorkAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object PlanAnswer:
+    type Rationale = Rationale.T
+    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PlanAnswer] = KindlingsSchema
       .derived[PlanAnswer]
       .schema
@@ -55,19 +72,41 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
-  final case class ProposedWork(doi: String, why: String) derives KindlingsCodecAsObject
+  final case class ProposedWork(doi: com.histmersion.domain.library.Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
+
+  object ProposedWork:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
-      rationale: String,
+      rationale: Proposed.Rationale,
       subGoals: List[PlannedGoal],
-      queries: List[String],
+      queries: List[Proposed.Queries],
       works: List[ProposedWork],
-      dropped: List[String]
+      dropped: List[Proposed.Dropped]
   ) derives KindlingsCodecAsObject
 
+  object Proposed:
+    type Rationale = Rationale.T
+    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dropped = Dropped.T
+    object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The caps on a plan (config `agents.plan.*`). */
-  final case class Caps(subGoals: Int, queries: Int, works: Int, queryChars: Int)
+  final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+
+  object Caps:
+    type SubGoals = SubGoals.T
+    object SubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Works = Works.T
+    object Works extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type QueryChars = QueryChars.T
+    object QueryChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Check a plan answer. Problems a retry can fix (an invalid slug or DOI, an empty title, a cap exceeded, nothing
     * proposed) send it back; things a retry cannot change (a slug that is already a goal, a query the goal already has,
@@ -154,14 +193,26 @@ object PlanGoal:
     * open access or retracted.
     */
   final case class Work(
-      title: Option[String],
-      year: Option[Int],
-      authors: List[String],
-      citekey: Option[String],
-      inDb: Boolean,
-      isOa: Boolean,
-      isRetracted: Boolean
+      title: Option[Work.Title],
+      year: Option[com.histmersion.Year],
+      authors: List[Work.Authors],
+      citekey: Option[com.histmersion.domain.library.Citekey],
+      inDb: Work.InDb,
+      isOa: Work.IsOa,
+      isRetracted: Work.IsRetracted
   )
+
+  object Work:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InDb = InDb.T
+    object InDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsOa = IsOa.T
+    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsRetracted = IsRetracted.T
+    object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = String => Either[String, Work]

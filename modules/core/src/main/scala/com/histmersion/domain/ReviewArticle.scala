@@ -101,9 +101,14 @@ object ReviewArticle:
     * read a slice) and the sentence copied from it. Code checks the quote is in that record before the fixer sees it,
     * so the fixer can act on it without searching again.
     */
-  final case class EvidenceAnswer(citekey: String, offset: Option[Int] = None, quote: String)
+  final case class EvidenceAnswer(citekey: com.histmersion.domain.library.Citekey, offset: Option[EvidenceAnswer.Offset] = None, quote: EvidenceAnswer.Quote)
       derives KindlingsCodecAsObject
   object EvidenceAnswer:
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[EvidenceAnswer] = KindlingsSchema
       .derived[EvidenceAnswer]
       .schema
@@ -122,16 +127,31 @@ object ReviewArticle:
     "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)"
 
   final case class FindingAnswer(
-      severity: String,
-      kind: String,
-      where: String,
-      quote: String,
-      problem: String,
-      fix: String,
+      severity: FindingAnswer.Severity,
+      kind: FindingAnswer.Kind,
+      where: FindingAnswer.Where,
+      quote: FindingAnswer.Quote,
+      problem: FindingAnswer.Problem,
+      fix: FindingAnswer.Fix,
       evidence: List[EvidenceAnswer] = Nil,
-      pair: Option[String] = None
+      pair: Option[FindingAnswer.Pair] = None
   ) derives KindlingsCodecAsObject
   object FindingAnswer:
+    type Severity = Severity.T
+    object Severity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pair = Pair.T
+    object Pair extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[FindingAnswer] = KindlingsSchema
       .derived[FindingAnswer]
       .schema
@@ -157,15 +177,28 @@ object ReviewArticle:
 
   /** A cold reader's finding: the same, with no evidence — the reader sees no source. */
   final case class ReaderFindingAnswer(
-      severity: String,
-      kind: String,
-      where: String,
-      quote: String,
-      problem: String,
-      fix: String
+      severity: ReaderFindingAnswer.Severity,
+      kind: ReaderFindingAnswer.Kind,
+      where: ReaderFindingAnswer.Where,
+      quote: ReaderFindingAnswer.Quote,
+      problem: ReaderFindingAnswer.Problem,
+      fix: ReaderFindingAnswer.Fix
   ) derives KindlingsCodecAsObject:
     def asFinding: FindingAnswer = FindingAnswer(severity, kind, where, quote, problem, fix)
   object ReaderFindingAnswer:
+    type Severity = Severity.T
+    object Severity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ReaderFindingAnswer] = KindlingsSchema
       .derived[ReaderFindingAnswer]
       .schema
@@ -177,15 +210,24 @@ object ReviewArticle:
       .modify(_.fix)(_.description("What would fix it"))
 
   final case class RulesAnswer(
-      verdict: String,
+      verdict: RulesAnswer.Verdict,
       findings: List[FindingAnswer] = Nil,
-      filter: String,
-      uncitedRelevant: List[String] = Nil,
-      statusesSilent: List[String] = Nil,
+      filter: RulesAnswer.Filter,
+      uncitedRelevant: List[RulesAnswer.UncitedRelevant] = Nil,
+      statusesSilent: List[RulesAnswer.StatusesSilent] = Nil,
       spotChecks: List[SpotCheckAnswer] = Nil,
       checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object RulesAnswer:
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Filter = Filter.T
+    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UncitedRelevant = UncitedRelevant.T
+    object UncitedRelevant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusesSilent = StatusesSilent.T
+    object StatusesSilent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RulesAnswer] = KindlingsSchema
       .derived[RulesAnswer]
       .schema
@@ -208,9 +250,16 @@ object ReviewArticle:
     * article's words, the AttrScore verdict, and the record's sentence it rests on. Code accepts it only when the step
     * really read that source ([[checkSpotChecks]]).
     */
-  final case class SpotCheckAnswer(citekey: String, claim: String, verdict: String, recordQuote: String)
+  final case class SpotCheckAnswer(citekey: com.histmersion.domain.library.Citekey, claim: SpotCheckAnswer.Claim, verdict: SpotCheckAnswer.Verdict, recordQuote: SpotCheckAnswer.RecordQuote)
       derives KindlingsCodecAsObject
   object SpotCheckAnswer:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordQuote = RecordQuote.T
+    object RecordQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SpotCheckAnswer] = KindlingsSchema
       .derived[SpotCheckAnswer]
       .schema
@@ -220,16 +269,29 @@ object ReviewArticle:
       .modify(_.recordQuote)(_.description("The record's sentence it rests on, copied EXACTLY"))
 
   final case class ColdReaderAnswer(
-      verdict: String,
-      explainBack: String,
-      emptySlots: List[String] = Nil,
+      verdict: ColdReaderAnswer.Verdict,
+      explainBack: ColdReaderAnswer.ExplainBack,
+      emptySlots: List[ColdReaderAnswer.EmptySlots] = Nil,
       findings: List[ReaderFindingAnswer] = Nil,
-      termsUndefined: Int,
-      opaqueSentences: Int,
-      lostAt: Option[String] = None,
+      termsUndefined: ColdReaderAnswer.TermsUndefined,
+      opaqueSentences: ColdReaderAnswer.OpaqueSentences,
+      lostAt: Option[ColdReaderAnswer.LostAt] = None,
       checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object ColdReaderAnswer:
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExplainBack = ExplainBack.T
+    object ExplainBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmptySlots = EmptySlots.T
+    object EmptySlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TermsUndefined = TermsUndefined.T
+    object TermsUndefined extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpaqueSentences = OpaqueSentences.T
+    object OpaqueSentences extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LostAt = LostAt.T
+    object LostAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ColdReaderAnswer] = KindlingsSchema
       .derived[ColdReaderAnswer]
       .schema
@@ -250,14 +312,19 @@ object ReviewArticle:
       .modify(_.checks)(_.description(ChecksDescription))
 
   final case class SkepticAnswer(
-      verdict: String,
+      verdict: SkepticAnswer.Verdict,
       findings: List[FindingAnswer] = Nil,
       proposals: List[ProposalAnswer] = Nil,
-      claimsChecked: Int,
+      claimsChecked: SkepticAnswer.ClaimsChecked,
       checks: List[CheckAnswer] = Nil,
       notMaterial: List[NotMaterialAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object SkepticAnswer:
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClaimsChecked = ClaimsChecked.T
+    object ClaimsChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SkepticAnswer] = KindlingsSchema
       .derived[SkepticAnswer]
       .schema
@@ -279,8 +346,13 @@ object ReviewArticle:
   /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the reason (the pair
     * becomes `reasoned`, §6.8).
     */
-  final case class NotMaterialAnswer(pair: String, reason: String) derives KindlingsCodecAsObject
+  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: NotMaterialAnswer.Reason) derives KindlingsCodecAsObject
   object NotMaterialAnswer:
+    type Pair = Pair.T
+    object Pair extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[NotMaterialAnswer] = KindlingsSchema
       .derived[NotMaterialAnswer]
       .schema
@@ -294,8 +366,17 @@ object ReviewArticle:
   /** A reviewer's verdict on one of its own earlier findings (the review ledger, [[ReviewLedger]]): fixed or not, shown
     * by a quote of the CURRENT article.
     */
-  final case class CheckAnswer(id: String, fixed: Boolean, quote: String, note: String) derives KindlingsCodecAsObject
+  final case class CheckAnswer(id: CheckAnswer.Id, fixed: CheckAnswer.Fixed, quote: CheckAnswer.Quote, note: CheckAnswer.Note) derives KindlingsCodecAsObject
   object CheckAnswer:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fixed = Fixed.T
+    object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[CheckAnswer] = KindlingsSchema
       .derived[CheckAnswer]
       .schema
@@ -315,9 +396,12 @@ object ReviewArticle:
   final case class RecheckAnswer(
       checks: List[CheckAnswer] = Nil,
       findings: List[FindingAnswer] = Nil,
-      lessons: List[String] = Nil
+      lessons: List[RecheckAnswer.Lessons] = Nil
   ) derives KindlingsCodecAsObject
   object RecheckAnswer:
+    type Lessons = Lessons.T
+    object Lessons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RecheckAnswer] = KindlingsSchema
       .derived[RecheckAnswer]
       .schema
@@ -333,9 +417,16 @@ object ReviewArticle:
         )
       )
 
-  final case class RejectionAnswer(id: String, reason: String, citekey: String, quote: String)
+  final case class RejectionAnswer(id: RejectionAnswer.Id, reason: RejectionAnswer.Reason, citekey: com.histmersion.domain.library.Citekey, quote: RejectionAnswer.Quote)
       derives KindlingsCodecAsObject
   object RejectionAnswer:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RejectionAnswer] = KindlingsSchema
       .derived[RejectionAnswer]
       .schema
@@ -347,15 +438,22 @@ object ReviewArticle:
 
   final case class FixerAnswer(
       edits: List[Article.Edits.EditAnswer] = Nil,
-      applied: List[String] = Nil,
+      applied: List[FixerAnswer.Applied] = Nil,
       rejected: List[RejectionAnswer] = Nil,
-      unresolvedMoved: List[String] = Nil,
-      notes: String,
+      unresolvedMoved: List[FixerAnswer.UnresolvedMoved] = Nil,
+      notes: FixerAnswer.Notes,
       reasons: List[Coverage.Reason] = Nil,
       wontFix: List[WontFixAnswer] = Nil,
       setAside: List[SetAsideAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object FixerAnswer:
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnresolvedMoved = UnresolvedMoved.T
+    object UnresolvedMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[FixerAnswer] = KindlingsSchema
       .derived[FixerAnswer]
       .schema
@@ -388,9 +486,16 @@ object ReviewArticle:
   /** The fixer's answer to a missing-critique finding: the critique does not bear on what the article cites the source
     * for. Code stores the reason with the article and closes the finding (§6.8).
     */
-  final case class SetAsideAnswer(id: String, pair: Option[String] = None, reason: String)
+  final case class SetAsideAnswer(id: SetAsideAnswer.Id, pair: Option[SetAsideAnswer.Pair] = None, reason: SetAsideAnswer.Reason)
       derives KindlingsCodecAsObject
   object SetAsideAnswer:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pair = Pair.T
+    object Pair extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
       .schema
@@ -406,8 +511,13 @@ object ReviewArticle:
         )
       )
 
-  final case class WontFixAnswer(id: String, reason: String) derives KindlingsCodecAsObject
+  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: WontFixAnswer.Reason) derives KindlingsCodecAsObject
   object WontFixAnswer:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
       .schema
@@ -417,18 +527,18 @@ object ReviewArticle:
   // ── verified values (checkpointed) ──────────────────────────────────────────────────────────────
 
   final case class Finding(
-      id: String,
+      id: Finding.Id,
       reviewer: Reviewer,
       severity: Severity,
-      kind: String,
-      where: String,
-      quote: String,
-      problem: String,
-      fix: String,
+      kind: Finding.Kind,
+      where: Finding.Where,
+      quote: Finding.Quote,
+      problem: Finding.Problem,
+      fix: Finding.Fix,
       /** The records it rests on, each quote found in its record by code. */
       evidence: List[Evidence] = Nil,
       /** A reviewer raised it again after the fixer rejected it in an earlier round. */
-      escalated: Boolean = false,
+      escalated: Finding.Escalated = false,
       /** A missing-critique finding's pair of the critique checklist (§6.8). */
       pair: Option[CritiqueRef] = None
   ) derives KindlingsCodecAsObject,
@@ -441,31 +551,67 @@ object ReviewArticle:
       val at = Option(where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
       s"$id ${severity.wire}$at: ${problem.trim}"
 
+  object Finding:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Escalated = Escalated.T
+    object Escalated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
-  final case class Evidence(citekey: String, offset: Option[Int], quote: String, ratio: Double)
+  final case class Evidence(citekey: com.histmersion.domain.library.Citekey, offset: Option[Evidence.Offset], quote: Evidence.Quote, ratio: Evidence.Ratio)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object Evidence:
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = Ratio.T
+    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for
     * [[Evidence]]), and `tool` — the call of the step that read the source.
     */
   final case class SpotCheck(
-      citekey: String,
-      claim: String,
-      verdict: String,
-      recordQuote: String,
-      ratio: Double,
-      tool: String
+      citekey: com.histmersion.domain.library.Citekey,
+      claim: SpotCheck.Claim,
+      verdict: SpotCheck.Verdict,
+      recordQuote: SpotCheck.RecordQuote,
+      ratio: SpotCheck.Ratio,
+      tool: SpotCheck.Tool
   ) derives KindlingsCodecAsObject
+
+  object SpotCheck:
+    type Claim = Claim.T
+    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordQuote = RecordQuote.T
+    object RecordQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = Ratio.T
+    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tool = Tool.T
+    object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One reviewer's verified answer. */
   final case class Report(
       reviewer: Reviewer,
       verdict: Verdict,
       findings: List[Finding],
-      explainBack: Option[String] = None,
-      emptySlots: List[String] = Nil,
+      explainBack: Option[Report.ExplainBack] = None,
+      emptySlots: List[Report.EmptySlots] = Nil,
       proposals: List[Proposal] = Nil,
       /** Its verdicts on its own earlier findings (the ledger's open ones), each quote found in the body. */
       checks: List[Check] = Nil,
@@ -475,8 +621,24 @@ object ReviewArticle:
       notMaterial: List[CritiqueReason] = Nil
   ) derives KindlingsCodecAsObject
 
+  object Report:
+    type ExplainBack = ExplainBack.T
+    object ExplainBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmptySlots = EmptySlots.T
+    object EmptySlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A verified [[CheckAnswer]]. */
-  final case class Check(id: String, fixed: Boolean, quote: String, note: String) derives KindlingsCodecAsObject
+  final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note) derives KindlingsCodecAsObject
+
+  object Check:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fixed = Fixed.T
+    object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A verification pass's verified answer: one reviewer's checks, the new findings (scoped: a MAJOR outside the edited
     * passages that is not a factual error with evidence is recorded as minor) and its lessons.
@@ -485,17 +647,21 @@ object ReviewArticle:
       reviewer: Reviewer,
       checks: List[Check],
       findings: List[Finding],
-      lessons: List[String] = Nil
+      lessons: List[Recheck.Lessons] = Nil
   ) derives KindlingsCodecAsObject
+
+  object Recheck:
+    type Lessons = Lessons.T
+    object Lessons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(
-      slug: String,
-      title: String,
-      kind: String,
-      body: String,
-      updatedAt: Option[String],
-      truncated: Boolean,
+      slug: Snapshot.Slug,
+      title: Snapshot.Title,
+      kind: Snapshot.Kind,
+      body: Snapshot.Body,
+      updatedAt: Option[Snapshot.UpdatedAt],
+      truncated: Snapshot.Truncated,
       coverage: Option[Coverage] = None,
       cited: List[CitedSource] = Nil,
       /** The critique checklist of this body (§6.8), whether or not the article records a filter. */
@@ -503,6 +669,20 @@ object ReviewArticle:
   ) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
     def generated: Option[String] = coverage.map(Article.Coverage.sections)
+
+  object Snapshot:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Truncated = Truncated.T
+    object Truncated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One line per source the article cites — `[[citekey]] · year · status · title` — so a reviewer reads every cited
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
@@ -521,35 +701,55 @@ object ReviewArticle:
     * (§6.9) — open, but not in this verdict and not among [[majors]].
     */
   final case class Merged(
-      round: Int,
+      round: Merged.Round,
       verdict: Verdict,
       findings: List[Finding],
-      explainBack: Option[String],
-      emptySlots: List[String],
+      explainBack: Option[Merged.ExplainBack],
+      emptySlots: List[Merged.EmptySlots],
       proposals: List[Proposal],
-      deferred: List[String] = Nil
+      deferred: List[Merged.Deferred] = Nil
   ) derives KindlingsCodecAsObject:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
     def escalated: List[Finding] = findings.filter(_.escalated)
     def count(r: Reviewer): Int = findings.count(_.reviewer == r)
 
-  final case class Rejection(id: String, reason: String, citekey: String, quote: String, ratio: Double)
+  object Merged:
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExplainBack = ExplainBack.T
+    object ExplainBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmptySlots = EmptySlots.T
+    object EmptySlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Deferred = Deferred.T
+    object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Rejection(id: Rejection.Id, reason: Rejection.Reason, citekey: com.histmersion.domain.library.Citekey, quote: Rejection.Quote, ratio: Rejection.Ratio)
       derives KindlingsCodecAsObject
+
+  object Rejection:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = Ratio.T
+    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The fixer's verified revision: the body its edits produced, and every edit with what became of it (applied, or
     * skipped and why) — what a person reads to see exactly what changed. `unverified` = rejections whose quote code
     * could not find in the record: they do not count as rejections (the finding stays open).
     */
   final case class Fix(
-      body: String,
+      body: Fix.Body,
       edits: List[Article.Edits.EditResult],
-      applied: List[String],
+      applied: List[Fix.Applied],
       rejected: List[Rejection],
-      unverified: List[String],
-      unresolvedMoved: List[String],
-      notes: String,
-      wordsBefore: Int,
-      wordsAfter: Int,
+      unverified: List[Fix.Unverified],
+      unresolvedMoved: List[Fix.UnresolvedMoved],
+      notes: Fix.Notes,
+      wordsBefore: Fix.WordsBefore,
+      wordsAfter: Fix.WordsAfter,
       /** The coverage reasons the fixer set (an empty one removes), already checked against the coverage. */
       reasons: List[Coverage.Reason] = Nil,
       /** Minor findings declined, with the reason. */
@@ -557,9 +757,9 @@ object ReviewArticle:
       /** Missing-critique findings set aside as not material, each with the pair and the reason stored. */
       setAside: List[SetAside] = Nil,
       /** Findings code's pairing repair answered (§6.9): claimed like the applied ones. */
-      repaired: List[String] = Nil,
+      repaired: List[Fix.Repaired] = Nil,
       /** What the pairing repair did, one line per citation added. */
-      repairs: List[String] = Nil,
+      repairs: List[Fix.Repairs] = Nil,
       /** Findings the fixer neither applied nor rejected, or claimed without the change code checks for: each with why
         * — the ledger records it as not fixed (§6.9).
         */
@@ -568,28 +768,82 @@ object ReviewArticle:
       pairsAside: List[CritiqueReason] = Nil
   ) derives KindlingsCodecAsObject
 
-  final case class WontFix(id: String, reason: String) derives KindlingsCodecAsObject
+  object Fix:
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unverified = Unverified.T
+    object Unverified extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnresolvedMoved = UnresolvedMoved.T
+    object UnresolvedMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WordsBefore = WordsBefore.T
+    object WordsBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WordsAfter = WordsAfter.T
+    object WordsAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Repaired = Repaired.T
+    object Repaired extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Repairs = Repairs.T
+    object Repairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class WontFix(id: WontFix.Id, reason: WontFix.Reason) derives KindlingsCodecAsObject
+
+  object WontFix:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
-  final case class SetAside(id: String, pair: CritiqueRef, reason: String) derives KindlingsCodecAsObject
+  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: SetAside.Reason) derives KindlingsCodecAsObject
+
+  object SetAside:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or why nothing was
     * written.
     */
-  final case class Patched(written: Boolean, previousVersion: Option[Long], conflict: Boolean)
+  final case class Patched(written: Patched.Written, previousVersion: Option[Patched.PreviousVersion], conflict: Patched.Conflict)
       derives KindlingsCodecAsObject
+
+  object Patched:
+    type Written = Written.T
+    object Written extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PreviousVersion = PreviousVersion.T
+    object PreviousVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Conflict = Conflict.T
+    object Conflict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The run's result, for its log line and its queue items. */
   final case class Outcome(
-      slug: String,
-      rounds: Int,
+      slug: Outcome.Slug,
+      rounds: Outcome.Rounds,
       verdict: Verdict,
       open: List[Finding],
-      applied: Int,
-      rejected: Int,
-      fixed: Boolean,
-      approvals: Int
+      applied: Outcome.Applied,
+      rejected: Outcome.Rejected,
+      fixed: Outcome.Fixed,
+      approvals: Outcome.Approvals
   ) derives KindlingsCodecAsObject
+
+  object Outcome:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rejected = Rejected.T
+    object Rejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fixed = Fixed.T
+    object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approvals = Approvals.T
+    object Approvals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── mechanical checks (§4.3 step 2) ─────────────────────────────────────────────────────────────
 
@@ -903,12 +1157,22 @@ object ReviewArticle:
     * far, every attempt's (a retry amends its answer without looking the records up again).
     */
   final case class SpotRule(
-      required: Int,
-      cited: Set[String],
-      body: String,
+      required: SpotRule.Required,
+      cited: Set[SpotRule.Cited],
+      body: SpotRule.Body,
       calls: List[AgentVerify.ToolUse],
-      minRatio: Double
+      minRatio: SpotRule.MinRatio
   )
+
+  object SpotRule:
+    type Required = Required.T
+    object Required extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cited = Cited.T
+    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinRatio = MinRatio.T
+    object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
@@ -1090,10 +1354,18 @@ object ReviewArticle:
   final case class CritiqueRule(
       pairs: List[CritiquePair],
       shown: List[CritiquePair],
-      full: Boolean,
-      body: String = "",
-      minRatio: Double = 0.9
+      full: CritiqueRule.Full,
+      body: CritiqueRule.Body = "",
+      minRatio: CritiqueRule.MinRatio = 0.9
   )
+
+  object CritiqueRule:
+    type Full = Full.T
+    object Full extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinRatio = MinRatio.T
+    object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def recordedMinor(f: Finding, why: String): Finding =
     f.modify(_.severity).setTo(Severity.Minor).modify(_.problem).setTo(s"${f.problem.trim} (recorded minor: $why)")
@@ -1359,7 +1631,13 @@ object ReviewArticle:
   /** What a reviewer's checks are verified against: its earlier findings it was asked about (open in the ledger), and
     * the article as it is now.
     */
-  final case class Prior(asked: List[Finding], body: String, minRatio: Double)
+  final case class Prior(asked: List[Finding], body: Prior.Body, minRatio: Prior.MinRatio)
+
+  object Prior:
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinRatio = MinRatio.T
+    object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A full panel's checks: only when the ledger listed findings of this reviewer; otherwise ignored. */
   private def checksOf(
@@ -1615,8 +1893,12 @@ object ReviewArticle:
       isCitekey: String => Boolean,
       isTarget: String => Boolean,
       formatErrors: String => List[String],
-      generated: Boolean = false
+      generated: BodyCorpus.Generated = false
   )
+
+  object BodyCorpus:
+    type Generated = Generated.T
+    object Generated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** THE check of a draft — the fixer's edits against the body the round reviewed, or a whole body — shared by the
     * pipeline's validation of the fixer's answer and the `check_edits` tool, so the two can never disagree. Edits apply
@@ -1683,11 +1965,15 @@ object ReviewArticle:
     */
   final private case class Revision(
       check: Article.Edits.ArticleCheck,
-      body: String,
+      body: Revision.Body,
       hits: List[CritiquePairing.Hit],
       pairs: List[CritiquePair],
       regressions: List[ReviewLedger.Regression]
   )
+
+  object Revision:
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Verify a revision: its edits applied to the body the round reviewed and the result checked ([[checkBody]]); every
     * MAJOR finding either applied or rejected; no mechanical or cold-reader finding rejected (a reader's confusion is a

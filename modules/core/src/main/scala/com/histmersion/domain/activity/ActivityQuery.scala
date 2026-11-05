@@ -10,7 +10,13 @@ import java.time.Instant
 final case class ActivityQuery(
     show: Activity.Show = Activity.Show.Everything,
     since: Option[Instant] = None,
-    goal: Option[String] = None,
-    limit: Int = Activity.DefaultLimit,
+    goal: Option[ActivityQuery.Goal] = None,
+    limit: ActivityQuery.Limit = Activity.DefaultLimit,
     before: Option[ActivityCursor] = None
 )
+
+object ActivityQuery:
+  type Goal = Goal.T
+  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

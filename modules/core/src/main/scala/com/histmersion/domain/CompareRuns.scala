@@ -15,44 +15,97 @@ object CompareRuns:
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
-  final case class Tokens(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0):
+  final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
     def +(o: Tokens): Tokens =
       Tokens(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
 
   object Tokens:
+    type Input = Input.T
+    object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CacheRead = CacheRead.T
+    object CacheRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CacheWrite = CacheWrite.T
+    object CacheWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Zero: Tokens = Tokens()
 
   /** A role's model, as a run was told to use it. */
-  final case class ModelChoice(role: String, model: String)
+  final case class ModelChoice(role: ModelChoice.Role, model: ModelChoice.Model)
+
+  object ModelChoice:
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A run as compared: what it ran on, its state, and the models it was given. */
   final case class RunHead(
-      id: String,
-      pipeline: String,
-      target: String,
-      status: String,
-      dryRun: Boolean,
-      model: Option[String],
+      id: RunHead.Id,
+      pipeline: RunHead.Pipeline,
+      target: RunHead.Target,
+      status: RunHead.Status,
+      dryRun: RunHead.DryRun,
+      model: Option[RunHead.Model],
       modelFor: List[ModelChoice]
   )
+
+  object RunHead:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One attempt of one step, with its full recorded output. `firstCallTokens` and `turns` are None where nothing was
     * recorded (a provider that cannot tell, or a run recorded before they were kept).
     */
   final case class Step(
-      name: String,
-      status: String,
-      model: Option[String],
-      actualModel: Option[String],
+      name: Step.Name,
+      status: Step.Status,
+      model: Option[Step.Model],
+      actualModel: Option[Step.ActualModel],
       usage: Tokens,
-      costUsd: Double,
-      startedAt: String,
-      finishedAt: String,
-      firstCallTokens: Option[Long],
-      turns: Option[Int],
-      output: Option[String],
-      error: Option[String]
+      costUsd: Step.CostUsd,
+      startedAt: Step.StartedAt,
+      finishedAt: Step.FinishedAt,
+      firstCallTokens: Option[Step.FirstCallTokens],
+      turns: Option[Step.Turns],
+      output: Option[Step.Output],
+      error: Option[Step.Error]
   )
+
+  object Step:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ActualModel = ActualModel.T
+    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartedAt = StartedAt.T
+    object StartedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FinishedAt = FinishedAt.T
+    object FinishedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Run(run: RunHead, steps: List[Step])
 
@@ -60,76 +113,184 @@ object CompareRuns:
 
   /** One run, in total. `seconds` = the sum of its steps' durations. */
   final case class RunSide(
-      id: String,
-      status: String,
-      dryRun: Boolean,
-      model: Option[String],
+      id: RunSide.Id,
+      status: RunSide.Status,
+      dryRun: RunSide.DryRun,
+      model: Option[RunSide.Model],
       modelFor: List[ModelChoice],
       usage: Tokens,
-      costUsd: Double,
-      seconds: Long,
-      attempts: Int,
-      failures: Int
+      costUsd: RunSide.CostUsd,
+      seconds: RunSide.Seconds,
+      attempts: RunSide.Attempts,
+      failures: RunSide.Failures
   )
+
+  object RunSide:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Seconds = Seconds.T
+    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failures = Failures.T
+    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One step of one run, every attempt summed. `billing` names how each configured model is paid for. */
   final case class StepSide(
-      models: List[String],
-      actual: List[String],
-      billing: List[String],
+      models: List[StepSide.Models],
+      actual: List[StepSide.Actual],
+      billing: List[StepSide.Billing],
       usage: Tokens,
-      costUsd: Double,
-      seconds: Long,
-      attempts: Int,
-      failures: Int,
-      firstCallTokens: Option[Long] = None,
-      turns: Option[Int] = None
+      costUsd: StepSide.CostUsd,
+      seconds: StepSide.Seconds,
+      attempts: StepSide.Attempts,
+      failures: StepSide.Failures,
+      firstCallTokens: Option[StepSide.FirstCallTokens] = None,
+      turns: Option[StepSide.Turns] = None
   )
 
+  object StepSide:
+    type Models = Models.T
+    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Actual = Actual.T
+    object Actual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Billing = Billing.T
+    object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Seconds = Seconds.T
+    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failures = Failures.T
+    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One step name, and that step in each run (None = the run has no such step). */
-  final case class StepRow(name: String, runs: List[Option[StepSide]])
+  final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
+
+  object StepRow:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** enrich-source's outputs; the period is the classify step's, in signed years. */
   final case class EnrichSide(
-      findings: Int,
-      quotesChecked: Int,
-      quotesPassed: Int,
-      placesAsked: Int,
-      placesResolved: Int,
-      datedFindings: Int,
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      summaryChars: Int,
-      notesChars: Int,
-      uniqueClaims: List[String]
+      findings: EnrichSide.Findings,
+      quotesChecked: EnrichSide.QuotesChecked,
+      quotesPassed: EnrichSide.QuotesPassed,
+      placesAsked: EnrichSide.PlacesAsked,
+      placesResolved: EnrichSide.PlacesResolved,
+      datedFindings: EnrichSide.DatedFindings,
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
+      summaryChars: EnrichSide.SummaryChars,
+      notesChars: EnrichSide.NotesChars,
+      uniqueClaims: List[EnrichSide.UniqueClaims]
   )
 
-  final case class ReviewerSide(reviewer: String, verdict: Option[String], majors: Int, minors: Int)
+  object EnrichSide:
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type QuotesChecked = QuotesChecked.T
+    object QuotesChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type QuotesPassed = QuotesPassed.T
+    object QuotesPassed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesAsked = PlacesAsked.T
+    object PlacesAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesResolved = PlacesResolved.T
+    object PlacesResolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DatedFindings = DatedFindings.T
+    object DatedFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SummaryChars = SummaryChars.T
+    object SummaryChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotesChars = NotesChars.T
+    object NotesChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UniqueClaims = UniqueClaims.T
+    object UniqueClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class KindCount(kind: String, count: Int)
+  final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+
+  object ReviewerSide:
+    type Reviewer = Reviewer.T
+    object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Majors = Majors.T
+    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Minors = Minors.T
+    object Minors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
+
+  object KindCount:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** review-article's outputs: the last round's verdict, the rounds, round 1 per reviewer and by kind. */
   final case class ReviewSide(
-      verdict: Option[String],
-      rounds: Int,
+      verdict: Option[ReviewSide.Verdict],
+      rounds: ReviewSide.Rounds,
       reviewers: List[ReviewerSide],
       kinds: List[KindCount],
-      majors: List[String]
+      majors: List[ReviewSide.Majors]
   )
 
+  object ReviewSide:
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Majors = Majors.T
+    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** Round 1's major findings two runs share; `pairs` shows each match as `<a's id> ↔ <b's id>`. */
-  final case class MajorOverlap(a: String, b: String, aMajors: Int, bMajors: Int, shared: Int, pairs: List[String])
+  final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
+
+  object MajorOverlap:
+    type A = A.T
+    object A extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type B = B.T
+    object B extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AMajors = AMajors.T
+    object AMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BMajors = BMajors.T
+    object BMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Shared = Shared.T
+    object Shared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pairs = Pairs.T
+    object Pairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Comparison(
-      pipeline: String,
-      target: String,
+      pipeline: Comparison.Pipeline,
+      target: Comparison.Target,
       runs: List[RunSide],
       steps: List[StepRow],
       enrich: List[EnrichSide],
       review: List[ReviewSide],
       overlaps: List[MajorOverlap],
-      notes: List[String]
+      notes: List[Comparison.Notes]
   )
+
+  object Comparison:
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 

@@ -11,5 +11,13 @@ import sttp.ai.core.agent.*
 import scala.jdk.CollectionConverters.*
 
 /** What a person decided on a blocking approval step — the step's checkpoint. */
-final case class Decided(approved: Boolean, approval: Long, note: Option[String] = None)
+final case class Decided(approved: Decided.Approved, approval: Decided.Approval, note: Option[Decided.Note] = None)
     derives hearth.kindlings.circederivation.KindlingsCodecAsObject
+
+object Decided:
+  type Approved = Approved.T
+  object Approved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Approval = Approval.T
+  object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

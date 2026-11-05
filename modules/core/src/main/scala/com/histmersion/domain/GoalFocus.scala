@@ -53,20 +53,40 @@ object GoalFocus:
     * only a person decides that one.
     */
   final case class Work(
-      itemId: Long,
-      kind: String,
-      status: String,
-      target: String = "",
-      person: Boolean = false,
-      focusHeld: Boolean = false,
-      personHeld: Boolean = false,
-      approval: Option[Long] = None,
-      approvalByPerson: Boolean = false
+      itemId: Work.ItemId,
+      kind: Work.Kind,
+      status: Work.Status,
+      target: Work.Target = "",
+      person: Work.Person = false,
+      focusHeld: Work.FocusHeld = false,
+      personHeld: Work.PersonHeld = false,
+      approval: Option[Work.Approval] = None,
+      approvalByPerson: Work.ApprovalByPerson = false
   ):
     def waitsForPerson: Boolean = approval.isDefined && approvalByPerson
 
     /** It can still use a model without a person: not waiting for a person's approval, not held by one. */
     def runnable: Boolean = !waitsForPerson && !personHeld
+
+  object Work:
+    type ItemId = ItemId.T
+    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Person = Person.T
+    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FocusHeld = FocusHeld.T
+    object FocusHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PersonHeld = PersonHeld.T
+    object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approval = Approval.T
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalByPerson = ApprovalByPerson.T
+    object ApprovalByPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal as the focus sees it. `articles` = its linked articles that exist, `unreviewed` = those not passed their
     * review; `compileOpen` = its approved articles not compiled yet; `work` = its open model-using items; `lastStop` =
@@ -74,27 +94,65 @@ object GoalFocus:
     * focus recorded.
     */
   final case class Facts(
-      slug: String,
-      parent: Option[String] = None,
-      status: String = Goal.Status.Seeding,
-      createdAt: String = "",
-      sources: Int = 0,
-      articles: Int = 0,
-      unreviewed: Int = 0,
-      compileOpen: Int = 0,
+      slug: Facts.Slug,
+      parent: Option[Facts.Parent] = None,
+      status: Facts.Status = Goal.Status.Seeding,
+      createdAt: Facts.CreatedAt = "",
+      sources: Facts.Sources = 0,
+      articles: Facts.Articles = 0,
+      unreviewed: Facts.Unreviewed = 0,
+      compileOpen: Facts.CompileOpen = 0,
       work: List[Work] = Nil,
-      lastStop: Option[String] = None,
-      pinned: Boolean = false,
-      priority: Int = 0,
-      active: Boolean = false,
-      since: Option[String] = None
+      lastStop: Option[Facts.LastStop] = None,
+      pinned: Facts.Pinned = false,
+      priority: Facts.Priority = 0,
+      active: Facts.Active = false,
+      since: Option[Facts.Since] = None
   )
+
+  object Facts:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Parent = Parent.T
+    object Parent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sources = Sources.T
+    object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Articles = Articles.T
+    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unreviewed = Unreviewed.T
+    object Unreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CompileOpen = CompileOpen.T
+    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastStop = LastStop.T
+    object LastStop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Active = Active.T
+    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `max` goals at most (≤ 0: no cap); `minSources` = what a proposed article needs (`agents.seed.min-sources`);
     * `plansByPerson` = a person decides goal plans (`agents.approvals.goal-plan = manual`) and `openPersonPlans` of
     * them are open — at `max` such open plans, no further goal is activated only to ask for one more.
     */
-  final case class Settings(max: Int, minSources: Int, plansByPerson: Boolean = false, openPersonPlans: Int = 0)
+  final case class Settings(max: Settings.Max, minSources: Settings.MinSources, plansByPerson: Settings.PlansByPerson = false, openPersonPlans: Settings.OpenPersonPlans = 0)
+
+  object Settings:
+    type Max = Max.T
+    object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinSources = MinSources.T
+    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlansByPerson = PlansByPerson.T
+    object PlansByPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenPersonPlans = OpenPersonPlans.T
+    object OpenPersonPlans extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
   enum Fit:
@@ -112,7 +170,17 @@ object GoalFocus:
     val Plans = "plans"
 
   /** An active or queued goal, with why it is where it is. */
-  final case class Pick(slug: String, stage: Stage, why: String, pinned: Boolean = false, since: Option[String] = None)
+  final case class Pick(slug: Pick.Slug, stage: Stage, why: Pick.Why, pinned: Pick.Pinned = false, since: Option[Pick.Since] = None)
+
+  object Pick:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What one pass decides: the active goals (in their order), the queue (the order the next would become active), the
     * goals that joined now, the ones that left (why), and the ones that cannot use a slot now (slug, code, why).
@@ -120,11 +188,25 @@ object GoalFocus:
   final case class Plan(
       active: List[Pick] = Nil,
       queue: List[Pick] = Nil,
-      joined: List[String] = Nil,
-      left: List[(String, String)] = Nil,
-      waiting: List[(String, String, String)] = Nil
+      joined: List[Plan.Joined] = Nil,
+      left: List[(Plan.LeftPart1, Plan.LeftPart2)] = Nil,
+      waiting: List[(Plan.WaitingPart1, Plan.WaitingPart2, Plan.WaitingPart3)] = Nil
   ):
     lazy val activeSet: Set[String] = active.map(_.slug).toSet
+
+  object Plan:
+    type Joined = Joined.T
+    object Joined extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftPart1 = LeftPart1.T
+    object LeftPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftPart2 = LeftPart2.T
+    object LeftPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WaitingPart1 = WaitingPart1.T
+    object WaitingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WaitingPart2 = WaitingPart2.T
+    object WaitingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WaitingPart3 = WaitingPart3.T
+    object WaitingPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def unfinishedKids(f: Facts, kids: Map[String, List[Facts]]): List[Facts] =
     kids.getOrElse(f.slug, Nil).filterNot(k => finished(k.status))
@@ -388,16 +470,40 @@ object GoalFocus:
     * item: the goals its article is linked to; none: library work).
     */
   final case class Item(
-      id: Long,
-      kind: String,
-      status: String,
-      goals: List[String],
-      person: Boolean = false,
-      focusHeld: Boolean = false
+      id: Item.Id,
+      kind: Item.Kind,
+      status: Item.Status,
+      goals: List[Item.Goals],
+      person: Item.Person = false,
+      focusHeld: Item.FocusHeld = false
   )
 
+  object Item:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goals = Goals.T
+    object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Person = Person.T
+    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FocusHeld = FocusHeld.T
+    object FocusHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** What the holds change: items to hold (id, goal, reason) and focus holds to release. */
-  final case class Holds(hold: List[(Long, String, String)] = Nil, release: List[Long] = Nil)
+  final case class Holds(hold: List[(Holds.HoldPart1, Holds.HoldPart2, Holds.HoldPart3)] = Nil, release: List[Holds.Release] = Nil)
+
+  object Holds:
+    type HoldPart1 = HoldPart1.T
+    object HoldPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HoldPart2 = HoldPart2.T
+    object HoldPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HoldPart3 = HoldPart3.T
+    object HoldPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Release = Release.T
+    object Release extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The reason a focus hold carries (it starts with `focus:`; the items window and the status show it). */
   val HoldPrefix = "focus:"

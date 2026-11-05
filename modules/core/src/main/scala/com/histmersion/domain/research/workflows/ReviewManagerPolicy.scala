@@ -63,15 +63,26 @@ object ReviewManagerPolicy:
     * checklist now (None when not known).
     */
   final case class ReviewFacts(
-      openMajors: Int,
-      maxReopened: Int,
-      escalated: Int,
-      onlyMissingCritiques: Boolean,
-      openPairs: Option[Int] = None
+      openMajors: ReviewFacts.OpenMajors,
+      maxReopened: ReviewFacts.MaxReopened,
+      escalated: ReviewFacts.Escalated,
+      onlyMissingCritiques: ReviewFacts.OnlyMissingCritiques,
+      openPairs: Option[ReviewFacts.OpenPairs] = None
   )
 
   object ReviewFacts:
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
+    type OpenMajors = OpenMajors.T
+    object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxReopened = MaxReopened.T
+    object MaxReopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Escalated = Escalated.T
+    object Escalated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OnlyMissingCritiques = OnlyMissingCritiques.T
+    object OnlyMissingCritiques extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenPairs = OpenPairs.T
+    object OpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(l: Ledger, openPairs: Option[Int] = None): ReviewFacts =
       val majors = l.openMajors
       ReviewFacts(
@@ -190,7 +201,17 @@ object ReviewManagerPolicy:
   // ── selection (the review manager's refill) ────────────────────────────────────────────────────
 
   /** One item the selection adds: its kind, target, priority, and why (for the event). */
-  final case class Pick(kind: String, target: String, priority: Int, why: String)
+  final case class Pick(kind: Pick.Kind, target: Pick.Target, priority: Pick.Priority, why: Pick.Why)
+
+  object Pick:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).

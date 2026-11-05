@@ -60,25 +60,57 @@ object PlaceReview:
   private val WithdrawnDuplicate = "(?i)^withdrawn\\s*\\(?duplicate\\)?\\s*:\\s*(.+)$".r
 
   /** A Wikidata (or other) record linked to the place: its id, its class, and its dates. */
-  final case class LinkedItem(ref: String, itemClass: Option[String], period: Option[Period])
+  final case class LinkedItem(ref: LinkedItem.Ref, itemClass: Option[LinkedItem.ItemClass], period: Option[Period])
+
+  object LinkedItem:
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemClass = ItemClass.T
+    object ItemClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What is known about one point-only seed place. `featureTypes`/`timePeriods` are Pleiades'; `start`/`end` the
     * stored period (`None` = open on that side).
     */
   final case class Evidence(
-      id: String,
-      label: String,
-      kind: String,
-      featureTypes: List[String],
-      timePeriods: List[String],
-      start: Option[Long],
-      end: Option[Long],
+      id: Evidence.Id,
+      label: Evidence.Label,
+      kind: Evidence.Kind,
+      featureTypes: List[Evidence.FeatureTypes],
+      timePeriods: List[Evidence.TimePeriods],
+      start: Option[Evidence.Start],
+      end: Option[Evidence.End],
       items: List[LinkedItem] = Nil,
-      descriptions: List[String] = Nil
+      descriptions: List[Evidence.Descriptions] = Nil
   )
 
+  object Evidence:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FeatureTypes = FeatureTypes.T
+    object FeatureTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TimePeriods = TimePeriods.T
+    object TimePeriods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Descriptions = Descriptions.T
+    object Descriptions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A seed place a withdrawn duplicate could be merged into. */
-  final case class Candidate(id: String, label: String, kind: String)
+  final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+
+  object Candidate:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What to do with one place. */
   enum Proposal:

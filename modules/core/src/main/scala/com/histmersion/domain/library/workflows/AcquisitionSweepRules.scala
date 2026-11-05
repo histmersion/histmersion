@@ -17,15 +17,23 @@ object AcquisitionSweepRules:
 
   /** A candidate a sweep found, as the ranking step sees it. */
   final case class Candidate(
-    doi: String,
+    doi: com.histmersion.domain.library.Doi,
     title: com.histmersion.api.library.Title,
     year: Option[com.histmersion.api.catalogue.Year],
     authors: List[com.histmersion.api.library.AuthorName],
     venue: Option[com.histmersion.api.library.Venue],
-    isOa: Boolean,
-    query: String,
-    abstractText: Option[String]
+    isOa: Candidate.IsOa,
+    query: Candidate.Query,
+    abstractText: Option[Candidate.AbstractText]
   ) derives KindlingsCodecAsObject
+
+  object Candidate:
+    type IsOa = IsOa.T
+    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AbstractText = AbstractText.T
+    object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The works a sweep may consider: with a DOI, not retracted, not in the corpus, not already in the acquisition queue
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
@@ -58,8 +66,11 @@ object AcquisitionSweepRules:
     (all.take(max), skipped.toMap)
 
   /** The ranking model's answer: which candidates belong to the goal. */
-  final case class Pick(doi: String, why: String) derives KindlingsCodecAsObject
+  final case class Pick(doi: com.histmersion.domain.library.Doi, why: Pick.Why) derives KindlingsCodecAsObject
   object Pick:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Pick]
       .schema

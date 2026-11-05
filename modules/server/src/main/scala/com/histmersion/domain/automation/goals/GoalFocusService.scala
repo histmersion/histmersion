@@ -94,10 +94,24 @@ final class GoalFocusService(
   final private case class Read(
       facts: List[Facts],
       work: List[FocusRepo.WorkRow],
-      titles: Map[String, String],
-      left: Map[String, (Option[String], Option[String])],
-      openPlans: Int
+      titles: Map[Read.TitlesKey, Read.TitlesValue],
+      left: Map[Read.LeftKey, (Option[Read.LeftValuePart1], Option[Read.LeftValuePart2])],
+      openPlans: Read.OpenPlans
   )
+
+  object Read:
+    type TitlesKey = TitlesKey.T
+    object TitlesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TitlesValue = TitlesValue.T
+    object TitlesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftKey = LeftKey.T
+    object LeftKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftValuePart1 = LeftValuePart1.T
+    object LeftValuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftValuePart2 = LeftValuePart2.T
+    object LeftValuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenPlans = OpenPlans.T
+    object OpenPlans extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def read(): Read =
     val goals = agents.focusStore.goals()

@@ -20,13 +20,24 @@ import com.histmersion.api.research.Article
 object FilterInference:
 
   final case class FilterAnswer(
-      rationale: String,
-      query: Option[String] = None,
-      topics: List[String] = Nil,
-      tags: List[String] = Nil,
-      extraQueries: List[String] = Nil
+      rationale: FilterAnswer.Rationale,
+      query: Option[FilterAnswer.Query] = None,
+      topics: List[FilterAnswer.Topics] = Nil,
+      tags: List[FilterAnswer.Tags] = Nil,
+      extraQueries: List[FilterAnswer.ExtraQueries] = Nil
   ) derives KindlingsCodecAsObject
   object FilterAnswer:
+    type Rationale = Rationale.T
+    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExtraQueries = ExtraQueries.T
+    object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[FilterAnswer] = KindlingsSchema
       .derived[FilterAnswer]
       .schema
@@ -41,11 +52,23 @@ object FilterInference:
       )
 
   /** The checks a filter must pass (config `agents.infer-filter.*`). */
-  final case class Limits(minHits: Int, maxHits: Int, minCitedShare: Double)
+  final case class Limits(minHits: Limits.MinHits, maxHits: Limits.MaxHits, minCitedShare: Limits.MinCitedShare)
+
+  object Limits:
+    type MinHits = MinHits.T
+    object MinHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxHits = MaxHits.T
+    object MaxHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinCitedShare = MinCitedShare.T
+    object MinCitedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the pipeline checkpoints: the proposal that passed, or None with why nothing did. */
-  final case class Inferred(proposal: Option[FilterProposal], problems: List[String] = Nil)
+  final case class Inferred(proposal: Option[FilterProposal], problems: List[Inferred.Problems] = Nil)
       derives KindlingsCodecAsObject
+
+  object Inferred:
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
   def filterOf(a: FilterAnswer): Either[List[String], Article.Filter] =

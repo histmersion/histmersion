@@ -11,8 +11,11 @@ import sttp.tapir.Schema
 object QueryTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class QueryInput(sql: String) derives KindlingsCodecAsObject
+  final case class QueryInput(sql: QueryInput.Sql) derives KindlingsCodecAsObject
   object QueryInput:
+    type Sql = Sql.T
+    object Sql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[QueryInput] = KindlingsSchema
       .derived[QueryInput]
       .schema

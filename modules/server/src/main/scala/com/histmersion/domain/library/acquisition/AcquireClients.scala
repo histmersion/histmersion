@@ -18,5 +18,9 @@ final case class AcquireClients(
     indexes: List[ScholarlyIndex] = Nil,
     alerts: CitationAlerts = NoAlerts,
     /** The legal chain's generation ([[FetcherGeneration]]): what makes the acquisition list due again. */
-    generation: String = ""
+    generation: AcquireClients.Generation = ""
 )
+
+object AcquireClients:
+  type Generation = Generation.T
+  object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

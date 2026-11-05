@@ -29,23 +29,41 @@ import com.histmersion.api.exchange.Bundle
 object SourceMatcher:
 
   /** A source with the old citekeys (aliases) that still name it. */
-  final case class Side(source: Bundle.Source, aliases: Set[String]):
+  final case class Side(source: Bundle.Source, aliases: Set[Side.Aliases]):
     def uid: UUID = source.uid
     def labels: Set[String] = aliases + source.citekey
 
+  object Side:
+    type Aliases = Aliases.T
+    object Aliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The evidence about one pair. `parts` is the score's waterfall, in the order it was added up. */
   final case class Evidence(
-      strong: List[String],
-      doiConflict: Boolean,
-      yearGap: Boolean,
-      titleDiffers: Boolean,
+      strong: List[Evidence.Strong],
+      doiConflict: Evidence.DoiConflict,
+      yearGap: Evidence.YearGap,
+      titleDiffers: Evidence.TitleDiffers,
       authors: AuthorAgreement,
-      parts: List[(String, Double)]
+      parts: List[(Evidence.PartsPart1, Evidence.PartsPart2)]
   ):
     def score: Double = parts.map(_._2).sum
     def strongKey: Boolean = strong.nonEmpty
     def why: List[String] =
       strong.map(k => s"$k equal (strong key)") ++ parts.map((l, w) => s"$l (${signed(w)})")
+
+  object Evidence:
+    type Strong = Strong.T
+    object Strong extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DoiConflict = DoiConflict.T
+    object DoiConflict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearGap = YearGap.T
+    object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TitleDiffers = TitleDiffers.T
+    object TitleDiffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsPart1 = PartsPart1.T
+    object PartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsPart2 = PartsPart2.T
+    object PartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
   def fixed(x: Double, places: Int): String = s"%.${places}f".formatLocal(java.util.Locale.ROOT, x)
@@ -182,10 +200,18 @@ object SourceMatcher:
       evidence: Evidence,
       outcome: Outcome,
       /** Hard flags that make it a question whatever the score. */
-      flags: List[String],
+      flags: List[Pair.Flags],
       /** Other sources here this one also resembles (best first), for the record. */
-      alsoLike: List[(String, Double)]
+      alsoLike: List[(Pair.AlsoLikePart1, Pair.AlsoLikePart2)]
   )
+
+  object Pair:
+    type Flags = Flags.T
+    object Flags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AlsoLikePart1 = AlsoLikePart1.T
+    object AlsoLikePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AlsoLikePart2 = AlsoLikePart2.T
+    object AlsoLikePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Matching(pairs: List[Pair], unmatched: List[Side])
 

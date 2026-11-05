@@ -13,13 +13,24 @@ object PeriodsTools:
 
   /** Input of the `periods` tool. */
   final case class PeriodsInput(
-      query: Option[String] = None,
-      id: Option[String] = None,
-      region: Option[String] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None
+      query: Option[PeriodsInput.Query] = None,
+      id: Option[PeriodsInput.Id] = None,
+      region: Option[PeriodsInput.Region] = None,
+      from: Option[PeriodsInput.From] = None,
+      to: Option[PeriodsInput.To] = None
   ) derives KindlingsCodecAsObject
   object PeriodsInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PeriodsInput] = KindlingsSchema
       .derived[PeriodsInput]
       .schema

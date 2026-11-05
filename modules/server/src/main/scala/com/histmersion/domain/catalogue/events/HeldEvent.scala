@@ -16,23 +16,23 @@ import com.histmersion.api.catalogue.{
   * participants. `geometry` is its own GeoJSON geometry; `attested` whether an attestation names it (its tier).
   */
 final case class HeldEvent(
-    id: String,
-    label: String,
-    kind: String,
+    id: HeldEvent.Id,
+    label: HeldEvent.Label,
+    kind: HeldEvent.Kind,
     timeSpan: TimeSpan,
-    historicity: String,
-    geometry: Option[String],
-    placeId: Option[String],
-    parentId: Option[String],
-    description: Option[String],
-    citekey: Option[String],
-    scale: Option[String],
-    wikidata: Option[String] = None,
-    names: List[String] = Nil,
-    catalogue: Option[String] = None,
-    central: Option[Long] = None,
-    plusMinus: Option[Long] = None,
-    datingMethod: Option[String] = None,
+    historicity: HeldEvent.Historicity,
+    geometry: Option[HeldEvent.Geometry],
+    placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+    parentId: Option[HeldEvent.ParentId],
+    description: Option[HeldEvent.Description],
+    citekey: Option[com.histmersion.domain.library.Citekey],
+    scale: Option[HeldEvent.Scale],
+    wikidata: Option[HeldEvent.Wikidata] = None,
+    names: List[HeldEvent.Names] = Nil,
+    catalogue: Option[HeldEvent.Catalogue] = None,
+    central: Option[HeldEvent.Central] = None,
+    plusMinus: Option[HeldEvent.PlusMinus] = None,
+    datingMethod: Option[HeldEvent.DatingMethod] = None,
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil
@@ -67,6 +67,35 @@ final case class HeldEvent(
 
 object HeldEvent:
   /** The `type` of a GeoJSON geometry, upper case. */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Historicity = Historicity.T
+  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Geometry = Geometry.T
+  object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentId = ParentId.T
+  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Scale = Scale.T
+  object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wikidata = Wikidata.T
+  object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Catalogue = Catalogue.T
+  object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Central = Central.T
+  object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlusMinus = PlusMinus.T
+  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatingMethod = DatingMethod.T
+  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def typeOf(geojson: String): Option[String] =
     io.circe.parser.parse(geojson).toOption.flatMap(_.hcursor.get[String]("type").toOption).map(_.toUpperCase)
 

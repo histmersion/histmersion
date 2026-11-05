@@ -15,19 +15,39 @@ import sttp.tapir.Schema
 object PersonalTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class BookmarksInput(kind: Option[String] = None, query: Option[String] = None, limit: Option[Int] = None)
+  final case class BookmarksInput(kind: Option[BookmarksInput.Kind] = None, query: Option[BookmarksInput.Query] = None, limit: Option[BookmarksInput.Limit] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object BookmarksInput:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class NotesInput(
-      id: Option[String] = None,
-      kind: Option[String] = None,
-      item: Option[String] = None,
-      query: Option[String] = None,
-      limit: Option[Int] = None
+      id: Option[NotesInput.Id] = None,
+      kind: Option[NotesInput.Kind] = None,
+      item: Option[NotesInput.Item] = None,
+      query: Option[NotesInput.Query] = None,
+      limit: Option[NotesInput.Limit] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object NotesInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   def apply(personal: PersonalControllers) =

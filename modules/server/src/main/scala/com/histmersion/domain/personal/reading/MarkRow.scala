@@ -14,10 +14,10 @@ final private[reading] case class MarkRow(
     key: ItemKey,
     uid: Option[ItemUid],
     targetLabel: Option[TargetLabel],
-    readAt: Option[String],
-    openedAt: Option[String],
-    createdAt: String,
-    updatedAt: String
+    readAt: Option[MarkRow.ReadAt],
+    openedAt: Option[MarkRow.OpenedAt],
+    createdAt: MarkRow.CreatedAt,
+    updatedAt: MarkRow.UpdatedAt
 ) derives DbCodec:
   def stored(user: UserId): StoredMark =
     StoredMark(
@@ -29,3 +29,13 @@ final private[reading] case class MarkRow(
       MarkTime.parse(createdAt),
       MarkTime.parse(updatedAt)
     )
+
+object MarkRow:
+  type ReadAt = ReadAt.T
+  object ReadAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenedAt = OpenedAt.T
+  object OpenedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedAt = CreatedAt.T
+  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

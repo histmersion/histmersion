@@ -8,16 +8,16 @@ import sttp.tapir.Schema
 
 /** `search` as an agent calls it: the filters steps use, mapped onto the same [[Filter]]. */
 final case class AgentSearchInput(
-    query: Option[String] = None,
-    topics: List[String] = Nil,
-    tags: List[String] = Nil,
-    authors: List[String] = Nil,
-    status: List[String] = Nil,
-    from: Option[Long] = None,
-    to: Option[Long] = None,
-    sort: Option[String] = None,
-    limit: Option[Int] = None,
-    offset: Option[Int] = None
+    query: Option[AgentSearchInput.Query] = None,
+    topics: List[AgentSearchInput.Topics] = Nil,
+    tags: List[AgentSearchInput.Tags] = Nil,
+    authors: List[AgentSearchInput.Authors] = Nil,
+    status: List[AgentSearchInput.Status] = Nil,
+    from: Option[AgentSearchInput.From] = None,
+    to: Option[AgentSearchInput.To] = None,
+    sort: Option[AgentSearchInput.Sort] = None,
+    limit: Option[AgentSearchInput.Limit] = None,
+    offset: Option[AgentSearchInput.Offset] = None
 ) derives KindlingsCodecAsObject:
   def toFilter: Filter =
     Filter.of(
@@ -41,4 +41,25 @@ final case class AgentSearchInput(
     )
 object AgentSearchInput:
   // the agent's few words per filter field are FilterDocs' `brief` (the MCP tool and the CLI read its `doc`)
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Topics = Topics.T
+  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type From = From.T
+  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type To = To.T
+  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sort = Sort.T
+  object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offset = Offset.T
+  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given Schema[AgentSearchInput] = Filter.Docs.describeBrief(KindlingsSchema.derived[AgentSearchInput].schema)

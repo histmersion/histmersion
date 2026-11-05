@@ -51,7 +51,7 @@ object Note:
   /** A live note as the table answers it. */
   final private[notes] case class Row(
       id: com.histmersion.api.personal.Note.Id,
-      kind: String,
+      kind: Row.Kind,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],
@@ -60,10 +60,18 @@ object Note:
       to: Option[Year],
       body: com.histmersion.api.personal.Note.Text,
       targetLabel: Option[TargetLabel],
-      createdAt: String,
-      updatedAt: String
+      createdAt: Row.CreatedAt,
+      updatedAt: Row.UpdatedAt
   ) derives DbCodec:
     def stored(user: UserId): Option[StoredNote] =
       MarkTarget
         .ofColumns(kind, key, uid, lat, lon, None, from, to, None)
         .map(t => StoredNote(user, id, t, body, targetLabel, MarkTime.parse(createdAt), MarkTime.parse(updatedAt)))
+
+  object Row:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

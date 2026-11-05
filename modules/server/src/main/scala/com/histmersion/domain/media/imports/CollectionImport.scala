@@ -21,7 +21,13 @@ import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, Medi
   */
 final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaConfig, converter: ConverterClient):
 
-  final private case class Judged(target: Target, rec: MediaRecord, decision: Either[String, String])
+  final private case class Judged(target: Target, rec: MediaRecord, decision: Either[Judged.DecisionPart1, Judged.DecisionPart2])
+
+  object Judged:
+    type DecisionPart1 = DecisionPart1.T
+    object DecisionPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecisionPart2 = DecisionPart2.T
+    object DecisionPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The role a record's picture plays: its own, else the collection's. */
   private def roleOf(rec: MediaRecord): String = rec.role.getOrElse(col.role)
