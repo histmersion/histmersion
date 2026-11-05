@@ -1,0 +1,4 @@
+PASS: review identities, scope, source hashes and current presence reconciled
+observation=refactor-audit/isolation-history/observations/2026-11-05T00-57-34.783327Z
+Confirmed relationships describe one currently known source-proposal ownership design problem; no fixes claimed.
+Classification does not suppress detection or grant permission to silently defer confirmed isolation work.

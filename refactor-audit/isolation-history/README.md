@@ -33,8 +33,9 @@ Unreviewed relationships remain candidates. This is not an independent quality s
 and does not establish 95% precision or recall.
 
 This adds evidence history and adjudication without changing detector coverage or
-spending a detector refinement round. Integration into the all-project assessment
-remains required before claiming automatic enforcement. The actual Scalafix CLI
+spending a detector refinement round. ProjectAssessment now runs this identity gate
+after capability history; the full assessment passed across 3,138 files with no new
+or reopened relationships. The actual Scalafix CLI
 passed unchanged-input verification and correctly failed equal-count substitution
 and reappearance scenarios, naming the expected regression identity in each case.
 See `verification.txt`; the original history and application sources were untouched.
@@ -45,3 +46,11 @@ relationships and 51 legitimate test relationships. The remaining 330 relationsh
 are candidates: 192 production and 138 test. Original raw evidence and the unreviewed
 baseline remain frozen; adjudication is a separate event. The confirmed engine/library
 coupling remains required repair work; it is not eligible for silent boy-scout deferral.
+
+The subsequent caller/definition review in `../approval-isolation` confirms 22 more
+relationships in Approvals and AgentRepo as part of the same design problem. Current
+adjudication is therefore 54 confirmed production, 21 accepted production, 170
+production candidates, 138 test candidates and 51 test non-violations. The original
+review-1 ledger is unchanged. `ReviewStatus.scala` reconciles both review events with
+current presence and source hashes; stale source evidence or unexplained absence fails.
+It remains a separately invoked review check, not part of ProjectAssessment.
