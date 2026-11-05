@@ -9,7 +9,16 @@ import scala.util.Try
   */
 object Clipboard:
 
-  def copy(text: String, what: String): Unit =
+  type CopyText = CopyText.T
+  object CopyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CopyWhat = CopyWhat.T
+  object CopyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FallbackText = FallbackText.T
+  object FallbackText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FallbackWhat = FallbackWhat.T
+  object FallbackWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def copy(text: com.histmersion.web.ui.Clipboard.CopyText, what: com.histmersion.web.ui.Clipboard.CopyWhat): Unit =
     val clip = Try(dom.window.navigator.asInstanceOf[js.Dynamic].clipboard).toOption.filterNot(c =>
       js.isUndefined(c) || c == null
     )
@@ -19,7 +28,7 @@ object Clipboard:
         p.`then`[Unit](_ => Flash.say(s"Copied $what."), (_: Any) => fallback(text, what)): Unit
       case None => fallback(text, what)
 
-  private def fallback(text: String, what: String): Unit =
+  private def fallback(text: com.histmersion.web.ui.Clipboard.FallbackText, what: com.histmersion.web.ui.Clipboard.FallbackWhat): Unit =
     val ta = dom.document.createElement("textarea").asInstanceOf[dom.HTMLTextAreaElement]
     ta.value = text
     ta.setAttribute("readonly", "")

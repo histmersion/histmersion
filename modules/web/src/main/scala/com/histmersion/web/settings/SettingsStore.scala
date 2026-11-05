@@ -12,20 +12,31 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object SettingsStore:
 
+  type CurrentResultPart1 = CurrentResultPart1.T
+  object CurrentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastResultResultPart1 = LastResultResultPart1.T
+  object LastResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SaveLiteralConsent = SaveLiteralConsent.T
+  object SaveLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MessageResult = MessageResult.T
+  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldKey = FieldKey.T
+  object FieldKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val page = Var(Option.empty[Either[String, ConfigEdit.Page]])
   private val result = Var(Option.empty[Either[String, ConfigEdit.Written]])
 
-  def current: Signal[Option[Either[String, ConfigEdit.Page]]] = page.signal
+  def current: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.CurrentResultPart1, ConfigEdit.Page]]] = page.signal
   def now: Option[ConfigEdit.Page] = page.now().flatMap(_.toOption)
 
   /** What the last change did, or why it was refused. */
-  def lastResult: Signal[Option[Either[String, ConfigEdit.Written]]] = result.signal
+  def lastResult: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.LastResultResultPart1, ConfigEdit.Written]]] = result.signal
 
   def load(): Unit =
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
 
   /** `changes` written against the version read; the page is read again either way. */
-  def save(changes: List[ConfigEdit.Change], literalConsent: Boolean = false): Future[ConfigEdit.Written] =
+  def save(changes: List[ConfigEdit.Change], literalConsent: com.histmersion.web.settings.SettingsStore.SaveLiteralConsent = false): Future[ConfigEdit.Written] =
     val w = ConfigEdit.Write(changes, version = now.map(_.version), literalConsent = literalConsent)
     val f = ApiClient.writeSettings(w)
     f.onComplete { r =>
@@ -36,12 +47,12 @@ object SettingsStore:
 
   def clearResult(): Unit = result.set(None)
 
-  def message(e: Throwable): String = e match
+  def message(e: Throwable): com.histmersion.web.settings.SettingsStore.MessageResult = e match
     case f: ApiFailure => f.getMessage
     case other         => Option(other.getMessage).getOrElse("the server could not be reached")
 
   /** A field of the page read now. */
-  def field(key: String): Signal[Option[ConfigEdit.Field]] =
+  def field(key: com.histmersion.web.settings.SettingsStore.FieldKey): Signal[Option[ConfigEdit.Field]] =
     page.signal.map(_.flatMap(_.toOption).flatMap(_.field(key)))
 
   /** What a change did, in a few lines: what changed, what waits for a restart (with the restart, where the server can

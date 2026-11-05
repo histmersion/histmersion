@@ -39,12 +39,21 @@ enum DecisionKind:
   case KeepUnanchored
 
   /** `true` when the decision needs an argument (`map:<citekey>`). */
-  def takesArgument: Boolean = this match
+  def takesArgument: com.histmersion.util.data.exchange.DecisionKind.TakesArgumentResult = this match
     case Map | RenameRight | RenameLeft | File => true
     case _                                     => false
 
 object DecisionKind:
-  def wireOf(k: DecisionKind): String = k match
+  type TakesArgumentResult = TakesArgumentResult.T
+  object TakesArgumentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireOfResult = WireOfResult.T
+  object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def wireOf(k: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireOfResult = k match
     case KeepLeft       => "keep-left"
     case KeepRight      => "keep-right"
     case Both           => "both"
@@ -60,5 +69,5 @@ object DecisionKind:
 
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind] = DecisionKind.values
-    def wire(e: DecisionKind): String = wireOf(e)
-    def fromWire(s: String): Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == s.trim)
+    def wire(e: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireResult = wireOf(e)
+    def fromWire(s: com.histmersion.util.data.exchange.DecisionKind.FromWireS): Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == s.trim)

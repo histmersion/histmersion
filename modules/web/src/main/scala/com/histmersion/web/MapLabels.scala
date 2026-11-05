@@ -44,6 +44,93 @@ object MapLabels:
   /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer target (the shape
     * under a name answers the pointer).
     */
+  type StatsResultPart1 = StatsResultPart1.T
+  object StatsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiveK = LiveK.T
+  object LiveK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasKeyResult = SyncAreasKeyResult.T
+  object SyncAreasKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasLabelResult = SyncAreasLabelResult.T
+  object SyncAreasLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasWrapClassResult = SyncAreasWrapClassResult.T
+  object SyncAreasWrapClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasPlaceResultPart1 = SyncAreasPlaceResultPart1.T
+  object SyncAreasPlaceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasPlaceResultPart2 = SyncAreasPlaceResultPart2.T
+  object SyncAreasPlaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasPlaceResultPart3 = SyncAreasPlaceResultPart3.T
+  object SyncAreasPlaceResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncAreasAsOfResult = SyncAreasAsOfResult.T
+  object SyncAreasAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasKeyResult = ApplyAreasKeyResult.T
+  object ApplyAreasKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasLabelResult = ApplyAreasLabelResult.T
+  object ApplyAreasLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasWrapClassResult = ApplyAreasWrapClassResult.T
+  object ApplyAreasWrapClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasPlaceResultPart1 = ApplyAreasPlaceResultPart1.T
+  object ApplyAreasPlaceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasPlaceResultPart2 = ApplyAreasPlaceResultPart2.T
+  object ApplyAreasPlaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasPlaceResultPart3 = ApplyAreasPlaceResultPart3.T
+  object ApplyAreasPlaceResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAreasAsOfResult = ApplyAreasAsOfResult.T
+  object ApplyAreasAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrackPointKey = TrackPointKey.T
+  object TrackPointKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrackEventRank = TrackEventRank.T
+  object TrackEventRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterK = RegisterK.T
+  object RegisterK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AreaMarkerLabel = AreaMarkerLabel.T
+  object AreaMarkerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AreaMarkerWrapClass = AreaMarkerWrapClass.T
+  object AreaMarkerWrapClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutlineResultPart1 = OutlineResultPart1.T
+  object OutlineResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignatureResult = SignatureResult.T
+  object SignatureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PolyRingsResultPart1 = PolyRingsResultPart1.T
+  object PolyRingsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PolyRingsResultPart2 = PolyRingsResultPart2.T
+  object PolyRingsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomNowResult = ZoomNowResult.T
+  object ZoomNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReducedMotionResult = ReducedMotionResult.T
+  object ReducedMotionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewNowZoom = ViewNowZoom.T
+  object ViewNowZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickPart1 = TickPart1.T
+  object TickPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrameResult = FrameResult.T
+  object FrameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrameT = FrameT.T
+  object FrameT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrameReduced = FrameReduced.T
+  object FrameReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderScale = RenderScale.T
+  object RenderScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderReduced = RenderReduced.T
+  object RenderReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteOA = WriteOA.T
+  object WriteOA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteI = WriteI.T
+  object WriteI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteName = WriteName.T
+  object WriteName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteV = WriteV.T
+  object WriteV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteEps = WriteEps.T
+  object WriteEps extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteUnit = WriteUnit.T
+  object WriteUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowResult = NowResult.T
+  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimedName = TimedName.T
+  object TimedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimedT0 = TimedT0.T
+  object TimedT0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def pane = TheMap.pane(MapStack.Pane.Labels)
 
   // `var`s: the one map, and the frames queued for it
@@ -98,13 +185,13 @@ object MapLabels:
   private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](ShapeCacheSize)
 
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
-  def stats: List[(String, BoundedCache.Stats)] =
+  def stats: List[(com.histmersion.web.MapLabels.StatsResultPart1, BoundedCache.Stats)] =
     List(
       "labels.entries" -> BoundedCache.Stats(entries.size, 0, 0L, 0L),
       "labels.state" -> BoundedCache.Stats(state.size, 0, 0L, 0L),
       "labels.shapes" -> BoundedCache.stats(shapes)
     )
-  private def live(k: String): Live = state.getOrElseUpdate(k, Live())
+  private def live(k: com.histmersion.web.MapLabels.LiveK): Live = state.getOrElseUpdate(k, Live())
 
   // the view: the zoom the size classes were chosen at, whether the view is the one the pass placed
   // the names for, whether the map is moving, a zoom animation in flight, and the last frame's time
@@ -155,11 +242,11 @@ object MapLabels:
     */
   def syncAreas(
       features: Seq[js.Dynamic],
-      key: js.Dynamic => String,
-      label: js.Dynamic => String,
-      wrapClass: js.Dynamic => String,
-      place: js.Dynamic => Option[(String, String, String)],
-      asOf: () => Option[Long],
+      key: js.Dynamic => com.histmersion.web.MapLabels.SyncAreasKeyResult,
+      label: js.Dynamic => com.histmersion.web.MapLabels.SyncAreasLabelResult,
+      wrapClass: js.Dynamic => com.histmersion.web.MapLabels.SyncAreasWrapClassResult,
+      place: js.Dynamic => Option[(com.histmersion.web.MapLabels.SyncAreasPlaceResultPart1, com.histmersion.web.MapLabels.SyncAreasPlaceResultPart2, com.histmersion.web.MapLabels.SyncAreasPlaceResultPart3)],
+      asOf: () => Option[com.histmersion.web.MapLabels.SyncAreasAsOfResult],
       release: js.Dynamic => Unit = _ => ()
   ): Unit =
     generation += 1
@@ -199,11 +286,11 @@ object MapLabels:
   /** The names of `named` (the areas whose place is known), the others' names gone (fading out). */
   private def applyAreas(
       named: Seq[(js.Dynamic, LabelPlacement.Shape)],
-      key: js.Dynamic => String,
-      label: js.Dynamic => String,
-      wrapClass: js.Dynamic => String,
-      place: js.Dynamic => Option[(String, String, String)],
-      asOf: () => Option[Long]
+      key: js.Dynamic => com.histmersion.web.MapLabels.ApplyAreasKeyResult,
+      label: js.Dynamic => com.histmersion.web.MapLabels.ApplyAreasLabelResult,
+      wrapClass: js.Dynamic => com.histmersion.web.MapLabels.ApplyAreasWrapClassResult,
+      place: js.Dynamic => Option[(com.histmersion.web.MapLabels.ApplyAreasPlaceResultPart1, com.histmersion.web.MapLabels.ApplyAreasPlaceResultPart2, com.histmersion.web.MapLabels.ApplyAreasPlaceResultPart3)],
+      asOf: () => Option[com.histmersion.web.MapLabels.ApplyAreasAsOfResult]
   ): Unit =
     if map != null && areasOn then
       val keep = named.map((f, _) => AreaKey + key(f)).toSet
@@ -250,7 +337,7 @@ object MapLabels:
       schedule()
 
   /** A point-only label ([[PlaceGlyph.labelMarker]]) takes part in the pass while it is on the map. */
-  def trackPoint(marker: DomMarker, key: String): Unit =
+  def trackPoint(marker: DomMarker, key: com.histmersion.web.MapLabels.TrackPointKey): Unit =
     val k = PointKey + key
     marker.onAdded(() =>
       entries(k) = Entry(marker.at, -1.0, None, () => inner(marker))
@@ -266,7 +353,7 @@ object MapLabels:
     * cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes over another name); without a map
     * pass it is simply shown.
     */
-  def trackEvent(key: com.histmersion.api.catalogue.Event.Id, marker: DomMarker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
+  def trackEvent(key: com.histmersion.api.catalogue.Event.Id, marker: DomMarker, rank: com.histmersion.web.MapLabels.TrackEventRank, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
       entries(EventKey + key.value) = Entry(marker.at, rank, None, label, Some(() => Some(marker.el)))
@@ -285,13 +372,13 @@ object MapLabels:
     state.filterInPlace((k, _) => !k.startsWith(EventKey))
     if entries.size != before then schedule()
 
-  private def register(k: String, m: DomMarker, s: LabelPlacement.Shape): Unit =
+  private def register(k: com.histmersion.web.MapLabels.RegisterK, m: DomMarker, s: LabelPlacement.Shape): Unit =
     entries(k) = Entry(m.at, s.size0, Some(s), () => inner(m), marker = Some(m))
 
   private def inner(m: DomMarker): Option[dom.HTMLElement] =
     Option(m.el.firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
 
-  private def areaMarker(s: LabelPlacement.Shape, label: String, wrapClass: String): DomMarker =
+  private def areaMarker(s: LabelPlacement.Shape, label: com.histmersion.web.MapLabels.AreaMarkerLabel, wrapClass: com.histmersion.web.MapLabels.AreaMarkerWrapClass): DomMarker =
     // hidden until the first pass has sized and placed it; it then fades and grows in
     DomMarker(
       s.lat,
@@ -302,7 +389,7 @@ object MapLabels:
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The parts of an area feature's outline, and their cache key; `None` for anything but a polygon. */
-  private def outline(f: js.Dynamic): Option[(String, js.Array[js.Dynamic])] =
+  private def outline(f: js.Dynamic): Option[(com.histmersion.web.MapLabels.OutlineResultPart1, js.Array[js.Dynamic])] =
     val g = f.geometry
     if js.isUndefined(g) || g == null then None
     else
@@ -336,7 +423,7 @@ object MapLabels:
   /** An outline's identity, cheaply: the feature's id, its parts, and each outer ring's length and first vertex — two
     * years of one polity with the same outline share it.
     */
-  private def signature(f: js.Dynamic, parts: js.Array[js.Dynamic]): String =
+  private def signature(f: js.Dynamic, parts: js.Array[js.Dynamic]): com.histmersion.web.MapLabels.SignatureResult =
     val id = Option(f.properties).filterNot(js.isUndefined).map(_.id.toString).getOrElse("")
     val sb = StringBuilder(id)
     parts.foreach { p =>
@@ -349,7 +436,7 @@ object MapLabels:
   /** One polygon's rings as (lat, lon), thinned on the way in to at most [[LabelPlacement.MaxRingPoints]] each — the
     * label needs the shape's room, not its coastline.
     */
-  private def polyRings(p: js.Dynamic): Seq[Seq[(Double, Double)]] =
+  private def polyRings(p: js.Dynamic): Seq[Seq[(com.histmersion.web.MapLabels.PolyRingsResultPart1, com.histmersion.web.MapLabels.PolyRingsResultPart2)]] =
     p.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].toSeq.map { ring =>
       val step = math.max(1, math.ceil(ring.length.toDouble / LabelPlacement.MaxRingPoints).toInt)
       (0 until ring.length by step).map(i => (ring(i)(1), ring(i)(0)))
@@ -367,13 +454,13 @@ object MapLabels:
   private val TierClasses = LabelPlacement.Tier.values.map(_.css)
 
   /** The map's zoom now (the raster grid's) — fractional in a zoom. */
-  private def zoomNow(): Double = map.zoom
+  private def zoomNow(): com.histmersion.web.MapLabels.ZoomNowResult = map.zoom
 
   /** The names snap instead of easing when the map does not animate (the reader's "Map motion", #4718). */
-  private def reducedMotion(): Boolean = !MotionPref.animate()
+  private def reducedMotion(): com.histmersion.web.MapLabels.ReducedMotionResult = !MotionPref.animate()
 
   /** The settled viewport in the zoom-0 plane. */
-  private def viewNow(zoom: Double): Rect =
+  private def viewNow(zoom: com.histmersion.web.MapLabels.ViewNowZoom): Rect =
     val scale = math.pow(2, zoom)
     val c = map.center
     val p = LabelPlacement.project(c.lat, c.lon)
@@ -449,7 +536,7 @@ object MapLabels:
       lastFrame = now()
       dom.window.requestAnimationFrame(tick)
 
-  private val tick: js.Function1[Double, Unit] = (_: Double) =>
+  private val tick: js.Function1[com.histmersion.web.MapLabels.TickPart1, Unit] = (_: Double) =>
     val t = now()
     val busy = frame(t, reducedMotion())
     timed("hd-label-frame", t)
@@ -459,7 +546,7 @@ object MapLabels:
   /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed. `true` while some
     * name is still on its way.
     */
-  private def frame(t: Double, reduced: Boolean): Boolean =
+  private def frame(t: com.histmersion.web.MapLabels.FrameT, reduced: com.histmersion.web.MapLabels.FrameReduced): com.histmersion.web.MapLabels.FrameResult =
     if map == null then false
     else
       val dt = math.max(0.0, math.min(0.1, (t - lastFrame) / 1000.0))
@@ -531,8 +618,8 @@ object MapLabels:
       st: Live,
       el: dom.HTMLElement,
       s: LabelPlacement.Shape,
-      scale: Double,
-      reduced: Boolean = false
+      scale: com.histmersion.web.MapLabels.RenderScale,
+      reduced: com.histmersion.web.MapLabels.RenderReduced = false
   ): Unit =
     if st.motion != null then
       write(st, el, 0, "--dx", (st.motion.p.x - s.home.x) * scale, 0.05, "px")
@@ -540,9 +627,9 @@ object MapLabels:
     write(st, el, 2, "--s", st.s * LabelMotion.appearScale(st.a, reduced), 0.002, "")
     writeO(st, el, st.a)
 
-  private def writeO(st: Live, el: dom.HTMLElement, a: Double): Unit = write(st, el, 3, "--o", a, 0.005, "")
+  private def writeO(st: Live, el: dom.HTMLElement, a: com.histmersion.web.MapLabels.WriteOA): Unit = write(st, el, 3, "--o", a, 0.005, "")
 
-  private def write(st: Live, el: dom.HTMLElement, i: Int, name: String, v: Double, eps: Double, unit: String): Unit =
+  private def write(st: Live, el: dom.HTMLElement, i: com.histmersion.web.MapLabels.WriteI, name: com.histmersion.web.MapLabels.WriteName, v: com.histmersion.web.MapLabels.WriteV, eps: com.histmersion.web.MapLabels.WriteEps, unit: com.histmersion.web.MapLabels.WriteUnit): Unit =
     val last = st.wrote(i)
     // past the threshold, or arriving exactly at an end (fully hidden, fully shown, at home)
     if last.isNaN || math.abs(last - v) > eps || (v != last && (v == 0 || v == 1)) then
@@ -556,9 +643,9 @@ object MapLabels:
 
   // ── what a pass costs, for the browser's performance panel (the latest of each, never a backlog) ──
 
-  private def now(): Double = dom.window.performance.now()
+  private def now(): com.histmersion.web.MapLabels.NowResult = dom.window.performance.now()
 
-  private def timed(name: String, t0: Double): Unit =
+  private def timed(name: com.histmersion.web.MapLabels.TimedName, t0: com.histmersion.web.MapLabels.TimedT0): Unit =
     val p = dom.window.performance.asInstanceOf[js.Dynamic]
     if js.typeOf(p.measure) == "function" then
       p.clearMeasures(name)

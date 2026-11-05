@@ -21,16 +21,23 @@ import javax.sql.DataSource
 object MergePlans:
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
+  type PlanFileResultPart1 = PlanFileResultPart1.T
+  object PlanFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanFileChunkChars = PlanFileChunkChars.T
+  object PlanFileChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanChunkChars = PlanChunkChars.T
+  object PlanChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def planFile(
       ds: DataSource,
       bundle: ByteSource,
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       files: ContentStore,
-      chunkChars: Int,
+      chunkChars: com.histmersion.util.data.exchange.MergePlans.PlanFileChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[String, MergePlan] =
+  ): Either[com.histmersion.util.data.exchange.MergePlans.PlanFileResultPart1, MergePlan] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -50,7 +57,7 @@ object MergePlans:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       files: ContentStore,
-      chunkChars: Int,
+      chunkChars: com.histmersion.util.data.exchange.MergePlans.PlanChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
   )(using DbCon): (MergePlanner.Input, MergePlanner.Result) =

@@ -16,10 +16,13 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
   /** The provider over `settings`. */
   def provider(settings: ProviderSettings): AiProvider
 
-  def register(c: HostAi, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: HostAi, ctx: Plugin.Context): Either[com.histmersion.plugins.ai.AiHttpPlugin.RegisterResultPart1, Unit] =
     settings(c.agents.providers)
       .toRight(s"no agents.providers.$name settings were supplied")
       .flatMap(s => ctx.aiProviders.add(name, provider(s)))
 
 object AiHttpPlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Version = "0.1.0"

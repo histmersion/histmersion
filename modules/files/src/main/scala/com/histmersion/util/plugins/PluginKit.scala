@@ -18,27 +18,136 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
 object PluginKit:
 
   /** JSON as these files are written: two-space indented, absent options left out. */
+  type Sha256HexResult = Sha256HexResult.T
+  object Sha256HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestResult = DigestResult.T
+  object DigestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestEntriesPart1 = DigestEntriesPart1.T
+  object DigestEntriesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestEntriesPart2 = DigestEntriesPart2.T
+  object DigestEntriesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetSpiVersion = PluginSetSpiVersion.T
+  object PluginSetSpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetMode = PluginSetMode.T
+  object PluginSetMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetKit = PluginSetKit.T
+  object PluginSetKit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetLinkedAt = PluginSetLinkedAt.T
+  object PluginSetLinkedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetDependenciesPart1 = PluginSetDependenciesPart1.T
+  object PluginSetDependenciesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginSetDependenciesPart2 = PluginSetDependenciesPart2.T
+  object PluginSetDependenciesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSetResultPart1 = ParseSetResultPart1.T
+  object ParseSetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSetText = ParseSetText.T
+  object ParseSetText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderSetResult = RenderSetResult.T
+  object RenderSetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJarsResultPart1 = ParseJarsResultPart1.T
+  object ParseJarsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJarsText = ParseJarsText.T
+  object ParseJarsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderJarsResult = RenderJarsResult.T
+  object RenderJarsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDirPart1 = StatusDirPart1.T
+  object StatusDirPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDirPart2 = StatusDirPart2.T
+  object StatusDirPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusServerAnswered = StatusServerAnswered.T
+  object StatusServerAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDependenciesPart1 = StatusDependenciesPart1.T
+  object StatusDependenciesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDependenciesPart2 = StatusDependenciesPart2.T
+  object StatusDependenciesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusLinesResult = StatusLinesResult.T
+  object StatusLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusLinesServerAnswered = StatusLinesServerAnswered.T
+  object StatusLinesServerAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseCoordinatesResultPart1 = ParseCoordinatesResultPart1.T
+  object ParseCoordinatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseCoordinatesS = ParseCoordinatesS.T
+  object ParseCoordinatesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginResultPart1 = OriginResultPart1.T
+  object OriginResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginArg = OriginArg.T
+  object OriginArg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginExistsArg1 = OriginExistsArg1.T
+  object OriginExistsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginExistsResult = OriginExistsResult.T
+  object OriginExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JarNameResult = JarNameResult.T
+  object JarNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JarNameFallback = JarNameFallback.T
+  object JarNameFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLoopbackResult = IsLoopbackResult.T
+  object IsLoopbackResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLoopbackUrl = IsLoopbackUrl.T
+  object IsLoopbackUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseIndexResultPart1 = ParseIndexResultPart1.T
+  object ParseIndexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseIndexText = ParseIndexText.T
+  object ParseIndexText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderIndexResult = RenderIndexResult.T
+  object RenderIndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsOfResult = IdsOfResult.T
+  object IdsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsOfFile = IdsOfFile.T
+  object IdsOfFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSignerResultPart1 = CheckSignerResultPart1.T
+  object CheckSignerResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSignerIds = CheckSignerIds.T
+  object CheckSignerIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSignerSeen = CheckSignerSeen.T
+  object CheckSignerSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalsResult = RefusalsResult.T
+  object RefusalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalsSpiVersion = RefusalsSpiVersion.T
+  object RefusalsSpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalsTakenPart1 = RefusalsTakenPart1.T
+  object RefusalsTakenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalsTakenPart2 = RefusalsTakenPart2.T
+  object RefusalsTakenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseKitResultPart1 = ParseKitResultPart1.T
+  object ParseKitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseKitText = ParseKitText.T
+  object ParseKitText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderKitResult = RenderKitResult.T
+  object RenderKitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256sumsResult = Sha256sumsResult.T
+  object Sha256sumsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSha256sumsResultPart1 = ParseSha256sumsResultPart1.T
+  object ParseSha256sumsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSha256sumsText = ParseSha256sumsText.T
+  object ParseSha256sumsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyKitResult = VerifyKitResult.T
+  object VerifyKitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyKitActualPart1 = VerifyKitActualPart1.T
+  object VerifyKitActualPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyKitActualPart2 = VerifyKitActualPart2.T
+  object VerifyKitActualPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val printer = Printer.spaces2.copy(dropNullValues = true)
 
   // ── digests ───────────────────────────────────────────────────────────────────────────────────
 
-  def sha256Hex(bytes: Array[Byte]): String =
+  def sha256Hex(bytes: Array[Byte]): com.histmersion.util.plugins.PluginKit.Sha256HexResult =
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   /** One digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent: SHA-256 over the sorted
     * `<name> <sha256>\n` lines. The empty set's is [[PluginSet.EmptyDigest]].
     */
-  def digest(entries: List[(String, String)]): String =
+  def digest(entries: List[(com.histmersion.util.plugins.PluginKit.DigestEntriesPart1, com.histmersion.util.plugins.PluginKit.DigestEntriesPart2)]): com.histmersion.util.plugins.PluginKit.DigestResult =
     sha256Hex(entries.sortBy(_._1).map((n, h) => s"$n $h\n").mkString.getBytes(UTF_8))
 
   /** The set for these jars, linked with these POMs and `lib/` jars (`(file, sha256)`). */
   def pluginSet(
       jars: List[PluginJar],
-      spiVersion: Int,
-      mode: String,
-      kit: Option[String],
-      linkedAt: Option[String],
-      dependencies: List[(String, String)] = Nil
+      spiVersion: com.histmersion.util.plugins.PluginKit.PluginSetSpiVersion,
+      mode: com.histmersion.util.plugins.PluginKit.PluginSetMode,
+      kit: Option[com.histmersion.util.plugins.PluginKit.PluginSetKit],
+      linkedAt: Option[com.histmersion.util.plugins.PluginKit.PluginSetLinkedAt],
+      dependencies: List[(com.histmersion.util.plugins.PluginKit.PluginSetDependenciesPart1, com.histmersion.util.plugins.PluginKit.PluginSetDependenciesPart2)] = Nil
   ): PluginSet =
     PluginSet(
       digest(jars.map(j => j.file -> j.sha256)),
@@ -50,15 +159,15 @@ object PluginKit:
       Some(dependencies.sortBy(_._1).map(PluginFile.apply))
     )
 
-  def parseSet(text: String): Either[String, PluginSet] =
+  def parseSet(text: com.histmersion.util.plugins.PluginKit.ParseSetText): Either[com.histmersion.util.plugins.PluginKit.ParseSetResultPart1, PluginSet] =
     parser.decode[PluginSet](text).left.map(e => s"plugin-set.json: ${e.getMessage}")
 
-  def renderSet(s: PluginSet): String = s.asJson.printWith(printer)
+  def renderSet(s: PluginSet): com.histmersion.util.plugins.PluginKit.RenderSetResult = s.asJson.printWith(printer)
 
-  def parseJars(text: String): Either[String, List[PluginJar]] =
+  def parseJars(text: com.histmersion.util.plugins.PluginKit.ParseJarsText): Either[com.histmersion.util.plugins.PluginKit.ParseJarsResultPart1, List[PluginJar]] =
     parser.decode[List[PluginJar]](text).left.map(e => s"plugin description: ${e.getMessage}")
 
-  def renderJars(js: List[PluginJar]): String = js.asJson.printWith(printer)
+  def renderJars(js: List[PluginJar]): com.histmersion.util.plugins.PluginKit.RenderJarsResult = js.asJson.printWith(printer)
 
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
@@ -111,11 +220,11 @@ object PluginKit:
     * linked with is out of date when they differ, though its jars are the same.
     */
   def status(
-      dir: List[(String, String)],
+      dir: List[(com.histmersion.util.plugins.PluginKit.StatusDirPart1, com.histmersion.util.plugins.PluginKit.StatusDirPart2)],
       installed: Option[PluginSet],
       running: Option[PluginSet],
-      serverAnswered: Boolean,
-      dependencies: List[(String, String)] = Nil
+      serverAnswered: com.histmersion.util.plugins.PluginKit.StatusServerAnswered,
+      dependencies: List[(com.histmersion.util.plugins.PluginKit.StatusDependenciesPart1, com.histmersion.util.plugins.PluginKit.StatusDependenciesPart2)] = Nil
   ): SetStatus =
     val dirDigest = digest(dir)
     val linkedDeps = installed.flatMap(_.dependencies).map(_.map(f => f.file -> f.sha256).toMap)
@@ -135,7 +244,7 @@ object PluginKit:
     SetStatus(dirDigest, installed, running, added, removed, changed, verdict)
 
   /** The status as Markdown lines (the CLI prints them). */
-  def statusLines(s: SetStatus, serverAnswered: Boolean): List[String] =
+  def statusLines(s: SetStatus, serverAnswered: com.histmersion.util.plugins.PluginKit.StatusLinesServerAnswered): List[com.histmersion.util.plugins.PluginKit.StatusLinesResult] =
     def short(d: String) = d.take(12) + "…"
     val verdict = s.verdict match
       case Verdict.UpToDate     => "up to date: the binary holds exactly the plugins in the directory"
@@ -158,12 +267,23 @@ object PluginKit:
 
   /** Maven coordinates. `g::a:v` is the Scala 3 artifact `a_3`. */
   final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
-    def path: String = s"${group.replace('.', '/')}/$artifact/$version/$artifact-$version"
-    def jarUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.jar"
-    def pomUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.pom"
+    def path: com.histmersion.util.plugins.PluginKit.Coordinates.PathResult = s"${group.replace('.', '/')}/$artifact/$version/$artifact-$version"
+    def jarUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlResult = s"${repo.stripSuffix("/")}/$path.jar"
+    def pomUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlResult = s"${repo.stripSuffix("/")}/$path.pom"
     override def toString: String = s"$group:$artifact:$version"
 
   object Coordinates:
+    type PathResult = PathResult.T
+    object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type JarUrlResult = JarUrlResult.T
+    object JarUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type JarUrlRepo = JarUrlRepo.T
+    object JarUrlRepo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PomUrlResult = PomUrlResult.T
+    object PomUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PomUrlRepo = PomUrlRepo.T
+    object PomUrlRepo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Group = Group.T
     object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Artifact = Artifact.T
@@ -173,7 +293,7 @@ object PluginKit:
 
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
-  def parseCoordinates(s: String): Either[String, Coordinates] =
+  def parseCoordinates(s: com.histmersion.util.plugins.PluginKit.ParseCoordinatesS): Either[com.histmersion.util.plugins.PluginKit.ParseCoordinatesResultPart1, Coordinates] =
     val scala3 = s"($Part)::($Part):($Part)".r
     val plain = s"($Part):($Part):($Part)".r
     s.trim match
@@ -189,7 +309,7 @@ object PluginKit:
   /** Pure: what `plugin add <arg>` names. An `http(s)://` URL is downloaded; anything that exists as a file, ends with
     * `.jar` or holds a `/` is a path; else Maven coordinates.
     */
-  def origin(arg: String, exists: String => Boolean): Either[String, Origin] =
+  def origin(arg: com.histmersion.util.plugins.PluginKit.OriginArg, exists: com.histmersion.util.plugins.PluginKit.OriginExistsArg1 => com.histmersion.util.plugins.PluginKit.OriginExistsResult): Either[com.histmersion.util.plugins.PluginKit.OriginResultPart1, Origin] =
     val a = arg.trim
     if a.startsWith("https://") || a.startsWith("http://") then Right(Origin.Url(a))
     else if exists(a) || a.endsWith(".jar") || a.contains("/") then Right(Origin.File(a))
@@ -198,7 +318,7 @@ object PluginKit:
   /** The file name a plugin jar is kept under: `<id>-<version>.jar` for a jar of one plugin (the convention of §7.1),
     * else the name it came with. Only `[A-Za-z0-9._+-]` survive.
     */
-  def jarName(plugins: List[PluginDescription], fallback: String): String =
+  def jarName(plugins: List[PluginDescription], fallback: com.histmersion.util.plugins.PluginKit.JarNameFallback): com.histmersion.util.plugins.PluginKit.JarNameResult =
     def clean(s: String) = s.replaceAll("[^A-Za-z0-9._+\\-]", "_")
     plugins match
       case List(p) if p.id.nonEmpty => clean(s"${p.id}-${p.version}.jar")
@@ -207,7 +327,7 @@ object PluginKit:
   /** Whether `url`'s host is this machine: the plugin commands act on the local install, and refuse to when the CLI is
     * pointed at a server elsewhere.
     */
-  def isLoopback(url: String): Boolean =
+  def isLoopback(url: com.histmersion.util.plugins.PluginKit.IsLoopbackUrl): com.histmersion.util.plugins.PluginKit.IsLoopbackResult =
     scala.util
       .Try(Option(URI(url.trim).getHost))
       .toOption
@@ -244,19 +364,27 @@ object PluginKit:
 
   final case class Index(jars: List[Installed] = Nil) derives KindlingsCodecAsObject:
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file))
-    def drop(file: String): Index = Index(jars.filterNot(_.file == file))
+    def drop(file: com.histmersion.util.plugins.PluginKit.Index.DropFile): Index = Index(jars.filterNot(_.file == file))
 
     /** The key fingerprint pinned for a plugin id by an earlier signed install (trust on first use). */
-    def pinnedSigner(id: String): Option[String] =
+    def pinnedSigner(id: com.histmersion.util.plugins.PluginKit.Index.PinnedSignerId): Option[com.histmersion.util.plugins.PluginKit.Index.PinnedSignerResult] =
       jars.find(j => j.plugins.exists(_.id == id) && j.signer.nonEmpty).flatMap(_.signer)
 
-  def parseIndex(text: String): Either[String, Index] =
+  object Index:
+    type DropFile = DropFile.T
+    object DropFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PinnedSignerResult = PinnedSignerResult.T
+    object PinnedSignerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PinnedSignerId = PinnedSignerId.T
+    object PinnedSignerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parseIndex(text: com.histmersion.util.plugins.PluginKit.ParseIndexText): Either[com.histmersion.util.plugins.PluginKit.ParseIndexResultPart1, Index] =
     parser.decode[Index](text).left.map(e => s"plugins index: ${e.getMessage}")
 
-  def renderIndex(i: Index): String = i.asJson.printWith(printer)
+  def renderIndex(i: Index): com.histmersion.util.plugins.PluginKit.RenderIndexResult = i.asJson.printWith(printer)
 
   /** The plugin id a jar file belongs to: the index's, else `<id>` of the `<id>-<version>.jar` name. */
-  def idsOf(file: String, index: Index): List[String] =
+  def idsOf(file: com.histmersion.util.plugins.PluginKit.IdsOfFile, index: Index): List[com.histmersion.util.plugins.PluginKit.IdsOfResult] =
     index.jars
       .find(_.file == file)
       .map(_.plugins.map(_.id))
@@ -266,7 +394,7 @@ object PluginKit:
   /** Pure: may a jar signed by `seen` be installed for these ids? The first signed install pins its key; a later
     * version signed by another key is refused (trust on first use, §9.3).
     */
-  def checkSigner(ids: List[String], seen: String, index: Index): Either[String, Unit] =
+  def checkSigner(ids: List[com.histmersion.util.plugins.PluginKit.CheckSignerIds], seen: com.histmersion.util.plugins.PluginKit.CheckSignerSeen, index: Index): Either[com.histmersion.util.plugins.PluginKit.CheckSignerResultPart1, Unit] =
     ids.flatMap(id => index.pinnedSigner(id).filter(_ != seen).map(id -> _)) match
       case Nil               => Right(())
       case (id, pinned) :: _ =>
@@ -278,7 +406,7 @@ object PluginKit:
   /** Pure: what refuses a described jar before it is installed: no plugin in it, a foreign SPI, a provider that could
     * not be instantiated, an id another installed jar (or the binary itself) already has.
     */
-  def refusals(jar: PluginJar, spiVersion: Int, taken: Map[String, String]): List[String] =
+  def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, com.histmersion.util.plugins.PluginKit.RefusalsTakenPart2]): List[com.histmersion.util.plugins.PluginKit.RefusalsResult] =
     val none = if jar.plugins.isEmpty then
       List(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)")
     else Nil
@@ -318,9 +446,12 @@ object PluginKit:
       mainClass: KitManifest.MainClass,
       files: List[KitFile]
   ) derives KindlingsCodecAsObject:
-    def label: String = version + commit.fold("")(c => s" ($c)")
+    def label: com.histmersion.util.plugins.PluginKit.KitManifest.LabelResult = version + commit.fold("")(c => s" ($c)")
 
   object KitManifest:
+    type LabelResult = LabelResult.T
+    object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Format = Format.T
     object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Version = Version.T
@@ -336,20 +467,20 @@ object PluginKit:
 
   val KitFormat = 1
 
-  def parseKit(text: String): Either[String, KitManifest] =
+  def parseKit(text: com.histmersion.util.plugins.PluginKit.ParseKitText): Either[com.histmersion.util.plugins.PluginKit.ParseKitResultPart1, KitManifest] =
     parser
       .decode[KitManifest](text)
       .left
       .map(e => s"kit.json: ${e.getMessage}")
       .filterOrElse(_.format <= KitFormat, s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)")
 
-  def renderKit(k: KitManifest): String = k.asJson.printWith(printer)
+  def renderKit(k: KitManifest): com.histmersion.util.plugins.PluginKit.RenderKitResult = k.asJson.printWith(printer)
 
   /** `SHA256SUMS`, the format `shasum -a 256 -c` / `sha256sum -c` read: `<sha256>  <path>`, sorted. */
-  def sha256sums(files: List[KitFile]): String =
+  def sha256sums(files: List[KitFile]): com.histmersion.util.plugins.PluginKit.Sha256sumsResult =
     files.sortBy(_.file).map(f => s"${f.sha256}  ${f.file}\n").mkString
 
-  def parseSha256sums(text: String): Either[String, List[KitFile]] =
+  def parseSha256sums(text: com.histmersion.util.plugins.PluginKit.ParseSha256sumsText): Either[com.histmersion.util.plugins.PluginKit.ParseSha256sumsResultPart1, List[KitFile]] =
     val line = "([0-9a-f]{64}) [ *](.+)".r
     text.linesIterator.filter(_.trim.nonEmpty).toList.foldLeft[Either[String, List[KitFile]]](Right(Nil)) {
       case (Right(acc), line(h, f)) => Right(acc :+ KitFile(f, h))
@@ -360,7 +491,7 @@ object PluginKit:
   /** Pure: every difference between the manifest and the kit on disk (`actual`: path → SHA-256 of every file found
     * under `kit/`, the manifests themselves excluded). Empty = intact.
     */
-  def verifyKit(expected: List[KitFile], actual: Map[String, String]): List[String] =
+  def verifyKit(expected: List[KitFile], actual: Map[com.histmersion.util.plugins.PluginKit.VerifyKitActualPart1, com.histmersion.util.plugins.PluginKit.VerifyKitActualPart2]): List[com.histmersion.util.plugins.PluginKit.VerifyKitResult] =
     val want = expected.map(f => f.file -> f.sha256).toMap
     val missing = want.keys.filterNot(actual.contains).toList.sorted.map(f => s"missing: $f")
     val changed = want.collect { case (f, h) if actual.get(f).exists(_ != h) => s"changed: $f" }.toList.sorted

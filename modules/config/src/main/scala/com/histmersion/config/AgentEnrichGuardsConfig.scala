@@ -11,9 +11,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases: AgentEnrichGuardsConfig.PointerPhrases)
     derives ConfigReader:
-  def phrases: List[String] = PeriodsConfig.split(pointerPhrases).map(_.toLowerCase(java.util.Locale.ROOT)).distinct
+  def phrases: List[com.histmersion.config.AgentEnrichGuardsConfig.PhrasesResult] = PeriodsConfig.split(pointerPhrases).map(_.toLowerCase(java.util.Locale.ROOT)).distinct
 
 object AgentEnrichGuardsConfig:
+  type PhrasesResult = PhrasesResult.T
+  object PhrasesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MinPlacedShare = MinPlacedShare.T
   object MinPlacedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CenturyGapYears = CenturyGapYears.T

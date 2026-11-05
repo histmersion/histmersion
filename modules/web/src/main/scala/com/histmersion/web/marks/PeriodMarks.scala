@@ -17,17 +17,50 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object PeriodMarks:
 
+  type TargetFrom = TargetFrom.T
+  object TargetFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetTo = TargetTo.T
+  object TargetTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartChangesResultPart1 = StartChangesResultPart1.T
+  object StartChangesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartChangesResultPart2 = StartChangesResultPart2.T
+  object StartChangesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartChangesFrom = StartChangesFrom.T
+  object StartChangesFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartChangesTo = StartChangesTo.T
+  object StartChangesTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartAtFrom = StartAtFrom.T
+  object StartAtFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartAtTo = StartAtTo.T
+  object StartAtTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddName = AddName.T
+  object AddName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddFrom = AddFrom.T
+  object AddFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddTo = AddTo.T
+  object AddTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionNaming = SectionNaming.T
+  object SectionNaming extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionCurrentResultPart1 = SectionCurrentResultPart1.T
+  object SectionCurrentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionCurrentResultPart2 = SectionCurrentResultPart2.T
+  object SectionCurrentResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionChooseArg1 = SectionChooseArg1.T
+  object SectionChooseArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionChooseArg2 = SectionChooseArg2.T
+  object SectionChooseArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val mine: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.Period))
 
   /** A period's target. Pure. */
-  def target(from: Long, to: Long): Target =
+  def target(from: com.histmersion.web.marks.PeriodMarks.TargetFrom, to: com.histmersion.web.marks.PeriodMarks.TargetTo): Target =
     Target(ItemKind.Period, from = Some(Year(math.min(from, to).toInt)), to = Some(Year(math.max(from, to).toInt)))
 
   /** The settings the timeline opens on, for these years. Pure. */
-  def startChanges(from: Long, to: Long): List[(String, String)] =
+  def startChanges(from: com.histmersion.web.marks.PeriodMarks.StartChangesFrom, to: com.histmersion.web.marks.PeriodMarks.StartChangesTo): List[(com.histmersion.web.marks.PeriodMarks.StartChangesResultPart1, com.histmersion.web.marks.PeriodMarks.StartChangesResultPart2)] =
     List("ui.time.default-from" -> math.min(from, to).toString, "ui.time.default-to" -> math.max(from, to).toString)
 
-  def startAt(from: Long, to: Long): Unit =
+  def startAt(from: com.histmersion.web.marks.PeriodMarks.StartAtFrom, to: com.histmersion.web.marks.PeriodMarks.StartAtTo): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else
       SettingsStore
@@ -41,7 +74,7 @@ object PeriodMarks:
           )
         )
 
-  def add(name: String, from: Long, to: Long): Unit =
+  def add(name: com.histmersion.web.marks.PeriodMarks.AddName, from: com.histmersion.web.marks.PeriodMarks.AddFrom, to: com.histmersion.web.marks.PeriodMarks.AddTo): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else
       MyItems
@@ -51,7 +84,7 @@ object PeriodMarks:
   /** "My periods" at the head of the presets menu: each a button that shows its years, × to remove it; and, while
     * `naming` holds a name, the form that keeps the years shown under it.
     */
-  def section(naming: Var[Option[String]], current: () => (Long, Long), choose: (Long, Long) => Unit): HtmlElement =
+  def section(naming: Var[Option[com.histmersion.web.marks.PeriodMarks.SectionNaming]], current: () => (com.histmersion.web.marks.PeriodMarks.SectionCurrentResultPart1, com.histmersion.web.marks.PeriodMarks.SectionCurrentResultPart2), choose: (com.histmersion.web.marks.PeriodMarks.SectionChooseArg1, com.histmersion.web.marks.PeriodMarks.SectionChooseArg2) => Unit): HtmlElement =
     div(
       cls := "tl-my-periods",
       child.maybe <-- mine

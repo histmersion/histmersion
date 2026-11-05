@@ -22,10 +22,10 @@ final class BoundedCache[K, V](
   // `var`: the summed weight of `entries`, kept with every change
   private var total = 0L
 
-  def size: Int = entries.size
-  def weight: Long = total
+  def size: com.histmersion.web.BoundedCache.SizeResult = entries.size
+  def weight: com.histmersion.web.BoundedCache.WeightResult = total
   def keys: List[K] = entries.keys.toList
-  def contains(k: K): Boolean = entries.contains(k)
+  def contains(k: K): com.histmersion.web.BoundedCache.ContainsResult = entries.contains(k)
 
   /** The value of `k`, now the most recently used. */
   def get(k: K): Option[V] =
@@ -53,7 +53,7 @@ final class BoundedCache[K, V](
         x
 
   /** `k`'s weight is now `w` (its value arrived); over budget, the least recently used others go. */
-  def reweigh(k: K, w: Long): Unit =
+  def reweigh(k: K, w: com.histmersion.web.BoundedCache.ReweighW): Unit =
     entries.get(k).foreach { (v, old) =>
       entries(k) = (v, math.max(0L, w))
       total += math.max(0L, w) - old
@@ -89,6 +89,15 @@ final class BoundedCache[K, V](
 
 object BoundedCache:
   /** The figures a diagnostics read reports for one cache. */
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WeightResult = WeightResult.T
+  object WeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsResult = ContainsResult.T
+  object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReweighW = ReweighW.T
+  object ReweighW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Stats(entries: Stats.Entries, maxEntries: Stats.MaxEntries, weight: Stats.Weight, maxWeight: Stats.MaxWeight)
 
   object Stats:

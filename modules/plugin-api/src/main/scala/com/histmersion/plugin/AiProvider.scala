@@ -17,29 +17,47 @@ package com.histmersion.plugin
   */
 trait AiProvider:
   /** What to call it: "Google Gemini API". */
-  def title: String
+  def title: com.histmersion.plugin.AiProvider.TitleResult
 
-  def description: String = ""
+  def description: com.histmersion.plugin.AiProvider.DescriptionResult = ""
 
   def capabilities: AiCapabilities = AiCapabilities()
 
   /** The provider spends the PERSON'S own subscription (a login, not an API key): refused while the server listens
     * beyond loopback, where another client could spend it.
     */
-  def spendsPersonalPlan: Boolean = false
+  def spendsPersonalPlan: com.histmersion.plugin.AiProvider.SpendsPersonalPlanResult = false
 
   /** Whether a client for `model` can be used now (a key configured, a URL given) — asked before a model is picked, so
     * a provider that cannot run is passed over with its reason. Spends nothing.
     */
-  def check(model: String): Either[String, Unit] = Right(())
+  def check(model: com.histmersion.plugin.AiProvider.CheckModel): Either[com.histmersion.plugin.AiProvider.CheckResultPart1, Unit] = Right(())
 
   /** The models the provider lists, from a FREE call (never a generation), for `agent doctor`; `Right(Nil)` = it has no
     * listing.
     */
-  def models(http: AiHttp): Either[String, List[String]] = Right(Nil)
+  def models(http: AiHttp): Either[com.histmersion.plugin.AiProvider.ModelsResultPart1, List[com.histmersion.plugin.AiProvider.ModelsResultPart2]] = Right(Nil)
 
   /** Its own checks for `agent doctor` (`online = false`: send nothing). Spends nothing. */
-  def doctor(online: Boolean, http: AiHttp): List[AiCheck] = Nil
+  def doctor(online: com.histmersion.plugin.AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] = Nil
 
   /** ONE model call. */
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]
+
+object AiProvider:
+  type TitleResult = TitleResult.T
+  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescriptionResult = DescriptionResult.T
+  object DescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpendsPersonalPlanResult = SpendsPersonalPlanResult.T
+  object SpendsPersonalPlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckModel = CheckModel.T
+  object CheckModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsResultPart1 = ModelsResultPart1.T
+  object ModelsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsResultPart2 = ModelsResultPart2.T
+  object ModelsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoctorOnline = DoctorOnline.T
+  object DoctorOnline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

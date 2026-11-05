@@ -17,11 +17,26 @@ import com.histmersion.api.instance.UiConfig
 object ResultsPanel:
 
   /** The width, px: the one this browser kept, else the default. */
-  val width: Var[Int] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(Layout.sidebarDefault.value), viewport))
+  type Width = Width.T
+  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewportResult = ViewportResult.T
+  object ViewportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResizeToW = ResizeToW.T
+  object ResizeToW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResizeToKeep = ResizeToKeep.T
+  object ResizeToKeep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabLabelResult = TabLabelResult.T
+  object TabLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabLabelLabel = TabLabelLabel.T
+  object TabLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabLabelCount = TabLabelCount.T
+  object TabLabelCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def viewport: Double = scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue)
+  val width: Var[com.histmersion.web.ResultsPanel.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(Layout.sidebarDefault.value), viewport))
 
-  private def resizeTo(w: Int, keep: Boolean): Unit =
+  private def viewport: com.histmersion.web.ResultsPanel.ViewportResult = scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue)
+
+  private def resizeTo(w: com.histmersion.web.ResultsPanel.ResizeToW, keep: com.histmersion.web.ResultsPanel.ResizeToKeep): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
     if keep then ResultsWidth.keep(width.now())
 
@@ -45,7 +60,7 @@ object ResultsPanel:
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
   /** Pure: a tab's label with its count, when known. */
-  def tabLabel(label: String, count: Option[Int]): String = count.fold(label)(n => s"$label $n")
+  def tabLabel(label: com.histmersion.web.ResultsPanel.TabLabelLabel, count: Option[com.histmersion.web.ResultsPanel.TabLabelCount]): com.histmersion.web.ResultsPanel.TabLabelResult = count.fold(label)(n => s"$label $n")
 
   private def counts(t: SidebarTab): Signal[Option[com.histmersion.api.RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal

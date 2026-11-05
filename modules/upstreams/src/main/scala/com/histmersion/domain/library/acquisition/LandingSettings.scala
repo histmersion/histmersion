@@ -31,6 +31,11 @@ final case class LandingSettings(
 
 object LandingSettings:
   /** A comma-separated list's entries, trimmed and lower-case. */
+  type EntriesResult = EntriesResult.T
+  object EntriesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntriesList = EntriesList.T
+  object EntriesList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxPages = MaxPages.T
@@ -52,5 +57,5 @@ object LandingSettings:
   type OaPublisherHosts = OaPublisherHosts.T
   object OaPublisherHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def entries(list: String): List[String] =
+  def entries(list: com.histmersion.domain.library.acquisition.LandingSettings.EntriesList): List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] =
     Option(list).getOrElse("").split(",").toList.map(_.trim.toLowerCase).filter(_.nonEmpty)

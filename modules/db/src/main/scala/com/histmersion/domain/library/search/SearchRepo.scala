@@ -16,7 +16,14 @@ import com.histmersion.api.catalogue.Place
 private[search] object SearchRepo:
 
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
-  def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Int =
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnlocatedResult = UnlocatedResult.T
+  object UnlocatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcesSnippetWords = SourcesSnippetWords.T
+  object SourcesSnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.domain.library.search.SearchRepo.CountResult =
     (FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
@@ -24,7 +31,7 @@ private[search] object SearchRepo:
     * §1.6a). Built from the SHARED [[FilterSql]] fragments, so it is narrowed by exactly the same criteria as the map
     * feed.
     */
-  def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Int =
+  def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.domain.library.search.SearchRepo.UnlocatedResult =
     val q = Sql.raw("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
       FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
       Sql.raw(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)")
@@ -46,7 +53,7 @@ private[search] object SearchRepo:
     * computes `ts_headline` only for the page's citekeys — typically 10–25 instead of every matching source in the
     * corpus.
     */
-  def sources(filter: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
+  def sources(filter: Filter, snippetWords: com.histmersion.domain.library.search.SearchRepo.SourcesSnippetWords, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
     val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
     val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
     if rows.isEmpty then SearchResult.of(total, Nil, filter.offset.max(0))

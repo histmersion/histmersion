@@ -6,6 +6,9 @@ import com.histmersion.api.jobs.JobDetail
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */
 object ExchangeJobKinds:
+  type PlanHash = PlanHash.T
+  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),
     "Import reference data",
@@ -22,4 +25,4 @@ object ExchangeJobKinds:
   )
 
   /** The plan a merge apply carries out, by its hash, in the job's detail. */
-  val PlanHash: JobDetail.Field[Option[String]] = JobDetail.Field("planHash", None)
+  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = JobDetail.Field("planHash", None)

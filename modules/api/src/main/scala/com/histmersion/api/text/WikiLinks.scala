@@ -1,6 +1,49 @@
 package com.histmersion.api.text
 object WikiLinks:
 
+  type IsCitekeyShapedResult = IsCitekeyShapedResult.T
+  object IsCitekeyShapedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCitekeyShapedS = IsCitekeyShapedS.T
+  object IsCitekeyShapedS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OccurrencesMd = OccurrencesMd.T
+  object OccurrencesMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormalizeResult = NormalizeResult.T
+  object NormalizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormalizeRaw = NormalizeRaw.T
+  object NormalizeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsResult = TargetsResult.T
+  object TargetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsBody = TargetsBody.T
+  object TargetsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksResult = RewriteLinksResult.T
+  object RewriteLinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksMd = RewriteLinksMd.T
+  object RewriteLinksMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksRenderArg1 = RewriteLinksRenderArg1.T
+  object RewriteLinksRenderArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksRenderArg2 = RewriteLinksRenderArg2.T
+  object RewriteLinksRenderArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksRenderArg3 = RewriteLinksRenderArg3.T
+  object RewriteLinksRenderArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksRenderResult = RewriteLinksRenderResult.T
+  object RewriteLinksRenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetargetResultPart1 = RetargetResultPart1.T
+  object RetargetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetargetResultPart2 = RetargetResultPart2.T
+  object RetargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetargetMd = RetargetMd.T
+  object RetargetMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetargetToArg1 = RetargetToArg1.T
+  object RetargetToArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetargetToResult = RetargetToResult.T
+  object RetargetToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksResult = LinksResult.T
+  object LinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksText = LinksText.T
+  object LinksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksCk = LinksCk.T
+  object LinksCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Citekey =
     """^(?=.*(?:_|\d{4}))[a-z][a-z0-9_]*$""".r
 
@@ -9,7 +52,7 @@ object WikiLinks:
   private val Link = """(!?)\\?\[\\?\[([^\[\]\n]+?)\\?\]\\?\]""".r
 
   /** Whether a target reads as a citekey (a four-digit year or an underscore in it) rather than an article's slug. */
-  def isCitekeyShaped(s: String): Boolean = Citekey.matches(s)
+  def isCitekeyShaped(s: com.histmersion.api.text.WikiLinks.IsCitekeyShapedS): com.histmersion.api.text.WikiLinks.IsCitekeyShapedResult = Citekey.matches(s)
 
   /** One link in a text: where it is, what was written, whether it is an embed or escaped, and its target. */
   final case class Occurrence(
@@ -35,7 +78,7 @@ object WikiLinks:
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def occurrences(md: String): List[Occurrence] =
+  def occurrences(md: com.histmersion.api.text.WikiLinks.OccurrencesMd): List[Occurrence] =
     Link
       .findAllMatchIn(md)
       .map { m =>
@@ -52,14 +95,14 @@ object WikiLinks:
       .toList
 
   /** A link's target as it is stored: no label, no anchor, lower case; none for an in-page anchor or a file name. */
-  def normalize(raw: String): Option[String] =
+  def normalize(raw: com.histmersion.api.text.WikiLinks.NormalizeRaw): Option[com.histmersion.api.text.WikiLinks.NormalizeResult] =
     val noLabel = raw.takeWhile(_ != '|')
     val noAnchor = noLabel.takeWhile(_ != '#')
     val t = noAnchor.trim.toLowerCase
     if t.isEmpty || !SlugShape.matches(t) then None else Some(t)
 
   /** The distinct targets a text links, in order; embeds are not links. */
-  def targets(body: String): List[String] =
+  def targets(body: com.histmersion.api.text.WikiLinks.TargetsBody): List[com.histmersion.api.text.WikiLinks.TargetsResult] =
     Link
       .findAllMatchIn(body)
       .filter(_.group(1).isEmpty)
@@ -70,7 +113,7 @@ object WikiLinks:
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
     */
-  def rewriteLinks(md: String)(render: (String, Option[String], String) => String): String =
+  def rewriteLinks(md: com.histmersion.api.text.WikiLinks.RewriteLinksMd)(render: (com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1, Option[com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2], com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3) => com.histmersion.api.text.WikiLinks.RewriteLinksRenderResult): com.histmersion.api.text.WikiLinks.RewriteLinksResult =
     Link.replaceAllIn(
       md,
       m =>
@@ -84,7 +127,7 @@ object WikiLinks:
     )
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
-  def retarget(md: String, to: String => Option[String]): (String, Int) =
+  def retarget(md: com.histmersion.api.text.WikiLinks.RetargetMd, to: com.histmersion.api.text.WikiLinks.RetargetToArg1 => Option[com.histmersion.api.text.WikiLinks.RetargetToResult]): (com.histmersion.api.text.WikiLinks.RetargetResultPart1, com.histmersion.api.text.WikiLinks.RetargetResultPart2) =
     def moved(m: scala.util.matching.Regex.Match): Option[String] =
       if m.group(1).nonEmpty then None
       else normalize(m.group(2).takeWhile(_ != '|')).flatMap(to)
@@ -108,4 +151,4 @@ object WikiLinks:
       (out, count)
 
   /** Whether a text links `ck` (any case). */
-  def links(text: String, ck: String): Boolean = targets(text).exists(_.equalsIgnoreCase(ck))
+  def links(text: com.histmersion.api.text.WikiLinks.LinksText, ck: com.histmersion.api.text.WikiLinks.LinksCk): com.histmersion.api.text.WikiLinks.LinksResult = targets(text).exists(_.equalsIgnoreCase(ck))

@@ -6,7 +6,32 @@ package com.histmersion.api
   */
 object LatinFold:
 
-  private val Pairs: String =
+  type Pairs = Pairs.T
+  object Pairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MultiPart1 = MultiPart1.T
+  object MultiPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MultiPart2 = MultiPart2.T
+  object MultiPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TablePart1 = TablePart1.T
+  object TablePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TablePart2 = TablePart2.T
+  object TablePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableCharsResult = TableCharsResult.T
+  object TableCharsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCombiningMarkResult = IsCombiningMarkResult.T
+  object IsCombiningMarkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCombiningMarkC = IsCombiningMarkC.T
+  object IsCombiningMarkC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldCharResult = FoldCharResult.T
+  object FoldCharResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldCharC = FoldCharC.T
+  object FoldCharC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldResult = FoldResult.T
+  object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldS = FoldS.T
+  object FoldS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private val Pairs: com.histmersion.api.LatinFold.Pairs =
     // Latin-1 Supplement
     "ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
       "íiîiïiðdñnòoóoôoõoöoøoùuúuûuüuýyÿy" +
@@ -30,7 +55,7 @@ object LatinFold:
       "ỴYỵyỶYỷyỸYỹy"
 
   /** The transliteration half rings (`ʿ` ayin, `ʾ` aleph) fold to nothing: `Baʿal` → `Baal`. */
-  private val Multi: Map[Char, String] = Map(
+  private val Multi: Map[com.histmersion.api.LatinFold.MultiPart1, com.histmersion.api.LatinFold.MultiPart2] = Map(
     '\u02bf' -> "",
     '\u02be' -> "",
     'Æ' -> "AE",
@@ -63,17 +88,17 @@ object LatinFold:
     'ỻ' -> "ll"
   )
 
-  private val Table: Map[Char, String] =
+  private val Table: Map[com.histmersion.api.LatinFold.TablePart1, com.histmersion.api.LatinFold.TablePart2] =
     Pairs.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
-  def tableChars: Set[Char] = Table.keySet
+  def tableChars: Set[com.histmersion.api.LatinFold.TableCharsResult] = Table.keySet
 
-  private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
+  private def isCombiningMark(c: com.histmersion.api.LatinFold.IsCombiningMarkC): com.histmersion.api.LatinFold.IsCombiningMarkResult = c >= '\u0300' && c <= '\u036f'
 
-  def foldChar(c: Char): String =
+  def foldChar(c: com.histmersion.api.LatinFold.FoldCharC): com.histmersion.api.LatinFold.FoldCharResult =
     if isCombiningMark(c) then "" else Table.getOrElse(c, c.toString)
 
-  def fold(s: String): String =
+  def fold(s: com.histmersion.api.LatinFold.FoldS): com.histmersion.api.LatinFold.FoldResult =
     val b = new StringBuilder(s.length)
     s.foreach { c =>
       if !isCombiningMark(c) then

@@ -9,7 +9,12 @@ enum PluginState:
 
   case Refused
 
-  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+  def wire: com.histmersion.api.plugins.PluginState.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
 
 object PluginState:
-  def parse(s: String): Option[PluginState] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.plugins.PluginState.ParseS): Option[PluginState] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))

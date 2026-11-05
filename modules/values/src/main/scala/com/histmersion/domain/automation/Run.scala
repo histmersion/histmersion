@@ -23,10 +23,15 @@ object Run:
     case Failed extends State("failed")
     case Cancelled extends State("cancelled")
 
-    def isTerminal: Boolean = this == Done || this == Failed || this == Cancelled
+    def isTerminal: com.histmersion.domain.automation.Run.State.IsTerminalResult = this == Done || this == Failed || this == Cancelled
 
   object State:
-    def parse(s: String): Option[State] = values.find(_.wire == s.trim.toLowerCase)
+    type IsTerminalResult = IsTerminalResult.T
+    object IsTerminalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Run.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)
 
     /** The legal transitions. `None` = refuse (the run has moved on). Resume is `Paused → Queued`. */
     def next(from: State, to: State): Option[State] = (from, to) match

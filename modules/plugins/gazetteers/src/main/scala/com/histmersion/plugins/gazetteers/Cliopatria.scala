@@ -16,6 +16,19 @@ import io.circe.{Json, JsonObject}
   */
 object Cliopatria extends DownloadedGazetteer:
 
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadText = ReadText.T
+  object ReadText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFeatureResultPart1 = ReadFeatureResultPart1.T
+  object ReadFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFeatureOrdinal = ReadFeatureOrdinal.T
+  object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumYearResult = NumYearResult.T
+  object NumYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumYearKey = NumYearKey.T
+  object NumYearKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val title = "Seshat Cliopatria polity polygons"
   override val description = "Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)"
   val url = "https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip"
@@ -30,7 +43,7 @@ object Cliopatria extends DownloadedGazetteer:
   override def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
-  def read(text: String): Either[String, List[GazetteerPlace]] =
+  def read(text: com.histmersion.plugins.gazetteers.Cliopatria.ReadText): Either[com.histmersion.plugins.gazetteers.Cliopatria.ReadResultPart1, List[GazetteerPlace]] =
     io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
@@ -41,7 +54,7 @@ object Cliopatria extends DownloadedGazetteer:
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
     }
 
-  def readFeature(j: Json, ordinal: Int): Either[String, GazetteerPlace] =
+  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureResultPart1, GazetteerPlace] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val rawName = str(props, "Name").getOrElse("")
@@ -105,5 +118,5 @@ object Cliopatria extends DownloadedGazetteer:
         GazetteerPlace(id = pid, label = label, kind = Polity, period = period)
       }
 
-  private def numYear(o: JsonObject, key: String): Option[Long] =
+  private def numYear(o: JsonObject, key: com.histmersion.plugins.gazetteers.Cliopatria.NumYearKey): Option[com.histmersion.plugins.gazetteers.Cliopatria.NumYearResult] =
     o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))

@@ -7,6 +7,21 @@ import com.histmersion.api.given
 
 object Stalls:
 
+  type StalledResult = StalledResult.T
+  object StalledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StalledDays = StalledDays.T
+  object StalledDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResultPart1 = ClassifyResultPart1.T
+  object ClassifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResultPart2 = ClassifyResultPart2.T
+  object ClassifyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResultPart3 = ClassifyResultPart3.T
+  object ClassifyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportDays = ReportDays.T
+  object ReportDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportAt = ReportAt.T
+  object ReportAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Stall(
       slug: Stall.Slug,
       title: Stall.Title = "",
@@ -139,9 +154,9 @@ object Stalls:
     type Running = Running.T
     object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def stalled(f: Facts, days: Int): Boolean = f.idleDays.forall(_ >= math.max(0, days))
+  def stalled(f: Facts, days: com.histmersion.api.automation.Stalls.StalledDays): com.histmersion.api.automation.Stalls.StalledResult = f.idleDays.forall(_ >= math.max(0, days))
 
-  def classify(f: Facts): (String, String, String) =
+  def classify(f: Facts): (com.histmersion.api.automation.Stalls.ClassifyResultPart1, com.histmersion.api.automation.Stalls.ClassifyResultPart2, com.histmersion.api.automation.Stalls.ClassifyResultPart3) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
     if f.draining then
@@ -227,7 +242,7 @@ object Stalls:
                             s"histmersion agent scheduler why <item>"
                           )
 
-  def report(facts: List[Facts], days: Int, at: String): StallReport =
+  def report(facts: List[Facts], days: com.histmersion.api.automation.Stalls.ReportDays, at: com.histmersion.api.automation.Stalls.ReportAt): StallReport =
     val stalls = facts
       .filter(stalled(_, days))
       .map { f =>

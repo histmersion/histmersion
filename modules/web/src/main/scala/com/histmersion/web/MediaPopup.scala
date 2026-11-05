@@ -17,6 +17,13 @@ import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
   */
 object MediaPopup:
   /** Pure: what the picture's full-size view shows. */
+  type HtmlResult = HtmlResult.T
+  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlPeriod = HtmlPeriod.T
+  object HtmlPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlCaption = HtmlCaption.T
+  object HtmlCaption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def full(h: MediaGeoHit): Option[Lightbox.Item] =
     h.fileUrl.map(u =>
       Lightbox.Item(
@@ -32,7 +39,7 @@ object MediaPopup:
       )
     )
 
-  def html(h: MediaGeoHit, period: String, caption: String): String =
+  def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.HtmlPeriod, caption: com.histmersion.web.MediaPopup.HtmlCaption): com.histmersion.web.MediaPopup.HtmlResult =
     val kind = Fmt.display(h.kind.getOrElse("media"))
     def title(inner: String) =
       s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(CardIcons.Media)}$inner</div>"""

@@ -16,7 +16,13 @@ import scala.concurrent.duration.*
   *   what must exist before a pool can open on a database (the bundle creates it)
   */
 final case class ConfigSource(
-    read: () => Either[String, LoadedConfig],
+    read: () => Either[ConfigSource.ReadResultPart1, LoadedConfig],
     adjust: AppConfig => AppConfig = identity,
-    prepare: AppConfig => Either[String, Unit] = _ => Right(())
+    prepare: AppConfig => Either[ConfigSource.PrepareResultPart1, Unit] = _ => Right(())
 )
+
+object ConfigSource:
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PrepareResultPart1 = PrepareResultPart1.T
+  object PrepareResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

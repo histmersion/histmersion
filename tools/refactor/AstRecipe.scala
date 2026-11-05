@@ -290,9 +290,15 @@ object MemberDefinitions {
           val declared = additions.getOrElseUpdate(targetOwner,scala.collection.mutable.LinkedHashMap.empty[String,String])
           val shadowed = tree.collect { case d: Defn.Type if d.name.value == base => d }.nonEmpty
           val local = context.exists(_.is[Defn.Def])
-          if(blocked || local || shadowed || !name.matches("[A-Z][A-Za-z0-9_]*") ||
+          val packed = (leaf :: parents(leaf).takeWhile(x => x.pos.start >= t.pos.start && x.pos.end <= t.pos.end)).exists {
+            case a: Type.Apply => Set("Array","scala.Array","_root_.scala.Array","js.Array")(a.tpe.syntax)
+            case _ => false
+          }
+          val empty = targetOwner.is[Defn.Object] && stats(targetOwner).isEmpty
+          if(blocked || local || shadowed || packed || empty || !name.matches("[A-Z][A-Za-z0-9_]*") ||
             (mappings.isEmpty && (occupied(name) || declared.get(name).exists(_ != base)))) {
-            evidence += List(path,(leaf.pos.startLine + 1).toString,"UNRESOLVED member " + key,leaf.structure)
+            val reasons = List(if(blocked) "override-or-native-contract" else "",if(local) "local" else "",if(shadowed) "primitive-name-shadowing" else "",if(packed) "whole-buffer-modeling-required" else "",if(empty) "empty-companion" else "").filter(_.nonEmpty)
+            evidence += List(path,(leaf.pos.startLine + 1).toString,"UNRESOLVED member " + key,leaf.structure + " " + (if(reasons.isEmpty) "name-or-base-conflict" else reasons.mkString(",")))
           } else {
             val replacement = mappings.headOption.getOrElse(owner + "." + name)
             if(mappings.isEmpty) declared(name) = base
@@ -304,7 +310,7 @@ object MemberDefinitions {
     }
     tree.collect {
       case d: Defn.Def =>
-        val blocked = d.mods.exists(_.is[Mod.Override])
+        val blocked = d.mods.exists(_.is[Mod.Override]) || (d.body match { case Term.Select(_,Term.Name("native")) => true; case _ => false })
         d.decltpe.foreach(rewrite(d,d.name.value,upper(d.name.value) + "Result",_,blocked))
         d.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).foreach(p => p.decltpe.foreach(rewrite(d,d.name.value + "." + p.name.value,upper(d.name.value) + upper(p.name.value),_,blocked)))
       case d: Decl.Def =>

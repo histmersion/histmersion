@@ -11,11 +11,18 @@ enum CritiqueState(val wire: String):
   case Open extends CritiqueState("open")
 
 object CritiqueState:
-  def parse(s: String): Option[CritiqueState] = values.find(_.wire == s.trim.toLowerCase)
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.research.CritiqueState.ParseS): Option[CritiqueState] = values.find(_.wire == s.trim.toLowerCase)
   given WireEnumValues[CritiqueState]:
     def all: Array[CritiqueState] = CritiqueState.values
-    def wire(e: CritiqueState): String = e.wire
-    def fromWire(s: String): Option[CritiqueState] = parse(s)
+    def wire(e: CritiqueState): com.histmersion.api.research.CritiqueState.WireResult = e.wire
+    def fromWire(s: com.histmersion.api.research.CritiqueState.FromWireS): Option[CritiqueState] = parse(s)
   given Encoder[CritiqueState] = WireEnum.encoder
   given Decoder[CritiqueState] = WireEnum.decoder
   given Schema[CritiqueState] = WireEnum.schema

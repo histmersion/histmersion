@@ -24,6 +24,11 @@ final case class TableRow(
 object TableRow:
 
   /** The authors as the table shows them: the first three, then "et al.". */
+  type AuthorsResult = AuthorsResult.T
+  object AuthorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorsNames = AuthorsNames.T
+  object AuthorsNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
@@ -39,7 +44,7 @@ object TableRow:
   type Page = Page.T
   object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def authors(names: List[String]): String =
+  def authors(names: List[com.histmersion.web.library.TableRow.AuthorsNames]): com.histmersion.web.library.TableRow.AuthorsResult =
     val named = names.map(_.trim).filter(_.nonEmpty)
     if named.size <= 3 then named.mkString(", ") else named.take(3).mkString(", ") + " et al."
 

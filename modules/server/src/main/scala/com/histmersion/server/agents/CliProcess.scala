@@ -21,6 +21,41 @@ import scala.jdk.CollectionConverters.*
 object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
+  type CannotStartCommand = CannotStartCommand.T
+  object CannotStartCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CannotStartHint = CannotStartHint.T
+  object CannotStartHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupPrefix = GroupPrefix.T
+  object GroupPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveCommand = ResolveCommand.T
+  object ResolveCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvePath = ResolvePath.T
+  object ResolvePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignalGroupPgid = SignalGroupPgid.T
+  object SignalGroupPgid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignalGroupSig = SignalGroupSig.T
+  object SignalGroupSig extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunArgv = RunArgv.T
+  object RunArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunEnvArg1Part1 = RunEnvArg1Part1.T
+  object RunEnvArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunEnvArg1Part2 = RunEnvArg1Part2.T
+  object RunEnvArg1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStdin = RunStdin.T
+  object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunTimeoutSeconds = RunTimeoutSeconds.T
+  object RunTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunHint = RunHint.T
+  object RunHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOnLineArg1 = RunOnLineArg1.T
+  object RunOnLineArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOnLineResult = RunOnLineResult.T
+  object RunOnLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithDirPrefix = WithDirPrefix.T
+  object WithDirPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PrivateFileText = PrivateFileText.T
+  object PrivateFileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
 
   object Run:
@@ -34,7 +69,7 @@ object CliProcess:
     object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Raised when the executable cannot be started at all. */
-  def cannotStart(command: String, e: java.io.IOException, hint: String): java.io.IOException =
+  def cannotStart(command: com.histmersion.server.agents.CliProcess.CannotStartCommand, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
     java.io.IOException(s"cannot run '$command' (${e.getMessage}) — $hint")
 
   /** What the engine watches of a step's processes (the stall watchdog): every process a step starts is registered
@@ -65,7 +100,7 @@ object CliProcess:
   private val PollMillis = 250L
 
   /** The prefix that starts a command as the leader of a new process group, if this platform has one. */
-  private lazy val groupPrefix: List[String] =
+  private lazy val groupPrefix: List[com.histmersion.server.agents.CliProcess.GroupPrefix] =
     val setsid = List("/usr/bin/setsid", "/bin/setsid").find(f => Files.isExecutable(Path.of(f)))
     setsid
       .map(List(_))
@@ -77,7 +112,7 @@ object CliProcess:
       .getOrElse(Nil)
 
   /** `command` resolved the way `execvp` would against `path` (None: not found, or not executable). */
-  private[agents] def resolve(command: String, path: Option[String], dir: Path): Option[Path] =
+  private[agents] def resolve(command: com.histmersion.server.agents.CliProcess.ResolveCommand, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Path): Option[Path] =
     if command.contains('/') then Option(dir.resolve(command)).filter(Files.isExecutable)
     else
       path.toList
@@ -116,7 +151,7 @@ object CliProcess:
         val _ = d.destroyForcibly()
       }
 
-  private def signalGroup(pgid: Long, sig: String): Unit =
+  private def signalGroup(pgid: com.histmersion.server.agents.CliProcess.SignalGroupPgid, sig: com.histmersion.server.agents.CliProcess.SignalGroupSig): Unit =
     try
       val k = ProcessBuilder("/bin/kill", s"-$sig", "--", s"-$pgid").redirectErrorStream(true).start()
       k.getInputStream.readAllBytes()
@@ -126,13 +161,13 @@ object CliProcess:
       case _: Exception            => () // no `kill` (or the group is gone): the per-process kills above still ran
 
   def run(
-      argv: List[String],
+      argv: List[com.histmersion.server.agents.CliProcess.RunArgv],
       dir: Path,
-      env: java.util.Map[String, String] => Unit,
-      stdin: String,
-      timeoutSeconds: Int,
-      hint: String,
-      onLine: String => Option[String] = _ => None
+      env: java.util.Map[com.histmersion.server.agents.CliProcess.RunEnvArg1Part1, com.histmersion.server.agents.CliProcess.RunEnvArg1Part2] => Unit,
+      stdin: com.histmersion.server.agents.CliProcess.RunStdin,
+      timeoutSeconds: com.histmersion.server.agents.CliProcess.RunTimeoutSeconds,
+      hint: com.histmersion.server.agents.CliProcess.RunHint,
+      onLine: com.histmersion.server.agents.CliProcess.RunOnLineArg1 => Option[com.histmersion.server.agents.CliProcess.RunOnLineResult] = _ => None
   ): Run =
     val pb = ProcessBuilder().directory(dir.toFile)
     env(pb.environment())
@@ -219,7 +254,7 @@ object CliProcess:
   def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
-  def withDir[A](prefix: String)(f: Path => A): A =
+  def withDir[A](prefix: com.histmersion.server.agents.CliProcess.WithDirPrefix)(f: Path => A): A =
     val dir = Files.createTempDirectory(prefix)
     try f(dir)
     finally
@@ -231,7 +266,7 @@ object CliProcess:
       finally files.close()
 
   /** An owner-only file (it may carry a run token). */
-  def privateFile(f: Path, text: String): Path =
+  def privateFile(f: Path, text: com.histmersion.server.agents.CliProcess.PrivateFileText): Path =
     Files.writeString(f, text, StandardCharsets.UTF_8)
     try {
       val _ = Files.setPosixFilePermissions(f, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"))

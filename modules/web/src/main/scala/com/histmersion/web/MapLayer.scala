@@ -21,4 +21,7 @@ enum MapLayer(val wire: String, val label: String, val icon: Icon):
   case Notes extends MapLayer("notes", "My notes", Icon.Note)
 
 object MapLayer:
-  def fromWire(s: String): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromWire(s: com.histmersion.web.MapLayer.FromWireS): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)

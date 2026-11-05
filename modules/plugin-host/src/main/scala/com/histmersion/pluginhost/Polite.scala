@@ -35,15 +35,15 @@ final class Polite(
   private var count = 0
 
   /** The interval between two requests to `h` now, ms: the configured one, times its slow-down. */
-  def intervalMs(h: String): Long = cfg.requestIntervalMs.toLong * slowdown.getOrElse(h, 1)
+  def intervalMs(h: com.histmersion.pluginhost.Polite.IntervalMsH): com.histmersion.pluginhost.Polite.IntervalMsResult = cfg.requestIntervalMs.toLong * slowdown.getOrElse(h, 1)
 
   /** Requests sent so far (retries included). */
-  def requests: Int = count
+  def requests: com.histmersion.pluginhost.Polite.RequestsResult = count
 
-  private def host(url: String): String =
+  private def host(url: com.histmersion.pluginhost.Polite.HostUrl): com.histmersion.pluginhost.Polite.HostResult =
     scala.util.Try(URI.create(url).getHost).toOption.flatMap(Option(_)).getOrElse(url)
 
-  private def pace(h: String): Unit =
+  private def pace(h: com.histmersion.pluginhost.Polite.PaceH): Unit =
     last.get(h).foreach { t =>
       val wait = t + intervalMs(h) - clock()
       if wait > 0 then sleep(wait)
@@ -53,7 +53,7 @@ final class Polite(
   /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
     * plugin's request too).
     */
-  def get(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
+  def get(url: com.histmersion.pluginhost.Polite.GetUrl, headers: Map[com.histmersion.pluginhost.Polite.GetHeadersPart1, com.histmersion.pluginhost.Polite.GetHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.Polite.GetResultPart1, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.equalsIgnoreCase("User-Agent")) + ("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))
@@ -87,13 +87,13 @@ final class Polite(
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
     */
-  def json(url: String, headers: Map[String, String] = Map.empty): Either[String, Json] =
+  def json(url: com.histmersion.pluginhost.Polite.JsonUrl, headers: Map[com.histmersion.pluginhost.Polite.JsonHeadersPart1, com.histmersion.pluginhost.Polite.JsonHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.Polite.JsonResultPart1, Json] =
     get(url, headers).flatMap(a =>
       io.circe.parser.parse(a.text).left.map(e => s"${host(url)}: unparseable JSON (${e.getMessage})")
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
-  def file(url: String, fallbackMime: String): Either[String, (Array[Byte], String)] =
+  def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileResultPart1, (Array[Byte], com.histmersion.pluginhost.Polite.FileResultPart2Part2)] =
     get(url).map(a =>
       (
         a.body,
@@ -106,4 +106,41 @@ final class Polite(
 
 object Polite:
   /** A host is never asked more than this many times slower than its configured pace. */
+  type IntervalMsResult = IntervalMsResult.T
+  object IntervalMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntervalMsH = IntervalMsH.T
+  object IntervalMsH extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestsResult = RequestsResult.T
+  object RequestsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostResult = HostResult.T
+  object HostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostUrl = HostUrl.T
+  object HostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaceH = PaceH.T
+  object PaceH extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetResultPart1 = GetResultPart1.T
+  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetUrl = GetUrl.T
+  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart1 = GetHeadersPart1.T
+  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart2 = GetHeadersPart2.T
+  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonResultPart1 = JsonResultPart1.T
+  object JsonResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonUrl = JsonUrl.T
+  object JsonUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonHeadersPart1 = JsonHeadersPart1.T
+  object JsonHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonHeadersPart2 = JsonHeadersPart2.T
+  object JsonHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileResultPart1 = FileResultPart1.T
+  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileResultPart2Part2 = FileResultPart2Part2.T
+  object FileResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileUrl = FileUrl.T
+  object FileUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileFallbackMime = FileFallbackMime.T
+  object FileFallbackMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val MaxSlowdown = 16

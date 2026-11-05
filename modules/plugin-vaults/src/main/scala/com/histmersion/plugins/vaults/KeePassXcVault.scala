@@ -26,7 +26,7 @@ final class KeePassXcVault(
 
   private def file = Path.of(db).getFileName.toString
 
-  def resolve(ref: String): Either[String, String] =
+  def resolve(ref: com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart1, com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart2] =
     request(ref).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
         withYubiKey(s"read '$ref'", s"for '$ref'", entry)(yk =>
@@ -53,7 +53,7 @@ final class KeePassXcVault(
     else single ++ session(batched)
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
-  private def request(ref: String): Either[String, (String, String)] =
+  private def request(ref: com.histmersion.plugins.vaults.KeePassXcVault.RequestRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart1, (com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part2)] =
     val (entry, attr) = Vaults.entryAndField(ref, attribute)
     for
       e <- Subprocess.plain("the entry", entry)
@@ -62,11 +62,11 @@ final class KeePassXcVault(
 
   private def stdin = password.map(_ + "\n")
 
-  private def unlocking(yk: Option[YubiKey.Slot]): List[String] =
+  private def unlocking(yk: Option[YubiKey.Slot]): List[com.histmersion.plugins.vaults.KeePassXcVault.UnlockingResult] =
     keyFile.toList.flatMap(k => List("-k", k)) ++ yk.toList.flatMap(y => List("-y", y.shown)) ++
       (if password.isEmpty then List("--no-password") else Nil)
 
-  private def argv(attr: String, entry: String, yk: Option[YubiKey.Slot]): List[String] =
+  private def argv(attr: com.histmersion.plugins.vaults.KeePassXcVault.ArgvAttr, entry: com.histmersion.plugins.vaults.KeePassXcVault.ArgvEntry, yk: Option[YubiKey.Slot]): List[com.histmersion.plugins.vaults.KeePassXcVault.ArgvResult] =
     List(exe, "show", "-q", "-a", attr) ++ unlocking(yk) ++ List(db, entry)
 
   final private case class Opened(session: Subprocess.Session, prompt: Opened.Prompt)
@@ -79,7 +79,7 @@ final class KeePassXcVault(
     * `Left` = it could not start or did not answer within `wait` (killed). The password line is written alone, before
     * any request: the unlock reads stdin ahead of the prompt.
     */
-  private def open(yk: Option[YubiKey.Slot], wait: FiniteDuration): Either[String, Either[Subprocess.Result, Opened]] =
+  private def open(yk: Option[YubiKey.Slot], wait: FiniteDuration): Either[com.histmersion.plugins.vaults.KeePassXcVault.OpenResultPart1, Either[Subprocess.Result, Opened]] =
     Subprocess.Session.start(List(exe, "open", "-q") ++ unlocking(yk) ++ List(db), Map.empty).flatMap { s =>
       password.foreach(pw => s.send(pw))
       val up = s.awaitOut(wait)(o => KeePassXcSession.prompt(o).isDefined)
@@ -92,7 +92,7 @@ final class KeePassXcVault(
           Left(s"keepassxc-cli did not answer within ${wait.toSeconds} s")
     }
 
-  private def session(batched: List[(String, (String, String))]): Map[String, Either[String, String]] =
+  private def session(batched: List[(com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart1, (com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part2))]): Map[com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part2]] =
     val what = s"open $file for ${batched.size} references"
     val opened: Either[String, Opened] =
       if yubikeys.nonEmpty then
@@ -118,7 +118,7 @@ final class KeePassXcVault(
 
   /** One request after another, each answered before the next is sent; a session that stops answering fails the rest.
     */
-  private def readAll(o: Opened, batched: List[(String, (String, String))]): Map[String, Either[String, String]] =
+  private def readAll(o: Opened, batched: List[(com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart1, (com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part2))]): Map[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart1, Either[com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.ReadAllResultPart2Part2]] =
     val s = o.session
     @tailrec def read(
         rest: List[(String, (String, String))],
@@ -162,7 +162,7 @@ final class KeePassXcVault(
     read(batched, Map.empty, s.out.length, None)
 
   /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
-  private def connected(): Option[Set[Long]] =
+  private def connected(): Option[Set[com.histmersion.plugins.vaults.KeePassXcVault.ConnectedResult]] =
     ykman.flatMap { y =>
       Subprocess.run(List(y, "list", "--serials"), Map.empty, None, timeout) match
         case Right(r) if r.exit == 0 => Some(YubiKey.serials(r.out))
@@ -177,9 +177,9 @@ final class KeePassXcVault(
     * names every entry: tried (and why it failed) or not connected. `what` says what failed ("read '<ref>'"), `purpose`
     * what the log line asks the touch for.
     */
-  private def withYubiKey[A](what: String, purpose: String, entry: String)(
-      attempt: YubiKey.Slot => Either[String, Either[Subprocess.Result, A]]
-  ): Either[String, A] =
+  private def withYubiKey[A](what: com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyWhat, purpose: com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyPurpose, entry: com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyEntry)(
+      attempt: YubiKey.Slot => Either[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyAttemptResultPart1, Either[Subprocess.Result, A]]
+  ): Either[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyResultPart1, A] =
     val found = connected()
     val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
     val notConnected = absent.map(s => s"${s.shown}: not connected")
@@ -218,9 +218,77 @@ final class KeePassXcVault(
                   else report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
       go(planned, Nil)
 
-  private def classify(entry: String)(err: String): Option[String] =
+  private def classify(entry: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry)(err: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyErr): Option[com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
       err.contains("enter password")
     then Some(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault")
     else if err.contains("could not find entry") || err.contains("not found") then Some(s"$name: no entry '$entry'")
     else None
+
+object KeePassXcVault:
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart2 = ResolveResultPart2.T
+  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveRef = ResolveRef.T
+  object ResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestResultPart1 = RequestResultPart1.T
+  object RequestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestResultPart2Part1 = RequestResultPart2Part1.T
+  object RequestResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestResultPart2Part2 = RequestResultPart2Part2.T
+  object RequestResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestRef = RequestRef.T
+  object RequestRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnlockingResult = UnlockingResult.T
+  object UnlockingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArgvResult = ArgvResult.T
+  object ArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArgvAttr = ArgvAttr.T
+  object ArgvAttr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArgvEntry = ArgvEntry.T
+  object ArgvEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenResultPart1 = OpenResultPart1.T
+  object OpenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionResultPart1 = SessionResultPart1.T
+  object SessionResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionResultPart2Part1 = SessionResultPart2Part1.T
+  object SessionResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionResultPart2Part2 = SessionResultPart2Part2.T
+  object SessionResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionBatchedPart1 = SessionBatchedPart1.T
+  object SessionBatchedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionBatchedPart2Part1 = SessionBatchedPart2Part1.T
+  object SessionBatchedPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionBatchedPart2Part2 = SessionBatchedPart2Part2.T
+  object SessionBatchedPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllResultPart1 = ReadAllResultPart1.T
+  object ReadAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllResultPart2Part1 = ReadAllResultPart2Part1.T
+  object ReadAllResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllResultPart2Part2 = ReadAllResultPart2Part2.T
+  object ReadAllResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllBatchedPart1 = ReadAllBatchedPart1.T
+  object ReadAllBatchedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllBatchedPart2Part1 = ReadAllBatchedPart2Part1.T
+  object ReadAllBatchedPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAllBatchedPart2Part2 = ReadAllBatchedPart2Part2.T
+  object ReadAllBatchedPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConnectedResult = ConnectedResult.T
+  object ConnectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyResultPart1 = WithYubiKeyResultPart1.T
+  object WithYubiKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyWhat = WithYubiKeyWhat.T
+  object WithYubiKeyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyPurpose = WithYubiKeyPurpose.T
+  object WithYubiKeyPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyEntry = WithYubiKeyEntry.T
+  object WithYubiKeyEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithYubiKeyAttemptResultPart1 = WithYubiKeyAttemptResultPart1.T
+  object WithYubiKeyAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResult = ClassifyResult.T
+  object ClassifyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyEntry = ClassifyEntry.T
+  object ClassifyEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyErr = ClassifyErr.T
+  object ClassifyErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

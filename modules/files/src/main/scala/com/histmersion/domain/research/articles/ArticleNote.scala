@@ -24,7 +24,52 @@ object ArticleNote:
     * [[ArticleCoverage.GeneratedEnd]], which [[parse]] drops again — the stored body never holds them, and the filter
     * and reasons they come from travel in the frontmatter.
     */
-  def render(a: Article, generated: Option[String] = None): String =
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGenerated = RenderGenerated.T
+  object RenderGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilterMapResultPart1 = FilterMapResultPart1.T
+  object FilterMapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFallbackSlug = ParseFallbackSlug.T
+  object ParseFallbackSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFallbackKind = ParseFallbackKind.T
+  object ParseFallbackKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart1 = SplitResultPart1.T
+  object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart2 = SplitResultPart2.T
+  object SplitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitText = SplitText.T
+  object SplitText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYamlResultPart1 = ParseYamlResultPart1.T
+  object ParseYamlResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYamlYaml = ParseYamlYaml.T
+  object ParseYamlYaml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RawMPart1 = RawMPart1.T
+  object RawMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RawK = RawK.T
+  object RawK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrMPart1 = StrMPart1.T
+  object StrMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrK = StrK.T
+  object StrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListResult = ListResult.T
+  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListMPart1 = ListMPart1.T
+  object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListK = ListK.T
+  object ListK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongResult = LongResult.T
+  object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongMPart1 = LongMPart1.T
+  object LongMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongK = LongK.T
+  object LongK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def render(a: Article, generated: Option[com.histmersion.domain.research.articles.ArticleNote.RenderGenerated] = None): com.histmersion.domain.research.articles.ArticleNote.RenderResult =
     val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
       a.reasons.toList.sortBy(_._1).foreach((k, v) => r.put(k, v))
@@ -44,7 +89,7 @@ object ArticleNote:
     MirrorFrontmatter(fields).note(Option.when(body.nonEmpty)(body))
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
-  private def filterMap(f: Article.Filter): java.util.Map[String, Any] =
+  private def filterMap(f: Article.Filter): java.util.Map[com.histmersion.domain.research.articles.ArticleNote.FilterMapResultPart1, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     f.query.foreach(m.put("query", _))
     def lst(k: String, xs: List[String]) = if xs.nonEmpty then m.put(k, xs.asJava)
@@ -63,7 +108,7 @@ object ArticleNote:
     * dropped. `question:` (a report's driving question) and `topics:`/ `cultures:` (list dimensions) ARE kept — as the
     * summary and as tags respectively — because they are the same thing under another name.
     */
-  def parse(text: String, fallbackSlug: String, fallbackKind: String): Option[Article] =
+  def parse(text: com.histmersion.domain.research.articles.ArticleNote.ParseText, fallbackSlug: com.histmersion.domain.research.articles.ArticleNote.ParseFallbackSlug, fallbackKind: com.histmersion.domain.research.articles.ArticleNote.ParseFallbackKind): Option[Article] =
     split(text).map { (yaml, rawBody) =>
       val m = parseYaml(yaml)
       val body = Article.Coverage.stripGenerated(rawBody).trim
@@ -116,7 +161,7 @@ object ArticleNote:
 
   // ── YAML plumbing (deliberately independent of Frontmatter's private copy) ────────────────────
   /** Split a note into (yaml, body); `None` when it has no opening `---` fence. */
-  private def split(text: String): Option[(String, String)] =
+  private def split(text: com.histmersion.domain.research.articles.ArticleNote.SplitText): Option[(com.histmersion.domain.research.articles.ArticleNote.SplitResultPart1, com.histmersion.domain.research.articles.ArticleNote.SplitResultPart2)] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else
@@ -130,21 +175,21 @@ object ArticleNote:
           case i  => after.substring(i + 1)
         Some((rest.substring(0, end), body))
 
-  private def parseYaml(yaml: String): Map[String, Any] =
+  private def parseYaml(yaml: com.histmersion.domain.research.articles.ArticleNote.ParseYamlYaml): Map[com.histmersion.domain.research.articles.ArticleNote.ParseYamlResultPart1, Any] =
     Option(new Yaml().load[AnyRef](yaml)) match
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
 
   // decoded YAML values are type-tested (E165, #879): `asMatchable` states that is intended
-  private def raw(m: Map[String, Any], k: String): Option[Matchable] =
+  private def raw(m: Map[com.histmersion.domain.research.articles.ArticleNote.RawMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.RawK): Option[Matchable] =
     m.get(k).flatMap(v => Option(v)).map(_.asMatchable)
-  private def str(m: Map[String, Any], k: String): Option[String] =
+  private def str(m: Map[com.histmersion.domain.research.articles.ArticleNote.StrMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.StrK): Option[com.histmersion.domain.research.articles.ArticleNote.StrResult] =
     raw(m, k).map(_.toString).map(_.trim).filter(s => s.nonEmpty && s != "null")
-  private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
+  private def list(m: Map[com.histmersion.domain.research.articles.ArticleNote.ListMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.ListK): List[com.histmersion.domain.research.articles.ArticleNote.ListResult] = raw(m, k) match
     case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
     case Some(s: String)            => s.split(",").toList.map(_.trim).filter(_.nonEmpty)
     case _                          => Nil
-  private def long(m: Map[String, Any], k: String): Option[Long] = raw(m, k) match
+  private def long(m: Map[com.histmersion.domain.research.articles.ArticleNote.LongMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.LongK): Option[com.histmersion.domain.research.articles.ArticleNote.LongResult] = raw(m, k) match
     case Some(n: java.lang.Number) => Some(n.longValue)
     case Some(o)                   => o.toString.toLongOption
     case None                      => None

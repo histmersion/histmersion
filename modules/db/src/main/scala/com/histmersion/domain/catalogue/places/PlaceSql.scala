@@ -17,13 +17,74 @@ object PlaceSql:
     * very point — and is drawn on the base map only with a finding (2026-10-09: 1.2 M points had made every region's
     * subtree and hover counts enormous).
     */
-  def importedSql(alias: String): String =
+  type ImportedSqlResult = ImportedSqlResult.T
+  object ImportedSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportedSqlAlias = ImportedSqlAlias.T
+  object ImportedSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportedList = ImportedList.T
+  object ImportedList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceTierSql = SourceTierSql.T
+  object SourceTierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormLabelSqlResult = NormLabelSqlResult.T
+  object NormLabelSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormLabelSqlCol = NormLabelSqlCol.T
+  object NormLabelSqlCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModernSqlResult = ModernSqlResult.T
+  object ModernSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModernSqlAlias = ModernSqlAlias.T
+  object ModernSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultModernFrom = DefaultModernFrom.T
+  object DefaultModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedSqlResult = UndatedSqlResult.T
+  object UndatedSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedSqlAlias = UndatedSqlAlias.T
+  object UndatedSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimelessSqlResult = TimelessSqlResult.T
+  object TimelessSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimelessSqlAlias = TimelessSqlAlias.T
+  object TimelessSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeBasisSqlResult = TimeBasisSqlResult.T
+  object TimeBasisSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeBasisSqlAlias = TimeBasisSqlAlias.T
+  object TimeBasisSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeWindowCteAsOf = TimeWindowCteAsOf.T
+  object TimeWindowCteAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeWindowCteModernFrom = TimeWindowCteModernFrom.T
+  object TimeWindowCteModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowCteWindowPart1 = WindowCteWindowPart1.T
+  object WindowCteWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowCteWindowPart2 = WindowCteWindowPart2.T
+  object WindowCteWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowCteModernFrom = WindowCteModernFrom.T
+  object WindowCteModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlResult = InTimeSqlResult.T
+  object InTimeSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlAlias = InTimeSqlAlias.T
+  object InTimeSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlAsOf = InTimeSqlAsOf.T
+  object InTimeSqlAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlKind = InTimeSqlKind.T
+  object InTimeSqlKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlResult = InWindowSqlResult.T
+  object InWindowSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlAlias = InWindowSqlAlias.T
+  object InWindowSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlWindowPart1 = InWindowSqlWindowPart1.T
+  object InWindowSqlWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlWindowPart2 = InWindowSqlWindowPart2.T
+  object InWindowSqlWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlKind = InWindowSqlKind.T
+  object InWindowSqlKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlModernFrom = InWindowSqlModernFrom.T
+  object InWindowSqlModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def importedSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias): com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlResult =
     s"coalesce($alias.import_source, '') IN $ImportedList"
 
   /** `('wikidata', 'geonames', 'tgn')` — [[Gazetteer.ImportedSources]] as an SQL list. The partial indexes of
     * V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word.
     */
-  val ImportedList: String = Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
+  val ImportedList: com.histmersion.domain.catalogue.places.PlaceSql.ImportedList = Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
 
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open range there means
     * "unknown", not "always". Findable and placeable by name; never on a time-sliced map. Over a `places` row aliased
@@ -45,14 +106,14 @@ object PlaceSql:
     * dataset (Cliopatria/Seshat, Pleiades, Natural Earth), 3 = the agent-drawn sketches of `db/places/polities` — shown
     * only where nothing better covers them.
     */
-  val sourceTierSql: String =
+  val sourceTierSql: com.histmersion.domain.catalogue.places.PlaceSql.SourceTierSql =
     "CASE WHEN p.properties->>'method' = 'ohm-import' THEN 1" +
       " WHEN p.properties->>'method' = 'agent-drawn' THEN 3 ELSE 2 END"
 
   /** A label reduced to what identifies the state: lower case, no parentheses, no filler words (of/the/and), no
     * punctuation — so "Old Kingdom of Egypt" and "Old Kingdom Egypt" meet.
     */
-  def normLabelSql(col: String): String =
+  def normLabelSql(col: com.histmersion.domain.catalogue.places.PlaceSql.NormLabelSqlCol): com.histmersion.domain.catalogue.places.PlaceSql.NormLabelSqlResult =
     s"regexp_replace(regexp_replace(lower($col), '\\m(of|the|and)\\M', '', 'g'), '[^a-z0-9]+', '', 'g')"
 
   /** Share of the SMALLER outline covered by the other above which two same-kind shapes from different sources are
@@ -75,26 +136,26 @@ object PlaceSql:
   val ModernSql = modernSql("p")
 
   /** [[ModernSql]] over a `places` row aliased `alias`. */
-  def modernSql(alias: String): String = s"coalesce(($alias.properties->>'modern')::boolean, false)"
+  def modernSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.ModernSqlAlias): com.histmersion.domain.catalogue.places.PlaceSql.ModernSqlResult = s"coalesce(($alias.properties->>'modern')::boolean, false)"
 
   // ── the time rule (2026-10-09): what a view AT A TIME shows ─────────────────────────────────────
 
   /** The configured `places.modern-from` for callers that hold no config (the tests). It MUST equal `reference.conf`;
     * `PlaceTimeSuite` asserts it. Every production read passes the configured value.
     */
-  val DefaultModernFrom: Long = 1500L
+  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = 1500L
 
   /** A stored period open on both sides: the source states no date. An unknown start (V074) is not — it stores a
     * window.
     */
-  private def undatedSql(alias: String): String = s"(lower_inf($alias.period) AND upper_inf($alias.period))"
+  private def undatedSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.UndatedSqlAlias): com.histmersion.domain.catalogue.places.PlaceSql.UndatedSqlResult = s"(lower_inf($alias.period) AND upper_inf($alias.period))"
 
   /** A physical feature of the seed: there at any time ([[PlaceTimeBasis.Timeless]]). */
-  private def timelessSql(alias: String): String =
+  private def timelessSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.TimelessSqlAlias): com.histmersion.domain.catalogue.places.PlaceSql.TimelessSqlResult =
     s"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR ($alias.kind = 'region' AND ${modernSql(alias)})))"
 
   /** [[PlaceTimeBasis.of]] in SQL, over a `places` row aliased `alias`: the basis's wire name. */
-  def timeBasisSql(alias: String): String =
+  def timeBasisSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.TimeBasisSqlAlias): com.histmersion.domain.catalogue.places.PlaceSql.TimeBasisSqlResult =
     s"CASE WHEN ${timelessSql(alias)} THEN 'timeless' WHEN ${modernSql(alias)} THEN 'modern'" +
       s" WHEN ${undatedSql(alias)} AND $alias.geom IS NULL THEN 'grouping'" +
       s" WHEN ${undatedSql(alias)} THEN 'findings' ELSE 'dated' END"
@@ -103,13 +164,13 @@ object PlaceSql:
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
     * time-filtered place query starts with it.
     */
-  def timeWindowCte(asOf: Option[Long], modernFrom: Long): Sql =
+  def timeWindowCte(asOf: Option[com.histmersion.domain.catalogue.places.PlaceSql.TimeWindowCteAsOf], modernFrom: com.histmersion.domain.catalogue.places.PlaceSql.TimeWindowCteModernFrom): Sql =
     windowCte(asOf.map(y => (y, y)), modernFrom)
 
   /** [[timeWindowCte]] for the inclusive window `lo..hi` (the map's area layer over a whole range, [[GeoTime.Within]]):
     * `modern_on` when its END reaches `modern-from`. A year is the window `y..y`.
     */
-  def windowCte(window: Option[(Long, Long)], modernFrom: Long): Sql =
+  def windowCte(window: Option[(com.histmersion.domain.catalogue.places.PlaceSql.WindowCteWindowPart1, com.histmersion.domain.catalogue.places.PlaceSql.WindowCteWindowPart2)], modernFrom: com.histmersion.domain.catalogue.places.PlaceSql.WindowCteModernFrom): Sql =
     import Param.*
     window.fold(Sql.raw("tw AS (SELECT NULL::int8range AS w, false AS modern_on)"))((lo, hi) =>
       Sql.of(
@@ -136,7 +197,7 @@ object PlaceSql:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of a search, the
     * (kind, period) GiSTs of a map layer (V076).
     */
-  def inTimeSql(alias: String, asOf: Option[Long], kind: Option[String] = None): String =
+  def inTimeSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlAlias, asOf: Option[com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlAsOf], kind: Option[com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlKind] = None): com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlResult =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 
   /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. With `modernFrom` the
@@ -146,11 +207,11 @@ object PlaceSql:
     * finding of the window for each of them (2.5 s of a sites tile over -3000..2000, 2026-10-27).
     */
   def inWindowSql(
-      alias: String,
-      window: Option[(Long, Long)],
-      kind: Option[String] = None,
-      modernFrom: Option[Long] = None
-  ): String =
+      alias: com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlAlias,
+      window: Option[(com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlWindowPart1, com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlWindowPart2)],
+      kind: Option[com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlKind] = None,
+      modernFrom: Option[com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlModernFrom] = None
+  ): com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlResult =
     window.fold("true") { (lo, hi) =>
       val w = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range($lo::bigint, $hi::bigint, '[]')")
       val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi >= m then "true" else "false")

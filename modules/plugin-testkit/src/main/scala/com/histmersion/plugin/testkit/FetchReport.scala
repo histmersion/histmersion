@@ -26,7 +26,7 @@ final case class FetchReport(
   /** The licence the copy is published under: what the fetcher stated on the file, else the first line it logged about
     * a licence (the server records the first and logs the second).
     */
-  def licence: Option[String] =
+  def licence: Option[com.histmersion.plugin.testkit.FetchReport.LicenceResult] =
     file
       .flatMap(_.licence)
       .map(_.value)
@@ -36,5 +36,8 @@ final case class FetchReport(
       })
 
 object FetchReport:
+  type LicenceResult = LicenceResult.T
+  object LicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Requests = Requests.T
   object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

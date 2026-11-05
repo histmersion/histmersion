@@ -32,10 +32,10 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
     case Some(c) => c
     case None    => js.Array("coalesce", js.Array("feature-state", "c"), js.Array("get", "c"))
   private val alphaExpr: js.Array[js.Any] = js.Array("coalesce", js.Array("feature-state", "a"), js.Array("get", "a"))
-  private def times(k: Double): js.Any = js.Array("*", k, alphaExpr)
+  private def times(k: com.histmersion.web.map.maplibre.GlShapes.TimesK): js.Any = js.Array("*", k, alphaExpr)
   private val notPoint = js.Array("!=", js.Array("geometry-type"), "Point")
 
-  def layerIds: List[String] =
+  def layerIds: List[com.histmersion.web.map.maplibre.GlShapes.LayerIdsResult] =
     List(
       Option.when(look.fillOpacity > 0)(s"$id-fill"),
       Some(s"$id-line"),
@@ -130,7 +130,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
 
   restore()
 
-  def ids: Seq[String] = drawn.keys.toSeq
+  def ids: Seq[com.histmersion.web.map.maplibre.GlShapes.IdsResult] = drawn.keys.toSeq
 
   // `var`: how many times the outlines were sent (diagnostics)
   private var sent = 0
@@ -140,7 +140,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds it, a point
     * within its circle.
     */
-  def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[String] =
+  def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[com.histmersion.web.map.maplibre.GlShapes.UnderResult] =
     // a shape faded out (playback's states before and after their years) answers nothing
     drawn.toSeq.reverseIterator
       .filter((_, d) => d.alpha > 0.05)
@@ -185,7 +185,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
           stated.foreach(k => state(drawn(k)))
         case None => restore()
 
-  def restyle(k: String, colour: String, alpha: Double): Unit =
+  def restyle(k: com.histmersion.web.map.maplibre.GlShapes.RestyleK, colour: com.histmersion.web.map.maplibre.GlShapes.RestyleColour, alpha: com.histmersion.web.map.maplibre.GlShapes.RestyleAlpha): Unit =
     drawn.get(k).foreach { d =>
       if d.colour != colour || d.alpha != alpha then
         d.colour = colour
@@ -197,7 +197,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
   /** The same outline: the same object, or (a new answer for the same shape) the same rings' lengths and first vertex —
     * cheap, and two years of one state with the same outline share it.
     */
-  private def sameGeometry(a: js.Any, b: js.Any): Boolean =
+  private def sameGeometry(a: js.Any, b: js.Any): com.histmersion.web.map.maplibre.GlShapes.SameGeometryResult =
     (a eq b) || {
       def sig(g: js.Any): String =
         val d = g.asInstanceOf[js.Dynamic]
@@ -216,3 +216,21 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: String, val look: Shap
           sb.toString
       sig(a) == sig(b)
     }
+
+object GlShapes:
+  type TimesK = TimesK.T
+  object TimesK extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerIdsResult = LayerIdsResult.T
+  object LayerIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsResult = IdsResult.T
+  object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderResult = UnderResult.T
+  object UnderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestyleK = RestyleK.T
+  object RestyleK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestyleColour = RestyleColour.T
+  object RestyleColour extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestyleAlpha = RestyleAlpha.T
+  object RestyleAlpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameGeometryResult = SameGeometryResult.T
+  object SameGeometryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

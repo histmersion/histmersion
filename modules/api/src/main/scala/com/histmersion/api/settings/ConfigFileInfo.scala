@@ -15,6 +15,9 @@ final case class ConfigFileInfo(
 object ConfigFileInfo:
 
 
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Path = Path.T
   object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Loaded = Loaded.T
@@ -22,7 +25,7 @@ object ConfigFileInfo:
   type UnknownKeys = UnknownKeys.T
   object UnknownKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def describe(c: ConfigFileInfo): String =
+  def describe(c: ConfigFileInfo): com.histmersion.api.settings.ConfigFileInfo.DescribeResult =
     c.path match
       case None    => "none (no location: HOME is unset)"
       case Some(p) =>

@@ -21,18 +21,31 @@ trait UpstreamQuota:
     * when the budget paces calls. `Left` says why the call is not made now — the upstream asked to wait, the day's
     * budget is spent, the slot is too far — and nothing is counted then.
     */
-  def take(purpose: String): Either[String, Unit]
+  def take(purpose: com.histmersion.plugin.UpstreamQuota.TakePurpose): Either[com.histmersion.plugin.UpstreamQuota.TakeResultPart1, Unit]
 
   /** What the upstream answered the call taken last: its status and headers (names in lower case). */
-  def observe(status: Int, headers: Map[String, String]): Unit
+  def observe(status: com.histmersion.plugin.UpstreamQuota.ObserveStatus, headers: Map[com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart1, com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart2]): Unit
 
   /** The time the upstream asked not to be called before, as the budget keeps it (ISO-8601, `2026-10-26T18:52:11Z`),
     * once an answer asked to wait; `None` while it may be called.
     */
-  def waitingUntil: Option[String] = None
+  def waitingUntil: Option[com.histmersion.plugin.UpstreamQuota.WaitingUntilResult] = None
 
 object UpstreamQuota:
   /** No limit: every call may go, nothing is kept. What a host without a budget for the upstream lends. */
+  type TakeResultPart1 = TakeResultPart1.T
+  object TakeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TakePurpose = TakePurpose.T
+  object TakePurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveStatus = ObserveStatus.T
+  object ObserveStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart1 = ObserveHeadersPart1.T
+  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart2 = ObserveHeadersPart2.T
+  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitingUntilResult = WaitingUntilResult.T
+  object WaitingUntilResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Unlimited: UpstreamQuota = new UpstreamQuota:
-    def take(purpose: String): Either[String, Unit] = Right(())
-    def observe(status: Int, headers: Map[String, String]): Unit = ()
+    def take(purpose: com.histmersion.plugin.UpstreamQuota.TakePurpose): Either[com.histmersion.plugin.UpstreamQuota.TakeResultPart1, Unit] = Right(())
+    def observe(status: com.histmersion.plugin.UpstreamQuota.ObserveStatus, headers: Map[com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart1, com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart2]): Unit = ()

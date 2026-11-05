@@ -3,12 +3,29 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AutopilotMarkdown:
+  type BriefResult = BriefResult.T
+  object BriefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalResult = GoalResult.T
+  object GoalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaceResult = PaceResult.T
+  object PaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusResult = FocusResult.T
+  object FocusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusResult = StatusResult.T
+  object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusIngestedBy = StatusIngestedBy.T
+  object StatusIngestedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusBeforeBacklog = StatusBeforeBacklog.T
+  object StatusBeforeBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusAfterBacklog = StatusAfterBacklog.T
+  object StatusAfterBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import Autopilot.*
 
-  private def brief(m: ManagerBrief): String =
+  private def brief(m: ManagerBrief): com.histmersion.api.automation.AutopilotMarkdown.BriefResult =
     s"${m.id} ${m.state}" + m.note.filter(n => n.nonEmpty && n != m.state).fold("")(n => s" ($n)")
 
-  def goal(g: GoalProgress): String =
+  def goal(g: GoalProgress): com.histmersion.api.automation.AutopilotMarkdown.GoalResult =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
     s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, "source")}, " +
@@ -17,10 +34,10 @@ object AutopilotMarkdown:
                                                    else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
-  private def pace(g: FocusGoal): String =
+  private def pace(g: FocusGoal): com.histmersion.api.automation.AutopilotMarkdown.PaceResult =
     s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
 
-  def focus(f: FocusInfo): String =
+  def focus(f: FocusInfo): com.histmersion.api.automation.AutopilotMarkdown.FocusResult =
     val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
       (if f.maxFrom == "person" then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
@@ -60,10 +77,10 @@ object AutopilotMarkdown:
     */
   def status(
       s: Autopilot.EngineStatus,
-      ingestedBy: String = "",
-      beforeBacklog: List[String] = Nil,
-      afterBacklog: List[String] = Nil
-  ): String =
+      ingestedBy: com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy = "",
+      beforeBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog] = Nil,
+      afterBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog] = Nil
+  ): com.histmersion.api.automation.AutopilotMarkdown.StatusResult =
     val head = s"# Autopilot: ${if s.on then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(

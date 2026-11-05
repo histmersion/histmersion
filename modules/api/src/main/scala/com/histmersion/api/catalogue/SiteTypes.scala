@@ -8,6 +8,73 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
   */
 object SiteTypes:
 
+  type ByIdPart1 = ByIdPart1.T
+  object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconResult = IconResult.T
+  object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconId = IconId.T
+  object IconId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PleiadesTypesPart1 = PleiadesTypesPart1.T
+  object PleiadesTypesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PleiadesTypesPart2 = PleiadesTypesPart2.T
+  object PleiadesTypesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Preference = Preference.T
+  object Preference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BestResult = BestResult.T
+  object BestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BestTypes = BestTypes.T
+  object BestTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PleiadesResult = PleiadesResult.T
+  object PleiadesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PleiadesFeatureTypes = PleiadesFeatureTypes.T
+  object PleiadesFeatureTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeonamesCodesPart1 = GeonamesCodesPart1.T
+  object GeonamesCodesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeonamesCodesPart2 = GeonamesCodesPart2.T
+  object GeonamesCodesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeonamesResult = GeonamesResult.T
+  object GeonamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeonamesFcode = GeonamesFcode.T
+  object GeonamesFcode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataClassesPart1 = WikidataClassesPart1.T
+  object WikidataClassesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataClassesPart2 = WikidataClassesPart2.T
+  object WikidataClassesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataResult = WikidataResult.T
+  object WikidataResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataP31 = WikidataP31.T
+  object WikidataP31 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataSuperclasses = WikidataSuperclasses.T
+  object WikidataSuperclasses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataImportClass = WikidataImportClass.T
+  object WikidataImportClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataOwnResult = WikidataOwnResult.T
+  object WikidataOwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataOwnP31 = WikidataOwnP31.T
+  object WikidataOwnP31 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type P31OfResult = P31OfResult.T
+  object P31OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type P31OfJson = P31OfJson.T
+  object P31OfJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResult = OfResult.T
+  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlaceId = OfPlaceId.T
+  object OfPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlaceKind = OfPlaceKind.T
+  object OfPlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStored = OfStored.T
+  object OfStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFeatureTypes = OfFeatureTypes.T
+  object OfFeatureTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFcode = OfFcode.T
+  object OfFcode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfWikidataClass = OfWikidataClass.T
+  object OfWikidataClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfP31 = OfP31.T
+  object OfP31 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
 
   object SiteType:
@@ -56,12 +123,12 @@ object SiteTypes:
     SiteType(Shipwreck, "shipwreck", "ship")
   )
 
-  private val byId: Map[String, SiteType] = all.map(t => t.id -> t).toMap
+  private val byId: Map[com.histmersion.api.catalogue.SiteTypes.ByIdPart1, SiteType] = all.map(t => t.id -> t).toMap
 
-  def get(id: String): Option[SiteType] = byId.get(id.trim.toLowerCase(java.util.Locale.ROOT))
-  def icon(id: String): Option[String] = get(id).map(_.icon)
+  def get(id: com.histmersion.api.catalogue.SiteTypes.GetId): Option[SiteType] = byId.get(id.trim.toLowerCase(java.util.Locale.ROOT))
+  def icon(id: com.histmersion.api.catalogue.SiteTypes.IconId): Option[com.histmersion.api.catalogue.SiteTypes.IconResult] = get(id).map(_.icon)
 
-  val pleiadesTypes: Map[String, String] = Map(
+  val pleiadesTypes: Map[com.histmersion.api.catalogue.SiteTypes.PleiadesTypesPart1, com.histmersion.api.catalogue.SiteTypes.PleiadesTypesPart2] = Map(
     "settlement" -> Settlement,
     "urban" -> Settlement,
     "town" -> Settlement,
@@ -148,7 +215,7 @@ object SiteTypes:
     "wreck" -> Shipwreck
   )
 
-  val preference: List[String] = List(
+  val preference: List[com.histmersion.api.catalogue.SiteTypes.Preference] = List(
     Palace,
     Sanctuary,
     Theatre,
@@ -168,12 +235,12 @@ object SiteTypes:
     Findspot
   )
 
-  private def best(types: Iterable[String]): Option[String] =
+  private def best(types: Iterable[com.histmersion.api.catalogue.SiteTypes.BestTypes]): Option[com.histmersion.api.catalogue.SiteTypes.BestResult] =
     types.toList.distinct
       .sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i })
       .headOption
 
-  def pleiades(featureTypes: String): Option[String] =
+  def pleiades(featureTypes: com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes): Option[com.histmersion.api.catalogue.SiteTypes.PleiadesResult] =
     best(
       Option(featureTypes).toList
         .flatMap(_.split(","))
@@ -183,7 +250,7 @@ object SiteTypes:
         .flatMap(pleiadesTypes.get)
     )
 
-  val geonamesCodes: Map[String, String] = Map(
+  val geonamesCodes: Map[com.histmersion.api.catalogue.SiteTypes.GeonamesCodesPart1, com.histmersion.api.catalogue.SiteTypes.GeonamesCodesPart2] = Map(
     "S.RUIN" -> Findspot,
     "S.ANS" -> Findspot,
     "S.HSTS" -> Findspot,
@@ -229,7 +296,7 @@ object SiteTypes:
     "T.CAVE" -> Cave
   )
 
-  def geonames(fcode: String): Option[String] =
+  def geonames(fcode: com.histmersion.api.catalogue.SiteTypes.GeonamesFcode): Option[com.histmersion.api.catalogue.SiteTypes.GeonamesResult] =
     Option(fcode).map(_.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
       geonamesCodes.get(c).orElse(Option.when(c.startsWith("P."))(Settlement))
     }
@@ -238,7 +305,7 @@ object SiteTypes:
   val HumanSettlement = "Q486972"
 
   /** The comment beside each id is its Wikidata label. */
-  val wikidataClasses: Map[String, String] = Map(
+  val wikidataClasses: Map[com.histmersion.api.catalogue.SiteTypes.WikidataClassesPart1, com.histmersion.api.catalogue.SiteTypes.WikidataClassesPart2] = Map(
     HumanSettlement -> Settlement,
     "Q15661340" -> Settlement /* ancient city */,
     "Q515" -> Settlement /* city */,
@@ -317,25 +384,25 @@ object SiteTypes:
     ArchaeologicalSite -> Findspot
   )
 
-  def wikidata(p31: List[String], superclasses: List[String], importClass: Option[String]): Option[String] =
+  def wikidata(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataP31], superclasses: List[com.histmersion.api.catalogue.SiteTypes.WikidataSuperclasses], importClass: Option[com.histmersion.api.catalogue.SiteTypes.WikidataImportClass]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataResult] =
     wikidataOwn(p31)
       .orElse(superclasses.flatMap(wikidataClasses.get).headOption)
       .orElse(importClass.flatMap(wikidataClasses.get))
 
-  def wikidataOwn(p31: List[String]): Option[String] = best(p31.map(_.trim).flatMap(wikidataClasses.get))
+  def wikidataOwn(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataOwnResult] = best(p31.map(_.trim).flatMap(wikidataClasses.get))
 
-  def p31Of(json: Option[String]): List[String] =
+  def p31Of(json: Option[com.histmersion.api.catalogue.SiteTypes.P31OfJson]): List[com.histmersion.api.catalogue.SiteTypes.P31OfResult] =
     json.toList.flatMap(s => "Q[0-9]+".r.findAllIn(s).toList)
 
   def of(
-      placeId: String,
-      placeKind: String,
-      stored: Option[String],
-      featureTypes: Option[String],
-      fcode: Option[String],
-      wikidataClass: Option[String],
-      p31: List[String] = Nil
-  ): Option[String] =
+      placeId: com.histmersion.api.catalogue.SiteTypes.OfPlaceId,
+      placeKind: com.histmersion.api.catalogue.SiteTypes.OfPlaceKind,
+      stored: Option[com.histmersion.api.catalogue.SiteTypes.OfStored],
+      featureTypes: Option[com.histmersion.api.catalogue.SiteTypes.OfFeatureTypes],
+      fcode: Option[com.histmersion.api.catalogue.SiteTypes.OfFcode],
+      wikidataClass: Option[com.histmersion.api.catalogue.SiteTypes.OfWikidataClass],
+      p31: List[com.histmersion.api.catalogue.SiteTypes.OfP31] = Nil
+  ): Option[com.histmersion.api.catalogue.SiteTypes.OfResult] =
     if placeKind != com.histmersion.api.catalogue.Place.Kind.Site && placeKind != com.histmersion.api.catalogue.Place.Kind.Feature
     then None
     else
@@ -358,6 +425,9 @@ object SiteTypes:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
 
+    type SummaryResult = SummaryResult.T
+    object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Pending = Pending.T
@@ -371,7 +441,7 @@ object SiteTypes:
     type Failed = Failed.T
     object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def summary(r: Report): String =
+    def summary(r: Report): com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult =
       if r.dryRun then s"${r.pending} Wikidata site(s) on the map would be asked about"
       else
         (List(

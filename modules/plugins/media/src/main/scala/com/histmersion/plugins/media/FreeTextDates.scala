@@ -9,6 +9,19 @@ import java.util.Locale
   */
 object FreeTextDates:
 
+  type BoundRaw = BoundRaw.T
+  object BoundRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanResultPart1 = SpanResultPart1.T
+  object SpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanResultPart2 = SpanResultPart2.T
+  object SpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart2 = ParseResultPart2.T
+  object ParseResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Part =
     """^(?:(?:late|early|mid|middle|first half of|second half of|end of|beginning of)[\s-]+)?(?:the\s+)?([0-9]{1,5})(?:st|nd|rd|th)?(?:\s*(century|centuries|millennium|millennia))?(?:\s*(bce|bc|ce|ad))?$""".r
 
@@ -25,7 +38,7 @@ object FreeTextDates:
     type Bce = Bce.T
     object Bce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def bound(raw: String): Option[Bound] =
+  private def bound(raw: com.histmersion.plugins.media.FreeTextDates.BoundRaw): Option[Bound] =
     raw.trim match
       case Part(n, unit, era) =>
         val u = Option(unit).map(x => if x.startsWith("cent") then Unit.Century else Unit.Millennium)
@@ -34,7 +47,7 @@ object FreeTextDates:
       case _ => None
 
   /** Pure: the signed span of one bound, given the unit and era it carries or inherits. */
-  private def span(b: Bound): Option[(Long, Long)] =
+  private def span(b: Bound): Option[(com.histmersion.plugins.media.FreeTextDates.SpanResultPart1, com.histmersion.plugins.media.FreeTextDates.SpanResultPart2)] =
     val bce = b.bce.contains(true)
     b.unit.getOrElse(Unit.Year) match
       case Unit.Year if b.ordinal => None
@@ -45,7 +58,7 @@ object FreeTextDates:
         Option.when(b.n > 0)(if bce then (-b.n * 1000, -((b.n - 1) * 1000 + 1)) else ((b.n - 1) * 1000 + 1, b.n * 1000))
 
   /** Pure: the span a date text states, or `None`. */
-  def parse(text: String): Option[(Long, Long)] =
+  def parse(text: com.histmersion.plugins.media.FreeTextDates.ParseText): Option[(com.histmersion.plugins.media.FreeTextDates.ParseResultPart1, com.histmersion.plugins.media.FreeTextDates.ParseResultPart2)] =
     val s0 = Option(text).getOrElse("").toLowerCase(Locale.ROOT).trim
     if s0.isEmpty || s0.contains("?") then None
     else

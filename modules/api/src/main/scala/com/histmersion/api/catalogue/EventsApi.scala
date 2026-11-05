@@ -9,6 +9,19 @@ import com.histmersion.api.given
 /** Appended to [[Api.all]] before the event routes: otherwise `events/leads` would be read as the event `leads`. */
 object EventsApi:
 
+  type CorrectionsPart1Part1 = CorrectionsPart1Part1.T
+  object CorrectionsPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsPart1Part2 = CorrectionsPart1Part2.T
+  object CorrectionsPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsPart1Part3 = CorrectionsPart1Part3.T
+  object CorrectionsPart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsPart1Part4 = CorrectionsPart1Part4.T
+  object CorrectionsPart1Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksPart1 = LinksPart1.T
+  object LinksPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLinksPart1Part1 = ApplyLinksPart1Part1.T
+  object ApplyLinksPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private lazy val eventQuery: EndpointInput[Api.EventQuery] =
     Api.filterQuery
       .and(query[Option[String]]("text"))
@@ -37,7 +50,7 @@ object EventsApi:
       .out(jsonBody[JobInfo])
 
   lazy val corrections
-      : PublicEndpoint[(Option[String], Option[String], Option[Int], Option[Int]), Api.Error, Correction.List, Any] =
+      : PublicEndpoint[(Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part1], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part2], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part3], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part4]), Api.Error, Correction.List, Any] =
     endpoint.get
       .in("api" / "events" / "corrections")
       .in(query[Option[String]]("status"))
@@ -68,13 +81,13 @@ object EventsApi:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
-  lazy val links: PublicEndpoint[String, Api.Error, EventLinkList, Any] =
+  lazy val links: PublicEndpoint[com.histmersion.api.catalogue.EventsApi.LinksPart1, Api.Error, EventLinkList, Any] =
     endpoint.get
       .in("api" / "events" / path[String]("id") / "links")
       .errorOut(Api.writeErrors)
       .out(jsonBody[EventLinkList])
 
-  lazy val applyLinks: PublicEndpoint[(String, EventLinksRequest), Api.Error, EventLinksResult, Any] =
+  lazy val applyLinks: PublicEndpoint[(com.histmersion.api.catalogue.EventsApi.ApplyLinksPart1Part1, EventLinksRequest), Api.Error, EventLinksResult, Any] =
     endpoint.post
       .in("api" / "events" / path[String]("id") / "links")
       .in(jsonBody[EventLinksRequest])

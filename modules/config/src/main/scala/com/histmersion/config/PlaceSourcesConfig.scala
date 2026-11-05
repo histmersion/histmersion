@@ -22,10 +22,13 @@ final case class PlaceSourcesConfig(
     pointAreaFixSeconds: PlaceSourcesConfig.PointAreaFixSeconds
 ) derives ConfigReader:
   /** `point-area-kinds` as a set ([[Gazetteer.dropsPointArea]]); empty keeps every record. */
-  def pointAreaKindSet: Set[String] =
+  def pointAreaKindSet: Set[com.histmersion.config.PlaceSourcesConfig.PointAreaKindSetResult] =
     PeriodsConfig.split(pointAreaKinds).map(_.toLowerCase(java.util.Locale.ROOT)).toSet
 
 object PlaceSourcesConfig:
+  type PointAreaKindSetResult = PointAreaKindSetResult.T
+  object PointAreaKindSetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Dir = Dir.T
   object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LpfDir = LpfDir.T

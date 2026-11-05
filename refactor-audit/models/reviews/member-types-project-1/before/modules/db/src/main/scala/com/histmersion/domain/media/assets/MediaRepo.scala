@@ -1,0 +1,422 @@
+package com.histmersion.domain.media.assets
+
+import com.histmersion.util.database.RangeSql
+
+import com.histmersion.api.Api
+import com.histmersion.util.database.{Param, Sql}
+
+import com.histmersion.util.database.given
+import com.augustnagro.magnum.*
+import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.media.{
+  MediaCount,
+  MediaFacets,
+  MediaGeoHit,
+  MediaItem,
+  MediaList,
+  MediaProvider,
+  MediaTarget,
+  MediaThumb
+}
+
+/** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
+  * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every
+  * stored picture shares — the media list and facets, the media layer, the cards' thumbnails. Every method runs on the
+  * connection it is given.
+  */
+private[assets] object MediaRepo:
+
+  // ── writes ───────────────────────────────────────────────────────────────────────────────────
+
+  /** The pictures of `provider` already stored under these keys. */
+  def known(provider: String, keys: List[String])(using DbCon): Map[String, Known] =
+    if keys.isEmpty then Map.empty
+    else
+      sql"""SELECT provider_key, uid::text, license FROM assets
+          WHERE provider = $provider AND provider_key = ANY($keys::text[])"""
+        .query[(String, String, Option[String])]
+        .run()
+        .map((k, u, l) => k -> Known(u, l))
+        .toMap
+
+  /** Store a provider's picture (or replace the bytes and rights of the one stored under its key); its point and period
+    * come from the place or event it is first stored for. Returns its uid and whether it is new.
+    */
+  def save(a: ProviderAsset, firstTarget: (String, String))(using DbCon): (String, Boolean) =
+    val sha = com.histmersion.domain.media.assets.NewFigure.sha256(a.bytes)
+    val (uid, inserted) =
+      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, kind, license, provider,
+              provider_key, source_url, original_url, author, credit, license_url, retrieved_at,
+              thumb, thumb_mime, thumb_width, thumb_height)
+            VALUES (NULL, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${a.kind},
+              nullif(${a.license}, ''), ${a.provider}, ${a.key}, ${a.sourceUrl}, ${a.originalUrl}, ${a.author},
+              ${a.credit}, ${a.licenseUrl}, now(), ${a.thumb}, ${a.thumbMime}, ${a.thumbWidth}, ${a.thumbHeight})
+            ON CONFLICT (provider, provider_key) WHERE provider IS NOT NULL DO UPDATE SET
+              name = EXCLUDED.name, mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
+              width = EXCLUDED.width, height = EXCLUDED.height, license = EXCLUDED.license,
+              source_url = EXCLUDED.source_url, original_url = EXCLUDED.original_url,
+              author = EXCLUDED.author, credit = EXCLUDED.credit, license_url = EXCLUDED.license_url,
+              retrieved_at = EXCLUDED.retrieved_at, thumb = EXCLUDED.thumb, thumb_mime = EXCLUDED.thumb_mime,
+              thumb_width = EXCLUDED.thumb_width, thumb_height = EXCLUDED.thumb_height,
+              kind = coalesce(assets.kind, EXCLUDED.kind)
+            RETURNING uid::text, (xmax = 0)""".query[(String, Boolean)].run().head
+    placeAt(uid, firstTarget)
+    (uid, inserted)
+
+  /** A picture's point and period, where it has none: the place's point on surface and period, or the event's own point
+    * (else its place's) and outer span. An open period (a place with no dates is stored as `(,)`) is not copied: a
+    * time-filtered media layer shows dated pictures only.
+    */
+  private def placeAt(uid: String, target: (String, String))(using DbCon): Unit =
+    val (tt, id) = target
+    if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
+    else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+              period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
+            FROM (SELECT ST_PointOnSurface(coalesce(geom_clipped, geom)) AS g, period AS p FROM places WHERE id = $id) t
+            WHERE a.uid = $uid::uuid""".update.run()
+    else sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+              period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
+            FROM (SELECT ST_PointOnSurface(coalesce(e.geom, p.geom)) AS g, e.outer_span AS p
+                  FROM events e LEFT JOIN places p ON p.id = e.place_id WHERE e.id = $id) t
+            WHERE a.uid = $uid::uuid""".update.run()
+    ()
+
+  /** Re-read rights on a stored picture whose bytes are kept (a refresh that does not re-download). */
+  def refreshRights(uid: String, r: Rights)(using DbCon): Unit =
+    val _ = sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
+            credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run()
+
+  /** Link a stored picture to a place or event in a role — with `basis`, why a collection's record is tied to it
+    * (V094). Returns whether the link is new.
+    */
+  def link(
+      uid: String,
+      targetType: String,
+      targetId: String,
+      role: String,
+      property: Option[String],
+      item: Option[String],
+      rank: Int,
+      basis: Option[String]
+  )(using DbCon): Boolean =
+    sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank, basis)
+          VALUES ($uid::uuid, $targetType, $targetId, $role, $property, $item, $rank, $basis)
+          ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET
+            property = EXCLUDED.property, item = EXCLUDED.item, rank = EXCLUDED.rank,
+            basis = coalesce(EXCLUDED.basis, media_links.basis)
+          RETURNING (xmax = 0)""".query[Boolean].run().head
+
+  /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
+  def setThumb(uid: String, bytes: Array[Byte], mime: String, width: Option[Int], height: Option[Int])(using
+      DbCon
+  ): Unit =
+    val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
+          WHERE uid = $uid::uuid""".update.run()
+
+  /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
+  def setSourcePicture(citekey: String, uid: String, role: String, property: Option[String])(using DbCon): Unit =
+    val _ = sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
+            AND asset_uid <> $uid::uuid""".update.run()
+    val _ = sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
+          VALUES ($uid::uuid, 'source', $citekey, $role, $property, NULL, 0)
+          ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET property = EXCLUDED.property""".update
+      .run()
+
+  /** The source's picture in `role`, if it has one: its uid and the provider key or figure name. */
+  def sourcePicture(citekey: String, role: String)(using DbCon): Option[(String, String)] =
+    sql"""SELECT a.uid::text, coalesce(a.provider_key, a.name) FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+          WHERE m.target_type = 'source' AND m.target_id = $citekey AND m.role = $role LIMIT 1"""
+      .query[(String, String)]
+      .run()
+      .headOption
+
+  // ── reads ────────────────────────────────────────────────────────────────────────────────────
+
+  private def thumbOf(r: MediaThumbRow): MediaThumb =
+    MediaThumb(
+      r.uid,
+      r.role,
+      MediaThumb.thumbPath(r.uid),
+      r.credit,
+      r.license,
+      r.licenseUrl,
+      r.sourceUrl,
+      r.width,
+      r.height
+    )
+
+  /** A place's or event's (or a source's) pictures for its card, best first (the role order of [[MediaRole]], then the
+    * provider's preference): one indexed lookup, so it fits the hover budget. A source's picture without a stored
+    * thumbnail is shown from its own bytes (a figure is already small enough); a provider's picture of a place needs
+    * one.
+    */
+  def thumbsIn(targetType: String, targetId: String, limit: Int)(using DbCon): List[MediaThumb] =
+    // one row per picture (an event's P18 image may also be one of its depictions), in its best role
+    sql"""SELECT uid, role, credit, license, license_url, source_url, w, h FROM (
+            SELECT DISTINCT ON (a.uid) a.uid::text AS uid, m.role, coalesce(a.credit, '') AS credit, a.license,
+                   a.license_url, a.source_url, coalesce(a.thumb_width, a.width) AS w,
+                   coalesce(a.thumb_height, a.height) AS h, m.rank,
+                   array_position(${MediaRole.all}::text[], m.role) AS ord
+            FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+            WHERE m.target_type = $targetType AND m.target_id = $targetId
+              AND (a.thumb IS NOT NULL OR m.target_type = 'source')
+            ORDER BY a.uid, array_position(${MediaRole.all}::text[], m.role), m.rank) x
+          ORDER BY ord, rank, uid
+          LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
+
+  /** Pure: `km` as degrees of arc for `ST_DWithin` on lon/lat geometry — a latitude degree, so a little generous
+    * east–west away from the equator, which a "same site" test can afford.
+    */
+  def kmToDegrees(km: Double): Double = (km.max(0) / 111.32)
+
+  /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
+    *   - any place with the same Wikidata item (the picture's `item`): Mycenae is `pleiades_570491` and a Wikidata
+    *     import, a polity is one place per time slice;
+    *   - an old id merged or renamed into it (`place_aliases`);
+    *   - another gazetteer's POINT of the same name (the geocoder's key) within `sameSiteKm` — Pleiades and GeoNames
+    *     listing one site twice — and that point's items.
+    * Best role first, then the place's own before an equivalent's, then the provider's preference. Index lookups only
+    * (label key, GiST on the point, the links' item), within the hover budget.
+    */
+  def placeThumbsIn(placeId: String, sameSiteKm: Double, limit: Int)(using DbCon): List[MediaThumb] =
+    val deg = kmToDegrees(sameSiteKm)
+    sql"""WITH p AS (SELECT id, label, geom FROM places WHERE id = $placeId),
+          eq AS (
+            SELECT id FROM p
+            UNION SELECT alias FROM place_aliases WHERE place_id = $placeId
+            UNION SELECT q.id FROM p JOIN places q
+                    ON histmersion_place_key(q.label) = histmersion_place_key(p.label)
+                   AND q.id <> p.id
+                   AND $deg > 0
+                   AND ST_Dimension(p.geom) = 0 AND ST_Dimension(q.geom) = 0
+                   AND ST_DWithin(q.geom, p.geom, $deg)),
+          qids AS (
+            SELECT pl.external_id AS qid FROM place_links pl JOIN eq ON pl.place_id = eq.id
+            WHERE pl.scheme = 'wikidata' AND pl.relation = 'exact_match'
+            UNION SELECT 'Q' || substr(id, 11) FROM eq WHERE id ~ '^wikidata_q[1-9][0-9]*$$'),
+          hits AS (
+            SELECT DISTINCT ON (a.uid) a.uid, m.role, m.rank, (m.target_id = $placeId) AS own,
+                   coalesce(a.credit, '') AS credit, a.license, a.license_url, a.source_url,
+                   coalesce(a.thumb_width, a.width) AS w, coalesce(a.thumb_height, a.height) AS h
+            FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+            WHERE m.target_type = 'place' AND a.thumb IS NOT NULL
+              AND (m.target_id IN (SELECT id FROM eq) OR m.item IN (SELECT qid FROM qids))
+            ORDER BY a.uid, (m.target_id = $placeId) DESC, array_position(${MediaRole.all}::text[], m.role), m.rank)
+          SELECT uid::text, role, credit, license, license_url, source_url, w, h FROM hits
+          ORDER BY array_position(${MediaRole.all}::text[], role), own DESC, rank, uid
+          LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
+
+  private val itemCols =
+    """a.uid::text, a.name, a.mime, length(a.bytes), a.citekey, a.provider, a.provider_key, a.width, a.height,
+       a.kind, a.caption, a.license, a.license_url, a.author, a.credit, a.source_url, a.original_url,
+       to_char(a.retrieved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), a.thumb IS NOT NULL"""
+
+  private def item(r: MediaItemRow, targets: List[MediaTarget]): MediaItem =
+    MediaItem(
+      r.uid,
+      r.name,
+      r.mime,
+      r.bytes,
+      r.citekey,
+      r.provider,
+      r.providerKey,
+      r.width,
+      r.height,
+      r.kind,
+      r.caption,
+      r.license,
+      r.licenseUrl,
+      r.author,
+      r.credit,
+      r.sourceUrl,
+      r.originalUrl,
+      r.retrievedAt,
+      Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid)),
+      MediaThumb.filePath(r.uid),
+      targets
+    )
+
+  private def targetsOf(uids: List[String])(using DbCon): Map[String, List[MediaTarget]] =
+    if uids.isEmpty then Map.empty
+    else
+      sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, ''),
+                   coalesce(basis, '')
+            FROM media_links WHERE asset_uid = ANY($uids::uuid[])
+            ORDER BY asset_uid, target_type, target_id, rank"""
+        .query[(String, String, String, String, String, String, String)]
+        .run()
+        .toList
+        .groupMap(_._1)((_, tt, ti, role, p, q, b) =>
+          MediaTarget(
+            tt,
+            ti,
+            role,
+            Option(p).filter(_.nonEmpty),
+            Option(q).filter(_.nonEmpty),
+            Option(b).filter(_.nonEmpty)
+          )
+        )
+
+  private def clean(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
+
+  /** The list: by provider (`source` = a source's figures), licence (`none` = no licence), the place or event a picture
+    * is linked to, and a text match; newest first. `total` ignores the limit.
+    */
+  def list(q: Api.MediaQuery, limit: Int)(using DbCon): MediaList =
+    val (provider, license) = (clean(q.provider), clean(q.license))
+    val (place, event) = (clean(q.place), clean(q.event))
+    val text = clean(q.q).map(t => s"%$t%")
+    val offset = q.offset.getOrElse(0).max(0)
+    val rows = sql"""SELECT ${SqlLiteral(itemCols)}, count(*) OVER ()::int FROM assets a
+          WHERE ($provider::text IS NULL OR ($provider::text = ${MediaProvider.Source} AND a.provider IS NULL)
+                 OR a.provider = $provider::text)
+            AND ($license::text IS NULL OR ($license::text = 'none' AND coalesce(btrim(a.license), '') = '')
+                 OR a.license = $license::text)
+            AND ($place::text IS NULL OR EXISTS (SELECT 1 FROM media_links m WHERE m.asset_uid = a.uid
+                 AND m.target_type = 'place' AND m.target_id = $place::text))
+            AND ($event::text IS NULL OR EXISTS (SELECT 1 FROM media_links m WHERE m.asset_uid = a.uid
+                 AND m.target_type = 'event' AND m.target_id = $event::text))
+            AND ($text::text IS NULL OR a.name ILIKE $text::text OR a.credit ILIKE $text::text
+                 OR a.provider_key ILIKE $text::text)
+          ORDER BY a.retrieved_at DESC NULLS LAST, a.citekey, a.name LIMIT ${limit.max(1)} OFFSET $offset"""
+      .query[(MediaItemRow, Int)]
+      .run()
+      .toList
+    val ts = targetsOf(rows.map(_._1.uid))
+    MediaList.of(rows.headOption.fold(0)(_._2), rows.map((r, _) => item(r, ts.getOrElse(r.uid, Nil))), offset)
+
+  def show(uid: String)(using DbCon): Option[MediaItem] =
+    sql"SELECT ${SqlLiteral(itemCols)} FROM assets a WHERE a.uid = $uid::uuid"
+      .query[MediaItemRow]
+      .run()
+      .headOption
+      .map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
+
+  /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
+  def thumb(uid: String)(using DbCon): Option[(String, Array[Byte])] =
+    sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
+          FROM assets WHERE uid = $uid::uuid
+            AND (thumb IS NOT NULL OR provider IS NULL OR provider IN (${MediaProvider.Calibre}, ${MediaProvider.OpenLibrary}))"""
+      .query[(String, Array[Byte])]
+      .run()
+      .headOption
+
+  /** The stored rendition's (or figure's) bytes and type. */
+  def file(uid: String)(using DbCon): Option[(String, Array[Byte])] =
+    sql"SELECT mime, bytes FROM assets WHERE uid = $uid::uuid".query[(String, Array[Byte])].run().headOption
+
+  def facets(using DbCon): MediaFacets =
+    val providers = sql"""SELECT coalesce(provider, ${MediaProvider.Source}), count(*)::int FROM assets
+          GROUP BY 1 ORDER BY 2 DESC, 1""".query[(String, Int)].run().toList.map(MediaCount(_, _))
+    val licences = sql"""SELECT coalesce(nullif(btrim(license), ''), 'none'), count(*)::int FROM assets
+          GROUP BY 1 ORDER BY 2 DESC, 1""".query[(String, Int)].run().toList.map(MediaCount(_, _))
+    MediaFacets(providers, licences)
+
+  /** The media layer: geolocated pictures in the span, by kind, provider and licence. */
+  def geo(q: Api.MediaGeoQuery, limit: Int)(using DbCon): List[MediaGeoHit] =
+    val k = q.kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val (provider, license) = (clean(q.provider), clean(q.license))
+    sql"""SELECT ${SqlLiteral(geoCols)}
+          FROM assets a
+          WHERE a.geom IS NOT NULL
+            AND ($k::text IS NULL OR a.kind = $k::text)
+            AND (${q.from}::bigint IS NULL OR a.period && int8range(${q.from}, ${q.to}))
+            AND ($provider::text IS NULL OR ($provider::text = ${MediaProvider.Source} AND a.provider IS NULL)
+                 OR a.provider = $provider::text)
+            AND ($license::text IS NULL OR ($license::text = 'none' AND coalesce(btrim(a.license), '') = '')
+                 OR a.license = $license::text)
+          ORDER BY lower(a.period) NULLS LAST LIMIT ${limit.max(1)}"""
+      .query[MediaGeoRow]
+      .run()
+      .toList
+      .map(geoHit)
+
+  /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
+  def geoOf(uids: List[String])(using DbCon): Map[String, MediaGeoHit] =
+    if uids.isEmpty then Map.empty
+    else
+      sql"""SELECT ${SqlLiteral(geoCols)} FROM assets a
+          WHERE a.geom IS NOT NULL AND a.uid = ANY($uids::uuid[])"""
+        .query[MediaGeoRow]
+        .run()
+        .map(r => r.uid -> geoHit(r))
+        .toMap
+
+  /** The pictures of the media layer as the map's tiles select them — [[geo]]'s selection, every one whose dates
+    * overlap `window` (none: whatever their dates), in the tile's box `envelope`: uid, point and dates.
+    */
+  def tileCandidates(
+      kind: Option[String],
+      provider: Option[String],
+      license: Option[String],
+      window: Option[(Long, Long)],
+      envelope: Sql
+  ): Sql =
+    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val ps = List.newBuilder[Sql]
+    k.foreach(v => ps += Sql.of("a.kind = ?", Param.S(v)))
+    clean(provider).foreach(p =>
+      ps += (if p == MediaProvider.Source then Sql.raw("a.provider IS NULL") else Sql.of("a.provider = ?", Param.S(p)))
+    )
+    clean(license).foreach(l =>
+      ps += (if l == "none" then Sql.raw("coalesce(btrim(a.license), '') = ''")
+             else Sql.of("a.license = ?", Param.S(l)))
+    )
+    window.foreach((lo, hi) => ps += Sql.raw(RangeSql.overlaps("a.period", s"$lo::bigint", s"$hi::bigint")))
+    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(" AND ") ++ p)
+    Sql.raw(
+      "SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe," +
+        " false AS ub" +
+        " FROM assets a CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(a.geom) = 'POINT' THEN a.geom" +
+        " ELSE ST_PointOnSurface(a.geom) END AS pt) q WHERE a.geom IS NOT NULL AND a.geom && "
+    ) ++ envelope ++ rest
+
+  private val geoCols =
+    """a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
+       lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
+       a.thumb IS NOT NULL, a.source_url, a.license_url, a.author"""
+
+  private def geoHit(r: MediaGeoRow): MediaGeoHit =
+    MediaGeoHit(
+      r.citekey,
+      r.name,
+      r.kind,
+      r.lat,
+      r.lon,
+      r.periodStart,
+      r.periodEnd,
+      r.caption,
+      r.uid,
+      r.provider,
+      r.license,
+      r.credit,
+      Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid)),
+      fileUrl = Some(MediaThumb.filePath(r.uid)),
+      sourceUrl = r.sourceUrl,
+      licenseUrl = r.licenseUrl,
+      author = r.author
+    )
+
+  /** `media-licence`: the pictures with no licence (a cover from Calibre or Open Library needs none) or a provider's
+    * with no credit line — `citekey/name` (else `media:<uid>`) and what is missing, the provider's first.
+    */
+  def licenceGaps()(using DbCon): List[(String, String)] =
+    sql"""SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
+                concat_ws(' · ',
+                  CASE WHEN coalesce(btrim(a.license), '') = ''
+                        AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library') THEN 'no licence' END,
+                  CASE WHEN a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '' THEN 'no credit line' END,
+                  coalesce(a.provider || ' ' || a.provider_key, a.mime))
+         FROM assets a
+         WHERE (coalesce(btrim(a.license), '') = '' AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library'))
+            OR (a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '')
+         ORDER BY a.provider NULLS LAST, 1""".query[(String, String)].run().toList
+
+  /** A source's stored figures (images only), as the illustration's choice weighs them. */
+  def sourceFigures(citekey: String)(using DbCon): List[SourceFigure] =
+    sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets
+          WHERE citekey = $citekey AND mime LIKE 'image/%' ORDER BY name"""
+      .query[(String, String, Option[Int], Option[Int], Boolean)]
+      .run()
+      .toList
+      .map(SourceFigure.apply)

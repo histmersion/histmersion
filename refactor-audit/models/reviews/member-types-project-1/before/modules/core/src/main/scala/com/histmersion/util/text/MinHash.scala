@@ -1,0 +1,32 @@
+package com.histmersion.util.text
+
+/** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
+final case class MinHash(mins: Vector[MinHash.Mins]):
+
+  /** The estimated Jaccard similarity of the two shingle sets. */
+  def similarity(o: MinHash): Double =
+    if mins.isEmpty || mins.length != o.mins.length then 0.0
+    else mins.zip(o.mins).count((a, b) => a == b).toDouble / mins.length
+
+object MinHash:
+
+  /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
+    * hashed as one. Pure and deterministic.
+    */
+  type Mins = Mins.T
+  object Mins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(text: String, k: Int = 64, shingle: Int = 5): MinHash =
+    val ws = Fingerprint.tokens(text)
+    val shingles: Iterator[String] =
+      if ws.length <= shingle then Iterator.single(ws.mkString(" ")) else ws.sliding(shingle).map(_.mkString(" "))
+    val mins = Array.fill(k)(Int.MaxValue)
+    shingles.foreach { sh =>
+      val h = scala.util.hashing.MurmurHash3.stringHash(sh)
+      var i = 0 // a hot loop over the k functions; a while keeps it allocation-free
+      while i < k do
+        val v = scala.util.hashing.MurmurHash3.mix(h, i * 0x9e3779b9)
+        if v < mins(i) then mins(i) = v
+        i += 1
+    }
+    MinHash(mins.toVector)

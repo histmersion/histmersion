@@ -13,7 +13,16 @@ private[workflows] object ReviewLedgerRepo:
   /** The article's ledger; None when it has none yet. A value that no longer decodes is an error (the run fails rather
     * than start over and lose its history).
     */
-  def get(slug: String)(using DbCon): Either[String, Option[Ledger]] =
+  type GetResultPart1 = GetResultPart1.T
+  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetSlug = GetSlug.T
+  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassedReviewResult = PassedReviewResult.T
+  object PassedReviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassedReviewReviewId = PassedReviewReviewId.T
+  object PassedReviewReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerRepo.GetSlug)(using DbCon): Either[com.histmersion.domain.research.workflows.ReviewLedgerRepo.GetResultPart1, Option[Ledger]] =
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
       case Some(json) =>
@@ -28,7 +37,7 @@ private[workflows] object ReviewLedgerRepo:
   /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of review manager
     * `reviewId` (a review queued or running is not passed yet).
     */
-  def passedReview(reviewId: String)(using DbCon): Set[String] =
+  def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerRepo.PassedReviewReviewId)(using DbCon): Set[com.histmersion.domain.research.workflows.ReviewLedgerRepo.PassedReviewResult] =
     sql"""SELECT l.slug FROM review_ledgers l
           WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
                             WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')

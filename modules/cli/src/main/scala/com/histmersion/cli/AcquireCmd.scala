@@ -24,6 +24,9 @@ object AcquireCmd:
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 
+  type PollRetractionsWaited = PollRetractionsWaited.T
+  object PollRetractionsWaited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def discoverSearch (using console: Console) = Opts.subcommand("search", "OpenAlex search for literature to ingest") {
     (
       Opts.argument[String]("query"),
@@ -85,7 +88,7 @@ object AcquireCmd:
     * plus 60 000 inserts — so the CLI drives the wait, exactly as `reindex` does.
     */
   @annotation.tailrec
-  private def pollRetractions(c: AcquireClient, waited: Int)(using console: Console) : Either[Cli.Error, RetractionsUpdate] =
+  private def pollRetractions(c: AcquireClient, waited: com.histmersion.cli.AcquireCmd.PollRetractionsWaited)(using console: Console) : Either[Cli.Error, RetractionsUpdate] =
     c.retractionsStatus match
       case Left(e)                => Left(e)
       case Right(r) if !r.running =>

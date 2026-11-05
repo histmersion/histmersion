@@ -29,9 +29,20 @@ import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, Me
   */
 object MergeResolutionsFile:
 
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FlagResultPart1 = FlagResultPart1.T
+  object FlagResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FlagS = FlagS.T
+  object FlagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TemplateResult = TemplateResult.T
+  object TemplateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 
-  def parse(text: String): Either[List[String], MergeResolutions] =
+  def parse(text: com.histmersion.util.data.exchange.MergeResolutionsFile.ParseText): Either[List[com.histmersion.util.data.exchange.MergeResolutionsFile.ParseResultPart1], MergeResolutions] =
     scala.util.Try(Option(yaml.load[AnyRef](text))).toEither.left.map(e => List(s"not YAML: ${e.getMessage}")).flatMap {
       case None                         => Right(MergeResolutions())
       case Some(m: java.util.Map[?, ?]) =>
@@ -96,7 +107,7 @@ object MergeResolutionsFile:
     }
 
   /** `ID=decision` of a `--resolve` flag. */
-  def flag(s: String): Either[String, MergeResolution] = MergeResolutions.Text.flag(s)
+  def flag(s: com.histmersion.util.data.exchange.MergeResolutionsFile.FlagS): Either[com.histmersion.util.data.exchange.MergeResolutionsFile.FlagResultPart1, MergeResolution] = MergeResolutions.Text.flag(s)
 
   /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */
-  def template(p: MergePlan, current: MergeResolutions): String = MergeResolutions.Text.template(p, current)
+  def template(p: MergePlan, current: MergeResolutions): com.histmersion.util.data.exchange.MergeResolutionsFile.TemplateResult = MergeResolutions.Text.template(p, current)

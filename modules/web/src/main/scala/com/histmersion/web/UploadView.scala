@@ -23,6 +23,39 @@ object UploadView:
     * `acquireItem`, and the server's OCR job ticks it off as `ingested as [[citekey]]` when — and only when — the job
     * succeeds.
     */
+  type SuggestCitekeyResult = SuggestCitekeyResult.T
+  object SuggestCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestCitekeyFileName = SuggestCitekeyFileName.T
+  object SuggestCitekeyFileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidateResultPart1Part2 = ValidateResultPart1Part2.T
+  object ValidateResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemLabelResult = ItemLabelResult.T
+  object ItemLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemLabelMax = ItemLabelMax.T
+  object ItemLabelMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickedItemTyped = PickedItemTyped.T
+  object PickedItemTyped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ErrorForResult = ErrorForResult.T
+  object ErrorForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextFieldLabel0 = TextFieldLabel0.T
+  object TextFieldLabel0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextFieldGetResult = TextFieldGetResult.T
+  object TextFieldGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextFieldSetArg2 = TextFieldSetArg2.T
+  object TextFieldSetArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextFieldHint = TextFieldHint.T
+  object TextFieldHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckboxText = CheckboxText.T
+  object CheckboxText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckboxGetResult = CheckboxGetResult.T
+  object CheckboxGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckboxSetArg2 = CheckboxSetArg2.T
+  object CheckboxSetArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeLabelResult = SizeLabelResult.T
+  object SizeLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeLabelBytes = SizeLabelBytes.T
+  object SizeLabelBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Draft(
       fileName: Option[Draft.FileName] = None,
       citekey: Draft.Citekey = "",
@@ -62,7 +95,7 @@ object UploadView:
   /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
     * reader types one); the server judges it when the upload is sent.
     */
-  def suggestCitekey(fileName: String): Option[String] =
+  def suggestCitekey(fileName: com.histmersion.web.UploadView.SuggestCitekeyFileName): Option[com.histmersion.web.UploadView.SuggestCitekeyResult] =
     val stem = fileName.reverse.dropWhile(_ != '.').drop(1).reverse match
       case "" => fileName
       case s  => s
@@ -77,7 +110,7 @@ object UploadView:
     Option(slug).filter(_.length >= 2)
 
   /** The parameters to send, or what is wrong, field by field. */
-  def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
+  def validate(d: Draft): Either[List[(Field, com.histmersion.web.UploadView.ValidateResultPart1Part2)], Ingest.Params] =
     val file = Option.when(d.fileName.isEmpty)(Field.File -> "choose a file to upload")
     // the key itself is the server's to judge (it answers why it refuses one)
     val ck = Option.when(d.citekey.trim.isEmpty)(Field.Citekey -> "citekey is required")
@@ -131,12 +164,12 @@ object UploadView:
     )
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
-  def itemLabel(item: Queue.QueueItem, max: Int = 110): String =
+  def itemLabel(item: Queue.QueueItem, max: com.histmersion.web.UploadView.ItemLabelMax = 110): com.histmersion.web.UploadView.ItemLabelResult =
     val line = item.text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line)
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
-  def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
+  def pickedItem(typed: com.histmersion.web.UploadView.PickedItemTyped, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
     """^\s*#(\d+)\b""".r
       .findFirstMatchIn(typed)
       .flatMap(m => m.group(1).toIntOption)
@@ -218,17 +251,17 @@ object UploadView:
           }
         }
 
-  private def errorFor(f: Field): Signal[Option[String]] =
+  private def errorFor(f: Field): Signal[Option[com.histmersion.web.UploadView.ErrorForResult]] =
     errors.signal.map(_.collectFirst { case (`f`, m) => m })
 
   private def fieldError(f: Field): Modifier[HtmlElement] =
     child.maybe <-- errorFor(f).map(_.map(m => div(cls := "field-error", role := "alert", m)))
 
   private def textField(
-      label0: String,
-      get: Draft => String,
-      set: (Draft, String) => Draft,
-      hint: String,
+      label0: com.histmersion.web.UploadView.TextFieldLabel0,
+      get: Draft => com.histmersion.web.UploadView.TextFieldGetResult,
+      set: (Draft, com.histmersion.web.UploadView.TextFieldSetArg2) => Draft,
+      hint: com.histmersion.web.UploadView.TextFieldHint,
       err: Option[Field] = None
   ): HtmlElement =
     div(
@@ -411,7 +444,7 @@ object UploadView:
       )
     )
 
-  private def checkbox(text: String, get: Draft => Boolean, set: (Draft, Boolean) => Draft): HtmlElement =
+  private def checkbox(text: com.histmersion.web.UploadView.CheckboxText, get: Draft => com.histmersion.web.UploadView.CheckboxGetResult, set: (Draft, com.histmersion.web.UploadView.CheckboxSetArg2) => Draft): HtmlElement =
     label(
       cls := "check",
       input(
@@ -422,5 +455,5 @@ object UploadView:
     )
 
   /** `1.4 MB`, `820 kB`. */
-  def sizeLabel(bytes: Double): String =
+  def sizeLabel(bytes: com.histmersion.web.UploadView.SizeLabelBytes): com.histmersion.web.UploadView.SizeLabelResult =
     if bytes >= 1e6 then f"${bytes / 1e6}%.1f MB" else f"${math.max(1.0, bytes / 1e3)}%.0f kB"

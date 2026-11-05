@@ -11,23 +11,68 @@ import com.histmersion.api.given
 
 object PeriodO:
 
-  def isoYear(raw: String): Option[Long] =
+  type IsoYearResult = IsoYearResult.T
+  object IsoYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoYearRaw = IsoYearRaw.T
+  object IsoYearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinYear = MinYear.T
+  object MinYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxYear = MaxYear.T
+  object MaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanFactor = SpanFactor.T
+  object SpanFactor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinImplausibleSpan = MinImplausibleSpan.T
+  object MinImplausibleSpan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinSiblings = MinSiblings.T
+  object MinSiblings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJson = ParseJson.T
+  object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorityId = AuthorityId.T
+  object AuthorityId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefinitionId = DefinitionId.T
+  object DefinitionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundResult = BoundResult.T
+  object BoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundOuter = BoundOuter.T
+  object BoundOuter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearAtResult = YearAtResult.T
+  object YearAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearAtKey = YearAtKey.T
+  object YearAtKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrKey = StrKey.T
+  object StrKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntResult = IntResult.T
+  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntKey = IntKey.T
+  object IntKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsExistingPart1 = ToPeriodsExistingPart1.T
+  object ToPeriodsExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsExistingPart2 = ToPeriodsExistingPart2.T
+  object ToPeriodsExistingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsRoots = ToPeriodsRoots.T
+  object ToPeriodsRoots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def isoYear(raw: com.histmersion.api.catalogue.PeriodO.IsoYearRaw): Option[com.histmersion.api.catalogue.PeriodO.IsoYearResult] =
     Years.parseIso(raw)
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
-  val MinYear: Long = -3000000L
-  val MaxYear: Long = 2100L
+  val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = -3000000L
+  val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = 2100L
 
   /** A lost minus sign lands a period across BCE into CE (EAMENA's "Old Kingdom", -2701 → 2150), but long spans alone
     * are normal in deep time (a Lower Palaeolithic of 1.2 million years), so length is judged against the authority's
     * other definitions for the same region.
     */
-  val SpanFactor: Long = 3L
-  val MinImplausibleSpan: Long = 1000L
+  val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = 3L
+  val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = 1000L
 
-  val MinSiblings: Int = 3
+  val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = 3
 
-  def parse(json: String): Either[String, PeriodODataset] =
+  def parse(json: com.histmersion.api.catalogue.PeriodO.ParseJson): Either[com.histmersion.api.catalogue.PeriodO.ParseResultPart1, PeriodODataset] =
     io.circe.parser.parse(json).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
@@ -65,7 +110,7 @@ object PeriodO:
     }
 
   private def authority(
-      id: String,
+      id: com.histmersion.api.catalogue.PeriodO.AuthorityId,
       c: ACursor
   ): (com.histmersion.api.catalogue.PeriodO.Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
@@ -111,7 +156,7 @@ object PeriodO:
     (verdicts.flatMap(_.left.toOption), verdicts.flatMap(_.toOption))
 
   private def definition(
-      id: String,
+      id: com.histmersion.api.catalogue.PeriodO.DefinitionId,
       c: ACursor
   ): Either[SkippedPeriod, com.histmersion.api.catalogue.PeriodO.Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
@@ -153,20 +198,20 @@ object PeriodO:
       case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, s"starts after it ends ($s > $e)")
       case _                  => skip(Period.Skip.NoSpan, "no readable start or stop year")
 
-  private def bound(in: ACursor, outer: String): Option[Long] =
+  private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.BoundOuter): Option[com.histmersion.api.catalogue.PeriodO.BoundResult] =
     yearAt(in, "year").orElse(yearAt(in, outer))
 
-  private def yearAt(c: ACursor, key: String): Option[Long] =
+  private def yearAt(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.YearAtKey): Option[com.histmersion.api.catalogue.PeriodO.YearAtResult] =
     c.downField(key).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap(isoYear)
 
-  private def str(c: ACursor, key: String): Option[String] = c.downField(key).focus.flatMap(_.asString)
-  private def int(c: ACursor, key: String): Option[Int] =
+  private def str(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.StrKey): Option[com.histmersion.api.catalogue.PeriodO.StrResult] = c.downField(key).focus.flatMap(_.asString)
+  private def int(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.IntKey): Option[com.histmersion.api.catalogue.PeriodO.IntResult] =
     c.downField(key).focus.flatMap(j => j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption)))
 
   def toPeriods(
       ds: PeriodODataset,
-      existing: Map[String, Option[String]] = Map.empty,
-      roots: Boolean = false
+      existing: Map[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart1, Option[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart2]] = Map.empty,
+      roots: com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots = false
   ): List[HistoricalPeriod] =
     val defs = ds.authorities.flatMap(a => a.periods.map(a -> _))
     val ids = defs.map(_._2.id).toSet
@@ -217,10 +262,15 @@ object PeriodO:
 
   final case class Authority(id: Authority.Id, title: Authority.Title, year: Option[Authority.Year], periods: List[Definition]):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
-    def cite(periodId: String): String =
+    def cite(periodId: com.histmersion.api.catalogue.PeriodO.Authority.CitePeriodId): com.histmersion.api.catalogue.PeriodO.Authority.CiteResult =
       s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
 
   object Authority:
+    type CiteResult = CiteResult.T
+    object CiteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitePeriodId = CitePeriodId.T
+    object CitePeriodId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Title = Title.T

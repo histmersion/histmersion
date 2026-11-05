@@ -19,6 +19,29 @@ import com.histmersion.api.catalogue.Geocode
   */
 private[places] object PlaceReviewRepo:
 
+  type SplitResult = SplitResult.T
+  object SplitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitS = SplitS.T
+  object SplitS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewedSql = ReviewedSql.T
+  object ReviewedSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart1 = ApplyResultPart1.T
+  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart2 = ApplyResultPart2.T
+  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyToleranceKm = ApplyToleranceKm.T
+  object ApplyToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeInResult = MergeInResult.T
+  object MergeInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeInFrom = MergeInFrom.T
+  object MergeInFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeInInto = MergeInInto.T
+  object MergeInInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelocateResult = RelocateResult.T
+  object RelocateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelocateToleranceKm = RelocateToleranceKm.T
+  object RelocateToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class Row(
       id: Row.Id,
       label: Row.Label,
@@ -65,7 +88,7 @@ private[places] object PlaceReviewRepo:
 
   private given DbCodec[Candidate] = DbCodec.derived
 
-  private def split(s: Option[String]): List[String] =
+  private def split(s: Option[com.histmersion.domain.catalogue.places.PlaceReviewRepo.SplitS]): List[com.histmersion.domain.catalogue.places.PlaceReviewRepo.SplitResult] =
     s.toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty)
 
   /** The places the rule reads: every seed (not imported) place whose point stands for a region, a polity or a people
@@ -73,7 +96,7 @@ private[places] object PlaceReviewRepo:
     * type, and every place Pleiades withdrew, whatever its kind — unless a person set its kind or period (`places set`,
     * V080).
     */
-  private val reviewedSql: String =
+  private val reviewedSql: com.histmersion.domain.catalogue.places.PlaceReviewRepo.ReviewedSql =
     // a place whose kind or period a person set (V080) is decided: never listed again
     "p.import_source IS NULL AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)" +
       " AND ((ST_Dimension(p.geom) = 0 AND p.kind NOT IN ('site', 'feature'))" +
@@ -144,7 +167,7 @@ private[places] object PlaceReviewRepo:
     * changed places' `finding_places` rows are then matched again (a kind decides how a place takes findings), in the
     * same transaction. Returns (reclassified, merged).
     */
-  def apply(ps: List[Proposal], toleranceKm: Double)(using DbCon): (Int, Int) =
+  def apply(ps: List[Proposal], toleranceKm: com.histmersion.domain.catalogue.places.PlaceReviewRepo.ApplyToleranceKm)(using DbCon): (com.histmersion.domain.catalogue.places.PlaceReviewRepo.ApplyResultPart1, com.histmersion.domain.catalogue.places.PlaceReviewRepo.ApplyResultPart2) =
     val todo = ps.filter(_.fixable)
     if todo.isEmpty then (0, 0)
     else
@@ -160,7 +183,7 @@ private[places] object PlaceReviewRepo:
       (re.size, mg.size)
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
-  private[places] def mergeIn(from: String, into: String)(using DbCon): Boolean =
+  private[places] def mergeIn(from: com.histmersion.domain.catalogue.places.PlaceReviewRepo.MergeInFrom, into: com.histmersion.domain.catalogue.places.PlaceReviewRepo.MergeInInto)(using DbCon): com.histmersion.domain.catalogue.places.PlaceReviewRepo.MergeInResult =
     val both = sql"SELECT count(*)::int FROM places WHERE id = $from OR id = $into".query[Int].run().head
     if from == into || both < 2 then false
     else
@@ -201,13 +224,13 @@ private[places] object PlaceReviewRepo:
       lon: com.histmersion.Longitude,
       lat: com.histmersion.Latitude
   ) derives DbCodec:
-    def km: Double = Geocode.distanceKm(fromLon, fromLat, lon, lat)
+    def km: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.KmResult = Geocode.distanceKm(fromLon, fromLat, lon, lat)
 
     /** One line: id, label, the grid point, the better one and how far. */
-    def describe: String = s"$id $detail"
+    def describe: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.DescribeResult = s"$id $detail"
 
     /** The line without the id — a lint item, which carries the id beside it. */
-    def detail: String =
+    def detail: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.DetailResult =
       String.format(
         java.util.Locale.ROOT,
         "%s: location approximate (atlas grid square) at %.2f N %.2f E → %s's point %.4f N %.4f E, %.0f km",
@@ -221,6 +244,13 @@ private[places] object PlaceReviewRepo:
       )
 
   object Relocation:
+    type KmResult = KmResult.T
+    object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DetailResult = DetailResult.T
+    object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
@@ -251,7 +281,7 @@ private[places] object PlaceReviewRepo:
   /** Give each listed place the linked record's point — only while it still has the grid point the list was made from —
     * and match the moved places' findings again, in the same transaction. Returns the places moved.
     */
-  def relocate(rs: List[Relocation], toleranceKm: Double)(using DbCon): Int =
+  def relocate(rs: List[Relocation], toleranceKm: com.histmersion.domain.catalogue.places.PlaceReviewRepo.RelocateToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.PlaceReviewRepo.RelocateResult =
     if rs.isEmpty then 0
     else
       val moved = rs.filter { r =>

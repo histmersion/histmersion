@@ -8,12 +8,15 @@ import com.histmersion.api.Api
 
 object UiApi:
 
+  type MarkSeenPart1Part1 = MarkSeenPart1Part1.T
+  object MarkSeenPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import UiNotices.{Counters, SeenMark}
 
   lazy val counters: PublicEndpoint[Unit, Api.Error, Counters, Any] =
     endpoint.get.in("api" / "ui" / "counters").errorOut(jsonBody[Api.Error]).out(jsonBody[Counters])
 
-  lazy val markSeen: PublicEndpoint[(String, SeenMark), Api.Error, Counters, Any] =
+  lazy val markSeen: PublicEndpoint[(com.histmersion.api.instance.UiApi.MarkSeenPart1Part1, SeenMark), Api.Error, Counters, Any] =
     endpoint.post
       .in("api" / "ui" / "seen" / path[String]("board"))
       .in(jsonBody[SeenMark])

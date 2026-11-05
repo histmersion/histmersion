@@ -9,10 +9,14 @@ abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends
 
   val kinds: Set[ItemKind] = byKind.keySet
 
-  def resolve(kind: ItemKind, key: ItemKey): Either[String, ItemRef] =
+  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.util.identity.TableReferable.ResolveResultPart1, ItemRef] =
     byKind.get(kind).toRight(s"no records of kind '${kind.value}'").flatMap(t => db.read(t.resolve(key)))
 
   def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
     val asked = refs.filter(r => byKind.contains(r.kind))
     if asked.isEmpty then Map.empty
     else db.read(tables.flatMap(t => t.describe(asked)).toMap)
+
+object TableReferable:
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

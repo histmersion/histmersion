@@ -53,7 +53,12 @@ object AssetLink:
 
   object List:
 
-    def of(total: Int, rows: scala.List[AssetLink], offset: Int): List =
+    type OfTotal = OfTotal.T
+    object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfOffset = OfOffset.T
+    object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(total: com.histmersion.api.media.AssetLink.List.OfTotal, rows: scala.List[AssetLink], offset: com.histmersion.api.media.AssetLink.List.OfOffset): List =
       List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Put(

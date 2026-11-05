@@ -11,16 +11,23 @@ package com.histmersion.cli
 object WorkingDir:
 
   /** What GraalVM's `SystemPropertiesSupport` says when `getcwd` fails. */
+  type Message = Message.T
+  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeniedResult = DeniedResult.T
+  object DeniedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeniedText = DeniedText.T
+  object DeniedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Marker = "Could not determine current working directory"
 
-  val message: String =
+  val message: com.histmersion.cli.WorkingDir.Message =
     "error: histmersion cannot read the directory it was started in.\n" +
       "  On macOS this is privacy protection: the folder (e.g. under ~/Documents) is off limits to this terminal.\n" +
       "  Either grant the terminal access in System Settings → Privacy & Security → Files and Folders\n" +
       "  (Documents Folder, or the folder in question), or run histmersion from another directory, e.g. `cd ~`."
 
   /** Pure: is `t`, or anything in its cause chain, the working-directory failure? */
-  def denied(t: Throwable): Boolean =
+  def denied(t: Throwable): com.histmersion.cli.WorkingDir.DeniedResult =
     Iterator
       .iterate(t)(_.getCause)
       .takeWhile(_ != null)
@@ -28,4 +35,4 @@ object WorkingDir:
       .exists(e => Option(e.getMessage).exists(_.contains(Marker)))
 
   /** Pure: the same check on an error text the CLI already turned into a message. */
-  def denied(text: String): Boolean = text.contains(Marker)
+  def denied(text: com.histmersion.cli.WorkingDir.DeniedText): com.histmersion.cli.WorkingDir.DeniedResult = text.contains(Marker)

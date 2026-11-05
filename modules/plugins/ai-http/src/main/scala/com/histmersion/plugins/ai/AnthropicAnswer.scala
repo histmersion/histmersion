@@ -14,7 +14,7 @@ import com.histmersion.plugin.AiTool
 final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[String, AiTurn] =
+  def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1, AiTurn] =
     if status / 100 != 2 then Left(body)
     else
       parse(body).flatMap(_.as(using AnthropicAnswer.message)) match
@@ -26,6 +26,15 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
 
 object AnthropicAnswer:
 
+  type TurnResultPart1 = TurnResultPart1.T
+  object TurnResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ErrorDetail = ErrorDetail.T
+  object ErrorDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OptionalIntResultPart2 = OptionalIntResultPart2.T
+  object OptionalIntResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Body = Body.T
@@ -35,14 +44,14 @@ object AnthropicAnswer:
     if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))
 
   /** An error answer's message: `{"error": {"type": …, "message": …}}`. */
-  val error: Decoder[String] = Decoder.instance { c =>
+  val error: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Error] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       m <- c.downField("error").as(using errorDetail)
     yield m
   }
 
-  private val errorDetail: Decoder[String] = Decoder.instance { c =>
+  private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       _ <- c.downField("type").as[String]
@@ -77,7 +86,7 @@ object AnthropicAnswer:
     }
   }
 
-  private def optionalInt(c: ACursor): Either[DecodingFailure, Option[Int]] = c.as[Option[Int]]
+  private def optionalInt(c: ACursor): Either[DecodingFailure, Option[com.histmersion.plugins.ai.AnthropicAnswer.OptionalIntResultPart2]] = c.as[Option[Int]]
 
   private val usage: Decoder[AiUsage] = Decoder.instance { c =>
     for

@@ -15,9 +15,12 @@ final case class StorageSpot(
     detail: Option[StorageSpot.Detail] = None
 ):
   /** Where the entry is, as About shows it. */
-  def path: Option[String] = shown.map(_.where())
+  def path: Option[com.histmersion.util.data.diagnostics.StorageSpot.PathResult] = shown.map(_.where())
 
 object StorageSpot:
+  type PathResult = PathResult.T
+  object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T

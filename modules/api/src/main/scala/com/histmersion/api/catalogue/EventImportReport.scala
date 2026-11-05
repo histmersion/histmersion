@@ -29,6 +29,11 @@ object EventImportReport:
 
 
   /** An events import job's report, in its detail. */
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DryRun = DryRun.T
@@ -85,7 +90,7 @@ object EventImportReport:
       a.corrections + b.corrections
     )
 
-  def summary(r: EventImportReport): String =
+  def summary(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.SummaryResult =
     val verb = if r.dryRun then "would create" else "created"
     List(
       Some(s"${r.provider}: ${r.records} record(s) read, ${r.kept} kept"),
@@ -99,7 +104,7 @@ object EventImportReport:
       r.corrections.summary
     ).flatten.mkString(" · ")
 
-  def markdown(r: EventImportReport): String =
+  def markdown(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.MarkdownResult =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
     val head = s"## Event import — ${r.provider}${if r.dryRun then " (dry run: nothing stored)" else ""}"
     val lines = List(

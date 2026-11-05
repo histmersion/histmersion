@@ -16,6 +16,19 @@ object ArticlesTab:
     * to articles (see [[Api.ArticleQuery]]), so the two lists cannot disagree about what is filtered. A page at a time;
     * "show more" fetches past the first.
     */
+  type RenderArticleInPanel = RenderArticleInPanel.T
+  object RenderArticleInPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindCountsResult = KindCountsResult.T
+  object KindCountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewClassResult = ReviewClassResult.T
+  object ReviewClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripMdResult = StripMdResult.T
+  object StripMdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripMdS = StripMdS.T
+  object StripMdS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowTabName = ShowTabName.T
+  object ShowTabName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
     name = "articles",
     singular = "article",
@@ -41,7 +54,7 @@ object ArticlesTab:
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".
     */
-  private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
+  private[web] def renderArticle(art: Article.Summary, inPanel: com.histmersion.web.ArticlesTab.RenderArticleInPanel = false): HtmlElement =
     li(
       cls := "article-row",
       marks.RowActions(marks.ItemRef.article(art.slug, art.title), Route.Article(art.slug).path, Fmt.display(art.kind)),
@@ -74,7 +87,7 @@ object ArticlesTab:
     )
 
   /** The count line's per-kind counts: `200 concepts`, `3 indexes`, the largest first. */
-  def kindCounts(kinds: List[Article.KindCount]): List[String] =
+  def kindCounts(kinds: List[Article.KindCount]): List[com.histmersion.web.ArticlesTab.KindCountsResult] =
     Article.List
       .byKind(kinds)
       .map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else ""))
@@ -84,9 +97,9 @@ object ArticlesTab:
     span(cls := reviewClass(b.state), title := b.detail, Wording.capitalize(b.label))
 
   /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
-  def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"
+  def reviewClass(state: ReviewState): com.histmersion.web.ArticlesTab.ReviewClassResult = s"job-state review-state state-${state.wire}"
 
-  private def stripMd(s: String): String =
+  private def stripMd(s: com.histmersion.web.ArticlesTab.StripMdS): com.histmersion.web.ArticlesTab.StripMdResult =
     s.replaceAll("\\[\\[([^\\]]+)\\]\\]", "$1")
       .replaceAll("\\*\\*([^*]+)\\*\\*", "$1")
       .replaceAll("\\*([^*]+)\\*", "$1")
@@ -94,7 +107,7 @@ object ArticlesTab:
       .replaceAll("\\s+", " ")
       .trim
 
-  def show(tabName: String): Unit =
+  def show(tabName: com.histmersion.web.ArticlesTab.ShowTabName): Unit =
     if tabName == "articles" then
       UiState.set(UiState.tab := Some("articles"))()
       load()

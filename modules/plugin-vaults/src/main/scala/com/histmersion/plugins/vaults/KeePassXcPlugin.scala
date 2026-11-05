@@ -11,7 +11,7 @@ final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
   val info = Plugin.Info("keepassxc", Vaults.Version, Spi.Version)
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     val home = ctx.env("HOME")
@@ -49,7 +49,7 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: String, ctx: Plugin.Context): Either[String, Option[String]] =
+  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorYkman, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart1, Option[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart2]] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     val t = Option(ykman).map(_.trim).getOrElse("")
     if t.isEmpty then
@@ -65,3 +65,13 @@ final class KeePassXcPlugin extends Plugin:
           )
           Right(None)
         case Left(e) => Left(s"ykman: $e")
+
+object KeePassXcPlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetectorResultPart1 = DetectorResultPart1.T
+  object DetectorResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetectorResultPart2 = DetectorResultPart2.T
+  object DetectorResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetectorYkman = DetectorYkman.T
+  object DetectorYkman extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

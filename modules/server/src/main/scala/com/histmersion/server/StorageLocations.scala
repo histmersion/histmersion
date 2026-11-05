@@ -14,6 +14,23 @@ import java.nio.file.Path
 object StorageLocations:
 
   /** The directory of `location` under `cfg`; `None` where the configuration places none. */
+  type SearchPathPath = SearchPathPath.T
+  object SearchPathPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfiguredS = ConfiguredS.T
+  object ConfiguredS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfiguredEnvArg1 = ConfiguredEnvArg1.T
+  object ConfiguredEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfiguredEnvResult = ConfiguredEnvResult.T
+  object ConfiguredEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasuredEnvArg1 = MeasuredEnvArg1.T
+  object MeasuredEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasuredEnvResult = MeasuredEnvResult.T
+  object MeasuredEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasuredOsName = MeasuredOsName.T
+  object MeasuredOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpoolDir = SpoolDir.T
+  object SpoolDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def root(
       location: Location,
       cfg: AppConfig,
@@ -56,14 +73,14 @@ object StorageLocations:
       case Location.Executables   => None
 
   /** The directories of the executables' search path `path` (`PATH`), each a store, in order. */
-  def searchPath(path: Option[String]): List[Store] =
+  def searchPath(path: Option[com.histmersion.server.StorageLocations.SearchPathPath]): List[Store] =
     path.toList
       .flatMap(_.split(java.io.File.pathSeparatorChar).toList)
       .filter(_.nonEmpty)
       .map(d => Storage.at(Location.Executables, Path.of(d)))
 
   /** A configured directory: `None` when the setting is empty, a leading `~` the environment's `HOME`. */
-  private def configured(s: String, env: String => Option[String]): Option[Path] =
+  private def configured(s: com.histmersion.server.StorageLocations.ConfiguredS, env: com.histmersion.server.StorageLocations.ConfiguredEnvArg1 => Option[com.histmersion.server.StorageLocations.ConfiguredEnvResult]): Option[Path] =
     Option(s).map(_.trim).filter(_.nonEmpty).map(p => Path.of(AgentTrees.expandIn(p, env)))
 
   /** The install's own places About › Storage shows beside the owners' stores: no owner's data. */
@@ -75,7 +92,7 @@ object StorageLocations:
     * is made; the bundled database's files and the install only in a bundle (`runtime.enabled`, or the executable in a
     * bundle's layout when `HISTMERSION_RUNTIME` is not set).
     */
-  def measured(cfg: AppConfig, env: String => Option[String], osName: String, exe: Option[Path]): Storage =
+  def measured(cfg: AppConfig, env: com.histmersion.server.StorageLocations.MeasuredEnvArg1 => Option[com.histmersion.server.StorageLocations.MeasuredEnvResult], osName: com.histmersion.server.StorageLocations.MeasuredOsName, exe: Option[Path]): Storage =
     val bundled = cfg.runtime.enabled || (env("HISTMERSION_RUNTIME").forall(_.trim.isEmpty) && Supervisor.bundled(exe))
     val home = Option.when(bundled)(Supervisor.layout(cfg.runtime, exe, env, osName).toOption.map(_.home)).flatten
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, osName).map(_.toAbsolutePath.normalize)
@@ -119,7 +136,7 @@ object StorageLocations:
     )
 
   /** `acquire.spool-dir`, or `<java.io.tmpdir>/histmersion-acquire` when it is empty — absolute and normalised. */
-  def spool(dir: String): Path =
+  def spool(dir: com.histmersion.server.StorageLocations.SpoolDir): Path =
     Option(dir)
       .map(_.trim)
       .filter(_.nonEmpty)

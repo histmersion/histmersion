@@ -29,6 +29,9 @@ final case class EventGeo(
 object EventGeo:
 
 
+  type MissingEndResult = MissingEndResult.T
+  object MissingEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kind = Kind.T
@@ -54,7 +57,7 @@ object EventGeo:
   type Dating = Dating.T
   object Dating extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def missingEnd(ts: TimeSpan): Option[String] =
+  def missingEnd(ts: TimeSpan): Option[com.histmersion.api.catalogue.EventGeo.MissingEndResult] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
     if hasStart && !hasEnd then Some("end not recorded")

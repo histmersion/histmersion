@@ -38,7 +38,7 @@ final class FilterTab[Q, Row](
   private val latest = Latest()
   // `var`s: the query last sent (to skip an unchanged one) and the pending debounce
   private var lastQuery: Option[Q] = None
-  private var timer: Int = 0
+  private var timer: com.histmersion.web.FilterTab.Timer = 0
 
   def pane: HtmlElement =
     div(
@@ -84,3 +84,7 @@ final class FilterTab[Q, Row](
           p => state.update(TabState.appended(_, p, page)),
           m => state.update(TabState.failed(_, m))
         )
+
+object FilterTab:
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

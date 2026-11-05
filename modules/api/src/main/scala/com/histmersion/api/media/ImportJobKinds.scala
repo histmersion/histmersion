@@ -7,7 +7,10 @@ import com.histmersion.api.jobs.JobDetail
 object ImportJobKinds:
 
   /** What a media job does, as a person reads it, in the job's detail. */
-  val Media: JobDetail.Field[Option[String]] = JobDetail.Field("media", None)
+  type Media = Media.T
+  object Media extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Media: JobDetail.Field[Option[com.histmersion.api.media.ImportJobKinds.Media]] = JobDetail.Field("media", None)
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-import"),

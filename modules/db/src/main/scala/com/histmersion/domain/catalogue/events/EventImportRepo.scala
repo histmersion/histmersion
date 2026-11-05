@@ -16,6 +16,61 @@ private[events] object EventImportRepo:
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
     */
+  type RefreshId = RefreshId.T
+  object RefreshId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNames = RefreshNames.T
+  object RefreshNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshWd = RefreshWd.T
+  object RefreshWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointSqlResult = PointSqlResult.T
+  object PointSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertEventId = InsertEventId.T
+  object InsertEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertEventNames = InsertEventNames.T
+  object InsertEventNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertEventWd = InsertEventWd.T
+  object InsertEventWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FillId = FillId.T
+  object FillId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FillNames = FillNames.T
+  object FillNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FillWd = FillWd.T
+  object FillWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpstreamOfResultPart1 = UpstreamOfResultPart1.T
+  object UpstreamOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpstreamOfId = UpstreamOfId.T
+  object UpstreamOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart1Part1 = RecordsResultPart1Part1.T
+  object RecordsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart1Part2 = RecordsResultPart1Part2.T
+  object RecordsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart2 = RecordsResultPart2.T
+  object RecordsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsProvider = RecordsProvider.T
+  object RecordsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart1Part1 = StoredKindsResultPart1Part1.T
+  object StoredKindsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart1Part2 = StoredKindsResultPart1Part2.T
+  object StoredKindsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart2 = StoredKindsResultPart2.T
+  object StoredKindsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsProvider = StoredKindsProvider.T
+  object StoredKindsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsDoneResult = PartsDoneResult.T
+  object PartsDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsDoneProvider = PartsDoneProvider.T
+  object PartsDoneProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartProvider = MarkPartProvider.T
+  object MarkPartProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartPart = MarkPartPart.T
+  object MarkPartPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartRecords = MarkPartRecords.T
+  object MarkPartRecords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClearPartsProvider = ClearPartsProvider.T
+  object ClearPartsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CatalogueRefsId = CatalogueRefsId.T
+  object CatalogueRefsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def stored(using DbCon): List[StoredEvent] =
     sql"""SELECT e.id, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
                  ST_Y(a.pt), ST_X(a.pt), e.wikidata,
@@ -88,7 +143,7 @@ private[events] object EventImportRepo:
   /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s values; a span kept by
     * hand drops the catalogue's stated year and ± (they do not explain it).
     */
-  private def refresh(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using
+  private def refresh(id: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshNames], wd: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshWd])(using
       DbCon
   ): Correction.Counts =
     val (keep, outcomes) = CorrectionRepo.reconcile(Correction.Target.Event, id, EventFields.upstream(r))
@@ -113,10 +168,10 @@ private[events] object EventImportRepo:
         WHERE id = $id""".update.run()
     Corrections.counts(outcomes)
 
-  private def pointSql(r: CatalogRecord): Option[String] =
+  private def pointSql(r: CatalogRecord): Option[com.histmersion.domain.catalogue.events.EventImportRepo.PointSqlResult] =
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
 
-  private def insertEvent(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using DbCon): Unit =
+  private def insertEvent(id: com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventNames], wd: Option[com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventWd])(using DbCon): Unit =
     val geom = pointSql(r)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after, historicity, geom,
                               description, wikidata, names, catalogue, central, plus_minus, dating_method)
@@ -127,7 +182,7 @@ private[events] object EventImportRepo:
                   ${r.datingMethod})""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
-  private def fill(id: String, names: List[String], wd: Option[String])(using DbCon): Unit =
+  private def fill(id: com.histmersion.domain.catalogue.events.EventImportRepo.FillId, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.FillNames], wd: Option[com.histmersion.domain.catalogue.events.EventImportRepo.FillWd])(using DbCon): Unit =
     sql"""UPDATE events SET wikidata = coalesce(wikidata, $wd),
           names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
         WHERE id = $id AND (wikidata IS DISTINCT FROM coalesce(wikidata, $wd)
@@ -136,7 +191,7 @@ private[events] object EventImportRepo:
   /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what the event's fields
     * are compared with when a person corrects them. `None`: not an import's event.
     */
-  def upstreamOf(id: String)(using DbCon): Option[(String, CatalogRecord)] =
+  def upstreamOf(id: com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfResultPart1, CatalogRecord)] =
     sql"SELECT catalogue FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.flatMap { cat =>
       val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
                        WHERE event_id = $id AND provider = $cat ORDER BY provider_id"""
@@ -154,7 +209,7 @@ private[events] object EventImportRepo:
     * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
     * counted in the second value and left alone.
     */
-  def records(provider: Option[String])(using DbCon): (List[(String, String, CatalogRecord)], Int) =
+  def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart1Part2, CatalogRecord)], com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart2) =
     val rows =
       sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                      WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
@@ -165,14 +220,14 @@ private[events] object EventImportRepo:
   /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
     * ([[EventProviders.WikidataEvents.moreSpecific]]).
     */
-  def storedKinds(provider: String)(using DbCon): Map[(String, String), String] =
+  def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart1Part2), com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart2] =
     sql"SELECT provider, provider_id, kind FROM event_catalogue WHERE provider = $provider"
       .query[(String, String, String)]
       .run()
       .map((p, i, k) => (p, i) -> k)
       .toMap
 
-  private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
+  private def upsertRecord(eventId: com.histmersion.domain.catalogue.Event.Id, r: CatalogRecord)(using DbCon): Unit =
     val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
@@ -188,19 +243,19 @@ private[events] object EventImportRepo:
 
   // ── the parts of a catalogue read ───────────────────────────────────────────────────────────
 
-  def partsDone(provider: String)(using DbCon): Set[String] =
+  def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneProvider)(using DbCon): Set[com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneResult] =
     sql"SELECT part FROM event_import_parts WHERE provider = $provider".query[String].run().toSet
 
-  def markPart(provider: String, part: String, records: Int)(using DbCon): Unit =
+  def markPart(provider: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartPart, records: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartRecords)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO event_import_parts (provider, part, records) VALUES ($provider, $part, $records)
             ON CONFLICT (provider, part) DO UPDATE SET records = EXCLUDED.records, done_at = now()""".update.run()
 
-  def clearParts(provider: String)(using DbCon): Unit =
+  def clearParts(provider: com.histmersion.domain.catalogue.events.EventImportRepo.ClearPartsProvider)(using DbCon): Unit =
     val _ = sql"DELETE FROM event_import_parts WHERE provider = $provider".update.run()
 
   /** The catalogue rows of one event, with each provider's licence and citation. */
-  def catalogueRefs(id: String)(using DbCon): List[EventCatalogueRef] =
+  def catalogueRefs(id: com.histmersion.domain.catalogue.events.EventImportRepo.CatalogueRefsId)(using DbCon): List[EventCatalogueRef] =
     sql"""SELECT provider, provider_id, url, vei, magnitude, deaths, retrieved_at::text
           FROM event_catalogue WHERE event_id = $id ORDER BY provider, provider_id"""
       .query[CatalogueRefRow]

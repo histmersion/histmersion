@@ -17,7 +17,7 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   def write(
       edits: List[SettingEdit],
       expected: Option[FileVersion],
-      literalConsent: Boolean
+      literalConsent: com.histmersion.config.edit.ConfigFileWriter.WriteLiteralConsent
   ): Either[SettingError, WriteOutcome] =
     ConfigFileWriter.lock.synchronized {
       for
@@ -53,8 +53,8 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   private def commit(
       current: ConfigFileState,
       edited: EditedText,
-      intended: Map[String, Option[SettingValue]]
-  ): Either[SettingError, Option[String]] =
+      intended: Map[com.histmersion.config.edit.ConfigFileWriter.CommitIntendedPart1, Option[SettingValue]]
+  ): Either[SettingError, Option[com.histmersion.config.edit.ConfigFileWriter.CommitResultPart2]] =
     file.replace(edited.text, existed = current.text.isDefined) { staged =>
       for
         parsed <- staged.parsed.left.map(e => SettingError.Invalid(e.message))
@@ -65,10 +65,19 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
 
 object ConfigFileWriter:
   /** One write at a time in this process: two at once would each read the same old text. */
+  type WriteLiteralConsent = WriteLiteralConsent.T
+  object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommitResultPart2 = CommitResultPart2.T
+  object CommitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommitIntendedPart1 = CommitIntendedPart1.T
+  object CommitIntendedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewFileHeader = NewFileHeader.T
+  object NewFileHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val lock = new Object
 
   /** The first lines of a config file Settings creates. */
-  val NewFileHeader: String =
+  val NewFileHeader: com.histmersion.config.edit.ConfigFileWriter.NewFileHeader =
     """# Histmersion's settings. Settings in the web UI and `histmersion config set` change this file and keep
       |# everything else in it as it is: comments, order, and anything written by hand.
       |""".stripMargin

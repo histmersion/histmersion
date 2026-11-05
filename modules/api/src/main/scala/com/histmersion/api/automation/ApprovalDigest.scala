@@ -7,6 +7,15 @@ import com.histmersion.api.given
 
 object ApprovalDigest:
 
+  type GroupCheckedArg1 = GroupCheckedArg1.T
+  object GroupCheckedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupCheckedResult = GroupCheckedResult.T
+  object GroupCheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupWaiting = GroupWaiting.T
+  object GroupWaiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object SubjectCount:
@@ -141,7 +150,7 @@ object ApprovalDigest:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def group(open: List[Open], checked: String => Boolean, waiting: Set[String] = Set.empty): List[KindGroup] =
+  def group(open: List[Open], checked: com.histmersion.api.automation.ApprovalDigest.GroupCheckedArg1 => com.histmersion.api.automation.ApprovalDigest.GroupCheckedResult, waiting: Set[com.histmersion.api.automation.ApprovalDigest.GroupWaiting] = Set.empty): List[KindGroup] =
     open
       .groupBy(_.kind)
       .toList
@@ -174,7 +183,7 @@ object ApprovalDigest:
       .sortBy(_.id)
       .take(math.max(1, b.limit.getOrElse(Int.MaxValue)))
 
-  def line(d: Digest): String =
+  def line(d: Digest): com.histmersion.api.automation.ApprovalDigest.LineResult =
     if d.total == 0 && d.heldForPerson == 0 then "approval digest: nothing waits for a person"
     else
       s"approval digest: ${Plural.count(d.total, "approval")} wait for a person" +

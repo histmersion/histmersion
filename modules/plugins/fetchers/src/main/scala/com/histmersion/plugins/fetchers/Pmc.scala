@@ -79,7 +79,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     def fullText: Option[FetchedFile] =
       record.flatMap(_.xml).flatMap(o => dataset(o, "xml")(b => Jats.isJats(String(b, "UTF-8"))))
 
-    private def dataset(o: PmcObject, ext: String)(ok: Array[Byte] => Boolean): Option[FetchedFile] =
+    private def dataset(o: PmcObject, ext: com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetExt)(ok: Array[Byte] => com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetOkResult): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(url, pmcHeaders) match
         case Left(e) =>
@@ -90,8 +90,18 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           ctx.log.warn(s"pmc: $url does not match the MD5 its record gives — skipping"); None
         case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
 
-  private def lookup(ctx: Fetch.Context, doi: String): PmcLookup =
+  object PmcLookup:
+    type DatasetExt = DatasetExt.T
+    object DatasetExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DatasetOkResult = DatasetOkResult.T
+    object DatasetOkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def lookup(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.Pmc.LookupDoi): PmcLookup =
     ctx.memo(s"pmc:lookup:$doi")(PmcLookup(doi, ctx))
 
   val pdfStep: SourceFetcher = ByDoi("pmc", (ctx, d) => lookup(ctx, d).pdf)
   val textStep: SourceFetcher = ByDoi("pmc-text", (ctx, d) => lookup(ctx, d).fullText)
+
+object Pmc:
+  type LookupDoi = LookupDoi.T
+  object LookupDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

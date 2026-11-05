@@ -17,6 +17,13 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleReader:
 
+  type ReadHashBlobs = ReadHashBlobs.T
+  object ReadHashBlobs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256OfResult = Sha256OfResult.T
+  object Sha256OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyServerSchema = VerifyServerSchema.T
+  object VerifyServerSchema extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Loaded(
       manifest: Option[com.histmersion.api.exchange.Bundle.Manifest],
       entities: BundleEntities,
@@ -24,9 +31,12 @@ object BundleReader:
       blobs: Map[Loaded.BlobsKey, Loaded.BlobsValue],
       problems: List[Loaded.Problems]
   ):
-    def ok: Boolean = manifest.isDefined && problems.isEmpty
+    def ok: com.histmersion.util.data.exchange.BundleReader.Loaded.OkResult = manifest.isDefined && problems.isEmpty
 
   object Loaded:
+    type OkResult = OkResult.T
+    object OkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type BlobsKey = BlobsKey.T
     object BlobsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BlobsValue = BlobsValue.T
@@ -34,7 +44,7 @@ object BundleReader:
     type Problems = Problems.T
     object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def read(in: InputStream, hashBlobs: Boolean): Loaded =
+  def read(in: InputStream, hashBlobs: com.histmersion.util.data.exchange.BundleReader.ReadHashBlobs): Loaded =
     val tar = BundleTar.Reader(in)
     val problems = List.newBuilder[String]
     val payloads = scala.collection.mutable.LinkedHashMap.empty[String, Array[Byte]]
@@ -96,7 +106,7 @@ object BundleReader:
       .map(sha => s"blob $sha is in the bundle but nothing references it")
     Loaded(manifest, entities, blobs.toMap, problems.result() ++ fileProblems ++ lineProblems ++ missing ++ unused)
 
-  def sha256Of(in: InputStream): String =
+  def sha256Of(in: InputStream): com.histmersion.util.data.exchange.BundleReader.Sha256OfResult =
     val md = MessageDigest.getInstance("SHA-256")
     val din = DigestInputStream(in, md)
     val buf = new Array[Byte](1 << 16)
@@ -106,7 +116,7 @@ object BundleReader:
   /** Verification of a whole bundle: format and schema against this server, checksums, revs, blobs, and — for a full
     * bundle (no `since`) — that every reference resolves inside it.
     */
-  def verify(in: InputStream, serverSchema: Option[String]): com.histmersion.api.exchange.Bundle.VerifyResult =
+  def verify(in: InputStream, serverSchema: Option[com.histmersion.util.data.exchange.BundleReader.VerifyServerSchema]): com.histmersion.api.exchange.Bundle.VerifyResult =
     val l = read(in, hashBlobs = true)
     val compat = l.manifest.toList.flatMap(BundleFormat.compatible(_, serverSchema))
     val dangling =

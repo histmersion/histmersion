@@ -4,7 +4,12 @@ import com.histmersion.api.checks.Lint.*
 /** The citations' lint rules: edges to no stored source, and short citekeys an edge never resolved. */
 object CitationLint:
 
-  def danglingEdges(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: Int): List[LintItem] =
+  type DanglingEdgesMaxSuggestions = DanglingEdgesMaxSuggestions.T
+  object DanglingEdgesMaxSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnresolvedShortCitekeysMaxSuggestions = UnresolvedShortCitekeysMaxSuggestions.T
+  object UnresolvedShortCitekeysMaxSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def danglingEdges(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.DanglingEdgesMaxSuggestions): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
       .sortBy(e => (if looksLikeCitekey(e.dst.value.toString) then 0 else 1, e.src.value.toString, e.kind, e.dst.value.toString))
@@ -17,7 +22,7 @@ object CitationLint:
         LintItem(e.src.value.toString, s"${e.kind} → ${e.dst.value.toString} ($what)$tail")
       }
 
-  def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: Int): List[LintItem] =
+  def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.UnresolvedShortCitekeysMaxSuggestions): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
       .flatMap { e =>

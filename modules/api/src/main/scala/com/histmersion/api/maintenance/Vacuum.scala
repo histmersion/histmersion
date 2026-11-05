@@ -11,14 +11,43 @@ import io.circe.Codec
 import sttp.tapir.Schema
 object Vacuum:
 
+  type InvalidMsg = InvalidMsg.T
+  object InvalidMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanDefaults = PlanDefaults.T
+  object PlanDefaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanExisting = PlanExisting.T
+  object PlanExisting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatementResult = StatementResult.T
+  object StatementResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatementTable = StatementTable.T
+  object StatementTable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatementAnalyze = StatementAnalyze.T
+  object StatementAnalyze extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineResult = TableLineResult.T
+  object TableLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineTable = TableLineTable.T
+  object TableLineTable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineDeadBefore = TableLineDeadBefore.T
+  object TableLineDeadBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineDeadAfter = TableLineDeadAfter.T
+  object TableLineDeadAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineBytesBefore = TableLineBytesBefore.T
+  object TableLineBytesBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineBytesAfter = TableLineBytesAfter.T
+  object TableLineBytesAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableLineMs = TableLineMs.T
+  object TableLineMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val JobKind = com.histmersion.api.maintenance.MaintenanceJobKinds.Vacuum.kind.value
 
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
-  private def invalid(msg: String) = Api.Error(msg, Some(Write.CodeInvalid))
+  private def invalid(msg: com.histmersion.api.maintenance.Vacuum.InvalidMsg) = Api.Error(msg, Some(Write.CodeInvalid))
 
-  def plan(in: Vacuum.Request, defaults: List[String], existing: Set[String]): Either[Api.Error, VacuumPlan] =
+  def plan(in: Vacuum.Request, defaults: List[com.histmersion.api.maintenance.Vacuum.PlanDefaults], existing: Set[com.histmersion.api.maintenance.Vacuum.PlanExisting]): Either[Api.Error, VacuumPlan] =
     val asked = in.tables.flatMap(_.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
     val tables = (if asked.isEmpty then defaults.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
                   else asked).distinct
@@ -29,21 +58,21 @@ object Vacuum:
     else if absent.nonEmpty then Left(invalid(s"no such table: ${absent.mkString(", ")}"))
     else Right(VacuumPlan(in.analyze, tables))
 
-  def statement(table: String, analyze: Boolean): String =
+  def statement(table: com.histmersion.api.maintenance.Vacuum.StatementTable, analyze: com.histmersion.api.maintenance.Vacuum.StatementAnalyze): com.histmersion.api.maintenance.Vacuum.StatementResult =
     val q = "\"" + table.replace("\"", "\"\"") + "\""
     if analyze then s"VACUUM (ANALYZE) $q" else s"VACUUM $q"
 
-  def describe(p: VacuumPlan): String =
+  def describe(p: VacuumPlan): com.histmersion.api.maintenance.Vacuum.DescribeResult =
     s"${if p.analyze then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}"
 
   def tableLine(
-      table: String,
-      deadBefore: Long,
-      deadAfter: Long,
-      bytesBefore: Long,
-      bytesAfter: Long,
-      ms: Long
-  ): String =
+      table: com.histmersion.api.maintenance.Vacuum.TableLineTable,
+      deadBefore: com.histmersion.api.maintenance.Vacuum.TableLineDeadBefore,
+      deadAfter: com.histmersion.api.maintenance.Vacuum.TableLineDeadAfter,
+      bytesBefore: com.histmersion.api.maintenance.Vacuum.TableLineBytesBefore,
+      bytesAfter: com.histmersion.api.maintenance.Vacuum.TableLineBytesAfter,
+      ms: com.histmersion.api.maintenance.Vacuum.TableLineMs
+  ): com.histmersion.api.maintenance.Vacuum.TableLineResult =
     s"$table: $deadBefore → $deadAfter dead rows, ${Backup.humanBytes(bytesBefore)} → ${Backup.humanBytes(bytesAfter)}" +
       String.format(java.util.Locale.ROOT, " (%.1f s)", ms / 1000.0)
 

@@ -19,6 +19,75 @@ import java.util.Locale
   */
 object Europeana:
 
+  type PhraseS = PhraseS.T
+  object PhraseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyOfField = AnyOfField.T
+  object AnyOfField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyOfVs = AnyOfVs.T
+  object AnyOfVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryResult = QueryResult.T
+  object QueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryName = QueryName.T
+  object QueryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlResult = SearchUrlResult.T
+  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlApi = SearchUrlApi.T
+  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlName = SearchUrlName.T
+  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlRows = SearchUrlRows.T
+  object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LettersS = LettersS.T
+  object LettersS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExcludedByResult = ExcludedByResult.T
+  object ExcludedByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExcludedByProviders = ExcludedByProviders.T
+  object ExcludedByProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExcludedByDataProviders = ExcludedByDataProviders.T
+  object ExcludedByDataProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExcludedTypeResult = ExcludedTypeResult.T
+  object ExcludedTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExcludedTypeTypes = ExcludedTypeTypes.T
+  object ExcludedTypeTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordUrlResult = RecordUrlResult.T
+  object RecordUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordUrlApi = RecordUrlApi.T
+  object RecordUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordUrlId = RecordUrlId.T
+  object RecordUrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbnailUrlResult = ThumbnailUrlResult.T
+  object ThumbnailUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbnailUrlApi = ThumbnailUrlApi.T
+  object ThumbnailUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbnailUrlMedia = ThumbnailUrlMedia.T
+  object ThumbnailUrlMedia extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbnailUrlWidth = ThumbnailUrlWidth.T
+  object ThumbnailUrlWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviewSourceResult = PreviewSourceResult.T
+  object PreviewSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviewSourcePreview = PreviewSourcePreview.T
+  object PreviewSourcePreview extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShortNameResult = ShortNameResult.T
+  object ShortNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuesResult = ValuesResult.T
+  object ValuesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuesField = ValuesField.T
+  object ValuesField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsUriS = IsUriS.T
+  object IsUriS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart1 = RecordsResultPart1.T
+  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
+  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsApi = RecordsApi.T
+  object RecordsApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordApi = RecordApi.T
+  object RecordApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemResultPart1 = ItemResultPart1.T
+  object ItemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val KeyHeader = "X-Api-Key"
   val Spatial = "dcterms:spatial"
   val Place = "edm:Place"
@@ -39,25 +108,25 @@ object Europeana:
 
     val none: Exclusions = Exclusions(Nil, Nil, Nil)
 
-  private def phrase(s: String) = "\"" + s.replace("\"", " ").trim + "\""
-  private def anyOf(field: String, vs: List[String]) =
+  private def phrase(s: com.histmersion.plugins.media.Europeana.PhraseS) = "\"" + s.replace("\"", " ").trim + "\""
+  private def anyOf(field: com.histmersion.plugins.media.Europeana.AnyOfField, vs: List[com.histmersion.plugins.media.Europeana.AnyOfVs]) =
     val ps = vs.map(_.trim).filter(_.nonEmpty)
     if ps.isEmpty then "" else ps.map(phrase).mkString(s" NOT $field:(", " OR ", ")")
 
   /** Pure: the query — the place as Europeana's aggregated `where` field, without the excluded aggregators (`PROVIDER`)
     * and types (`proxy_dc_type`).
     */
-  def query(name: String, ex: Exclusions = Exclusions.none): String =
+  def query(name: com.histmersion.plugins.media.Europeana.QueryName, ex: Exclusions = Exclusions.none): com.histmersion.plugins.media.Europeana.QueryResult =
     s"where:(${phrase(name)})" + anyOf("PROVIDER", ex.providers) + anyOf("proxy_dc_type", ex.types)
 
-  def searchUrl(api: String, name: String, rows: Int, ex: Exclusions = Exclusions.none): String =
+  def searchUrl(api: com.histmersion.plugins.media.Europeana.SearchUrlApi, name: com.histmersion.plugins.media.Europeana.SearchUrlName, rows: com.histmersion.plugins.media.Europeana.SearchUrlRows, ex: Exclusions = Exclusions.none): com.histmersion.plugins.media.Europeana.SearchUrlResult =
     s"${api.stripSuffix("/")}/record/v2/search.json?query=${query(name, ex).enc}&reusability=open&media=true" +
       s"&thumbnail=true&qf=${"TYPE:IMAGE".enc}&profile=rich&rows=${rows.max(1).min(100)}"
 
-  private def letters(s: String) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
+  private def letters(s: com.histmersion.plugins.media.Europeana.LettersS) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
 
   /** Pure: why a record's aggregator or institution excludes it, or `None`. */
-  def excludedBy(providers: List[String], dataProviders: List[String], ex: Exclusions): Option[String] =
+  def excludedBy(providers: List[com.histmersion.plugins.media.Europeana.ExcludedByProviders], dataProviders: List[com.histmersion.plugins.media.Europeana.ExcludedByDataProviders], ex: Exclusions): Option[com.histmersion.plugins.media.Europeana.ExcludedByResult] =
     providers
       .find(p => ex.providers.exists(_.trim.equalsIgnoreCase(p)))
       .map(p => s"an excluded provider ($p)")
@@ -71,17 +140,17 @@ object Europeana:
       )
 
   /** Pure: the first of a record's `dc:type` values that is excluded, or `None`. */
-  def excludedType(types: List[String], ex: Exclusions): Option[String] =
+  def excludedType(types: List[com.histmersion.plugins.media.Europeana.ExcludedTypeTypes], ex: Exclusions): Option[com.histmersion.plugins.media.Europeana.ExcludedTypeResult] =
     val banned = ex.types.map(letters).filter(_.nonEmpty).toSet
     types.find(t => banned(letters(t)))
 
   /** Pure: the Record API URL of a Europeana id (`/2058611/_kimbl_3_1`), each segment encoded. */
-  def recordUrl(api: String, id: String): String =
+  def recordUrl(api: com.histmersion.plugins.media.Europeana.RecordUrlApi, id: com.histmersion.plugins.media.Europeana.RecordUrlId): com.histmersion.plugins.media.Europeana.RecordUrlResult =
     val path = id.split("/").toList.filter(_.nonEmpty).map(s => s.enc.replace("+", "%20")).mkString("/")
     s"${api.stripSuffix("/")}/record/v2/$path.json"
 
   /** Pure: the Thumbnail API v3 URL of a media file at `width` (200 or 400). */
-  def thumbnailUrl(api: String, media: String, width: Int): String =
+  def thumbnailUrl(api: com.histmersion.plugins.media.Europeana.ThumbnailUrlApi, media: com.histmersion.plugins.media.Europeana.ThumbnailUrlMedia, width: com.histmersion.plugins.media.Europeana.ThumbnailUrlWidth): com.histmersion.plugins.media.Europeana.ThumbnailUrlResult =
     val md5 =
       java.security.MessageDigest.getInstance("MD5").digest(media.getBytes(UTF_8)).map(b => f"${b & 0xff}%02x").mkString
     s"${api.stripSuffix("/")}/thumbnail/v3/$width/$md5.jpg"
@@ -89,7 +158,7 @@ object Europeana:
   /** Pure: the media URL a search's `edmPreview` (a Thumbnail API v2 URL) was made from — its `uri` parameter — or
     * `None` when it is not one.
     */
-  def previewSource(preview: String): Option[String] =
+  def previewSource(preview: com.histmersion.plugins.media.Europeana.PreviewSourcePreview): Option[com.histmersion.plugins.media.Europeana.PreviewSourceResult] =
     scala.util
       .Try(java.net.URI.create(preview.trim))
       .toOption
@@ -103,7 +172,7 @@ object Europeana:
       .filter(_.nonEmpty)
 
   /** Pure: a licence's short name for the credit line (`CC-BY-SA-4.0` → `CC BY-SA 4.0`). */
-  def shortName(l: Licence.Read): String = l.family match
+  def shortName(l: Licence.Read): com.histmersion.plugins.media.Europeana.ShortNameResult = l.family match
     case Licence.Read.Cc0          => "CC0"
     case Licence.Read.PublicDomain => "Public Domain Mark"
     case _                         =>
@@ -117,7 +186,7 @@ object Europeana:
   /** Pure: the values of a field that may be a string, an array of strings, a LangMap (`{"en": [..]}`) or an array of
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
-  def values(c: ACursor, field: String): List[String] =
+  def values(c: ACursor, field: com.histmersion.plugins.media.Europeana.ValuesField): List[com.histmersion.plugins.media.Europeana.ValuesResult] =
     def ofJson(j: Json): List[String] =
       j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
         val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
@@ -125,15 +194,15 @@ object Europeana:
       }
     c.downField(field).focus.toList.flatMap(ofJson).map(_.trim).filter(_.nonEmpty).distinct
 
-  private def isUri(s: String) = s.startsWith("http://") || s.startsWith("https://")
+  private def isUri(s: com.histmersion.plugins.media.Europeana.IsUriS) = s.startsWith("http://") || s.startsWith("https://")
 
   /** Pure: the items of a search answer; `success: false` is a `Left` with Europeana's message. */
   def records(
       json: Json,
-      api: String,
+      api: com.histmersion.plugins.media.Europeana.RecordsApi,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[String, List[Either[String, MediaItem]]] =
+  ): Either[com.histmersion.plugins.media.Europeana.RecordsResultPart1, List[Either[com.histmersion.plugins.media.Europeana.RecordsResultPart2Part1, MediaItem]]] =
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
@@ -149,10 +218,10 @@ object Europeana:
     */
   def record(
       json: Json,
-      api: String,
+      api: com.histmersion.plugins.media.Europeana.RecordApi,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[String, MediaItem] =
+  ): Either[com.histmersion.plugins.media.Europeana.RecordResultPart1, MediaItem] =
     val c = json.hcursor
     c.str("id").filter(_.startsWith("/")).toRight("no Europeana id").map { id =>
       val title = values(c, "title").headOption.orElse(values(c, "dcTitleLangAware").headOption).getOrElse(id)
@@ -204,7 +273,7 @@ object Europeana:
       rec: MediaItem,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[String, MediaItem] =
+  ): Either[com.histmersion.plugins.media.Europeana.ItemResultPart1, MediaItem] =
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": "))

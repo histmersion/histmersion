@@ -12,7 +12,12 @@ import scala.scalajs.js
 object Diagnostics:
 
   /** Every cache and its figures, by name. */
-  def caches: List[(String, BoundedCache.Stats)] =
+  type CachesResultPart1 = CachesResultPart1.T
+  object CachesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToJsCsPart1 = ToJsCsPart1.T
+  object ToJsCsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def caches: List[(com.histmersion.web.Diagnostics.CachesResultPart1, BoundedCache.Stats)] =
     List(
       "places.geo" -> MapView.geoCacheStats,
       "ident" -> IdentLink.cacheStats,
@@ -21,7 +26,7 @@ object Diagnostics:
       List("findings.kept" -> BoundedCache.Stats(App.keptFindings, 0, 0L, 0L))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
-  def toJs(cs: List[(String, BoundedCache.Stats)]): js.Object =
+  def toJs(cs: List[(com.histmersion.web.Diagnostics.ToJsCsPart1, BoundedCache.Stats)]): js.Object =
     val o = js.Dictionary.empty[js.Any]
     cs.foreach { (n, s) =>
       o(n) = js.Dynamic.literal(

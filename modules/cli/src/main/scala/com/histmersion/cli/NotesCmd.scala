@@ -12,6 +12,11 @@ import com.histmersion.util.console.Console
   */
 object NotesCmd:
 
+  type TextInline = TextInline.T
+  object TextInline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextFile = TextFile.T
+  object TextFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def list (using console: Console) = Opts.subcommand("list", "Your notes, last changed first") {
     (
       Opts
@@ -35,7 +40,7 @@ object NotesCmd:
     }
   }
 
-  private def text(inline: Option[String], file: Option[String]): Either[Cli.Error, Note.Text] =
+  private def text(inline: Option[com.histmersion.cli.NotesCmd.TextInline], file: Option[com.histmersion.cli.NotesCmd.TextFile]): Either[Cli.Error, Note.Text] =
     (inline, file) match
       case (Some(t), None) => Right(Note.Text(t))
       case (None, Some(f)) =>

@@ -2,9 +2,16 @@ package com.histmersion.api.library
 import com.histmersion.api.given
 object UpstreamQuotaMarkdown:
 
-  private def name(upstream: String): String = if upstream == "core" then "CORE" else upstream
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameUpstream = NameUpstream.T
+  object NameUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def line(q: UpstreamQuota): String =
+  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): com.histmersion.api.library.UpstreamQuotaMarkdown.NameResult = if upstream == "core" then "CORE" else upstream
+
+  def line(q: UpstreamQuota): com.histmersion.api.library.UpstreamQuotaMarkdown.LineResult =
     val spent = q.lookupTokens + q.searchTokens
     val window = q.rateRemaining.fold("")(r => s" · CORE's window $r of ${q.rateLimit.fold("?")(_.toString)} left")
     val block =

@@ -5,6 +5,49 @@ import com.histmersion.api.given
 
 object GoalsExport:
 
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemStatusPart1 = RenderItemStatusPart1.T
+  object RenderItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemStatusPart2 = RenderItemStatusPart2.T
+  object RenderItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResultPart2 = TreeResultPart2.T
+  object TreeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockResult = BlockResult.T
+  object BlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockDepth = BlockDepth.T
+  object BlockDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockKnown = BlockKnown.T
+  object BlockKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockItemStatusPart1 = BlockItemStatusPart1.T
+  object BlockItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockItemStatusPart2 = BlockItemStatusPart2.T
+  object BlockItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsResult = LinkSectionsResult.T
+  object LinkSectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsItemStatusPart1 = LinkSectionsItemStatusPart1.T
+  object LinkSectionsItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsItemStatusPart2 = LinkSectionsItemStatusPart2.T
+  object LinkSectionsItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TitledResult = TitledResult.T
+  object TitledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotedResult = NotedResult.T
+  object NotedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueLineResult = QueueLineResult.T
+  object QueueLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueLineItemStatusPart1 = QueueLineItemStatusPart1.T
+  object QueueLineItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueLineItemStatusPart2 = QueueLineItemStatusPart2.T
+  object QueueLineItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleLineResult = ScheduleLineResult.T
+  object ScheduleLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneLineResult = OneLineResult.T
+  object OneLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneLineS = OneLineS.T
+  object OneLineS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val File = "GOALS.md"
 
   val Header = "# 🎯 GOALS — research goals"
@@ -14,7 +57,7 @@ object GoalsExport:
       "Do not edit: the next export overwrites this file. The source of truth is Histmersion " +
       "(`histmersion goals …`)._"
 
-  def render(views: List[GoalView], itemStatus: Map[Int, String]): String =
+  def render(views: List[GoalView], itemStatus: Map[com.histmersion.api.automation.GoalsExport.RenderItemStatusPart1, com.histmersion.api.automation.GoalsExport.RenderItemStatusPart2]): com.histmersion.api.automation.GoalsExport.RenderResult =
     val goals = views.map(_.goal)
     val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
@@ -22,7 +65,7 @@ object GoalsExport:
       if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
     (head ++ body).mkString("\n\n") + "\n"
 
-  private[api] def summary(goals: List[Goal]): String =
+  private[api] def summary(goals: List[Goal]): com.histmersion.api.automation.GoalsExport.SummaryResult =
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
@@ -32,7 +75,7 @@ object GoalsExport:
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
     s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
 
-  private[api] def tree(views: List[GoalView]): List[(GoalView, Int)] =
+  private[api] def tree(views: List[GoalView]): List[(GoalView, com.histmersion.api.automation.GoalsExport.TreeResultPart2)] =
     val bySlug = views.map(v => v.goal.slug -> v).toMap
     val children = views.groupBy(_.goal.parentSlug).view.mapValues(_.sortBy(_.goal.slug)).toMap
     val roots = views.filter(v => v.goal.parentSlug.forall(p => !bySlug.contains(p))).sortBy(_.goal.slug)
@@ -46,7 +89,7 @@ object GoalsExport:
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
 
-  private def block(v: GoalView, depth: Int, known: Set[String], itemStatus: Map[Int, String]): String =
+  private def block(v: GoalView, depth: com.histmersion.api.automation.GoalsExport.BlockDepth, known: Set[com.histmersion.api.automation.GoalsExport.BlockKnown], itemStatus: Map[com.histmersion.api.automation.GoalsExport.BlockItemStatusPart1, com.histmersion.api.automation.GoalsExport.BlockItemStatusPart2]): com.histmersion.api.automation.GoalsExport.BlockResult =
     val g = v.goal
     val heading = s"${"#" * math.min(depth + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
@@ -67,7 +110,7 @@ object GoalsExport:
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
-  private def linkSections(links: List[GoalLink], itemStatus: Map[Int, String]): List[String] =
+  private def linkSections(links: List[GoalLink], itemStatus: Map[com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart1, com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart2]): List[com.histmersion.api.automation.GoalsExport.LinkSectionsResult] =
     def section(
         kind: com.histmersion.api.automation.Goal.LinkKind,
         label: String,
@@ -106,19 +149,19 @@ object GoalsExport:
       )
     ).flatten
 
-  private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
-  private def noted(l: GoalLink): String = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
+  private def titled(l: GoalLink): com.histmersion.api.automation.GoalsExport.TitledResult = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
+  private def noted(l: GoalLink): com.histmersion.api.automation.GoalsExport.NotedResult = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  private def queueLine(l: GoalLink, itemStatus: Map[Int, String]): String =
+  private def queueLine(l: GoalLink, itemStatus: Map[com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1, com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2]): com.histmersion.api.automation.GoalsExport.QueueLineResult =
     l.ref.toIntOption.flatMap(itemStatus.get) match
       case Some(st) =>
         val box = if st == Queue.Done then "[x]" else "[ ]"
         s"$box `#${l.ref}` ${l.title.map(oneLine).getOrElse("")}${noted(l)}"
       case None => s"`#${l.ref}` (not found)${noted(l)}"
 
-  private def scheduleLine(s: GoalSchedule): String =
+  private def scheduleLine(s: GoalSchedule): com.histmersion.api.automation.GoalsExport.ScheduleLineResult =
     val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     s"${s.kind.wire} · `${s.cron}` · $state$budget"
 
-  private def oneLine(s: String): String = s.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" ")
+  private def oneLine(s: com.histmersion.api.automation.GoalsExport.OneLineS): com.histmersion.api.automation.GoalsExport.OneLineResult = s.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" ")

@@ -17,7 +17,7 @@ final class PlaceCardView(
     counts: String => Place.Counts,
     pictures: String => List[MediaThumb]
 ):
-  def apply(id: String, asOf: Option[Long], withCounts: Boolean): Either[Api.Error, PlaceDetail] =
+  def apply(id: com.histmersion.server.views.PlaceCardView.ApplyId, asOf: Option[com.histmersion.server.views.PlaceCardView.ApplyAsOf], withCounts: com.histmersion.server.views.PlaceCardView.ApplyWithCounts): Either[Api.Error, PlaceDetail] =
     place(id, asOf).map(d =>
       if withCounts then
         d.modify(_.counts)
@@ -27,3 +27,11 @@ final class PlaceCardView(
           .transform
       else d.into[PlaceDetail].withFieldConst(_.media, Nil).transform
     )
+
+object PlaceCardView:
+  type ApplyId = ApplyId.T
+  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAsOf = ApplyAsOf.T
+  object ApplyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyWithCounts = ApplyWithCounts.T
+  object ApplyWithCounts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

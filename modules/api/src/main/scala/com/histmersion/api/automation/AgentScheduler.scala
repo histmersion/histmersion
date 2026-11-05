@@ -6,6 +6,11 @@ import com.histmersion.api.given
 
 object AgentScheduler:
 
+  type WaitCodesPart1 = WaitCodesPart1.T
+  object WaitCodesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitCodesPart2 = WaitCodesPart2.T
+  object WaitCodesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = "") derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object StrategyLine:
@@ -223,7 +228,7 @@ object AgentScheduler:
     val Paused = "paused"
 
   /** What a scheduler's wait code means, as the managers' view says it. */
-  val waitCodes: Map[String, String] = Map(
+  val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.WaitCodesPart1, com.histmersion.api.automation.AgentScheduler.WaitCodesPart2] = Map(
     "capacity" -> "No free place",
     "pool" -> "Plan is full",
     "manager-cap" -> "Manager is full",

@@ -16,5 +16,10 @@ final case class SearchResult(
   def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(hits.size))
 object SearchResult:
 
-  def of(total: Int, hits: List[Hit], offset: Int): SearchResult =
+  type OfTotal = OfTotal.T
+  object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(total: com.histmersion.api.library.SearchResult.OfTotal, hits: List[Hit], offset: com.histmersion.api.library.SearchResult.OfOffset): SearchResult =
     SearchResult(com.histmersion.api.RowCount(total), hits, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(hits.size)).next)

@@ -7,6 +7,10 @@ package com.histmersion.plugins.fetchers
 import com.histmersion.plugin.Plugin
 final class PmcPlugin extends FetcherPlugin("pmc"):
   type Config = HostAcquire
-  def register(c: HostAcquire, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: HostAcquire, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.PmcPlugin.RegisterResultPart1, Unit] =
     val pmc = Pmc(c.acquire, () => ctx.http)
     ctx.sourceFetchers.add("pmc", pmc.pdfStep).flatMap(_ => ctx.sourceFetchers.add("pmc-text", pmc.textStep))
+
+object PmcPlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

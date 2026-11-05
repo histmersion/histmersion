@@ -7,9 +7,18 @@ import sttp.model.Uri
   */
 final case class BaseUrl(uri: Uri):
   /** The endpoint under this URL: `v1/messages`, `chat/completions`. */
-  def endpoint(segments: String*): String = uri.addPath(segments.toList).toString
+  def endpoint(segments: String*): com.histmersion.plugins.ai.BaseUrl.EndpointResult = uri.addPath(segments.toList).toString
 
 object BaseUrl:
   /** `text` as a base URL, or why not, naming the `setting` it came from. */
-  def parse(text: String, setting: String): Either[String, BaseUrl] =
+  type EndpointResult = EndpointResult.T
+  object EndpointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSetting = ParseSetting.T
+  object ParseSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(text: com.histmersion.plugins.ai.BaseUrl.ParseText, setting: com.histmersion.plugins.ai.BaseUrl.ParseSetting): Either[com.histmersion.plugins.ai.BaseUrl.ParseResultPart1, BaseUrl] =
     Uri.parse(text).left.map(e => s"$setting: $e").map(BaseUrl(_))

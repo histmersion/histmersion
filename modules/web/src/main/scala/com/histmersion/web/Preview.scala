@@ -29,6 +29,163 @@ import com.histmersion.api.views.{EventDetail, PlaceDetail}
 object Preview:
 
   /** What an element asks to preview. */
+  type TargetOfCk = TargetOfCk.T
+  object TargetOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetOfSlug = TargetOfSlug.T
+  object TargetOfSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralResult = PluralResult.T
+  object PluralResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralN = PluralN.T
+  object PluralN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralOne = PluralOne.T
+  object PluralOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatasetOfResult = DatasetOfResult.T
+  object DatasetOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventFactsResult = EventFactsResult.T
+  object EventFactsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventFactsYears = EventFactsYears.T
+  object EventFactsYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditLineResultPart1 = CreditLineResultPart1.T
+  object CreditLineResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditLineResultPart2Part1 = CreditLineResultPart2Part1.T
+  object CreditLineResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditLineResultPart2Part2 = CreditLineResultPart2Part2.T
+  object CreditLineResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CacheStatsResultPart1 = CacheStatsResultPart1.T
+  object CacheStatsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CachedCachePart1 = CachedCachePart1.T
+  object CachedCachePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CachedKey = CachedKey.T
+  object CachedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForgetCk = ForgetCk.T
+  object ForgetCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAsOfResult = PlaceAsOfResult.T
+  object PlaceAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetOfPlace = TargetOfPlace.T
+  object TargetOfPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetOfEvent = TargetOfEvent.T
+  object TargetOfEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinUnderKeyboard = PinUnderKeyboard.T
+  object PinUnderKeyboard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowingAtResult = ShowingAtResult.T
+  object ShowingAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowAtX = ShowAtX.T
+  object ShowAtX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowAtY = ShowAtY.T
+  object ShowAtY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoveToX = MoveToX.T
+  object MoveToX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoveToY = MoveToY.T
+  object MoveToY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastPointPart1 = LastPointPart1.T
+  object LastPointPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastPointPart2 = LastPointPart2.T
+  object LastPointPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NaturalSizeResultPart1 = NaturalSizeResultPart1.T
+  object NaturalSizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NaturalSizeResultPart2 = NaturalSizeResultPart2.T
+  object NaturalSizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyNatural = ApplyNatural.T
+  object ApplyNatural extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitResultPart1 = VerticalFitResultPart1.T
+  object VerticalFitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitResultPart2 = VerticalFitResultPart2.T
+  object VerticalFitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitTop = VerticalFitTop.T
+  object VerticalFitTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitBottom = VerticalFitBottom.T
+  object VerticalFitBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitGap = VerticalFitGap.T
+  object VerticalFitGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitH = VerticalFitH.T
+  object VerticalFitH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerticalFitVh = VerticalFitVh.T
+  object VerticalFitVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitX = PointFitX.T
+  object PointFitX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitY = PointFitY.T
+  object PointFitY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitW = PointFitW.T
+  object PointFitW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitH = PointFitH.T
+  object PointFitH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitVw = PointFitVw.T
+  object PointFitVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitVh = PointFitVh.T
+  object PointFitVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitLeft = UnderFitLeft.T
+  object UnderFitLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitTop = UnderFitTop.T
+  object UnderFitTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitBottom = UnderFitBottom.T
+  object UnderFitBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitWidth = UnderFitWidth.T
+  object UnderFitWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitW = UnderFitW.T
+  object UnderFitW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitH = UnderFitH.T
+  object UnderFitH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitVw = UnderFitVw.T
+  object UnderFitVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitVh = UnderFitVh.T
+  object UnderFitVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementResultPart1 = PointPlacementResultPart1.T
+  object PointPlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementResultPart2 = PointPlacementResultPart2.T
+  object PointPlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementX = PointPlacementX.T
+  object PointPlacementX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementY = PointPlacementY.T
+  object PointPlacementY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementW = PointPlacementW.T
+  object PointPlacementW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementH = PointPlacementH.T
+  object PointPlacementH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementVw = PointPlacementVw.T
+  object PointPlacementVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementVh = PointPlacementVh.T
+  object PointPlacementVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementResultPart1 = UnderPlacementResultPart1.T
+  object UnderPlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementResultPart2 = UnderPlacementResultPart2.T
+  object UnderPlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementLeft = UnderPlacementLeft.T
+  object UnderPlacementLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementTop = UnderPlacementTop.T
+  object UnderPlacementTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementBottom = UnderPlacementBottom.T
+  object UnderPlacementBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementWidth = UnderPlacementWidth.T
+  object UnderPlacementWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementW = UnderPlacementW.T
+  object UnderPlacementW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementH = UnderPlacementH.T
+  object UnderPlacementH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementVw = UnderPlacementVw.T
+  object UnderPlacementVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementVh = UnderPlacementVh.T
+  object UnderPlacementVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsPinnedResult = IsPinnedResult.T
+  object IsPinnedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameCardResult = SameCardResult.T
+  object SameCardResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinKeyboard = PinKeyboard.T
+  object PinKeyboard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnpinRestoreFocus = UnpinRestoreFocus.T
+  object UnpinRestoreFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandViewCmd = CommandViewCmd.T
+  object CommandViewCmd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverButtonQ = DiscoverButtonQ.T
+  object DiscoverButtonQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullAttrsResultPart1 = FullAttrsResultPart1.T
+  object FullAttrsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullAttrsResultPart2 = FullAttrsResultPart2.T
+  object FullAttrsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeOfResultPart1 = SizeOfResultPart1.T
+  object SizeOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeOfResultPart2 = SizeOfResultPart2.T
+  object SizeOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Target:
     case Source(citekey: String)
     case Article(slug: String)
@@ -40,7 +197,7 @@ object Preview:
     case Event(id: String)
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
-  def targetOf(ck: Option[String], slug: Option[String]): Option[Target] =
+  def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug]): Option[Target] =
     ck.map(_.trim)
       .filter(_.nonEmpty)
       .map(Target.Source(_))
@@ -175,12 +332,12 @@ object Preview:
       icon = Some(CardIcons.Article)
     )
 
-  private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
+  private def plural(n: com.histmersion.web.Preview.PluralN, one: com.histmersion.web.Preview.PluralOne): com.histmersion.web.Preview.PluralResult = s"$n $one${if n == 1 then "" else "s"}"
 
   /** Where a place comes from, in words: the external source that brought it in, else the seed's own source line
     * ("Pleiades (pleiades.stoa.org), CC-BY").
     */
-  private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[String] =
+  private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[com.histmersion.web.Preview.DatasetOfResult] =
     p.importSource
       .map { k =>
         if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}"
@@ -268,7 +425,7 @@ object Preview:
     * imprecise one is not on the map at a year), and the fields corrected by hand (kept over the catalogue's on a
     * re-import).
     */
-  def eventFacts(d: EventDetail, years: String): List[String] =
+  def eventFacts(d: EventDetail, years: com.histmersion.web.Preview.EventFactsYears): List[com.histmersion.web.Preview.EventFactsResult] =
     val e = d.event
     Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
       EventPrecision
@@ -343,7 +500,7 @@ object Preview:
   /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a page), as the
     * licence asks for it to be shown.
     */
-  def creditLine(t: MediaThumb): (String, Option[(String, String)]) =
+  def creditLine(t: MediaThumb): (com.histmersion.web.Preview.CreditLineResultPart1, Option[(com.histmersion.web.Preview.CreditLineResultPart2Part1, com.histmersion.web.Preview.CreditLineResultPart2Part2)]) =
     val lic = t.license.map(l => l -> t.licenseUrl.orElse(LicenseName.url(l)).orElse(t.sourceUrl).getOrElse(""))
     (t.credit, lic.map((l, u) => (l, u)))
 
@@ -356,7 +513,7 @@ object Preview:
   private val eventCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
 
   /** The card caches' figures, for [[Diagnostics]]. */
-  def cacheStats: List[(String, BoundedCache.Stats)] =
+  def cacheStats: List[(com.histmersion.web.Preview.CacheStatsResultPart1, BoundedCache.Stats)] =
     List(
       "cards.source" -> sourceCache,
       "cards.article" -> articleCache,
@@ -365,7 +522,7 @@ object Preview:
     ).map((n, c) => n -> BoundedCache.stats(c))
 
   /** A failed fetch is forgotten, so the next hover tries again. */
-  private def cached(cache: BoundedCache[String, Future[Card]], key: String)(fetch: => Future[Card]): Future[Card] =
+  private def cached(cache: BoundedCache[com.histmersion.web.Preview.CachedCachePart1, Future[Card]], key: com.histmersion.web.Preview.CachedKey)(fetch: => Future[Card]): Future[Card] =
     cache.getOrElseUpdate(
       key, {
         val f = fetch
@@ -377,7 +534,7 @@ object Preview:
     )
 
   /** Drop a source's cached card — it was just edited, and the next hover must show the edit. */
-  def forget(ck: String): Unit = { val _ = sourceCache.remove(ck) }
+  def forget(ck: com.histmersion.web.Preview.ForgetCk): Unit = { val _ = sourceCache.remove(ck) }
 
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck)      => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(card))
@@ -392,18 +549,18 @@ object Preview:
 
   /** The year a place chip's card reads the gazetteer at — the map's; set by whoever owns the map. */
   // `var`: the app's map sets it once it exists; a page without a map reads places as of now
-  var placeAsOf: () => Option[Long] = () => None
+  var placeAsOf: () => Option[com.histmersion.web.Preview.PlaceAsOfResult] = () => None
 
   /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
-  def targetOf(ck: Option[String], slug: Option[String], place: Option[String], asOf: => Option[Long]): Option[Target] =
+  def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug], place: Option[com.histmersion.web.Preview.TargetOfPlace], asOf: => Option[Long]): Option[Target] =
     targetOf(ck, slug).orElse(place.map(_.trim).filter(_.nonEmpty).map(Target.Place(_, asOf)))
 
   /** Pure: the same, an event's id last. */
   def targetOf(
-      ck: Option[String],
-      slug: Option[String],
-      place: Option[String],
-      event: Option[String],
+      ck: Option[com.histmersion.web.Preview.TargetOfCk],
+      slug: Option[com.histmersion.web.Preview.TargetOfSlug],
+      place: Option[com.histmersion.web.Preview.TargetOfPlace],
+      event: Option[com.histmersion.web.Preview.TargetOfEvent],
       asOf: => Option[Long]
   ): Option[Target] =
     targetOf(ck, slug, place, asOf).orElse(event.map(_.trim).filter(_.nonEmpty).map(Target.Event(_)))
@@ -439,7 +596,7 @@ object Preview:
           case _ => false
         if !inside then unpin(restoreFocus = false)
 
-  private def pinUnder(el: dom.Element, keyboard: Boolean): Unit =
+  private def pinUnder(el: dom.Element, keyboard: com.histmersion.web.Preview.PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
       if isPinned(t) && !keyboard then unpin(restoreFocus = false)
       else
@@ -555,12 +712,12 @@ object Preview:
   private var atPoint: Option[Target] = None
 
   /** Is the card at the pointer showing `t`? */
-  def showingAt(t: Target): Boolean = atPoint.contains(t) && tip.isDefined
+  def showingAt(t: Target): com.histmersion.web.Preview.ShowingAtResult = atPoint.contains(t) && tip.isDefined
 
   /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second call for the
     * target already showing only moves it.
     */
-  def showAt(t: Target, x: Double, y: Double): Unit =
+  def showAt(t: Target, x: com.histmersion.web.Preview.ShowAtX, y: com.histmersion.web.Preview.ShowAtY): Unit =
     if showingAt(t) then moveTo(x, y)
     else if isPinned(t) then hide() // its card is already up, pinned: no second, moving copy
     else
@@ -590,7 +747,7 @@ object Preview:
   /** Beside the pointer, below and to the right; flipped to the other side when it would leave the viewport. The
     * position is data for `.cite-tooltip`.
     */
-  def moveTo(x: Double, y: Double): Unit =
+  def moveTo(x: com.histmersion.web.Preview.MoveToX, y: com.histmersion.web.Preview.MoveToY): Unit =
     lastPoint = Some((x, y))
     tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
       val maxW = math.min(360.0, window.innerWidth - 20)
@@ -601,7 +758,7 @@ object Preview:
 
   // `var`s: the pointer the floating card was last placed beside (a size change re-places it there),
   // and the observer that re-places the hover card when its content grows (a picture, a late section)
-  private var lastPoint: Option[(Double, Double)] = None
+  private var lastPoint: Option[(com.histmersion.web.Preview.LastPointPart1, com.histmersion.web.Preview.LastPointPart2)] = None
   private var tipObserver: Option[js.Dynamic] = None
 
   /** Re-run `f` whenever the card's content changes size — a picture arriving, a section filling in after the card was
@@ -624,14 +781,14 @@ object Preview:
       Some(o)
 
   /** The card's width, and the height its content wants — not the height a cap gave it last time. */
-  private def naturalSize(box: dom.HTMLElement): (Double, Double) =
+  private def naturalSize(box: dom.HTMLElement): (com.histmersion.web.Preview.NaturalSizeResultPart1, com.histmersion.web.Preview.NaturalSizeResultPart2) =
     val b = box.getBoundingClientRect()
     (b.width, box.scrollHeight.toDouble + (box.offsetHeight - box.clientHeight))
 
   /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once pinned), and a capped
     * hover card fades out at the bottom to say there is more.
     */
-  private def apply(box: dom.HTMLElement, fit: Fit, natural: Double): Unit =
+  private def apply(box: dom.HTMLElement, fit: Fit, natural: com.histmersion.web.Preview.ApplyNatural): Unit =
     box.style.setProperty("--tip-x", s"${fit.x}px")
     box.style.setProperty("--tip-y", s"${fit.y}px")
     box.style.setProperty("--tip-maxh", s"${fit.maxH}px")
@@ -658,7 +815,7 @@ object Preview:
     * when it fits there, else on the roomier side, capped to that room so the content scrolls; with less than `MinRoom`
     * either side, the full viewport height.
     */
-  def verticalFit(top: Double, bottom: Double, gap: Double, h: Double, vh: Double): (Double, Double) =
+  def verticalFit(top: com.histmersion.web.Preview.VerticalFitTop, bottom: com.histmersion.web.Preview.VerticalFitBottom, gap: com.histmersion.web.Preview.VerticalFitGap, h: com.histmersion.web.Preview.VerticalFitH, vh: com.histmersion.web.Preview.VerticalFitVh): (com.histmersion.web.Preview.VerticalFitResultPart1, com.histmersion.web.Preview.VerticalFitResultPart2) =
     val below = vh - Margin - (bottom + gap)
     val above = top - gap - Margin
     if h <= below then (bottom + gap, below)
@@ -671,7 +828,7 @@ object Preview:
     * would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in height when neither side has room for
     * all of it.
     */
-  def pointFit(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): Fit =
+  def pointFit(x: com.histmersion.web.Preview.PointFitX, y: com.histmersion.web.Preview.PointFitY, w: com.histmersion.web.Preview.PointFitW, h: com.histmersion.web.Preview.PointFitH, vw: com.histmersion.web.Preview.PointFitVw, vh: com.histmersion.web.Preview.PointFitVh): Fit =
     val gap = 14.0
     val left0 = if x + gap + w > vw - Margin then x - gap - w else x + gap
     val left = math.max(Margin, math.min(left0, vw - w - Margin))
@@ -682,35 +839,35 @@ object Preview:
     * room below, capped in height when neither side has room.
     */
   def underFit(
-      left: Double,
-      top: Double,
-      bottom: Double,
-      width: Double,
-      w: Double,
-      h: Double,
-      vw: Double,
-      vh: Double
+      left: com.histmersion.web.Preview.UnderFitLeft,
+      top: com.histmersion.web.Preview.UnderFitTop,
+      bottom: com.histmersion.web.Preview.UnderFitBottom,
+      width: com.histmersion.web.Preview.UnderFitWidth,
+      w: com.histmersion.web.Preview.UnderFitW,
+      h: com.histmersion.web.Preview.UnderFitH,
+      vw: com.histmersion.web.Preview.UnderFitVw,
+      vh: com.histmersion.web.Preview.UnderFitVh
   ): Fit =
     val x = math.max(Margin, math.min(left + width / 2 - w / 2, vw - w - Margin))
     val (y, maxH) = verticalFit(top, bottom, 6.0, h, vh)
     Fit(x, y, maxH)
 
   /** Pure: the corner [[pointFit]] picks (kept for callers that only need the position). */
-  def pointPlacement(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): (Double, Double) =
+  def pointPlacement(x: com.histmersion.web.Preview.PointPlacementX, y: com.histmersion.web.Preview.PointPlacementY, w: com.histmersion.web.Preview.PointPlacementW, h: com.histmersion.web.Preview.PointPlacementH, vw: com.histmersion.web.Preview.PointPlacementVw, vh: com.histmersion.web.Preview.PointPlacementVh): (com.histmersion.web.Preview.PointPlacementResultPart1, com.histmersion.web.Preview.PointPlacementResultPart2) =
     val f = pointFit(x, y, w, h, vw, vh)
     (f.x, f.y)
 
   /** Pure: the corner [[underFit]] picks. */
   def underPlacement(
-      left: Double,
-      top: Double,
-      bottom: Double,
-      width: Double,
-      w: Double,
-      h: Double,
-      vw: Double,
-      vh: Double
-  ): (Double, Double) =
+      left: com.histmersion.web.Preview.UnderPlacementLeft,
+      top: com.histmersion.web.Preview.UnderPlacementTop,
+      bottom: com.histmersion.web.Preview.UnderPlacementBottom,
+      width: com.histmersion.web.Preview.UnderPlacementWidth,
+      w: com.histmersion.web.Preview.UnderPlacementW,
+      h: com.histmersion.web.Preview.UnderPlacementH,
+      vw: com.histmersion.web.Preview.UnderPlacementVw,
+      vh: com.histmersion.web.Preview.UnderPlacementVh
+  ): (com.histmersion.web.Preview.UnderPlacementResultPart1, com.histmersion.web.Preview.UnderPlacementResultPart2) =
     val f = underFit(left, top, bottom, width, w, h, vw, vh)
     (f.x, f.y)
 
@@ -738,19 +895,25 @@ object Preview:
   ):
     // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
     // and must not force a layout each time
-    var size: (Double, Double) = (0, 0)
+    var size: (com.histmersion.web.Preview.Pinned.SizePart1, com.histmersion.web.Preview.Pinned.SizePart2) = (0, 0)
     // `var`: re-measures the card when its content changes size (see `observe`)
     var observer: Option[js.Dynamic] = None
+
+  object Pinned:
+    type SizePart1 = SizePart1.T
+    object SizePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SizePart2 = SizePart2.T
+    object SizePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // `var`: at most one card is pinned
   private var pinned: Option[Pinned] = None
 
-  def isPinned(t: Target): Boolean = pinned.exists(p => sameCard(p.target, t))
+  def isPinned(t: Target): com.histmersion.web.Preview.IsPinnedResult = pinned.exists(p => sameCard(p.target, t))
 
   /** Pure: do two targets show the same card? A place is the same place whichever layer read it, at whichever year (the
     * map's span and the filter round its middle differently).
     */
-  def sameCard(a: Target, b: Target): Boolean = (a, b) match
+  def sameCard(a: Target, b: Target): com.histmersion.web.Preview.SameCardResult = (a, b) match
     case (Target.Place(x, _), Target.Place(y, _)) => x == y
     case _                                        => a == b
   def pinnedTarget: Option[Target] = pinned.map(_.target)
@@ -758,7 +921,7 @@ object Preview:
   /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
     * the card (its ✕ first, then its links), and back to `owner` when it closes.
     */
-  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: Boolean = false): Unit =
+  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: com.histmersion.web.Preview.PinKeyboard = false): Unit =
     unpin(restoreFocus = false)
     hide()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
@@ -795,7 +958,7 @@ object Preview:
     }
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
-  def unpin(restoreFocus: Boolean = true): Unit =
+  def unpin(restoreFocus: com.histmersion.web.Preview.UnpinRestoreFocus = true): Unit =
     pinned.foreach { p =>
       pinned = None
       p.observer.foreach { o =>
@@ -905,7 +1068,7 @@ object Preview:
       it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd))
     )
 
-  private def commandView(cmd: String): HtmlElement =
+  private def commandView(cmd: com.histmersion.web.Preview.CommandViewCmd): HtmlElement =
     span(
       cls := "cite-tip-command",
       code(cmd),
@@ -921,7 +1084,7 @@ object Preview:
   /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and list the first few
     * under the button.
     */
-  private def discoverButton(q: String): HtmlElement =
+  private def discoverButton(q: com.histmersion.web.Preview.DiscoverButtonQ): HtmlElement =
     val found = Var[Option[Either[String, DiscoverResult]]](None)
     span(
       cls := "cite-tip-discover",
@@ -1003,7 +1166,7 @@ object Preview:
   /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its credit, licence and
     * the provider's page.
     */
-  def fullAttrs(t: MediaThumb): List[(String, String)] =
+  def fullAttrs(t: MediaThumb): List[(com.histmersion.web.Preview.FullAttrsResultPart1, com.histmersion.web.Preview.FullAttrsResultPart2)] =
     val item = Lightbox.Item(
       MediaThumb.filePath(t.uid),
       t.credit,
@@ -1025,7 +1188,7 @@ object Preview:
     vals.collect { case (k, Some(v)) if v.nonEmpty => k -> v }
 
   /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */
-  def sizeOf(t: MediaThumb): Option[(Int, Int)] = (t.width, t.height) match
+  def sizeOf(t: MediaThumb): Option[(com.histmersion.web.Preview.SizeOfResultPart1, com.histmersion.web.Preview.SizeOfResultPart2)] = (t.width, t.height) match
     case (Some(w), Some(h)) if w > 0 && h > 0 => Some((w, h))
     case _                                    => None
 

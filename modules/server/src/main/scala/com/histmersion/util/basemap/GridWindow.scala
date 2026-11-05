@@ -4,9 +4,12 @@ import io.github.iltotore.iron.*
 
 /** The rows `first` … `last` of a grid and the columns `firstCol` … `lastCol` (inclusive). */
 final case class GridWindow(first: GridWindow.First, last: GridWindow.Last, firstCol: GridWindow.FirstCol, lastCol: GridWindow.LastCol):
-  def rows: Int = last - first + 1
+  def rows: com.histmersion.util.basemap.GridWindow.RowsResult = last - first + 1
 
 object GridWindow:
+  type RowsResult = RowsResult.T
+  object RowsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type First = First.T
   object First extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Last = Last.T

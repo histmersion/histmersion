@@ -1,12 +1,19 @@
 package com.histmersion.api.basemap
 import com.histmersion.api.given
 object BaseMapSource:
+  type All = All.T
+  object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResult = ResolveResult.T
+  object ResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveSetting = ResolveSetting.T
+  object ResolveSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Auto = "auto"
   val Local = "local"
   val Online = "online"
-  val All: List[String] = List(Auto, Local, Online)
+  val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(Auto, Local, Online)
 
-  def resolve(setting: String, status: Basemap.Status): String =
+  def resolve(setting: com.histmersion.api.basemap.BaseMapSource.ResolveSetting, status: Basemap.Status): com.histmersion.api.basemap.BaseMapSource.ResolveResult =
     setting.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => Local
       case Online => Online

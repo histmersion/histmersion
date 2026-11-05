@@ -13,6 +13,11 @@ import scala.util.Try
   */
 object SettingsReader:
 
+  type LeavesResult = LeavesResult.T
+  object LeavesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeavesPrefix = LeavesPrefix.T
+  object LeavesPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def read(
       schema: ConfigSchema,
       state: ConfigFileState,
@@ -61,7 +66,7 @@ object SettingsReader:
       .flatMap(ws => SettingKey.either(ws.mkString(".")).toOption)
       .distinct
 
-  private def leaves(o: ConfigObject, prefix: List[String]): List[List[String]] =
+  private def leaves(o: ConfigObject, prefix: List[com.histmersion.config.edit.SettingsReader.LeavesPrefix]): List[List[com.histmersion.config.edit.SettingsReader.LeavesResult]] =
     Try(o.keySet.asScala.toList.sorted).getOrElse(Nil).flatMap { k =>
       Option(o.get(k)) match
         case Some(child: ConfigObject) => leaves(child, prefix :+ k)

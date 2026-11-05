@@ -10,7 +10,12 @@ import com.raquo.laminar.api.L.*
   */
 object RowActions:
 
-  def apply(ref: ItemRef, href: String, byline: String = ""): Modifier[HtmlElement] =
+  type ApplyHref = ApplyHref.T
+  object ApplyHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyByline = ApplyByline.T
+  object ApplyByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def apply(ref: ItemRef, href: com.histmersion.web.marks.RowActions.ApplyHref, byline: com.histmersion.web.marks.RowActions.ApplyByline = ""): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
       ContextMenu.on(s"Actions: ${ref.title}", () => ItemMenu.entries(ref, byline)),

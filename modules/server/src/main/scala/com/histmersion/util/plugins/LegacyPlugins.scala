@@ -27,6 +27,41 @@ import scala.util.Try
 object LegacyPlugins:
 
   /** A former plugin id and the plugins that took its place, in their chain order. */
+  type IdsResult = IdsResult.T
+  object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExpandResult = ExpandResult.T
+  object ExpandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExpandId = ExpandId.T
+  object ExpandId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnabledEnvResult = EnabledEnvResult.T
+  object EnabledEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnabledEnvId = EnabledEnvId.T
+  object EnabledEnvId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MigrateKnownArg1 = MigrateKnownArg1.T
+  object MigrateKnownArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MigrateKnownResult = MigrateKnownResult.T
+  object MigrateKnownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PathResult = PathResult.T
+  object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PathId = PathId.T
+  object PathId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasResult = HasResult.T
+  object HasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasP = HasP.T
+  object HasP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockResultPart2 = BlockResultPart2.T
+  object BlockResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockKnownArg1 = BlockKnownArg1.T
+  object BlockKnownArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockKnownResult = BlockKnownResult.T
+  object BlockKnownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResultPart2 = OrderResultPart2.T
+  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvironmentResultPart2 = EnvironmentResultPart2.T
+  object EnvironmentResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuccessorsResult = SuccessorsResult.T
+  object SuccessorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Split(id: Split.Id, into: List[Split.Into])
 
   object Split:
@@ -40,13 +75,13 @@ object LegacyPlugins:
   val All: List[Split] = List(OaIndex)
 
   /** The former ids: no plugin may take one (its settings would be read as the successors'). */
-  def ids: Set[String] = All.map(_.id).toSet
+  def ids: Set[com.histmersion.util.plugins.LegacyPlugins.IdsResult] = All.map(_.id).toSet
 
   /** The plugins a key of `id` concerns: the successors of a former id, else the id itself. */
-  def expand(id: String): List[String] = All.find(_.id == id).fold(List(id))(_.into)
+  def expand(id: com.histmersion.util.plugins.LegacyPlugins.ExpandId): List[com.histmersion.util.plugins.LegacyPlugins.ExpandResult] = All.find(_.id == id).fold(List(id))(_.into)
 
   /** The environment variable the host reads for a plugin's `enabled` (its defaults declare it). */
-  def enabledEnv(id: String): String =
+  def enabledEnv(id: com.histmersion.util.plugins.LegacyPlugins.EnabledEnvId): com.histmersion.util.plugins.LegacyPlugins.EnabledEnvResult =
     s"HISTMERSION_PLUGIN_${id.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
 
   final case class Migrated(user: Config, env: Config, warnings: List[Migrated.Warnings])
@@ -58,7 +93,7 @@ object LegacyPlugins:
   /** Map every former id's settings onto its successors. `known(id)`: the keys of plugin `id`'s defaults (`enabled`
     * aside), which decide where a key other than `enabled` goes.
     */
-  def migrate(user: Config, env: Config, known: String => Set[String]): Migrated =
+  def migrate(user: Config, env: Config, known: com.histmersion.util.plugins.LegacyPlugins.MigrateKnownArg1 => Set[com.histmersion.util.plugins.LegacyPlugins.MigrateKnownResult]): Migrated =
     All.foldLeft(Migrated(user, env, Nil)) { (m, split) =>
       val (u1, w1) = block(m.user, split, known)
       val (u2, w2) = order(u1, m.env, split)
@@ -66,12 +101,12 @@ object LegacyPlugins:
       Migrated(u2, e1, m.warnings ++ w1 ++ w2 ++ w3)
     }
 
-  private def path(id: String): String = s"${PluginHost.Root}.$id"
+  private def path(id: com.histmersion.util.plugins.LegacyPlugins.PathId): com.histmersion.util.plugins.LegacyPlugins.PathResult = s"${PluginHost.Root}.$id"
 
-  private def has(c: Config, p: String): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
+  private def has(c: Config, p: com.histmersion.util.plugins.LegacyPlugins.HasP): com.histmersion.util.plugins.LegacyPlugins.HasResult = Try(c.hasPathOrNull(p)).getOrElse(false)
 
   /** The former block's keys onto the successors; the block itself removed. */
-  private def block(user: Config, split: Split, known: String => Set[String]): (Config, List[String]) =
+  private def block(user: Config, split: Split, known: com.histmersion.util.plugins.LegacyPlugins.BlockKnownArg1 => Set[com.histmersion.util.plugins.LegacyPlugins.BlockKnownResult]): (Config, List[com.histmersion.util.plugins.LegacyPlugins.BlockResultPart2]) =
     val from = path(split.id)
     if !has(user, from) then (user, Nil)
     else
@@ -104,7 +139,7 @@ object LegacyPlugins:
           (out, warn :: ignored.map(k => s"$from.$k: none of ${split.into.mkString(", ")} has this setting — ignored"))
 
   /** `order`: the former id replaced in place by its successors not listed already. */
-  private def order(user: Config, env: Config, split: Split): (Config, List[String]) =
+  private def order(user: Config, env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.OrderResultPart2]) =
     val at = s"${PluginHost.Root}.${PluginHost.OrderKey}"
     val listed = Try(user.withFallback(env).resolve().getStringList(at).asScala.toList.map(_.trim)).toOption
     listed match
@@ -117,7 +152,7 @@ object LegacyPlugins:
       case _ => (user, Nil)
 
   /** The former `enabled` variable for each successor's that is not set. */
-  private def environment(env: Config, split: Split): (Config, List[String]) =
+  private def environment(env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.EnvironmentResultPart2]) =
     val old = enabledEnv(split.id)
     Option(env.root.get(old)) match
       case None    => (env, Nil)
@@ -130,9 +165,14 @@ object LegacyPlugins:
           List(s"$old is deprecated: ${successors(split)} — set ${split.into.map(enabledEnv).mkString(", ")} instead")
         )
 
-  private def successors(split: Split): String =
+  private def successors(split: Split): com.histmersion.util.plugins.LegacyPlugins.SuccessorsResult =
     s"'${split.id}' is ${split.into.size} plugins now (${split.into.mkString(", ")})"
 
   /** A key as one HOCON path element (an environment variable's name or a block's key). */
   private object ConfigQuote:
-    def apply(k: String): String = org.ekrich.config.ConfigUtil.quoteString(k)
+    type ApplyResult = ApplyResult.T
+    object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyK = ApplyK.T
+    object ApplyK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def apply(k: com.histmersion.util.plugins.LegacyPlugins.ConfigQuote.ApplyK): com.histmersion.util.plugins.LegacyPlugins.ConfigQuote.ApplyResult = org.ekrich.config.ConfigUtil.quoteString(k)

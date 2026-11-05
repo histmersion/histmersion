@@ -14,14 +14,20 @@ object ConfigEdit:
     case Environment extends Source("environment", "an environment variable")
 
   object Source:
-    def parse(s: String): Option[Source] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.settings.ConfigEdit.Source.ParseS): Option[Source] = values.find(_.wire == s.trim.toLowerCase)
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isSet: Boolean = form != "unset"
+    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = form != "unset"
 
   object Credential:
+    type IsSetResult = IsSetResult.T
+    object IsSetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Rule = Rule.T
     object Rule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Form = Form.T
@@ -44,9 +50,12 @@ object ConfigEdit:
       locked: Option[Field.Locked] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def relative: String = key.stripPrefix("histmersion.")
+    def relative: com.histmersion.api.settings.ConfigEdit.Field.RelativeResult = key.stripPrefix("histmersion.")
 
   object Field:
+    type RelativeResult = RelativeResult.T
+    object RelativeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Key = Key.T
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Section = Section.T
@@ -91,11 +100,14 @@ object ConfigEdit:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
-    def field(key: String): Option[Field] =
+    def field(key: com.histmersion.api.settings.ConfigEdit.Page.FieldKey): Option[Field] =
       val full = if key.startsWith("histmersion.") then key else s"histmersion.$key"
       fields.find(_.key == full)
 
   object Page:
+    type FieldKey = FieldKey.T
+    object FieldKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type File = File.T
     object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Exists = Exists.T

@@ -1,5 +1,44 @@
 # Priority-family status
 
+## Applied: callback/member/method conversion across production modules
+
+member-types-project-1 applies the same transformation across all configured
+production module roots, converting 12634 additional explicit primitive positions
+in 1093 files. The existing frozen applicator checks all files against the source
+hash chain. These are declaration changes; caller/implementation repair, tests
+and overlap indexing remain deferred. Existing type identities and prior evidence
+are preserved, and no behavioral repair credit is added.
+
+type-positions-after-project-members-1 validates all 3167 current main/test source
+files and the twelve-plan hash chain. Stable-ID comparison against the preceding
+measurement reports exactly 12634 removed raw leaves and zero introduced. The
+explicit count drops from 21621 to 8987: production2933/test6054. Tests are unchanged.
+The scoped rewrite rerun produces zero further conversions and 1762 blocked
+positions. These counts have different scopes: the global residual also includes
+ordinary/enum constructors, aliases, lambda parameters and unsupported shapes.
+No aggregate repair percentage or full model compliance is claimed.
+
+This application leaves packed arrays, native method bodies, overrides, local
+declarations, shadowing and naming/base conflicts as explicit unresolved evidence.
+The rule now records the reason for each blocked member and preserves empty
+companions for review rather than stopping the whole batch. The fixture adds a
+packed-array parameter/result case without changing previous expectations; output
+matches exactly, and expected source compiles with Scala 3.10.0/Iron 3.4.1. It reports
+nine conversions and three deliberately blocked positions. Application/config/docs
+whitespace checks pass; generated TSV empty final columns are retained as before.
+
+The previous domain signature batch predates the packed-array guard. A bounded
+review of its evidence finds 44 Byte primitive matches, including buffer signatures
+such as NewFigure.sha256.bytes and tile/image returns. These need representation
+review and whole-buffer correction where appropriate; they are not accepted or
+counted as verified repairs. The old batch remains applied with its history intact.
+The new guard prevents extending that per-element treatment to additional arrays.
+
+Next handle the supported residual declaration shapes and buffer corrections,
+keeping genuine external contracts under explicit review. Inferred types and alias,
+shadowing and semantic boundary classification remain unresolved detection limits.
+Create the overlap index after the conversion batches, as requested.
+
 ## Applied: callback, member and method signatures in domain packages
 
 member-types-domain-1 converts 6401 explicit primitive type positions across 342

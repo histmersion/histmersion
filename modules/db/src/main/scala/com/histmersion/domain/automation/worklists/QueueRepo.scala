@@ -19,6 +19,25 @@ private[worklists] object QueueRepo:
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated column lists). `to_char`
     * normalises to UTC so the value is stable whatever the session TZ is.
     */
+  type ListAll = ListAll.T
+  object ListAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForGoalGoal = ForGoalGoal.T
+  object ForGoalGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForGoalLinked = ForGoalLinked.T
+  object ForGoalLinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForGoalAll = ForGoalAll.T
+  object ForGoalAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForJobJob = ForJobJob.T
+  object ForJobJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByIdsIds = ByIdsIds.T
+  object ByIdsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteId = DeleteId.T
+  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteListResult = DeleteListResult.T
+  object DeleteListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Cols = SqlLiteral("""id, list, text, topic, status, reason,
        to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
        to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
@@ -29,7 +48,7 @@ private[worklists] object QueueRepo:
   /** `open` (and, in a checkbox list, `done`) items — never `note` blocks, which are export-only scaffolding. `all`
     * includes everything, in id order, which is what the export renders.
     */
-  def list(kind: Kind, all: Boolean)(using DbCon): Vector[QueueItem] =
+  def list(kind: Kind, all: com.histmersion.domain.automation.worklists.QueueRepo.ListAll)(using DbCon): Vector[QueueItem] =
     if all then
       sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} ORDER BY id"""
         .query[QueueItem]
@@ -40,23 +59,23 @@ private[worklists] object QueueRepo:
   /** The open (with `all`, every) items of `kind` that serve goal `goal`: their own goal, or one of `linked` (the
     * references of the goal's `queue-item` links, compared with the id as text).
     */
-  def forGoal(kind: Kind, goal: String, linked: List[String], all: Boolean)(using DbCon): Vector[QueueItem] =
+  def forGoal(kind: Kind, goal: com.histmersion.domain.automation.worklists.QueueRepo.ForGoalGoal, linked: List[com.histmersion.domain.automation.worklists.QueueRepo.ForGoalLinked], all: com.histmersion.domain.automation.worklists.QueueRepo.ForGoalAll)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND ($all OR status = $Open)
               AND (goal_slug = $goal OR id::text = ANY($linked::text[]))
             ORDER BY id""".query[QueueItem].run()
 
   /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
-  def forJob(kind: Kind, job: String)(using DbCon): Vector[QueueItem] =
+  def forJob(kind: Kind, job: com.histmersion.domain.automation.worklists.QueueRepo.ForJobJob)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
             ORDER BY id""".query[QueueItem].run()
 
-  def get(id: Int)(using DbCon): Option[QueueItem] =
+  def get(id: com.histmersion.domain.automation.worklists.QueueRepo.GetId)(using DbCon): Option[QueueItem] =
     sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption
 
   /** The items with these ids (any list, any status), by id; ids with no row are simply absent. */
-  def byIds(ids: List[Int])(using DbCon): Vector[QueueItem] =
+  def byIds(ids: List[com.histmersion.domain.automation.worklists.QueueRepo.ByIdsIds])(using DbCon): Vector[QueueItem] =
     if ids.isEmpty then Vector.empty
     else
       // a text[] crosses as a real array (db/Codecs.scala); the ids are compared as text there
@@ -67,7 +86,7 @@ private[worklists] object QueueRepo:
     * backlog make right before adding one to the acquisition list (a sweep's snapshot of the list can be minutes old,
     * and another watcher's sweep may have added it since).
     */
-  def naming(kind: Kind, doi: String)(using DbCon): Vector[QueueItem] =
+  def naming(kind: Kind, doi: com.histmersion.domain.library.Doi)(using DbCon): Vector[QueueItem] =
     val d = doi.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} AND strpos(lower(text), $d) > 0
@@ -98,9 +117,9 @@ private[worklists] object QueueRepo:
                     done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
                 WHERE id = ${next.id}""".update.run()
 
-  def delete(id: Int)(using DbCon): Unit =
+  def delete(id: com.histmersion.domain.automation.worklists.QueueRepo.DeleteId)(using DbCon): Unit =
     val _ = sql"DELETE FROM queue_items WHERE id = $id".update.run()
 
   /** Every row of `kind` removed; how many. */
-  def deleteList(kind: Kind)(using DbCon): Int =
+  def deleteList(kind: Kind)(using DbCon): com.histmersion.domain.automation.worklists.QueueRepo.DeleteListResult =
     sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run()

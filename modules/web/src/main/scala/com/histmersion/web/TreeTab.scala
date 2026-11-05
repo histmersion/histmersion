@@ -15,14 +15,53 @@ import com.histmersion.api.library.{Bucket, TimeHistogram}
 
 object TreeTab:
 
+  type Axis = Axis.T
+  object Axis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastParams = LastParams.T
+  object LastParams extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowTab = ShowTab.T
+  object ShowTab extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamsKeyResult = ParamsKeyResult.T
+  object ParamsKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoLoadMine = DoLoadMine.T
+  object DoLoadMine extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLineResult = CountLineResult.T
+  object CountLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLineRoots = CountLineRoots.T
+  object CountLineRoots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLineFrom = CountLineFrom.T
+  object CountLineFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLineTo = CountLineTo.T
+  object CountLineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitWordResult = UnitWordResult.T
+  object UnitWordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitWordN = UnitWordN.T
+  object UnitWordN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderNodeDepth = RenderNodeDepth.T
+  object RenderNodeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleDepth = ToggleDepth.T
+  object ToggleDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleExpanded = ToggleExpanded.T
+  object ToggleExpanded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleFilled = ToggleFilled.T
+  object ToggleFilled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleOpenable = ToggleOpenable.T
+  object ToggleOpenable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FillWithDepth = FillWithDepth.T
+  object FillWithDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderSampleDepth = RenderSampleDepth.T
+  object RenderSampleDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private var config: Option[UiConfig] = None
-  private var axis: Option[String] = None
+  private var axis: Option[com.histmersion.web.TreeTab.Axis] = None
   private var lastData: Option[TimeHistogram] = None
 
   /** Drops the answers to a superseded load ([[Latest]]). */
   private val latest = Latest()
-  private var timer: Int = 0
-  private var lastParams: Option[String] = None
+  private var timer: com.histmersion.web.TreeTab.Timer = 0
+  private var lastParams: Option[com.histmersion.web.TreeTab.LastParams] = None
 
   private val treeContent = Var[List[HtmlElement]](Nil)
   private val countText = Var("")
@@ -37,7 +76,7 @@ object TreeTab:
       div(idAttr := "tree-list", cls := "tree-list", children <-- treeContent.signal)
     )
 
-  def show(tab: String): Unit =
+  def show(tab: com.histmersion.web.TreeTab.ShowTab): Unit =
     val mine = tab match
       case "bytime"   => Some("time")
       case "byregion" => Some("region")
@@ -64,7 +103,7 @@ object TreeTab:
         val ms = config.flatMap(c => Option(c.debounce.reloadMs)).getOrElse(0)
         timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(ms))
 
-  private def paramsKey(): String =
+  private def paramsKey(): com.histmersion.web.TreeTab.ParamsKeyResult =
     val f = UiState.toFilter()
     s"${axis.getOrElse("")}:${f.hashCode}"
 
@@ -79,7 +118,7 @@ object TreeTab:
           failed.set(false)
           doLoad(cfg, mine)
 
-  private def doLoad(cfg: UiConfig, mine: Int): Unit =
+  private def doLoad(cfg: UiConfig, mine: com.histmersion.web.TreeTab.DoLoadMine): Unit =
     val by = axis.getOrElse("time")
     val f = UiState.toFilter()
     val asOf = if by == "region" then for a <- UiState.from.now(); b <- UiState.to.now() yield (a + b) / 2
@@ -119,7 +158,7 @@ object TreeTab:
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
     * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
     */
-  def countLine(data: TimeHistogram, roots: Int, from: Long, to: Long): String =
+  def countLine(data: TimeHistogram, roots: com.histmersion.web.TreeTab.CountLineRoots, from: com.histmersion.web.TreeTab.CountLineFrom, to: com.histmersion.web.TreeTab.CountLineTo): com.histmersion.web.TreeTab.CountLineResult =
     val groups =
       if data.by == "region" then Plural.count(roots.toLong, "region") else Plural.count(roots.toLong, "period")
     ResultsPaging.countLine(
@@ -129,9 +168,9 @@ object TreeTab:
       extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}")
     )
 
-  private def unitWord(n: Int): String = if n == 1 then "1 source" else s"$n sources"
+  private def unitWord(n: com.histmersion.web.TreeTab.UnitWordN): com.histmersion.web.TreeTab.UnitWordResult = if n == 1 then "1 source" else s"$n sources"
 
-  private def renderNode(b: Bucket, depth: Int, data: TimeHistogram): HtmlElement =
+  private def renderNode(b: Bucket, depth: com.histmersion.web.TreeTab.RenderNodeDepth, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
     val childrenFilled = Var(false)
     val kidElements = Var[List[HtmlElement]](Nil)
@@ -197,12 +236,12 @@ object TreeTab:
 
   private def toggle(
       b: Bucket,
-      depth: Int,
+      depth: com.histmersion.web.TreeTab.ToggleDepth,
       data: TimeHistogram,
-      expanded: Var[Boolean],
-      filled: Var[Boolean],
+      expanded: Var[com.histmersion.web.TreeTab.ToggleExpanded],
+      filled: Var[com.histmersion.web.TreeTab.ToggleFilled],
       kidElements: Var[List[HtmlElement]],
-      openable: Boolean
+      openable: com.histmersion.web.TreeTab.ToggleOpenable
   ): Unit =
     if !openable then ()
     else
@@ -229,7 +268,7 @@ object TreeTab:
   private def fillWith(
       kids: List[Bucket],
       samples: List[Bucket.Sample],
-      depth: Int,
+      depth: com.histmersion.web.TreeTab.FillWithDepth,
       data: TimeHistogram,
       kidElements: Var[List[HtmlElement]]
   ): Unit =
@@ -239,7 +278,7 @@ object TreeTab:
     else Nil
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
-  private def renderSample(s: Bucket.Sample, depth: Int): HtmlElement =
+  private def renderSample(s: Bucket.Sample, depth: com.histmersion.web.TreeTab.RenderSampleDepth): HtmlElement =
     div(
       cls := "tsample",
       styleAttr := s"--tdepth: $depth",

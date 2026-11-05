@@ -19,6 +19,9 @@ import com.histmersion.api.exchange.Bundle
   */
 private[goals] object GoalBundleRepo:
 
+  type GoalSlugOfResult = GoalSlugOfResult.T
+  object GoalSlugOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
     val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
@@ -154,7 +157,7 @@ private[goals] object GoalBundleRepo:
     }
     goals.foreach(goalSets(w, _))
 
-  private def goalSlugOf(u: UUID)(using DbCon): Option[String] =
+  private def goalSlugOf(u: UUID)(using DbCon): Option[com.histmersion.domain.automation.goals.GoalBundleRepo.GoalSlugOfResult] =
     sql"SELECT slug FROM goals WHERE uid = $u".query[String].run().headOption
 
   def goalAliasesIn(w: BundleImport.Writer): Unit =

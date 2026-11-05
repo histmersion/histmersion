@@ -7,7 +7,10 @@ import com.raquo.laminar.api.L.*
   */
 object NoteView:
 
-  def apply(text: String): HtmlElement =
+  type ApplyText = ApplyText.T
+  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def apply(text: com.histmersion.web.marks.NoteView.ApplyText): HtmlElement =
     div(cls := "note-text reading", NoteMarkdown.blocks(text).map(block))
 
   private def block(b: NoteMarkdown.Block): HtmlElement = b match

@@ -12,7 +12,7 @@ final case class AgentWatchdogConfig(
     heartbeatSeconds: AgentWatchdogConfig.HeartbeatSeconds,
     interruptedResumeMinutes: AgentWatchdogConfig.InterruptedResumeMinutes
 ) derives ConfigReader:
-  def stallMinutesFor(p: AgentProvidersConfig): Int =
+  def stallMinutesFor(p: AgentProvidersConfig): com.histmersion.config.AgentWatchdogConfig.StallMinutesForResult =
     if stallMinutes > 0 then stallMinutes
     else
       val longest = List(
@@ -26,6 +26,9 @@ final case class AgentWatchdogConfig(
       (longest + 59) / 60 + 5
 
 object AgentWatchdogConfig:
+  type StallMinutesForResult = StallMinutesForResult.T
+  object StallMinutesForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StallMinutes = StallMinutes.T
   object StallMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResumeMinutes = ResumeMinutes.T

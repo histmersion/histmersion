@@ -19,13 +19,20 @@ final case class SitePoint(
     period: Option[(SitePoint.PeriodPart1, SitePoint.PeriodPart2)],
     undated: SitePoint.Undated = false
 ):
-  def name: String = if label.nonEmpty then label else id.getOrElse("site")
-  def mid: Option[Double] = period.map((a, b) => (a + b) / 2)
+  def name: com.histmersion.web.SitePoint.NameResult = if label.nonEmpty then label else id.getOrElse("site")
+  def mid: Option[com.histmersion.web.SitePoint.MidResult] = period.map((a, b) => (a + b) / 2)
 
   /** Its type, when it is one the map knows. */
   def known: Option[SiteTypes.SiteType] = siteType.flatMap(SiteTypes.get)
 
 object SitePoint:
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidResult = MidResult.T
+  object MidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
@@ -47,7 +54,7 @@ object SitePoint:
   type Undated = Undated.T
   object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
+  private def str(v: js.Dynamic): Option[com.histmersion.web.SitePoint.StrResult] = if js.isUndefined(v) || v == null then None else Some(v.toString)
 
   /** A GeoJSON point feature of the places feed. */
   def of(f: js.Dynamic): SitePoint =

@@ -18,6 +18,9 @@ private[evidence] object EvidenceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  type EventIdsOfResultResult = EventIdsOfResultResult.T
+  object EventIdsOfResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
     (Sql.raw(s"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
                        ${targetUid("t.target_type", "t.target_id")}, t.quote, t.prefix, t.suffix,
@@ -92,7 +95,7 @@ private[evidence] object EvidenceBundleRepo:
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
   /** Each event of the candidates and checks looked up once, in one step. */
-  private def eventIdsOf()(using DbCon): UUID => Option[String] =
+  private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.evidence.EvidenceBundleRepo.EventIdsOfResultResult] =
     val ids = scala.collection.mutable.Map.empty[UUID, Option[String]]
     u => ids.getOrElseUpdate(u, sql"SELECT id FROM events WHERE uid = $u".query[String].run().headOption)
 

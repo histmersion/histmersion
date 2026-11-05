@@ -6,12 +6,25 @@ import com.histmersion.api.jobs.{JobInfo, JobState}
   */
 object JobControlRules:
 
-  def stoppable(kind: String): Boolean = com.histmersion.api.jobs.JobActions.Stoppable.contains(kind)
+  type StoppableResult = StoppableResult.T
+  object StoppableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoppableKind = StoppableKind.T
+  object StoppableKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideResultPart1 = DecideResultPart1.T
+  object DecideResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideResumable = DecideResumable.T
+  object DecideResumable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoppedLineResult = StoppedLineResult.T
+  object StoppedLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoppedLineLast = StoppedLineLast.T
+  object StoppedLineLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def stoppable(kind: com.histmersion.util.jobs.JobControlRules.StoppableKind): com.histmersion.util.jobs.JobControlRules.StoppableResult = com.histmersion.api.jobs.JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job` (a kind whose runner controls its own jobs is handed the action); `Left`
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).
     */
-  def decide(job: JobInfo, action: JobAction, resumable: Boolean): Either[String, JobControlStep] =
+  def decide(job: JobInfo, action: JobAction, resumable: com.histmersion.util.jobs.JobControlRules.DecideResumable): Either[com.histmersion.util.jobs.JobControlRules.DecideResultPart1, JobControlStep] =
     if com.histmersion.api.RegisteredJobKinds.all.get(job.kind).exists(_.ownControl) then Right(JobControlStep.Run(action))
     else if !com.histmersion.api.RegisteredJobKinds.all.get(job.kind).exists(_.stoppable) then
       Left(s"a ${job.kind} job cannot be paused or cancelled: it runs as one piece and ends by itself")
@@ -31,7 +44,7 @@ object JobControlRules:
         case (JobAction.Resume, Some(_)) => Left(s"job ${job.id} is not paused")
 
   /** The progress line a stopped job keeps: what it had done, and that it was paused or cancelled. */
-  def stoppedLine(stop: JobStop, last: Option[String]): String =
+  def stoppedLine(stop: JobStop, last: Option[com.histmersion.util.jobs.JobControlRules.StoppedLineLast]): com.histmersion.util.jobs.JobControlRules.StoppedLineResult =
     val what = stop match
       case JobStop.Pause  => "paused"
       case JobStop.Cancel => "cancelled"

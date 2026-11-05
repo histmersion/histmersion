@@ -13,16 +13,16 @@ trait Blob:
   def key: Store.Key
 
   /** Where the file is, for messages. */
-  def where: String
+  def where: com.histmersion.util.storage.Blob.WhereResult
   def size: ByteCount
   def modified: Instant
   def open(): InputStream
   def bytes(): Array[Byte]
-  def text(): String
+  def text(): com.histmersion.util.storage.Blob.TextResult
   def sha256(): Sha256
 
   /** `length` bytes from `offset`. */
-  def readAt(offset: ByteOffset, length: Int): Array[Byte]
+  def readAt(offset: ByteOffset, length: com.histmersion.util.storage.Blob.ReadAtLength): Array[Byte]
 
   /** A reader held open for many positional reads. */
   def reader(): RandomReader
@@ -36,3 +36,11 @@ trait Blob:
     new ByteSource:
       def size: Long = blob.size.value
       def open(): InputStream = blob.open()
+
+object Blob:
+  type WhereResult = WhereResult.T
+  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadAtLength = ReadAtLength.T
+  object ReadAtLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

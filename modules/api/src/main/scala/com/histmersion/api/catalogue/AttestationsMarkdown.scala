@@ -4,7 +4,14 @@ import com.histmersion.api.Markdown.*
 
 object AttestationsMarkdown:
 
-  private[api] def attestationLine(a: Attestation): String =
+  type AttestationLineResult = AttestationLineResult.T
+  object AttestationLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttestationListResult = AttestationListResult.T
+  object AttestationListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttestationResult = AttestationResult.T
+  object AttestationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private[api] def attestationLine(a: Attestation): com.histmersion.api.catalogue.AttestationsMarkdown.AttestationLineResult =
     val loc = List(
       a.page.map(p => s"p.$p"),
       a.chunkOrd.map(o => s"chunk $o"),
@@ -17,12 +24,12 @@ object AttestationsMarkdown:
     val n = a.note.map(n => s" — $n").getOrElse("")
     s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n"
 
-  def attestationList(result: Attestation.List): String =
+  def attestationList(result: Attestation.List): com.histmersion.api.catalogue.AttestationsMarkdown.AttestationListResult =
     OffsetPage.markdown(result.page, "attestation(s)", "_No matching attestations._", result.attestations)(
       attestationLine
     )
 
-  def attestation(a: Attestation): String =
+  def attestation(a: Attestation): com.histmersion.api.catalogue.AttestationsMarkdown.AttestationResult =
     val header = s"# Attestation #${a.id}\n\n_[[${a.citekey}]] → ${a.targetType}:`${a.targetId}`_"
     val loc = List(
       a.page.map(p => s"**Page:** $p"),

@@ -34,14 +34,49 @@ import com.histmersion.api.exchange.{Bundle, MergeDecision, MergePlan, MergeReso
   */
 object MergeState:
 
-  private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
+  type IdsResult = IdsResult.T
+  object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadReadProblems = LoadReadProblems.T
+  object LoadReadProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadChunkChars = LoadChunkChars.T
+  object LoadChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SketchesResultPart1 = SketchesResultPart1.T
+  object SketchesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SketchesWanted = SketchesWanted.T
+  object SketchesWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SketchesSize = SketchesSize.T
+  object SketchesSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodiesResultPart1 = BodiesResultPart1.T
+  object BodiesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodiesResultPart2 = BodiesResultPart2.T
+  object BodiesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodiesWanted = BodiesWanted.T
+  object BodiesWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsResultPart1 = BlobTextsResultPart1.T
+  object BlobTextsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsResultPart2 = BlobTextsResultPart2.T
+  object BlobTextsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobTextsWanted = BlobTextsWanted.T
+  object BlobTextsWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSketchesResultPart1 = BundleSketchesResultPart1.T
+  object BundleSketchesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSketchesWanted = BundleSketchesWanted.T
+  object BundleSketchesWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSketchesSize = BundleSketchesSize.T
+  object BundleSketchesSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanFileResultPart1 = PlanFileResultPart1.T
+  object PlanFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanFileChunkChars = PlanFileChunkChars.T
+  object PlanFileChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def ids(us: Iterable[UUID]): List[com.histmersion.util.data.exchange.MergeState.IdsResult] = us.iterator.map(_.toString).toList.distinct
 
   def load(
       es: BundleEntities,
       m: Bundle.Manifest,
-      readProblems: List[String],
+      readProblems: List[com.histmersion.util.data.exchange.MergeState.LoadReadProblems],
       originals: ContentStore,
-      chunkChars: Int,
+      chunkChars: com.histmersion.util.data.exchange.MergeState.LoadChunkChars,
       cfg: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
@@ -193,7 +228,7 @@ object MergeState:
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
-  def sketches(bundle: ByteSource, in: Input, wanted: Set[String], size: Int)(using DbCon): Map[String, MinHash] =
+  def sketches(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.SketchesWanted], size: com.histmersion.util.data.exchange.MergeState.SketchesSize)(using DbCon): Map[com.histmersion.util.data.exchange.MergeState.SketchesResultPart1, MinHash] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -214,7 +249,7 @@ object MergeState:
   /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the bundle's from one
     * pass over its blobs ([[MergePlanner.bodiesWanted]]).
     */
-  def bodies(bundle: ByteSource, in: Input, wanted: Set[String])(using DbCon): Map[String, String] =
+  def bodies(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.BodiesWanted])(using DbCon): Map[com.histmersion.util.data.exchange.MergeState.BodiesResultPart1, com.histmersion.util.data.exchange.MergeState.BodiesResultPart2] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -232,7 +267,7 @@ object MergeState:
       val there = wanted -- here.keySet
       here ++ (if there.isEmpty then Map.empty else blobTexts(bundle, there))
 
-  private def blobTexts(bundle: ByteSource, wanted: Set[String]): Map[String, String] =
+  private def blobTexts(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BlobTextsWanted]): Map[com.histmersion.util.data.exchange.MergeState.BlobTextsResultPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsResultPart2] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
@@ -249,7 +284,7 @@ object MergeState:
       loop(Map.empty)
     }
 
-  private def bundleSketches(bundle: ByteSource, wanted: Set[String], size: Int): Map[String, MinHash] =
+  private def bundleSketches(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BundleSketchesWanted], size: com.histmersion.util.data.exchange.MergeState.BundleSketchesSize): Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesResultPart1, MinHash] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
@@ -273,10 +308,10 @@ object MergeState:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       originals: ContentStore,
-      chunkChars: Int,
+      chunkChars: com.histmersion.util.data.exchange.MergeState.PlanFileChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[String, MergePlan] =
+  ): Either[com.histmersion.util.data.exchange.MergeState.PlanFileResultPart1, MergePlan] =
     MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars, kinds, rules)
 
   private[histmersion] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

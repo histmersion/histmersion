@@ -15,10 +15,10 @@ package com.histmersion.plugin
   */
 trait GazetteerSource:
   /** What to call it: "Seshat Cliopatria polity polygons". */
-  def title: String
+  def title: com.histmersion.plugin.GazetteerSource.TitleResult
 
   /** One sentence: what it brings and on what terms. */
-  def description: String = ""
+  def description: com.histmersion.plugin.GazetteerSource.DescriptionResult = ""
 
   /** The dataset's licence and credit, as its provider states them. The credit is the provenance line stored with each
     * place that does not state its own ([[GazetteerPlace.source]]).
@@ -29,4 +29,12 @@ trait GazetteerSource:
     * relation finds it). `http` is the host's client for gazetteer downloads (its User-Agent and timeouts); a dataset
     * is one large download, so [[Plugin.Http.fetch]] (one request, the answer's status as it came) suits it best.
     */
-  def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]]
+  def fetch(http: Plugin.Http): Either[com.histmersion.plugin.GazetteerSource.FetchResultPart1, List[GazetteerPlace]]
+
+object GazetteerSource:
+  type TitleResult = TitleResult.T
+  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescriptionResult = DescriptionResult.T
+  object DescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchResultPart1 = FetchResultPart1.T
+  object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

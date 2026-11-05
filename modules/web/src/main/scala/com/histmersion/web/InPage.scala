@@ -12,7 +12,20 @@ import scala.scalajs.js
 object InPage:
 
   /** The id a same-page link points at: `#cite-3` → `cite-3`; anything else → `None`. Pure. */
-  def fragmentOf(href: String): Option[String] =
+  type FragmentOfResult = FragmentOfResult.T
+  object FragmentOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FragmentOfHref = FragmentOfHref.T
+  object FragmentOfHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScrollToId = ScrollToId.T
+  object ScrollToId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIndexResult = NextIndexResult.T
+  object NextIndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIndexCurrent = NextIndexCurrent.T
+  object NextIndexCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIndexCount = NextIndexCount.T
+  object NextIndexCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fragmentOf(href: com.histmersion.web.InPage.FragmentOfHref): Option[com.histmersion.web.InPage.FragmentOfResult] =
     Option(href).filter(h => h.startsWith("#") && h.length > 1).map(_.drop(1))
 
   /** One delegated click handler per content root. */
@@ -34,12 +47,12 @@ object InPage:
           case _ => ()
     )
 
-  private def scrollTo(root: dom.Element, id: String): Unit =
+  private def scrollTo(root: dom.Element, id: com.histmersion.web.InPage.ScrollToId): Unit =
     Option(root.querySelector(s"[id=\"${id.replace("\"", "")}\"]"))
       .foreach(_.asInstanceOf[js.Dynamic].scrollIntoView(js.Dynamic.literal(behavior = "smooth", block = "center")))
 
   /** The index of the match after `current` among `count`, wrapping — pure. */
-  def nextIndex(current: Int, count: Int): Int = if count <= 0 then -1 else (current + 1) % count
+  def nextIndex(current: com.histmersion.web.InPage.NextIndexCurrent, count: com.histmersion.web.InPage.NextIndexCount): com.histmersion.web.InPage.NextIndexResult = if count <= 0 then -1 else (current + 1) % count
 
   /** Step to the next `<mark id="hl…">`, remembering the position on the root. */
   def nextMatch(root: dom.Element): Unit =

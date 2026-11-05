@@ -38,6 +38,83 @@ import com.histmersion.util.storage.Store
   */
 object Supervisor:
 
+  type LayoutResultPart1 = LayoutResultPart1.T
+  object LayoutResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayoutEnvArg1 = LayoutEnvArg1.T
+  object LayoutEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayoutEnvResult = LayoutEnvResult.T
+  object LayoutEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayoutOsName = LayoutOsName.T
+  object LayoutOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgOptionsResult = PgOptionsResult.T
+  object PgOptionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgOptionsPort = PgOptionsPort.T
+  object PgOptionsPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgOptionsSettingsPart1 = PgOptionsSettingsPart1.T
+  object PgOptionsSettingsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgOptionsSettingsPart2 = PgOptionsSettingsPart2.T
+  object PgOptionsSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStartResult = PgStartResult.T
+  object PgStartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStartPort = PgStartPort.T
+  object PgStartPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStartSettingsPart1 = PgStartSettingsPart1.T
+  object PgStartSettingsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStartSettingsPart2 = PgStartSettingsPart2.T
+  object PgStartSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MbResult = MbResult.T
+  object MbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MbBytes = MbBytes.T
+  object MbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeV = SizeV.T
+  object SizeV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeAutoArg1 = SizeAutoArg1.T
+  object SizeAutoArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeAutoResult = SizeAutoResult.T
+  object SizeAutoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeRamBytes = SizeRamBytes.T
+  object SizeRamBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgSettingsResultPart1 = PgSettingsResultPart1.T
+  object PgSettingsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgSettingsResultPart2 = PgSettingsResultPart2.T
+  object PgSettingsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgSettingsRamBytes = PgSettingsRamBytes.T
+  object PgSettingsRamBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PhysicalMemoryResult = PhysicalMemoryResult.T
+  object PhysicalMemoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PhysicalMemoryOsName = PhysicalMemoryOsName.T
+  object PhysicalMemoryOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStopResult = PgStopResult.T
+  object PgStopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InitdbResult = InitdbResult.T
+  object InitdbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InitdbUser = InitdbUser.T
+  object InitdbUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConverterCmdResult = ConverterCmdResult.T
+  object ConverterCmdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConverterCmdPort = ConverterCmdPort.T
+  object ConverterCmdPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigureExplicitBind = ConfigureExplicitBind.T
+  object ConfigureExplicitBind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundledResult = BundledResult.T
+  object BundledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReloadSourceReadResultPart1 = ReloadSourceReadResultPart1.T
+  object ReloadSourceReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InitClusterUser = InitClusterUser.T
+  object InitClusterUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InitClusterPassword = InitClusterPassword.T
+  object InitClusterPassword extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuperviseConverterPort = SuperviseConverterPort.T
+  object SuperviseConverterPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResultPart1 = RunResultPart1.T
+  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCmd = RunCmd.T
+  object RunCmd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Layout(home: Path, data: Path):
     def pgBin: Path = home.resolve("pg").resolve("bin")
     def projData: Path = home.resolve("pg").resolve("share").resolve("proj")
@@ -55,9 +132,9 @@ object Supervisor:
   private[server] def layout(
       rc: RuntimeConfig,
       exe: Option[Path],
-      env: String => Option[String],
-      osName: String
-  ): Either[String, Layout] =
+      env: com.histmersion.server.Supervisor.LayoutEnvArg1 => Option[com.histmersion.server.Supervisor.LayoutEnvResult],
+      osName: com.histmersion.server.Supervisor.LayoutOsName
+  ): Either[com.histmersion.server.Supervisor.LayoutResultPart1, Layout] =
     val home = Option(rc.home)
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -72,11 +149,11 @@ object Supervisor:
   /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and the memory
     * settings ([[pgSettings]]).
     */
-  private[server] def pgOptions(port: Int, settings: List[(String, String)] = Nil): String =
+  private[server] def pgOptions(port: com.histmersion.server.Supervisor.PgOptionsPort, settings: List[(com.histmersion.server.Supervisor.PgOptionsSettingsPart1, com.histmersion.server.Supervisor.PgOptionsSettingsPart2)] = Nil): com.histmersion.server.Supervisor.PgOptionsResult =
     (s"-p $port -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
       settings.map((k, v) => s"-c $k=$v")).mkString(" ")
 
-  private[server] def pgStart(l: Layout, port: Int, settings: List[(String, String)] = Nil): List[String] =
+  private[server] def pgStart(l: Layout, port: com.histmersion.server.Supervisor.PgStartPort, settings: List[(com.histmersion.server.Supervisor.PgStartSettingsPart1, com.histmersion.server.Supervisor.PgStartSettingsPart2)] = Nil): List[com.histmersion.server.Supervisor.PgStartResult] =
     List(
       l.pgBin.resolve("pg_ctl").toString,
       "-D",
@@ -94,12 +171,12 @@ object Supervisor:
   private val MB = 1024L * 1024L
 
   /** A Postgres size for `bytes`, in whole megabytes. */
-  private def mb(bytes: Long): String = s"${math.max(1L, bytes / MB)}MB"
+  private def mb(bytes: com.histmersion.server.Supervisor.MbBytes): com.histmersion.server.Supervisor.MbResult = s"${math.max(1L, bytes / MB)}MB"
 
   /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the `-o` string),
     * `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the machine's memory is unknown).
     */
-  private def size(v: String, auto: Long => Long, ramBytes: Option[Long]): Option[String] =
+  private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ramBytes: Option[com.histmersion.server.Supervisor.SizeRamBytes]): Option[com.histmersion.server.Supervisor.SizeResult] =
     v.trim match
       case ""                                         => None
       case a if a.equalsIgnoreCase("auto")            => ramBytes.map(r => mb(auto(r)))
@@ -116,7 +193,7 @@ object Supervisor:
     *   - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
     *   - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory).
     */
-  private[server] def pgSettings(t: PgTuning, ramBytes: Option[Long]): List[(String, String)] =
+  private[server] def pgSettings(t: PgTuning, ramBytes: Option[com.histmersion.server.Supervisor.PgSettingsRamBytes]): List[(com.histmersion.server.Supervisor.PgSettingsResultPart1, com.histmersion.server.Supervisor.PgSettingsResultPart2)] =
     List(
       "shared_buffers" -> size(t.sharedBuffers, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
       "effective_cache_size" -> size(t.effectiveCacheSize, r => math.max(512 * MB, r / 2), ramBytes),
@@ -124,7 +201,7 @@ object Supervisor:
     ).collect { case (k, Some(v)) => k -> v }
 
   /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. */
-  private def physicalMemory(osName: String): Option[Long] =
+  private def physicalMemory(osName: com.histmersion.server.Supervisor.PhysicalMemoryOsName): Option[com.histmersion.server.Supervisor.PhysicalMemoryResult] =
     scala.util
       .Try {
         if osName.toLowerCase.contains("mac") then
@@ -141,10 +218,10 @@ object Supervisor:
       .toOption
       .flatten
 
-  private[server] def pgStop(l: Layout): List[String] =
+  private[server] def pgStop(l: Layout): List[com.histmersion.server.Supervisor.PgStopResult] =
     List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-m", "fast", "-w", "stop")
 
-  private[server] def initdb(l: Layout, user: String, pwFile: Path): List[String] =
+  private[server] def initdb(l: Layout, user: com.histmersion.server.Supervisor.InitdbUser, pwFile: Path): List[com.histmersion.server.Supervisor.InitdbResult] =
     List(
       l.pgBin.resolve("initdb").toString,
       "-D",
@@ -158,13 +235,13 @@ object Supervisor:
       "--locale=C"
     )
 
-  private[server] def converterCmd(l: Layout, port: Int): List[String] =
+  private[server] def converterCmd(l: Layout, port: com.histmersion.server.Supervisor.ConverterCmdPort): List[com.histmersion.server.Supervisor.ConverterCmdResult] =
     List(l.python.toString, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", port.toString)
 
   /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
     * backups dir other than the default, a pg-bin-dir) are kept.
     */
-  private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[String] = None): AppConfig =
+  private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[com.histmersion.server.Supervisor.ConfigureExplicitBind] = None): AppConfig =
     val dbName = Backup.parseJdbc(cfg.db.url).toOption.map(_.database).filter(_.nonEmpty).getOrElse("histmersion")
     cfg.copy(
       // a desktop install is private by default, so the bind address is loopback unless the user
@@ -197,7 +274,7 @@ object Supervisor:
   /** True when `exe` sits in a bundle (`<home>/bin/<exe>` beside `<home>/pg/bin/pg_ctl`): running the bundled server
     * needs no configuration at all.
     */
-  def bundled(exe: Option[Path]): Boolean =
+  def bundled(exe: Option[Path]): com.histmersion.server.Supervisor.BundledResult =
     exe
       .flatMap(e => Option(e.toAbsolutePath.getParent))
       .flatMap(b => Option(b.getParent))
@@ -262,7 +339,7 @@ object Supervisor:
     * `runtime.*`, are restart-only), and a database the reload names is created in the bundled cluster before a pool
     * opens on it. `started` is the config [[start]] was given.
     */
-  def reloadSource(started: AppConfig, read: () => Either[String, LoadedConfig], paths: UserPaths): ConfigSource =
+  def reloadSource(started: AppConfig, read: () => Either[com.histmersion.server.Supervisor.ReloadSourceReadResultPart1, LoadedConfig], paths: UserPaths): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e), identity)
     val bind = paths.environment.get("HISTMERSION_BIND")
@@ -272,7 +349,7 @@ object Supervisor:
       c => scala.util.Try(ensureDatabase(c)).toEither.left.map(e => s"cannot create the database: ${e.getMessage}")
     )
 
-  private def initCluster(l: Layout, user: String, password: String): Unit =
+  private def initCluster(l: Layout, user: com.histmersion.server.Supervisor.InitClusterUser, password: com.histmersion.server.Supervisor.InitClusterPassword): Unit =
     val pw = Files.createTempFile("histmersion-pw", "")
     try
       Files.writeString(pw, password)
@@ -299,7 +376,7 @@ object Supervisor:
   /** Run the converter; when it exits unexpectedly, restart it after 1, 2, 4 … 60 s (reset once a run has lasted a
     * minute).
     */
-  private def superviseConverter(l: Layout, port: Int): Unit =
+  private def superviseConverter(l: Layout, port: com.histmersion.server.Supervisor.SuperviseConverterPort): Unit =
     val t = Thread.ofPlatform().daemon(true).name("histmersion-converter").unstarted { () =>
       var backoffMs = 1000L
       while !stopping.get() do
@@ -339,7 +416,7 @@ object Supervisor:
     if rc != 0 then scribe.error(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")
 
   /** Run a Postgres tool with the bundle's environment; returns (exit code, output lines). */
-  private def run(cmd: List[String], l: Layout): (Int, List[String]) =
+  private def run(cmd: List[com.histmersion.server.Supervisor.RunCmd], l: Layout): (com.histmersion.server.Supervisor.RunResultPart1, List[com.histmersion.server.Supervisor.RunResultPart2]) =
     processes
       .run(ProcessLaunch(cmd, environment = Map("PROJ_DATA" -> l.projData.toString)))
       .fold(e => throw java.io.IOException(e), r => (r.exitCode, r.lines))

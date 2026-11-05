@@ -1,0 +1,85 @@
+package com.histmersion.domain.catalogue.periods
+
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.data.exchange.BundleScope
+import com.histmersion.util.data.exchange.BundleSql.*
+import com.histmersion.domain.catalogue.places.PlaceSql
+import com.histmersion.util.database.RangeSql
+
+import com.histmersion.util.database.given
+import com.augustnagro.magnum.*
+import java.util.UUID
+import com.histmersion.api.exchange.Bundle
+
+/** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
+  * in a deterministic order, and written in by an import.
+  */
+private[periods] object PeriodBundleRepo:
+
+  /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
+  def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[Bundle.Period] =
+    val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
+    val sel = if alsoIds.isEmpty then own
+    else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
+    (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
+                       ${ts("p.updated_at")}
+                FROM periods p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
+      Bundle.Period(
+        r.uid,
+        r.origin,
+        r.id,
+        r.label,
+        r.authority,
+        range(r.pNull, r.pLo, r.pHi),
+        r.region,
+        r.parentId,
+        r.updatedAt
+      )
+    }
+
+  /** Which of `ids` name a period here. */
+  def present(ids: List[String])(using DbCon): Set[String] =
+    if ids.isEmpty then Set.empty
+    else sql"SELECT id FROM periods WHERE id = ANY(${ids.distinct}::text[])".query[String].run().toSet
+
+  /** A bundle period with no id here that names a period here: the same label (reduced) and spans sharing a year.
+    */
+  def matchPeriods(ps: List[Bundle.Period])(using DbCon): Map[UUID, String] =
+    val norm = PlaceSql.normLabelSql("p.label")
+    ps.flatMap { b =>
+      val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))
+      Sql
+        .of(
+          s"""SELECT p.id FROM periods p
+            WHERE $norm = ${PlaceSql.normLabelSql("?")}
+              AND p.period && ${RangeSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
+            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1""",
+          Param.S(b.label),
+          Param.S(lo.fold("")(_.toString)),
+          Param.S(hi.fold("")(_.toString))
+        )
+        .frag
+        .query[String]
+        .run()
+        .headOption
+        .map(b.uid -> _)
+    }.toMap
+
+  /** Named periods of the other collection's own (V052), then their parents. */
+  def periodsIn(w: BundleImport.Writer): Unit =
+    given DbCon = w.transaction
+    val periods = w.es.periods.filter(p => w.writes(p.uid))
+    periods.foreach { p =>
+      val range = rangeOrAll(p.period)
+      sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at)
+            VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
+              $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz)
+            ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
+              authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
+              dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()
+    }
+    periods.foreach { p =>
+      sql"""UPDATE periods SET parent_id = (SELECT id FROM periods WHERE id = ${p.parentId}), updated_at = ${p.updatedAt}::timestamptz
+            WHERE uid = ${p.uid}""".update.run()
+    }

@@ -16,11 +16,16 @@ import hearth.kindlings.optics.syntax.*
   * which of the bundle's event ids and old ids name an event here.
   */
 object EventMergeRules extends MergeRules:
+  type LedgerLabel = LedgerLabel.T
+  object LedgerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Referable = Referable.T
+  object Referable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
   val kind: Bundle.Kind = Bundle.Kind.Event
-  override val ledgerLabel: Option[String] = Some("SELECT id FROM events WHERE uid = l.local_uid")
-  override val referable: Boolean = true
+  override val ledgerLabel: Option[com.histmersion.domain.catalogue.events.EventMergeRules.LedgerLabel] = Some("SELECT id FROM events WHERE uid = l.local_uid")
+  override val referable: com.histmersion.domain.catalogue.events.EventMergeRules.Referable = true
 
   override def gather(
       bundle: BundleEntities,

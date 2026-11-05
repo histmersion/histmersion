@@ -24,6 +24,55 @@ private[places] object PointAreaRepo:
     * spend before it returns what is left (an HTTP request must end well inside netty's idle timeout); `toleranceKm`
     * the point tolerance the re-match uses.
     */
+  type Sources = Sources.T
+  object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsInKinds = GroupsInKinds.T
+  object GroupsInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoldersInKinds = HoldersInKinds.T
+  object HoldersInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SampleInKinds = SampleInKinds.T
+  object SampleInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SampleInN = SampleInN.T
+  object SampleInN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportInKinds = ReportInKinds.T
+  object ReportInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportInMaxItems = ReportInMaxItems.T
+  object ReportInMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemovableInResult = RemovableInResult.T
+  object RemovableInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemovableInKinds = RemovableInKinds.T
+  object RemovableInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeletePlacesInResult = DeletePlacesInResult.T
+  object DeletePlacesInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeletePlacesInIds = DeletePlacesInIds.T
+  object DeletePlacesInIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceInResult = OfSourceInResult.T
+  object OfSourceInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceInSource = OfSourceInSource.T
+  object OfSourceInSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceInKinds = OfSourceInKinds.T
+  object OfSourceInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameKeysInResultPart1 = NameKeysInResultPart1.T
+  object NameKeysInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameKeysInResultPart2 = NameKeysInResultPart2.T
+  object NameKeysInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInResultPart1 = RemoveInResultPart1.T
+  object RemoveInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInResultPart2 = RemoveInResultPart2.T
+  object RemoveInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInResultPart3 = RemoveInResultPart3.T
+  object RemoveInResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInIds0 = RemoveInIds0.T
+  object RemoveInIds0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInKinds = RemoveInKinds.T
+  object RemoveInKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInToleranceKm = RemoveInToleranceKm.T
+  object RemoveInToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInNamedPart1 = RemoveInNamedPart1.T
+  object RemoveInNamedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveInNamedPart2 = RemoveInNamedPart2.T
+  object RemoveInNamedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Settings(kinds: List[Settings.Kinds], batch: Settings.Batch, budgetMs: Settings.BudgetMs, toleranceKm: Settings.ToleranceKm)
 
   object Settings:
@@ -39,9 +88,12 @@ private[places] object PointAreaRepo:
   /** What one [[remove]] call did. */
   final case class Removal(removed: Removal.Removed, remaining: Removal.Remaining, findings: Removal.Findings, sources: Removal.Sources):
     /** The line `lint --fix` reports it with. */
-    def line: String = PointAreas.fixed(removed, remaining, findings, sources)
+    def line: com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.LineResult = PointAreas.fixed(removed, remaining, findings, sources)
 
   object Removal:
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Removed = Removed.T
     object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Remaining = Remaining.T
@@ -51,7 +103,7 @@ private[places] object PointAreaRepo:
     type Sources = Sources.T
     object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private val sources: List[String] = Gazetteer.PointAreaSources
+  private val sources: List[com.histmersion.domain.catalogue.places.PointAreaRepo.Sources] = Gazetteer.PointAreaSources
 
   final private case class Row(
       id: Row.Id,
@@ -91,7 +143,7 @@ private[places] object PointAreaRepo:
     object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The counts by source, kind and dating. */
-  def groupsIn(kinds: List[String])(using DbCon): List[Group] =
+  def groupsIn(kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.GroupsInKinds])(using DbCon): List[Group] =
     sql"""SELECT p.import_source, p.kind, coalesce(p.start_unknown, false),
                  coalesce(lower_inf(p.period), true), coalesce(upper_inf(p.period), true), count(*)::int
           FROM places p
@@ -108,7 +160,7 @@ private[places] object PointAreaRepo:
   /** Every such place that holds a finding or that evidence names. `alone`: the findings it holds that hold no OTHER
     * place that would survive the removal.
     */
-  def holdersIn(kinds: List[String])(using DbCon): List[Listed] =
+  def holdersIn(kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.HoldersInKinds])(using DbCon): List[Listed] =
     sql"""WITH a AS MATERIALIZED (
             SELECT p.id, p.label, p.import_source, p.kind, coalesce(p.start_unknown, false) AS su,
                    coalesce(lower_inf(p.period), true) AS li, coalesce(upper_inf(p.period), true) AS ui
@@ -136,7 +188,7 @@ private[places] object PointAreaRepo:
           ORDER BY a.id""".query[Row].run().toList.map(_.listed)
 
   /** The first `n` such places by id — the sample the listing ends with. */
-  def sampleIn(kinds: List[String], n: Int)(using DbCon): List[Listed] =
+  def sampleIn(kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.SampleInKinds], n: com.histmersion.domain.catalogue.places.PointAreaRepo.SampleInN)(using DbCon): List[Listed] =
     sql"""SELECT p.id, p.label, p.import_source, p.kind, coalesce(p.start_unknown, false),
                  coalesce(lower_inf(p.period), true), coalesce(upper_inf(p.period), true), 0, 0, 0
           FROM places p
@@ -145,12 +197,12 @@ private[places] object PointAreaRepo:
           ORDER BY p.id LIMIT ${math.max(0, n)}""".query[Row].run().toList.map(_.listed)
 
   /** The rule's report. */
-  def reportIn(rule: Lint.Rule, kinds: List[String], maxItems: Int)(using DbCon): Lint.LintRuleReport =
+  def reportIn(rule: Lint.Rule, kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.ReportInKinds], maxItems: com.histmersion.domain.catalogue.places.PointAreaRepo.ReportInMaxItems)(using DbCon): Lint.LintRuleReport =
     if kinds.isEmpty then Lint.LintRuleReport(rule.name, rule.description, 0, Nil)
     else PointAreas.report(rule, groupsIn(kinds), holdersIn(kinds), sampleIn(kinds, maxItems), maxItems)
 
   /** The ids `--fix` may remove: every listed place no evidence names. */
-  private[places] def removableIn(kinds: List[String])(using DbCon): List[String] =
+  private[places] def removableIn(kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.RemovableInKinds])(using DbCon): List[com.histmersion.domain.catalogue.places.PointAreaRepo.RemovableInResult] =
     sql"""SELECT p.id FROM places p
           WHERE p.import_source = ANY($sources::text[]) AND p.kind = ANY($kinds::text[])
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
@@ -165,7 +217,7 @@ private[places] object PointAreaRepo:
     * keeps the cascade idle); an event naming one keeps its row and loses its place (`SET NULL`). Returns the places
     * deleted. Shared with the importer's prune ([[GazetteerImport.Session.prune]]).
     */
-  private[places] def deletePlacesIn(ids: List[String])(using DbCon): Int =
+  private[places] def deletePlacesIn(ids: List[com.histmersion.domain.catalogue.places.PointAreaRepo.DeletePlacesInIds])(using DbCon): com.histmersion.domain.catalogue.places.PointAreaRepo.DeletePlacesInResult =
     if ids.isEmpty then 0
     else
       val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
@@ -184,7 +236,7 @@ private[places] object PointAreaRepo:
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
     * ([[GazetteerImport.Session.prune]]).
     */
-  private[places] def ofSourceIn(source: String, kinds: List[String])(using DbCon): List[String] =
+  private[places] def ofSourceIn(source: com.histmersion.domain.catalogue.places.PointAreaRepo.OfSourceInSource, kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.OfSourceInKinds])(using DbCon): List[com.histmersion.domain.catalogue.places.PointAreaRepo.OfSourceInResult] =
     sql"""SELECT p.id FROM places p
           WHERE p.import_source = $source AND p.kind = ANY($kinds::text[])
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
@@ -200,7 +252,7 @@ private[places] object PointAreaRepo:
     * point region, before "Bohemia"), and chooses the seed place once that is gone. Every other match an imported point
     * has is a finding ON it, which the place's own rows say.
     */
-  private[places] def nameKeysIn()(using DbCon): Map[String, Set[String]] =
+  private[places] def nameKeysIn()(using DbCon): Map[com.histmersion.domain.catalogue.places.PointAreaRepo.NameKeysInResultPart1, Set[com.histmersion.domain.catalogue.places.PointAreaRepo.NameKeysInResultPart2]] =
     val findings =
       sql"""SELECT DISTINCT citekey, btrim(region_name) FROM findings WHERE btrim(coalesce(region_name, '')) <> ''"""
         .query[(String, String)]
@@ -233,13 +285,13 @@ private[places] object PointAreaRepo:
     * place for it, and now chooses the seed region, which takes the finding by its name ("Thrace").
     */
   private[places] def removeIn(
-      ids0: List[String],
-      kinds: List[String],
-      toleranceKm: Double,
-      named: Map[String, Set[String]]
+      ids0: List[com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInIds0],
+      kinds: List[com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInKinds],
+      toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInToleranceKm,
+      named: Map[com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInNamedPart1, Set[com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInNamedPart2]]
   )(using
       DbCon
-  ): (Int, Int, Set[String]) =
+  ): (com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInResultPart1, com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInResultPart2, Set[com.histmersion.domain.catalogue.places.PointAreaRepo.RemoveInResultPart3]) =
     val ids = sql"""SELECT p.id FROM places p
                     WHERE p.id = ANY($ids0::text[])
                       AND p.import_source = ANY($sources::text[]) AND p.kind = ANY($kinds::text[])

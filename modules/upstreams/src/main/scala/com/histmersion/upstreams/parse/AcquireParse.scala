@@ -17,26 +17,99 @@ import com.histmersion.upstreams.unpaywall.OaAccess
 object AcquireParse:
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
-  private def str(c: ACursor, keys: String*): Option[String] =
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntResult = IntResult.T
+  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoolResult = BoolResult.T
+  object BoolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringsResult = StringsResult.T
+  object StringsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TailResult = TailResult.T
+  object TailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TailUri = TailUri.T
+  object TailUri extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenalexAbstractResult = OpenalexAbstractResult.T
+  object OpenalexAbstractResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenalexOaLocationsResult = OpenalexOaLocationsResult.T
+  object OpenalexOaLocationsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenalexPdfUrlsResult = OpenalexPdfUrlsResult.T
+  object OpenalexPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivIdFromUrlResult = ArxivIdFromUrlResult.T
+  object ArxivIdFromUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivIdFromUrlUrl = ArxivIdFromUrlUrl.T
+  object ArxivIdFromUrlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlineMarkupResult = InlineMarkupResult.T
+  object InlineMarkupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlineMarkupS = InlineMarkupS.T
+  object InlineMarkupS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GluedPageNumberResult = GluedPageNumberResult.T
+  object GluedPageNumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GluedPageNumberS = GluedPageNumberS.T
+  object GluedPageNumberS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripTagsResult = StripTagsResult.T
+  object StripTagsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripTagsS = StripTagsS.T
+  object StripTagsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnpaywallResultPart1 = UnpaywallResultPart1.T
+  object UnpaywallResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnpaywallResultPart2 = UnpaywallResultPart2.T
+  object UnpaywallResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EuropePmcFree = EuropePmcFree.T
+  object EuropePmcFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EuropepmcHitDoi = EuropepmcHitDoi.T
+  object EuropepmcHitDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PmcLatestVersionResult = PmcLatestVersionResult.T
+  object PmcLatestVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PmcLatestVersionListXml = PmcLatestVersionListXml.T
+  object PmcLatestVersionListXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PmcLatestVersionPmcid = PmcLatestVersionPmcid.T
+  object PmcLatestVersionPmcid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PmcObjectS3 = PmcObjectS3.T
+  object PmcObjectS3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoreDownloadUrlsResult = CoreDownloadUrlsResult.T
+  object CoreDownloadUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type S2NextResult = S2NextResult.T
+  object S2NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArchiveItemIdentifier = ArchiveItemIdentifier.T
+  object ArchiveItemIdentifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickArchiveFileWant = PickArchiveFileWant.T
+  object PickArchiveFileWant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiTitleResult = WikiTitleResult.T
+  object WikiTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiTextResult = WikiTextResult.T
+  object WikiTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiRefsResultPart1 = WikiRefsResultPart1.T
+  object WikiRefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiRefsResultPart2 = WikiRefsResultPart2.T
+  object WikiRefsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiRefsWikitext = WikiRefsWikitext.T
+  object WikiRefsWikitext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiPageTitleResult = WikiPageTitleResult.T
+  object WikiPageTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiPageTitleUrl = WikiPageTitleUrl.T
+  object WikiPageTitleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def str(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.StrResult] =
     keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)
-  private def int(c: ACursor, keys: String*): Option[Int] =
+  private def int(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.IntResult] =
     keys.foldLeft(c)(_.downField(_)).as[Int].toOption
-  private def bool(c: ACursor, keys: String*): Boolean =
+  private def bool(c: ACursor, keys: String*): com.histmersion.upstreams.parse.AcquireParse.BoolResult =
     keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false)
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
-  private def strings(c: ACursor, keys: String*): List[String] =
+  private def strings(c: ACursor, keys: String*): List[com.histmersion.upstreams.parse.AcquireParse.StringsResult] =
     arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)
 
   /** The trailing path segment of an OpenAlex URI (`https://openalex.org/W123` → `W123`). */
-  private def tail(uri: String): String = uri.split("/").lastOption.getOrElse(uri)
+  private def tail(uri: com.histmersion.upstreams.parse.AcquireParse.TailUri): com.histmersion.upstreams.parse.AcquireParse.TailResult = uri.split("/").lastOption.getOrElse(uri)
 
   // ── OpenAlex ────────────────────────────────────────────────────────────────────────────────
 
   /** OpenAlex ships abstracts as an inverted index (`word -> [positions]`) because publishers forbid redistributing the
     * running text. Re-ordering the positions restores it — the same trick `discover.py::_abstract` used.
     */
-  def openalexAbstract(json: Json): Option[String] =
+  def openalexAbstract(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.OpenalexAbstractResult] =
     json.asObject
       .map { o =>
         val words = o.toList.flatMap { (w, positions) =>
@@ -82,7 +155,7 @@ object AcquireParse:
     )
 
   /** The open locations' landing pages and PDFs, the best location first. */
-  private def openalexOaLocations(c: ACursor): List[String] =
+  private def openalexOaLocations(c: ACursor): List[com.histmersion.upstreams.parse.AcquireParse.OpenalexOaLocationsResult] =
     val best = c.downField("best_oa_location")
     val open = arr(c, "locations").filter(l => bool(l.hcursor, "is_oa"))
     (List(str(best, "landing_page_url"), str(best, "pdf_url")).flatten ++
@@ -95,14 +168,14 @@ object AcquireParse:
   /** OA locations OpenAlex knows about, best first — catches green-OA repository PDFs (PMC, bioRxiv) that Unpaywall's
     * `best_oa_location` sometimes misses.
     */
-  def openalexPdfUrls(json: Json): List[String] =
+  def openalexPdfUrls(json: Json): List[com.histmersion.upstreams.parse.AcquireParse.OpenalexPdfUrlsResult] =
     val c = json.hcursor
     val oa = str(c, "open_access", "oa_url").toList
     val best = str(c.downField("best_oa_location"), "pdf_url").toList
     val rest = arr(c, "locations").flatMap(l => str(l.hcursor, "pdf_url"))
     (best ++ oa ++ rest).distinct
 
-  private def arxivIdFromUrl(url: String): Option[String] =
+  private def arxivIdFromUrl(url: com.histmersion.upstreams.parse.AcquireParse.ArxivIdFromUrlUrl): Option[com.histmersion.upstreams.parse.AcquireParse.ArxivIdFromUrlResult] =
     if !url.toLowerCase.contains("arxiv.org") then None
     else Identifiers.arxiv(url.split("/").lastOption.getOrElse("").stripSuffix(".pdf"))
 
@@ -155,13 +228,13 @@ object AcquireParse:
   /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a space — they sit
     * inside words — and collapse what is left.
     */
-  private[upstreams] def inlineMarkup(s: String): String =
+  private[upstreams] def inlineMarkup(s: com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS): com.histmersion.upstreams.parse.AcquireParse.InlineMarkupResult =
     s.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion in …". Digits
     * running straight into a capitalised word are that page; "1177 B.C." (a space) and "3.2 ka" are left alone.
     */
-  private[upstreams] def gluedPageNumber(s: String): String =
+  private[upstreams] def gluedPageNumber(s: com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberS): com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberResult =
     s.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", "")
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
@@ -169,7 +242,7 @@ object AcquireParse:
     json.hcursor.downField("message").downField("items").values.toList.flatten.map(crossrefWork)
 
   /** Crossref abstracts are JATS XML fragments. */
-  private def stripTags(s: String): String =
+  private def stripTags(s: com.histmersion.upstreams.parse.AcquireParse.StripTagsS): com.histmersion.upstreams.parse.AcquireParse.StripTagsResult =
     s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
 
   /** The deposited `reference[]` array — structured, often carrying DOIs, and free of tokens. */
@@ -200,7 +273,7 @@ object AcquireParse:
 
   /** `(pdf urls best-first, oa_status)`. Unpaywall's `best_oa_location` first, then every other location it lists.
     */
-  def unpaywall(json: Json): (List[String], Option[String]) =
+  def unpaywall(json: Json): (List[com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart1], Option[com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart2]) =
     val c = json.hcursor
     val best = str(c.downField("best_oa_location"), "url_for_pdf").toList
     val rest = arr(c, "oa_locations").flatMap(l => str(l.hcursor, "url_for_pdf"))
@@ -221,12 +294,12 @@ object AcquireParse:
   // ── Europe PMC / PMC Article Datasets ───────────────────────────────────────────────────────
 
   /** Europe PMC availability codes that mean a reader may download the copy without an account. */
-  val EuropePmcFree: Set[String] = Set("OA", "F")
+  val EuropePmcFree: Set[com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree] = Set("OA", "F")
 
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
     */
-  def europepmcHit(json: Json, doi: String): Option[EuropePmcHit] =
+  def europepmcHit(json: Json, doi: com.histmersion.upstreams.parse.AcquireParse.EuropepmcHitDoi): Option[EuropePmcHit] =
     val want = Identifiers.doi(doi)
     arr(json.hcursor, "resultList", "result")
       .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(Identifiers.doi) == want)
@@ -250,7 +323,7 @@ object AcquireParse:
   /** The newest version NCBI publishes of `pmcid`, from an S3 `ListObjectsV2` answer for the prefix `metadata/<pmcid>.`
     * (keys `metadata/PMC123.1.json`, `metadata/PMC123.2.json`, …).
     */
-  def pmcLatestVersion(listXml: String, pmcid: String): Option[Int] =
+  def pmcLatestVersion(listXml: com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionListXml, pmcid: com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionPmcid): Option[com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionResult] =
     if !PmcId.matches(pmcid) then None
     else
       val key = ("<Key>metadata/" + pmcid + """\.(\d+)\.json</Key>""").r
@@ -273,12 +346,12 @@ object AcquireParse:
   /** `s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf?md5=…` → the key and the MD5. Only the shapes the dataset uses are
     * accepted, so a record can never point a download outside an article's own folder.
     */
-  def pmcObject(s3: String): Option[PmcObject] =
+  def pmcObject(s3: com.histmersion.upstreams.parse.AcquireParse.PmcObjectS3): Option[PmcObject] =
     S3Url.findFirstMatchIn(s3.trim).map(m => PmcObject(m.group(1), Option(m.group(2)).map(_.toLowerCase)))
 
   private val S3Url = """^s3://[a-z0-9.-]+/(PMC\d+\.\d+/[A-Za-z0-9_-][A-Za-z0-9._-]*)(?:\?md5=([0-9a-fA-F]{32}))?$""".r
 
-  def coreDownloadUrls(json: Json): List[String] =
+  def coreDownloadUrls(json: Json): List[com.histmersion.upstreams.parse.AcquireParse.CoreDownloadUrlsResult] =
     arr(json.hcursor, "results").flatMap(r => str(r.hcursor, "downloadUrl"))
 
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
@@ -303,7 +376,7 @@ object AcquireParse:
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[Int] = int(json.hcursor, "next")
+  def s2Next(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.S2NextResult] = int(json.hcursor, "next")
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -313,7 +386,7 @@ object AcquireParse:
     * but never downloaded here. The Python tool refused at exactly this point and so do we — there is no DRM
     * circumvention anywhere in this pipeline.
     */
-  def archiveItem(identifier: String, json: Json): ArchiveItem =
+  def archiveItem(identifier: com.histmersion.upstreams.parse.AcquireParse.ArchiveItemIdentifier, json: Json): ArchiveItem =
     val c = json.hcursor
     val m = c.downField("metadata")
     val yr = str(m, "year").orElse(str(m, "date")).map(_.take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
@@ -357,7 +430,7 @@ object AcquireParse:
   /** Pick the best downloadable file: a clean text format (EPUB, or the OCR'd `_text.pdf`) beats the giant raw image
     * scan, unless the caller asks for a specific format. Returns the file name.
     */
-  def pickArchiveFile(files: List[ArchiveFile], want: Option[String]): Option[ArchiveFile] =
+  def pickArchiveFile(files: List[ArchiveFile], want: Option[com.histmersion.upstreams.parse.AcquireParse.PickArchiveFileWant]): Option[ArchiveFile] =
     def ext(f: ArchiveFile) = f.name.toLowerCase.split("\\.").lastOption.getOrElse("")
     val epubs = files.filter(ext(_) == "epub")
     val textPdfs = files.filter(_.name.toLowerCase.endsWith("_text.pdf"))
@@ -374,21 +447,21 @@ object AcquireParse:
   private val ArxivInText = """(?i)arxiv\s*[:=]\s*([0-9]{4}\.[0-9]{4,5})""".r
 
   /** The article title from `action=parse&prop=wikitext` (after redirects). */
-  def wikiTitle(json: Json): Option[String] = str(json.hcursor.downField("parse"), "title")
+  def wikiTitle(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTitleResult] = str(json.hcursor.downField("parse"), "title")
 
-  def wikiText(json: Json): Option[String] =
+  def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTextResult] =
     json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption
 
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
-  def wikiRefs(wikitext: String): (List[String], List[String]) =
+  def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.WikiRefsWikitext): (List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart1], List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart2]) =
     val dois = DoiInText.findAllIn(wikitext).toList.flatMap(Identifiers.doi).distinct.sorted
     val arxiv = ArxivInText.findAllMatchIn(wikitext).map(_.group(1)).toList.distinct.sorted
     (dois, arxiv)
 
   /** The Wikipedia page title of an article URL (`…/wiki/Late_Bronze_Age_collapse`). */
-  def wikiPageTitle(url: String): Option[String] =
+  def wikiPageTitle(url: com.histmersion.upstreams.parse.AcquireParse.WikiPageTitleUrl): Option[com.histmersion.upstreams.parse.AcquireParse.WikiPageTitleResult] =
     val s = url.trim.stripSuffix("/")
     Option(if s.contains("/wiki/") then s.split("/wiki/").last else s)
       .map(_.split("[?#]").head)

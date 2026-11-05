@@ -28,7 +28,7 @@ enum Route:
   case Job(id: String)
 
   /** The address of the page — without the hash, which carries the filters and the open windows. */
-  def path: String = this match
+  def path: com.histmersion.web.Route.PathResult = this match
     case Explore       => "/explore"
     case Library(s)    => sub("/library", s.slug)
     case Research(s)   => sub("/research", s.slug)
@@ -44,7 +44,7 @@ enum Route:
     case Manager(id)   => s"/manager/${HtmlAtoms.segment(id)}"
     case Job(id)       => s"/job/${HtmlAtoms.segment(id)}"
 
-  private def sub(base: String, slug: String): String = if slug.isEmpty then base else s"$base/$slug"
+  private def sub(base: com.histmersion.web.Route.SubBase, slug: com.histmersion.web.Route.SubSlug): com.histmersion.web.Route.SubResult = if slug.isEmpty then base else s"$base/$slug"
 
   /** The top bar's tab this page sits under. */
   def place: PlaceTab = this match
@@ -54,7 +54,7 @@ enum Route:
     case Settings(_) | Setup                                                => PlaceTab.Settings
 
   /** Whether the server renders this page itself (a full page load), rather than the web UI. */
-  def serverPage: Boolean = this match
+  def serverPage: com.histmersion.web.Route.ServerPageResult = this match
     case Source(_) | Article(_) => true
     case _                      => false
 
@@ -69,23 +69,56 @@ enum Route:
 object Route:
 
   /** The front page of each place. */
+  type PathResult = PathResult.T
+  object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubResult = SubResult.T
+  object SubResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubBase = SubBase.T
+  object SubBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubSlug = SubSlug.T
+  object SubSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServerPageResult = ServerPageResult.T
+  object ServerPageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegmentsResult = SegmentsResult.T
+  object SegmentsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegmentsPath = SegmentsPath.T
+  object SegmentsPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeResult = DecodeResult.T
+  object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeS = DecodeS.T
+  object DecodeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePath = ParsePath.T
+  object ParsePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HrefOfResult = HrefOfResult.T
+  object HrefOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueItemResult = QueueItemResult.T
+  object QueueItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueItemId = QueueItemId.T
+  object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyPath = LegacyPath.T
+  object LegacyPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsAppPathResult = IsAppPathResult.T
+  object IsAppPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsAppPathPath = IsAppPathPath.T
+  object IsAppPathPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def front(p: PlaceTab): Route = p match
     case PlaceTab.Explore  => Explore
     case PlaceTab.Library  => Library(LibrarySection.Sources)
     case PlaceTab.Research => Research(ResearchSection.Overview)
     case PlaceTab.Settings => Settings(SettingsSection.General)
 
-  private def segments(path: String): List[String] =
+  private def segments(path: com.histmersion.web.Route.SegmentsPath): List[com.histmersion.web.Route.SegmentsResult] =
     Option(path).getOrElse("").split('/').toList.filter(_.nonEmpty).map(decode)
 
-  private def decode(s: String): String =
+  private def decode(s: com.histmersion.web.Route.DecodeS): com.histmersion.web.Route.DecodeResult =
     try js.URIUtils.decodeURIComponent(s)
     catch case _: Throwable => s
 
   /** The page an address stands for; `None` for one the web UI does not know. The root and the old addresses of the
     * lists (`/acquire`, `/tasks`, `/log`, `/merge`) are [[legacy]]'s.
     */
-  def parse(path: String): Option[Route] =
+  def parse(path: com.histmersion.web.Route.ParsePath): Option[Route] =
     segments(path) match
       case List("explore")   => Some(Explore)
       case "library" :: rest =>
@@ -169,7 +202,7 @@ object Route:
   /** Where a link to `key` points: the item's own page, the page that took over its window, else the map with that
     * window open (a citation graph, a source's editor).
     */
-  def hrefOf(key: WindowKey): String =
+  def hrefOf(key: WindowKey): com.histmersion.web.Route.HrefOfResult =
     ofItem(key)
       .orElse(ofWindow(key))
       .orElse(Option.when(key == WindowKey.ApiKey)(Settings(SettingsSection.Keys)))
@@ -177,7 +210,7 @@ object Route:
       .getOrElse(s"${Explore.path}#open=${js.URIUtils.encodeURIComponent(key.wire)}")
 
   /** The page of a list item: the list, scrolled to the item and marked (`?item=`). */
-  def queueItem(kind: Queue.Kind, id: Int): String =
+  def queueItem(kind: Queue.Kind, id: com.histmersion.web.Route.QueueItemId): com.histmersion.web.Route.QueueItemResult =
     val list = kind match
       case Queue.Kind.Acquire => Research(ResearchSection.Acquire)
       case Queue.Kind.Tasks   => Research(ResearchSection.Backlog)
@@ -192,7 +225,7 @@ object Route:
     * are dropped, and the windows of single items stay open over it. `None` when the address is already a page of its
     * own and names no toolbar window. Pure.
     */
-  def legacy(path: String, open: List[WindowKey]): Option[Landing] =
+  def legacy(path: com.histmersion.web.Route.LegacyPath, open: List[WindowKey]): Option[Landing] =
     val byPath: Option[Route] = segments(path) match
       case Nil           => Some(Explore)
       case List("merge") => Some(Library(LibrarySection.Merge))
@@ -211,4 +244,4 @@ object Route:
       Some(Landing(target, items))
 
   /** Is a path one the web UI's page answers (the server serves it the app)? Pure. */
-  def isAppPath(path: String): Boolean = parse(path).exists(!_.serverPage) || legacy(path, Nil).isDefined
+  def isAppPath(path: com.histmersion.web.Route.IsAppPathPath): com.histmersion.web.Route.IsAppPathResult = parse(path).exists(!_.serverPage) || legacy(path, Nil).isDefined

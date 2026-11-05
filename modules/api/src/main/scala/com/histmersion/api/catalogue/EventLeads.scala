@@ -4,17 +4,40 @@ import com.histmersion.api.{Plural, TimeSpan, YearFmt}
 import com.histmersion.api.given
 object EventLeads:
 
-  def years(ts: TimeSpan): String =
+  type YearsResult = YearsResult.T
+  object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeVei = SizeVei.T
+  object SizeVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeMagnitude = SizeMagnitude.T
+  object SizeMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QResult = QResult.T
+  object QResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QS = QS.T
+  object QS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsEventId = ActionsEventId.T
+  object ActionsEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsLabel = ActionsLabel.T
+  object ActionsLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsYrs = ActionsYrs.T
+  object ActionsYrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsProposed = ActionsProposed.T
+  object ActionsProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def years(ts: TimeSpan): com.histmersion.api.catalogue.EventLeads.YearsResult =
     YearFmt.span(ts)
 
-  def size(vei: Option[Int], magnitude: Option[Double]): Option[String] =
+  def size(vei: Option[com.histmersion.api.catalogue.EventLeads.SizeVei], magnitude: Option[com.histmersion.api.catalogue.EventLeads.SizeMagnitude]): Option[com.histmersion.api.catalogue.EventLeads.SizeResult] =
     vei
       .map(v => s"VEI $v")
       .orElse(magnitude.map(m => s"M ${BigDecimal(m).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))
 
-  private def q(s: String): String = "\"" + s.replace("\"", "'") + "\""
+  private def q(s: com.histmersion.api.catalogue.EventLeads.QS): com.histmersion.api.catalogue.EventLeads.QResult = "\"" + s.replace("\"", "'") + "\""
 
-  def actions(eventId: String, label: String, yrs: String, proposed: Int): List[EventLead.Action] =
+  def actions(eventId: com.histmersion.api.catalogue.EventLeads.ActionsEventId, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: com.histmersion.api.catalogue.EventLeads.ActionsYrs, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
     List(
       EventLead.Action(
         "discover",
@@ -62,7 +85,7 @@ object EventLeads:
         )
       )
 
-  def markdown(l: EventLead.List): String =
+  def markdown(l: EventLead.List): com.histmersion.api.catalogue.EventLeads.MarkdownResult =
     if l.leads.isEmpty then
       "_No leads: every event in the selection is attested by a source in the corpus, or none matched._"
     else

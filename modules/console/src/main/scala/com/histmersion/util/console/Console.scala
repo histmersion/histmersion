@@ -1,7 +1,7 @@
 package com.histmersion.util.console
 
 trait Console:
-  def readTerminalLine(prompt: String): Option[String] = None
+  def readTerminalLine(prompt: com.histmersion.util.console.Console.ReadTerminalLinePrompt): Option[com.histmersion.util.console.Console.ReadTerminalLineResult] = None
   final lazy val out: Console.Output = new Console.Output:
     def print(value: => Any): Unit = write(value)
     def println(value: => Any): Unit = writeLine(value)
@@ -20,9 +20,18 @@ trait Console:
   def errorLine(value: => String): Unit
   def errorLine(): Unit
   def errorFlush(): Unit
-  def readLine(): String
+  def readLine(): com.histmersion.util.console.Console.ReadLineResult
 
 object Console:
+  type ReadTerminalLineResult = ReadTerminalLineResult.T
+  object ReadTerminalLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadTerminalLinePrompt = ReadTerminalLinePrompt.T
+  object ReadTerminalLinePrompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadLineResult = ReadLineResult.T
+  object ReadLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StreamsInputResult = StreamsInputResult.T
+  object StreamsInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   trait Output:
     def print(value: => Any): Unit
     def println(value: => Any): Unit
@@ -36,7 +45,7 @@ object Console:
     prompt => Option(System.console()).flatMap(c => Option(c.readLine(prompt)))
   )
   def standard: Console = Streams(() => scala.Console.out, () => scala.Console.err, () => scala.io.StdIn.readLine())
-  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => String): Console =
+  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => com.histmersion.util.console.Console.StreamsInputResult): Console =
     Streams(() => out, () => err, input, prompt => { err.print(prompt); err.flush(); Option(input()) })
 
   final private class Streams(
@@ -59,4 +68,8 @@ object Console:
       stream.println(value)
     def errorLine(): Unit = stderr().println()
     def errorFlush(): Unit = stderr().flush()
-    def readLine(): String = input()
+    def readLine(): com.histmersion.util.console.Console.Streams.ReadLineResult = input()
+
+  object Streams:
+    type ReadLineResult = ReadLineResult.T
+    object ReadLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

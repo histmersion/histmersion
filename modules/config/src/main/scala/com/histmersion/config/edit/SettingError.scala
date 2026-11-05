@@ -36,7 +36,7 @@ enum SettingError:
   case NoFile(why: String)
   case Io(why: String)
 
-  def message: String = this match
+  def message: com.histmersion.config.edit.SettingError.MessageResult = this match
     case BadKey(why)            => why
     case UnknownKey(k, closest) =>
       s"There is no setting called ${k.relative}." +
@@ -63,3 +63,7 @@ enum SettingError:
     case Changed      => "The settings file changed since it was read. Look at it again, then make the change."
     case NoFile(why)  => why
     case Io(why)      => s"The settings file could not be written: $why"
+
+object SettingError:
+  type MessageResult = MessageResult.T
+  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

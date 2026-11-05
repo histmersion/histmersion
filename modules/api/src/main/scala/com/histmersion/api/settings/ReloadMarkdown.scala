@@ -1,7 +1,10 @@
 package com.histmersion.api.settings
 import com.histmersion.api.given
 object ReloadMarkdown:
-  def report(r: ReloadReport): String =
+  type ReportResult = ReportResult.T
+  object ReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def report(r: ReloadReport): com.histmersion.api.settings.ReloadMarkdown.ReportResult =
     def list(title: String, xs: List[String]): List[String] =
       if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =

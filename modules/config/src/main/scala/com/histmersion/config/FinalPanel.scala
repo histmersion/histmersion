@@ -9,5 +9,8 @@ enum FinalPanel(val wire: String):
   case Never extends FinalPanel("never")
 
 object FinalPanel:
-  def parse(s: String): Option[FinalPanel] =
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.config.FinalPanel.ParseS): Option[FinalPanel] =
     values.find(_.wire == Option(s).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))

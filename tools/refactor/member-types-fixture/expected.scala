@@ -29,6 +29,7 @@ object Service:
 class Store:
   def load(key: memberfixture.Store.LoadKey): Option[memberfixture.Store.LoadResult] = ???
   override def toString: String = "store"
+  def buffer(bytes: Array[Byte]): Array[Byte] = ???
 
 object Store:
   type LoadResult = LoadResult.T

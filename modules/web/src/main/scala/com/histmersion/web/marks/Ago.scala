@@ -4,7 +4,24 @@ package com.histmersion.web.marks
   */
 object Ago:
 
-  def apply(thenMs: Double, nowMs: Double, isoDate: String): String =
+  type ApplyResult = ApplyResult.T
+  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyThenMs = ApplyThenMs.T
+  object ApplyThenMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyNowMs = ApplyNowMs.T
+  object ApplyNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyIsoDate = ApplyIsoDate.T
+  object ApplyIsoDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MsResult = MsResult.T
+  object MsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MsIso = MsIso.T
+  object MsIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResult = OfResult.T
+  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfIso = OfIso.T
+  object OfIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.histmersion.web.marks.Ago.ApplyResult =
     val s = math.max(0.0, (nowMs - thenMs) / 1000)
     def n(v: Double, one: String) =
       val k = math.floor(v).toInt
@@ -16,6 +33,6 @@ object Ago:
     else isoDate.take(10)
 
   /** An ISO time's milliseconds, NaN for none. */
-  def ms(iso: String): Double = scala.scalajs.js.Date.parse(iso)
+  def ms(iso: com.histmersion.web.marks.Ago.MsIso): com.histmersion.web.marks.Ago.MsResult = scala.scalajs.js.Date.parse(iso)
 
-  def of(iso: String): String = apply(ms(iso), scala.scalajs.js.Date.now(), iso)
+  def of(iso: com.histmersion.web.marks.Ago.OfIso): com.histmersion.web.marks.Ago.OfResult = apply(ms(iso), scala.scalajs.js.Date.now(), iso)

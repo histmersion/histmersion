@@ -26,6 +26,91 @@ import scala.collection.mutable
 object LabelPlacement:
 
   /** A point in the zoom-0 Mercator plane. */
+  type ProjectLat = ProjectLat.T
+  object ProjectLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProjectLon = ProjectLon.T
+  object ProjectLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnprojectResultPart1 = UnprojectResultPart1.T
+  object UnprojectResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnprojectResultPart2 = UnprojectResultPart2.T
+  object UnprojectResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RingAreaResult = RingAreaResult.T
+  object RingAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PolyAreaResult = PolyAreaResult.T
+  object PolyAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapePolysPart1 = ShapePolysPart1.T
+  object ShapePolysPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapePolysPart2 = ShapePolysPart2.T
+  object ShapePolysPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThinMax = ThinMax.T
+  object ThinMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorPrecision = AnchorPrecision.T
+  object AnchorPrecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorMaxProbes = AnchorMaxProbes.T
+  object AnchorMaxProbes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CentroidCellResultPart1 = CentroidCellResultPart1.T
+  object CentroidCellResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CentroidCellResultPart2 = CentroidCellResultPart2.T
+  object CentroidCellResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceResult = SignedDistanceResult.T
+  object SignedDistanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceX = SignedDistanceX.T
+  object SignedDistanceX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceY = SignedDistanceY.T
+  object SignedDistanceY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceFlatResult = SignedDistanceFlatResult.T
+  object SignedDistanceFlatResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceFlatX = SignedDistanceFlatX.T
+  object SignedDistanceFlatX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceFlatY = SignedDistanceFlatY.T
+  object SignedDistanceFlatY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqResult = SegDistSqResult.T
+  object SegDistSqResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqPx = SegDistSqPx.T
+  object SegDistSqPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqPy = SegDistSqPy.T
+  object SegDistSqPy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqAx = SegDistSqAx.T
+  object SegDistSqAx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqAy = SegDistSqAy.T
+  object SegDistSqAy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqBx = SegDistSqBx.T
+  object SegDistSqBx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SegDistSqBy = SegDistSqBy.T
+  object SegDistSqBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierSize0 = TierSize0.T
+  object TierSize0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierExtent0 = TierExtent0.T
+  object TierExtent0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierZoom = TierZoom.T
+  object TierZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceScale = PlaceScale.T
+  object PlaceScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceHalfW = PlaceHalfW.T
+  object PlaceHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceHalfH = PlaceHalfH.T
+  object PlaceHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EdgePlaceScale = EdgePlaceScale.T
+  object EdgePlaceScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EdgePlaceHalfW = EdgePlaceHalfW.T
+  object EdgePlaceHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EdgePlaceHalfH = EdgePlaceHalfH.T
+  object EdgePlaceHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GlideScale = GlideScale.T
+  object GlideScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GlideHalfW = GlideHalfW.T
+  object GlideHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GlideHalfH = GlideHalfH.T
+  object GlideHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullResult = CullResult.T
+  object CullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullCell = CullCell.T
+  object CullCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullShownArg1 = CullShownArg1.T
+  object CullShownArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CullShownResult = CullShownResult.T
+  object CullShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Pt(x: Pt.X, y: Pt.Y)
 
   object Pt:
@@ -39,21 +124,38 @@ object LabelPlacement:
 
   /** An axis-aligned rectangle (a bounding box, a viewport), `min ≤ max` on both axes when non-empty. */
   final case class Rect(minX: Rect.MinX, minY: Rect.MinY, maxX: Rect.MaxX, maxY: Rect.MaxY):
-    def w: Double = maxX - minX
-    def h: Double = maxY - minY
-    def isEmpty: Boolean = minX > maxX || minY > maxY
-    def contains(p: Pt): Boolean = p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY
-    def intersects(o: Rect): Boolean = minX <= o.maxX && o.minX <= maxX && minY <= o.maxY && o.minY <= maxY
-    def within(o: Rect): Boolean = minX >= o.minX && maxX <= o.maxX && minY >= o.minY && maxY <= o.maxY
+    def w: com.histmersion.web.LabelPlacement.Rect.WResult = maxX - minX
+    def h: com.histmersion.web.LabelPlacement.Rect.HResult = maxY - minY
+    def isEmpty: com.histmersion.web.LabelPlacement.Rect.IsEmptyResult = minX > maxX || minY > maxY
+    def contains(p: Pt): com.histmersion.web.LabelPlacement.Rect.ContainsResult = p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY
+    def intersects(o: Rect): com.histmersion.web.LabelPlacement.Rect.IntersectsResult = minX <= o.maxX && o.minX <= maxX && minY <= o.maxY && o.minY <= maxY
+    def within(o: Rect): com.histmersion.web.LabelPlacement.Rect.WithinResult = minX >= o.minX && maxX <= o.maxX && minY >= o.minY && maxY <= o.maxY
 
     /** Shrunk by `dx` left and right and `dy` top and bottom (empty when that leaves nothing). */
-    def inset(dx: Double, dy: Double): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy)
+    def inset(dx: com.histmersion.web.LabelPlacement.Rect.InsetDx, dy: com.histmersion.web.LabelPlacement.Rect.InsetDy): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy)
 
     /** The nearest point of the rectangle to `p`. */
     def clamp(p: Pt): Pt = Pt(math.max(minX, math.min(maxX, p.x)), math.max(minY, math.min(maxY, p.y)))
 
   object Rect:
     /** Pure: the bounding box of some points (empty for none). */
+    type WResult = WResult.T
+    object WResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HResult = HResult.T
+    object HResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsEmptyResult = IsEmptyResult.T
+    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContainsResult = ContainsResult.T
+    object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IntersectsResult = IntersectsResult.T
+    object IntersectsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WithinResult = WithinResult.T
+    object WithinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsetDx = InsetDx.T
+    object InsetDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsetDy = InsetDy.T
+    object InsetDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type MinX = MinX.T
     object MinX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MinY = MinY.T
@@ -80,18 +182,18 @@ object LabelPlacement:
   private val MaxLat = 85.0511287798
 
   /** Pure: (lat, lon) → the zoom-0 Mercator plane. */
-  def project(lat: Double, lon: Double): Pt =
+  def project(lat: com.histmersion.web.LabelPlacement.ProjectLat, lon: com.histmersion.web.LabelPlacement.ProjectLon): Pt =
     val phi = math.toRadians(math.max(-MaxLat, math.min(MaxLat, lat)))
     Pt((lon + 180.0) / 360.0 * World, (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World)
 
   /** Pure: the inverse of [[project]] → (lat, lon). */
-  def unproject(p: Pt): (Double, Double) =
+  def unproject(p: Pt): (com.histmersion.web.LabelPlacement.UnprojectResultPart1, com.histmersion.web.LabelPlacement.UnprojectResultPart2) =
     val lon = p.x / World * 360.0 - 180.0
     val n = math.Pi - 2.0 * math.Pi * p.y / World
     (math.toDegrees(math.atan(math.sinh(n))), lon)
 
   /** Pure: a ring's unsigned area (shoelace). */
-  def ringArea(r: Vector[Pt]): Double =
+  def ringArea(r: Vector[Pt]): com.histmersion.web.LabelPlacement.RingAreaResult =
     if r.length < 3 then 0.0
     else
       var s = 0.0
@@ -104,7 +206,7 @@ object LabelPlacement:
       math.abs(s) / 2.0
 
   /** Pure: a polygon's area — its outer ring less its holes. */
-  def polyArea(p: Poly): Double =
+  def polyArea(p: Poly): com.histmersion.web.LabelPlacement.PolyAreaResult =
     p.headOption.fold(0.0)(ringArea) - p.drop(1).map(ringArea).sum
 
   /** Pure: the convex hull of some points (Andrew's monotone chain), counter-clockwise in the plane, without a repeated
@@ -149,9 +251,12 @@ object LabelPlacement:
       archipelago: Shape.Archipelago
   ):
     /** The shape's larger side at zoom 0. */
-    def extent0: Double = math.max(bbox0.w, bbox0.h)
+    def extent0: com.histmersion.web.LabelPlacement.Shape.Extent0Result = math.max(bbox0.w, bbox0.h)
 
   object Shape:
+    type Extent0Result = Extent0Result.T
+    object Extent0Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Lat = Lat.T
     object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Lon = Lon.T
@@ -168,7 +273,7 @@ object LabelPlacement:
 
   /** Pure: the label home and size of a (multi)polygon given in (lat, lon) rings — `None` for an empty one.
     */
-  def shape(polys: Seq[Seq[Seq[(Double, Double)]]]): Option[Shape] =
+  def shape(polys: Seq[Seq[Seq[(com.histmersion.web.LabelPlacement.ShapePolysPart1, com.histmersion.web.LabelPlacement.ShapePolysPart2)]]]): Option[Shape] =
     val projected = polys
       .map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector)
       .filter(_.nonEmpty)
@@ -198,7 +303,7 @@ object LabelPlacement:
   val MaxRingPoints = 400
 
   /** Pure: every `k`-th point, so the ring keeps at most `max` (its first point always). */
-  def thin(r: Vector[Pt], max: Int = MaxRingPoints): Vector[Pt] =
+  def thin(r: Vector[Pt], max: com.histmersion.web.LabelPlacement.ThinMax = MaxRingPoints): Vector[Pt] =
     if r.length <= max then r
     else
       val step = math.ceil(r.length.toDouble / max).toInt
@@ -215,7 +320,7 @@ object LabelPlacement:
     * `maxProbes` cells. The first grid has at most [[MaxGridCells]] cells along the longer side, so a sliver (a shape
     * clipped to a screen edge) costs no more than a square.
     */
-  def anchor(poly: Poly, precision: Double = 0.0, maxProbes: Int = MaxProbes): Pt =
+  def anchor(poly: Poly, precision: com.histmersion.web.LabelPlacement.AnchorPrecision = 0.0, maxProbes: com.histmersion.web.LabelPlacement.AnchorMaxProbes = MaxProbes): Pt =
     val rings = poly.map(thin(_))
     val outer = rings.head
     val minX = outer.map(_.x).min
@@ -263,7 +368,7 @@ object LabelPlacement:
           queue.enqueue(Cell(c.x + q, c.y + q, q))
       Pt(best.x, best.y)
 
-  private def centroidCell(r: Vector[Pt]): Option[(Double, Double)] =
+  private def centroidCell(r: Vector[Pt]): Option[(com.histmersion.web.LabelPlacement.CentroidCellResultPart1, com.histmersion.web.LabelPlacement.CentroidCellResultPart2)] =
     var area = 0.0
     var x = 0.0
     var y = 0.0
@@ -281,7 +386,7 @@ object LabelPlacement:
     if area == 0 then None else Some((x / area, y / area))
 
   /** Pure: the distance from (x, y) to the polygon's nearest edge, positive inside, negative outside. */
-  def signedDistance(x: Double, y: Double, rings: Poly): Double = signedDistanceFlat(x, y, flatten(rings))
+  def signedDistance(x: com.histmersion.web.LabelPlacement.SignedDistanceX, y: com.histmersion.web.LabelPlacement.SignedDistanceY, rings: Poly): com.histmersion.web.LabelPlacement.SignedDistanceResult = signedDistanceFlat(x, y, flatten(rings))
 
   /** Each ring as `[x0, y0, x1, y1, …]`. */
   private def flatten(rings: Poly): Array[Array[Double]] =
@@ -293,7 +398,7 @@ object LabelPlacement:
     }.toArray
 
   /** [[signedDistance]] over [[flatten]]ed rings: plain array reads in the probe loop. */
-  private def signedDistanceFlat(x: Double, y: Double, rings: Array[Array[Double]]): Double =
+  private def signedDistanceFlat(x: com.histmersion.web.LabelPlacement.SignedDistanceFlatX, y: com.histmersion.web.LabelPlacement.SignedDistanceFlatY, rings: Array[Array[Double]]): com.histmersion.web.LabelPlacement.SignedDistanceFlatResult =
     // `var`s: one pass over every edge of every ring
     var inside = false
     var minSq = Double.PositiveInfinity
@@ -316,7 +421,7 @@ object LabelPlacement:
       k += 1
     (if inside then 1 else -1) * math.sqrt(minSq)
 
-  private def segDistSq(px: Double, py: Double, ax: Double, ay: Double, bx: Double, by: Double): Double =
+  private def segDistSq(px: com.histmersion.web.LabelPlacement.SegDistSqPx, py: com.histmersion.web.LabelPlacement.SegDistSqPy, ax: com.histmersion.web.LabelPlacement.SegDistSqAx, ay: com.histmersion.web.LabelPlacement.SegDistSqAy, bx: com.histmersion.web.LabelPlacement.SegDistSqBx, by: com.histmersion.web.LabelPlacement.SegDistSqBy): com.histmersion.web.LabelPlacement.SegDistSqResult =
     var x = ax
     var y = ay
     val dx = bx - x
@@ -347,7 +452,7 @@ object LabelPlacement:
   /** Pure: the size of a shape's name at `zoom`, from the side of a square of its on-screen size ([[Shape.size0]]: all
     * its land, an archipelago's hull) — `None` only when the whole shape is a few pixels across ([[MinExtentPx]]).
     */
-  def tier(size0: Double, extent0: Double, zoom: Double): Option[Tier] =
+  def tier(size0: com.histmersion.web.LabelPlacement.TierSize0, extent0: com.histmersion.web.LabelPlacement.TierExtent0, zoom: com.histmersion.web.LabelPlacement.TierZoom): Option[Tier] =
     val scale = math.pow(2, zoom)
     val side = math.sqrt(size0) * scale
     if extent0 * scale < MinExtentPx then None
@@ -355,7 +460,7 @@ object LabelPlacement:
     else if side >= MediumSidePx then Some(Tier.M)
     else Some(Tier.S)
 
-  def tier(s: Shape, zoom: Double): Option[Tier] = tier(s.size0, s.extent0, zoom)
+  def tier(s: Shape, zoom: com.histmersion.web.LabelPlacement.TierZoom): Option[Tier] = tier(s.size0, s.extent0, zoom)
 
   // ── where, in this viewport ──────────────────────────────────────────────────────────────────────
 
@@ -395,7 +500,7 @@ object LabelPlacement:
     *      while the name then still touches that box or sits within [[NearPx]] of it;
     *   4. else nowhere.
     */
-  def place(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, prev: Option[Pt] = None): Option[Pt] =
+  def place(s: Shape, view: Rect, scale: com.histmersion.web.LabelPlacement.PlaceScale, halfW: com.histmersion.web.LabelPlacement.PlaceHalfW, halfH: com.histmersion.web.LabelPlacement.PlaceHalfH, prev: Option[Pt] = None): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
     else if inner.contains(s.home) then Some(s.home)
@@ -429,7 +534,7 @@ object LabelPlacement:
   /** Pure: step 3 of [[place]] — the middle of `box` (what is on screen of a shape) pulled into `inner`, kept while the
     * name there touches `box` or is at most [[NearPx]] beside it.
     */
-  def edgePlace(box: Rect, inner: Rect, scale: Double, halfW: Double, halfH: Double): Option[Pt] =
+  def edgePlace(box: Rect, inner: Rect, scale: com.histmersion.web.LabelPlacement.EdgePlaceScale, halfW: com.histmersion.web.LabelPlacement.EdgePlaceHalfW, halfH: com.histmersion.web.LabelPlacement.EdgePlaceHalfH): Option[Pt] =
     if box.isEmpty || inner.isEmpty then None
     else
       val q = inner.clamp(Pt((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2))
@@ -442,7 +547,7 @@ object LabelPlacement:
     * inset viewport and the on-screen box of the shape, else as in step 3 of [[place]]. `None`: no place on screen, the
     * name fades out.
     */
-  def glide(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, last: Option[Pt]): Option[Pt] =
+  def glide(s: Shape, view: Rect, scale: com.histmersion.web.LabelPlacement.GlideScale, halfW: com.histmersion.web.LabelPlacement.GlideHalfW, halfH: com.histmersion.web.LabelPlacement.GlideHalfH, last: Option[Pt]): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
     else if inner.contains(s.home) then Some(s.home)
@@ -540,7 +645,7 @@ object LabelPlacement:
     * kept unless its box (padded by [[PadPx]], or by [[PadPx]] + [[AppearPadPx]] when it is not in `shown`) overlaps
     * one already kept. A grid of `cell`-pixel buckets keeps it near-linear: 400 labels are a few thousand box tests.
     */
-  def cull(boxes: Seq[Box], cell: Double = 128.0, shown: String => Boolean = _ => true): Set[String] =
+  def cull(boxes: Seq[Box], cell: com.histmersion.web.LabelPlacement.CullCell = 128.0, shown: com.histmersion.web.LabelPlacement.CullShownArg1 => com.histmersion.web.LabelPlacement.CullShownResult = _ => true): Set[com.histmersion.web.LabelPlacement.CullResult] =
     val grid = mutable.HashMap.empty[(Int, Int), mutable.ArrayBuffer[Box]]
     val kept = mutable.Set.empty[String]
     def cells(b: Box, pad: Double): Seq[(Int, Int)] =

@@ -18,7 +18,12 @@ enum MatchMethod:
   case Unmatched
 
 object MatchMethod:
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given WireEnumValues[MatchMethod]:
     def all: Array[MatchMethod] = MatchMethod.values
-    def wire(e: MatchMethod): String = Ascii.lower(e.toString)
-    def fromWire(s: String): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase(s.trim))
+    def wire(e: MatchMethod): com.histmersion.domain.library.MatchMethod.WireResult = Ascii.lower(e.toString)
+    def fromWire(s: com.histmersion.domain.library.MatchMethod.FromWireS): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase(s.trim))

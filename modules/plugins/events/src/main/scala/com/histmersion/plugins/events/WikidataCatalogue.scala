@@ -18,11 +18,11 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   def home = "https://www.wikidata.org"
   override def requestIntervalMs: Int = cfg.requestIntervalMs
 
-  private def classes: List[(String, String)] = WikidataClasses.parse(cfg.classes)
+  private def classes: List[(com.histmersion.plugins.events.WikidataCatalogue.ClassesResultPart1, com.histmersion.plugins.events.WikidataCatalogue.ClassesResultPart2)] = WikidataClasses.parse(cfg.classes)
 
-  def parts(query: CatalogueQuery): List[String] = classes.map((qid, _) => s"class:$qid")
+  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.WikidataCatalogue.PartsResult] = classes.map((qid, _) => s"class:$qid")
 
-  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
+  def read(part: com.histmersion.plugins.events.WikidataCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.WikidataCatalogue.ReadResultPart1, CataloguePage] =
     classes.find((qid, _) => part == s"class:$qid") match
       case None              => Left(s"'$part' is no class of the configured events.wikidata.classes")
       case Some((qid, kind)) =>
@@ -47,14 +47,57 @@ object WikidataCatalogue:
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).
     */
+  type ClassesResultPart1 = ClassesResultPart1.T
+  object ClassesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassesResultPart2 = ClassesResultPart2.T
+  object ClassesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsResult = PartsResult.T
+  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPart = ReadPart.T
+  object ReadPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Legendary = Legendary.T
+  object Legendary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlResult = SparqlResult.T
+  object SparqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlQid = SparqlQid.T
+  object SparqlQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlFrom = SparqlFrom.T
+  object SparqlFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlTo = SparqlTo.T
+  object SparqlTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlLang = SparqlLang.T
+  object SparqlLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlUrlResult = SparqlUrlResult.T
+  object SparqlUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlUrlEndpoint = SparqlUrlEndpoint.T
+  object SparqlUrlEndpoint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SparqlUrlQuery = SparqlUrlQuery.T
+  object SparqlUrlQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindingResult = BindingResult.T
+  object BindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindingK = BindingK.T
+  object BindingK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointResultPart1 = PointResultPart1.T
+  object PointResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointResultPart2 = PointResultPart2.T
+  object PointResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointWkt = PointWkt.T
+  object PointWkt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseKind = ParseKind.T
+  object ParseKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Mythical = "Q24336466"
-  val Legendary: Set[String] = Set("Q26913948", "Q122397289")
+  val Legendary: Set[com.histmersion.plugins.events.WikidataCatalogue.Legendary] = Set("Q26913948", "Q122397289")
 
   /** Pure: the SPARQL of one class — its instances (and its subclasses'), dated (point in time, else start/end) before
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
-  def sparql(qid: String, from: Option[Long], to: Long, lang: String): String =
+  def sparql(qid: com.histmersion.plugins.events.WikidataCatalogue.SparqlQid, from: Option[com.histmersion.plugins.events.WikidataCatalogue.SparqlFrom], to: com.histmersion.plugins.events.WikidataCatalogue.SparqlTo, lang: com.histmersion.plugins.events.WikidataCatalogue.SparqlLang): com.histmersion.plugins.events.WikidataCatalogue.SparqlResult =
     // the query service compares astronomical years; `to`/`from` are historical
     val toA = CatalogDating.toAstronomical(to)
     val fromF = from.fold("")(f => s" && YEAR(?t) >= ${CatalogDating.toAstronomical(f)}")
@@ -74,14 +117,14 @@ object WikidataCatalogue:
        |  SERVICE wikibase:label { bd:serviceParam wikibase:language "$lang". }
        |}""".stripMargin
 
-  def sparqlUrl(endpoint: String, query: String): String =
+  def sparqlUrl(endpoint: com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlEndpoint, query: com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlQuery): com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlResult =
     s"$endpoint?format=json&query=${URLEncoder.encode(query, UTF_8)}"
 
-  private def binding(b: ACursor, k: String): Option[String] =
+  private def binding(b: ACursor, k: com.histmersion.plugins.events.WikidataCatalogue.BindingK): Option[com.histmersion.plugins.events.WikidataCatalogue.BindingResult] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
-  def point(wkt: String): Option[(Double, Double)] =
+  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.PointWkt): Option[(com.histmersion.plugins.events.WikidataCatalogue.PointResultPart1, com.histmersion.plugins.events.WikidataCatalogue.PointResultPart2)] =
     "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt).flatMap { m =>
       for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (lat, lon)
     }
@@ -90,7 +133,7 @@ object WikidataCatalogue:
     * location's; the most precise dating; the most deaths). Items with no label of their own (the label service then
     * answers the id) keep it.
     */
-  def parse(json: Json, kind: String): Either[String, List[CatalogueEvent]] =
+  def parse(json: Json, kind: com.histmersion.plugins.events.WikidataCatalogue.ParseKind): Either[com.histmersion.plugins.events.WikidataCatalogue.ParseResultPart1, List[CatalogueEvent]] =
     json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
       case None       => Left("no results in the answer")
       case Some(rows) =>

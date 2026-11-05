@@ -15,7 +15,7 @@ import com.augustnagro.magnum.Frag
 final case class Sql(text: Sql.Text, params: List[Param] = Nil):
   def ++(that: Sql): Sql = Sql(text + that.text, params ++ that.params)
   def ++(raw: String): Sql = Sql(text + raw, params)
-  def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
+  def wrap(pre: com.histmersion.util.database.Sql.WrapPre, post: com.histmersion.util.database.Sql.WrapPost): Sql = Sql(pre + text + post, params)
 
   /** This fragment, then a query written with Magnum's `sql""` — how a shared fragment (the window of a time-filtered
     * place view, `PlaceRepo.timeWindowCte`) heads such a query. Parameters bind in text order: this fragment's, then
@@ -35,12 +35,25 @@ final case class Sql(text: Sql.Text, params: List[Param] = Nil):
     Frag(text, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
 
 object Sql:
+  type WrapPre = WrapPre.T
+  object WrapPre extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapPost = WrapPost.T
+  object WrapPost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RawText = RawText.T
+  object RawText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfText = OfText.T
+  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindResult = BindResult.T
+  object BindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindPos = BindPos.T
+  object BindPos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val empty: Sql = Sql("", Nil)
-  def raw(text: String): Sql = Sql(text, Nil)
-  def of(text: String, ps: Param*): Sql = Sql(text, ps.toList)
+  def raw(text: com.histmersion.util.database.Sql.RawText): Sql = Sql(text, Nil)
+  def of(text: com.histmersion.util.database.Sql.OfText, ps: Param*): Sql = Sql(text, ps.toList)
 
   private def value(p: Param): Any = p match
     case Param.S(v) => v
@@ -49,7 +62,7 @@ object Sql:
     case Param.D(v) => v
     case Param.A(v) => v
 
-  private def bind(stmt: java.sql.PreparedStatement, pos: Int, ps: List[Param]): Int =
+  private def bind(stmt: java.sql.PreparedStatement, pos: com.histmersion.util.database.Sql.BindPos, ps: List[Param]): com.histmersion.util.database.Sql.BindResult =
     var i = pos
     ps.foreach { p =>
       p match

@@ -21,24 +21,85 @@ import com.histmersion.api.library.Finding
   */
 object Patches:
 
+  type BuildJson = BuildJson.T
+  object BuildJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsAdd = BuildTagsAdd.T
+  object BuildTagsAdd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsRemove = BuildTagsRemove.T
+  object BuildTagsRemove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsReplace = BuildTagsReplace.T
+  object BuildTagsReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTopics = BuildTopics.T
+  object BuildTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildRegions = BuildRegions.T
+  object BuildRegions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildSummary = BuildSummary.T
+  object BuildSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTitle = BuildTitle.T
+  object BuildTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildNotesFile = BuildNotesFile.T
+  object BuildNotesFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPeriod = BuildPeriod.T
+  object BuildPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildBodyFile = BuildBodyFile.T
+  object BuildBodyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildAddFindings = BuildAddFindings.T
+  object BuildAddFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildRemoveFindings = BuildRemoveFindings.T
+  object BuildRemoveFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildIfUpdatedAt = BuildIfUpdatedAt.T
+  object BuildIfUpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildAddEdges = BuildAddEdges.T
+  object BuildAddEdges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildRemoveEdges = BuildRemoveEdges.T
+  object BuildRemoveEdges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeTagsAdd = MergeTagsAdd.T
+  object MergeTagsAdd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeTagsRemove = MergeTagsRemove.T
+  object MergeTagsRemove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeTagsReplace = MergeTagsReplace.T
+  object MergeTagsReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeFindingsRemove = MergeFindingsRemove.T
+  object MergeFindingsRemove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CsvResult = CsvResult.T
+  object CsvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CsvS = CsvS.T
+  object CsvS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseFlag = ParseFlag.T
+  object ParseFlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseEdgeFlag = ParseEdgeFlag.T
+  object ParseEdgeFlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseEdgeS = ParseEdgeS.T
+  object ParseEdgeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePeriodS = ParsePeriodS.T
+  object ParsePeriodS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFileResultPart2 = ReadFileResultPart2.T
+  object ReadFileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFileFlag = ReadFileFlag.T
+  object ReadFileFlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFileFile = ReadFileFile.T
+  object ReadFileFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def build(
-      json: Option[String],
-      tagsAdd: Option[String],
-      tagsRemove: Option[String],
-      tagsReplace: Option[String],
-      topics: Option[String],
-      regions: Option[String],
-      summary: Option[String],
+      json: Option[com.histmersion.cli.Patches.BuildJson],
+      tagsAdd: Option[com.histmersion.cli.Patches.BuildTagsAdd],
+      tagsRemove: Option[com.histmersion.cli.Patches.BuildTagsRemove],
+      tagsReplace: Option[com.histmersion.cli.Patches.BuildTagsReplace],
+      topics: Option[com.histmersion.cli.Patches.BuildTopics],
+      regions: Option[com.histmersion.cli.Patches.BuildRegions],
+      summary: Option[com.histmersion.cli.Patches.BuildSummary],
       status: Option[Source.Status],
-      title: Option[String],
-      notesFile: Option[String],
-      period: Option[String],
-      bodyFile: Option[String],
-      addFindings: List[String],
-      removeFindings: List[String],
-      ifUpdatedAt: Option[String],
-      addEdges: List[String] = Nil,
-      removeEdges: List[String] = Nil
+      title: Option[com.histmersion.cli.Patches.BuildTitle],
+      notesFile: Option[com.histmersion.cli.Patches.BuildNotesFile],
+      period: Option[com.histmersion.cli.Patches.BuildPeriod],
+      bodyFile: Option[com.histmersion.cli.Patches.BuildBodyFile],
+      addFindings: List[com.histmersion.cli.Patches.BuildAddFindings],
+      removeFindings: List[com.histmersion.cli.Patches.BuildRemoveFindings],
+      ifUpdatedAt: Option[com.histmersion.cli.Patches.BuildIfUpdatedAt],
+      addEdges: List[com.histmersion.cli.Patches.BuildAddEdges] = Nil,
+      removeEdges: List[com.histmersion.cli.Patches.BuildRemoveEdges] = Nil
   ): Either[Cli.Error, com.histmersion.api.library.Source.Patch] =
     for
       base <- json.fold[Either[Cli.Error, com.histmersion.api.library.Source.Patch]](
@@ -71,9 +132,9 @@ object Patches:
 
   private def mergeTags(
       base: Option[ListPatch],
-      add: Option[String],
-      remove: Option[String],
-      replace: Option[String]
+      add: Option[com.histmersion.cli.Patches.MergeTagsAdd],
+      remove: Option[com.histmersion.cli.Patches.MergeTagsRemove],
+      replace: Option[com.histmersion.cli.Patches.MergeTagsReplace]
   ) =
     if add.isEmpty && remove.isEmpty && replace.isEmpty then base
     else
@@ -86,7 +147,7 @@ object Patches:
         )
       )
 
-  private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[String]) =
+  private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[com.histmersion.cli.Patches.MergeFindingsRemove]) =
     if add.isEmpty && remove.isEmpty then base
     else
       val f = base.getOrElse(FindingsPatch())
@@ -103,9 +164,9 @@ object Patches:
       Some(e.modify(_.add).setTo(e.add ++ add).modify(_.remove).setTo(e.remove ++ remove))
 
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
-  private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
+  private def csv(s: com.histmersion.cli.Patches.CsvS): List[com.histmersion.cli.Patches.CsvResult] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
 
-  private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
+  private def parse[A: io.circe.Decoder](flag: com.histmersion.cli.Patches.ParseFlag, s: com.histmersion.cli.Patches.ParseS): Either[Cli.Error, A] =
     decode[A](s).left.map(e =>
       Cli.Error(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = ExitCode.Usage)
     )
@@ -113,7 +174,7 @@ object Patches:
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
+  private[cli] def parseEdge(flag: com.histmersion.cli.Patches.ParseEdgeFlag, s: com.histmersion.cli.Patches.ParseEdgeS): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind
@@ -133,13 +194,13 @@ object Patches:
           )
         )
 
-  private def parsePeriod(s: String): Either[Cli.Error, Period.Input] =
+  private def parsePeriod(s: com.histmersion.cli.Patches.ParsePeriodS): Either[Cli.Error, Period.Input] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(Period.Input(a, b))
       case _ => Left(Cli.Error(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
-  private def readFile(flag: String, file: String): Either[Cli.Error, String] =
+  private def readFile(flag: com.histmersion.cli.Patches.ReadFileFlag, file: com.histmersion.cli.Patches.ReadFileFile): Either[Cli.Error, com.histmersion.cli.Patches.ReadFileResultPart2] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
     else Left(Cli.Error(s"$flag: no such file: $file", exitCode = ExitCode.Usage))

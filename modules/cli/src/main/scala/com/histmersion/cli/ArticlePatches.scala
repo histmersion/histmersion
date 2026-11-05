@@ -21,19 +21,64 @@ import com.histmersion.api.research.Coverage
   */
 object ArticlePatches:
 
+  type BuildJson = BuildJson.T
+  object BuildJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTitle = BuildTitle.T
+  object BuildTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildSummary = BuildSummary.T
+  object BuildSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildKind = BuildKind.T
+  object BuildKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildBodyFile = BuildBodyFile.T
+  object BuildBodyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildAppendFile = BuildAppendFile.T
+  object BuildAppendFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsAdd = BuildTagsAdd.T
+  object BuildTagsAdd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsRemove = BuildTagsRemove.T
+  object BuildTagsRemove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildTagsReplace = BuildTagsReplace.T
+  object BuildTagsReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildRegions = BuildRegions.T
+  object BuildRegions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPeriod = BuildPeriod.T
+  object BuildPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildIfUpdatedAt = BuildIfUpdatedAt.T
+  object BuildIfUpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithCoverageReasons = WithCoverageReasons.T
+  object WithCoverageReasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithCritiquesReasons = WithCritiquesReasons.T
+  object WithCritiquesReasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJson = ParseJson.T
+  object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart2 = ReadResultPart2.T
+  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFile = ReadFile.T
+  object ReadFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfS = PeriodOfS.T
+  object PeriodOfS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CsvResult = CsvResult.T
+  object CsvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CsvS = CsvS.T
+  object CsvS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Csv1Result = Csv1Result.T
+  object Csv1Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Csv1S = Csv1S.T
+  object Csv1S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def build(
-      json: Option[String],
-      title: Option[String],
-      summary: Option[String],
-      kind: Option[String],
-      bodyFile: Option[String],
-      appendFile: Option[String],
-      tagsAdd: Option[String],
-      tagsRemove: Option[String],
-      tagsReplace: Option[String],
-      regions: Option[String],
-      period: Option[String],
-      ifUpdatedAt: Option[String]
+      json: Option[com.histmersion.cli.ArticlePatches.BuildJson],
+      title: Option[com.histmersion.cli.ArticlePatches.BuildTitle],
+      summary: Option[com.histmersion.cli.ArticlePatches.BuildSummary],
+      kind: Option[com.histmersion.cli.ArticlePatches.BuildKind],
+      bodyFile: Option[com.histmersion.cli.ArticlePatches.BuildBodyFile],
+      appendFile: Option[com.histmersion.cli.ArticlePatches.BuildAppendFile],
+      tagsAdd: Option[com.histmersion.cli.ArticlePatches.BuildTagsAdd],
+      tagsRemove: Option[com.histmersion.cli.ArticlePatches.BuildTagsRemove],
+      tagsReplace: Option[com.histmersion.cli.ArticlePatches.BuildTagsReplace],
+      regions: Option[com.histmersion.cli.ArticlePatches.BuildRegions],
+      period: Option[com.histmersion.cli.ArticlePatches.BuildPeriod],
+      ifUpdatedAt: Option[com.histmersion.cli.ArticlePatches.BuildIfUpdatedAt]
   ): Either[Cli.Error, Article.Patch] =
     for
       base <- parse(json)
@@ -59,10 +104,13 @@ object ArticlePatches:
       extraQueries: List[FilterFlags.ExtraQueries] = Nil,
       clear: FilterFlags.Clear = false
   ):
-    def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
+    def anyGiven: com.histmersion.cli.ArticlePatches.FilterFlags.AnyGivenResult = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
       places.isDefined || period.isDefined || extraQueries.nonEmpty
 
   object FilterFlags:
+    type AnyGivenResult = AnyGivenResult.T
+    object AnyGivenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Query = Query.T
     object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topics = Topics.T
@@ -84,7 +132,7 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
-  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[String]): Either[Cli.Error, Article.Patch] =
+  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[com.histmersion.cli.ArticlePatches.WithCoverageReasons]): Either[Cli.Error, Article.Patch] =
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
@@ -120,14 +168,14 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: Article.Patch, reasons: List[String]): Either[Cli.Error, Article.Patch] =
+  def withCritiques(p: Article.Patch, reasons: List[com.histmersion.cli.ArticlePatches.WithCritiquesReasons]): Either[Cli.Error, Article.Patch] =
     reasons
       .traverse(r =>
         CritiqueReason.parse(r).left.map(m => Cli.Error(s"--critique-reason: $m", exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
-  private def parse(json: Option[String]): Either[Cli.Error, Article.Patch] = json match
+  private def parse(json: Option[com.histmersion.cli.ArticlePatches.ParseJson]): Either[Cli.Error, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
       io.circe.parser
@@ -135,14 +183,14 @@ object ArticlePatches:
         .left
         .map(e => Cli.Error(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
 
-  private def read(file: Option[String]): Either[Cli.Error, Option[String]] = file match
+  private def read(file: Option[com.histmersion.cli.ArticlePatches.ReadFile]): Either[Cli.Error, Option[com.histmersion.cli.ArticlePatches.ReadResultPart2]] = file match
     case None    => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(java.nio.file.Files.readString(p)))
       else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
 
-  private def periodOf(s: Option[String]): Either[Cli.Error, Option[Period.Input]] = s match
+  private def periodOf(s: Option[com.histmersion.cli.ArticlePatches.PeriodOfS]): Either[Cli.Error, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
       v.split(",").map(_.trim).toList match
@@ -152,5 +200,5 @@ object ArticlePatches:
             case _                  => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
         case _ => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
 
-  private def csv(s: Option[String]): List[String] = s.map(csv1).getOrElse(Nil)
-  private def csv1(s: String): List[String] = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
+  private def csv(s: Option[com.histmersion.cli.ArticlePatches.CsvS]): List[com.histmersion.cli.ArticlePatches.CsvResult] = s.map(csv1).getOrElse(Nil)
+  private def csv1(s: com.histmersion.cli.ArticlePatches.Csv1S): List[com.histmersion.cli.ArticlePatches.Csv1Result] = s.split(",").toList.map(_.trim).filter(_.nonEmpty)

@@ -19,6 +19,21 @@ import com.histmersion.util.storage.Store
   */
 object PgRelocation:
 
+  type PatchResultPart2 = PatchResultPart2.T
+  object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelocateMacOS = RelocateMacOS.T
+  object RelocateMacOS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsMachOResult = IsMachOResult.T
+  object IsMachOResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastNulResult = LastNulResult.T
+  object LastNulResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastNulBefore = LastNulBefore.T
+  object LastNulBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IndexOfResult = IndexOfResult.T
+  object IndexOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IndexOfFrom = IndexOfFrom.T
+  object IndexOfFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Marker = ".prefix"
 
   final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
@@ -34,7 +49,7 @@ object PgRelocation:
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.
     */
-  def patch(bytes: Array[Byte], from: Array[Byte], to: Array[Byte]): (Array[Byte], Int) =
+  def patch(bytes: Array[Byte], from: Array[Byte], to: Array[Byte]): (Array[Byte], com.histmersion.util.data.maintenance.PgRelocation.PatchResultPart2) =
     if !bytes.contains(0.toByte) then
       (String(bytes, UTF_8).replace(String(from, UTF_8), String(to, UTF_8)).getBytes(UTF_8), 0)
     else
@@ -57,7 +72,7 @@ object PgRelocation:
   /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
-  def relocate(pg: Store, macOS: Boolean, processes: Processes): Option[Result] =
+  def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.RelocateMacOS, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
     val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().trim).filter(_.nonEmpty) else None
@@ -90,14 +105,14 @@ object PgRelocation:
 
   private val MachO = List(Array(0xcf, 0xfa, 0xed, 0xfe), Array(0xca, 0xfe, 0xba, 0xbe)).map(_.map(_.toByte))
 
-  private def isMachO(b: Array[Byte]): Boolean = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
+  private def isMachO(b: Array[Byte]): com.histmersion.util.data.maintenance.PgRelocation.IsMachOResult = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
 
-  private def lastNul(d: Array[Byte], before: Int): Int =
+  private def lastNul(d: Array[Byte], before: com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore): com.histmersion.util.data.maintenance.PgRelocation.LastNulResult =
     var j = before - 1
     while j >= 0 && d(j) != 0 do j -= 1
     j
 
-  private def indexOf(d: Array[Byte], p: Array[Byte], from: Int): Int =
+  private def indexOf(d: Array[Byte], p: Array[Byte], from: com.histmersion.util.data.maintenance.PgRelocation.IndexOfFrom): com.histmersion.util.data.maintenance.PgRelocation.IndexOfResult =
     if p.isEmpty then -1
     else
       var i = math.max(0, from)

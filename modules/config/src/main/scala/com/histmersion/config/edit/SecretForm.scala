@@ -19,6 +19,17 @@ enum SecretForm(val wire: String, val describe: String):
   case Plain extends SecretForm("plain", "set")
 
 object SecretForm:
+  type OfText = OfText.T
+  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceResultPart1 = ReferenceResultPart1.T
+  object ReferenceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceText = ReferenceText.T
+  object ReferenceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownResult = ShownResult.T
+  object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownText = ShownText.T
+  object ShownText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ValueScheme = "value"
   val EnvScheme = "env"
   private val EnvName = "[A-Za-z_][A-Za-z0-9_]*".r
@@ -28,14 +39,14 @@ object SecretForm:
   val Forms = "env:<NAME>, <vault>:<entry> (keepassxc:…, 1password:…, bitwarden:…) or value:<the value itself>"
 
   /** How `text` refers to a credential (`rule`: what its setting is). */
-  def of(text: String, rule: SecretRule): SecretForm =
+  def of(text: com.histmersion.config.edit.SecretForm.OfText, rule: SecretRule): SecretForm =
     val t = Option(text).getOrElse("").trim
     if t.isEmpty then Unset
     else if rule == SecretRule.FromEnvironment then Plain
     else reference(t).fold(_ => Plain, identity)
 
   /** The reference's form, or why `text` is none. Never repeats `text` (it may be the value). */
-  def reference(text: String): Either[String, SecretForm] =
+  def reference(text: com.histmersion.config.edit.SecretForm.ReferenceText): Either[com.histmersion.config.edit.SecretForm.ReferenceResultPart1, SecretForm] =
     val t = text.trim
     t.indexOf(':') match
       case i if i <= 0 => Left(s"a credential is written as a reference — $Forms — never as the bare value")
@@ -52,7 +63,7 @@ object SecretForm:
   /** The reference as it may be shown: the scheme and name of an environment variable or a vault entry, `value:***` for
     * a literal, nothing for a plain value.
     */
-  def shown(text: String, rule: SecretRule): Option[String] =
+  def shown(text: com.histmersion.config.edit.SecretForm.ShownText, rule: SecretRule): Option[com.histmersion.config.edit.SecretForm.ShownResult] =
     of(text, rule) match
       case Environment | Vault => Some(text.trim)
       case Literal             => Some(s"$ValueScheme:***")

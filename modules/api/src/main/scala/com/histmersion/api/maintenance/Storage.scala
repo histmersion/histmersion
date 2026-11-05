@@ -13,9 +13,28 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 object Storage:
 
-  val DefaultLowFreeBytes: Long = 10L * 1000 * 1000 * 1000
+  type DefaultLowFreeBytes = DefaultLowFreeBytes.T
+  object DefaultLowFreeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderResult = UnderResult.T
+  object UnderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderChild = UnderChild.T
+  object UnderChild extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderParent = UnderParent.T
+  object UnderParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnVolumeVolume = OnVolumeVolume.T
+  object OnVolumeVolume extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintsResult = HintsResult.T
+  object HintsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailsResult = DetailsResult.T
+  object DetailsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownResultPart2 = ShownResultPart2.T
+  object ShownResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def under(child: String, parent: String): Boolean =
+  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = 10L * 1000 * 1000 * 1000
+
+  def under(child: com.histmersion.api.maintenance.Storage.UnderChild, parent: com.histmersion.api.maintenance.Storage.UnderParent): com.histmersion.api.maintenance.Storage.UnderResult =
     def norm(p: String) = p.replace('\\', '/').stripSuffix("/")
     val c = norm(child)
     val p = norm(parent)
@@ -39,12 +58,12 @@ object Storage:
   def total(entries: List[Storage.Entry]): com.histmersion.api.ByteCount =
     com.histmersion.api.ByteCount(entries.filter(_.within.isEmpty).flatMap(_.bytes.map(_.value.toLong)).sum)
 
-  def onVolume(entries: List[Storage.Entry], volume: String): List[Storage.Entry] =
+  def onVolume(entries: List[Storage.Entry], volume: com.histmersion.api.maintenance.Storage.OnVolumeVolume): List[Storage.Entry] =
     entries
       .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.map(_.value.toLong).exists(_ > 0))
       .sortBy(e => -e.bytes.map(_.value.toLong).getOrElse(0L))
 
-  def hints(report: Storage.Report): List[String] =
+  def hints(report: Storage.Report): List[com.histmersion.api.maintenance.Storage.HintsResult] =
     report.volumes.filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong).sortBy(_.freeBytes.value.toLong).map { v =>
       val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
       val head =
@@ -69,7 +88,7 @@ object Storage:
 
   def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
-  def details(r: Storage.Report, e: Storage.Entry): List[String] =
+  def details(r: Storage.Report, e: Storage.Entry): List[com.histmersion.api.maintenance.Storage.DetailsResult] =
     val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Plural.count(n, "file")).toList
     val extra = e.key match
       case "backups" =>
@@ -88,7 +107,7 @@ object Storage:
       case _ => Nil
     files ++ extra ++ e.detail.toList
 
-  def shown(entries: List[Storage.Entry]): List[(Storage.Entry, Int)] =
+  def shown(entries: List[Storage.Entry]): List[(Storage.Entry, com.histmersion.api.maintenance.Storage.ShownResultPart2)] =
     val present = entries.filter(_.exists)
     val keys = present.map(_.key).toSet
     def walk(e: Storage.Entry, depth: Int, seen: Set[String]): List[(Storage.Entry, Int)] =
@@ -97,7 +116,7 @@ object Storage:
         .flatMap(c => walk(c, depth + 1, seen + e.key))
     present.filter(e => e.within.forall(w => !keys.contains(w))).flatMap(walk(_, 0, Set.empty))
 
-  def size(e: Storage.Entry): String =
+  def size(e: Storage.Entry): com.histmersion.api.maintenance.Storage.SizeResult =
     e.bytes.map(_.value.toLong) match
       case None                 => if e.exists then "—" else "not there"
       case Some(b) if e.partial => s"at least ${Backup.humanBytes(b)}"
@@ -105,7 +124,14 @@ object Storage:
 
   object Advice:
 
-    def shrink(key: String, keep: Int): Option[String] = key match
+    type ShrinkResult = ShrinkResult.T
+    object ShrinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ShrinkKey = ShrinkKey.T
+    object ShrinkKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ShrinkKeep = ShrinkKeep.T
+    object ShrinkKeep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def shrink(key: com.histmersion.api.maintenance.Storage.Advice.ShrinkKey, keep: com.histmersion.api.maintenance.Storage.Advice.ShrinkKeep): Option[com.histmersion.api.maintenance.Storage.Advice.ShrinkResult] = key match
       case "backups" =>
         Some(if keep > 0 then s"lower backups.keep (now $keep) — the next backup deletes the older archives"
         else "set backups.keep (now 0 = keep every archive), or delete old archives")

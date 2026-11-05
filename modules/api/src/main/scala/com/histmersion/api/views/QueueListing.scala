@@ -18,9 +18,12 @@ final case class QueueListing(
       KindlingsSchema, com.histmersion.api.json.Schema:
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
-  def markdown: Option[String] =
+  def markdown: Option[com.histmersion.api.views.QueueListing.MarkdownResult] =
     Queue.Kind.parse(list).map(k => Queue.markdown(k, items, checks.map(c => c.item -> c.reason).toMap))
 
 object QueueListing:
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type List = List.T
   object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

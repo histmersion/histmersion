@@ -27,7 +27,7 @@ final class StorageCache(
   private val last = AtomicReference[Option[(Long, Storage.Report)]](None)
   private val running = AtomicReference[Option[CompletableFuture[Storage.Report]]](None)
 
-  def get(waitMillis: Long): Storage.Report =
+  def get(waitMillis: com.histmersion.util.data.diagnostics.StorageCache.GetWaitMillis): Storage.Report =
     last.get match
       case Some((at, r)) if clock() - at < ttlMillis() => r
       case Some((_, r))                                =>
@@ -65,3 +65,7 @@ final class StorageCache(
             ()
           }
           f
+
+object StorageCache:
+  type GetWaitMillis = GetWaitMillis.T
+  object GetWaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

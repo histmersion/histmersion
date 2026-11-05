@@ -9,7 +9,46 @@ import scala.scalajs.js
 object Clustering:
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
-  def world(lat: Double, lon: Double, z: Double): (Double, Double) =
+  type WorldResultPart1 = WorldResultPart1.T
+  object WorldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorldResultPart2 = WorldResultPart2.T
+  object WorldResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorldLat = WorldLat.T
+  object WorldLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorldLon = WorldLon.T
+  object WorldLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorldZ = WorldZ.T
+  object WorldZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupRadius = GroupRadius.T
+  object GroupRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsResultPart1 = GroupsResultPart1.T
+  object GroupsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsPtsPart1 = GroupsPtsPart1.T
+  object GroupsPtsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsZ = GroupsZ.T
+  object GroupsZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsRadius = GroupsRadius.T
+  object GroupsRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InViewResult = InViewResult.T
+  object InViewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InViewMargin = InViewMargin.T
+  object InViewMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnResultPart1 = DrawnResultPart1.T
+  object DrawnResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnResultPart2Part1 = DrawnResultPart2Part1.T
+  object DrawnResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnResultPart2Part2 = DrawnResultPart2Part2.T
+  object DrawnResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnGroupsPart1 = DrawnGroupsPart1.T
+  object DrawnGroupsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnePlaceResult = OnePlaceResult.T
+  object OnePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LevelResult = LevelResult.T
+  object LevelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LevelZoom = LevelZoom.T
+  object LevelZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmersion.web.map.Clustering.WorldResultPart1, com.histmersion.web.map.Clustering.WorldResultPart2) =
     val scale = 256.0 * math.pow(2, z)
     val l = math.max(-85.05112878, math.min(85.05112878, lat))
     val s = math.sin(math.toRadians(l))
@@ -19,7 +58,7 @@ object Clustering:
     * point is within `radius` px, else starts one. Answers each point's group number (0, 1, … in the order the groups
     * were started). Pure; one pass with a grid of `radius` cells.
     */
-  def group(xs: Array[Double], ys: Array[Double], radius: Double): Array[Int] =
+  def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): Array[Int] =
     val n = xs.length
     val out = new Array[Int](n)
     if radius <= 0 then
@@ -72,7 +111,7 @@ object Clustering:
   /** The groups of `pts` at zoom `z`: each group's keys (in the points' order) and where its bubble stands — the mean
     * of its points. Pure.
     */
-  def groups(pts: Seq[(String, LatLon)], z: Int, radius: Double): Vector[(Vector[String], LatLon)] =
+  def groups(pts: Seq[(com.histmersion.web.map.Clustering.GroupsPtsPart1, LatLon)], z: com.histmersion.web.map.Clustering.GroupsZ, radius: com.histmersion.web.map.Clustering.GroupsRadius): Vector[(Vector[com.histmersion.web.map.Clustering.GroupsResultPart1], LatLon)] =
     val n = pts.length
     val arr = pts.toArray
     val xs = new Array[Double](n)
@@ -97,7 +136,7 @@ object Clustering:
     Vector.tabulate(count)(k => (keys(k).toVector, LatLon(lat(k) / keys(k).length, lon(k) / keys(k).length)))
 
   /** Is `at` on `s`'s screen, or within `margin` px of it (the copy of the world nearest the view)? */
-  def inView(s: MapSurface, at: LatLon, margin: Double): Boolean =
+  def inView(s: MapSurface, at: LatLon, margin: com.histmersion.web.map.Clustering.InViewMargin): com.histmersion.web.map.Clustering.InViewResult =
     val (w, h) = s.size
     val c = s.center.lon
     val q = s.project(LatLon(at.lat, at.lon + 360 * math.round((c - at.lon) / 360).toDouble))
@@ -106,7 +145,7 @@ object Clustering:
   /** What a cluster layer draws of `groups` on `s`: the points drawn alone and the bubbles (their points), those in
     * view and a margin of a quarter of the view. Pure but for the projection.
     */
-  def drawn(groups: Vector[(Vector[String], LatLon)], s: MapSurface): (Set[String], Map[String, Vector[String]]) =
+  def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.DrawnGroupsPart1], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.DrawnResultPart1], Map[com.histmersion.web.map.Clustering.DrawnResultPart2Part1, Vector[com.histmersion.web.map.Clustering.DrawnResultPart2Part2]]) =
     val (w, h) = s.size
     val margin = 0.25 * math.max(w, h)
     val shown = groups.filter((_, at) => inView(s, at, margin))
@@ -116,10 +155,10 @@ object Clustering:
     )
 
   /** Pure: do `pts` all stand at one spot — a bubble no zoom can part? */
-  def onePlace(pts: Seq[LatLon]): Boolean =
+  def onePlace(pts: Seq[LatLon]): com.histmersion.web.map.Clustering.OnePlaceResult =
     pts.nonEmpty && pts.forall(p => p.lat == pts.head.lat && p.lon == pts.head.lon)
 
   /** The zoom a map at `zoom` clusters at: the nearest whole zoom (the bubbles regroup as the map passes the middle
     * between two). Pure.
     */
-  def level(zoom: Double): Int = math.round(zoom).toInt
+  def level(zoom: com.histmersion.web.map.Clustering.LevelZoom): com.histmersion.web.map.Clustering.LevelResult = math.round(zoom).toInt

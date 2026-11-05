@@ -16,10 +16,43 @@ import com.histmersion.api.media.MediaProvider
   */
 object ViewportToggle:
 
-  private def r5(x: Double): Double = Math.round(x * 1e5) / 1e5
+  type R5Result = R5Result.T
+  object R5Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type R5X = R5X.T
+  object R5X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapLonResult = WrapLonResult.T
+  object WrapLonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapLonX = WrapLonX.T
+  object WrapLonX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BboxOfResult = BboxOfResult.T
+  object BboxOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AreaPickHelp = AreaPickHelp.T
+  object AreaPickHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayersLabelResult = LayersLabelResult.T
+  object LayersLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayersLabelOn = LayersLabelOn.T
+  object LayersLabelOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayersLabelTotal = LayersLabelTotal.T
+  object LayersLabelTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerCount = LayerCount.T
+  object LayerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Open = Open.T
+  object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnCount = OnCount.T
+  object OnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedBoxField = UndatedBoxField.T
+  object UndatedBoxField extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedBoxWhat = UndatedBoxWhat.T
+  object UndatedBoxWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetInViewOn = SetInViewOn.T
+  object SetInViewOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def r5(x: com.histmersion.web.ViewportToggle.R5X): com.histmersion.web.ViewportToggle.R5Result = Math.round(x * 1e5) / 1e5
 
   /** Wrap longitude to [-180, 180]. The map can give unwrapped values past the antimeridian. */
-  private def wrapLon(x: Double): Double =
+  private def wrapLon(x: com.histmersion.web.ViewportToggle.WrapLonX): com.histmersion.web.ViewportToggle.WrapLonResult =
     val y = ((x + 180) % 360 + 360) % 360 - 180
     if y == -180 && x > 0 then 180.0 else y
 
@@ -27,7 +60,7 @@ object ViewportToggle:
     * comes back with minLon > maxLon; the server splits it into two envelopes. A viewport wider than the world becomes
     * the whole world.
     */
-  private def bboxOf(map: MapSurface): String =
+  private def bboxOf(map: MapSurface): com.histmersion.web.ViewportToggle.BboxOfResult =
     val b = map.bounds
     val w = b.west
     val e = b.east
@@ -42,24 +75,24 @@ object ViewportToggle:
     Option.when(TheMap.isUp)(TheMap.surface).flatMap(m => scala.util.Try(bboxOf(m)).toOption).flatMap(BBox.parse)
 
   /** The help of the "States shown" menu ([[UiState.areaPick]]). */
-  val AreaPickHelp: String =
+  val AreaPickHelp: com.histmersion.web.ViewportToggle.AreaPickHelp =
     "Which states the boundaries layer draws for the period. Sites use the same year, or the midpoint " +
       "for “all states in period”; playback shows one year at a time."
 
   /** Pure: how many of the map's `total` layers are on, as the layers button says it. */
-  def layersLabel(on: Int, total: Int): String = s"Layers · $on of $total on"
+  def layersLabel(on: com.histmersion.web.ViewportToggle.LayersLabelOn, total: com.histmersion.web.ViewportToggle.LayersLabelTotal): com.histmersion.web.ViewportToggle.LayersLabelResult = s"Layers · $on of $total on"
 
   /** The layers the button counts: the findings, then every [[MapLayer]]. */
-  val LayerCount: Int = 1 + MapLayer.values.length
+  val LayerCount: com.histmersion.web.ViewportToggle.LayerCount = 1 + MapLayer.values.length
 
   /** Whether the layers panel is open (a wide screen: on a phone it is the map & tools drawer). */
-  val open: Var[Boolean] = Var(false)
+  val open: Var[com.histmersion.web.ViewportToggle.Open] = Var(false)
 
-  private val onCount: Signal[Int] =
+  private val onCount: Signal[com.histmersion.web.ViewportToggle.OnCount] =
     UiState.sources.signal.combineWith(UiState.layers.signal).map((src, ls) => (if src then 1 else 0) + ls.size)
 
   /** The undated sites' or events' switch, under their layer. */
-  private def undatedBox(field: Field[Boolean], what: String): HtmlElement =
+  private def undatedBox(field: Field[com.histmersion.web.ViewportToggle.UndatedBoxField], what: com.histmersion.web.ViewportToggle.UndatedBoxWhat): HtmlElement =
     label(
       cls := "layer-check",
       input(
@@ -118,12 +151,12 @@ object ViewportToggle:
     )
 
   // `var`: the pending debounce timer of the moveend handler below
-  private var timer: Int = 0
+  private var timer: com.histmersion.web.ViewportToggle.Timer = 0
 
   /** "On the map" (only the sources in the map's view) or "Everywhere": the results follow the map's view while it is
     * on.
     */
-  def setInView(on: Boolean): Unit =
+  def setInView(on: com.histmersion.web.ViewportToggle.SetInViewOn): Unit =
     dom.window.clearTimeout(timer)
     if on && TheMap.isUp then UiState.set(UiState.inView := true, UiState.bbox := Some(bboxOf(TheMap.surface)))()
     else UiState.set(UiState.inView := false, UiState.bbox := None)()

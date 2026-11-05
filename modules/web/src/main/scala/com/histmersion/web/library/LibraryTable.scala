@@ -11,6 +11,19 @@ import org.scalajs.dom
   */
 object LibraryTable:
 
+  type ElementChosen = ElementChosen.T
+  object ElementChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentKeysResult = CurrentKeysResult.T
+  object CurrentKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChosenKeyResult = ChosenKeyResult.T
+  object ChosenKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRowKey = FocusRowKey.T
+  object FocusRowKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowSources = RowSources.T
+  object RowSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowChosen = RowChosen.T
+  object RowChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val colScope = htmlAttr("scope", com.raquo.laminar.codecs.StringAsIsCodec)
 
   /** Choose `key` in `section`'s list: a step in the history (`push`), or the arrow keys' quiet move. */
@@ -19,7 +32,7 @@ object LibraryTable:
   def element(
       section: LibrarySection,
       rows: Signal[List[TableRow]],
-      chosen: Signal[Option[String]],
+      chosen: Signal[Option[com.histmersion.web.library.LibraryTable.ElementChosen]],
       choose: Choose
   ): HtmlElement =
     val sources = section != LibrarySection.Articles
@@ -58,11 +71,11 @@ object LibraryTable:
       )
     )
 
-  private def currentKeys(ev: dom.KeyboardEvent): List[String] =
+  private def currentKeys(ev: dom.KeyboardEvent): List[com.histmersion.web.library.LibraryTable.CurrentKeysResult] =
     val rows = ev.currentTarget.asInstanceOf[dom.Element].querySelectorAll("tbody tr[data-key]")
     (0 until rows.length).toList.map(i => rows(i).getAttribute("data-key"))
 
-  private def chosenKey(ev: dom.KeyboardEvent): Option[String] =
+  private def chosenKey(ev: dom.KeyboardEvent): Option[com.histmersion.web.library.LibraryTable.ChosenKeyResult] =
     Option(ev.currentTarget.asInstanceOf[dom.Element].querySelector("tbody tr.is-chosen"))
       .map(_.getAttribute("data-key"))
       .orElse(
@@ -71,13 +84,13 @@ object LibraryTable:
           .map(_.getAttribute("data-key"))
       )
 
-  private def focusRow(wrap: dom.Element, key: String): Unit =
+  private def focusRow(wrap: dom.Element, key: com.histmersion.web.library.LibraryTable.FocusRowKey): Unit =
     val rows = wrap.querySelectorAll("tbody tr[data-key]")
     (0 until rows.length).map(rows(_)).find(_.getAttribute("data-key") == key).foreach { tr =>
       Option(tr.querySelector("a.lib-title")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
     }
 
-  private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[String]], choose: Choose): HtmlElement =
+  private def row(r: TableRow, sources: com.histmersion.web.library.LibraryTable.RowSources, chosen: Signal[Option[com.histmersion.web.library.LibraryTable.RowChosen]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =
       if sources then com.histmersion.web.marks.ItemRef.source(r.key, r.title)

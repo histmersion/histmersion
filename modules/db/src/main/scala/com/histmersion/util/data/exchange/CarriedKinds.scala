@@ -35,14 +35,19 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
     loop(inBundleOrder, BundleEntities())
 
   /** Where the first kind that owns `use` puts it. */
-  def sink(use: BlobUse, sha256: String, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+  def sink(use: BlobUse, sha256: com.histmersion.util.data.exchange.CarriedKinds.SinkSha256, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
     inBundleOrder.iterator.flatMap(_.blobIn(use, sha256, writer, files)).nextOption()
 
 object CarriedKinds:
   /** The kinds in the format's order, or what is wrong with them: an entry no kind carries, one carried twice, one the
     * format does not have.
     */
-  def of(kinds: List[CarriedKind]): Either[List[String], CarriedKinds] =
+  type SinkSha256 = SinkSha256.T
+  object SinkSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResultPart1 = OfResultPart1.T
+  object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(kinds: List[CarriedKind]): Either[List[com.histmersion.util.data.exchange.CarriedKinds.OfResultPart1], CarriedKinds] =
     val entries = kinds.map(_.entry.value)
     val missing =
       com.histmersion.api.exchange.Bundle.Files.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")

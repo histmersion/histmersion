@@ -12,6 +12,9 @@ object QueryAccess:
   /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011, which holds nothing
     * but SELECT. Deliberately tiny: the hatch is an interactive escape valve, not a serving path.
     */
+  type ProvisionResultPart1 = ProvisionResultPart1.T
+  object ProvisionResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def pool(db: DbConfig, q: QueryConfig): HikariDataSource =
     Db.pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), "histmersion-query")
 
@@ -25,7 +28,7 @@ object QueryAccess:
     * `Left` when the application role may not `ALTER ROLE` (it is not a superuser and has no CREATEROLE). The caller
     * decides what to do about it; nothing here throws.
     */
-  def provision(admin: DataSource, q: QueryConfig): Either[String, Unit] =
+  def provision(admin: DataSource, q: QueryConfig): Either[com.histmersion.domain.library.search.QueryAccess.ProvisionResultPart1, Unit] =
     val c = admin.getConnection
     try
       // A restore into a FRESH cluster (disaster recovery) finds V011 recorded as applied but no role:

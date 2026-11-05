@@ -24,12 +24,21 @@ object MergeResolutions:
 
   object Text:
 
-    def flag(s: String): Either[String, MergeResolution] =
+    type FlagResultPart1 = FlagResultPart1.T
+    object FlagResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FlagS = FlagS.T
+    object FlagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TemplateResult = TemplateResult.T
+    object TemplateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TextsResult = TextsResult.T
+    object TextsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.FlagS): Either[com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1, MergeResolution] =
       s.indexOf('=') match
         case i if i > 0 && i < s.length - 1 => Right(MergeResolution(s.take(i).trim, s.drop(i + 1).trim))
         case _                              => Left(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left")
 
-    def template(p: MergePlan, current: MergeResolutions): String =
+    def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult =
       val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
       def opts(i: MergeIssue): String =
         i.options
@@ -75,7 +84,7 @@ object MergeResolutions:
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.
       */
-    def texts(current: MergeResolutions): List[String] =
+    def texts(current: MergeResolutions): List[com.histmersion.api.exchange.MergeResolutions.Text.TextsResult] =
       val withText = current.resolve.flatMap(r => r.text.map(r.issue -> _)).sortBy(_._1)
       if withText.isEmpty then Nil
       else

@@ -10,7 +10,20 @@ import com.histmersion.api.media.{AssetInfo, AssetsMarkdown}
 import com.histmersion.api.given
 object IngestMarkdown:
 
-  def job(j: JobInfo): String =
+  type JobResult = JobResult.T
+  object JobResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsResult = JobsResult.T
+  object JobsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStatus = JobsStatus.T
+  object JobsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsOlder = JobsOlder.T
+  object JobsOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetsResult = AssetsResult.T
+  object AssetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetsCitekey = AssetsCitekey.T
+  object AssetsCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def job(j: JobInfo): com.histmersion.api.library.IngestMarkdown.JobResult =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
       j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
@@ -45,9 +58,9 @@ object IngestMarkdown:
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,
-      status: Option[String] = None,
-      older: Option[String] = None
-  ): String =
+      status: Option[com.histmersion.api.library.IngestMarkdown.JobsStatus] = None,
+      older: Option[com.histmersion.api.library.IngestMarkdown.JobsOlder] = None
+  ): com.histmersion.api.library.IngestMarkdown.JobsResult =
     if js.isEmpty then status.fold("_No jobs._")(s => s"_No $s jobs._")
     else
       val rows = js.map(j =>
@@ -62,4 +75,4 @@ object IngestMarkdown:
         ))
         .mkString("\n")
 
-  def assets(citekey: String, as: Vector[AssetInfo]): String = AssetsMarkdown.assets(citekey, as)
+  def assets(citekey: com.histmersion.api.library.IngestMarkdown.AssetsCitekey, as: Vector[AssetInfo]): com.histmersion.api.library.IngestMarkdown.AssetsResult = AssetsMarkdown.assets(citekey, as)

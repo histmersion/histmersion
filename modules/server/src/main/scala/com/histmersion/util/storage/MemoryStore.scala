@@ -39,15 +39,15 @@ final class MemoryStore private (
   private def ancestors(k: Store.Key): List[Store.Key] =
     k.segments.inits.toList.drop(1).filter(_.nonEmpty).map(s => Store.Key.applyUnsafe(s.mkString("/")))
 
-  def where(key: Store.Key): String = s"$name/${full(key).value}"
+  def where(key: Store.Key): com.histmersion.util.storage.MemoryStore.WhereResult = s"$name/${full(key).value}"
 
   def sub(prefix: Store.Key): Store = MemoryStore(location, name, state, full(prefix))
 
-  def exists(key: Store.Key): Boolean = isFile(key) || isDirectory(key)
-  def isFile(key: Store.Key): Boolean = state.get.files.contains(full(key))
-  def isDirectory(key: Store.Key): Boolean = full(key).isRoot || directories(Store.Key.Root).contains(full(key))
-  def isLink(key: Store.Key): Boolean = false
-  def isExecutable(key: Store.Key): Boolean = false
+  def exists(key: Store.Key): com.histmersion.util.storage.MemoryStore.ExistsResult = isFile(key) || isDirectory(key)
+  def isFile(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsFileResult = state.get.files.contains(full(key))
+  def isDirectory(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsDirectoryResult = full(key).isRoot || directories(Store.Key.Root).contains(full(key))
+  def isLink(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsLinkResult = false
+  def isExecutable(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsExecutableResult = false
 
   def stat(key: Store.Key): Option[Stored] =
     state.get.files
@@ -83,7 +83,7 @@ final class MemoryStore private (
   def put(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
   def write(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
 
-  def reserve(key: Store.Key, temp: TempName, throughLink: Boolean): Either[Store.Error, Reservation] =
+  def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.MemoryStore.ReserveThroughLink): Either[Store.Error, Reservation] =
     Right(MemoryStore.MemoryReservation(key, where(key), (k, b) => store(k, b)))
 
   def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] =
@@ -91,7 +91,7 @@ final class MemoryStore private (
       state.updateAndGet(_.modify(_.files).using(_.removed(full(from)).updated(full(to), e))): Unit
     }
 
-  def copy(from: Store.Key, to: Store.Key, keepAttributes: Boolean): Either[Store.Error, Unit] =
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.MemoryStore.CopyKeepAttributes): Either[Store.Error, Unit] =
     state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
       val copied = if keepAttributes then e else e.modify(_.modified).setTo(now)
       state.updateAndGet(_.modify(_.files).using(_.updated(full(to), copied))): Unit
@@ -100,7 +100,7 @@ final class MemoryStore private (
   def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] =
     Right(state.updateAndGet(_.modify(_.directories).using(_ + full(prefix))): Unit)
 
-  def delete(key: Store.Key): Boolean =
+  def delete(key: Store.Key): com.histmersion.util.storage.MemoryStore.DeleteResult =
     val k = full(key)
     state.getAndUpdate(_.modify(_.files).using(_.removed(k))).files.contains(k)
 
@@ -135,7 +135,7 @@ final class MemoryStore private (
 
   def volume: Option[Store.Volume] = None
 
-  def names(prefix: Store.Key): List[String] = list(prefix).map(_.key.name)
+  def names(prefix: Store.Key): List[com.histmersion.util.storage.MemoryStore.NamesResult] = list(prefix).map(_.key.name)
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 
@@ -145,6 +145,27 @@ final class MemoryStore private (
 
 object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
+  type WhereResult = WhereResult.T
+  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExistsResult = ExistsResult.T
+  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsFileResult = IsFileResult.T
+  object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDirectoryResult = IsDirectoryResult.T
+  object IsDirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLinkResult = IsLinkResult.T
+  object IsLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsExecutableResult = IsExecutableResult.T
+  object IsExecutableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReserveThroughLink = ReserveThroughLink.T
+  object ReserveThroughLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CopyKeepAttributes = CopyKeepAttributes.T
+  object CopyKeepAttributes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteResult = DeleteResult.T
+  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesResult = NamesResult.T
+  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ticks = java.util.concurrent.atomic.AtomicLong()
 
   final case class Entry(bytes: Entry.Bytes, modified: Instant):
@@ -161,10 +182,10 @@ object MemoryStore:
     def modified: Instant = entry.modified
     def open(): InputStream = ByteArrayInputStream(entry.bytes)
     def bytes(): Array[Byte] = entry.bytes.clone()
-    def text(): String = String(entry.bytes, UTF_8)
+    def text(): com.histmersion.util.storage.MemoryStore.MemoryBlob.TextResult = String(entry.bytes, UTF_8)
     def sha256(): Sha256 =
       Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes).map(b => f"${b & 0xff}%02x").mkString)
-    def readAt(offset: ByteOffset, length: Int): Array[Byte] = reader().read(offset, length)
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): Array[Byte] = reader().read(offset, length)
     def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
       def where: String = MemoryBlob.this.where
@@ -177,6 +198,12 @@ object MemoryStore:
         val from = math.min(offset.value, entry.bytes.length.toLong).toInt
         java.util.Arrays.copyOfRange(entry.bytes, from, math.min(entry.bytes.length, from + length))
       def close(): Unit = ()
+
+  object MemoryBlob:
+    type TextResult = TextResult.T
+    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadAtLength = ReadAtLength.T
+    object ReadAtLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final class MemoryReservation(val key: Store.Key, val where: String, commitTo: (Store.Key, Array[Byte]) => Stored)
       extends Reservation:
@@ -197,10 +224,14 @@ object MemoryStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(written.get.length.toLong)
 
-    def commit(keepPermissions: Boolean): Either[Store.Error, Stored] =
+    def commit(keepPermissions: com.histmersion.util.storage.MemoryStore.MemoryReservation.CommitKeepPermissions): Either[Store.Error, Stored] =
       done = true
       Right(commitTo(key, written.get))
 
     def discard(): Unit = written.set(Array.emptyByteArray)
     def close(): Unit = if !done then discard()
     private[util] def onDisk: Either[Store.Error, java.nio.file.Path] = Left(Store.Error.NotOnDisk(where))
+
+  object MemoryReservation:
+    type CommitKeepPermissions = CommitKeepPermissions.T
+    object CommitKeepPermissions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,12 +9,25 @@ import com.histmersion.api.library.Label
   * button. Editable chip inputs, the empty-state list, article cards and the link preview all draw theirs with it.
   */
 object Chip:
+  type ApplyText = ApplyText.T
+  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPrefix = ApplyPrefix.T
+  object ApplyPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTip = ApplyTip.T
+  object ApplyTip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyExtraCls = ApplyExtraCls.T
+  object ApplyExtraCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValueV = ValueV.T
+  object ValueV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuePrefix = ValuePrefix.T
+  object ValuePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(
-      text: String,
+      text: com.histmersion.web.Chip.ApplyText,
       remove: Option[() => Unit] = None,
-      prefix: Option[String] = None,
-      tip: Option[String] = None,
-      extraCls: String = "",
+      prefix: Option[com.histmersion.web.Chip.ApplyPrefix] = None,
+      tip: Option[com.histmersion.web.Chip.ApplyTip] = None,
+      extraCls: com.histmersion.web.Chip.ApplyExtraCls = "",
       mods: Modifier[HtmlElement]*
   ): HtmlElement =
     span(
@@ -35,5 +48,5 @@ object Chip:
     )
 
   /** A chip for a stored VALUE: the label is its display form. */
-  def value(v: String, remove: Option[() => Unit] = None, prefix: Option[String] = None): HtmlElement =
+  def value(v: com.histmersion.web.Chip.ValueV, remove: Option[() => Unit] = None, prefix: Option[com.histmersion.web.Chip.ValuePrefix] = None): HtmlElement =
     apply(Label.display(v), remove, prefix)

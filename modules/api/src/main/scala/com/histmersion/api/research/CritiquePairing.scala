@@ -7,6 +7,69 @@ import com.histmersion.api.given
 
 object CritiquePairing:
 
+  type LettersResult = LettersResult.T
+  object LettersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LettersS = LettersS.T
+  object LettersS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsciiResult = AsciiResult.T
+  object AsciiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsciiS = AsciiS.T
+  object AsciiS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesResult = NamesResult.T
+  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesCitekey = NamesCitekey.T
+  object NamesCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesAuthors = NamesAuthors.T
+  object NamesAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsResult = WordsResult.T
+  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsText = WordsText.T
+  object WordsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProseResult = ProseResult.T
+  object ProseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProseText = ProseText.T
+  object ProseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionText = MentionText.T
+  object MentionText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionName = MentionName.T
+  object MentionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionYear = MentionYear.T
+  object MentionYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EdgeLineResult = EdgeLineResult.T
+  object EdgeLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitsBody = HitsBody.T
+  object HitsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitsResolveArg1 = HitsResolveArg1.T
+  object HitsResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitsResolveResult = HitsResolveResult.T
+  object HitsResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitsWorkArg1 = HitsWorkArg1.T
+  object HitsWorkArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepairResultPart1 = RepairResultPart1.T
+  object RepairResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepairBody = RepairBody.T
+  object RepairBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstructionResult = InstructionResult.T
+  object InstructionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstructionBody = InstructionBody.T
+  object InstructionBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstructionResolveArg1 = InstructionResolveArg1.T
+  object InstructionResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstructionResolveResult = InstructionResolveResult.T
+  object InstructionResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstructionNear = InstructionNear.T
+  object InstructionNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolverResultArg1 = ResolverResultArg1.T
+  object ResolverResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolverResultResult = ResolverResultResult.T
+  object ResolverResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolverCitekeys = ResolverCitekeys.T
+  object ResolverCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolverAliasesPart1 = ResolverAliasesPart1.T
+  object ResolverAliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolverAliasesPart2 = ResolverAliasesPart2.T
+  object ResolverAliasesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Work(citekey: com.histmersion.api.library.Citekey, names: List[Work.Names], year: Option[com.histmersion.api.catalogue.Year])
 
   object Work:
@@ -26,13 +89,16 @@ object CritiquePairing:
   ) derives KindlingsCodecAsObject:
     def ref: CritiqueRef = CritiqueRef(cited, missing)
 
-    def line: String =
+    def line: com.histmersion.api.research.CritiquePairing.Hit.LineResult =
       s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
         (if mechanical then s"cite [[$missing]] there (fixable)"
          else
            s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)")
 
   object Hit:
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Unit = Unit.T
     object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
@@ -48,11 +114,11 @@ object CritiquePairing:
     type Mechanical = Mechanical.T
     object Mechanical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def letters(s: String): String =
+  private def letters(s: com.histmersion.api.research.CritiquePairing.LettersS): com.histmersion.api.research.CritiquePairing.LettersResult =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
-  private def ascii(s: String): String = s.toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
+  private def ascii(s: com.histmersion.api.research.CritiquePairing.AsciiS): com.histmersion.api.research.CritiquePairing.AsciiResult = s.toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
 
-  def names(citekey: String, authors: List[String]): List[String] =
+  def names(citekey: com.histmersion.api.research.CritiquePairing.NamesCitekey, authors: List[com.histmersion.api.research.CritiquePairing.NamesAuthors]): List[com.histmersion.api.research.CritiquePairing.NamesResult] =
     val lead = citekey.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
     val words = authors
       .flatMap(_.split("[\\s,]+").toList)
@@ -68,14 +134,14 @@ object CritiquePairing:
   private val LinkRe = """!?\\?\[\\?\[[^\[\]\n]+?\\?\]\\?\]""".r
   private val YearRe = """(?<!\d)(1[0-9]\d\d|20\d\d)(?!\d)""".r
 
-  private def words(text: String): List[String] = text.split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))
+  private def words(text: com.histmersion.api.research.CritiquePairing.WordsText): List[com.histmersion.api.research.CritiquePairing.WordsResult] = text.split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))
 
-  private def prose(text: String): String = LinkRe.replaceAllIn(text, " ")
+  private def prose(text: com.histmersion.api.research.CritiquePairing.ProseText): com.histmersion.api.research.CritiquePairing.ProseResult = LinkRe.replaceAllIn(text, " ")
 
   private enum Mention:
     case Strong, Weak, Conflict
 
-  private def mention(text: String, name: String, year: Option[Int]): Option[Mention] =
+  private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histmersion.api.research.CritiquePairing.MentionYear]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote(name) + "(?!\\p{L})").r
     val ms = re.findAllMatchIn(text).toList
     if ms.isEmpty then None
@@ -87,13 +153,13 @@ object CritiquePairing:
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 
-  private def edgeLine(e: Coverage.Edge): String = s"[[${e.from}]] ${e.kind} [[${e.to}]]"
+  private def edgeLine(e: Coverage.Edge): com.histmersion.api.research.CritiquePairing.EdgeLineResult = s"[[${e.from}]] ${e.kind} [[${e.to}]]"
 
   def hits(
-      body: String,
-      resolve: String => Option[String],
+      body: com.histmersion.api.research.CritiquePairing.HitsBody,
+      resolve: com.histmersion.api.research.CritiquePairing.HitsResolveArg1 => Option[com.histmersion.api.research.CritiquePairing.HitsResolveResult],
       edges: List[Coverage.Edge],
-      work: String => Option[Work]
+      work: com.histmersion.api.research.CritiquePairing.HitsWorkArg1 => Option[Work]
   ): List[Hit] =
     val es = edges.filter(e => Critiques.Kinds.contains(e.kind) && e.from != e.to)
     val blocks = Critiques.units(body)
@@ -137,7 +203,7 @@ object CritiquePairing:
       }
     }
 
-  def repair(body: String, hs: List[Hit]): (String, List[Hit]) =
+  def repair(body: com.histmersion.api.research.CritiquePairing.RepairBody, hs: List[Hit]): (com.histmersion.api.research.CritiquePairing.RepairResultPart1, List[Hit]) =
     val todo = hs.filter(_.mechanical).groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
@@ -164,11 +230,11 @@ object CritiquePairing:
       (if crlf then text.replace("\n", "\r\n") else text, done.sortBy(h => (h.unit, h.missing)))
 
   def instruction(
-      body: String,
+      body: com.histmersion.api.research.CritiquePairing.InstructionBody,
       p: CritiquePair,
-      resolve: String => Option[String],
-      near: Option[Int] = None
-  ): Option[String] =
+      resolve: com.histmersion.api.research.CritiquePairing.InstructionResolveArg1 => Option[com.histmersion.api.research.CritiquePairing.InstructionResolveResult],
+      near: Option[com.histmersion.api.research.CritiquePairing.InstructionNear] = None
+  ): Option[com.histmersion.api.research.CritiquePairing.InstructionResult] =
     val crit = p.criticised.citekey
     val critic = p.critic.citekey
     val us = Critiques.units(body).zipWithIndex
@@ -180,7 +246,7 @@ object CritiquePairing:
         "not touch what that paragraph says, set the pair aside with a reason"
     }
 
-  def resolver(citekeys: Set[String], aliases: Map[String, String]): String => Option[String] =
+  def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1, com.histmersion.api.research.CritiquePairing.ResolverAliasesPart2]): com.histmersion.api.research.CritiquePairing.ResolverResultArg1 => Option[com.histmersion.api.research.CritiquePairing.ResolverResultResult] =
     val sorted = citekeys.toVector.sorted
     t =>
       val k = t.trim.toLowerCase(java.util.Locale.ROOT)

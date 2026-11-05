@@ -32,7 +32,60 @@ import com.histmersion.api.catalogue.EventGeo
 private[events] object EventRepo:
 
   /** How many events the catalogue holds. */
-  def count()(using DbCon): Long = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListLimit = ListLimit.T
+  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListOffset = ListOffset.T
+  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoLimit = GeoLimit.T
+  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoTolerance = GeoTolerance.T
+  object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoOfResultPart1 = GeoOfResultPart1.T
+  object GeoOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoOfIds = GeoOfIds.T
+  object GeoOfIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierAndNamesResultPart1 = TierAndNamesResultPart1.T
+  object TierAndNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierAndNamesResultPart2 = TierAndNamesResultPart2.T
+  object TierAndNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierAndNamesResultPart3 = TierAndNamesResultPart3.T
+  object TierAndNamesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierAndNamesId = TierAndNamesId.T
+  object TierAndNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExistsResult = ExistsResult.T
+  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExistsId = ExistsId.T
+  object ExistsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordCorrectionsId = RecordCorrectionsId.T
+  object RecordCorrectionsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordCorrectionsFieldsPart1 = RecordCorrectionsFieldsPart1.T
+  object RecordCorrectionsFieldsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeometryErrorResult = GeometryErrorResult.T
+  object GeometryErrorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeometryErrorGeojson = GeometryErrorGeojson.T
+  object GeometryErrorGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutId = PutId.T
+  object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchId = PatchId.T
+  object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameOldId = RenameOldId.T
+  object RenameOldId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameNewId = RenameNewId.T
+  object RenameNewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedToResult = RenamedToResult.T
+  object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedToId = RenamedToId.T
+  object RenamedToId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteResult = DeleteResult.T
+  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteId = DeleteId.T
+  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def count()(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.CountResult = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong
 
   private given DbCodec[EventEdge] = DbCodec.derived
   private given DbCodec[EventParticipant] = DbCodec.derived
@@ -51,7 +104,7 @@ private[events] object EventRepo:
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
   /** The events `where` selects ([[EventSql.listWhere]]), one page of them. */
-  def list(where: Sql, limit: Int, offset: Int)(using DbCon): EventList =
+  def list(where: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.ListLimit, offset: com.histmersion.domain.catalogue.events.EventRepo.ListOffset)(using DbCon): EventList =
     val total = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE ") ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(s"SELECT $summaryCols FROM $fromEvents WHERE ") ++ where ++
       Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
@@ -68,7 +121,7 @@ private[events] object EventRepo:
     * land-clipped shape, as the map draws it); a local one, or an area known only by a point, none. Two statements: the
     * rows with their scale, then the outlines of the regional ones alone.
     */
-  def geo(listed: Sql, limit: Int, tolerance: Double)(using DbCon): EventGeo.List =
+  def geo(listed: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
     val where = listed ++ Sql.of(" AND e.uncertainty <= ?", Param.L(EventPrecision.ApproximateUpTo))
@@ -99,7 +152,7 @@ private[events] object EventRepo:
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.
     */
-  def geoOf(ids: List[String])(using DbCon): Map[String, com.histmersion.api.catalogue.EventGeo] =
+  def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventRepo.GeoOfIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOfResultPart1, com.histmersion.api.catalogue.EventGeo] =
     if ids.isEmpty then Map.empty
     else
       (geoSelect ++ Sql.of(
@@ -117,7 +170,7 @@ private[events] object EventRepo:
             WHERE s.g IS NOT NULL AND """)
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
-  def get(id: String)(using DbCon): Option[EventEntry] =
+  def get(id: com.histmersion.domain.catalogue.events.EventRepo.GetId)(using DbCon): Option[EventEntry] =
     sql"""SELECT ${SqlLiteral(summaryCols)}, ST_AsGeoJSON(e.geom)
           FROM ${SqlLiteral(fromEvents)} WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
       val parent = r.toSummary.parentId.flatMap { pid =>
@@ -167,13 +220,13 @@ private[events] object EventRepo:
     }
 
   /** The tier, other names and catalogue of one event. */
-  def tierAndNames(id: String)(using DbCon): Option[(String, List[String], Option[String])] =
+  def tierAndNames(id: com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart1, List[com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart2], Option[com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart3])] =
     sql"""SELECT ${SqlLiteral(EventSql.TierSql)}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
       .query[(String, List[String], Option[String])]
       .run()
       .headOption
 
-  def exists(id: String)(using DbCon): Boolean = sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
+  def exists(id: com.histmersion.domain.catalogue.events.EventRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.ExistsResult = sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
@@ -187,7 +240,7 @@ private[events] object EventRepo:
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its
     * correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
     */
-  private def recordCorrections(id: String, fields: Map[String, io.circe.Json])(using DbCon): Unit =
+  private def recordCorrections(id: com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsId, fields: Map[com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsFieldsPart1, io.circe.Json])(using DbCon): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(id).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
@@ -199,7 +252,7 @@ private[events] object EventRepo:
   /** Why PostGIS cannot read `geojson` as a geometry, in its own words — `None` when it can. Asked before a write, on a
     * connection of its own, so a bad geometry is a 400 rather than a failed statement.
     */
-  def geometryError(geojson: String)(using con: DbCon): Option[String] =
+  def geometryError(geojson: com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorGeojson)(using con: DbCon): Option[com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorResult] =
     try
       val st = con.connection.prepareStatement("SELECT ST_IsEmpty(ST_GeomFromGeoJSON(?))")
       try
@@ -219,7 +272,7 @@ private[events] object EventRepo:
   /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
     * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
     */
-  def put(id: String, in: EventPut)(using DbCon): Unit =
+  def put(id: com.histmersion.domain.catalogue.events.EventRepo.PutId, in: EventPut)(using DbCon): Unit =
     val geom = in.geometry.map(_.trim).filter(_.nonEmpty)
     val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after,
@@ -275,7 +328,7 @@ private[events] object EventRepo:
     * ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once the catalogue agrees, or
     * flags a conflict when the catalogue changes to something else).
     */
-  def patch(id: String, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
+  def patch(id: com.histmersion.domain.catalogue.events.EventRepo.PatchId, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
     if !exists(id) then Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
@@ -336,7 +389,7 @@ private[events] object EventRepo:
     * attestations and asset links that name it follow. What a bundle import does when an event was renamed on the other
     * side.
     */
-  def rename(oldId: String, newId: String)(using DbCon): Either[Api.Error, Unit] =
+  def rename(oldId: com.histmersion.domain.catalogue.events.EventRepo.RenameOldId, newId: com.histmersion.domain.catalogue.events.EventRepo.RenameNewId)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(Api.Error(s"No event '$oldId'", Some(Write.CodeNotFound)))
     else if exists(newId) then Left(Api.Error(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
@@ -358,8 +411,8 @@ private[events] object EventRepo:
       Right(())
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(id: String)(using DbCon): Option[String] =
+  def renamedTo(id: com.histmersion.domain.catalogue.events.EventRepo.RenamedToId)(using DbCon): Option[com.histmersion.domain.catalogue.events.EventRepo.RenamedToResult] =
     EventAliasTable.table.renamedToIn(id)
 
-  def delete(id: String)(using DbCon): Boolean =
+  def delete(id: com.histmersion.domain.catalogue.events.EventRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.DeleteResult =
     sql"DELETE FROM events WHERE id = $id".update.run() > 0 // its corrections go (a trigger)

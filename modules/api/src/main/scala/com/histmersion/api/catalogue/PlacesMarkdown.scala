@@ -3,14 +3,51 @@ import com.histmersion.api.Markdown.*
 
 object PlacesMarkdown:
 
-  private[api] def kindOf(kind: String, ps: Option[Long], pe: Option[Long]): String =
+  type KindOfResult = KindOfResult.T
+  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfKind = KindOfKind.T
+  object KindOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfPs = KindOfPs.T
+  object KindOfPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfPe = KindOfPe.T
+  object KindOfPe extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindWhenResult = KindWhenResult.T
+  object KindWhenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacesResult = PlacesResult.T
+  object PlacesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacesAsOf = PlacesAsOf.T
+  object PlacesAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceTreeResult = PlaceTreeResult.T
+  object PlaceTreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceImportResult = PlaceImportResult.T
+  object PlaceImportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerSourcesResult = GazetteerSourcesResult.T
+  object GazetteerSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceNameChangedResult = PlaceNameChangedResult.T
+  object PlaceNameChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManualPlaceNamesResult = ManualPlaceNamesResult.T
+  object ManualPlaceNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceOverrideChangedResult = PlaceOverrideChangedResult.T
+  object PlaceOverrideChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceGoneResult = PlaceGoneResult.T
+  object PlaceGoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceOverridesResult = PlaceOverridesResult.T
+  object PlaceOverridesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAddedResult = PlaceAddedResult.T
+  object PlaceAddedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceRebuildResult = PlaceRebuildResult.T
+  object PlaceRebuildResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceResult = PlaceResult.T
+  object PlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.PlacesMarkdown.KindOfPs], pe: Option[com.histmersion.api.catalogue.PlacesMarkdown.KindOfPe]): com.histmersion.api.catalogue.PlacesMarkdown.KindOfResult =
     val p = period(ps, pe)
     if p.isEmpty then kind else s"$kind · $p"
 
-  private[api] def kindWhen(s: Place.Summary): String =
+  private[api] def kindWhen(s: Place.Summary): com.histmersion.api.catalogue.PlacesMarkdown.KindWhenResult =
     if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else s"${s.kind} · ${s.when}"
 
-  def places(rows: Vector[Place.Hit], asOf: Option[Long] = None): String =
+  def places(rows: Vector[Place.Hit], asOf: Option[com.histmersion.api.catalogue.PlacesMarkdown.PlacesAsOf] = None): com.histmersion.api.catalogue.PlacesMarkdown.PlacesResult =
     if rows.isEmpty then "_No matching places._"
     else
       val items = rows.map { h =>
@@ -21,7 +58,7 @@ object PlacesMarkdown:
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
-  def placeTree(rows: Vector[Place.TreeRow]): String =
+  def placeTree(rows: Vector[Place.TreeRow]): com.histmersion.api.catalogue.PlacesMarkdown.PlaceTreeResult =
     if rows.isEmpty then "_No hierarchy._"
     else
       rows
@@ -31,14 +68,14 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeImport(r: Place.ImportResult): String =
+  def placeImport(r: Place.ImportResult): com.histmersion.api.catalogue.PlacesMarkdown.PlaceImportResult =
     val head = r.job.fold(s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)")(id =>
       s"job `$id` started (`histmersion jobs $id` follows it)"
     )
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
-  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
+  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): com.histmersion.api.catalogue.PlacesMarkdown.GazetteerSourcesResult =
     if rows.isEmpty then "_No external gazetteer sources: no pinned extracts and no LPF files._"
     else
       val head =
@@ -52,7 +89,7 @@ object PlacesMarkdown:
       }
       (head :: body).mkString("\n")
 
-  def placeNameChanged(r: Place.NameChanged): String =
+  def placeNameChanged(r: Place.NameChanged): com.histmersion.api.catalogue.PlacesMarkdown.PlaceNameChangedResult =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
     val what =
       if !r.added then s"removed the name **${r.name}**$lang from"
@@ -61,7 +98,7 @@ object PlacesMarkdown:
       else s"added the name **${r.name}**$lang to"
     s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed"
 
-  def manualPlaceNames(rows: List[ManualPlaceName]): String =
+  def manualPlaceNames(rows: List[ManualPlaceName]): com.histmersion.api.catalogue.PlacesMarkdown.ManualPlaceNamesResult =
     if rows.isEmpty then "_No names added by hand._"
     else
       s"${rows.size} name(s) added by hand:\n\n" + rows
@@ -70,7 +107,7 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeOverrideChanged(r: Place.OverrideChanged): String =
+  def placeOverrideChanged(r: Place.OverrideChanged): com.histmersion.api.catalogue.PlacesMarkdown.PlaceOverrideChangedResult =
     val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}"
     else s"period ${r.periodBefore} → ${r.periodAfter}"
@@ -86,7 +123,7 @@ object PlacesMarkdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  def placeGone(r: Place.Gone): String =
+  def placeGone(r: Place.Gone): com.histmersion.api.catalogue.PlacesMarkdown.PlaceGoneResult =
     val head = r.into match
       case Some(into) =>
         s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
@@ -94,7 +131,7 @@ object PlacesMarkdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  def placeOverrides(rows: List[Place.Override]): String =
+  def placeOverrides(rows: List[Place.Override]): com.histmersion.api.catalogue.PlacesMarkdown.PlaceOverridesResult =
     if rows.isEmpty then "_No place has a kind, period or point set by hand._"
     else
       s"${rows.size} place(s) with a kind, period or point set by hand:\n\n" + rows
@@ -113,18 +150,18 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeAdded(p: Place.Summary): String =
+  def placeAdded(p: Place.Summary): com.histmersion.api.catalogue.PlacesMarkdown.PlaceAddedResult =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
       p.source.fold("")(src => s" — source: $src") +
       "\n\nIt is this collection's own place (carried in a bundle, never touched by a re-seed). " +
       "Run `histmersion places rebuild` to match findings to it."
 
-  def placeRebuild(r: Place.RebuildResult): String =
+  def placeRebuild(r: Place.RebuildResult): com.histmersion.api.catalogue.PlacesMarkdown.PlaceRebuildResult =
     s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated"
 
-  def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
+  def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): com.histmersion.api.catalogue.PlacesMarkdown.PlaceResult =
     val p = d.place
     val header = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +

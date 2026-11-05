@@ -4,20 +4,159 @@ import com.histmersion.api.given
 import com.histmersion.api.research.Article
 
 object AgentsMarkdown:
+  type UsdResult = UsdResult.T
+  object UsdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UsdD = UsdD.T
+  object UsdD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CallShapeResult = CallShapeResult.T
+  object CallShapeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CallShapeFirstCallTokens = CallShapeFirstCallTokens.T
+  object CallShapeFirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CallShapeTurns = CallShapeTurns.T
+  object CallShapeTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensResult = TokensResult.T
+  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsResult = ModelsResult.T
+  object ModelsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainEntryResult = ChainEntryResult.T
+  object ChainEntryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoleChainResult = RoleChainResult.T
+  object RoleChainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AmountResult = AmountResult.T
+  object AmountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AmountV = AmountV.T
+  object AmountV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceBlockResult = AllowanceBlockResult.T
+  object AllowanceBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceResult = AllowanceResult.T
+  object AllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PctResult = PctResult.T
+  object PctResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PctD = PctD.T
+  object PctD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgeResult = AgeResult.T
+  object AgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgeS = AgeS.T
+  object AgeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolResult = PoolResult.T
+  object PoolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshLineResult = RefreshLineResult.T
+  object RefreshLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshedResult = RefreshedResult.T
+  object RefreshedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotaResult = QuotaResult.T
+  object QuotaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeneratedResult = GeneratedResult.T
+  object GeneratedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoctorResult = DoctorResult.T
+  object DoctorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeResult = ProbeResult.T
+  object ProbeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OptionsResult = OptionsResult.T
+  object OptionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunLineResult = RunLineResult.T
+  object RunLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsResult = RunsResult.T
+  object RunsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsStatus = RunsStatus.T
+  object RunsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsOlder = RunsOlder.T
+  object RunsOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageLineResult = PageLineResult.T
+  object PageLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageLineShown = PageLineShown.T
+  object PageLineShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageLineSingular = PageLineSingular.T
+  object PageLineSingular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageLineQualifier = PageLineQualifier.T
+  object PageLineQualifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFacetsPart1 = RunFacetsPart1.T
+  object RunFacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFacetsPart2 = RunFacetsPart2.T
+  object RunFacetsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalFacetsPart1 = ApprovalFacetsPart1.T
+  object ApprovalFacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalFacetsPart2 = ApprovalFacetsPart2.T
+  object ApprovalFacetsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetLinesResult = FacetLinesResult.T
+  object FacetLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetLinesFacetsPart1 = FacetLinesFacetsPart1.T
+  object FacetLinesFacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetLinesFacetsPart2 = FacetLinesFacetsPart2.T
+  object FacetLinesFacetsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResult = RunResult.T
+  object RunResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunWithMessages = RunWithMessages.T
+  object RunWithMessages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeResult = ChangeResult.T
+  object ChangeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalLineResult = ApprovalLineResult.T
+  object ApprovalLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalsResult = ApprovalsResult.T
+  object ApprovalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalsState = ApprovalsState.T
+  object ApprovalsState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalsOlder = ApprovalsOlder.T
+  object ApprovalsOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IndentResult = IndentResult.T
+  object IndentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IndentB = IndentB.T
+  object IndentB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanBlockResult = PlanBlockResult.T
+  object PlanBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DraftBlockResult = DraftBlockResult.T
+  object DraftBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DraftBlockChars = DraftBlockChars.T
+  object DraftBlockChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleLineResult = ScheduleLineResult.T
+  object ScheduleLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchedulesResult = SchedulesResult.T
+  object SchedulesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkLineResult = LinkLineResult.T
+  object LinkLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalViewResult = GoalViewResult.T
+  object GoalViewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellResult = CellResult.T
+  object CellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellS = CellS.T
+  object CellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecsResult = SecsResult.T
+  object SecsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecsN = SecsN.T
+  object SecsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsConfigured = ModelsConfigured.T
+  object ModelsConfigured extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsActual = ModelsActual.T
+  object ModelsActual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaidResult = PaidResult.T
+  object PaidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaidCostUsd = PaidCostUsd.T
+  object PaidCostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaidBilling = PaidBilling.T
+  object PaidBilling extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RatioResult = RatioResult.T
+  object RatioResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RatioN = RatioN.T
+  object RatioN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RatioOf = RatioOf.T
+  object RatioOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareResult = CompareResult.T
+  object CompareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import Agents.*
 
-  def usd(d: Double): String =
+  def usd(d: com.histmersion.api.automation.AgentsMarkdown.UsdD): com.histmersion.api.automation.AgentsMarkdown.UsdResult =
     val scale = if d != 0 && math.abs(d) < 0.0001 then 6 else 4
     BigDecimal(d).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString
 
-  def callShape(firstCallTokens: Option[Long], turns: Option[Int]): String =
+  def callShape(firstCallTokens: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeFirstCallTokens], turns: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeTurns]): com.histmersion.api.automation.AgentsMarkdown.CallShapeResult =
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, "turn"))).mkString(" · ")
 
-  private def tokens(u: Usage): String =
+  private def tokens(u: Usage): com.histmersion.api.automation.AgentsMarkdown.TokensResult =
     val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
     s"${u.input} in / ${u.output} out$cache"
 
-  def models(m: ModelsInfo): String =
+  def models(m: ModelsInfo): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val head = s"# Embedded agents — ${if m.enabled then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
     val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- $p").mkString("\n")
@@ -40,7 +179,7 @@ object AgentsMarkdown:
       head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
         allowances + problems
 
-  private def chainEntry(e: ModelChains.ChainEntry): String =
+  private def chainEntry(e: ModelChains.ChainEntry): com.histmersion.api.automation.AgentsMarkdown.ChainEntryResult =
     val mark =
       if e.usable then ""
       else if !e.ready then " (not ready)"
@@ -49,7 +188,7 @@ object AgentsMarkdown:
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}"
 
-  def roleChain(c: ModelChains.RoleChain): String =
+  def roleChain(c: ModelChains.RoleChain): com.histmersion.api.automation.AgentsMarkdown.RoleChainResult =
     val lines = c.models.zipWithIndex.map { (e, i) =>
       val state = if e.usable then "usable"
       else if !e.ready then "not ready"
@@ -61,12 +200,12 @@ object AgentsMarkdown:
     s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
       (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n"))
 
-  private def amount(v: Double, m: ModelChains.Measure): String = m match
+  private def amount(v: com.histmersion.api.automation.AgentsMarkdown.AmountV, m: ModelChains.Measure): com.histmersion.api.automation.AgentsMarkdown.AmountResult = m match
     case ModelChains.Measure.Tokens =>
       ModelChains.Limit.compact(BigDecimal(v).setScale(0, BigDecimal.RoundingMode.HALF_UP))
     case ModelChains.Measure.Usd => usd(v)
 
-  private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
+  private def allowanceBlock(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult =
     val state = if a.usable then "has headroom"
     else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
     val limits = a.limits.map { l =>
@@ -77,18 +216,18 @@ object AgentsMarkdown:
     (s"- `${a.target}` (${a.source}${if a.reservePct > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n")
 
-  def allowance(a: ModelChains.AllowanceStatus): String = allowanceBlock(a)
+  def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceResult = allowanceBlock(a)
 
-  private def pct(d: Double): String =
+  private def pct(d: com.histmersion.api.automation.AgentsMarkdown.PctD): com.histmersion.api.automation.AgentsMarkdown.PctResult =
     java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
 
-  private def age(s: Long): String =
+  private def age(s: com.histmersion.api.automation.AgentsMarkdown.AgeS): com.histmersion.api.automation.AgentsMarkdown.AgeResult =
     if s < 120 then s"$s s"
     else if s < 7200 then s"${s / 60} min"
     else if s < 172800 then s"${s / 3600} h"
     else s"${s / 86400} d"
 
-  def pool(p: PlanQuota.PoolStatus): String =
+  def pool(p: PlanQuota.PoolStatus): com.histmersion.api.automation.AgentsMarkdown.PoolResult =
     val state =
       if !p.available then s"**${p.reason.getOrElse("unavailable: no login")}**"
       else if p.held then "**held** — no agent use until released"
@@ -111,7 +250,7 @@ object AgentsMarkdown:
       s" · ${p.maxCallsInFlight} call(s) at once${p.planType.fold("")(t => s" · plan $t")}" +
       p.note.fold("")(n => s"\n\n_${n}_") + windows + refreshLine(p)
 
-  private def refreshLine(p: PlanQuota.PoolStatus): String =
+  private def refreshLine(p: PlanQuota.PoolStatus): com.histmersion.api.automation.AgentsMarkdown.RefreshLineResult =
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
     val times = if p.refreshesToday == 1 then "once" else s"${p.refreshesToday} times"
     val last = p.lastRefresh.fold("")(r =>
@@ -119,7 +258,7 @@ object AgentsMarkdown:
     )
     s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last"
 
-  def refreshed(q: PlanQuota.QuotaRefreshed): String =
+  def refreshed(q: PlanQuota.QuotaRefreshed): com.histmersion.api.automation.AgentsMarkdown.RefreshedResult =
     q.pools
       .map(r => s"**${r.pool}**: ${if r.refreshed then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
       .mkString("\n\n") +
@@ -127,7 +266,7 @@ object AgentsMarkdown:
        else
          s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}")
 
-  def quota(q: PlanQuota.QuotaInfo): String =
+  def quota(q: PlanQuota.QuotaInfo): com.histmersion.api.automation.AgentsMarkdown.QuotaResult =
     val metered =
       if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
       else q.metered.map(allowanceBlock).mkString("\n")
@@ -147,11 +286,11 @@ object AgentsMarkdown:
     s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
       s"\n\n## Metered\n\n$metered\n\n$fall"
 
-  def generated(r: GenerateResult): String =
+  def generated(r: GenerateResult): com.histmersion.api.automation.AgentsMarkdown.GeneratedResult =
     s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
       s"(definitions ${r.definitions.take(12)})."
 
-  def doctor(d: DoctorReport): String =
+  def doctor(d: DoctorReport): com.histmersion.api.automation.AgentsMarkdown.DoctorResult =
     def mark(l: CheckLevel) = l match
       case CheckLevel.Ok   => "ok"
       case CheckLevel.Warn => "**warn**"
@@ -167,7 +306,7 @@ object AgentsMarkdown:
     }
     s"# Agent doctor${if d.online then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n")
 
-  def probe(p: ProbeResult): String =
+  def probe(p: ProbeResult): com.histmersion.api.automation.AgentsMarkdown.ProbeResult =
     val verdict =
       if p.answer.isEmpty then
         "**no typed answer**" + (if p.problems.isEmpty then "" else s": ${p.problems.mkString("; ")}")
@@ -181,7 +320,7 @@ object AgentsMarkdown:
        else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"
 
-  def options(r: RunInfo): String =
+  def options(r: RunInfo): com.histmersion.api.automation.AgentsMarkdown.OptionsResult =
     List(
       Option.when(r.dryRun)("dry run, writes nothing"),
       Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
@@ -197,7 +336,7 @@ object AgentsMarkdown:
 
   val DryRunNote = "dry run: not written"
 
-  def runLine(r: RunInfo): String =
+  def runLine(r: RunInfo): com.histmersion.api.automation.AgentsMarkdown.RunLineResult =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
     val opts = Option(options(r)).filter(_.nonEmpty).fold("")(o => s" ($o)")
     val goal = r.goal.fold("")(g => s" · goal $g")
@@ -207,18 +346,18 @@ object AgentsMarkdown:
   def runs(
       rs: List[RunInfo],
       page: Paging.Page = Paging.Page.empty,
-      status: Option[String] = None,
-      older: Option[String] = None
-  ): String =
+      status: Option[com.histmersion.api.automation.AgentsMarkdown.RunsStatus] = None,
+      older: Option[com.histmersion.api.automation.AgentsMarkdown.RunsOlder] = None
+  ): com.histmersion.api.automation.AgentsMarkdown.RunsResult =
     if rs.isEmpty then status.fold("_No agent runs._")(s => s"_No $s agent runs._")
     else
       "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) + facetLines(page, RunFacets) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  private def pageLine(shown: Int, page: Paging.Page, singular: String, qualifier: Option[String]): String =
+  private def pageLine(shown: com.histmersion.api.automation.AgentsMarkdown.PageLineShown, page: Paging.Page, singular: com.histmersion.api.automation.AgentsMarkdown.PageLineSingular, qualifier: Option[com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier]): com.histmersion.api.automation.AgentsMarkdown.PageLineResult =
     if page.total <= shown then "" else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
 
-  val RunFacets: List[(String, String)] =
+  val RunFacets: List[(com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2)] =
     List(
       "pipeline" -> "By pipeline",
       "origin" -> "By origin",
@@ -227,13 +366,13 @@ object AgentsMarkdown:
       "model" -> "By model"
     )
 
-  val ApprovalFacets: List[(String, String)] = List("kind" -> "By kind", "decidedBy" -> "Decided by")
+  val ApprovalFacets: List[(com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart2)] = List("kind" -> "By kind", "decidedBy" -> "Decided by")
 
-  def facetLines(page: Paging.Page, facets: List[(String, String)]): String =
+  def facetLines(page: Paging.Page, facets: List[(com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart2)]): com.histmersion.api.automation.AgentsMarkdown.FacetLinesResult =
     val lines = facets.map((name, label) => ListFilters.facetLine(label, page.facet(name))).filter(_.nonEmpty)
     if lines.isEmpty then "" else lines.mkString("  \n") + "\n\n"
 
-  def run(d: RunDetail, withMessages: Boolean): String =
+  def run(d: RunDetail, withMessages: com.histmersion.api.automation.AgentsMarkdown.RunWithMessages): com.histmersion.api.automation.AgentsMarkdown.RunResult =
     val r = d.run
     val head = s"# Agent run ${r.id}${if r.dryRun then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
@@ -280,7 +419,7 @@ object AgentsMarkdown:
           .mkString("\n\n")
     head + warnings + steps + writes + msgs
 
-  def change(a: ApprovalInfo): String =
+  def change(a: ApprovalInfo): com.histmersion.api.automation.AgentsMarkdown.ChangeResult =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
         s"[[${a.citekey}]] status ${a.current.getOrElse("?")} → **${a.status.getOrElse("?")}**"
@@ -308,7 +447,7 @@ object AgentsMarkdown:
           )
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
-  def approvalLine(a: ApprovalInfo): String =
+  def approvalLine(a: ApprovalInfo): com.histmersion.api.automation.AgentsMarkdown.ApprovalLineResult =
     val run = a.runId.fold("")(r => s" · run ${r.take(8)}")
     val res = a.result.filter(_.nonEmpty).fold("")(r => s" · $r")
     s"#${a.id} · ${a.state} · ${change(a)}$run$res"
@@ -316,9 +455,9 @@ object AgentsMarkdown:
   def approvals(
       as: List[ApprovalInfo],
       page: Paging.Page = Paging.Page.empty,
-      state: Option[String] = None,
-      older: Option[String] = None
-  ): String =
+      state: Option[com.histmersion.api.automation.AgentsMarkdown.ApprovalsState] = None,
+      older: Option[com.histmersion.api.automation.AgentsMarkdown.ApprovalsOlder] = None
+  ): com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult =
     if as.isEmpty then "_No approvals._"
     else
       "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + facetLines(page, ApprovalFacets) + as
@@ -337,9 +476,9 @@ object AgentsMarkdown:
         }
         .mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  private def indent(b: String): String = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
+  private def indent(b: com.histmersion.api.automation.AgentsMarkdown.IndentB): com.histmersion.api.automation.AgentsMarkdown.IndentResult = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
 
-  def planBlock(p: Goal.Plans.Plan): String =
+  def planBlock(p: Goal.Plans.Plan): com.histmersion.api.automation.AgentsMarkdown.PlanBlockResult =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
     val works = p.works.map { w =>
@@ -355,7 +494,7 @@ object AgentsMarkdown:
       .filter(_.nonEmpty)
       .mkString("\n\n")
 
-  def draftBlock(d: Goal.Plans.ArticleDraft, chars: Int): String =
+  def draftBlock(d: Goal.Plans.ArticleDraft, chars: com.histmersion.api.automation.AgentsMarkdown.DraftBlockChars): com.histmersion.api.automation.AgentsMarkdown.DraftBlockResult =
     val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
       s"cites ${d.cited.size} source(s) · ${d.filter}"
     val problems =
@@ -365,17 +504,17 @@ object AgentsMarkdown:
     else d.text
     s"$head\n\n$problems\n\n```markdown\n$text\n```"
 
-  def scheduleLine(s: Goal.Plans.GoalSchedule): String =
+  def scheduleLine(s: Goal.Plans.GoalSchedule): com.histmersion.api.automation.AgentsMarkdown.ScheduleLineResult =
     val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b)} USD")
     s"${s.goal} · ${s.kind.wire} · `${s.cron}` · $state$budget" +
       s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.take(8)}") +
       s.lastNote.filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  def schedules(ss: List[Goal.Plans.GoalSchedule]): String =
+  def schedules(ss: List[Goal.Plans.GoalSchedule]): com.histmersion.api.automation.AgentsMarkdown.SchedulesResult =
     if ss.isEmpty then "_No schedules._" else "# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n")
 
-  def linkLine(l: Goal.Plans.GoalLink): String =
+  def linkLine(l: Goal.Plans.GoalLink): com.histmersion.api.automation.AgentsMarkdown.LinkLineResult =
     val ref = l.kind match
       case Goal.Plans.LinkKind.Source | Goal.Plans.LinkKind.Article => s"[[${l.ref}]]"
       case Goal.Plans.LinkKind.QueueItem                            => s"queue item ${l.ref}"
@@ -383,7 +522,7 @@ object AgentsMarkdown:
     val title = l.title.fold(if l.kind == Goal.Plans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
     s"${l.kind.wire}: $ref$title${l.note.filter(_.nonEmpty).fold("")(n => s" · $n")}"
 
-  def goalView(v: Goal.Plans.GoalView): String =
+  def goalView(v: Goal.Plans.GoalView): com.histmersion.api.automation.AgentsMarkdown.GoalViewResult =
     val children = if v.children.isEmpty then ""
     else
       "\n\n## Sub-goals\n\n" +
@@ -400,27 +539,27 @@ object AgentsMarkdown:
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     GoalsMarkdown.goal(v.goal) + budget + children + links + sch + plan
 
-  private def cell(s: String): String = s.replace("|", "\\|").replace("\n", " ")
+  private def cell(s: com.histmersion.api.automation.AgentsMarkdown.CellS): com.histmersion.api.automation.AgentsMarkdown.CellResult = s.replace("|", "\\|").replace("\n", " ")
 
-  private def secs(n: Long): String = if n < 120 then s"$n s" else s"${n / 60} min ${n % 60} s"
+  private def secs(n: com.histmersion.api.automation.AgentsMarkdown.SecsN): com.histmersion.api.automation.AgentsMarkdown.SecsResult = if n < 120 then s"$n s" else s"${n / 60} min ${n % 60} s"
 
-  private def models(configured: List[String], actual: List[String]): String =
+  private def models(configured: List[com.histmersion.api.automation.AgentsMarkdown.ModelsConfigured], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val conf = configured.mkString(", ")
     val shown = actual.filterNot(a => configured.exists(c => c.drop(c.indexOf(':') + 1) == a))
     if conf.isEmpty && actual.isEmpty then "—"
     else if shown.isEmpty then conf
     else s"$conf → ${shown.mkString(", ")}"
 
-  private def paid(costUsd: Double, billing: List[String]): String =
+  private def paid(costUsd: com.histmersion.api.automation.AgentsMarkdown.PaidCostUsd, billing: List[com.histmersion.api.automation.AgentsMarkdown.PaidBilling]): com.histmersion.api.automation.AgentsMarkdown.PaidResult =
     val plan = billing.filter(_.startsWith("plan pool"))
     if costUsd > 0 || plan.isEmpty then
       s"${usd(costUsd)} USD" + (if plan.nonEmpty then s" + ${plan.mkString(", ")}" else "")
     else plan.mkString(", ")
 
-  private def ratio(n: Int, of: Int): String =
+  private def ratio(n: com.histmersion.api.automation.AgentsMarkdown.RatioN, of: com.histmersion.api.automation.AgentsMarkdown.RatioOf): com.histmersion.api.automation.AgentsMarkdown.RatioResult =
     if of == 0 then "—" else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
-  def compare(c: RunCompare.Comparison): String =
+  def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*
     val ids = c.runs.map(_.id.take(8))
     def table(rows: List[(String, List[String])]): String =

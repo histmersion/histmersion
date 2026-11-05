@@ -15,6 +15,19 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object SavedViews:
 
   /** The view on screen, as a bookmark's target. */
+  type SuggestedNameResult = SuggestedNameResult.T
+  object SuggestedNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestedNameWords = SuggestedNameWords.T
+  object SuggestedNameWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestedNameFrom = SuggestedNameFrom.T
+  object SuggestedNameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestedNameTo = SuggestedNameTo.T
+  object SuggestedNameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnExplore = OnExplore.T
+  object OnExplore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SaveName = SaveName.T
+  object SaveName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def current(): Target =
     val s = Option.when(TheMap.isUp)(TheMap.surface)
     Target(
@@ -28,7 +41,7 @@ object SavedViews:
     )
 
   /** A name to offer for the view: its span, and the words or the first filter. Pure. */
-  def suggestedName(words: Option[String], from: Option[Long], to: Option[Long]): String =
+  def suggestedName(words: Option[com.histmersion.web.marks.SavedViews.SuggestedNameWords], from: Option[com.histmersion.web.marks.SavedViews.SuggestedNameFrom], to: Option[com.histmersion.web.marks.SavedViews.SuggestedNameTo]): com.histmersion.web.marks.SavedViews.SuggestedNameResult =
     val span = Fmt.periodStr(from, to)
     List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span).filter(_.nonEmpty)).flatten
       .mkString(", ") match
@@ -37,10 +50,10 @@ object SavedViews:
 
   val saved: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.View))
 
-  private val onExplore: Signal[Boolean] = Router.route.map(_ == Route.Explore)
+  private val onExplore: Signal[com.histmersion.web.marks.SavedViews.OnExplore] = Router.route.map(_ == Route.Explore)
 
   /** Save the view on screen as `name`. */
-  def save(name: String): Unit =
+  def save(name: com.histmersion.web.marks.SavedViews.SaveName): Unit =
     if Auth.writableNow then
       MyItems
         .add(current(), Some(name.trim).filter(_.nonEmpty), name.trim)

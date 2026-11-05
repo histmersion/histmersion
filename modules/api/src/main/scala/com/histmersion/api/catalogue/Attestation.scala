@@ -82,7 +82,12 @@ object Attestation:
 
   object List:
 
-    def of(total: Int, rows: scala.List[Attestation], offset: Int): List =
+    type OfTotal = OfTotal.T
+    object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfOffset = OfOffset.T
+    object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(total: com.histmersion.api.catalogue.Attestation.List.OfTotal, rows: scala.List[Attestation], offset: com.histmersion.api.catalogue.Attestation.List.OfOffset): List =
       List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(

@@ -8,6 +8,11 @@ import java.text.Normalizer
   */
 object ComparedText:
 
+  type NormaliseResult = NormaliseResult.T
+  object NormaliseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormaliseS = NormaliseS.T
+  object NormaliseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ligatures = List(
     "ﬀ" -> "ff",
     "ﬁ" -> "fi",
@@ -24,7 +29,7 @@ object ComparedText:
     * ASCII quotes and dashes, soft hyphens dropped, words hyphenated across a line break re-joined, Markdown
     * emphasis/heading marks dropped, whitespace collapsed.
     */
-  def normalise(s: String): String =
+  def normalise(s: com.histmersion.util.text.ComparedText.NormaliseS): com.histmersion.util.text.ComparedText.NormaliseResult =
     var t = Normalizer.normalize(s, Normalizer.Form.NFKC).toLowerCase(java.util.Locale.ROOT) // local accumulator
     ligatures.foreach((a, b) => t = t.replace(a, b))
     t = t

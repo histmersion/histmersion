@@ -7,7 +7,7 @@ import com.histmersion.plugin.Plugin
   * catalogue's host, as the host's own client words it.
   */
 final class CatalogueJson(http: Plugin.Http):
-  def apply(url: String): Either[String, Json] =
+  def apply(url: com.histmersion.plugins.events.CatalogueJson.ApplyUrl): Either[com.histmersion.plugins.events.CatalogueJson.ApplyResultPart1, Json] =
     http
       .get(url)
       .flatMap(b =>
@@ -18,5 +18,14 @@ final class CatalogueJson(http: Plugin.Http):
       )
 
 object CatalogueJson:
-  def host(url: String): String =
+  type ApplyResultPart1 = ApplyResultPart1.T
+  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyUrl = ApplyUrl.T
+  object ApplyUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostResult = HostResult.T
+  object HostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostUrl = HostUrl.T
+  object HostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def host(url: com.histmersion.plugins.events.CatalogueJson.HostUrl): com.histmersion.plugins.events.CatalogueJson.HostResult =
     scala.util.Try(java.net.URI.create(url).getHost).toOption.flatMap(Option(_)).getOrElse(url)

@@ -16,16 +16,29 @@ final case class PlaceScope(byValue: Map[PlaceScope.ByValueKey, List[PlaceScope.
   /** The place ids one filter value stands for — itself plus its descendants as of the filter's period. `None` when the
     * value is not a place id.
     */
-  def idsFor(value: String): Option[List[String]] = byValue.get(value).filter(_.nonEmpty)
+  def idsFor(value: com.histmersion.domain.catalogue.places.PlaceScope.IdsForValue): Option[List[com.histmersion.domain.catalogue.places.PlaceScope.IdsForResult]] = byValue.get(value).filter(_.nonEmpty)
 
   /** What to CALL a filter value when explaining a match: the gazetteer label for an id, and the value itself for a
     * free-text name. "place: pleiades_589831" names nothing a reader knows (item 15); "place: Kairatos (river)" does.
     */
-  def labelFor(value: String): String = labels.getOrElse(value, value)
-  def isEmpty: Boolean = byValue.isEmpty
-  def nonEmpty: Boolean = !isEmpty
+  def labelFor(value: com.histmersion.domain.catalogue.places.PlaceScope.LabelForValue): com.histmersion.domain.catalogue.places.PlaceScope.LabelForResult = labels.getOrElse(value, value)
+  def isEmpty: com.histmersion.domain.catalogue.places.PlaceScope.IsEmptyResult = byValue.isEmpty
+  def nonEmpty: com.histmersion.domain.catalogue.places.PlaceScope.NonEmptyResult = !isEmpty
 
 object PlaceScope:
+  type IdsForResult = IdsForResult.T
+  object IdsForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsForValue = IdsForValue.T
+  object IdsForValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelForResult = LabelForResult.T
+  object LabelForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelForValue = LabelForValue.T
+  object LabelForValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsEmptyResult = IsEmptyResult.T
+  object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NonEmptyResult = NonEmptyResult.T
+  object NonEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ByValueKey = ByValueKey.T
   object ByValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ByValueValue = ByValueValue.T

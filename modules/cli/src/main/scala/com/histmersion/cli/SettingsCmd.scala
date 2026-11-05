@@ -16,6 +16,19 @@ import com.histmersion.util.console.Console
   */
 object SettingsCmd:
 
+  type ChangeKey = ChangeKey.T
+  object ChangeKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeValue = ChangeValue.T
+  object ChangeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeOnlyLocal = ChangeOnlyLocal.T
+  object ChangeOnlyLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeReload = ChangeReload.T
+  object ChangeReload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeConsent = ChangeConsent.T
+  object ChangeConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeJson = ChangeJson.T
+  object ChangeJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val local = Opts
     .flag(
       "local",
@@ -67,12 +80,12 @@ object SettingsCmd:
   }
 
   private def change(
-      key: String,
-      value: Option[String],
-      onlyLocal: Boolean,
-      reload: Boolean,
-      consent: Boolean,
-      json: Boolean,
+      key: com.histmersion.cli.SettingsCmd.ChangeKey,
+      value: Option[com.histmersion.cli.SettingsCmd.ChangeValue],
+      onlyLocal: com.histmersion.cli.SettingsCmd.ChangeOnlyLocal,
+      reload: com.histmersion.cli.SettingsCmd.ChangeReload,
+      consent: com.histmersion.cli.SettingsCmd.ChangeConsent,
+      json: com.histmersion.cli.SettingsCmd.ChangeJson,
       c: Client
   )(using console: Console): Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(List(ConfigEdit.Change(key, value)), literalConsent = consent, reload = reload)
@@ -111,6 +124,9 @@ object SettingsCmd:
 
   /** The settings file on this machine, read and changed by the config module's own writer. */
   private object Local:
+    type PagePrefix = PagePrefix.T
+    object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     private def env = ConfigFactory.systemEnvironment()
 
     private def file: Either[Cli.Error, LocalSettingsFile] =
@@ -124,7 +140,7 @@ object SettingsCmd:
 
     private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
 
-    def page(prefix: Option[String]): Either[Cli.Error, ConfigEdit.Page] =
+    def page(prefix: Option[com.histmersion.cli.SettingsCmd.Local.PagePrefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
         f <- file
         p <- prefix.fold(Right(None))(k => SettingKey.parse(k).map(Some(_))).left.map(Cli.Error(_, ExitCode.Usage))

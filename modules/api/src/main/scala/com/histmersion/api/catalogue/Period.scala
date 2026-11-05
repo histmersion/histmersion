@@ -9,9 +9,12 @@ import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 final case class Period(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year):
-  def isPoint: Boolean = start == end
+  def isPoint: com.histmersion.api.catalogue.Period.IsPointResult = start == end
 
 object Period:
+
+  type IsPointResult = IsPointResult.T
+  object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Detail(
       period: HistoricalPeriod,
@@ -62,7 +65,14 @@ object Period:
     case ImplausibleSpan
 
   object Skip:
-    def wireOf(p: Skip): String = p match
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def wireOf(p: Skip): com.histmersion.api.catalogue.Period.Skip.WireOfResult = p match
       case NoSpan          => "no_span"
       case EndsBeforeStart => "ends_before_start"
       case OutOfRange      => "out_of_range"
@@ -70,8 +80,8 @@ object Period:
 
     given WireEnumValues[Skip]:
       def all: Array[Skip] = Skip.values
-      def wire(e: Skip): String = wireOf(e)
-      def fromWire(s: String): Option[Skip] = Skip.values.find(wireOf(_) == s)
+      def wire(e: Skip): com.histmersion.api.catalogue.Period.Skip.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.api.catalogue.Period.Skip.FromWireS): Option[Skip] = Skip.values.find(wireOf(_) == s)
 
     given io.circe.Encoder[Skip] = WireEnum.encoder
     given io.circe.Decoder[Skip] = WireEnum.decoder

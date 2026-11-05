@@ -16,6 +16,159 @@ import com.histmersion.api.library.TimeBucket
 
 object TimelineView:
 
+  type SpanFromResult = SpanFromResult.T
+  object SpanFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanToResult = SpanToResult.T
+  object SpanToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvWidth = LastOvWidth.T
+  object LastOvWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtWidth = LastDtWidth.T
+  object LastDtWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvHeight = LastOvHeight.T
+  object LastOvHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtHeight = LastDtHeight.T
+  object LastDtHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvBarsLen = LastOvBarsLen.T
+  object LastOvBarsLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtBarsLen = LastDtBarsLen.T
+  object LastDtBarsLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvResizeRaf = OvResizeRaf.T
+  object OvResizeRaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtResizeRaf = DtResizeRaf.T
+  object DtResizeRaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBarsRangePart1 = DtBarsRangePart1.T
+  object DtBarsRangePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBarsRangePart2 = DtBarsRangePart2.T
+  object DtBarsRangePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastOvFilterKey = LastOvFilterKey.T
+  object LastOvFilterKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart1 = DtDrawnPart1.T
+  object DtDrawnPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart2 = DtDrawnPart2.T
+  object DtDrawnPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtDrawnPart3 = DtDrawnPart3.T
+  object DtDrawnPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentSpanResultPart1 = CurrentSpanResultPart1.T
+  object CurrentSpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentSpanResultPart2 = CurrentSpanResultPart2.T
+  object CurrentSpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Folded = Folded.T
+  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetFoldedOn = SetFoldedOn.T
+  object SetFoldedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampResultPart1 = ClampResultPart1.T
+  object ClampResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampResultPart2 = ClampResultPart2.T
+  object ClampResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampA0 = ClampA0.T
+  object ClampA0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampB0 = ClampB0.T
+  object ClampB0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Locked = Locked.T
+  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetLockedOn = SetLockedOn.T
+  object SetLockedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanFrom = SetSpanFrom.T
+  object SetSpanFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanTo = SetSpanTo.T
+  object SetSpanTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSpanPush = SetSpanPush.T
+  object SetSpanPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastDtKey = LastDtKey.T
+  object LastDtKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailKeyResult = DetailKeyResult.T
+  object DetailKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForResult = BucketSizeForResult.T
+  object BucketSizeForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForSpanYears = BucketSizeForSpanYears.T
+  object BucketSizeForSpanYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BucketSizeForPixelWidth = BucketSizeForPixelWidth.T
+  object BucketSizeForPixelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadOverviewPixelWidth = LoadOverviewPixelWidth.T
+  object LoadOverviewPixelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElWidthResult = ElWidthResult.T
+  object ElWidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NiceIntervalResult = NiceIntervalResult.T
+  object NiceIntervalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NiceIntervalRaw = NiceIntervalRaw.T
+  object NiceIntervalRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElHeightResult = ElHeightResult.T
+  object ElHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElHeightFallback = ElHeightFallback.T
+  object ElHeightFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveFrom = DrawAreaCurveFrom.T
+  object DrawAreaCurveFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveTo = DrawAreaCurveTo.T
+  object DrawAreaCurveTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveW = DrawAreaCurveW.T
+  object DrawAreaCurveW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveBaseY = DrawAreaCurveBaseY.T
+  object DrawAreaCurveBaseY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawAreaCurveGradId = DrawAreaCurveGradId.T
+  object DrawAreaCurveGradId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtResultPart1 = HoverAtResultPart1.T
+  object HoverAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtPx = HoverAtPx.T
+  object HoverAtPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtTx = HoverAtTx.T
+  object HoverAtTx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverAtScale = HoverAtScale.T
+  object HoverAtScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoverTextResult = HoverTextResult.T
+  object HoverTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowHoverAtPart1 = ShowHoverAtPart1.T
+  object ShowHoverAtPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowHoverW = ShowHoverW.T
+  object ShowHoverW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewLayerCls = NewLayerCls.T
+  object NewLayerCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignResultPart1 = RealignResultPart1.T
+  object RealignResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignResultPart2 = RealignResultPart2.T
+  object RealignResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart1 = RealignDrawnPart1.T
+  object RealignDrawnPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart2 = RealignDrawnPart2.T
+  object RealignDrawnPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignDrawnPart3 = RealignDrawnPart3.T
+  object RealignDrawnPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart1 = RealignNowPart1.T
+  object RealignNowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart2 = RealignNowPart2.T
+  object RealignNowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RealignNowPart3 = RealignNowPart3.T
+  object RealignNowPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformResult = ApplyTransformResult.T
+  object ApplyTransformResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformTx = ApplyTransformTx.T
+  object ApplyTransformTx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTransformScale = ApplyTransformScale.T
+  object ApplyTransformScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvHeightResult = OvHeightResult.T
+  object OvHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvBaseResult = OvBaseResult.T
+  object OvBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OvBaseH = OvBaseH.T
+  object OvBaseH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtHeightResult = DtHeightResult.T
+  object DtHeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBaseResult = DtBaseResult.T
+  object DtBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DtBaseH = DtBaseH.T
+  object DtBaseH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AlignOverviewCurveW = AlignOverviewCurveW.T
+  object AlignOverviewCurveW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderlayBucketsFrom = UnderlayBucketsFrom.T
+  object UnderlayBucketsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderlayBucketsTo = UnderlayBucketsTo.T
+  object UnderlayBucketsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AlignDetailW = AlignDetailW.T
+  object AlignDetailW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderDetailAxisW = RenderDetailAxisW.T
+  object RenderDetailAxisW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val OH = Layout.overviewHeight.value
   private val O_BASE = Layout.overviewBase.value
   private val DH = Layout.detailHeight.value
@@ -30,8 +183,8 @@ object TimelineView:
   /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without committing, and commits once,
     * on release.
     */
-  private def spanFrom: Long = UiState.from.now().getOrElse(limits.defaultFrom)
-  private def spanTo: Long = UiState.to.now().getOrElse(limits.defaultTo)
+  private def spanFrom: com.histmersion.web.TimelineView.SpanFromResult = UiState.from.now().getOrElse(limits.defaultFrom)
+  private def spanTo: com.histmersion.web.TimelineView.SpanToResult = UiState.to.now().getOrElse(limits.defaultTo)
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
   private val loading = Var(false)
@@ -51,7 +204,7 @@ object TimelineView:
   private val detailOpen = Var(false)
   // the overview's: only the newest answer is drawn
   private val overviewLatest = Latest()
-  private var timer: Int = 0
+  private var timer: com.histmersion.web.TimelineView.Timer = 0
   private var overviewSvg: dom.Element = uninitialized
   private var detailSvg: dom.Element = uninitialized
 
@@ -68,24 +221,24 @@ object TimelineView:
   // the points each curve was drawn through (the hover reads them)
   private var ovPts: Vector[TimelineCurve.Pt] = Vector.empty
   private var dtPts: Vector[TimelineCurve.Pt] = Vector.empty
-  private var lastOvWidth: Double = 0
-  private var lastDtWidth: Double = 0
-  private var lastOvHeight: Double = 0
-  private var lastDtHeight: Double = 0
-  private var lastOvBarsLen: Int = -1
-  private var lastDtBarsLen: Int = -1
-  private var ovResizeRaf: Int = 0
+  private var lastOvWidth: com.histmersion.web.TimelineView.LastOvWidth = 0
+  private var lastDtWidth: com.histmersion.web.TimelineView.LastDtWidth = 0
+  private var lastOvHeight: com.histmersion.web.TimelineView.LastOvHeight = 0
+  private var lastDtHeight: com.histmersion.web.TimelineView.LastDtHeight = 0
+  private var lastOvBarsLen: com.histmersion.web.TimelineView.LastOvBarsLen = -1
+  private var lastDtBarsLen: com.histmersion.web.TimelineView.LastDtBarsLen = -1
+  private var ovResizeRaf: com.histmersion.web.TimelineView.OvResizeRaf = 0
   // `var`s: the strips' size observers, disconnected when their strip leaves the page
   private var ovObserver: Option[js.Dynamic] = None
   private var dtObserver: Option[js.Dynamic] = None
-  private var dtResizeRaf: Int = 0
+  private var dtResizeRaf: com.histmersion.web.TimelineView.DtResizeRaf = 0
 
   /** The span the current `detailBars` were fetched for — not the span on screen. */
-  private var dtBarsRange: (Long, Long) = (0L, 0L)
-  private var lastOvFilterKey: String = ""
+  private var dtBarsRange: (com.histmersion.web.TimelineView.DtBarsRangePart1, com.histmersion.web.TimelineView.DtBarsRangePart2) = (0L, 0L)
+  private var lastOvFilterKey: com.histmersion.web.TimelineView.LastOvFilterKey = ""
 
   /** What the detail curve layer was drawn for: (from, to, width). */
-  private var dtDrawn: (Long, Long, Double) = (0L, 0L, 0.0)
+  private var dtDrawn: (com.histmersion.web.TimelineView.DtDrawnPart1, com.histmersion.web.TimelineView.DtDrawnPart2, com.histmersion.web.TimelineView.DtDrawnPart3) = (0L, 0L, 0.0)
 
   private enum DragKind:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -109,22 +262,22 @@ object TimelineView:
     object OrigTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val dragState = Var(Option.empty[DragInfo])
 
-  def currentSpan: (Long, Long) = (spanFrom, spanTo)
+  def currentSpan: (com.histmersion.web.TimelineView.CurrentSpanResultPart1, com.histmersion.web.TimelineView.CurrentSpanResultPart2) = (spanFrom, spanTo)
 
   private val foldedKey = "histmersion.timelineFolded"
 
   /** Whether the timeline is folded to its one line of controls (kept by this browser). */
-  val folded: Var[Boolean] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
+  val folded: Var[com.histmersion.web.TimelineView.Folded] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
   catch case _: Exception => false)
 
-  def setFolded(on: Boolean): Unit =
+  def setFolded(on: com.histmersion.web.TimelineView.SetFoldedOn): Unit =
     folded.set(on)
     try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0")
     catch case _: Exception => ()
 
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
-  private def clamp(a0: Long, b0: Long): (Long, Long) =
+  private def clamp(a0: com.histmersion.web.TimelineView.ClampA0, b0: com.histmersion.web.TimelineView.ClampB0): (com.histmersion.web.TimelineView.ClampResultPart1, com.histmersion.web.TimelineView.ClampResultPart2) =
     var a = Math.round(Math.min(a0.toDouble, b0.toDouble))
     var b = Math.round(Math.max(a0.toDouble, b0.toDouble))
     if b - a < MIN_SPAN then
@@ -137,9 +290,9 @@ object TimelineView:
     (a, Math.max(a + MIN_SPAN, b))
 
   /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
-  val locked: Var[Boolean] = Var(false)
+  val locked: Var[com.histmersion.web.TimelineView.Locked] = Var(false)
 
-  def setLocked(on: Boolean): Unit =
+  def setLocked(on: com.histmersion.web.TimelineView.SetLockedOn): Unit =
     locked.set(on)
     ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it."
     else "The timeline moves again.")
@@ -147,7 +300,7 @@ object TimelineView:
   /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
   private val namingPeriod = Var(Option.empty[String])
 
-  private def setSpan(from: Long, to: Long, push: Boolean = true): Unit =
+  private def setSpan(from: com.histmersion.web.TimelineView.SetSpanFrom, to: com.histmersion.web.TimelineView.SetSpanTo, push: com.histmersion.web.TimelineView.SetSpanPush = true): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
     else if nf == spanFrom && nt == spanTo then ()
@@ -168,20 +321,20 @@ object TimelineView:
     timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(150))
 
   /** What the detail strip was last asked for: the filter over the span on screen. */
-  private var lastDtKey: String = ""
-  private def detailKey(): String = UiState.toFilter().copy(period = Some(Period(spanFrom, spanTo))).toString
+  private var lastDtKey: com.histmersion.web.TimelineView.LastDtKey = ""
+  private def detailKey(): com.histmersion.web.TimelineView.DetailKeyResult = UiState.toFilter().copy(period = Some(Period(spanFrom, spanTo))).toString
 
   private[web] val MAX_BUCKETS = Layout.maxBuckets
 
   /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers), and never more than
     * `Layout.maxBuckets`.
     */
-  private[web] def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
+  private[web] def bucketSizeFor(spanYears: com.histmersion.web.TimelineView.BucketSizeForSpanYears, pixelWidth: com.histmersion.web.TimelineView.BucketSizeForPixelWidth): com.histmersion.web.TimelineView.BucketSizeForResult =
     val byPixels = Math.ceil(spanYears.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket)).toLong
     val byLimit = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
 
-  private def loadOverview(pixelWidth: Double): Unit = overview(pixelWidth)
+  private def loadOverview(pixelWidth: com.histmersion.web.TimelineView.LoadOverviewPixelWidth): Unit = overview(pixelWidth)
 
   /** The overview follows every filter change — and every hovered suggestion — with ONE request in flight and the
     * newest change next (it fired one per change, undebounced: sweeping the pointer down a suggestion list sent one per
@@ -244,7 +397,7 @@ object TimelineView:
   /** The element's drawn width, fractions of a pixel included (the drawing is made at exactly this size: a whole-pixel
     * `clientWidth` stretched it by the fraction).
     */
-  private def elWidth(el: dom.Element): Double =
+  private def elWidth(el: dom.Element): com.histmersion.web.TimelineView.ElWidthResult =
     if el == null then 600.0
     else
       val r = el.getBoundingClientRect()
@@ -253,13 +406,13 @@ object TimelineView:
         val w = el.asInstanceOf[dom.SVGElement].clientWidth.toDouble
         if w > 0 then w else 600.0
 
-  private def niceInterval(raw: Double): Double =
+  private def niceInterval(raw: com.histmersion.web.TimelineView.NiceIntervalRaw): com.histmersion.web.TimelineView.NiceIntervalResult =
     val candidates =
       List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0, 1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
     candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
 
   /** The element's drawn height (its stylesheet height: fixed on a wide screen, `clamp()` on a phone). */
-  private def elHeight(el: dom.Element, fallback: Double): Double =
+  private def elHeight(el: dom.Element, fallback: com.histmersion.web.TimelineView.ElHeightFallback): com.histmersion.web.TimelineView.ElHeightResult =
     if el == null then fallback
     else
       val r = el.getBoundingClientRect()
@@ -275,11 +428,11 @@ object TimelineView:
   private def drawAreaCurve(
       svg: dom.Element,
       bs: List[TimeBucket],
-      from: Long,
-      to: Long,
-      w: Double,
-      baseY: Double,
-      gradId: String
+      from: com.histmersion.web.TimelineView.DrawAreaCurveFrom,
+      to: com.histmersion.web.TimelineView.DrawAreaCurveTo,
+      w: com.histmersion.web.TimelineView.DrawAreaCurveW,
+      baseY: com.histmersion.web.TimelineView.DrawAreaCurveBaseY,
+      gradId: com.histmersion.web.TimelineView.DrawAreaCurveGradId
   ): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
     val pts = TimelineCurve.points(bs, from, to, w, baseY, top = 4)
@@ -321,19 +474,19 @@ object TimelineView:
     */
   private[web] def hoverAt(
       pts: IndexedSeq[TimelineCurve.Pt],
-      px: Double,
-      tx: Double,
-      scale: Double
-  ): Option[(Double, TimelineCurve.Pt)] =
+      px: com.histmersion.web.TimelineView.HoverAtPx,
+      tx: com.histmersion.web.TimelineView.HoverAtTx,
+      scale: com.histmersion.web.TimelineView.HoverAtScale
+  ): Option[(com.histmersion.web.TimelineView.HoverAtResultPart1, TimelineCurve.Pt)] =
     if scale <= 0 then None
     else TimelineCurve.nearest(pts, (px - tx) / scale).map(p => (tx + p.x * scale, p))
 
   /** Pure: what the hover marker says of a bucket. */
-  private[web] def hoverText(b: TimeBucket): String =
+  private[web] def hoverText(b: TimeBucket): com.histmersion.web.TimelineView.HoverTextResult =
     val years = if b.start == b.end then Fmt.yr(b.start) else s"${Fmt.yr(b.start)}–${Fmt.yr(b.end)}"
     s"$years: ${Plural.count(b.count, "source")}"
 
-  private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
+  private def showHover(layer: dom.Element, at: Option[(com.histmersion.web.TimelineView.ShowHoverAtPart1, TimelineCurve.Pt)], w: com.histmersion.web.TimelineView.ShowHoverW): Unit =
     if layer != null then
       clearLayer(layer)
       at.filter((_, p) => p.bucket.count > 0).foreach { (x, p) =>
@@ -365,14 +518,14 @@ object TimelineView:
   private def clearLayer(g: dom.Element): Unit =
     while g.firstChild != null do g.removeChild(g.firstChild)
 
-  private def newLayer(svg: dom.Element, cls: String): dom.Element =
+  private def newLayer(svg: dom.Element, cls: com.histmersion.web.TimelineView.NewLayerCls): dom.Element =
     val g = dom.document.createElementNS(svgNs, "g")
     g.setAttribute("class", cls)
     svg.appendChild(g)
     g
 
   /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
-  private[web] def realign(drawn: (Long, Long, Double), now: (Long, Long, Double)): (Double, Double) =
+  private[web] def realign(drawn: (com.histmersion.web.TimelineView.RealignDrawnPart1, com.histmersion.web.TimelineView.RealignDrawnPart2, com.histmersion.web.TimelineView.RealignDrawnPart3), now: (com.histmersion.web.TimelineView.RealignNowPart1, com.histmersion.web.TimelineView.RealignNowPart2, com.histmersion.web.TimelineView.RealignNowPart3)): (com.histmersion.web.TimelineView.RealignResultPart1, com.histmersion.web.TimelineView.RealignResultPart2) =
     val (df, dt, dw) = drawn
     val (nf, nt, nw) = now
     val dSpan = (dt - df).toDouble.max(1)
@@ -383,7 +536,7 @@ object TimelineView:
       val tx = (df - nf).toDouble / nSpan * nw
       (tx, scale)
 
-  private def applyTransform(g: dom.Element, tx: Double, scale: Double): Boolean =
+  private def applyTransform(g: dom.Element, tx: com.histmersion.web.TimelineView.ApplyTransformTx, scale: com.histmersion.web.TimelineView.ApplyTransformScale): com.histmersion.web.TimelineView.ApplyTransformResult =
     val identity = Math.abs(tx) < 0.5 && Math.abs(scale - 1) < 0.002
     if identity then g.removeAttribute("transform")
     else g.setAttribute("transform", s"translate($tx 0) scale($scale 1)")
@@ -393,10 +546,10 @@ object TimelineView:
     * label band under it keeps its height, the curve takes the rest — drawn at the size it is shown, so nothing is
     * stretched.
     */
-  private def ovHeight: Double = elHeight(overviewSvg, OH.toDouble)
-  private def ovBase(h: Double): Double = h - (OH - O_BASE)
-  private def dtHeight: Double = elHeight(detailSvg, DH.toDouble)
-  private def dtBase(h: Double): Double = h - (DH - D_BASE)
+  private def ovHeight: com.histmersion.web.TimelineView.OvHeightResult = elHeight(overviewSvg, OH.toDouble)
+  private def ovBase(h: com.histmersion.web.TimelineView.OvBaseH): com.histmersion.web.TimelineView.OvBaseResult = h - (OH - O_BASE)
+  private def dtHeight: com.histmersion.web.TimelineView.DtHeightResult = elHeight(detailSvg, DH.toDouble)
+  private def dtBase(h: com.histmersion.web.TimelineView.DtBaseH): com.histmersion.web.TimelineView.DtBaseResult = h - (DH - D_BASE)
 
   private def renderOverviewCurve(): Unit =
     if overviewSvg != null then
@@ -413,7 +566,7 @@ object TimelineView:
       alignOverviewCurve(w)
 
   /** Stretch the drawn overview curve to the current width at once; the exact redraw follows. */
-  private def alignOverviewCurve(w: Double): Unit =
+  private def alignOverviewCurve(w: com.histmersion.web.TimelineView.AlignOverviewCurveW): Unit =
     val stale = applyTransform(ovCurveLayer, 0, if lastOvWidth > 0 then w / lastOvWidth else 1)
     if stale then ovCurveLayer.classList.add("tl-stale") else ovCurveLayer.classList.remove("tl-stale")
 
@@ -478,7 +631,7 @@ object TimelineView:
 
   /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
     */
-  private[web] def underlayBuckets(bs: List[TimeBucket], from: Long, to: Long): List[TimeBucket] =
+  private[web] def underlayBuckets(bs: List[TimeBucket], from: com.histmersion.web.TimelineView.UnderlayBucketsFrom, to: com.histmersion.web.TimelineView.UnderlayBucketsTo): List[TimeBucket] =
     val idx = bs.indices.filter(i => bs(i).end >= from && bs(i).start <= to)
     if idx.isEmpty then Nil
     else bs.slice(Math.max(0, idx.head - 1), Math.min(bs.length, idx.last + 2))
@@ -503,7 +656,7 @@ object TimelineView:
   /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only partly covering a
     * widened span) the overview curve shows beneath as a low-resolution stand-in.
     */
-  private def alignDetail(w: Double): Unit =
+  private def alignDetail(w: com.histmersion.web.TimelineView.AlignDetailW): Unit =
     val sf = spanFrom
     val st = spanTo
     val (tx, scale) = realign(dtDrawn, (sf, st, w))
@@ -523,7 +676,7 @@ object TimelineView:
       )
     renderDetailAxis(w)
 
-  private def renderDetailAxis(w: Double): Unit =
+  private def renderDetailAxis(w: com.histmersion.web.TimelineView.RenderDetailAxisW): Unit =
     val ns = svgNs
     val g = dtAxisLayer
     clearLayer(g)

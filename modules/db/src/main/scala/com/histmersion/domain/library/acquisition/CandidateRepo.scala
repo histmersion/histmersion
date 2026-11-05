@@ -12,6 +12,45 @@ import com.histmersion.api.library.Source
   */
 private[acquisition] object CandidateRepo:
 
+  type WatchesGoal = WatchesGoal.T
+  object WatchesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordWatchWatermark = RecordWatchWatermark.T
+  object RecordWatchWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordWatchError = RecordWatchError.T
+  object RecordWatchError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordWatchFound = RecordWatchFound.T
+  object RecordWatchFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertResult = UpsertResult.T
+  object UpsertResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoisResult = DoisResult.T
+  object DoisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoisGoal = DoisGoal.T
+  object DoisGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListGoal = ListGoal.T
+  object ListGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListState = ListState.T
+  object ListState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListLimit = ListLimit.T
+  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListOffset = ListOffset.T
+  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsGoal = CountsGoal.T
+  object CountsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkResult = MarkResult.T
+  object MarkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkIds = MarkIds.T
+  object MarkIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkState = MarkState.T
+  object MarkState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkDoisResult = MarkDoisResult.T
+  object MarkDoisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkDoisGoal = MarkDoisGoal.T
+  object MarkDoisGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkDoisDois = MarkDoisDois.T
+  object MarkDoisDois extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkDoisState = MarkDoisState.T
+  object MarkDoisState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class WatchRow(
@@ -44,7 +83,7 @@ private[acquisition] object CandidateRepo:
     object LastFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's watches as they were last read. */
-  def watches(goal: String)(using DbCon): List[CandidateWatch] =
+  def watches(goal: com.histmersion.domain.library.acquisition.CandidateRepo.WatchesGoal)(using DbCon): List[CandidateWatch] =
     sql"""SELECT goal, kind, subject, index_name, to_char(watermark, 'YYYY-MM-DD'),
                    to_char(last_run AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), last_error, last_found
             FROM candidate_watches WHERE goal = $goal ORDER BY kind, subject, index_name"""
@@ -58,9 +97,9 @@ private[acquisition] object CandidateRepo:
     */
   def recordWatch(
       w: CandidateWatch,
-      watermark: Option[String],
-      error: Option[String],
-      found: Int
+      watermark: Option[com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchWatermark],
+      error: Option[com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchError],
+      found: com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchFound
   )(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO candidate_watches (goal, kind, subject, index_name, watermark, last_run, last_error, last_found)
@@ -71,7 +110,7 @@ private[acquisition] object CandidateRepo:
 
   /** Store a candidate: a new one (`true`), or one found again — every watch that found it kept, its state as it was.
     */
-  def upsert(c: Source.Candidate)(using DbCon): Boolean =
+  def upsert(c: Source.Candidate)(using DbCon): com.histmersion.domain.library.acquisition.CandidateRepo.UpsertResult =
     val existed =
       sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
     val _ =
@@ -85,7 +124,7 @@ private[acquisition] object CandidateRepo:
     !existed
 
   /** The DOIs a goal has candidates for already (any state): a sweep does not count them as new. */
-  def dois(goal: String)(using DbCon): Set[String] =
+  def dois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.DoisGoal)(using DbCon): Set[com.histmersion.domain.library.acquisition.CandidateRepo.DoisResult] =
     sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[String].run().toSet
 
   final private case class Row(
@@ -132,7 +171,7 @@ private[acquisition] object CandidateRepo:
     object LastSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[String], state: String, limit: Int, offset: Int)(using DbCon): List[Source.Candidate] =
+  def list(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal], state: com.histmersion.domain.library.acquisition.CandidateRepo.ListState, limit: com.histmersion.domain.library.acquisition.CandidateRepo.ListLimit, offset: com.histmersion.domain.library.acquisition.CandidateRepo.ListOffset)(using DbCon): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
                    to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
         ts
@@ -162,7 +201,7 @@ private[acquisition] object CandidateRepo:
       )
 
   /** How many candidates there are in each state (of one goal, or of all). */
-  def counts(goal: Option[String])(using DbCon): List[CandidateCount] =
+  def counts(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.CountsGoal])(using DbCon): List[CandidateCount] =
     sql"""SELECT state, count(*)::int FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal)
             GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END"""
       .query[(String, Int)]
@@ -171,13 +210,13 @@ private[acquisition] object CandidateRepo:
       .map(CandidateCount(_, _))
 
   /** Set the state of these candidates; how many there were. */
-  def mark(ids: List[Long], state: String)(using DbCon): Int =
+  def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateRepo.MarkState)(using DbCon): com.histmersion.domain.library.acquisition.CandidateRepo.MarkResult =
     if ids.isEmpty then 0
     else
       val arr = ids.map(_.toString)
       sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run()
 
   /** Set the state of a goal's candidates with these DOIs (a ranking's picks). */
-  def markDois(goal: String, dois: List[String], state: String)(using DbCon): Int =
+  def markDois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal, dois: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois], state: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisState)(using DbCon): com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisResult =
     if dois.isEmpty then 0
     else sql"UPDATE source_candidates SET state = $state WHERE goal = $goal AND doi = ANY($dois::text[])".update.run()

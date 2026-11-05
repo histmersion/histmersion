@@ -5,14 +5,45 @@ import com.histmersion.api.Markdown.*
 object SearchMarkdown:
 
   /** `ts_headline` marks hits with `**` already. */
-  private[api] def snippet(h: SearchHit): String =
+  type SnippetResult = SnippetResult.T
+  object SnippetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultsResult = SearchResultsResult.T
+  object SearchResultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BriefResultsResult = BriefResultsResult.T
+  object BriefResultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetsResult = FacetsResult.T
+  object FacetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetsField = FacetsField.T
+  object FacetsField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoPageResult = GeoPageResult.T
+  object GeoPageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoResultsResult = GeoResultsResult.T
+  object GeoResultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistogramResult = HistogramResult.T
+  object HistogramResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistogramUnit = HistogramUnit.T
+  object HistogramUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResult = TreeResult.T
+  object TreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeUnit = TreeUnit.T
+  object TreeUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeLinesResult = TreeLinesResult.T
+  object TreeLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeLinesUnit = TreeLinesUnit.T
+  object TreeLinesUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeLinesDepth = TreeLinesDepth.T
+  object TreeLinesDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildNounResult = ChildNounResult.T
+  object ChildNounResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private[api] def snippet(h: SearchHit): com.histmersion.api.library.SearchMarkdown.SnippetResult =
     h.snippet.map(_.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
       case None    => ""
       case Some(s) =>
         val head = h.matchedHeading.map(_.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
         s"\n  > $head$s"
 
-  def searchResults(hits: Vector[SearchHit]): String =
+  def searchResults(hits: Vector[SearchHit]): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
     if hits.isEmpty then "_No matching sources._"
     else
       val body = hits.map { h =>
@@ -25,7 +56,7 @@ object SearchMarkdown:
       }
       s"### ${hits.size} result(s)\n\n${body.mkString("\n")}"
 
-  def searchResults(result: SearchResult): String =
+  def searchResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
     if result.hits.isEmpty then "_No matching sources._"
     else
       val body = result.hits.map { hit =>
@@ -52,7 +83,7 @@ object SearchMarkdown:
       val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
-  def briefResults(result: SearchResult): String =
+  def briefResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.BriefResultsResult =
     if result.hits.isEmpty then "_No matching sources._"
     else
       val body = result.hits.map { hit =>
@@ -66,7 +97,7 @@ object SearchMarkdown:
       val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
-  def facets(field: String, rows: Vector[Facet]): String =
+  def facets(field: com.histmersion.api.library.SearchMarkdown.FacetsField, rows: Vector[Facet]): com.histmersion.api.library.SearchMarkdown.FacetsResult =
     if rows.isEmpty then s"_No $field in the current filter._"
     else
       val items = rows.map(f =>
@@ -75,14 +106,14 @@ object SearchMarkdown:
       )
       s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
-  def geoPage(p: GeoHitPage): String =
+  def geoPage(p: GeoHitPage): com.histmersion.api.library.SearchMarkdown.GeoPageResult =
     if p.hits.isEmpty then
       OffsetPage.markdown(p.page, "finding(s)", "_No findings match that place/time._", Nil)(_ => "")
     else
       val body = geoResults(p.hits.toVector)
       OffsetPage.header(p.page, "finding(s)") + body.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
-  def geoResults(hits: Vector[GeoHit]): String =
+  def geoResults(hits: Vector[GeoHit]): com.histmersion.api.library.SearchMarkdown.GeoResultsResult =
     if hits.isEmpty then "_No findings match that place/time._"
     else
       val blocks = hits
@@ -101,7 +132,7 @@ object SearchMarkdown:
         }
       s"### ${hits.size} finding(s)\n\n${blocks.mkString("\n")}"
 
-  def histogram(h: TimeHistogram, unit: String): String =
+  def histogram(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.HistogramUnit): com.histmersion.api.library.SearchMarkdown.HistogramResult =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.buckets.isEmpty then s"_No time buckets for $span._"
     else
@@ -154,7 +185,7 @@ object SearchMarkdown:
         .reverse
       runs
 
-  def tree(h: TimeHistogram, unit: String): String =
+  def tree(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.TreeUnit): com.histmersion.api.library.SearchMarkdown.TreeResult =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.tree.isEmpty then s"_No $unit to group for $span._"
     else
@@ -164,7 +195,7 @@ object SearchMarkdown:
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
       (List(head, "", treeLines(h.tree, unit, 0).mkString("\n"), "", note)).mkString("\n")
 
-  private[api] def treeLines(buckets: List[Bucket], unit: String, depth: Int): List[String] =
+  private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLinesDepth): List[com.histmersion.api.library.SearchMarkdown.TreeLinesResult] =
     val pad = "  " * depth
     buckets.flatMap { b =>
       val over = if b.overlap > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
@@ -178,5 +209,5 @@ object SearchMarkdown:
       line :: (kids ++ samps)
     }
 
-  private[api] def childNoun(b: Bucket): String =
+  private[api] def childNoun(b: Bucket): com.histmersion.api.library.SearchMarkdown.ChildNounResult =
     if b.children.exists(_.kind == Tree.KindTime) then "period" else "subregion"

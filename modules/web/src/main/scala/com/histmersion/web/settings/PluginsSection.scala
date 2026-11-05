@@ -11,7 +11,12 @@ import com.raquo.laminar.api.L.*
 object PluginsSection:
 
   /** What became of a plugin, in words. Pure. */
-  def state(p: PluginStatus): String = PluginState.parse(p.state) match
+  type StateResult = StateResult.T
+  object StateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProvidesResult = ProvidesResult.T
+  object ProvidesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def state(p: PluginStatus): com.histmersion.web.settings.PluginsSection.StateResult = PluginState.parse(p.state) match
     case Some(PluginState.Registered) => "Working"
     case Some(PluginState.Disabled)   => "Turned off"
     case Some(PluginState.Failed)     => s"Not working: ${p.error.getOrElse("no reason given")}"
@@ -19,7 +24,7 @@ object PluginsSection:
     case None                         => Wording.humanize(p.state)
 
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
-  def provides(p: PluginStatus): List[String] =
+  def provides(p: PluginStatus): List[com.histmersion.web.settings.PluginsSection.ProvidesResult] =
     p.provides.map(_.takeWhile(_ != ':')).distinct.map {
       case "source-fetcher"   => "Finds papers"
       case "media-collection" => "Pictures"

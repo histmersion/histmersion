@@ -4,15 +4,24 @@ import com.histmersion.api.BBox
 import com.histmersion.api.given
 object PresetMenu:
 
+  type MinShare = MinShare.T
+  object MinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShareResult = ShareResult.T
+  object ShareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceResult = SourceResult.T
+  object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodoIdResult = PeriodoIdResult.T
+  object PeriodoIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
 
   object Group:
     type InView = InView.T
     object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val MinShare: Double = 0.5
+  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = 0.5
 
-  def share(view: BBox, box: BBox): Double =
+  def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.ShareResult =
     val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)
     if view.crossesAntimeridian || area <= 0 then 0.0
     else
@@ -31,7 +40,7 @@ object PresetMenu:
       }
       .sortBy(g => if g.inView then (0, -cover(g.region)) else (1, 0.0))
 
-  def source(p: HistoricalPeriod): Option[String] =
+  def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.SourceResult] =
     p.authority.map(a =>
       a.split(" · ", 2) match
         case Array(id, rest) if id.startsWith("PeriodO ") => rest
@@ -39,7 +48,7 @@ object PresetMenu:
     )
 
   /** A PeriodO definition can be looked up at `https://n2t.net/ark:/99152/<id>`. */
-  def periodoId(p: HistoricalPeriod): Option[String] =
+  def periodoId(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.PeriodoIdResult] =
     p.authority.flatMap(a =>
       Option.when(a.startsWith("PeriodO "))(a.drop("PeriodO ".length).takeWhile(!_.isWhitespace))
     )

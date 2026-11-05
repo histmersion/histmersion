@@ -14,6 +14,27 @@ import com.augustnagro.magnum.*
   */
 private[review] object ArticleReviewRepo:
 
+  type WaitingKinds = WaitingKinds.T
+  object WaitingKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactsResultPart1 = FactsResultPart1.T
+  object FactsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactsResultPart2Part2 = FactsResultPart2Part2.T
+  object FactsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactsSlugs = FactsSlugs.T
+  object FactsSlugs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalsResultPart1 = ApprovalsResultPart1.T
+  object ApprovalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalsSlugs = ApprovalsSlugs.T
+  object ApprovalsSlugs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStartsResultPart1 = RunStartsResultPart1.T
+  object RunStartsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStartsResultPart2 = RunStartsResultPart2.T
+  object RunStartsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStartsRuns = RunStartsRuns.T
+  object RunStartsRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsSlug = GoalsSlug.T
+  object GoalsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class FactsRow(
       slug: FactsRow.Slug,
       itemStatus: Option[FactsRow.ItemStatus],
@@ -70,14 +91,14 @@ private[review] object ArticleReviewRepo:
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The approval kinds that leave an article waiting for a person. */
-  val WaitingKinds: List[String] = List("article-filter", "article-publish")
+  val WaitingKinds: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.WaitingKinds] = List("article-filter", "article-publish")
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
     */
-  def facts(slugs: List[String])(using DbCon): Map[String, (Facts, Option[String])] =
+  def facts(slugs: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.FactsSlugs])(using DbCon): Map[com.histmersion.domain.research.articles.review.ArticleReviewRepo.FactsResultPart1, (Facts, Option[com.histmersion.domain.research.articles.review.ArticleReviewRepo.FactsResultPart2Part2])] =
     if slugs.isEmpty then Map.empty
     else
       val rows = sql"""
@@ -113,19 +134,19 @@ private[review] object ArticleReviewRepo:
         r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
       }.toMap
 
-  private def approvals(slugs: List[String])(using DbCon): Map[String, List[ReviewApproval]] =
+  private def approvals(slugs: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.ApprovalsSlugs])(using DbCon): Map[com.histmersion.domain.research.articles.review.ArticleReviewRepo.ApprovalsResultPart1, List[ReviewApproval]] =
     sql"""SELECT subject, id, kind FROM approvals
           WHERE state = 'open' AND kind = ANY($WaitingKinds::text[]) AND subject = ANY(${slugs.distinct}::text[])
           ORDER BY id""".query[ApprovalRow].run().toList.groupMap(_.subject)(r => ReviewApproval(r.id, r.kind))
 
   /** When each of `runs` started (UTC), for the runs still recorded. */
-  def runStarts(runs: List[String])(using DbCon): Map[String, String] =
+  def runStarts(runs: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.RunStartsRuns])(using DbCon): Map[com.histmersion.domain.research.articles.review.ArticleReviewRepo.RunStartsResultPart1, com.histmersion.domain.research.articles.review.ArticleReviewRepo.RunStartsResultPart2] =
     if runs.isEmpty then Map.empty
     else sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
               WHERE id = ANY(${runs.distinct}::text[])""".query[(String, String)].run().toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
-  def goals(slug: String)(using DbCon): List[ReviewGoal] =
+  def goals(slug: com.histmersion.domain.research.articles.review.ArticleReviewRepo.GoalsSlug)(using DbCon): List[ReviewGoal] =
     sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug"""
       .query[GoalRow]

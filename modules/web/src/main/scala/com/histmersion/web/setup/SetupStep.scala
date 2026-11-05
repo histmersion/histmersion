@@ -10,6 +10,10 @@ enum SetupStep(val label: String, val optional: Boolean = false):
   case Calibre extends SetupStep("Calibre library", optional = true)
   case Ready extends SetupStep("Ready")
 
-  def number: Int = ordinal + 1
+  def number: com.histmersion.web.setup.SetupStep.NumberResult = ordinal + 1
   def next: Option[SetupStep] = SetupStep.values.lift(ordinal + 1)
   def back: Option[SetupStep] = Option.when(ordinal > 0)(SetupStep.values(ordinal - 1))
+
+object SetupStep:
+  type NumberResult = NumberResult.T
+  object NumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

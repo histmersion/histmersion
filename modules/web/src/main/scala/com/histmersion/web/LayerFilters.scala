@@ -14,11 +14,22 @@ import com.histmersion.api.catalogue.{EventTaxonomy, EventTier, SiteTypes}
   */
 object LayerFilters:
   /** Pure: a badge of `shape` with `glyph`, as an option's icon (in the accent colour: no date). */
-  def badge(shape: Shape, glyph: String): String =
+  type BadgeResult = BadgeResult.T
+  object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeGlyph = BadgeGlyph.T
+  object BadgeGlyph extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerIconResult = LayerIconResult.T
+  object LayerIconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierMeaningResult = TierMeaningResult.T
+  object TierMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierMeaningTier = TierMeaningTier.T
+  object TierMeaningTier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def badge(shape: Shape, glyph: com.histmersion.web.LayerFilters.BadgeGlyph): com.histmersion.web.LayerFilters.BadgeResult =
     s"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>"""
 
   /** Pure: a layer's own switch icon, the "all" option's. */
-  def layerIcon(k: PointKind[?]): String = Icon.html(k.icon)
+  def layerIcon(k: PointKind[?]): com.histmersion.web.LayerFilters.LayerIconResult = Icon.html(k.icon)
 
   val eventKinds: List[IconSelect.Opt] =
     IconSelect.Opt("", "all", layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
@@ -30,7 +41,7 @@ object LayerFilters:
     }
 
   /** What each event tier means; the tier menu's tooltips. */
-  def tierMeaning(tier: String): Option[String] = tier match
+  def tierMeaning(tier: com.histmersion.web.LayerFilters.TierMeaningTier): Option[com.histmersion.web.LayerFilters.TierMeaningResult] = tier match
     case EventTier.Attested =>
       Some("Events a source in the corpus attests: its own record, or an attestation linked to it.")
     case EventTier.Catalogue =>

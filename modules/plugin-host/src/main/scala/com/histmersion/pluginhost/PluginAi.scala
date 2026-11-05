@@ -11,7 +11,12 @@ import scala.util.control.NonFatal
 object PluginAi:
 
   /** Whether the provider can serve `model` now, by its own check; an exception is a "no". */
-  def check(provider: AiProvider, model: String): Either[String, Unit] =
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckModel = CheckModel.T
+  object CheckModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.CheckModel): Either[com.histmersion.pluginhost.PluginAi.CheckResultPart1, Unit] =
     try Option(provider.check(model)).getOrElse(Left("its check answered null"))
     catch
       case e: InterruptedException => throw e

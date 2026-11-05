@@ -8,6 +8,9 @@ import com.histmersion.api.given
 
 object RepairAcquire:
 
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class RepairRequest(dryRun: RepairRequest.DryRun = false, by: Option[RepairRequest.By] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -78,7 +81,7 @@ object RepairAcquire:
   val Remove = "remove"
   val Keep = "keep"
 
-  def markdown(r: RepairResult): String =
+  def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.MarkdownResult =
     val verb = if r.dryRun then "would " else ""
     val head = s"# Repair of the acquisition list${if r.dryRun then " (dry run: nothing changed)" else ""}\n\n" +
       s"- ${verb}move ${Plural.count(r.moved, "legal open-access work")} into the watchers' ingest backlogs\n" +

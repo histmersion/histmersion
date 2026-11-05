@@ -1,6 +1,9 @@
 package com.histmersion.api.basemap
 import com.histmersion.api.given
 object BaseStyles:
+  type StatesDropped = StatesDropped.T
+  object StatesDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Style(id: Style.Id, name: Style.Name, needs: List[Style.Needs])
 
   object Style:
@@ -17,5 +20,5 @@ object BaseStyles:
 
   val all: List[Style] = List(Readable, Physical)
 
-  def states(dropped: Option[List[String]]): List[Basemap.StyleState] =
+  def states(dropped: Option[List[com.histmersion.api.basemap.BaseStyles.StatesDropped]]): List[Basemap.StyleState] =
     all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))

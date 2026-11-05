@@ -18,6 +18,13 @@ object Event:
 
   /** The relations between two events: Allen's interval relations and the causal ones. */
   object EdgeKind:
+    type Allen = Allen.T
+    object Allen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Causal = Causal.T
+    object Causal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Before = "before"
     val Meets = "meets"
     val Overlaps = "overlaps"
@@ -30,9 +37,9 @@ object Event:
     val Triggers = "triggers"
     val RespondsTo = "responds_to"
     val FallsWithin = "falls_within"
-    val allen: Set[String] = Set(Before, Meets, Overlaps, During, Starts, Finishes, Equals)
-    val causal: Set[String] = Set(Causes, Enables, Triggers, RespondsTo, FallsWithin)
-    val all: List[String] =
+    val allen: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Allen] = Set(Before, Meets, Overlaps, During, Starts, Finishes, Equals)
+    val causal: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Causal] = Set(Causes, Enables, Triggers, RespondsTo, FallsWithin)
+    val all: List[com.histmersion.domain.catalogue.Event.EdgeKind.All] =
       List(
         Before,
         Meets,
@@ -50,7 +57,10 @@ object Event:
 
   /** Where a candidate link between an event and a source stands. */
   object LinkStatus:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[String] = List(Proposed, Confirmed, Rejected)
+    val all: List[com.histmersion.domain.catalogue.Event.LinkStatus.All] = List(Proposed, Confirmed, Rejected)

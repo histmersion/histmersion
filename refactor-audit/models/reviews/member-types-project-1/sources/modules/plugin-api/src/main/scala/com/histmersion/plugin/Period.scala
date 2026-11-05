@@ -1,0 +1,37 @@
+package com.histmersion.plugin
+
+import io.github.iltotore.iron.*
+
+/** The values the SPI exchanges about works, places, events and pictures, each a type that says what it means. They are
+  * Iron newtypes: opaque, so at run time a `Year` is an `Int` and a `Doi` a `String`.
+  *
+  * None of them judges validity — that is the host's: a value is built from any value of its base type (`Year(-1600)`,
+  * `Doi(raw.trim)`, `Latitude(lat)`), `.value` takes the plain value out.
+  *
+  * The host checks every value a plugin hands over where it becomes the model's: a DOI that is none, a Wikidata id that
+  * is no item or a position off the globe is left out of its record with a warning (the rest of the record is kept); a
+  * dating that cannot be one refuses the record, with the value in the reason.
+  */
+
+/** A span of deep time, both ends included; a single year is a period whose ends are the same year. Built with
+  * [[Period.from]] (the start must not be after the end) or [[Period.point]].
+  */
+final case class Period private (start: Year, end: Year):
+  def isPoint: com.histmersion.plugin.Period.IsPointResult = start.value == end.value
+
+object Period:
+  /** The period from `start` to `end`, or why there is none (it would end before it starts). */
+  type IsPointResult = IsPointResult.T
+  object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromResultPart1 = FromResultPart1.T
+  object FromResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def from(start: Year, end: Year): Either[com.histmersion.plugin.Period.FromResultPart1, Period] =
+    Either.cond(
+      start.value <= end.value,
+      new Period(start, end),
+      s"the period ends (${end.value}) before it starts (${start.value})"
+    )
+
+  /** The period of one year. */
+  def point(year: Year): Period = new Period(year, year)

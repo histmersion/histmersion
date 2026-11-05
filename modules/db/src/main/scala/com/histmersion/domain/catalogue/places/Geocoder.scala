@@ -22,6 +22,41 @@ import com.histmersion.api.catalogue.{Geocode, Period}
   */
 private[places] object Geocoder:
 
+  type CandidatesKey = CandidatesKey.T
+  object CandidatesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesWithin = CandidatesWithin.T
+  object CandidatesWithin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierSql = TierSql.T
+  object TierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveName = ResolveName.T
+  object ResolveName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvePlaceholderMin = ResolvePlaceholderMin.T
+  object ResolvePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveInName = ResolveInName.T
+  object ResolveInName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveInPlaceholderMin = ResolveInPlaceholderMin.T
+  object ResolveInPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptAsked = AttemptAsked.T
+  object AttemptAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptMin = AttemptMin.T
+  object AttemptMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChosenAsked = ChosenAsked.T
+  object ChosenAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChosenMin = ChosenMin.T
+  object ChosenMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacySql = LegacySql.T
+  object LegacySql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResult = ApplyResult.T
+  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyToleranceKm = ApplyToleranceKm.T
+  object ApplyToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnplacedSql = UnplacedSql.T
+  object UnplacedSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceResult = PlaceResult.T
+  object PlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceToleranceKm = PlaceToleranceKm.T
+  object PlaceToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private given DbCodec[Candidate] = DbCodec.derived
 
   /** The places whose label or one of whose names has `key`, with a geometry, optionally only those intersecting place
@@ -30,7 +65,7 @@ private[places] object Geocoder:
     * only 1935–1956), so the time rule of [[Geocode.rank]] reads the name's dates too. `tier` is who brought the place
     * in ([[Geocode.tierOf]]).
     */
-  def candidates(key: String, within: Option[String])(using DbCon): List[Candidate] =
+  def candidates(key: com.histmersion.domain.catalogue.places.Geocoder.CandidatesKey, within: Option[com.histmersion.domain.catalogue.places.Geocoder.CandidatesWithin])(using DbCon): List[Candidate] =
     if key.isEmpty then Nil
     else
       sql"""WITH hit AS (
@@ -57,7 +92,7 @@ private[places] object Geocoder:
             GROUP BY p.id, h.nlo, h.nhi""".query[Candidate].run().toList
 
   /** SQL twin of [[Geocode.tierOf]] over a `places` row aliased `p`. */
-  private[histmersion] val tierSql: String =
+  private[histmersion] val tierSql: com.histmersion.domain.catalogue.places.Geocoder.TierSql =
     "CASE WHEN p.import_source IS NULL THEN 0 WHEN p.import_source LIKE 'lpf:%' THEN 1" +
       " WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'tgn' THEN 3" +
       " WHEN p.import_source = 'geonames' THEN 4 ELSE 5 END"
@@ -66,19 +101,19 @@ private[places] object Geocoder:
     * name (nothing is ever guessed).
     */
   def resolve(
-      name: String,
+      name: com.histmersion.domain.catalogue.places.Geocoder.ResolveName,
       hint: KindHint,
       at: Option[Period],
-      placeholderMin: Int
+      placeholderMin: com.histmersion.domain.catalogue.places.Geocoder.ResolvePlaceholderMin
   )(using DbCon): Option[Resolution] =
     resolveIn(name, hint, at, placeholderMin)
 
-  def resolveIn(name: String, hint: KindHint, at: Option[Period], placeholderMin: Int)(using
+  def resolveIn(name: com.histmersion.domain.catalogue.places.Geocoder.ResolveInName, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.Geocoder.ResolveInPlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
     Geocode.attempts(name).iterator.flatMap(a => attempt(name.trim, a, hint, at, placeholderMin)).nextOption()
 
-  private def attempt(asked: String, a: Attempt, hint: KindHint, at: Option[Period], min: Int)(using
+  private def attempt(asked: com.histmersion.domain.catalogue.places.Geocoder.AttemptAsked, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.Geocoder.AttemptMin)(using
       DbCon
   ): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
@@ -106,7 +141,7 @@ private[places] object Geocoder:
           .headOption
           .fold(r)((lon, lat) => r.copy(lon = lon, lat = lat))
 
-  private def chosen(asked: String, a: Attempt, h: KindHint, at: Option[Period], min: Int)(using
+  private def chosen(asked: com.histmersion.domain.catalogue.places.Geocoder.ChosenAsked, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.Geocoder.ChosenMin)(using
       DbCon
   ): Option[Resolution] =
     a.within match
@@ -152,7 +187,7 @@ private[places] object Geocoder:
     * `legacy` is the old rule, verbatim: exact `lower()` match on a label or any name, then site < feature < polity <
     * region, then the smaller area, then the id; the point on its surface.
     */
-  val legacySql: String =
+  val legacySql: com.histmersion.domain.catalogue.places.Geocoder.LegacySql =
     s"""WITH asked AS (
          SELECT DISTINCT ON (f.id) f.id, btrim(p->>'place') AS place
          FROM findings f
@@ -207,7 +242,7 @@ private[places] object Geocoder:
     * touched sources' `updated_at` moves and their `finding_places` are re-materialised, in the same transaction.
     * Returns the findings moved.
     */
-  def apply(ms: List[Move], toleranceKm: Double)(using DbCon): Int =
+  def apply(ms: List[Move], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.ApplyToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geocoder.ApplyResult =
     if ms.isEmpty then 0
     else
       val moved = ms.filter { m =>
@@ -239,7 +274,7 @@ private[places] object Geocoder:
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
-  val unplacedSql: String =
+  val unplacedSql: com.histmersion.domain.catalogue.places.Geocoder.UnplacedSql =
     s"""SELECT f.id, f.citekey, btrim(f.region_name), ${RangeSql.cols("f.period")}
        FROM findings f
        WHERE f.geom IS NULL AND btrim(coalesce(f.region_name, '')) <> ''
@@ -261,7 +296,7 @@ private[places] object Geocoder:
     * left alone; its name is never touched). The touched sources' `updated_at` moves and their `finding_places` are
     * re-materialised, in the same transaction. Returns the findings placed.
     */
-  def place(ps: List[Placement], toleranceKm: Double)(using DbCon): Int =
+  def place(ps: List[Placement], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.PlaceToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geocoder.PlaceResult =
     if ps.isEmpty then 0
     else
       val placed = ps.filter { p =>

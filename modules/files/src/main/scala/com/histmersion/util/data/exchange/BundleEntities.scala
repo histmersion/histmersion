@@ -46,7 +46,7 @@ final case class BundleEntities(
   /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle always has the same
     * set of entries.
     */
-  def payloads: List[(String, Array[Byte])] =
+  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart1, Array[Byte])] =
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
     def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
@@ -99,7 +99,7 @@ final case class BundleEntities(
   def uids: Set[UUID] = revs.keySet
 
   /** sha256 → what it is, for every blob these lines reference. */
-  def blobRefs: Map[String, List[BlobUse]] =
+  def blobRefs: Map[com.histmersion.util.data.exchange.BundleEntities.BlobRefsResultPart1, List[BlobUse]] =
     (sources.flatMap(s =>
       s.bodySha256.map(_ -> BlobUse.Body(s.uid)).toList ++
         s.originalSha256.zip(s.originalExt).map((sha, ext) => sha -> BlobUse.Original(s.uid, ext)).toList
@@ -111,7 +111,7 @@ final case class BundleEntities(
   /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC format, so text
     * order is time order.
     */
-  def asOf: Option[String] =
+  def asOf: Option[com.histmersion.util.data.exchange.BundleEntities.AsOfResult] =
     (sources.map(_.updatedAt) ++ findings.map(_.updatedAt) ++ assessments.map(_.checkedAt) ++
       aliases.map(_.createdAt) ++ articles.map(_.updatedAt) ++ versions.map(_.updatedAt) ++
       assets.map(_.updatedAt) ++ assetLinks.map(_.updatedAt) ++ attestations.map(_.updatedAt) ++
@@ -164,6 +164,17 @@ final case class BundleEntities(
 
 object BundleEntities:
 
+  type PayloadsResultPart1 = PayloadsResultPart1.T
+  object PayloadsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobRefsResultPart1 = BlobRefsResultPart1.T
+  object BlobRefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsOfResult = AsOfResult.T
+  object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeResultPart2 = DecodeResultPart2.T
+  object DecodeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodePayloadsPart1 = DecodePayloadsPart1.T
+  object DecodePayloadsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Rev(kind: Bundle.Kind, rev: Rev.Value, label: Rev.Label)
 
   object Rev:
@@ -199,7 +210,7 @@ object BundleEntities:
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
-  def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[String]) =
+  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart1, Array[Byte]]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.DecodeResultPart2]) =
     val problems = List.newBuilder[String]
     def read[A: Decoder](path: String, stamped: Boolean): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>

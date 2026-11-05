@@ -15,9 +15,9 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
   private val byKey: Map[SettingKey, SettingField] = fields.map(f => f.key -> f).toMap
 
   /** A block's documentation (`histmersion.backups`), empty when it has none or is no block. */
-  def blockDoc(key: SettingKey): String = blocks.getOrElse(key, "")
+  def blockDoc(key: SettingKey): com.histmersion.config.edit.ConfigSchema.BlockDocResult = blocks.getOrElse(key, "")
 
-  def isBlock(key: SettingKey): Boolean = blocks.contains(key) && !byKey.contains(key)
+  def isBlock(key: SettingKey): com.histmersion.config.edit.ConfigSchema.IsBlockResult = blocks.contains(key) && !byKey.contains(key)
 
   /** The setting `key`: one of reference.conf's, or a key of an open block (a plugin's own settings, the variables of
     * an AI tool's environment), which takes any single value. `None`: no such setting.
@@ -32,7 +32,7 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       )
 
   /** The known settings named most like `key`, for "did you mean". */
-  def closest(key: SettingKey, n: Int = 3): List[SettingKey] =
+  def closest(key: SettingKey, n: com.histmersion.config.edit.ConfigSchema.ClosestN = 3): List[SettingKey] =
     val k = key.relative
     fields
       .map(f => f.key -> ConfigSchema.distance(k, f.key.relative))
@@ -42,23 +42,58 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       .map(_._1)
 
   /** The top-level blocks, in reference.conf's order, with the settings in each. */
-  def sections: List[(String, List[SettingField])] =
+  def sections: List[(com.histmersion.config.edit.ConfigSchema.SectionsResultPart1, List[SettingField])] =
     val order = fields.map(_.section).distinct
     order.map(s => s -> fields.filter(_.section == s))
 
 object ConfigSchema:
 
   /** The schema of the reference.conf on the class path. */
+  type BlockDocResult = BlockDocResult.T
+  object BlockDocResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsBlockResult = IsBlockResult.T
+  object IsBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosestN = ClosestN.T
+  object ClosestN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionsResultPart1 = SectionsResultPart1.T
+  object SectionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceTextResult = ReferenceTextResult.T
+  object ReferenceTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfText = OfText.T
+  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WalkResultPart1 = WalkResultPart1.T
+  object WalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WalkResultPart3 = WalkResultPart3.T
+  object WalkResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WalkPrefix = WalkPrefix.T
+  object WalkPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenBlockResult = OpenBlockResult.T
+  object OpenBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenBlockPath = OpenBlockPath.T
+  object OpenBlockPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InOpenBlockResult = InOpenBlockResult.T
+  object InOpenBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartOfResult = RestartOfResult.T
+  object RestartOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceResult = DistanceResult.T
+  object DistanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceA = DistanceA.T
+  object DistanceA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceB = DistanceB.T
+  object DistanceB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetsAnythingResult = SetsAnythingResult.T
+  object SetsAnythingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   lazy val reference: ConfigSchema = of(referenceText)
 
-  def referenceText: String =
+  def referenceText: com.histmersion.config.edit.ConfigSchema.ReferenceTextResult =
     val is = Option(getClass.getClassLoader.getResourceAsStream("reference.conf"))
       .getOrElse(throw IllegalStateException("reference.conf is missing from the class path"))
     try String(is.readAllBytes, java.nio.charset.StandardCharsets.UTF_8)
     finally is.close()
 
   /** The schema of a reference.conf's text. */
-  def of(text: String): ConfigSchema =
+  def of(text: com.histmersion.config.edit.ConfigSchema.OfText): ConfigSchema =
     val raw = ConfigFactory.parseString(text)
     val resolved = raw.resolve(ConfigResolveOptions.noSystem)
     val docs = ReferenceDocs(text)
@@ -88,7 +123,7 @@ object ConfigSchema:
     new ConfigSchema(fields, blocks)
 
   /** Every node of the tree in the file's order (`isBlock` for an object), the open blocks' contents left out. */
-  private def walk(o: ConfigObject, prefix: List[String]): List[(List[String], ConfigValue, Boolean)] =
+  private def walk(o: ConfigObject, prefix: List[com.histmersion.config.edit.ConfigSchema.WalkPrefix]): List[(List[com.histmersion.config.edit.ConfigSchema.WalkResultPart1], ConfigValue, com.histmersion.config.edit.ConfigSchema.WalkResultPart3)] =
     o.keySet.asScala.toList.sortBy(k => o.get(k).origin.lineNumber).flatMap { k =>
       val p = prefix :+ k
       o.get(k) match
@@ -99,7 +134,7 @@ object ConfigSchema:
         case v => List((p, v, false))
     }
 
-  private def openBlock(path: List[String]): Boolean = ConfigLayers.OpenBlocks.contains(path)
+  private def openBlock(path: List[com.histmersion.config.edit.ConfigSchema.OpenBlockPath]): com.histmersion.config.edit.ConfigSchema.OpenBlockResult = ConfigLayers.OpenBlocks.contains(path)
 
   /** The kind of an open block's key: a plugin's `enabled` is true or false (the host's own key); any other takes any
     * single value.
@@ -108,17 +143,17 @@ object ConfigSchema:
     if key.leaf == "enabled" && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then SettingKind.Flag
     else SettingKind.Any
 
-  def inOpenBlock(key: SettingKey): Boolean =
+  def inOpenBlock(key: SettingKey): com.histmersion.config.edit.ConfigSchema.InOpenBlockResult =
     val p = key.segments
     ConfigLayers.OpenBlocks.exists(b => p.length > b.length && p.startsWith(b))
 
-  def restartOf(key: SettingKey): Option[String] =
+  def restartOf(key: SettingKey): Option[com.histmersion.config.edit.ConfigSchema.RestartOfResult] =
     ConfigReload.RestartOnly.collectFirst {
       case (k, why) if com.histmersion.config.HotPlan.keyMatches(key.value, k) => why
     }
 
   /** Levenshtein distance, for "did you mean". */
-  private[edit] def distance(a: String, b: String): Int =
+  private[edit] def distance(a: com.histmersion.config.edit.ConfigSchema.DistanceA, b: com.histmersion.config.edit.ConfigSchema.DistanceB): com.histmersion.config.edit.ConfigSchema.DistanceResult =
     val prev = Array.tabulate(b.length + 1)(identity)
     val cur = Array.ofDim[Int](b.length + 1)
     var i = 1
@@ -135,5 +170,5 @@ object ConfigSchema:
   /** The user file's own settings (no reference.conf): whether it sets anything at all — the first-run setup is offered
     * only to a file that does not.
     */
-  def setsAnything(user: Config): Boolean =
+  def setsAnything(user: Config): com.histmersion.config.edit.ConfigSchema.SetsAnythingResult =
     user.hasPath(SettingKey.Root) && Try(!user.getConfig(SettingKey.Root).isEmpty).getOrElse(true)

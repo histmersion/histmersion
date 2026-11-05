@@ -18,6 +18,15 @@ final case class ArticleEventLead(
 object ArticleEventLead:
 
 
+  type MentionedResult = MentionedResult.T
+  object MentionedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionedBody = MentionedBody.T
+  object MentionedBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionedNames = MentionedNames.T
+  object MentionedNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kind = Kind.T
@@ -31,11 +40,11 @@ object ArticleEventLead:
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def mentioned(body: String, names: List[String]): Boolean =
+  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.MentionedBody, names: List[com.histmersion.api.catalogue.ArticleEventLead.MentionedNames]): com.histmersion.api.catalogue.ArticleEventLead.MentionedResult =
     val b = body.toLowerCase(java.util.Locale.ROOT)
     names.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains)
 
-  def markdown(leads: List[ArticleEventLead]): String =
+  def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
     if leads.isEmpty then ""
     else
       ("### Catalogue events in this article's period and region that it never names" :: "" ::

@@ -4,17 +4,24 @@ import com.histmersion.api.Markdown.*
 
 object GoalsMarkdown:
 
-  private[api] def goalLine(g: Goal): String =
+  type GoalLineResult = GoalLineResult.T
+  object GoalLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalListResult = GoalListResult.T
+  object GoalListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalResult = GoalResult.T
+  object GoalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private[api] def goalLine(g: Goal): com.histmersion.api.automation.GoalsMarkdown.GoalLineResult =
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, "") match
       case "" => ""
       case p  => s" ($p)"
     val parent = g.parentSlug.map(p => s" ⊂ $p").getOrElse("")
     s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent"
 
-  def goalList(result: Goal.List): String =
+  def goalList(result: Goal.List): com.histmersion.api.automation.GoalsMarkdown.GoalListResult =
     OffsetPage.markdown(result.page, "goal(s)", "_No matching goals._", result.goals)(goalLine)
 
-  def goal(g: Goal): String =
+  def goal(g: Goal): com.histmersion.api.automation.GoalsMarkdown.GoalResult =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, "") match
       case "" => ""

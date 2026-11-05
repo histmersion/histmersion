@@ -10,20 +10,35 @@ import io.circe.syntax.*
   * field as its default. [[read]], [[decode]] and [[write]] are the same rules for a repo that holds the text itself.
   */
 object Jsonb:
-  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: Boolean = false): DbCodec[A] =
+  type CodecDropNulls = CodecDropNulls.T
+  object CodecDropNulls extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OptionalDropNulls = OptionalDropNulls.T
+  object OptionalDropNulls extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadText = ReadText.T
+  object ReadText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeResultPart1 = DecodeResultPart1.T
+  object DecodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeText = DecodeText.T
+  object DecodeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteResult = WriteResult.T
+  object WriteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteDropNulls = WriteDropNulls.T
+  object WriteDropNulls extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: com.histmersion.util.database.Jsonb.CodecDropNulls = false): DbCodec[A] =
     DbCodec[Option[String]].biMap(_.flatMap(read[A]).getOrElse(fallback), a => Some(write(a, dropNulls)))
 
-  def optional[A: {Encoder, Decoder}](dropNulls: Boolean = false): DbCodec[Option[A]] =
+  def optional[A: {Encoder, Decoder}](dropNulls: com.histmersion.util.database.Jsonb.OptionalDropNulls = false): DbCodec[Option[A]] =
     DbCodec[Option[String]].biMap(_.flatMap(read[A]), _.map(write(_, dropNulls)))
 
   /** The stored text as an `A`; `None` when it does not decode. */
-  def read[A: Decoder](text: String): Option[A] = decode[A](text).toOption
+  def read[A: Decoder](text: com.histmersion.util.database.Jsonb.ReadText): Option[A] = decode[A](text).toOption
 
   /** The stored text as an `A`, or why it does not decode. */
-  def decode[A: Decoder](text: String): Either[String, A] =
+  def decode[A: Decoder](text: com.histmersion.util.database.Jsonb.DecodeText): Either[com.histmersion.util.database.Jsonb.DecodeResultPart1, A] =
     io.circe.parser.decode[A](text).left.map(_.getMessage)
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
-  def write[A: Encoder](a: A, dropNulls: Boolean = false): String =
+  def write[A: Encoder](a: A, dropNulls: com.histmersion.util.database.Jsonb.WriteDropNulls = false): com.histmersion.util.database.Jsonb.WriteResult =
     val j = a.asJson
     (if dropNulls then j.dropNullValues else j).noSpaces

@@ -19,6 +19,21 @@ import com.histmersion.api.library.Facet
 object SourceEditor:
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
+  type CannotClearWhat = CannotClearWhat.T
+  object CannotClearWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearResultPart1 = YearResultPart1.T
+  object YearResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearResultPart2 = YearResultPart2.T
+  object YearResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearRaw = YearRaw.T
+  object YearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPatchResultPart1Part2 = ToPatchResultPart1Part2.T
+  object ToPatchResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldOfMessage = FieldOfMessage.T
+  object FieldOfMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCk = ApplyCk.T
+  object ApplyCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Draft(
       title: Draft.Title,
       authors: List[Draft.Authors],
@@ -79,11 +94,11 @@ object SourceEditor:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  private def cannotClear(what: String) =
+  private def cannotClear(what: com.histmersion.web.SourceEditor.CannotClearWhat) =
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
-  def year(raw: String): Either[String, Option[Long]] =
+  def year(raw: com.histmersion.web.SourceEditor.YearRaw): Either[com.histmersion.web.SourceEditor.YearResultPart1, Option[com.histmersion.web.SourceEditor.YearResultPart2]] =
     if raw.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
 
@@ -93,7 +108,7 @@ object SourceEditor:
   def toPatch(
       orig: com.histmersion.api.library.Source.Detail,
       d: Draft
-  ): Either[List[(Field, String)], Option[com.histmersion.api.library.Source.Patch]] =
+  ): Either[List[(Field, com.histmersion.web.SourceEditor.ToPatchResultPart1Part2)], Option[com.histmersion.api.library.Source.Patch]] =
     val errs = List.newBuilder[(Field, String)]
     def text(v: String, was: Option[String], field: Field, what: String): Option[String] =
       val t = v.trim
@@ -154,7 +169,7 @@ object SourceEditor:
   /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
     * message about none of them is shown above the buttons.
     */
-  def fieldOf(message: String): Field =
+  def fieldOf(message: com.histmersion.web.SourceEditor.FieldOfMessage): Field =
     val m = message.toLowerCase
     List(
       "period" -> Field.Period,
@@ -176,7 +191,7 @@ object SourceEditor:
 
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
-  def apply(ck: String): HtmlElement =
+  def apply(ck: com.histmersion.web.SourceEditor.ApplyCk): HtmlElement =
     val orig = Var(Option.empty[com.histmersion.api.library.Source.Detail])
     // the form's own model until it is saved; it shadows nothing in UiState
     val draft = Var(Option.empty[Draft])

@@ -67,7 +67,7 @@ final class StorageFigures(registry: DataContributions):
     named ++ caches ++ rest
 
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */
-  private def basemapDetail(store: Store, budget: MeasureBudget): Option[String] =
+  private def basemapDetail(store: Store, budget: MeasureBudget): Option[com.histmersion.util.data.diagnostics.StorageFigures.BasemapDetailResult] =
     val parts = Basemap.Layer.values.toList.flatMap { l =>
       val file = Store.Key.applyUnsafe(l.file)
       val part = Store.Key.applyUnsafe(s".${l.wire}.part")
@@ -177,3 +177,7 @@ final class StorageFigures(registry: DataContributions):
           .toList
     )
     StorageReports.withHints(report)
+
+object StorageFigures:
+  type BasemapDetailResult = BasemapDetailResult.T
+  object BasemapDetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

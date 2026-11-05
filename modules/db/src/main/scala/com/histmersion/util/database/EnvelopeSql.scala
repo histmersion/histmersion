@@ -7,7 +7,10 @@ import com.histmersion.util.database.{Param, Sql}
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
   */
 object EnvelopeSql:
-  def envelopes(geom: String, b: BBox): Sql =
+  type EnvelopesGeom = EnvelopesGeom.T
+  object EnvelopesGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def envelopes(geom: com.histmersion.util.database.EnvelopeSql.EnvelopesGeom, b: BBox): Sql =
     def env(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
       Sql.of(
         s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)",

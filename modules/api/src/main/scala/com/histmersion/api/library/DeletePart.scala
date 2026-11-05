@@ -28,10 +28,15 @@ enum DeletePart(val wire: String, val label: String):
   case CoverageReasons extends DeletePart("coverage-reasons", "articles' reasons for leaving it out")
 
 object DeletePart:
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given WireEnumValues[DeletePart]:
     def all: Array[DeletePart] = DeletePart.values
-    def wire(e: DeletePart): String = e.wire
-    def fromWire(s: String): Option[DeletePart] = DeletePart.values.find(_.wire == s.trim.toLowerCase)
+    def wire(e: DeletePart): com.histmersion.api.library.DeletePart.WireResult = e.wire
+    def fromWire(s: com.histmersion.api.library.DeletePart.FromWireS): Option[DeletePart] = DeletePart.values.find(_.wire == s.trim.toLowerCase)
   given Encoder[DeletePart] = WireEnum.encoder
   given Decoder[DeletePart] = WireEnum.decoder
   given Schema[DeletePart] = WireEnum.schema

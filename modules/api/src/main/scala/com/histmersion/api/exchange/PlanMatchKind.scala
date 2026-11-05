@@ -20,5 +20,11 @@ final class PlanMatchKind[A](listed: A => Boolean, line: A => String)(using
   def all(m: PlanMatches): List[A] = m.rows.flatMap(decoder.decodeJson(_).toOption)
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
-  def lines(m: PlanMatches, limit: Int): List[String] =
+  def lines(m: PlanMatches, limit: com.histmersion.api.exchange.PlanMatchKind.LinesLimit): List[com.histmersion.api.exchange.PlanMatchKind.LinesResult] =
     m.rows.flatMap(decoder.decodeJson(_).toOption).filter(listed).take(limit).map(line)
+
+object PlanMatchKind:
+  type LinesResult = LinesResult.T
+  object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinesLimit = LinesLimit.T
+  object LinesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

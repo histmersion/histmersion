@@ -14,7 +14,16 @@ type Citekey = Citekey.T
 object Citekey extends RefinedType[String, CitekeyRule]:
 
   /** A citekey from what a person or a client typed (trimmed), or why it is none. */
-  def parse(raw: String): Either[String, Citekey] =
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidResult = ValidResult.T
+  object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidRaw = ValidRaw.T
+  object ValidRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
     val s = Option(raw).map(_.trim).getOrElse("")
     if s.isEmpty then Left("citekey is required")
     else if s.contains("..") then Left(s"invalid citekey '$raw' — it may not contain '..'")
@@ -25,4 +34,4 @@ object Citekey extends RefinedType[String, CitekeyRule]:
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */
-  def valid(raw: String): Boolean = parse(raw).isRight
+  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): com.histmersion.domain.library.Citekey.ValidResult = parse(raw).isRight

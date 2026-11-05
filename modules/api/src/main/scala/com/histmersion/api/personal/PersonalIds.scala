@@ -2,7 +2,12 @@ package com.histmersion.api.personal
 
 object PersonalIds:
 
+  type LimitResult = LimitResult.T
+  object LimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitAsked = LimitAsked.T
+  object LimitAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val MaxLimit = 1000
   val DefaultLimit = 200
 
-  def limit(asked: Option[Int]): Int = asked.filter(_ > 0).fold(DefaultLimit)(math.min(_, MaxLimit))
+  def limit(asked: Option[com.histmersion.api.personal.PersonalIds.LimitAsked]): com.histmersion.api.personal.PersonalIds.LimitResult = asked.filter(_ > 0).fold(DefaultLimit)(math.min(_, MaxLimit))

@@ -33,19 +33,28 @@ final class CliRuntime(
   @volatile var pools: Option[PoolSink] = None
 
   /** `127.x`, `::1`, `localhost`: nobody else can reach the server, so nobody else can spend a plan. */
-  def loopback: Boolean = ClaudeCode.Env.isLoopback(app.server.host)
+  def loopback: com.histmersion.server.agents.CliRuntime.LoopbackResult = ClaudeCode.Env.isLoopback(app.server.host)
 
   /** The agent MCP endpoint as a CLI reaches it (one URL; the run token decides the tools). */
-  def agentMcpUrl: String = trees.settings("").agentMcpUrl
-  def quotaUrl: String = trees.settings("").quotaUrl
+  def agentMcpUrl: com.histmersion.server.agents.CliRuntime.AgentMcpUrlResult = trees.settings("").agentMcpUrl
+  def quotaUrl: com.histmersion.server.agents.CliRuntime.QuotaUrlResult = trees.settings("").quotaUrl
 
   /** A token for one step attempt, alive a little longer than the CLI may run. */
-  def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: Int): Option[RunGrant] =
+  def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: com.histmersion.server.agents.CliRuntime.GrantTimeoutSeconds): Option[RunGrant] =
     agent.map(a => tokens.issue(a, call.scope, (math.max(1, timeoutSeconds).toLong + 60L) * 1000L))
 
 object CliRuntime:
   /** `roster`: the agent tools the engine's toolbox holds and the contributed roles (what a definition may list and
     * take).
     */
+  type LoopbackResult = LoopbackResult.T
+  object LoopbackResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentMcpUrlResult = AgentMcpUrlResult.T
+  object AgentMcpUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotaUrlResult = QuotaUrlResult.T
+  object QuotaUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GrantTimeoutSeconds = GrantTimeoutSeconds.T
+  object GrantTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: com.histmersion.util.storage.Stores, resources: com.histmersion.util.storage.Resources, clock: java.time.Clock, jvmHome: com.histmersion.util.system.JvmHome): CliRuntime =
     new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), roster), paths)

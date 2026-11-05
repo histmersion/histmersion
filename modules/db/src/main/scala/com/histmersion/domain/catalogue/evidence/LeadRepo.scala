@@ -16,7 +16,56 @@ import com.histmersion.util.database.given_DbCodec_List
 private[evidence] object LeadRepo:
 
   /** The sources attesting one event: its own citekey, then the attestations naming it. */
-  def attestingSources(id: String)(using DbCon): List[EventSourceRef] =
+  type AttestingSourcesId = AttestingSourcesId.T
+  object AttestingSourcesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearFindingsId = NearFindingsId.T
+  object NearFindingsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearFindingsKm = NearFindingsKm.T
+  object NearFindingsKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearFindingsYears = NearFindingsYears.T
+  object NearFindingsYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearFindingsLimit = NearFindingsLimit.T
+  object NearFindingsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadRowsKm = LeadRowsKm.T
+  object LeadRowsKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadRowsYears = LeadRowsYears.T
+  object LeadRowsYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadRowsLimit = LeadRowsLimit.T
+  object LeadRowsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeadRowsOffset = LeadRowsOffset.T
+  object LeadRowsOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart1 = ArticleCandidatesResultPart1.T
+  object ArticleCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart2 = ArticleCandidatesResultPart2.T
+  object ArticleCandidatesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart3 = ArticleCandidatesResultPart3.T
+  object ArticleCandidatesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart5 = ArticleCandidatesResultPart5.T
+  object ArticleCandidatesResultPart5 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart6 = ArticleCandidatesResultPart6.T
+  object ArticleCandidatesResultPart6 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart7 = ArticleCandidatesResultPart7.T
+  object ArticleCandidatesResultPart7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart8 = ArticleCandidatesResultPart8.T
+  object ArticleCandidatesResultPart8 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesResultPart9 = ArticleCandidatesResultPart9.T
+  object ArticleCandidatesResultPart9 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesCitekeys = ArticleCandidatesCitekeys.T
+  object ArticleCandidatesCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesPeriodPart1 = ArticleCandidatesPeriodPart1.T
+  object ArticleCandidatesPeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesPeriodPart2 = ArticleCandidatesPeriodPart2.T
+  object ArticleCandidatesPeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesKm = ArticleCandidatesKm.T
+  object ArticleCandidatesKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesMinVei = ArticleCandidatesMinVei.T
+  object ArticleCandidatesMinVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesMinMagnitude = ArticleCandidatesMinMagnitude.T
+  object ArticleCandidatesMinMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCandidatesLimit = ArticleCandidatesLimit.T
+  object ArticleCandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def attestingSources(id: com.histmersion.domain.catalogue.evidence.LeadRepo.AttestingSourcesId)(using DbCon): List[EventSourceRef] =
     val own = sql"""SELECT s.citekey, s.title, s.year FROM events e JOIN sources s ON s.citekey = e.citekey
                       WHERE e.id = $id"""
       .query[(String, Option[String], Option[Int])]
@@ -35,7 +84,7 @@ private[evidence] object LeadRepo:
   /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
     * space first: their distance and the years between (0 = overlapping).
     */
-  def nearFindings(id: String, km: Double, years: Long, limit: Int)(using DbCon): List[EventFindingRef] =
+  def nearFindings(id: com.histmersion.domain.catalogue.evidence.LeadRepo.NearFindingsId, km: com.histmersion.domain.catalogue.evidence.LeadRepo.NearFindingsKm, years: com.histmersion.domain.catalogue.evidence.LeadRepo.NearFindingsYears, limit: com.histmersion.domain.catalogue.evidence.LeadRepo.NearFindingsLimit)(using DbCon): List[EventFindingRef] =
     sql"""WITH ev AS (
               SELECT ${SqlLiteral(EventSql.AnchorSql)} AS pt, e.outer_span AS span
               FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE e.id = $id)
@@ -66,7 +115,7 @@ private[evidence] object LeadRepo:
   /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
     */
-  def leadRows(where: Sql, km: Double, years: Long, limit: Int, offset: Int)(using DbCon): (com.histmersion.RowCount, List[LeadRow]) =
+  def leadRows(where: Sql, km: com.histmersion.domain.catalogue.evidence.LeadRepo.LeadRowsKm, years: com.histmersion.domain.catalogue.evidence.LeadRepo.LeadRowsYears, limit: com.histmersion.domain.catalogue.evidence.LeadRepo.LeadRowsLimit, offset: com.histmersion.domain.catalogue.evidence.LeadRepo.LeadRowsOffset)(using DbCon): (com.histmersion.RowCount, List[LeadRow]) =
     val total = (Sql.raw(
       "SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE "
     ) ++ where).frag.query[Int].run().head
@@ -101,13 +150,13 @@ private[evidence] object LeadRepo:
     * findings are near each.
     */
   def articleCandidates(
-      citekeys: List[String],
-      period: Option[(Long, Long)],
-      km: Double,
-      minVei: Int,
-      minMagnitude: Double,
-      limit: Int
-  )(using DbCon): List[(String, String, String, TimeSpan, List[String], Option[Int], Option[Double], Int, String)] =
+      citekeys: List[com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesCitekeys],
+      period: Option[(com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesPeriodPart1, com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesPeriodPart2)],
+      km: com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesKm,
+      minVei: com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesMinVei,
+      minMagnitude: com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesMinMagnitude,
+      limit: com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesLimit
+  )(using DbCon): List[(com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart1, com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart2, com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart3, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart5], Option[com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart6], Option[com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart7], com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart8, com.histmersion.domain.catalogue.evidence.LeadRepo.ArticleCandidatesResultPart9)] =
     if citekeys.isEmpty then Nil
     else
       val (p0, p1) = period.getOrElse((Long.MinValue / 4, Long.MaxValue / 4))

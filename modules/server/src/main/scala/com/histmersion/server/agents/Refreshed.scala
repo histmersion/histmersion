@@ -7,9 +7,12 @@ import scala.jdk.CollectionConverters.*
 
 /** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
 final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
-  def text: String = s"$mode: $detail"
+  def text: com.histmersion.server.agents.Refreshed.TextResult = s"$mode: $detail"
 
 object Refreshed:
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Mode = Mode.T
   object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ok = Ok.T

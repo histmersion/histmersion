@@ -26,6 +26,9 @@ object Licence extends RefinedType[String, Pure]:
   final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = false)
 
   object Read:
+    type UnknownStatement = UnknownStatement.T
+    object UnknownStatement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Family = Family.T
@@ -39,4 +42,4 @@ object Licence extends RefinedType[String, Pure]:
     val Unknown = "unknown"
 
     /** A statement nothing reads. */
-    def unknown(statement: String): Read = Read(statement, Unknown)
+    def unknown(statement: com.histmersion.plugin.Licence.Read.UnknownStatement): Read = Read(statement, Unknown)

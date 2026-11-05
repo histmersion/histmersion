@@ -29,11 +29,11 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   def instance: InstanceInfo = bundles.instance
 
   /** Name this instance; a blank label clears it. */
-  def setInstance(label: Option[String]): Either[Api.Error, InstanceInfo] =
+  def setInstance(label: Option[com.histmersion.util.data.exchange.BundleControllers.SetInstanceLabel]): Either[Api.Error, InstanceInfo] =
     maintenance.guard("instance")(Right(bundles.setLabel(label)))
 
   /** `GET /api/bundle?since=` — the bundle file and its download name. */
-  def exportBundle(since: Option[String]): Either[Api.Error, (HandedFile, String)] =
+  def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleControllers.ExportBundleSince]): Either[Api.Error, (HandedFile, com.histmersion.util.data.exchange.BundleControllers.ExportBundleResultPart2Part2)] =
     BundleControllers.since(since).flatMap(bundles.exportBundle).map((f, m) => f -> BundleControllers.disposition(m))
 
   /** `POST /api/bundle/verify`. */
@@ -42,7 +42,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. Planned with no resolutions:
     * any open issue refuses it (decide them, then `POST /api/merge/import`).
     */
-  def importBundle(dryRun: Boolean, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
+  def importBundle(dryRun: com.histmersion.util.data.exchange.BundleControllers.ImportBundleDryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard("bundle/import")(readable(upload).flatMap(bundles.importBundle(_, dryRun)))
 
   /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported by name. The
@@ -70,7 +70,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       BundleControllers.sha256(req.bundle).flatMap(bundles.applyKept(_, req.planHash, req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
-  def applyStatus(job: String): Either[Api.Error, MergeApplyJob] =
+  def applyStatus(job: com.histmersion.util.data.exchange.BundleControllers.ApplyStatusJob): Either[Api.Error, MergeApplyJob] =
     bundles
       .applyStatus(job)
       .toRight(
@@ -82,23 +82,23 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       )
 
   /** `GET /api/merge/sessions/{bundle}`. */
-  def session(bundle: String): Either[Api.Error, MergeSession] = BundleControllers.sha256(bundle).map(bundles.session)
+  def session(bundle: com.histmersion.util.data.exchange.BundleControllers.SessionBundle): Either[Api.Error, MergeSession] = BundleControllers.sha256(bundle).map(bundles.session)
 
   /** `PUT /api/merge/sessions/{bundle}`. */
-  def putSession(bundle: String, r: MergeResolutions): Either[Api.Error, MergeSession] =
+  def putSession(bundle: com.histmersion.util.data.exchange.BundleControllers.PutSessionBundle, r: MergeResolutions): Either[Api.Error, MergeSession] =
     maintenance.guard("merge/session"):
       BundleControllers.sha256(bundle).map(bundles.putSession(_, r))
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
-  def parseResolutions(text: String): Either[Api.Error, MergeResolutions] =
+  def parseResolutions(text: com.histmersion.util.data.exchange.BundleControllers.ParseResolutionsText): Either[Api.Error, MergeResolutions] =
     MergeResolutionsFile.parse(text).left.map(es => Api.Error(es.mkString("; "), Some(Write.CodeInvalid)))
 
-  def merges(limit: Option[Int]): List[MergeInfo] =
+  def merges(limit: Option[com.histmersion.util.data.exchange.BundleControllers.MergesLimit]): List[MergeInfo] =
     bundles.merges(limit.filter(_ > 0).getOrElse(BundleControllers.ListLimit))
 
-  def mergeDetail(id: String): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
+  def mergeDetail(id: com.histmersion.util.data.exchange.BundleControllers.MergeDetailId): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
 
-  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[Api.Error, MergeLedger] =
+  def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerMerge], limit: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerLimit]): Either[Api.Error, MergeLedger] =
     bundles.mergeLedger(uid, merge, limit.filter(_ > 0).getOrElse(BundleControllers.LedgerLimit))
 
   private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
@@ -108,17 +108,54 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
 object BundleControllers:
   /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
+  type SetInstanceLabel = SetInstanceLabel.T
+  object SetInstanceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExportBundleResultPart2Part2 = ExportBundleResultPart2Part2.T
+  object ExportBundleResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExportBundleSince = ExportBundleSince.T
+  object ExportBundleSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportBundleDryRun = ImportBundleDryRun.T
+  object ImportBundleDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyStatusJob = ApplyStatusJob.T
+  object ApplyStatusJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionBundle = SessionBundle.T
+  object SessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutSessionBundle = PutSessionBundle.T
+  object PutSessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResolutionsText = ParseResolutionsText.T
+  object ParseResolutionsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergesLimit = MergesLimit.T
+  object MergesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeDetailId = MergeDetailId.T
+  object MergeDetailId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerUid = MergeLedgerUid.T
+  object MergeLedgerUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerMerge = MergeLedgerMerge.T
+  object MergeLedgerMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerLimit = MergeLedgerLimit.T
+  object MergeLedgerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256ResultPart2 = Sha256ResultPart2.T
+  object Sha256ResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256Raw = Sha256Raw.T
+  object Sha256Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SinceResultPart2 = SinceResultPart2.T
+  object SinceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SinceRaw = SinceRaw.T
+  object SinceRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispositionResult = DispositionResult.T
+  object DispositionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ListLimit = 50
   val LedgerLimit = 200
 
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
-  def sha256(raw: String): Either[Api.Error, String] =
+  def sha256(raw: com.histmersion.util.data.exchange.BundleControllers.Sha256Raw): Either[Api.Error, com.histmersion.util.data.exchange.BundleControllers.Sha256ResultPart2] =
     val s = raw.trim.toLowerCase(java.util.Locale.ROOT)
     if s.length == 64 && s.forall(c => c.isDigit || (c >= 'a' && c <= 'f')) then Right(s)
     else Left(Api.Error(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
-  def since(raw: Option[String]): Either[Api.Error, Option[String]] =
+  def since(raw: Option[com.histmersion.util.data.exchange.BundleControllers.SinceRaw]): Either[Api.Error, Option[com.histmersion.util.data.exchange.BundleControllers.SinceResultPart2]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -134,7 +171,7 @@ object BundleControllers:
           )
 
   /** `attachment; filename="histmersion-<label or id>-<asOf>.hmx"`. Pure. */
-  def disposition(m: Bundle.Manifest): String =
+  def disposition(m: Bundle.Manifest): com.histmersion.util.data.exchange.BundleControllers.DispositionResult =
     val who = m.instance.label.map(_.trim).filter(_.nonEmpty).getOrElse(m.instance.id.toString.take(8))
     val stamp = m.asOf.map(_.filter(_.isDigit).take(14)).filter(_.nonEmpty).getOrElse("empty")
     val name = s"histmersion-$who-$stamp${Bundle.Extension}".map(c =>

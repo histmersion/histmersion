@@ -10,9 +10,14 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class MediaPluginCollectionsConfig(licences: MediaPluginCollectionsConfig.Licences, perCollection: Map[MediaPluginCollectionsConfig.PerCollectionKey, MediaPluginCollectionsConfig.PerCollectionValue])
     derives ConfigReader:
   /** The allowlist as written for `collection` (what a report quotes). */
-  def licencesFor(collection: String): String = perCollection.getOrElse(collection, licences)
+  def licencesFor(collection: com.histmersion.config.MediaPluginCollectionsConfig.LicencesForCollection): com.histmersion.config.MediaPluginCollectionsConfig.LicencesForResult = perCollection.getOrElse(collection, licences)
 
 object MediaPluginCollectionsConfig:
+  type LicencesForResult = LicencesForResult.T
+  object LicencesForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LicencesForCollection = LicencesForCollection.T
+  object LicencesForCollection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Licences = Licences.T
   object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PerCollectionKey = PerCollectionKey.T

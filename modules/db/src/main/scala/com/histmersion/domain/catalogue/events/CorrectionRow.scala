@@ -19,7 +19,7 @@ final private[events] case class CorrectionRow(
     createdAt: CorrectionRow.CreatedAt,
     checkedAt: Option[CorrectionRow.CheckedAt]
 ) derives DbCodec:
-  def toDto(label: Option[String] = None): Correction =
+  def toDto(label: Option[com.histmersion.domain.catalogue.events.CorrectionRow.ToDtoLabel] = None): Correction =
     Correction(
       id,
       targetKind,
@@ -34,9 +34,14 @@ final private[events] case class CorrectionRow(
       createdAt,
       checkedAt
     )
-  def json(s: String): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
+  def json(s: com.histmersion.domain.catalogue.events.CorrectionRow.JsonS): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
 
 object CorrectionRow:
+  type ToDtoLabel = ToDtoLabel.T
+  object ToDtoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonS = JsonS.T
+  object JsonS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetKind = TargetKind.T

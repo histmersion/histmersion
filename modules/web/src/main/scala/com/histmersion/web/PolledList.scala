@@ -32,18 +32,18 @@ final class PolledList[A](
 )(using ExecutionContext):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
-  val loaded: Var[Boolean] = Var(false)
-  val older: Var[Boolean] = Var(false)
-  val failure: Var[Option[String]] = Var(None)
+  val loaded: Var[com.histmersion.web.PolledList.Loaded] = Var(false)
+  val older: Var[com.histmersion.web.PolledList.Older] = Var(false)
+  val failure: Var[Option[com.histmersion.web.PolledList.Failure]] = Var(None)
 
   /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
-  private val restarting: Var[Boolean] = Var(false)
-  def loading: Signal[Boolean] = restarting.signal
+  private val restarting: Var[com.histmersion.web.PolledList.Restarting] = Var(false)
+  def loading: Signal[com.histmersion.web.PolledList.LoadingResult] = restarting.signal
   private val latest = Latest()
   // `var`s: the one pending poll, its delay, and whether the window is there to be refreshed
-  private var timer: Int = 0
-  private var delay: Option[Int] = None
-  private var mounted: Boolean = false
+  private var timer: com.histmersion.web.PolledList.Timer = 0
+  private var delay: Option[com.histmersion.web.PolledList.Delay] = None
+  private var mounted: com.histmersion.web.PolledList.Mounted = false
 
   /** The window opened: load the newest page (and poll while anything is live). */
   def open(): Unit = { mounted = true; loaded.set(false); restart() }
@@ -58,9 +58,9 @@ final class PolledList[A](
   def restart(): Unit = load(reset = true, changed = true)
 
   /** A poll — or an outside change (a decision, a job started here): the rows shown, current again. */
-  def refresh(changed: Boolean = false): Unit = load(reset = false, changed)
+  def refresh(changed: com.histmersion.web.PolledList.RefreshChanged = false): Unit = load(reset = false, changed)
 
-  private def load(reset: Boolean, changed: Boolean): Unit =
+  private def load(reset: com.histmersion.web.PolledList.LoadReset, changed: com.histmersion.web.PolledList.LoadChanged): Unit =
     if mounted then
       cancel(timer)
       val cur = listing.now()
@@ -75,9 +75,9 @@ final class PolledList[A](
   private[web] def answered(
       r: Try[(List[A], Paging.Page)],
       cur: ListPaging.Listing[A],
-      upTo: Option[String],
-      reset: Boolean,
-      changed: Boolean
+      upTo: Option[com.histmersion.web.PolledList.AnsweredUpTo],
+      reset: com.histmersion.web.PolledList.AnsweredReset,
+      changed: com.histmersion.web.PolledList.AnsweredChanged
   ): Unit =
     restarting.set(false)
     r match
@@ -115,7 +115,7 @@ final class PolledList[A](
         }
     }
 
-  private def schedule(next: Option[Int]): Unit =
+  private def schedule(next: Option[com.histmersion.web.PolledList.ScheduleNext]): Unit =
     delay = next
     next.foreach(ms => timer = later(ms, () => refresh()))
 
@@ -126,7 +126,7 @@ final class PolledList[A](
   def olderButton: HtmlElement = ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
-  def errorLine(what: String): HtmlElement =
+  def errorLine(what: com.histmersion.web.PolledList.ErrorLineWhat): HtmlElement =
     div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(s"$what: $m"))))
 
 object PolledList:
@@ -135,12 +135,53 @@ object PolledList:
     * `mounted` guard, the stale-answer guard and the error line with the list windows; it has no pages, so it never
     * shows older rows. `after` gets the item before and after each poll (not the first load).
     */
+  type Loaded = Loaded.T
+  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Older = Older.T
+  object Older extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failure = Failure.T
+  object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Restarting = Restarting.T
+  object Restarting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadingResult = LoadingResult.T
+  object LoadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Delay = Delay.T
+  object Delay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mounted = Mounted.T
+  object Mounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshChanged = RefreshChanged.T
+  object RefreshChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadReset = LoadReset.T
+  object LoadReset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadChanged = LoadChanged.T
+  object LoadChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnsweredUpTo = AnsweredUpTo.T
+  object AnsweredUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnsweredReset = AnsweredReset.T
+  object AnsweredReset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnsweredChanged = AnsweredChanged.T
+  object AnsweredChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleNext = ScheduleNext.T
+  object ScheduleNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ErrorLineWhat = ErrorLineWhat.T
+  object ErrorLineWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SingleLiveResult = SingleLiveResult.T
+  object SingleLiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SingleLaterArg1 = SingleLaterArg1.T
+  object SingleLaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SingleLaterResult = SingleLaterResult.T
+  object SingleLaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SingleCancelArg1 = SingleCancelArg1.T
+  object SingleCancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def single[A](
       fetch: () => Future[A],
-      live: A => Boolean,
+      live: A => com.histmersion.web.PolledList.SingleLiveResult,
       after: (Option[A], A) => Unit = (_: Option[A], _: A) => (),
-      later: (Int, () => Unit) => Int = (ms, f) => dom.window.setTimeout(() => f(), ms),
-      cancel: Int => Unit = id => dom.window.clearTimeout(id)
+      later: (com.histmersion.web.PolledList.SingleLaterArg1, () => Unit) => com.histmersion.web.PolledList.SingleLaterResult = (ms, f) => dom.window.setTimeout(() => f(), ms),
+      cancel: com.histmersion.web.PolledList.SingleCancelArg1 => Unit = id => dom.window.clearTimeout(id)
   )(using ExecutionContext): PolledList[A] =
     PolledList[A](
       fetch = (_, _) => fetch().map(a => (List(a), Paging.Page.empty)),

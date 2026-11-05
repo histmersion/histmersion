@@ -12,9 +12,14 @@ final class Secret private (val ref: com.histmersion.plugin.Secret.Ref):
   override def hashCode: Int = ref.hashCode
 
 object Secret:
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(ref: com.histmersion.plugin.Secret.Ref): Secret = new Secret(ref)
 
-  def parse(text: String): Either[String, Secret] = com.histmersion.plugin.Secret.Ref.parse(text).map(Secret(_))
+  def parse(text: com.histmersion.plugin.Secret.ParseText): Either[com.histmersion.plugin.Secret.ParseResultPart1, Secret] = com.histmersion.plugin.Secret.Ref.parse(text).map(Secret(_))
 
   /** The HOCON reader: a string holding a reference. It parses the reference only — nothing is resolved while the
     * config is read.
@@ -39,12 +44,19 @@ object Secret:
     case Vault(vault: String, ref: String)
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
-    def shown: String = this match
+    def shown: com.histmersion.plugin.Secret.Ref.ShownResult = this match
       case Value(_)    => s"${Ref.ValueScheme}:${Ref.Mask}"
       case Env(n)      => s"${Ref.EnvScheme}:$n"
       case Vault(v, r) => s"$v:$r"
 
   object Ref:
+    type ShownResult = ShownResult.T
+    object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseText = ParseText.T
+    object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val ValueScheme = "value"
     val EnvScheme = "env"
 
@@ -57,7 +69,7 @@ object Secret:
     val Forms = "value:<literal>, env:<NAME> or <vault>:<ref>"
 
     /** Pure: a reference from its text. Never echoes the text back in an error (it may be a value). */
-    def parse(text: String): Either[String, Ref] =
+    def parse(text: com.histmersion.plugin.Secret.Ref.ParseText): Either[com.histmersion.plugin.Secret.Ref.ParseResultPart1, Ref] =
       val t = Option(text).getOrElse("").trim
       t.indexOf(':') match
         case i if i <= 0 => Left(s"a secret is a reference ($Forms), not a bare value")
@@ -79,8 +91,8 @@ object Secret:
     * the tool is missing) and NEVER contains the value.
     */
   trait Vault:
-    def name: String
-    def resolve(ref: String): Either[String, String]
+    def name: com.histmersion.plugin.Secret.Vault.NameResult
+    def resolve(ref: com.histmersion.plugin.Secret.Vault.ResolveRef): Either[com.histmersion.plugin.Secret.Vault.ResolveResultPart1, com.histmersion.plugin.Secret.Vault.ResolveResultPart2]
 
     /** Several references at once: the host asks for every reference of this vault that the plugins of one config
       * generation (a server start, a `config reload`) hold, in ONE call, before it registers them. The answer has an
@@ -89,5 +101,23 @@ object Secret:
       * database to unlock, a hardware key to touch — overrides it to pay once. The values are kept by the host for that
       * generation only.
       */
-    def resolveAll(refs: List[String]): Map[String, Either[String, String]] =
+    def resolveAll(refs: List[com.histmersion.plugin.Secret.Vault.ResolveAllRefs]): Map[com.histmersion.plugin.Secret.Vault.ResolveAllResultPart1, Either[com.histmersion.plugin.Secret.Vault.ResolveAllResultPart2Part1, com.histmersion.plugin.Secret.Vault.ResolveAllResultPart2Part2]] =
       refs.distinct.map(r => r -> resolve(r)).toMap
+
+  object Vault:
+    type NameResult = NameResult.T
+    object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveResultPart1 = ResolveResultPart1.T
+    object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveResultPart2 = ResolveResultPart2.T
+    object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveRef = ResolveRef.T
+    object ResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveAllResultPart1 = ResolveAllResultPart1.T
+    object ResolveAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveAllResultPart2Part1 = ResolveAllResultPart2Part1.T
+    object ResolveAllResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveAllResultPart2Part2 = ResolveAllResultPart2Part2.T
+    object ResolveAllResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveAllRefs = ResolveAllRefs.T
+    object ResolveAllRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

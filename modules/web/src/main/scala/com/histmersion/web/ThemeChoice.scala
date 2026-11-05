@@ -15,7 +15,12 @@ enum ThemeChoice(val wire: String, val label: String, val icon: Icon):
 
 object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */
-  def fromWire(s: String): ThemeChoice = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(System)
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TooltipResult = TooltipResult.T
+  object TooltipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromWire(s: com.histmersion.web.ThemeChoice.FromWireS): ThemeChoice = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(System)
 
   /** The button's next choice: system → light → dark → system. */
   def next(c: ThemeChoice): ThemeChoice = c match
@@ -24,7 +29,7 @@ object ThemeChoice:
     case Dark   => System
 
   /** What a press does, read out and shown on hover: the current choice and the one a press picks. */
-  def tooltip(c: ThemeChoice): String =
+  def tooltip(c: ThemeChoice): com.histmersion.web.ThemeChoice.TooltipResult =
     s"${c.label}. Click for ${next(c) match
         case System => "the system's setting"
         case Light  => "light"

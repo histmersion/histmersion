@@ -10,11 +10,20 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
+  type StoredRepositoriesResultPart1 = StoredRepositoriesResultPart1.T
+  object StoredRepositoriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteInputsPart1 = WriteInputsPart1.T
+  object WriteInputsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteInputsPart2 = WriteInputsPart2.T
+  object WriteInputsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256Result = Sha256Result.T
+  object Sha256Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Classpath = "classpath"
   val Inputs = "inputs"
   val Repositories = "repositories"
 
-  def storedRepositories(lib: Path): Either[String, List[RepositoryUrl]] =
+  def storedRepositories(lib: Path): Either[com.histmersion.pluginresolver.LibDirectory.StoredRepositoriesResultPart1, List[RepositoryUrl]] =
     val f = lib.resolve(Repositories)
     if !Files.isRegularFile(f) then Right(Nil)
     else
@@ -27,7 +36,7 @@ object LibDirectory:
   def write(
       lib: Path,
       deps: List[Dependency],
-      inputs: List[(String, String)],
+      inputs: List[(com.histmersion.pluginresolver.LibDirectory.WriteInputsPart1, com.histmersion.pluginresolver.LibDirectory.WriteInputsPart2)],
       repositories: List[RepositoryUrl]
   ): Unit =
     Files.createDirectories(lib)
@@ -50,7 +59,7 @@ object LibDirectory:
     try s.iterator().asScala.filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".jar")).toList
     finally s.close()
 
-  def sha256(p: Path): String =
+  def sha256(p: Path): com.histmersion.pluginresolver.LibDirectory.Sha256Result =
     val md = MessageDigest.getInstance("SHA-256")
     val in = Files.newInputStream(p)
     try

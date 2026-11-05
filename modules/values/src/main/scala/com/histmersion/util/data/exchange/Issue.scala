@@ -54,7 +54,14 @@ object Issue:
     case GoalPlanDiffers
 
   object Kind:
-    def wireOf(k: Kind): String = k match
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def wireOf(k: Kind): com.histmersion.util.data.exchange.Issue.Kind.WireOfResult = k match
       case SameWork                => "same-work"
       case CitekeyCollision        => "citekey-collision"
       case DoiDiffers              => "doi-differs"
@@ -79,8 +86,8 @@ object Issue:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = wireOf(e)
-      def fromWire(s: String): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
+      def wire(e: Kind): com.histmersion.util.data.exchange.Issue.Kind.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.util.data.exchange.Issue.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
 
   /** How much an issue holds the merge up. */
   enum Severity:
@@ -94,10 +101,15 @@ object Issue:
     case Info
 
   object Severity:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): String = Ascii.lower(e.toString)
-      def fromWire(s: String): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase(s.trim))
+      def wire(e: Severity): com.histmersion.util.data.exchange.Issue.Severity.WireResult = Ascii.lower(e.toString)
+      def fromWire(s: com.histmersion.util.data.exchange.Issue.Severity.FromWireS): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase(s.trim))
 
   /** Who decided an issue. */
   enum DecidedBy:
@@ -116,7 +128,12 @@ object Issue:
     case Remembered
 
   object DecidedBy:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): String = Ascii.lower(e.toString)
-      def fromWire(s: String): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
+      def wire(e: DecidedBy): com.histmersion.util.data.exchange.Issue.DecidedBy.WireResult = Ascii.lower(e.toString)
+      def fromWire(s: com.histmersion.util.data.exchange.Issue.DecidedBy.FromWireS): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))

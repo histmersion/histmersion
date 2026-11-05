@@ -14,6 +14,15 @@ object Bundle:
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
     */
+  type BlobPathResult = BlobPathResult.T
+  object BlobPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobPathSha256 = BlobPathSha256.T
+  object BlobPathSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobShaResult = BlobShaResult.T
+  object BlobShaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobShaPath = BlobShaPath.T
+  object BlobShaPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Kind:
     case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
 
@@ -22,16 +31,31 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: String = Kind.wireOf(this)
+    def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = Kind.wireOf(this)
 
     /** The NDJSON file holding this kind's lines. */
-    def file: String = s"entities/${Kind.fileStem(this)}.ndjson"
+    def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = s"entities/${Kind.fileStem(this)}.ndjson"
 
     /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
-    def issueLetter: String = Kind.letterOf(this)
+    def issueLetter: com.histmersion.api.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
 
   object Kind:
-    def wireOf(k: Kind): String = k match
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FileResult = FileResult.T
+    object FileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IssueLetterResult = IssueLetterResult.T
+    object IssueLetterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FileStemResult = FileStemResult.T
+    object FileStemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LetterOfResult = LetterOfResult.T
+    object LetterOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.WireOfResult = k match
       case Source         => "source"
       case Finding        => "finding"
       case Article        => "article"
@@ -45,7 +69,7 @@ object Bundle:
       case Place          => "place"
       case Period         => "period"
 
-    private def fileStem(k: Kind): String = k match
+    private def fileStem(k: Kind): com.histmersion.api.exchange.Bundle.Kind.FileStemResult = k match
       case Source         => "sources"
       case Finding        => "findings"
       case Article        => "articles"
@@ -59,7 +83,7 @@ object Bundle:
       case Place          => "places"
       case Period         => "periods"
 
-    private def letterOf(k: Kind): String = k match
+    private def letterOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.LetterOfResult = k match
       case Source         => "S"
       case Finding        => "F"
       case Article        => "A"
@@ -73,20 +97,20 @@ object Bundle:
       case Place          => "P"
       case Period         => "N"
 
-    def fromWire(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = wireOf(e)
-      def fromWire(s: String): Option[Kind] = Kind.fromWire(s)
+      def wire(e: Kind): com.histmersion.api.exchange.Bundle.Kind.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = Kind.fromWire(s)
   val Format = "histmersion-bundle"
   val FormatVersion = 1
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
-  def blobPath(sha256: String): String = s"blobs/sha256/${sha256.take(2)}/$sha256"
+  def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = s"blobs/sha256/${sha256.take(2)}/$sha256"
 
-  def blobSha(path: String): Option[String] =
+  def blobSha(path: com.histmersion.api.exchange.Bundle.BlobShaPath): Option[com.histmersion.api.exchange.Bundle.BlobShaResult] =
     val prefix = "blobs/sha256/"
     Option
       .when(path.startsWith(prefix)) {
@@ -589,11 +613,24 @@ object Bundle:
     object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object EventSets:
-    def candidateStatus(here: String, there: String): String =
+    type CandidateStatusResult = CandidateStatusResult.T
+    object CandidateStatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CandidateStatusHere = CandidateStatusHere.T
+    object CandidateStatusHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CandidateStatusThere = CandidateStatusThere.T
+    object CandidateStatusThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewerResult = NewerResult.T
+    object NewerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewerHere = NewerHere.T
+    object NewerHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewerThere = NewerThere.T
+    object NewerThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult =
       if here == "proposed" then there else here
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
-    def newer(here: Option[String], there: Option[String]): Boolean = (here, there) match
+    def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match
       case (None, Some(_))    => true
       case (Some(h), Some(t)) => t > h
       case _                  => false
@@ -610,6 +647,9 @@ object Bundle:
 
 
   object Files:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Edges = "entities/edges.ndjson"
     val UnresolvedEdges = "entities/unresolved-edges.ndjson"
     val Assessments = "entities/assessments.ndjson"
@@ -629,7 +669,7 @@ object Bundle:
     val PlaceSiteTypes = "entities/site-types.ndjson"
     val Tombstones = "entities/tombstones.ndjson"
 
-    val all: List[String] =
+    val all: List[com.histmersion.api.exchange.Bundle.Files.All] =
       com.histmersion.api.exchange.Bundle.Kind.values.toList.map(_.file) ++
         List(
           Edges,
@@ -784,9 +824,12 @@ object Bundle:
       planHash: Option[ImportResult.PlanHash] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: Int = counts.map(_.changed).sum
+    def changed: com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult = counts.map(_.changed).sum
 
   object ImportResult:
+    type ChangedResult = ChangedResult.T
+    object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Applied = Applied.T
@@ -822,9 +865,12 @@ object Bundle:
       held: KindCounts.Held = 0
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: Int = inserted + updated + deleted
+    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = inserted + updated + deleted
 
   object KindCounts:
+    type ChangedResult = ChangedResult.T
+    object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Inserted = Inserted.T
     object Inserted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Updated = Updated.T

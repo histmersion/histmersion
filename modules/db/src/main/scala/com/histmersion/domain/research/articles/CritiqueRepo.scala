@@ -16,7 +16,18 @@ import com.histmersion.api.Api
 private[articles] object CritiqueRepo:
 
   /** The article's reasons, by pair. */
-  def list(slug: String)(using DbCon): List[CritiqueReason] =
+  type ListSlug = ListSlug.T
+  object ListSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBy = CheckBy.T
+  object CheckBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInResultPart2 = ApplyInResultPart2.T
+  object ApplyInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInSlug = ApplyInSlug.T
+  object ApplyInSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInBy = ApplyInBy.T
+  object ApplyInBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def list(slug: com.histmersion.domain.research.articles.CritiqueRepo.ListSlug)(using DbCon): List[CritiqueReason] =
     sql"""SELECT src, dst, reason, set_by FROM article_critique_reasons WHERE slug = $slug ORDER BY src, dst"""
       .query[(String, String, String, String)]
       .run()
@@ -34,7 +45,7 @@ private[articles] object CritiqueRepo:
     * removes the pair's reason in either direction. `by` is the setter of a reason that names none. The first refusal
     * is the answer.
     */
-  private def check(reasons: List[CritiqueReason], by: String)(using DbCon): Either[Api.Error, List[Change]] =
+  private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.CheckBy)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
       case Some(m) => Left(Api.Error(m, Some(Write.CodeInvalid)))
@@ -77,9 +88,9 @@ private[articles] object CritiqueRepo:
     * (the article's own write, if any) runs between the two, so a refused reason leaves nothing written. Returns how
     * many pairs changed.
     */
-  def applyIn(slug: String, reasons: List[CritiqueReason], by: String)(
+  def applyIn(slug: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInSlug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInBy)(
       write: => Unit
-  )(using DbCon): Either[Api.Error, Int] =
+  )(using DbCon): Either[Api.Error, com.histmersion.domain.research.articles.CritiqueRepo.ApplyInResultPart2] =
     check(reasons, by).map { changes =>
       write
       changes.map {

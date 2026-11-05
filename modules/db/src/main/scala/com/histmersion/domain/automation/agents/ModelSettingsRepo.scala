@@ -11,15 +11,42 @@ import com.histmersion.util.database.given
 private[agents] object ModelSettingsRepo:
 
   /** A saved chain: the role and its models (`provider:model`, first choice first). */
-  def chains(using DbCon): Map[String, List[String]] =
+  type ChainsResultPart1 = ChainsResultPart1.T
+  object ChainsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainsResultPart2 = ChainsResultPart2.T
+  object ChainsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetChainRole = SetChainRole.T
+  object SetChainRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetChainModels = SetChainModels.T
+  object SetChainModels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveChainResult = RemoveChainResult.T
+  object RemoveChainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveChainRole = RemoveChainRole.T
+  object RemoveChainRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetAllowanceTarget = SetAllowanceTarget.T
+  object SetAllowanceTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetAllowanceReservePct = SetAllowanceReservePct.T
+  object SetAllowanceReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveAllowanceResult = RemoveAllowanceResult.T
+  object RemoveAllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveAllowanceTarget = RemoveAllowanceTarget.T
+  object RemoveAllowanceTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpendsModels = SpendsModels.T
+  object SpendsModels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpendsPrefixes = SpendsPrefixes.T
+  object SpendsPrefixes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpendsSeconds = SpendsSeconds.T
+  object SpendsSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def chains(using DbCon): Map[com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainsResultPart1, List[com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainsResultPart2]] =
     sql"SELECT role, models FROM agent_role_chains".query[(String, List[String])].run().toMap
 
-  def setChain(role: String, models: List[String])(using DbCon): Unit =
+  def setChain(role: com.histmersion.domain.automation.agents.ModelSettingsRepo.SetChainRole, models: List[com.histmersion.domain.automation.agents.ModelSettingsRepo.SetChainModels])(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_role_chains (role, models) VALUES ($role, $models::text[])
             ON CONFLICT (role) DO UPDATE SET models = EXCLUDED.models, updated_at = now()""".update.run()
 
-  def removeChain(role: String)(using DbCon): Boolean =
+  def removeChain(role: com.histmersion.domain.automation.agents.ModelSettingsRepo.RemoveChainRole)(using DbCon): com.histmersion.domain.automation.agents.ModelSettingsRepo.RemoveChainResult =
     (sql"DELETE FROM agent_role_chains WHERE role = $role".update.run() > 0)
 
   /** A saved allowance: target, limits, reserve %. Limits that no longer decode are a `Left` the caller reports and
@@ -44,21 +71,21 @@ private[agents] object ModelSettingsRepo:
         Saved(t, Jsonb.decode[List[LimitSpec]](json).left.map(e => s"saved limits of $t do not decode: $e"), r)
       }
 
-  def setAllowance(target: String, limits: List[LimitSpec], reservePct: Int)(using DbCon): Unit =
+  def setAllowance(target: com.histmersion.domain.automation.agents.ModelSettingsRepo.SetAllowanceTarget, limits: List[LimitSpec], reservePct: com.histmersion.domain.automation.agents.ModelSettingsRepo.SetAllowanceReservePct)(using DbCon): Unit =
     val json = Jsonb.write(limits)
     val _ =
       sql"""INSERT INTO agent_allowances (target, limits, reserve_pct) VALUES ($target, $json::jsonb, $reservePct)
             ON CONFLICT (target) DO UPDATE SET limits = EXCLUDED.limits, reserve_pct = EXCLUDED.reserve_pct,
               updated_at = now()""".update.run()
 
-  def removeAllowance(target: String)(using DbCon): Boolean =
+  def removeAllowance(target: com.histmersion.domain.automation.agents.ModelSettingsRepo.RemoveAllowanceTarget)(using DbCon): com.histmersion.domain.automation.agents.ModelSettingsRepo.RemoveAllowanceResult =
     (sql"DELETE FROM agent_allowances WHERE target = $target".update.run() > 0)
 
   /** Every LLM attempt of `models` (exact `provider:model` references) or of a provider (`prefix`, e.g. `claude-code:`)
     * that finished in the last `seconds`: when (epoch ms), tokens (input + output), USD. A failed attempt counts — it
     * was paid for.
     */
-  def spends(models: List[String], prefixes: List[String], seconds: Long)(using DbCon): Vector[Spend] =
+  def spends(models: List[com.histmersion.domain.automation.agents.ModelSettingsRepo.SpendsModels], prefixes: List[com.histmersion.domain.automation.agents.ModelSettingsRepo.SpendsPrefixes], seconds: com.histmersion.domain.automation.agents.ModelSettingsRepo.SpendsSeconds)(using DbCon): Vector[Spend] =
     if models.isEmpty && prefixes.isEmpty then Vector.empty
     else
       val likes = prefixes.map(_.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%")

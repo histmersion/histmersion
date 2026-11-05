@@ -11,13 +11,16 @@ import com.augustnagro.magnum.*
   */
 private[figures] object FigureRepo:
 
+  type FillLicencesApply = FillLicencesApply.T
+  object FillLicencesApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val figureCandidates =
     """FROM assets a JOIN sources s ON s.citekey = a.citekey
        WHERE a.provider IS NULL AND (a.license IS NULL OR btrim(a.license) = '')
          AND s.license IS NOT NULL AND btrim(s.license) <> ''"""
 
   /** Count (and with `apply`, write) the figures with no licence whose source records one. */
-  def fillLicences(apply: Boolean)(using DbCon): FigureLicenceFill =
+  def fillLicences(apply: com.histmersion.domain.media.figures.FigureRepo.FillLicencesApply)(using DbCon): FigureLicenceFill =
     val by = Sql
       .raw(s"SELECT a.citekey, count(*)::int $figureCandidates GROUP BY a.citekey ORDER BY 2 DESC, 1")
       .frag

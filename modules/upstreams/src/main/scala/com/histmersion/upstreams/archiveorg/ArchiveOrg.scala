@@ -10,11 +10,11 @@ import com.histmersion.plugin.Plugin
 final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
-  private def identifier(s: String): String =
+  private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult =
     val t = s.trim
     (if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head
 
-  def search(query: String, rows: Int): Either[String, List[ArchiveItem]] =
+  def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchResultPart1, List[ArchiveItem]] =
     http
       .json(
         Url(
@@ -32,11 +32,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       // restriction) comes from /metadata, one call per hit
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
-  def info(id: String): Either[String, ArchiveItem] =
+  def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
     val ident = identifier(id)
     http.json(Url(archive.url, s"/metadata/$ident")).map(AcquireParse.archiveItem(ident, _))
 
-  def download(id: String, file: String): Either[String, FetchedFile] =
+  def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadResultPart1, FetchedFile] =
     val ident = identifier(id)
     val url = Url(
       archive.url,
@@ -48,3 +48,25 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       if b.length < 10240 then Left(s"archive.org returned only ${b.length} bytes for $file")
       else Right(FetchedFile("archive_org", Some(url), b, file.toLowerCase.split("\\.").lastOption.getOrElse("pdf")))
     }
+
+object ArchiveOrg:
+  type IdentifierResult = IdentifierResult.T
+  object IdentifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifierS = IdentifierS.T
+  object IdentifierS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQuery = SearchQuery.T
+  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchRows = SearchRows.T
+  object SearchRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoResultPart1 = InfoResultPart1.T
+  object InfoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoId = InfoId.T
+  object InfoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart1 = DownloadResultPart1.T
+  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadId = DownloadId.T
+  object DownloadId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadFile = DownloadFile.T
+  object DownloadFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

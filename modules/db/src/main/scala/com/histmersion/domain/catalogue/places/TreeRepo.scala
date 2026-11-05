@@ -22,7 +22,24 @@ private[places] object TreeRepo:
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
-  private def periodOf(start: Option[Long], end: Option[Long]): Option[Period] =
+  type PeriodOfStart = PeriodOfStart.T
+  object PeriodOfStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfEnd = PeriodOfEnd.T
+  object PeriodOfEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosureResult = ClosureResult.T
+  object ClosureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosureIds = ClosureIds.T
+  object ClosureIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosureParamsIds = ClosureParamsIds.T
+  object ClosureParamsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NodesQueryIds = NodesQueryIds.T
+  object NodesQueryIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelationsQueryIds = RelationsQueryIds.T
+  object RelationsQueryIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerPlaceIds = GazetteerPlaceIds.T
+  object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def periodOf(start: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfStart], end: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfEnd]): Option[Period] =
     (start, end) match
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case _                  => None
@@ -75,7 +92,7 @@ private[places] object TreeRepo:
     * edges. Deliberately UNFILTERED by `asOf` — `by=time,region` reads the hierarchy at a different year in every time
     * bucket, so the as-of predicate belongs in [[Tree]], applied to the (small) closure, not in this query.
     */
-  private def closure(ids: List[String]): String =
+  private def closure(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds]): com.histmersion.domain.catalogue.places.TreeRepo.ClosureResult =
     s"""WITH RECURSIVE up(id) AS (
           SELECT p.id FROM places p WHERE p.id = ANY(?::text[])
           UNION
@@ -83,14 +100,14 @@ private[places] object TreeRepo:
           WHERE r.kind = '${Place.Relation.PartOf}'
         )"""
 
-  private def closureParams(ids: List[String]) = List(Param.A(ids))
+  private def closureParams(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.ClosureParamsIds]) = List(Param.A(ids))
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as a property, some
     * only as a `Withdrawn (duplicate): …` label — [[RegionNode.rootEligible]] checks the label too, so both spellings
     * are caught wherever they come from.
     */
-  def nodesQuery(ids: List[String]): Sql =
+  def nodesQuery(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.NodesQueryIds]): Sql =
     Sql(
       closure(ids) +
         s" SELECT p.id, p.label, p.kind, ${RangeSql.cols("p.period")}," +
@@ -101,7 +118,7 @@ private[places] object TreeRepo:
     )
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
-  def relationsQuery(ids: List[String]): Sql =
+  def relationsQuery(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.RelationsQueryIds]): Sql =
     Sql(
       closure(ids) +
         s" SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols("r.period")}" +
@@ -113,7 +130,7 @@ private[places] object TreeRepo:
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
     */
-  def gazetteer(placeIds: List[String])(using DbCon): (List[RegionNode], List[Place.Relation]) =
+  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.TreeRepo.GazetteerPlaceIds])(using DbCon): (List[RegionNode], List[Place.Relation]) =
     val ids = placeIds.distinct
     if ids.isEmpty then (Nil, Nil)
     else

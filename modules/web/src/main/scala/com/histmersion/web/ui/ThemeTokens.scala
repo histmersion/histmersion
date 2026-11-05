@@ -15,9 +15,36 @@ object ThemeTokens:
   /** Where a token's value comes from: the page's `:root`. A `var` so the tests, which run in Node with no stylesheet,
     * can supply the values instead.
     */
-  private[web] var lookup: String => Option[String] = fromDocument
+  type LookupArg1 = LookupArg1.T
+  object LookupArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupResult = LookupResult.T
+  object LookupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromDocumentResult = FromDocumentResult.T
+  object FromDocumentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromDocumentName = FromDocumentName.T
+  object FromDocumentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResult = ApplyResult.T
+  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyName = ApplyName.T
+  object ApplyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RgbResultPart1 = RgbResultPart1.T
+  object RgbResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RgbResultPart2 = RgbResultPart2.T
+  object RgbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RgbResultPart3 = RgbResultPart3.T
+  object RgbResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RgbValue = RgbValue.T
+  object RgbValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampResultPart1 = RampResultPart1.T
+  object RampResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampResultPart2 = RampResultPart2.T
+  object RampResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampResultPart3 = RampResultPart3.T
+  object RampResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def fromDocument(name: String): Option[String] =
+  private[web] var lookup: com.histmersion.web.ui.ThemeTokens.LookupArg1 => Option[com.histmersion.web.ui.ThemeTokens.LookupResult] = fromDocument
+
+  private def fromDocument(name: com.histmersion.web.ui.ThemeTokens.FromDocumentName): Option[com.histmersion.web.ui.ThemeTokens.FromDocumentResult] =
     Try(dom.window.getComputedStyle(dom.document.documentElement).getPropertyValue(name).trim).toOption
       .filter(_.nonEmpty)
 
@@ -30,7 +57,7 @@ object ThemeTokens:
     rampCache = None
 
   /** A token's value, `""` when the stylesheet does not define it. */
-  def apply(name: String): String =
+  def apply(name: com.histmersion.web.ui.ThemeTokens.ApplyName): com.histmersion.web.ui.ThemeTokens.ApplyResult =
     cache.getOrElse(
       name, {
         val v = lookup(name).getOrElse("")
@@ -40,7 +67,7 @@ object ThemeTokens:
     )
 
   /** `rgb(r,g,b)` / `#rrggbb` / `#rgb` → components; anything else is `None`. Pure. */
-  def rgb(value: String): Option[(Int, Int, Int)] =
+  def rgb(value: com.histmersion.web.ui.ThemeTokens.RgbValue): Option[(com.histmersion.web.ui.ThemeTokens.RgbResultPart1, com.histmersion.web.ui.ThemeTokens.RgbResultPart2, com.histmersion.web.ui.ThemeTokens.RgbResultPart3)] =
     val v = value.trim
     val hex = if v.startsWith("#") then v.drop(1) else ""
     if hex.length == 6 && hex.forall(Character.digit(_, 16) >= 0) then
@@ -56,7 +83,7 @@ object ThemeTokens:
         case _                                         => None
 
   /** The period ramp's stops, in order. */
-  def ramp: Vector[(Int, Int, Int)] =
+  def ramp: Vector[(com.histmersion.web.ui.ThemeTokens.RampResultPart1, com.histmersion.web.ui.ThemeTokens.RampResultPart2, com.histmersion.web.ui.ThemeTokens.RampResultPart3)] =
     rampCache.getOrElse {
       val stops = (0 until Palette.rampStops).toVector.flatMap(i => rgb(apply(s"--ramp-$i")))
       rampCache = Some(stops)

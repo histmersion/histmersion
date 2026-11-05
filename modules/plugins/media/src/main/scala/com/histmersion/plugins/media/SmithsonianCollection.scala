@@ -18,7 +18,7 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[String])
   )
   private val units = CollectionSettings.items(conf.excludeProviders)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),
@@ -27,3 +27,9 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[String])
       .flatMap(Smithsonian.records(_, units))
       .left
       .map(explain)
+
+object SmithsonianCollection:
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart2Part1 = SearchResultPart2Part1.T
+  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

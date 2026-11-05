@@ -14,17 +14,26 @@ enum ConverterState:
   case Down(reason: String)
 
   /** The `converter` line of [[Health]]. */
-  def render: String = this match
+  def render: com.histmersion.util.ocr.ConverterState.RenderResult = this match
     case Ok           => "ok"
     case Busy(id)     => s"converter busy: job $id"
     case Down(reason) => reason
 
   /** Busy is healthy: the server is doing exactly what it is for. */
-  def healthy: Boolean = this match
+  def healthy: com.histmersion.util.ocr.ConverterState.HealthyResult = this match
     case Down(_) => false
     case _       => true
 
 object ConverterState:
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
-  def of(probe: String, busyJob: Option[String]): ConverterState =
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HealthyResult = HealthyResult.T
+  object HealthyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfProbe = OfProbe.T
+  object OfProbe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfBusyJob = OfBusyJob.T
+  object OfBusyJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(probe: com.histmersion.util.ocr.ConverterState.OfProbe, busyJob: Option[com.histmersion.util.ocr.ConverterState.OfBusyJob]): ConverterState =
     if probe == "ok" then Ok else busyJob.fold(Down(probe))(Busy(_))

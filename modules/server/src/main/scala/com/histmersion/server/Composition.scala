@@ -37,7 +37,24 @@ object Composition:
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
-  def server(cfg: AppConfig, host: String, port: Int)(using Ox): NettySyncServer =
+  type ServerHost = ServerHost.T
+  object ServerHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServerPort = ServerPort.T
+  object ServerPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServerAutoInit = ServerAutoInit.T
+  object ServerAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildHost = BuildHost.T
+  object BuildHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPort = BuildPort.T
+  object BuildPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildAutoInit = BuildAutoInit.T
+  object BuildAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeasesResultPart1 = LeasesResultPart1.T
+  object LeasesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeasesResultPart2 = LeasesResultPart2.T
+  object LeasesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def server(cfg: AppConfig, host: com.histmersion.server.Composition.ServerHost, port: com.histmersion.server.Composition.ServerPort)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, host, port, None)
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document through a fake
@@ -46,10 +63,10 @@ object Composition:
     */
   def server(
       cfg: AppConfig,
-      host: String,
-      port: Int,
+      host: com.histmersion.server.Composition.ServerHost,
+      port: com.histmersion.server.Composition.ServerPort,
       converter: ConverterClient,
-      autoInit: Boolean = false,
+      autoInit: com.histmersion.server.Composition.ServerAutoInit = false,
       onWiring: ServerWiring => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
@@ -103,10 +120,10 @@ object Composition:
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
-      host: String,
-      port: Int,
+      host: com.histmersion.server.Composition.BuildHost,
+      port: com.histmersion.server.Composition.BuildPort,
       converter: Option[ConverterClient],
-      autoInit: Boolean = false,
+      autoInit: com.histmersion.server.Composition.BuildAutoInit = false,
       onWiring: ServerWiring => Unit = _ => (),
       plugins: Generation = ServerPlugins.offline,
       core: Option[CoreBudget] = None,
@@ -202,7 +219,7 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
-  private def leases(sg: ServerGraph, h: ServerWiring): Either[String, Hot[Boolean]] =
+  private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.LeasesResultPart1, Hot[com.histmersion.server.Composition.LeasesResultPart2]] =
     val lease = h.agents.lease
     sg.graph.node[Boolean](
       ServerGraph.Leases,

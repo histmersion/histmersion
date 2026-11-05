@@ -7,7 +7,12 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 object Static:
-  def read(path: String): String =
+  type ReadResult = ReadResult.T
+  object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPath = ReadPath.T
+  object ReadPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def read(path: com.histmersion.server.Static.ReadPath): com.histmersion.server.Static.ReadResult =
     val is = Option(classOf[HttpApi].getClassLoader.getResourceAsStream(path))
       .getOrElse(throw new IllegalStateException(s"missing resource $path"))
     try scala.io.Source.fromInputStream(is, "UTF-8").mkString

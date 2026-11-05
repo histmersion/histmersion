@@ -9,10 +9,15 @@ enum FormatSeverity:
   case Error, Warning
 
 object FormatSeverity:
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given WireEnumValues[FormatSeverity]:
     def all: Array[FormatSeverity] = FormatSeverity.values
-    def wire(e: FormatSeverity): String = e.toString.toLowerCase(java.util.Locale.ROOT)
-    def fromWire(s: String): Option[FormatSeverity] = FormatSeverity.values.find(_.toString.equalsIgnoreCase(s))
+    def wire(e: FormatSeverity): com.histmersion.api.checks.FormatSeverity.WireResult = e.toString.toLowerCase(java.util.Locale.ROOT)
+    def fromWire(s: com.histmersion.api.checks.FormatSeverity.FromWireS): Option[FormatSeverity] = FormatSeverity.values.find(_.toString.equalsIgnoreCase(s))
   given Encoder[FormatSeverity] = WireEnum.encoder
   given Decoder[FormatSeverity] = WireEnum.decoder
   given Schema[FormatSeverity] = WireEnum.schema

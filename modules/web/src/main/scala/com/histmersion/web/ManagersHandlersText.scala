@@ -8,7 +8,10 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /** The settings line a manager window shows (the server's own wording). */
 object ManagersHandlersText:
-  def describe(c: ManagerConfig): String =
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def describe(c: ManagerConfig): com.histmersion.web.ManagersHandlersText.DescribeResult =
     List(
       c.maxRuns.map(n => s"$n at once"),
       c.rounds.map(n => s"$n rounds"),

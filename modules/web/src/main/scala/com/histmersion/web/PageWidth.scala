@@ -12,4 +12,7 @@ enum PageWidth(val wire: String, val label: String):
 
 object PageWidth:
   /** A stored value; anything else is the reading width. Pure. */
-  def fromWire(s: String): PageWidth = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(Reading)
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromWire(s: com.histmersion.web.PageWidth.FromWireS): PageWidth = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(Reading)

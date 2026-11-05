@@ -2,6 +2,9 @@ package com.histmersion.api
 
 object MapStack:
 
+  type PointsAboveAreasResult = PointsAboveAreasResult.T
+  object PointsAboveAreasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Pane(val name: String, val point: Boolean, val canvas: Boolean):
     case Areas extends Pane("areas", point = false, canvas = true)
 
@@ -15,12 +18,16 @@ object MapStack:
 
     case Events extends Pane("events", point = true, canvas = false)
 
-    def cssClass: String = s"hd-pane--$name"
+    def cssClass: com.histmersion.api.MapStack.Pane.CssClassResult = s"hd-pane--$name"
+
+  object Pane:
+    type CssClassResult = CssClassResult.T
+    object CssClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val order: List[Pane] = Pane.values.toList
 
   val domPanes: List[Pane] = order.filterNot(_.canvas)
 
-  def pointsAboveAreas(order: List[Pane]): Boolean =
+  def pointsAboveAreas(order: List[Pane]): com.histmersion.api.MapStack.PointsAboveAreasResult =
     val firstPoint = order.indexWhere(_.point)
     firstPoint < 0 || order.drop(firstPoint).forall(_.point)

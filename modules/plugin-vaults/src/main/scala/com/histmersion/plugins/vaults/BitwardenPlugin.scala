@@ -10,7 +10,7 @@ final class BitwardenPlugin extends Plugin:
   type Config = BitwardenConfig
   val info = Plugin.Info("bitwarden", Vaults.Version, Spi.Version)
 
-  def register(c: BitwardenConfig, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: BitwardenConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.BitwardenPlugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     for
@@ -21,3 +21,7 @@ final class BitwardenPlugin extends Plugin:
         BitwardenVault(info.id, exe, session, c.field, Vaults.timeout(c.timeoutSeconds))
       )
     yield ()
+
+object BitwardenPlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

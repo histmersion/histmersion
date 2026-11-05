@@ -16,19 +16,19 @@ package com.histmersion.plugin
   */
 trait EventCatalogue:
   /** What to call it: "Smithsonian Global Volcanism Program". */
-  def title: String
+  def title: com.histmersion.plugin.EventCatalogue.TitleResult
 
   /** The terms its data comes under, as the provider states them. */
   def licence: Licence
 
   /** How it asks to be cited. */
-  def citation: String
+  def citation: com.histmersion.plugin.EventCatalogue.CitationResult
 
   /** Its home page. */
-  def home: String
+  def home: com.histmersion.plugin.EventCatalogue.HomeResult
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
-  def requestIntervalMs: Int = 1000
+  def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult = 1000
 
   /** The earliest year any of its events can be, when the catalogue covers a period that starts there — as the
     * Smithsonian's list is of HOLOCENE eruptions (`events.gvp.floor-year`). A dating whose uncertainty reaches further
@@ -39,16 +39,16 @@ trait EventCatalogue:
   /** The parts of one import, in order (time windows, classes, datasets) — each a stable key, so a part read and
     * recorded is not asked again by the next import.
     */
-  def parts(query: CatalogueQuery): List[String]
+  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult]
 
   /** The records of one part. `http` is the host's polite client of this import. */
-  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage]
+  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage]
 
   /** Whether every part is read at every import, whatever an earlier import read: for a catalogue whose parts are pages
     * of a list that changes (page 2 of the newest records is other records next week), so a part's key does not stand
     * for the same records next time. `false` (the default): a part read and recorded is not read again.
     */
-  def everyPartEachImport: Boolean = false
+  def everyPartEachImport: com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult = false
 
   /** One stored record read again, without the network, for `histmersion events rederive`: its dating (and what the
     * catalogue derives with it) computed again from the catalogue's own record ([[CatalogueEvent.raw]]) by today's
@@ -57,3 +57,21 @@ trait EventCatalogue:
     * host derives the stored record's dating as at the import.
     */
   def reread(stored: CatalogueEvent): Option[CatalogueEvent] = None
+
+object EventCatalogue:
+  type TitleResult = TitleResult.T
+  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationResult = CitationResult.T
+  object CitationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HomeResult = HomeResult.T
+  object HomeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestIntervalMsResult = RequestIntervalMsResult.T
+  object RequestIntervalMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsResult = PartsResult.T
+  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPart = ReadPart.T
+  object ReadPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EveryPartEachImportResult = EveryPartEachImportResult.T
+  object EveryPartEachImportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

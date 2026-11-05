@@ -12,6 +12,39 @@ import com.histmersion.api.library.{Filter, GeoHit, Hit, SearchResult}
 
 object ResultsList:
 
+  type BusyOn = BusyOn.T
+  object BusyOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailedMsg = FailedMsg.T
+  object FailedMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickTitle = PickTitle.T
+  object PickTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickIconIcon = PickIconIcon.T
+  object PickIconIcon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickIconKind = PickIconKind.T
+  object PickIconKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralResult = PluralResult.T
+  object PluralResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralN = PluralN.T
+  object PluralN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralWord = PluralWord.T
+  object PluralWord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetHtmlResult = SnippetHtmlResult.T
+  object SnippetHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetHtmlText = SnippetHtmlText.T
+  object SnippetHtmlText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLineResult = CountLineResult.T
+  object CountLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSizeResult = PageSizeResult.T
+  object PageSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextLabelResult = NextLabelResult.T
+  object NextLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitRowInPanel = HitRowInPanel.T
+  object HitRowInPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenSourceCk = OpenSourceCk.T
+  object OpenSourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenSourceInPanel = OpenSourceInPanel.T
+  object OpenSourceInPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   case class SourceRenderOpts(
       findings: SourceRenderOpts.Findings = 0,
       total: SourceRenderOpts.Total = 0,
@@ -78,11 +111,11 @@ object ResultsList:
       ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal, () => more())
     )
 
-  def busy(on: Boolean): Unit =
+  def busy(on: com.histmersion.web.ResultsList.BusyOn): Unit =
     isBusy.set(on)
     if on then isError.set(false)
 
-  def failed(msg: String): Unit =
+  def failed(msg: com.histmersion.web.ResultsList.FailedMsg): Unit =
     isError.set(true)
     isBusy.set(false)
     countText.set(if msg.nonEmpty then msg else "failed to load — retrying on the next change")
@@ -110,7 +143,7 @@ object ResultsList:
     */
   def pick(
       items: List[GeoHit],
-      title: String,
+      title: com.histmersion.web.ResultsList.PickTitle,
       onZoom: Option[() => Unit],
       others: List[(DotEntry, dom.Element => Unit)] = Nil
   ): Unit =
@@ -176,7 +209,7 @@ object ResultsList:
     moreLabel.set(None)
 
   /** A kind's icon at the head of a picked row, as a card's title has it. */
-  private def pickIcon(icon: String, kind: String): HtmlElement =
+  private def pickIcon(icon: com.histmersion.web.ResultsList.PickIconIcon, kind: com.histmersion.web.ResultsList.PickIconKind): HtmlElement =
     span(
       cls := "cite-tip-icon pick-icon",
       title := kind,
@@ -200,13 +233,13 @@ object ResultsList:
       }
     )
 
-  private def plural(n: Int, word: String): String = s"$n $word${if n == 1 then "" else "s"}"
+  private def plural(n: com.histmersion.web.ResultsList.PluralN, word: com.histmersion.web.ResultsList.PluralWord): com.histmersion.web.ResultsList.PluralResult = s"$n $word${if n == 1 then "" else "s"}"
 
-  private def snippetHtml(text: String): String =
+  private def snippetHtml(text: com.histmersion.web.ResultsList.SnippetHtmlText): com.histmersion.web.ResultsList.SnippetHtmlResult =
     val cleaned = text.replaceAll("\\s+", " ").trim
     Fmt.esc(cleaned).replaceAll("\\*\\*(.+?)\\*\\*", "<mark>$1</mark>")
 
-  private def countLine(): String =
+  private def countLine(): com.histmersion.web.ResultsList.CountLineResult =
     val findings = pageOpts match
       case Some(o) if o.inView => s"${Plural.count(o.findings, "finding")} in view / ${o.total} total"
       case Some(o)             => Plural.count(o.findings, "finding")
@@ -219,9 +252,9 @@ object ResultsList:
     )
 
   /** The next page's size: the request's own limit (at least 20). */
-  private def pageSize: Int = pageParams.fold(20)(p => math.max(p.limit, 20))
+  private def pageSize: com.histmersion.web.ResultsList.PageSizeResult = pageParams.fold(20)(p => math.max(p.limit, 20))
 
-  private def nextLabel(): Option[String] =
+  private def nextLabel(): Option[com.histmersion.web.ResultsList.NextLabelResult] =
     pageParams.flatMap(_ => ResultsPaging.moreLabel(pageTotal.value - pageHits.length, pageSize))
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
@@ -245,7 +278,7 @@ object ResultsList:
   /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window), what it is, why it matched, and "open in a new tab".
     */
-  private[web] def hitRow(h: Hit, inPanel: Boolean = false): HtmlElement =
+  private[web] def hitRow(h: Hit, inPanel: com.histmersion.web.ResultsList.HitRowInPanel = false): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
@@ -313,7 +346,7 @@ object ResultsList:
       }
     )
 
-  private def openSource(ck: String, inPanel: Boolean): Unit =
+  private def openSource(ck: com.histmersion.web.ResultsList.OpenSourceCk, inPanel: com.histmersion.web.ResultsList.OpenSourceInPanel): Unit =
     if inPanel then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 

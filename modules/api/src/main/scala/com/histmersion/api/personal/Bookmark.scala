@@ -18,10 +18,13 @@ final case class Bookmark(
     updatedAt: Bookmark.UpdatedAt = ""
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def name: String = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
+  def name: com.histmersion.api.personal.Bookmark.NameResult = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
 
 object Bookmark:
 
+
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -42,10 +45,13 @@ object Bookmark:
   type Label = Label.T
 
   object Label extends RefinedType[String, Pure]:
+    type TidyResultPart1 = TidyResultPart1.T
+    object TidyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val MaxChars = 200
 
     /** A name as given, tidied (spaces collapsed): none when empty, refused when too long. */
-    def tidy(raw: Option[Label]): Either[String, Option[Label]] =
+    def tidy(raw: Option[Label]): Either[com.histmersion.api.personal.Bookmark.Label.TidyResultPart1, Option[Label]] =
       raw.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty) match
         case Some(l) if l.length > MaxChars => Left(s"a bookmark's name is at most $MaxChars characters")
         case other                          => Right(other.map(Label(_)))

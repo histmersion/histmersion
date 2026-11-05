@@ -45,13 +45,13 @@ trait Plugin:
     * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
     * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
     */
-  def defaultsResource: String = s"META-INF/histmersion/plugins/${info.id}.conf"
+  def defaultsResource: com.histmersion.plugin.Plugin.DefaultsResourceResult = s"META-INF/histmersion/plugins/${info.id}.conf"
 
   /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
     * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
     * an exception) discards everything this plugin added.
     */
-  def register(config: Config, ctx: com.histmersion.plugin.Plugin.Context): Either[String, Unit]
+  def register(config: Config, ctx: com.histmersion.plugin.Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Unit]
 
 object Plugin:
 
@@ -61,8 +61,18 @@ object Plugin:
     * com.histmersion.plugin.Plugin.Config.given`); lexical-scope givens win over the companion defaults. Without them
     * an env override of a number fails with "Expected NUMBER but got STRING".
     */
+  type DefaultsResourceResult = DefaultsResourceResult.T
+  object DefaultsResourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   object Config:
-    private def lenient[A](name: String, strict: ConfigReader[A], parse: String => Option[A]): ConfigReader[A] =
+    type LenientName = LenientName.T
+    object LenientName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LenientParseArg1 = LenientParseArg1.T
+    object LenientParseArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    private def lenient[A](name: com.histmersion.plugin.Plugin.Config.LenientName, strict: ConfigReader[A], parse: com.histmersion.plugin.Plugin.Config.LenientParseArg1 => Option[A]): ConfigReader[A] =
       new ConfigReader[A]:
         def from(v: org.ekrich.config.ConfigValue) =
           strict
@@ -99,12 +109,12 @@ object Plugin:
     /** The host's environment as it was read at startup (on the main thread: a native image reads it once). For what a
       * plugin needs to run a tool (`PATH`), never for credentials — those are [[Secret]]s in the config.
       */
-    def env(name: String): Option[String]
+    def env(name: com.histmersion.plugin.Plugin.Context.EnvName): Option[com.histmersion.plugin.Plugin.Context.EnvResult]
 
     /** A secret's value. Every [[Secret]] inside the decoded config was resolved before [[Plugin.register]] was called,
       * so for those this is a lookup; another one is resolved now. Never log the value.
       */
-    def secret(s: Secret): Either[String, String]
+    def secret(s: Secret): Either[com.histmersion.plugin.Plugin.Context.SecretResultPart1, com.histmersion.plugin.Plugin.Context.SecretResultPart2]
 
     /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
     def secretVaults: Registry[Secret.Vault]
@@ -136,7 +146,7 @@ object Plugin:
       * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] —
       * the default, so a context written before budgets existed still compiles.
       */
-    def quota(upstream: String): UpstreamQuota = UpstreamQuota.Unlimited
+    def quota(upstream: com.histmersion.plugin.Plugin.Context.QuotaUpstream): UpstreamQuota = UpstreamQuota.Unlimited
 
     /** The host's reading of licence statements ([[LicenceReader]]), for a media collection that must decide on a
       * licence before it states it. A host that lends none reads every statement as unknown — the default, so a context
@@ -156,12 +166,24 @@ object Plugin:
       */
     def sourceCollections: Registry[SourceCollection] = Registry.refusing("this host has no source collections")
 
+  object Context:
+    type EnvResult = EnvResult.T
+    object EnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EnvName = EnvName.T
+    object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SecretResultPart1 = SecretResultPart1.T
+    object SecretResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SecretResultPart2 = SecretResultPart2.T
+    object SecretResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type QuotaUpstream = QuotaUpstream.T
+    object QuotaUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The host's HTTP client, as a plugin sees it. Failures are `Left(message)`, never exceptions. */
   trait Http:
     /** One GET under the host's outbound policy (its User-Agent, `Retry-After`, a slow-down asked again, a bot
       * challenge ending the request): the body of a 2xx answer, or why there is none.
       */
-    def get(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]]
+    def get(url: com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1, com.histmersion.plugin.Plugin.Http.GetHeadersPart2] = Map.empty): Either[com.histmersion.plugin.Plugin.Http.GetResultPart1, Array[Byte]]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -170,8 +192,26 @@ object Plugin:
       *
       * A host that has only bodies answers through [[get]]: status 200 and no headers, or its `Left`.
       */
-    def fetch(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpResponse] =
+    def fetch(url: com.histmersion.plugin.Plugin.Http.FetchUrl, headers: Map[com.histmersion.plugin.Plugin.Http.FetchHeadersPart1, com.histmersion.plugin.Plugin.Http.FetchHeadersPart2] = Map.empty): Either[com.histmersion.plugin.Plugin.Http.FetchResultPart1, HttpResponse] =
       get(url, headers).map(HttpResponse(200, Map.empty, _))
+
+  object Http:
+    type GetResultPart1 = GetResultPart1.T
+    object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetUrl = GetUrl.T
+    object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetHeadersPart1 = GetHeadersPart1.T
+    object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetHeadersPart2 = GetHeadersPart2.T
+    object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchResultPart1 = FetchResultPart1.T
+    object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchUrl = FetchUrl.T
+    object FetchUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchHeadersPart1 = FetchHeadersPart1.T
+    object FetchHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchHeadersPart2 = FetchHeadersPart2.T
+    object FetchHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *
@@ -184,9 +224,14 @@ object Plugin:
     */
   final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: HttpResponse.Body):
     /** A header by name, in any case. */
-    def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
+    def header(name: com.histmersion.plugin.Plugin.HttpResponse.HeaderName): Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult] = headers.get(name.toLowerCase(Locale.ROOT))
 
   object HttpResponse:
+    type HeaderResult = HeaderResult.T
+    object HeaderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeaderName = HeaderName.T
+    object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Body = Body.T
     object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -216,5 +261,11 @@ object Plugin:
 
   /** The host's log, with the plugin's id on every line. */
   trait Log:
-    def info(message: String): Unit
-    def warn(message: String): Unit
+    def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+    def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+
+  object Log:
+    type InfoMessage = InfoMessage.T
+    object InfoMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WarnMessage = WarnMessage.T
+    object WarnMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

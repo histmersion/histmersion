@@ -26,8 +26,53 @@ object Lpf:
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
-  def toIso(historicalYear: Long): Long = Years.toAstronomical(historicalYear)
-  def fromIso(isoYear: Long): Long = Years.fromAstronomical(isoYear)
+  type ToIsoResult = ToIsoResult.T
+  object ToIsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToIsoHistoricalYear = ToIsoHistoricalYear.T
+  object ToIsoHistoricalYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromIsoResult = FromIsoResult.T
+  object FromIsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromIsoIsoYear = FromIsoIsoYear.T
+  object FromIsoIsoYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYearResult = ParseYearResult.T
+  object ParseYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYearRaw = ParseYearRaw.T
+  object ParseYearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearOfResult = YearOfResult.T
+  object YearOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundResult = BoundResult.T
+  object BoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundWide = BoundWide.T
+  object BoundWide extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundNarrow = BoundNarrow.T
+  object BoundNarrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlugResult = SlugResult.T
+  object SlugResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlugS = SlugS.T
+  object SlugS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadNamesLabel = ReadNamesLabel.T
+  object ReadNamesLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadRelationsId = ReadRelationsId.T
+  object ReadRelationsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFeatureResultPart1 = ReadFeatureResultPart1.T
+  object ReadFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFeatureDefaultKind = ReadFeatureDefaultKind.T
+  object ReadFeatureDefaultKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadFeatureOrdinal = ReadFeatureOrdinal.T
+  object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJson = ParseJson.T
+  object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDefaultKind = ParseDefaultKind.T
+  object ParseDefaultKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def toIso(historicalYear: com.histmersion.api.catalogue.Lpf.ToIsoHistoricalYear): com.histmersion.api.catalogue.Lpf.ToIsoResult = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: com.histmersion.api.catalogue.Lpf.FromIsoIsoYear): com.histmersion.api.catalogue.Lpf.FromIsoResult = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -55,7 +100,7 @@ object Lpf:
   /** Bare years (`"-1400"`, `"1400 BCE"`) are historical reckoning, the practical convention in WHG/Pleiades data; ISO
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
-  def parseYear(raw: String): Option[Long] =
+  def parseYear(raw: com.histmersion.api.catalogue.Lpf.ParseYearRaw): Option[com.histmersion.api.catalogue.Lpf.ParseYearResult] =
     val t = Circa.replaceFirstIn(raw.trim.toLowerCase, "")
     if t.isEmpty then None
     else
@@ -70,11 +115,11 @@ object Lpf:
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
-  private def yearOf(j: Json): Option[Long] =
+  private def yearOf(j: Json): Option[com.histmersion.api.catalogue.Lpf.YearOfResult] =
     Years.fromJson(j, parseYear)
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
-  private def bound(j: Json, wide: String, narrow: String): Option[Long] =
+  private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.BoundWide, narrow: com.histmersion.api.catalogue.Lpf.BoundNarrow): Option[com.histmersion.api.catalogue.Lpf.BoundResult] =
     j.asObject match
       case None      => yearOf(j)
       case Some(obj) =>
@@ -122,10 +167,10 @@ object Lpf:
       )
     )
 
-  private def str(o: JsonObject, keys: String*): Option[String] =
+  private def str(o: JsonObject, keys: String*): Option[com.histmersion.api.catalogue.Lpf.StrResult] =
     keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
 
-  private def slug(s: String): String =
+  private def slug(s: com.histmersion.api.catalogue.Lpf.SlugS): com.histmersion.api.catalogue.Lpf.SlugResult =
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
@@ -160,7 +205,7 @@ object Lpf:
         )
       )
 
-  private def readNames(f: JsonObject, props: JsonObject, label: String): List[Place.Name] =
+  private def readNames(f: JsonObject, props: JsonObject, label: com.histmersion.api.catalogue.Lpf.ReadNamesLabel): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
         .map(s => Place.Name(s.trim))
@@ -188,7 +233,7 @@ object Lpf:
   /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain
     * `part_of: [{parent_id, period_start, period_end}]` of hand-traced polygons.
     */
-  private def readRelations(id: String, f: JsonObject, props: JsonObject): List[Place.Relation] =
+  private def readRelations(id: com.histmersion.api.catalogue.Lpf.ReadRelationsId, f: JsonObject, props: JsonObject): List[Place.Relation] =
     val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
       .flatMap(_.asArray)
       .flatMap(_.toList)
@@ -213,7 +258,7 @@ object Lpf:
       .distinctBy(r => (r.parentId, r.kind))
       .sortBy(r => (r.parentId, r.kind))
 
-  def readFeature(j: Json, defaultKind: String, ordinal: Int): Either[String, Place.Input] =
+  def readFeature(j: Json, defaultKind: com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind, ordinal: com.histmersion.api.catalogue.Lpf.ReadFeatureOrdinal): Either[com.histmersion.api.catalogue.Lpf.ReadFeatureResultPart1, Place.Input] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
@@ -273,9 +318,9 @@ object Lpf:
     }
 
   def parse(
-      json: String,
-      defaultKind: String = com.histmersion.api.catalogue.Place.Kind.Region
-  ): Either[String, List[Place.Input]] =
+      json: com.histmersion.api.catalogue.Lpf.ParseJson,
+      defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = com.histmersion.api.catalogue.Place.Kind.Region
+  ): Either[com.histmersion.api.catalogue.Lpf.ParseResultPart1, List[Place.Input]] =
     io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
@@ -336,7 +381,7 @@ object Lpf:
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 
-  def render(items: List[Place.Input]): String =
+  def render(items: List[Place.Input]): com.histmersion.api.catalogue.Lpf.RenderResult =
     Json
       .obj(
         "type" -> Json.fromString("FeatureCollection"),

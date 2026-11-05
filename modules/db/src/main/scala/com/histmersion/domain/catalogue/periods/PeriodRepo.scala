@@ -14,9 +14,50 @@ import com.augustnagro.magnum.*
   */
 private[periods] object PeriodRepo:
 
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenId = ChildrenId.T
+  object ChildrenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQ = SearchQ.T
+  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchRegion = SearchRegion.T
+  object SearchRegion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchFrom = SearchFrom.T
+  object SearchFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchTo = SearchTo.T
+  object SearchTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PresetCountResult = PresetCountResult.T
+  object PresetCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacementResultPart1 = PlacementResultPart1.T
+  object PlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacementResultPart2 = PlacementResultPart2.T
+  object PlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacementIds = PlacementIds.T
+  object PlacementIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertResult = UpsertResult.T
+  object UpsertResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetainPresetsResult = RetainPresetsResult.T
+  object RetainPresetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetainPresetsIds = RetainPresetsIds.T
+  object RetainPresetsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteSeedExceptResult = DeleteSeedExceptResult.T
+  object DeleteSeedExceptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteSeedExceptIds = DeleteSeedExceptIds.T
+  object DeleteSeedExceptIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedVersionResult = SeedVersionResult.T
+  object SeedVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedVersionName = SeedVersionName.T
+  object SeedVersionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSeedVersionName = SetSeedVersionName.T
+  object SetSeedVersionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSeedVersionVersion = SetSeedVersionVersion.T
+  object SetSeedVersionVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val columns = s"id, label, authority, ${RangeSql.cols("period")}, region, parent_id, preset"
 
-  def get(id: String)(using DbCon): Option[HistoricalPeriod] =
+  def get(id: com.histmersion.domain.catalogue.periods.PeriodRepo.GetId)(using DbCon): Option[HistoricalPeriod] =
     Sql
       .of(s"SELECT $columns FROM periods WHERE id = ?", Param.S(id))
       .frag
@@ -25,7 +66,7 @@ private[periods] object PeriodRepo:
       .headOption
       .map(_.toPeriod)
 
-  def children(id: String)(using DbCon): Vector[HistoricalPeriod] =
+  def children(id: com.histmersion.domain.catalogue.periods.PeriodRepo.ChildrenId)(using DbCon): Vector[HistoricalPeriod] =
     Sql
       .of(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label", Param.S(id))
       .frag
@@ -36,7 +77,7 @@ private[periods] object PeriodRepo:
   /** The periods whose label holds `q` (a literal substring, any case), of the region `region` (any case), overlapping
     * `from..to` (either bound alone is a span too), by start then label.
     */
-  def search(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long])(using
+  def search(q: Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SearchQ], region: Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SearchRegion], from: Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SearchFrom], to: Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SearchTo])(using
       DbCon
   ): Vector[HistoricalPeriod] =
     val text = q.map(_.trim).filter(_.nonEmpty)
@@ -50,14 +91,14 @@ private[periods] object PeriodRepo:
                  OR period && int8range($from::bigint, $to::bigint, '[]'))
           ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label""".query[PeriodRow].run().map(_.toPeriod)
 
-  def count(using DbCon): Int = sql"SELECT count(*)::int FROM periods".query[Int].run().head
+  def count(using DbCon): com.histmersion.domain.catalogue.periods.PeriodRepo.CountResult = sql"SELECT count(*)::int FROM periods".query[Int].run().head
 
   /** The periods the web timeline offers as presets (those filed under a region heading). */
-  def presetCount(using DbCon): Int =
+  def presetCount(using DbCon): com.histmersion.domain.catalogue.periods.PeriodRepo.PresetCountResult =
     sql"SELECT count(*)::int FROM periods WHERE preset IS NOT NULL".query[Int].run().head
 
   /** Where each of `ids` sits now: every stored id → its parent (`None` = top level). Ids with no row are absent. */
-  def placement(ids: List[String])(using DbCon): Map[String, Option[String]] =
+  def placement(ids: List[com.histmersion.domain.catalogue.periods.PeriodRepo.PlacementIds])(using DbCon): Map[com.histmersion.domain.catalogue.periods.PeriodRepo.PlacementResultPart1, Option[com.histmersion.domain.catalogue.periods.PeriodRepo.PlacementResultPart2]] =
     if ids.isEmpty then Map.empty
     else
       sql"SELECT id, parent_id FROM periods WHERE id = ANY($ids::text[])"
@@ -68,7 +109,7 @@ private[periods] object PeriodRepo:
   /** Upsert in the order given — parents first, because `parent_id` is a foreign key checked per row. A row with no
     * `preset` leaves a stored one alone.
     */
-  def upsert(ps: List[HistoricalPeriod], dataset: Dataset)(using DbCon): Int =
+  def upsert(ps: List[HistoricalPeriod], dataset: Dataset)(using DbCon): com.histmersion.domain.catalogue.periods.PeriodRepo.UpsertResult =
     if ps.isEmpty then 0
     else
       val _ = batchUpdate(ps) { p =>
@@ -85,17 +126,17 @@ private[periods] object PeriodRepo:
       ps.size
 
   /** Take every preset that is NOT one of `ids` off the menu (the row itself stays). */
-  def retainPresets(ids: List[String])(using DbCon): Int =
+  def retainPresets(ids: List[com.histmersion.domain.catalogue.periods.PeriodRepo.RetainPresetsIds])(using DbCon): com.histmersion.domain.catalogue.periods.PeriodRepo.RetainPresetsResult =
     sql"""UPDATE periods SET preset = NULL
           WHERE preset IS NOT NULL AND NOT (id = ANY($ids::text[]))""".update.run()
 
   /** Delete the SEED rows that are not among `ids`; a collection's own (`local`) periods are never touched. */
-  def deleteSeedExcept(ids: List[String])(using DbCon): Int =
+  def deleteSeedExcept(ids: List[com.histmersion.domain.catalogue.periods.PeriodRepo.DeleteSeedExceptIds])(using DbCon): com.histmersion.domain.catalogue.periods.PeriodRepo.DeleteSeedExceptResult =
     sql"""DELETE FROM periods WHERE dataset = 'seed' AND NOT (id = ANY($ids::text[]))""".update.run()
 
-  def seedVersion(name: String)(using DbCon): Option[Int] =
+  def seedVersion(name: com.histmersion.domain.catalogue.periods.PeriodRepo.SeedVersionName)(using DbCon): Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SeedVersionResult] =
     sql"SELECT version FROM seed_versions WHERE name = $name".query[Int].run().headOption
 
-  def setSeedVersion(name: String, version: Int)(using DbCon): Unit =
+  def setSeedVersion(name: com.histmersion.domain.catalogue.periods.PeriodRepo.SetSeedVersionName, version: com.histmersion.domain.catalogue.periods.PeriodRepo.SetSeedVersionVersion)(using DbCon): Unit =
     val _ = sql"""INSERT INTO seed_versions (name, version) VALUES ($name, $version)
                   ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, applied_at = now()""".update.run()

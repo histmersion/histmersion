@@ -10,6 +10,89 @@ import com.histmersion.api.given
 
 object Queue:
 
+  type Statuses = Statuses.T
+  object Statuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusOfResultPart1 = StatusOfResultPart1.T
+  object StatusOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusOfResultPart2 = StatusOfResultPart2.T
+  object StatusOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusOfRaw = StatusOfRaw.T
+  object StatusOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextOfResultPart1 = TextOfResultPart1.T
+  object TextOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextOfResultPart2 = TextOfResultPart2.T
+  object TextOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextOfRaw = TextOfRaw.T
+  object TextOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilledReasonResult = FulfilledReasonResult.T
+  object FulfilledReasonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilledReasonPrev = FulfilledReasonPrev.T
+  object FulfilledReasonPrev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilledReasonCitekey = FulfilledReasonCitekey.T
+  object FulfilledReasonCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilCitekey = FulfilCitekey.T
+  object FulfilCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilBy = FulfilBy.T
+  object FulfilBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfillableResultPart1 = FulfillableResultPart1.T
+  object FulfillableResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfillableId = FulfillableId.T
+  object FulfillableId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemGoalsOwnPart1 = ItemGoalsOwnPart1.T
+  object ItemGoalsOwnPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemGoalsLinkedPart1 = ItemGoalsLinkedPart1.T
+  object ItemGoalsLinkedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedAtOfResultPart1 = CreatedAtOfResultPart1.T
+  object CreatedAtOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedAtOfResultPart2 = CreatedAtOfResultPart2.T
+  object CreatedAtOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedAtOfRaw = CreatedAtOfRaw.T
+  object CreatedAtOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PathResult = PathResult.T
+  object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PathTopic = PathTopic.T
+  object PathTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicOfResult = TopicOfResult.T
+  object TopicOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicOfP = TopicOfP.T
+  object TopicOfP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsBoldResult = IsBoldResult.T
+  object IsBoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsBoldS = IsBoldS.T
+  object IsBoldS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryDateResult = EntryDateResult.T
+  object EntryDateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryDateStack = EntryDateStack.T
+  object EntryDateStack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimBlankResult = TrimBlankResult.T
+  object TrimBlankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimBlankLs = TrimBlankLs.T
+  object TrimBlankLs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultPreambleResult = DefaultPreambleResult.T
+  object DefaultPreambleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingLinesPrev = HeadingLinesPrev.T
+  object HeadingLinesPrev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingLinesNext = HeadingLinesNext.T
+  object HeadingLinesNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BulletResult = BulletResult.T
+  object BulletResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinResult = JoinResult.T
+  object JoinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstantKeyResult = InstantKeyResult.T
+  object InstantKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InstantKeyS = InstantKeyS.T
+  object InstantKeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownNotesPart1 = MarkdownNotesPart1.T
+  object MarkdownNotesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownNotesPart2 = MarkdownNotesPart2.T
+  object MarkdownNotesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class QueueItem(
       id: QueueItem.Id,
       list: QueueItem.List,
@@ -115,37 +198,42 @@ object Queue:
     case Log extends Kind("log", "LOG.md", false)
 
   object Kind:
-    val all: List[String] = values.toList.map(_.label)
-    def parse(s: String): Option[Kind] = values.find(_.label == s.trim.toLowerCase)
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    val all: List[com.histmersion.api.automation.Queue.Kind.All] = values.toList.map(_.label)
+    def parse(s: com.histmersion.api.automation.Queue.Kind.ParseS): Option[Kind] = values.find(_.label == s.trim.toLowerCase)
 
   val Open = "open"
   val Done = "done"
   val Note = "note"
 
-  val Statuses: List[String] = List(Open, Done, Note)
+  val Statuses: List[com.histmersion.api.automation.Queue.Statuses] = List(Open, Done, Note)
 
-  def statusOf(raw: Option[String]): Either[String, Option[String]] =
+  def statusOf(raw: Option[com.histmersion.api.automation.Queue.StatusOfRaw]): Either[com.histmersion.api.automation.Queue.StatusOfResultPart1, Option[com.histmersion.api.automation.Queue.StatusOfResultPart2]] =
     raw.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case None                            => Right(None)
       case Some(s) if Statuses.contains(s) => Right(Some(s))
       case Some(s)                         => Left(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}")
 
-  def textOf(raw: Option[String]): Either[String, Option[String]] =
+  def textOf(raw: Option[com.histmersion.api.automation.Queue.TextOfRaw]): Either[com.histmersion.api.automation.Queue.TextOfResultPart1, Option[com.histmersion.api.automation.Queue.TextOfResultPart2]] =
     raw match
       case Some(t) if t.trim.isEmpty => Left("queue item text is empty")
       case other                     => Right(other)
 
-  def fulfilledReason(prev: Option[String], citekey: String): String =
+  def fulfilledReason(prev: Option[com.histmersion.api.automation.Queue.FulfilledReasonPrev], citekey: com.histmersion.api.automation.Queue.FulfilledReasonCitekey): com.histmersion.api.automation.Queue.FulfilledReasonResult =
     val tag = s"ingested as [[$citekey]]"
     prev.map(_.trim).filter(_.nonEmpty) match
       case Some(p) if p.contains(tag) => p
       case Some(p)                    => s"$p · $tag"
       case None                       => tag
 
-  def fulfil(item: QueueItem, citekey: String, by: Option[String] = None): QueuePatch =
+  def fulfil(item: QueueItem, citekey: com.histmersion.api.automation.Queue.FulfilCitekey, by: Option[com.histmersion.api.automation.Queue.FulfilBy] = None): QueuePatch =
     QueuePatch(status = Some(Done), reason = Some(fulfilledReason(item.reason, citekey)), closedBy = by)
 
-  def fulfillable(id: Int, found: Option[QueueItem]): Either[String, QueueItem] =
+  def fulfillable(id: com.histmersion.api.automation.Queue.FulfillableId, found: Option[QueueItem]): Either[com.histmersion.api.automation.Queue.FulfillableResultPart1, QueueItem] =
     found match
       case None                                    => Left(s"no acquisition item $id")
       case Some(i) if i.list != Kind.Acquire.label =>
@@ -154,7 +242,7 @@ object Queue:
       case Some(i) if i.status != Open => Left(s"item $id is not an open acquisition item")
       case Some(i)                     => Right(i)
 
-  def itemGoals(own: List[(Int, GoalRef)], linked: List[(Int, GoalRef)]): List[ItemGoals] =
+  def itemGoals(own: List[(com.histmersion.api.automation.Queue.ItemGoalsOwnPart1, GoalRef)], linked: List[(com.histmersion.api.automation.Queue.ItemGoalsLinkedPart1, GoalRef)]): List[ItemGoals] =
     (own ++ linked).groupBy(_._1).toList.sortBy(_._1).map((id, gs) => ItemGoals(id, gs.map(_._2).distinctBy(_.slug)))
 
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
@@ -167,7 +255,7 @@ object Queue:
       _.status).setTo(status).modify(_.text).setTo(p.text.getOrElse(cur.text)).modify(_.topic).setTo(clearable(p.topic, cur.topic)).modify(_.reason).setTo(clearable(p.reason, cur.reason)).modify(_.goal).setTo(clearable(p.goal, cur.goal)).modify(_.closedBy).setTo(closedBy
     )
 
-  def createdAtOf(raw: Option[String]): Either[String, Option[String]] =
+  def createdAtOf(raw: Option[com.histmersion.api.automation.Queue.CreatedAtOfRaw]): Either[com.histmersion.api.automation.Queue.CreatedAtOfResultPart1, Option[com.histmersion.api.automation.Queue.CreatedAtOfResultPart2]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -180,10 +268,10 @@ object Queue:
 
   val Sep = " > "
 
-  def path(topic: Option[String]): Vector[String] =
+  def path(topic: Option[com.histmersion.api.automation.Queue.PathTopic]): Vector[com.histmersion.api.automation.Queue.PathResult] =
     topic.map(_.split(java.util.regex.Pattern.quote(Sep), -1).toVector.filter(_.nonEmpty)).getOrElse(Vector.empty)
 
-  def topicOf(p: Vector[String]): Option[String] = if p.isEmpty then None else Some(p.mkString(Sep))
+  def topicOf(p: Vector[com.histmersion.api.automation.Queue.TopicOfP]): Option[com.histmersion.api.automation.Queue.TopicOfResult] = if p.isEmpty then None else Some(p.mkString(Sep))
 
   private val HeadingRe = """^(#{2,6})\s+(.*?)\s*$""".r
   private val BoldRe = """^(\*\*.+\*\*)\s*$""".r
@@ -192,7 +280,7 @@ object Queue:
 
   private val DateRe = """^(\d{4}-\d{2}-\d{2}).*""".r
 
-  def parse(kind: Kind, text: String): List[QueueAdd] =
+  def parse(kind: Kind, text: com.histmersion.api.automation.Queue.ParseText): List[QueueAdd] =
     val out = List.newBuilder[QueueAdd]
     var stack = Vector.empty[String]
     val note = List.newBuilder[String]
@@ -238,18 +326,18 @@ object Queue:
     flush()
     out.result()
 
-  private def isBold(s: String): Boolean = s.startsWith("**") && s.endsWith("**")
+  private def isBold(s: com.histmersion.api.automation.Queue.IsBoldS): com.histmersion.api.automation.Queue.IsBoldResult = s.startsWith("**") && s.endsWith("**")
 
-  private def entryDate(stack: Vector[String]): Option[String] =
+  private def entryDate(stack: Vector[com.histmersion.api.automation.Queue.EntryDateStack]): Option[com.histmersion.api.automation.Queue.EntryDateResult] =
     stack.headOption.flatMap {
       case DateRe(d) => Some(s"${d}T00:00:00Z")
       case _         => None
     }
 
-  private def trimBlank(ls: List[String]): List[String] =
+  private def trimBlank(ls: List[com.histmersion.api.automation.Queue.TrimBlankLs]): List[com.histmersion.api.automation.Queue.TrimBlankResult] =
     ls.dropWhile(_.trim.isEmpty).reverse.dropWhile(_.trim.isEmpty).reverse
 
-  private def defaultPreamble(kind: Kind): String = kind match
+  private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.DefaultPreambleResult = kind match
     case Kind.Acquire =>
       "# 📥 ACQUIRE — the acquisition queue\n\nWhat to buy / borrow / download → Calibre. " +
         "`[ ]` = to get · `[x]` = done.\n\n---"
@@ -263,7 +351,7 @@ object Queue:
     case Item(lines: String)
     case Note(lines: String)
 
-  def render(kind: Kind, items: List[QueueItem]): String =
+  def render(kind: Kind, items: List[QueueItem]): com.histmersion.api.automation.Queue.RenderResult =
     val (preamble, rest) = items.partition(_.topic.isEmpty)
     val groups = rest
       .groupBy(_.topic.getOrElse(""))
@@ -288,7 +376,7 @@ object Queue:
     }
     join(blocks.result())
 
-  private def headingLines(prev: Vector[String], next: Vector[String]): List[Block] =
+  private def headingLines(prev: Vector[com.histmersion.api.automation.Queue.HeadingLinesPrev], next: Vector[com.histmersion.api.automation.Queue.HeadingLinesNext]): List[Block] =
     if next.isEmpty then Nil
     else
       val firstDiff = next.indices.find(i => prev.lift(i) != Some(next(i)))
@@ -299,12 +387,12 @@ object Queue:
         else Block.Heading(s"${"#" * (i + 2)} $seg")
       }
 
-  private def bullet(kind: Kind, i: QueueItem): String =
+  private def bullet(kind: Kind, i: QueueItem): com.histmersion.api.automation.Queue.BulletResult =
     val marker = if !kind.checkboxes then "- " else if i.status == Done then "- [x] " else "- [ ] "
     val lines = i.text.linesIterator.toList
     (marker + lines.headOption.getOrElse("")) + lines.drop(1).map("\n" + _).mkString
 
-  private def join(blocks: List[Block]): String =
+  private def join(blocks: List[Block]): com.histmersion.api.automation.Queue.JoinResult =
     val sb = new StringBuilder
     blocks.zipWithIndex.foreach { (b, idx) =>
       val sep = blocks.lift(idx - 1) match
@@ -321,11 +409,11 @@ object Queue:
     sb.append("\n")
     sb.result()
 
-  private def instantKey(s: String): Long =
+  private def instantKey(s: com.histmersion.api.automation.Queue.InstantKeyS): com.histmersion.api.automation.Queue.InstantKeyResult =
     scala.util.Try(java.time.Instant.parse(s).toEpochMilli).getOrElse(0L)
 
   /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
-  def markdown(kind: Kind, items: List[QueueItem], notes: Map[Int, String] = Map.empty): String =
+  def markdown(kind: Kind, items: List[QueueItem], notes: Map[com.histmersion.api.automation.Queue.MarkdownNotesPart1, com.histmersion.api.automation.Queue.MarkdownNotesPart2] = Map.empty): com.histmersion.api.automation.Queue.MarkdownResult =
     val shown = items.filterNot(_.status == Note)
     if shown.isEmpty then s"_${kind.label}: nothing queued._"
     else

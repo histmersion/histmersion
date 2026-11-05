@@ -9,7 +9,12 @@ enum ItemStatus(val wire: String):
   case Cancelled extends ItemStatus("cancelled")
 
   /** Settled: only a person (re-open, enqueue) brings it back. */
-  def isFinal: Boolean = this == Done || this == Stopped || this == Failed || this == Cancelled
+  def isFinal: com.histmersion.api.automation.ItemStatus.IsFinalResult = this == Done || this == Stopped || this == Failed || this == Cancelled
 
 object ItemStatus:
-  def parse(s: String): Option[ItemStatus] = values.find(_.wire == s.trim.toLowerCase)
+  type IsFinalResult = IsFinalResult.T
+  object IsFinalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.automation.ItemStatus.ParseS): Option[ItemStatus] = values.find(_.wire == s.trim.toLowerCase)

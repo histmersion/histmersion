@@ -25,6 +25,91 @@ import com.histmersion.api.library.Acquire
 object QueueView:
 
   /** A run of an item's text: the queue items are short Markdown lines. */
+  type SegmentsText = SegmentsText.T
+  object SegmentsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingResultPart1 = HeadingResultPart1.T
+  object HeadingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingResultPart2 = HeadingResultPart2.T
+  object HeadingResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingTopic = HeadingTopic.T
+  object HeadingTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingUntitled = HeadingUntitled.T
+  object HeadingUntitled extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogDateResult = LogDateResult.T
+  object LogDateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogDateTopic = LogDateTopic.T
+  object LogDateTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsResultPart1 = GroupsResultPart1.T
+  object GroupsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralResult = PluralResult.T
+  object PluralResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralN = PluralN.T
+  object PluralN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralOne = PluralOne.T
+  object PluralOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluralMany = PluralMany.T
+  object PluralMany extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilResultPart1 = FulfilResultPart1.T
+  object FulfilResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilCitekey = FulfilCitekey.T
+  object FulfilCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidateAddResultPart1 = ValidateAddResultPart1.T
+  object ValidateAddResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditPatchResultPart1 = EditPatchResultPart1.T
+  object EditPatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditPatchText = EditPatchText.T
+  object EditPatchText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditPatchTopic = EditPatchTopic.T
+  object EditPatchTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicSuggestionsResult = TopicSuggestionsResult.T
+  object TopicSuggestionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicSuggestionsTyped = TopicSuggestionsTyped.T
+  object TopicSuggestionsTyped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicSuggestionsLimit = TopicSuggestionsLimit.T
+  object TopicSuggestionsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneGoal = PaneGoal.T
+  object PaneGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicLabelResult = TopicLabelResult.T
+  object TopicLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TopicLabelT = TopicLabelT.T
+  object TopicLabelT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddFormTopicsId = AddFormTopicsId.T
+  object AddFormTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupTopic = RenderGroupTopic.T
+  object RenderGroupTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupTopicsId = RenderGroupTopicsId.T
+  object RenderGroupTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupChecksPart1 = RenderGroupChecksPart1.T
+  object RenderGroupChecksPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupGoalsPart1 = RenderGroupGoalsPart1.T
+  object RenderGroupGoalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupTarget = RenderGroupTarget.T
+  object RenderGroupTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemTopicsId = RenderItemTopicsId.T
+  object RenderItemTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemIsTarget = RenderItemIsTarget.T
+  object RenderItemIsTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListNameResult = ListNameResult.T
+  object ListNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfJobJobId = OfJobJobId.T
+  object OfJobJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemAnchorResult = ItemAnchorResult.T
+  object ItemAnchorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemAnchorId = ItemAnchorId.T
+  object ItemAnchorId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetItemResult = TargetItemResult.T
+  object TargetItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetItemSearch = TargetItemSearch.T
+  object TargetItemSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionButtonText = ActionButtonText.T
+  object ActionButtonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionButtonWrite = ActionButtonWrite.T
+  object ActionButtonWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditFormTopicsId = EditFormTopicsId.T
+  object EditFormTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Seg:
     case Text(s: String)
     case Bold(s: String)
@@ -60,18 +145,27 @@ object QueueView:
       tick: (Spec.TickPart1, Spec.TickPart2)
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
-    def checkable: Boolean = kind.checkboxes
+    def checkable: com.histmersion.web.QueueView.Spec.CheckableResult = kind.checkboxes
 
     /** Whether an item can be edited and deleted here; the worklog is only added to. */
-    def editable: Boolean = kind.checkboxes
+    def editable: com.histmersion.web.QueueView.Spec.EditableResult = kind.checkboxes
 
     /** Whether an item carries a reason (why it is wanted); a worklog entry is its own record. */
-    def reasons: Boolean = kind.checkboxes
+    def reasons: com.histmersion.web.QueueView.Spec.ReasonsResult = kind.checkboxes
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
-    def fulfils: Boolean = kind == Queue.Kind.Acquire
+    def fulfils: com.histmersion.web.QueueView.Spec.FulfilsResult = kind == Queue.Kind.Acquire
 
   object Spec:
+    type CheckableResult = CheckableResult.T
+    object CheckableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EditableResult = EditableResult.T
+    object EditableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReasonsResult = ReasonsResult.T
+    object ReasonsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FulfilsResult = FulfilsResult.T
+    object FulfilsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Empty = Empty.T
     object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Untitled = Untitled.T
@@ -117,7 +211,7 @@ object QueueView:
 
   /** Split an item's text into runs to render: bold, italic, DOIs, URLs, citekeys and bare identifiers; the rest text.
     */
-  def segments(text: String): List[Seg] =
+  def segments(text: com.histmersion.web.QueueView.SegmentsText): List[Seg] =
     val out = List.newBuilder[Seg]
     var last = 0
     Token.findAllMatchIn(text).foreach { m =>
@@ -136,7 +230,7 @@ object QueueView:
   /** A topic path (`**Group** > sub_topic`) as its heading and the path above it, readable; `untitled` stands in for an
     * item with no topic.
     */
-  def heading(topic: Option[String], untitled: String = "Uncategorised"): (String, List[String]) =
+  def heading(topic: Option[com.histmersion.web.QueueView.HeadingTopic], untitled: com.histmersion.web.QueueView.HeadingUntitled = "Uncategorised"): (com.histmersion.web.QueueView.HeadingResultPart1, List[com.histmersion.web.QueueView.HeadingResultPart2]) =
     val parts = topic
       .getOrElse("")
       .split(" > ")
@@ -153,7 +247,7 @@ object QueueView:
   /** The day a worklog group is about: the date its topic starts with (a range such as `2026-06-24/25` keeps its first
     * day), else the day its newest entry was written; `""` when neither is known, which sorts last.
     */
-  def logDate(topic: Option[String], items: List[Queue.QueueItem]): String =
+  def logDate(topic: Option[com.histmersion.web.QueueView.LogDateTopic], items: List[Queue.QueueItem]): com.histmersion.web.QueueView.LogDateResult =
     topic.map(_.trim) match
       case Some(LeadingDate(d)) => d
       case _                    => items.flatMap(_.createdAt).maxOption.map(_.take(10)).getOrElse("")
@@ -161,7 +255,7 @@ object QueueView:
   /** The items grouped by topic, each group in id order. The checkbox lists keep the groups in the order their first
     * item was added; the worklog puts the newest date first (ties: file order).
     */
-  def groups(kind: Queue.Kind, items: List[Queue.QueueItem]): List[(Option[String], List[Queue.QueueItem])] =
+  def groups(kind: Queue.Kind, items: List[Queue.QueueItem]): List[(Option[com.histmersion.web.QueueView.GroupsResultPart1], List[Queue.QueueItem])] =
     val gs = items.groupBy(_.topic).toList.map((t, is) => t -> is.sortBy(_.id))
     if kind.checkboxes then gs.sortBy((_, is) => is.head.id)
     else
@@ -171,7 +265,7 @@ object QueueView:
 
   /** The line above the list: how many are left (and done), or for the worklog how many entries over how many days.
     */
-  def summary(spec: Spec, items: List[Queue.QueueItem]): String =
+  def summary(spec: Spec, items: List[Queue.QueueItem]): com.histmersion.web.QueueView.SummaryResult =
     if spec.checkable then
       val done = items.count(_.status == Queue.Done)
       s"${items.size - done} ${spec.openNoun}" + (if done > 0 then s" · $done done" else "")
@@ -179,7 +273,7 @@ object QueueView:
       val days = items.map(_.topic).distinct.size
       s"${plural(items.size, "entry", "entries")} · ${plural(days, "day", "days")}"
 
-  private def plural(n: Int, one: String, many: String): String = s"$n ${if n == 1 then one else many}"
+  private def plural(n: com.histmersion.web.QueueView.PluralN, one: com.histmersion.web.QueueView.PluralOne, many: com.histmersion.web.QueueView.PluralMany): com.histmersion.web.QueueView.PluralResult = s"$n ${if n == 1 then one else many}"
 
   // ── writing: add · edit · fulfil (pure) ─────────────────────────────────────────────────────────
 
@@ -191,7 +285,7 @@ object QueueView:
   /** The write that ticks `item` off as fulfilled by the source `citekey` — the core rule ([[Queue.fulfil]]) the
     * server's OCR job applies too, addressed to the item.
     */
-  def fulfil(item: Queue.QueueItem, citekey: String): (Int, Queue.QueuePatch) =
+  def fulfil(item: Queue.QueueItem, citekey: com.histmersion.web.QueueView.FulfilCitekey): (com.histmersion.web.QueueView.FulfilResultPart1, Queue.QueuePatch) =
     item.id -> Queue.fulfil(item, citekey)
 
   /** The add form, as typed. */
@@ -210,7 +304,7 @@ object QueueView:
   /** The item to add, or why not: the text must not be blank; a blank topic or reason is left out (a worklog entry with
     * no topic joins today's date, server-side); the worklog takes no reason.
     */
-  def validateAdd(sp: Spec, d: AddDraft): Either[String, Queue.QueueAdd] =
+  def validateAdd(sp: Spec, d: AddDraft): Either[com.histmersion.web.QueueView.ValidateAddResultPart1, Queue.QueueAdd] =
     if d.text.trim.isEmpty then Left(EmptyText)
     else
       Right(
@@ -224,7 +318,7 @@ object QueueView:
   /** The patch an inline edit makes: only what changed (`None` = nothing did); a blank topic moves the item out of its
     * group; a blank text is refused.
     */
-  def editPatch(item: Queue.QueueItem, text: String, topic: String): Either[String, Option[Queue.QueuePatch]] =
+  def editPatch(item: Queue.QueueItem, text: com.histmersion.web.QueueView.EditPatchText, topic: com.histmersion.web.QueueView.EditPatchTopic): Either[com.histmersion.web.QueueView.EditPatchResultPart1, Option[Queue.QueuePatch]] =
     if text.trim.isEmpty then Left(EmptyText)
     else
       val t = text.strip
@@ -236,7 +330,7 @@ object QueueView:
   /** The topics to offer while one is typed: those the list already uses, in the order they first appear, matching what
     * is typed (case and underscores aside), without the one typed exactly.
     */
-  def topicSuggestions(items: List[Queue.QueueItem], typed: String, limit: Int = 12): List[String] =
+  def topicSuggestions(items: List[Queue.QueueItem], typed: com.histmersion.web.QueueView.TopicSuggestionsTyped, limit: com.histmersion.web.QueueView.TopicSuggestionsLimit = 12): List[com.histmersion.web.QueueView.TopicSuggestionsResult] =
     def norm(s: String) = Label.display(s).toLowerCase.trim
     val q = norm(typed)
     items
@@ -254,7 +348,7 @@ object QueueView:
 
   /** One window's pane. Its state lives with the pane, so each window loads its own list. */
   /** A list's page; with `goal`, only the items that serve that research goal. */
-  def pane(kind: Queue.Kind, goal: Option[String] = None): HtmlElement =
+  def pane(kind: Queue.Kind, goal: Option[com.histmersion.web.QueueView.PaneGoal] = None): HtmlElement =
     val sp = spec(kind)
     val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
     val items = Var(List.empty[Queue.QueueItem])
@@ -423,22 +517,28 @@ object QueueView:
 
   /** The pane's writes, handed to the rows. */
   final private case class Ops(
-      setDone: (Queue.QueueItem, Boolean) => Unit,
+      setDone: (Queue.QueueItem, Ops.SetDoneArg2) => Unit,
       edit: (Queue.QueueItem, Queue.QueuePatch, () => Unit) => Unit,
       delete: Queue.QueueItem => Unit,
-      fulfil: (Queue.QueueItem, String) => Unit,
+      fulfil: (Queue.QueueItem, Ops.FulfilArg2) => Unit,
       recheck: Queue.QueueItem => Unit
   )
 
+  object Ops:
+    type SetDoneArg2 = SetDoneArg2.T
+    object SetDoneArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FulfilArg2 = FulfilArg2.T
+    object FulfilArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A topic path as the suggestion list shows it: readable, the levels joined by `›`. */
-  private def topicLabel(t: String): String =
+  private def topicLabel(t: com.histmersion.web.QueueView.TopicLabelT): com.histmersion.web.QueueView.TopicLabelResult =
     val (last, path) = heading(Some(t))
     (path :+ last).mkString(" › ")
 
   private def addForm(
       sp: Spec,
       items: Signal[List[Queue.QueueItem]],
-      topicsId: String,
+      topicsId: com.histmersion.web.QueueView.AddFormTopicsId,
       send: (Queue.QueueAdd, () => Unit) => Unit,
       close: () => Unit
   ): HtmlElement =
@@ -519,13 +619,13 @@ object QueueView:
 
   private def renderGroup(
       sp: Spec,
-      topic: Option[String],
+      topic: Option[com.histmersion.web.QueueView.RenderGroupTopic],
       its: List[Queue.QueueItem],
       ops: Ops,
-      topicsId: String,
-      checks: Map[Int, Acquire.Checks.AcquireCheck],
-      goals: Map[Int, List[Queue.GoalRef]],
-      target: Option[Int]
+      topicsId: com.histmersion.web.QueueView.RenderGroupTopicsId,
+      checks: Map[com.histmersion.web.QueueView.RenderGroupChecksPart1, Acquire.Checks.AcquireCheck],
+      goals: Map[com.histmersion.web.QueueView.RenderGroupGoalsPart1, List[Queue.GoalRef]],
+      target: Option[com.histmersion.web.QueueView.RenderGroupTarget]
   ): HtmlElement =
     val (title, path) = heading(topic, sp.untitled)
     div(
@@ -544,10 +644,10 @@ object QueueView:
       sp: Spec,
       item: Queue.QueueItem,
       ops: Ops,
-      topicsId: String,
+      topicsId: com.histmersion.web.QueueView.RenderItemTopicsId,
       check: Option[Acquire.Checks.AcquireCheck],
       goals: List[Queue.GoalRef],
-      isTarget: Boolean
+      isTarget: com.histmersion.web.QueueView.RenderItemIsTarget
   ): HtmlElement =
     val done = item.status == Queue.Done
     val mode = Var(Mode.Idle)
@@ -631,7 +731,7 @@ object QueueView:
     )
 
   /** A list as Research's side navigation names it. */
-  def listName(kind: Queue.Kind): String = kind match
+  def listName(kind: Queue.Kind): com.histmersion.web.QueueView.ListNameResult = kind match
     case Queue.Kind.Acquire => "To acquire"
     case Queue.Kind.Tasks   => "Backlog"
     case Queue.Kind.Log     => "Worklog"
@@ -649,7 +749,7 @@ object QueueView:
     )
 
   /** What one agent run or background job wrote to the lists and ticked off — its page's side of the links. */
-  def ofJob(jobId: String): HtmlElement =
+  def ofJob(jobId: com.histmersion.web.QueueView.OfJobJobId): HtmlElement =
     val found = Var(Option.empty[List[Queue.QueueItem]])
     div(
       cls := "job-items",
@@ -678,10 +778,10 @@ object QueueView:
     )
 
   /** The id of an item's row, which a link to it scrolls to. */
-  def itemAnchor(id: Int): String = s"queue-item-$id"
+  def itemAnchor(id: com.histmersion.web.QueueView.ItemAnchorId): com.histmersion.web.QueueView.ItemAnchorResult = s"queue-item-$id"
 
   /** The item a link to the list points at (`?item=12`). Pure. */
-  def targetItem(search: String): Option[Int] =
+  def targetItem(search: com.histmersion.web.QueueView.TargetItemSearch): Option[com.histmersion.web.QueueView.TargetItemResult] =
     Option(search)
       .map(_.stripPrefix("?"))
       .getOrElse("")
@@ -691,7 +791,7 @@ object QueueView:
       .flatMap(_.toIntOption)
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
-  private def actionButton(text: String, act: () => Unit, write: Boolean = true): HtmlElement =
+  private def actionButton(text: com.histmersion.web.QueueView.ActionButtonText, act: () => Unit, write: com.histmersion.web.QueueView.ActionButtonWrite = true): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--sm",
@@ -700,7 +800,7 @@ object QueueView:
       onClick --> (_ => act())
     )
 
-  private def editForm(item: Queue.QueueItem, ops: Ops, topicsId: String, close: () => Unit): HtmlElement =
+  private def editForm(item: Queue.QueueItem, ops: Ops, topicsId: com.histmersion.web.QueueView.EditFormTopicsId, close: () => Unit): HtmlElement =
     val text = Var(item.text)
     val topic = Var(item.topic.getOrElse(""))
     val error = Var(Option.empty[String])

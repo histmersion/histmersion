@@ -27,10 +27,27 @@ import com.histmersion.api.Api
 object BasemapWiring:
 
   /** The base map of `deps`, reading its providers over the network. */
+  type ServiceFreeSpaceResult = ServiceFreeSpaceResult.T
+  object ServiceFreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackoffMsResult = BackoffMsResult.T
+  object BackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackoffMsAttempt = BackoffMsAttempt.T
+  object BackoffMsAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDownCode = SlowDownCode.T
+  object SlowDownCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDownRetryAfter = SlowDownRetryAfter.T
+  object SlowDownRetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDownAttempt = SlowDownAttempt.T
+  object SlowDownAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDownMaxRetries = SlowDownMaxRetries.T
+  object SlowDownMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDownMaxRetryAfterSeconds = SlowDownMaxRetryAfterSeconds.T
+  object SlowDownMaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
-  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => Long = _.usableSpace.value): BasemapService =
+  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.server.BasemapWiring.ServiceFreeSpaceResult = _.usableSpace.value): BasemapService =
     BasemapService(
       () => deps.cfg.basemap,
       deps.storage,
@@ -64,14 +81,14 @@ object BasemapWiring:
 
   /** [[HttpPolicy]]: 1, 2, 4 … s after a dropped connection; a slow-down answer after its `Retry-After`. */
   val Retries: RetryPolicy = new RetryPolicy:
-    def backoffMs(attempt: Int): Long = HttpPolicy.backoffMs(attempt)
+    def backoffMs(attempt: com.histmersion.server.BasemapWiring.BackoffMsAttempt): com.histmersion.server.BasemapWiring.BackoffMsResult = HttpPolicy.backoffMs(attempt)
 
     def slowDown(
-        code: Int,
-        retryAfter: Option[String],
-        attempt: Int,
-        maxRetries: Int,
-        maxRetryAfterSeconds: Int,
+        code: com.histmersion.server.BasemapWiring.SlowDownCode,
+        retryAfter: Option[com.histmersion.server.BasemapWiring.SlowDownRetryAfter],
+        attempt: com.histmersion.server.BasemapWiring.SlowDownAttempt,
+        maxRetries: com.histmersion.server.BasemapWiring.SlowDownMaxRetries,
+        maxRetryAfterSeconds: com.histmersion.server.BasemapWiring.SlowDownMaxRetryAfterSeconds,
         now: Instant
     ): Option[RetryWait] =
       HttpPolicy.decide(code, retryAfter, attempt, maxRetries, maxRetryAfterSeconds, now) match

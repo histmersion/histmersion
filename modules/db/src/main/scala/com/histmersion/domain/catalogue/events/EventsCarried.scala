@@ -13,9 +13,12 @@ import hearth.kindlings.optics.syntax.*
   * periods they point at), their old ids, what the catalogues say about them and the corrections by hand.
   */
 object EventsCarried:
+  type RowsRank = RowsRank.T
+  object RowsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Catalogue = DataOwner("catalogue")
 
-  private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: com.histmersion.domain.catalogue.events.EventsCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
   val events: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Event](
     Catalogue,

@@ -31,9 +31,32 @@ final case class CatalogRecord(
     raw: Option[CatalogRecord.Raw] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def key: (String, String) = (provider, providerId)
+  def key: (com.histmersion.api.catalogue.CatalogRecord.KeyResultPart1, com.histmersion.api.catalogue.CatalogRecord.KeyResultPart2) = (provider, providerId)
 object CatalogRecord:
 
+
+  type KeyResultPart1 = KeyResultPart1.T
+  object KeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyResultPart2 = KeyResultPart2.T
+  object KeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventIdResult = EventIdResult.T
+  object EventIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventIdProvider = EventIdProvider.T
+  object EventIdProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventIdProviderId = EventIdProviderId.T
+  object EventIdProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerResultPart1 = OwnerResultPart1.T
+  object OwnerResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerResultPart2 = OwnerResultPart2.T
+  object OwnerResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerEventId = OwnerEventId.T
+  object OwnerEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerCatalogue = OwnerCatalogue.T
+  object OwnerCatalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerKeysPart1 = OwnerKeysPart1.T
+  object OwnerKeysPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnerKeysPart2 = OwnerKeysPart2.T
+  object OwnerKeysPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -70,11 +93,11 @@ object CatalogRecord:
   type Raw = Raw.T
   object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def eventId(r: CatalogRecord): String = eventId(r.provider, r.providerId)
+  def eventId(r: CatalogRecord): com.histmersion.api.catalogue.CatalogRecord.EventIdResult = eventId(r.provider, r.providerId)
 
-  def eventId(provider: String, providerId: String): String =
+  def eventId(provider: com.histmersion.api.catalogue.CatalogRecord.EventIdProvider, providerId: com.histmersion.api.catalogue.CatalogRecord.EventIdProviderId): com.histmersion.api.catalogue.CatalogRecord.EventIdResult =
     (provider + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_")
 
-  def owner(eventId: String, catalogue: String, keys: Iterable[(String, String)]): Option[(String, String)] =
+  def owner(eventId: com.histmersion.api.catalogue.CatalogRecord.OwnerEventId, catalogue: com.histmersion.api.catalogue.CatalogRecord.OwnerCatalogue, keys: Iterable[(com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart2)]): Option[(com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart2)] =
     val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2)
     own.find(k => CatalogRecord.eventId(k._1, k._2) == eventId).orElse(own.headOption)

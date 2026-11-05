@@ -1,0 +1,44 @@
+package com.histmersion.config
+
+import hearth.kindlings.sconfigderivation.ConfigReader
+
+/** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on the user's machine,
+  * not in the container).
+  *
+  * @param libraryDir
+  *   the Calibre library root (`metadata.db` lives here); `~` is expanded
+  * @param calibredb
+  *   the `calibredb` executable — preferred reader/writer
+  * @param sqlite
+  *   the `sqlite3` executable — read-only fallback when the Calibre GUI holds the DB
+  * @param originalsDir
+  *   optional host directory holding the fetched originals as `<citekey>/paper.*`, an override for
+  *   `calibre push`/`sync`, which otherwise download the original the server stored
+  */
+final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCliConfig.OriginalsDir)
+    derives ConfigReader:
+
+  private def expand(p: com.histmersion.config.CalibreCliConfig.ExpandP): com.histmersion.config.CalibreCliConfig.ExpandResult =
+    if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p
+
+  def library: com.histmersion.config.CalibreCliConfig.LibraryResult = expand(libraryDir)
+  def originals: Option[com.histmersion.config.CalibreCliConfig.OriginalsResult] = Option(originalsDir).map(expand).map(_.trim).filter(_.nonEmpty)
+
+object CalibreCliConfig:
+  type ExpandResult = ExpandResult.T
+  object ExpandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExpandP = ExpandP.T
+  object ExpandP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LibraryResult = LibraryResult.T
+  object LibraryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalsResult = OriginalsResult.T
+  object OriginalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type LibraryDir = LibraryDir.T
+  object LibraryDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Calibredb = Calibredb.T
+  object Calibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sqlite = Sqlite.T
+  object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalsDir = OriginalsDir.T
+  object OriginalsDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

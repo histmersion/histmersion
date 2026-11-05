@@ -15,7 +15,7 @@ final class SettingsControllers(
     knownKeys: () => List[String] = () => Nil
 ):
 
-  def page(prefix: Option[String]): Either[Api.Error, ConfigEdit.Page] =
+  def page(prefix: Option[com.histmersion.util.settings.SettingsControllers.PagePrefix]): Either[Api.Error, ConfigEdit.Page] =
     for
       p <- prefix
         .map(_.trim)
@@ -49,4 +49,10 @@ final class SettingsControllers(
         msg => Right(ConfigEdit.Restart(accepted = true, msg))
       )
 
-  def setupDue: Boolean = settings.setupDue
+  def setupDue: com.histmersion.util.settings.SettingsControllers.SetupDueResult = settings.setupDue
+
+object SettingsControllers:
+  type PagePrefix = PagePrefix.T
+  object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetupDueResult = SetupDueResult.T
+  object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

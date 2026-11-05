@@ -8,7 +8,18 @@ import scala.concurrent.duration.*
   * host is treated as having no copy: it is neither retried nor worked around.
   */
 object Challenge:
-  def isChallenge(code: Int, headers: Map[String, String], body: Array[Byte]): Boolean =
+  type IsChallengeResult = IsChallengeResult.T
+  object IsChallengeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsChallengeCode = IsChallengeCode.T
+  object IsChallengeCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsChallengeHeadersPart1 = IsChallengeHeadersPart1.T
+  object IsChallengeHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsChallengeHeadersPart2 = IsChallengeHeadersPart2.T
+  object IsChallengeHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsAnubisResult = IsAnubisResult.T
+  object IsAnubisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def isChallenge(code: com.histmersion.pluginhost.Challenge.IsChallengeCode, headers: Map[com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1, com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart2], body: Array[Byte]): com.histmersion.pluginhost.Challenge.IsChallengeResult =
     val mitigated = headers.exists((k, v) => k.equalsIgnoreCase("cf-mitigated") && v.toLowerCase.contains("challenge"))
     val page = new String(body.take(4096), "ISO-8859-1").toLowerCase
     mitigated || isAnubis(body) || ((code == 403 || code == 429 || code == 503) &&
@@ -20,7 +31,7 @@ object Challenge:
     * assets under `/.within.website/x/` — and a file never starts with them, so any status counts; a PDF is never read
     * as one.
     */
-  private def isAnubis(body: Array[Byte]): Boolean =
+  private def isAnubis(body: Array[Byte]): com.histmersion.pluginhost.Challenge.IsAnubisResult =
     val head = new String(body.take(32768), "ISO-8859-1").toLowerCase
     !head.startsWith("%pdf") &&
     (head.contains("id=\"anubis_challenge\"") || (head.contains("/.within.website/x/") && head.contains("anubis")))

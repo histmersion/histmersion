@@ -2,10 +2,19 @@ package com.histmersion.api.library
 import com.histmersion.api.given
 object CandidatesMarkdown:
 
-  private def counts(cs: List[CandidateCount]): String =
+  type CountsResult = CountsResult.T
+  object CountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListResult = ListResult.T
+  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepResult = SweepResult.T
+  object SweepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkedResult = MarkedResult.T
+  object MarkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def counts(cs: List[CandidateCount]): com.histmersion.api.library.CandidatesMarkdown.CountsResult =
     if cs.isEmpty then "none yet" else cs.map(c => s"${c.count} ${c.state}").mkString(", ")
 
-  def list(l: CandidateList): String =
+  def list(l: CandidateList): com.histmersion.api.library.CandidatesMarkdown.ListResult =
     val head = s"# Candidates${l.goal.fold(" (every goal)")(g => s" for goal `$g`")} — ${l.state}"
     val total = s"Counts: ${counts(l.counts)}."
     val rows = l.candidates.map { c =>
@@ -19,7 +28,7 @@ object CandidatesMarkdown:
     val body = if rows.isEmpty then List(s"No ${l.state} candidates.") else rows
     (head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n")
 
-  def sweep(s: CandidateSweep): String =
+  def sweep(s: CandidateSweep): com.histmersion.api.library.CandidatesMarkdown.SweepResult =
     val w = s.watches.map { w =>
       s"- ${w.index} ${w.kind} `${w.subject}`: ${w.lastError.fold(s"${w.lastFound} found")(e => s"not read — $e")}" +
         w.watermark.fold("")(d => s" (reads from $d next)")
@@ -31,4 +40,4 @@ object CandidatesMarkdown:
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n")
 
-  def marked(m: CandidateMarked): String = s"${m.updated} candidate(s) marked ${m.state}."
+  def marked(m: CandidateMarked): com.histmersion.api.library.CandidatesMarkdown.MarkedResult = s"${m.updated} candidate(s) marked ${m.state}."

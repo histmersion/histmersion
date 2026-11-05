@@ -17,7 +17,18 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object ShelfList:
 
-  private def isRead(i: String): Boolean = MyItems.readNow(i)
+  type IsReadResult = IsReadResult.T
+  object IsReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsReadI = IsReadI.T
+  object IsReadI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HrefOfResult = HrefOfResult.T
+  object HrefOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElementChosen = ElementChosen.T
+  object ElementChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowChosen = RowChosen.T
+  object RowChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def isRead(i: com.histmersion.web.library.ShelfList.IsReadI): com.histmersion.web.library.ShelfList.IsReadResult = MyItems.readNow(i)
 
   /** The section a source's or an article's row is read in. */
   private def sectionOf(k: ItemKind): Option[LibrarySection] = k match
@@ -30,12 +41,12 @@ object ShelfList:
       case (Some(s), Some(k)) => Router.go(Route.Library(s), search = LibraryAddress.search(Some(k), shelf))
       case _                  => OpenBack(r.target)
 
-  private def hrefOf(r: ShelfRow, shelf: Shelf): String =
+  private def hrefOf(r: ShelfRow, shelf: Shelf): com.histmersion.web.library.ShelfList.HrefOfResult =
     (sectionOf(r.target.kind), r.target.itemKey) match
       case (Some(s), Some(k)) => LibraryAddress.href(s, Some(k), shelf)
       case _                  => ItemRef.back(r.target)
 
-  def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[String]]): HtmlElement =
+  def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ShelfList.ElementChosen]]): HtmlElement =
     val unread = Var(Option.empty[Either[String, UnreadPage]])
     val offset = Var(0)
     def readUnread(): Unit =
@@ -124,7 +135,7 @@ object ShelfList:
       )
     )
 
-  private def row(r: ShelfRow, shelf: Shelf, section: LibrarySection, chosen: Signal[Option[String]]): HtmlElement =
+  private def row(r: ShelfRow, shelf: Shelf, section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ShelfList.RowChosen]]): HtmlElement =
     val on =
       chosen.map(c => r.target.itemKey.isDefined && c == r.target.itemKey && sectionOf(r.target.kind).contains(section))
     li(

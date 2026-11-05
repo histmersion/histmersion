@@ -9,9 +9,9 @@ import sttp.tapir.Schema
 final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: com.histmersion.api.catalogue.Latitude, maxLon: com.histmersion.api.catalogue.Longitude, maxLat: com.histmersion.api.catalogue.Latitude)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def crossesAntimeridian: Boolean = minLon > maxLon
+  def crossesAntimeridian: com.histmersion.api.BBox.CrossesAntimeridianResult = minLon > maxLon
 
-  def contains(lon: Double, lat: Double): Boolean =
+  def contains(lon: com.histmersion.api.BBox.ContainsLon, lat: com.histmersion.api.BBox.ContainsLat): com.histmersion.api.BBox.ContainsResult =
     val latOk = lat >= minLat && lat <= maxLat
     val lonOk = if crossesAntimeridian then lon >= minLon || lon <= maxLon else lon >= minLon && lon <= maxLon
     latOk && lonOk
@@ -19,7 +19,18 @@ final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: c
 object BBox:
 
 
-  def parse(s: String): Option[BBox] =
+  type CrossesAntimeridianResult = CrossesAntimeridianResult.T
+  object CrossesAntimeridianResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsResult = ContainsResult.T
+  object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsLon = ContainsLon.T
+  object ContainsLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsLat = ContainsLat.T
+  object ContainsLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.BBox.ParseS): Option[BBox] =
     val parts = s.split(",").map(_.trim).toList
     parts.traverseDouble.filter(_.length == 4).map(a => BBox(a(0), a(1), a(2), a(3)))
 

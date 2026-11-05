@@ -26,11 +26,18 @@ enum BaseMap(
       extends BaseMap("muted", "Muted (online)", None, Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
   case Dark extends BaseMap("dark", "Dark (online)", None, None)
 
-  def online: Boolean = vector.isEmpty
+  def online: com.histmersion.web.BaseMap.OnlineResult = vector.isEmpty
 
 object BaseMap:
   /** A kept choice; `terrain` is what a browser kept for the local map before the two styles: Readable. */
-  def fromWire(s: String): Option[BaseMap] =
+  type OnlineResult = OnlineResult.T
+  object OnlineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DarkenedResult = DarkenedResult.T
+  object DarkenedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromWire(s: com.histmersion.web.BaseMap.FromWireS): Option[BaseMap] =
     val w = s.trim.toLowerCase
     if w == "terrain" then Some(Readable) else values.find(_.wire == w)
 
@@ -44,4 +51,4 @@ object BaseMap:
     case _        => MapTone.Light
 
   /** Pure: is base map `b` drawn by darkening light tiles? Not when the configured tiles already are dark. */
-  def darkened(b: BaseMap, configured: MapTone): Boolean = b == Dark && configured == MapTone.Light
+  def darkened(b: BaseMap, configured: MapTone): com.histmersion.web.BaseMap.DarkenedResult = b == Dark && configured == MapTone.Light

@@ -23,6 +23,31 @@ object FilterBar:
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
+  type Folded = Folded.T
+  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoreOpenInitiallyResult = MoreOpenInitiallyResult.T
+  object MoreOpenInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoreOpenInitiallyStored = MoreOpenInitiallyStored.T
+  object MoreOpenInitiallyStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoreOpenInitiallySomeMoreSet = MoreOpenInitiallySomeMoreSet.T
+  object MoreOpenInitiallySomeMoreSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoreOpenInitiallyNarrow = MoreOpenInitiallyNarrow.T
+  object MoreOpenInitiallyNarrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldedInitiallyResult = FoldedInitiallyResult.T
+  object FoldedInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldedInitiallyStored = FoldedInitiallyStored.T
+  object FoldedInitiallyStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredResult = StoredResult.T
+  object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKey = StoredKey.T
+  object StoredKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeepKey = KeepKey.T
+  object KeepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeepOn = KeepOn.T
+  object KeepOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetFoldedOn = SetFoldedOn.T
+  object SetFoldedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class ChipField(state: Field[List[ChipField.State]], facet: ChipField.Facet, label: ChipField.Label, placeholder: ChipField.Placeholder)
 
   object ChipField:
@@ -50,28 +75,28 @@ object FilterBar:
   private val moreOpen = Var(false)
 
   /** Whether the panel is folded to its rail (a wide screen; a phone's drawer never folds). */
-  val folded: Var[Boolean] = Var(false)
+  val folded: Var[com.histmersion.web.FilterBar.Folded] = Var(false)
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
   /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
     * link, say), so nothing that filters is hidden.
     */
-  def moreOpenInitially(stored: Option[String], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
+  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.MoreOpenInitiallyStored], someMoreSet: com.histmersion.web.FilterBar.MoreOpenInitiallySomeMoreSet, narrow: com.histmersion.web.FilterBar.MoreOpenInitiallyNarrow = false): com.histmersion.web.FilterBar.MoreOpenInitiallyResult =
     stored.contains("1") || someMoreSet
 
   /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
-  def foldedInitially(stored: Option[String]): Boolean = stored.contains("1")
+  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.FoldedInitiallyStored]): com.histmersion.web.FilterBar.FoldedInitiallyResult = stored.contains("1")
 
-  private def stored(key: String): Option[String] =
+  private def stored(key: com.histmersion.web.FilterBar.StoredKey): Option[com.histmersion.web.FilterBar.StoredResult] =
     try Option(dom.window.localStorage.getItem(key))
     catch case _: Exception => None
 
-  private def keep(key: String, on: Boolean): Unit =
+  private def keep(key: com.histmersion.web.FilterBar.KeepKey, on: com.histmersion.web.FilterBar.KeepOn): Unit =
     try dom.window.localStorage.setItem(key, if on then "1" else "0")
     catch case _: Exception => ()
 
-  def setFolded(on: Boolean): Unit =
+  def setFolded(on: com.histmersion.web.FilterBar.SetFoldedOn): Unit =
     folded.set(on)
     keep(foldedKey, on)
 

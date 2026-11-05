@@ -22,6 +22,19 @@ final case class MergeApplyJob(
 object MergeApplyJob:
 
 
+  type InterruptedText = InterruptedText.T
+  object InterruptedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfId = OfId.T
+  object OfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfBundle = OfBundle.T
+  object OfBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlanHash = OfPlanHash.T
+  object OfPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfElapsedMs = OfElapsedMs.T
+  object OfElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfError = OfError.T
+  object OfError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Job = Job.T
   object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Bundle = Bundle.T
@@ -35,18 +48,18 @@ object MergeApplyJob:
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind.value
 
-  val InterruptedText: String =
+  val InterruptedText: com.histmersion.api.exchange.MergeApplyJob.InterruptedText =
     "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
       "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
       "shows what is left"
 
   def of(
-      id: String,
+      id: com.histmersion.api.exchange.MergeApplyJob.OfId,
       status: JobState,
-      bundle: String,
-      planHash: String,
-      elapsedMs: Long,
-      error: Option[String],
+      bundle: com.histmersion.api.exchange.MergeApplyJob.OfBundle,
+      planHash: com.histmersion.api.exchange.MergeApplyJob.OfPlanHash,
+      elapsedMs: com.histmersion.api.exchange.MergeApplyJob.OfElapsedMs,
+      error: Option[com.histmersion.api.exchange.MergeApplyJob.OfError],
       result: Option[MergeApplyResult]
   ): MergeApplyJob =
     status match

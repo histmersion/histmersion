@@ -5,7 +5,12 @@ package com.histmersion.api
   */
 object Csv:
 
-  def parse(text: String): List[List[String]] =
+  type ParseResult = ParseResult.T
+  object ParseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(text: com.histmersion.api.Csv.ParseText): List[List[com.histmersion.api.Csv.ParseResult]] =
     val rows = List.newBuilder[List[String]]
     var row = List.newBuilder[String]
     val field = new StringBuilder

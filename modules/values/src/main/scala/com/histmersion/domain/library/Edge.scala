@@ -12,12 +12,23 @@ object Edge:
       Confirms, Cites, FoundationalFor, CompilationOf, ReviewOf, Verifies
 
   object Kind:
-    private val wireMap: Map[String, Kind] = values.map(e => wireOf(e) -> e).toMap
+    type WireMapPart1 = WireMapPart1.T
+    object WireMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllWire = AllWire.T
+    object AllWire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    private val wireMap: Map[com.histmersion.domain.library.Edge.Kind.WireMapPart1, Kind] = values.map(e => wireOf(e) -> e).toMap
 
     /** The wire string for an edge kind: lowercase with underscores preserved. `SupersededBy` → `"superseded_by"`,
       * `FoundationalFor` → `"foundational_for"`.
       */
-    def wireOf(e: Kind): String = e match
+    def wireOf(e: Kind): com.histmersion.domain.library.Edge.Kind.WireOfResult = e match
       case References      => "references"
       case Challenges      => "challenges"
       case Refutes         => "refutes"
@@ -31,12 +42,12 @@ object Edge:
       case ReviewOf        => "review_of"
       case Verifies        => "verifies"
 
-    def fromWire(s: String): Option[Kind] = wireMap.get(s.toLowerCase)
+    def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(s.toLowerCase)
 
     /** All wire strings, for validators and legends. */
-    val allWire: List[String] = values.map(wireOf).toList
+    val allWire: List[com.histmersion.domain.library.Edge.Kind.AllWire] = values.map(wireOf).toList
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = wireOf(e)
-      def fromWire(s: String): Option[Kind] = Kind.fromWire(s)
+      def wire(e: Kind): com.histmersion.domain.library.Edge.Kind.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = Kind.fromWire(s)

@@ -16,5 +16,10 @@ final case class MediaList(
   def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(items.size))
 object MediaList:
 
-  def of(total: Int, rows: List[MediaItem], offset: Int): MediaList =
+  type OfTotal = OfTotal.T
+  object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(total: com.histmersion.api.media.MediaList.OfTotal, rows: List[MediaItem], offset: com.histmersion.api.media.MediaList.OfOffset): MediaList =
     MediaList(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)

@@ -33,7 +33,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pause: com.histmersion.util.time.Pause = deps.pause
   override def userPaths: com.histmersion.config.UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
-  def aiProviders: () => ListMap[String, AiProvider] = () => deps.plugins.registries.aiProviders
+  def aiProviders: () => ListMap[com.histmersion.server.agents.ServerEngineSite.AiProvidersResultResultPart1, AiProvider] = () => deps.plugins.registries.aiProviders
   def roster: AgentRoster = EngineContributions.roster
   def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(
@@ -42,3 +42,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   )
   def host(a: AgentsControllers): AutomationHost =
     ServerAutomationHost(w, () => EngineContributions.work(a).acquisition)
+
+object ServerEngineSite:
+  type AiProvidersResultResultPart1 = AiProvidersResultResultPart1.T
+  object AiProvidersResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

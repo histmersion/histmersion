@@ -160,7 +160,7 @@ final class InstanceControllers(
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
     * counters after the mark moved.
     */
-  def markSeen(board: String, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
+  def markSeen(board: com.histmersion.server.instance.InstanceControllers.MarkSeenBoard, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
     deps.maintenance.guard("mark_seen"):
       for
         b <- UiNotices.Board
@@ -190,7 +190,13 @@ final class InstanceControllers(
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract can draw one of
     * the vector styles whole — a `stat` and a cached header read.
     */
-  def baseMapSource: String =
+  def baseMapSource: com.histmersion.server.instance.InstanceControllers.BaseMapSourceResult =
     cfg.ui.baseMapSource.trim.toLowerCase(java.util.Locale.ROOT) match
       case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
       case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
+
+object InstanceControllers:
+  type MarkSeenBoard = MarkSeenBoard.T
+  object MarkSeenBoard extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BaseMapSourceResult = BaseMapSourceResult.T
+  object BaseMapSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

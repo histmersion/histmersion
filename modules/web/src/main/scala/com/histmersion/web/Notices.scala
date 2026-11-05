@@ -28,25 +28,44 @@ object Notices:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The board a window watches: its wire key is the window's own; other windows watch none. */
+  type ToMarkResultPart2 = ToMarkResultPart2.T
+  object ToMarkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToMarkCsPart1 = ToMarkCsPart1.T
+  object ToMarkCsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeenAtAt = SeenAtAt.T
+  object SeenAtAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyFreshResult = AnyFreshResult.T
+  object AnyFreshResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyFreshCsPart1 = AnyFreshCsPart1.T
+  object AnyFreshCsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyFreshShownResult = AnyFreshShownResult.T
+  object AnyFreshShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpokenResult = SpokenResult.T
+  object SpokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshAfterArg1Part1 = RefreshAfterArg1Part1.T
+  object RefreshAfterArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkAt = MarkAt.T
+  object MarkAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def boardOf(key: WindowKey): Option[Board] = Board.parse(key.wire)
 
   /** The boards to mark seen now: those whose window is open and that have news, at their `latest`. */
-  def toMark(open: List[WindowKey], cs: Map[String, Counter]): List[(Board, String)] =
+  def toMark(open: List[WindowKey], cs: Map[com.histmersion.web.Notices.ToMarkCsPart1, Counter]): List[(Board, com.histmersion.web.Notices.ToMarkResultPart2)] =
     open.flatMap(boardOf).distinct.flatMap { b =>
       cs.get(b.wire).filter(_.fresh).flatMap(_.latest).map(b -> _)
     }
 
   /** A counter once its window showed the items up to `at`. */
-  def seenAt(c: Counter, at: String): Counter =
+  def seenAt(c: Counter, at: com.histmersion.web.Notices.SeenAtAt): Counter =
     val s = UiNotices.advance(c.seen, at)
     c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(UiNotices.fresh(c.latest, Some(s)))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
-  def anyFresh(cs: Map[String, Counter], shown: Board => Boolean): Boolean =
+  def anyFresh(cs: Map[com.histmersion.web.Notices.AnyFreshCsPart1, Counter], shown: Board => com.histmersion.web.Notices.AnyFreshShownResult): com.histmersion.web.Notices.AnyFreshResult =
     cs.values.exists(c => c.fresh && Board.parse(c.key).exists(shown))
 
   /** What a board's button says to a screen reader beside its label. */
-  def spoken(c: Option[Counter]): String =
+  def spoken(c: Option[Counter]): com.histmersion.web.Notices.SpokenResult =
     val count = c.flatMap(x => UiNotices.badge(x.count)).map(n => s"$n open")
     val news = Option.when(c.exists(_.fresh))("something new")
     (count.toList ++ news).mkString(", ")
@@ -62,7 +81,7 @@ object Notices:
   def counter(b: Board): Signal[Option[Counter]] = boards.signal.map(_.get(b.wire)).distinct
 
   /** Is a board among those shown new? */
-  def anyFresh(shown: Board => Boolean): Signal[Boolean] = boards.signal.map(anyFresh(_, shown)).distinct
+  def anyFresh(shown: Board => com.histmersion.web.Notices.AnyFreshShownResult): Signal[com.histmersion.web.Notices.AnyFreshResult] = boards.signal.map(anyFresh(_, shown)).distinct
 
   // `var`s: answers to a superseded request are dropped; the debounce timer; the marks on their way
   private var generation = 0
@@ -75,7 +94,7 @@ object Notices:
     glance.set(cs.agents)
 
   /** Re-read the counters; `after` sees them once they are in. */
-  def refresh(after: Map[String, Counter] => Unit = _ => ()): Unit =
+  def refresh(after: Map[com.histmersion.web.Notices.RefreshAfterArg1Part1, Counter] => Unit = _ => ()): Unit =
     generation += 1
     val mine = generation
     ApiClient.uiCounters().foreach { cs =>
@@ -105,7 +124,7 @@ object Notices:
     )
 
   /** Mark `b` seen at `at`: on the page now, then on the server. */
-  private def mark(b: Board, at: String): Unit =
+  private def mark(b: Board, at: com.histmersion.web.Notices.MarkAt): Unit =
     boards.update(m => m.get(b.wire).fold(m)(c => m.updated(b.wire, seenAt(c, at))))
     if !sending.get(b).exists(_ >= at) then
       sending(b) = at

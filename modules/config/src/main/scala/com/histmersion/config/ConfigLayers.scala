@@ -36,6 +36,35 @@ import scala.util.Try
   */
 private[config] object ConfigLayers:
 
+  type LeavesResultPart1 = LeavesResultPart1.T
+  object LeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeavesResultPart2 = LeavesResultPart2.T
+  object LeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeavesPrefix = LeavesPrefix.T
+  object LeavesPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenBlocks = OpenBlocks.T
+  object OpenBlocks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InOpenBlockResult = InOpenBlockResult.T
+  object InOpenBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InOpenBlockKeys = InOpenBlockKeys.T
+  object InOpenBlockKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypeCheckResultPart1 = TypeCheckResultPart1.T
+  object TypeCheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypeCheckSettings = TypeCheckSettings.T
+  object TypeCheckSettings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MismatchResult = MismatchResult.T
+  object MismatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MismatchPath = MismatchPath.T
+  object MismatchPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameFileResult = SameFileResult.T
+  object SameFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of `reference` whose `${?VAR}`
@@ -49,7 +78,7 @@ private[config] object ConfigLayers:
   /** Every key the user file sets (full paths, sorted), each with whether its value is a block. Unresolved values are
     * leaves; an object that cannot be listed (a delayed merge) is one too.
     */
-  private def leaves(obj: ConfigObject, prefix: List[String]): List[(List[String], Boolean)] =
+  private def leaves(obj: ConfigObject, prefix: List[com.histmersion.config.ConfigLayers.LeavesPrefix]): List[(List[com.histmersion.config.ConfigLayers.LeavesResultPart1], com.histmersion.config.ConfigLayers.LeavesResultPart2)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
       val p = prefix :+ k
       obj.get(k) match
@@ -75,7 +104,7 @@ private[config] object ConfigLayers:
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's environment), not a fixed
     * set of settings: any key under one is known, and its value — any string, or null — is left to the reader.
     */
-  val OpenBlocks: List[List[String]] = List(
+  val OpenBlocks: List[List[com.histmersion.config.ConfigLayers.OpenBlocks]] = List(
     List("histmersion", "agents", "providers", "claude-code", "env"),
     // each plugin's block is checked by the plugin host against THAT plugin's defaults resource
     // (com.histmersion.pluginhost.PluginHost.typeCheck), so `order` and every `<id> { … }` are open here
@@ -84,10 +113,10 @@ private[config] object ConfigLayers:
     List("histmersion", "media", "collections", "per-collection")
   )
 
-  private def inOpenBlock(keys: List[String]): Boolean =
+  private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): com.histmersion.config.ConfigLayers.InOpenBlockResult =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
-  def check(user: Config, known: Config): Either[String, Keys] =
+  def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.CheckResultPart1, Keys] =
     @tailrec def loop(
         rest: List[(List[String], Boolean)],
         settings: List[String],
@@ -110,7 +139,7 @@ private[config] object ConfigLayers:
     * accept it (that is how env values arrive). Finer mismatches (a fraction for a whole number) are left to the
     * readers.
     */
-  def typeCheck(settings: List[String], merged: Config, known: Config): Either[String, Unit] =
+  def typeCheck(settings: List[com.histmersion.config.ConfigLayers.TypeCheckSettings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.TypeCheckResultPart1, Unit] =
     settings.iterator
       .flatMap(path =>
         (Try(known.getValue(path)).toOption, Try(merged.getValue(path)).toOption) match
@@ -120,7 +149,7 @@ private[config] object ConfigLayers:
       .nextOption()
       .toLeft(())
 
-  private def mismatch(path: String, k: ConfigValue, v: ConfigValue): Option[String] =
+  private def mismatch(path: com.histmersion.config.ConfigLayers.MismatchPath, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.MismatchResult] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
     def shown = v.render(ConfigRenderOptions.concise)
@@ -134,7 +163,7 @@ private[config] object ConfigLayers:
     Option.unless(ok)(s"'$path' must be $want, not $shown")
 
   /** `file` as HOCON; `None` when there is no such file. */
-  def parse(file: Path): Either[String, Option[Config]] =
+  def parse(file: Path): Either[com.histmersion.config.ConfigLayers.ParseResultPart1, Option[Config]] =
     if !Files.exists(file) then Right(None)
     else if !Files.isRegularFile(file) then Left(s"$file is not a file")
     else
@@ -142,13 +171,13 @@ private[config] object ConfigLayers:
       catch case e: ConfigException => Left(e.getMessage)
 
   /** Is `o` the origin of `file` itself, not of a file it includes? */
-  def sameFile(o: ConfigOrigin, file: Path): Boolean =
+  def sameFile(o: ConfigOrigin, file: Path): com.histmersion.config.ConfigLayers.SameFileResult =
     Option(o.filename).exists(f =>
       Try(Path.of(f).toAbsolutePath.normalize).toOption.contains(file.toAbsolutePath.normalize)
     )
 
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
-  def describe(err: ConfigDecodingError): String =
+  def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.DescribeResult =
     err match
       case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe).mkString("; ")
       case e                                  =>

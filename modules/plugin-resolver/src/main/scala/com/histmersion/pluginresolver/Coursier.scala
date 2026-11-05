@@ -18,7 +18,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
   def resolve(
       roots: List[ModuleCoordinates],
       excluded: Set[ModuleKey]
-  ): Either[String, List[(ModuleCoordinates, Option[Path])]] =
+  ): Either[com.histmersion.pluginresolver.Coursier.ResolveResultPart1, List[(ModuleCoordinates, Option[Path])]] =
     val params = excluded.foldLeft(ResolutionParams.create())((p, k) => p.addExclusion(k.group.value, k.artifact.value))
     val fetch = Fetch
       .create()
@@ -41,13 +41,20 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
 object Coursier:
 
   /** Maven's version order (`1.10` after `1.9`, `1.0-RC1` before `1.0`). */
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JarPathResult = JarPathResult.T
+  object JarPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginRepositoryResultPart1 = PluginRepositoryResultPart1.T
+  object PluginRepositoryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val order: Resolution.VersionOrder = (a, b) => Version.compare(a.value, b.value)
 
   /** The repository every resolution falls back to when none is named: Maven Central. */
   def central: RepositoryUrl = RepositoryUrl.applyUnsafe(Repository.central().getBase)
 
   /** Where a module's main jar sits in a Maven repository, from its root. */
-  def jarPath(c: ModuleCoordinates): String =
+  def jarPath(c: ModuleCoordinates): com.histmersion.pluginresolver.Coursier.JarPathResult =
     val a = c.key.artifact.value
     val v = c.version.value
     s"/${c.key.group.value.replace('.', '/')}/$a/$v/$a-$v.jar"
@@ -59,7 +66,7 @@ object Coursier:
   def pluginRepository(
       dir: Path,
       plugins: List[PluginArtifact]
-  ): Either[String, List[(PluginArtifact, ModuleCoordinates)]] =
+  ): Either[com.histmersion.pluginresolver.Coursier.PluginRepositoryResultPart1, List[(PluginArtifact, ModuleCoordinates)]] =
     traverse(plugins.flatMap(p => p.pom.map(p -> _))) { (plugin, pom) =>
       Pom.coordinates(pom).left.map(e => s"${plugin.fileName}: its POM: $e").map { c =>
         val jar = dir.resolve(jarPath(c).drop(1))

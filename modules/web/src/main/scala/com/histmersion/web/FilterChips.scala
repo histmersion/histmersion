@@ -10,21 +10,40 @@ import com.raquo.laminar.api.L.*
 object FilterChips:
 
   /** Pure: is the span `from`–`to` other than the default one? */
-  def periodSet(from: Option[Long], to: Option[Long], defaultFrom: Long, defaultTo: Long): Boolean =
+  type PeriodSetResult = PeriodSetResult.T
+  object PeriodSetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSetFrom = PeriodSetFrom.T
+  object PeriodSetFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSetTo = PeriodSetTo.T
+  object PeriodSetTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSetDefaultFrom = PeriodSetDefaultFrom.T
+  object PeriodSetDefaultFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSetDefaultTo = PeriodSetDefaultTo.T
+  object PeriodSetDefaultTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountPeriod = CountPeriod.T
+  object CountPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountNowResult = CountNowResult.T
+  object CountNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelOfResult = LabelOfResult.T
+  object LabelOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def periodSet(from: Option[com.histmersion.web.FilterChips.PeriodSetFrom], to: Option[com.histmersion.web.FilterChips.PeriodSetTo], defaultFrom: com.histmersion.web.FilterChips.PeriodSetDefaultFrom, defaultTo: com.histmersion.web.FilterChips.PeriodSetDefaultTo): com.histmersion.web.FilterChips.PeriodSetResult =
     from.getOrElse(defaultFrom) != defaultFrom || to.getOrElse(defaultTo) != defaultTo
 
   /** Pure: how many filters are active — the chips and, when set, the period. */
-  def count(chips: List[UiState.ActiveChip], period: Boolean): Int = chips.size + (if period then 1 else 0)
+  def count(chips: List[UiState.ActiveChip], period: com.histmersion.web.FilterChips.CountPeriod): com.histmersion.web.FilterChips.CountResult = chips.size + (if period then 1 else 0)
 
   /** How many filters are active now. */
-  def countNow(config: UiConfig): Int =
+  def countNow(config: UiConfig): com.histmersion.web.FilterChips.CountNowResult =
     count(
       UiState.activeChips(),
       periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom, config.time.defaultTo)
     )
 
   /** The label a chip's field reads as. */
-  private def labelOf(c: UiState.ActiveChip): String = c.key match
+  private def labelOf(c: UiState.ActiveChip): com.histmersion.web.FilterChips.LabelOfResult = c.key match
     case k if k == UiState.q.key => "Words"
     case _                       => Wording.capitalize(c.label)
 

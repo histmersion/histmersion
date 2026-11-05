@@ -10,7 +10,7 @@ import com.augustnagro.magnum.DbCon
 final class MergeRuleSet(val all: List[MergeRules]):
 
   /** The ledger's label of a row: `CASE l.kind WHEN … END` over every kind that names its records. */
-  def ledgerLabelSql: String =
+  def ledgerLabelSql: com.histmersion.util.data.exchange.MergeRuleSet.LedgerLabelSqlResult =
     all
       .flatMap(r => r.ledgerLabel.map(sql => s"WHEN '${r.kind.wire}' THEN ($sql)"))
       .mkString("CASE l.kind ", "\n                       ", " END")
@@ -34,3 +34,7 @@ final class MergeRuleSet(val all: List[MergeRules]):
       case r :: tail => loop(tail, r.gather(bundle, localized, acc, settings))
       case Nil       => acc
     loop(all, in)
+
+object MergeRuleSet:
+  type LedgerLabelSqlResult = LedgerLabelSqlResult.T
+  object LedgerLabelSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

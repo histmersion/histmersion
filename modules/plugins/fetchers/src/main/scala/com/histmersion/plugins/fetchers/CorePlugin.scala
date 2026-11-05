@@ -4,7 +4,7 @@ package com.histmersion.plugins.fetchers
 import com.histmersion.plugin.Plugin
 final class CorePlugin extends FetcherPlugin("oa-core"):
   type Config = CoreConfig
-  def register(c: CoreConfig, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: CoreConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.CorePlugin.RegisterResultPart1, Unit] =
     c.apiKey
       .fold[Either[String, Option[String]]](Right(c.acquire.core.key))(s =>
         ctx.secret(s).map(v => Option(v).map(_.trim).filter(_.nonEmpty))
@@ -12,3 +12,7 @@ final class CorePlugin extends FetcherPlugin("oa-core"):
       .flatMap(key =>
         ctx.sourceFetchers.add("core", OpenAccess(c.acquire, () => ctx.http, ctx.log).core(key, ctx.quota("core")))
       )
+
+object CorePlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

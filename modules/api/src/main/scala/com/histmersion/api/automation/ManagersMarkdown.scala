@@ -4,9 +4,50 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 object ManagersMarkdown:
+  type CountsResult = CountsResult.T
+  object CountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TodayResult = TodayResult.T
+  object TodayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UsdResult = UsdResult.T
+  object UsdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UsdD = UsdD.T
+  object UsdD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensResult = TokensResult.T
+  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensN = TokensN.T
+  object TokensN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BacklogResult = BacklogResult.T
+  object BacklogResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BacklogN = BacklogN.T
+  object BacklogN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BacklogDays = BacklogDays.T
+  object BacklogDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListResult = ListResult.T
+  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemResult = ItemResult.T
+  object ItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsResult = ItemsResult.T
+  object ItemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventResult = EventResult.T
+  object EventResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventsResult = EventsResult.T
+  object EventsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EffectResult = EffectResult.T
+  object EffectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigLineResult = ConfigLineResult.T
+  object ConfigLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintResult = HintResult.T
+  object HintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueuedResult = EnqueuedResult.T
+  object EnqueuedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailResult = DetailResult.T
+  object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import Managers.*
 
-  private def counts(c: ItemCounts): String =
+  private def counts(c: ItemCounts): com.histmersion.api.automation.ManagersMarkdown.CountsResult =
     List(
       "pending" -> c.pending,
       "held" -> c.held,
@@ -19,19 +60,19 @@ object ManagersMarkdown:
       case "" => "no items"
       case s  => s
 
-  def today(m: ManagerInfo): String =
+  def today(m: ManagerInfo): com.histmersion.api.automation.ManagersMarkdown.TodayResult =
     val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter(_ > 0)
     s"today ${usd(m.spentTodayUsd)}${cap.fold("")(c => s" of ${usd(c)}")} USD" +
       (if m.tokensToday > 0 then s", ${tokens(m.tokensToday)} tokens" else "")
 
-  def usd(d: Double): String =
+  def usd(d: com.histmersion.api.automation.ManagersMarkdown.UsdD): com.histmersion.api.automation.ManagersMarkdown.UsdResult =
     BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
-  private def tokens(n: Long): String =
+  private def tokens(n: com.histmersion.api.automation.ManagersMarkdown.TokensN): com.histmersion.api.automation.ManagersMarkdown.TokensResult =
     def one(x: Double) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
 
-  def backlog(n: Int, days: Option[Int]): String =
+  def backlog(n: com.histmersion.api.automation.ManagersMarkdown.BacklogN, days: Option[com.histmersion.api.automation.ManagersMarkdown.BacklogDays]): com.histmersion.api.automation.ManagersMarkdown.BacklogResult =
     s"${Plural.count(n, "legal open-access work")} in the ingest backlog" + (if n == 0 then ""
                                                                              else
                                                                                days match
@@ -42,7 +83,7 @@ object ManagersMarkdown:
                                                                                  case None =>
                                                                                    " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
 
-  def line(m: ManagerInfo): String =
+  def line(m: ManagerInfo): com.histmersion.api.automation.ManagersMarkdown.LineResult =
     val goal = m.goal.fold("")(g => s" · goal $g")
     val runs = if m.pauseRuns then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
@@ -50,10 +91,10 @@ object ManagersMarkdown:
       m.statusNote.filter(_.nonEmpty).fold("")(n => s" · $n") +
       m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.take(120)}")
 
-  def list(ms: List[ManagerInfo]): String =
+  def list(ms: List[ManagerInfo]): com.histmersion.api.automation.ManagersMarkdown.ListResult =
     if ms.isEmpty then "_No managers._" else "# Managers\n\n" + ms.map(m => s"- ${line(m)}").mkString("\n")
 
-  def item(i: ManagerItem): String =
+  def item(i: ManagerItem): com.histmersion.api.automation.ManagersMarkdown.ItemResult =
     val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.take(8)}"))(r =>
       s" · run ${r.id.take(8)} ${r.status}" + r.progress.filter(_.nonEmpty).fold("")(p => s" (${p.take(80)})")
     )
@@ -68,27 +109,27 @@ object ManagersMarkdown:
       (if i.failures > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
       i.outcome.filter(_.nonEmpty).fold("")(o => s" · $o")
 
-  def items(p: ItemPage): String =
+  def items(p: ItemPage): com.histmersion.api.automation.ManagersMarkdown.ItemsResult =
     if p.items.isEmpty then "_No items._"
     else
       s"Items ${p.offset + 1}–${p.offset + p.items.size} of ${p.total}\n\n" + p.items
         .map(i => s"- ${item(i)}")
         .mkString("\n")
 
-  def event(e: ManagerEvent): String =
+  def event(e: ManagerEvent): com.histmersion.api.automation.ManagersMarkdown.EventResult =
     s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.take(8)}")} · ${e.text}"
 
-  def events(p: EventPage): String =
+  def events(p: EventPage): com.histmersion.api.automation.ManagersMarkdown.EventsResult =
     if p.events.isEmpty then "_No events._" else p.events.map(e => s"- ${event(e)}").mkString("\n")
 
-  def effect(e: HintEffect): String =
+  def effect(e: HintEffect): com.histmersion.api.automation.ManagersMarkdown.EffectResult =
     if e.action == HintEffect.Config then s"settings: ${e.config.fold("none")(configLine)}"
     else
       e.action + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
         e.untilSource.fold("")(s => s" until $s exists") + e.priority.fold("")(p => s" (priority $p)")
 
-  def configLine(c: ManagerConfig): String =
+  def configLine(c: ManagerConfig): com.histmersion.api.automation.ManagersMarkdown.ConfigLineResult =
     List(
       c.maxRuns.map(n => s"maxRuns=$n"),
       c.maxOpen.map(n => s"maxOpen=$n"),
@@ -118,7 +159,7 @@ object ManagersMarkdown:
       case "" => "the defaults"
       case s  => s
 
-  def hint(h: ManagerHint): String =
+  def hint(h: ManagerHint): com.histmersion.api.automation.ManagersMarkdown.HintResult =
     val scope = h.itemId.fold("manager-wide")(i => s"item #$i")
     val eff = h.effect.fold("")(e => s" · ${effect(e)}")
     val proposed = h.proposal.fold("")(a =>
@@ -127,11 +168,11 @@ object ManagersMarkdown:
     s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if h.uses > 0 then s" · reached ${h.uses} run(s)" else "")
 
-  def enqueued(r: EnqueueResult): String =
+  def enqueued(r: EnqueueResult): com.histmersion.api.automation.ManagersMarkdown.EnqueuedResult =
     val head = if r.items.isEmpty then s"Nothing queued for **${r.managerId}**." else s"Queued for **${r.managerId}**:"
     (List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n")
 
-  def detail(d: ManagerDetail): String =
+  def detail(d: ManagerDetail): com.histmersion.api.automation.ManagersMarkdown.DetailResult =
     val m = d.manager
     val cfg = m.effective
     val settings = List(

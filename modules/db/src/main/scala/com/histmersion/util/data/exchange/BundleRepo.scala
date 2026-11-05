@@ -23,11 +23,16 @@ object BundleRepo:
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
+  type SetLabelLabel = SetLabelLabel.T
+  object SetLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaVersionResult = SchemaVersionResult.T
+  object SchemaVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def instance(using DbCon): InstanceInfo =
     Sql.raw(s"SELECT id, label, ${ts("created_at")} FROM instance").frag.query[InstanceInfo].run().head
 
   /** Name this instance; a blank label clears it. */
-  def setLabel(label: Option[String])(using DbCon): InstanceInfo =
+  def setLabel(label: Option[com.histmersion.util.data.exchange.BundleRepo.SetLabelLabel])(using DbCon): InstanceInfo =
     val l = label.map(_.trim).filter(_.nonEmpty)
     sql"UPDATE instance SET label = $l".update.run()
     instance
@@ -52,6 +57,6 @@ object BundleRepo:
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
-  private[histmersion] def schemaVersion(using DbCon): Option[String] =
+  private[histmersion] def schemaVersion(using DbCon): Option[com.histmersion.util.data.exchange.BundleRepo.SchemaVersionResult] =
     sql"""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
           ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption

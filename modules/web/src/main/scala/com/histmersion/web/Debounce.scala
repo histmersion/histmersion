@@ -16,7 +16,7 @@ final class Debounce[A](
 ):
   // `var`s: the one pending run and its timer
   private var pending: Option[A] = None
-  private var timer: Int = 0
+  private var timer: com.histmersion.web.Debounce.Timer = 0
 
   def apply(a: A): Unit =
     if pending.isDefined then cancel(timer)
@@ -27,3 +27,7 @@ final class Debounce[A](
   def cancelPending(): Unit =
     if pending.isDefined then cancel(timer)
     pending = None
+
+object Debounce:
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

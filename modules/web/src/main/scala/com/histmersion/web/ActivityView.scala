@@ -19,7 +19,46 @@ object ActivityView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The row's first words: what is going on, or what it was and when (`hm` = the clock time it shows). */
-  def when(e: Entry, hm: String): String = e.entryKind match
+  type WhenResult = WhenResult.T
+  object WhenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhenHm = WhenHm.T
+  object WhenHm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemResult = ProblemResult.T
+  object ProblemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsResult = ActionsResult.T
+  object ActionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfResult = KindOfResult.T
+  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResult = SearchResult.T
+  object SearchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchGoal = SearchGoal.T
+  object SearchGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamResult = ParamResult.T
+  object ParamResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamSearch = ParamSearch.T
+  object ParamSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamName = ParamName.T
+  object ParamName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClockResult = ClockResult.T
+  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClockIso = ClockIso.T
+  object ClockIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalLinkG = GoalLinkG.T
+  object GoalLinkG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListEmpty = ListEmpty.T
+  object ListEmpty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipsGoal = ChipsGoal.T
+  object ChipsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneGoal = PaneGoal.T
+  object PaneGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShortLimit = ShortLimit.T
+  object ShortLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryGoal = HistoryGoal.T
+  object HistoryGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryLimit = HistoryLimit.T
+  object HistoryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def when(e: Entry, hm: com.histmersion.web.ActivityView.WhenHm): com.histmersion.web.ActivityView.WhenResult = e.entryKind match
     case Some(EntryKind.Run | EntryKind.Job) =>
       e.state match
         case "running"   => "Running"
@@ -33,12 +72,12 @@ object ActivityView:
     case _                        => s"Note · $hm"
 
   /** Does the row read as a problem (its first words in the attention colour)? */
-  def problem(e: Entry): Boolean = e.state == "failed"
+  def problem(e: Entry): com.histmersion.web.ActivityView.ProblemResult = e.state == "failed"
 
   /** The actions a row offers: an agent run or a long background job that is going (pause, cancel), paused (resume,
     * cancel) or waiting its turn (cancel).
     */
-  def actions(e: Entry): List[String] =
+  def actions(e: Entry): List[com.histmersion.web.ActivityView.ActionsResult] =
     val controllable = e.entryKind.contains(EntryKind.Run) ||
       (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(e.what))
     if !controllable || e.job.isEmpty then Nil
@@ -50,13 +89,13 @@ object ActivityView:
         case _                    => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
-  def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(e.kind))(_.wording)
+  def kindOf(e: Entry): com.histmersion.web.ActivityView.KindOfResult = e.entryKind.fold(Wording.humanize(e.kind))(_.wording)
 
   /** The query string of a page of the list: its goal, kept from one chip to the next. */
-  def search(goal: Option[String]): String = goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g)}")
+  def search(goal: Option[com.histmersion.web.ActivityView.SearchGoal]): com.histmersion.web.ActivityView.SearchResult = goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g)}")
 
   /** A `name=value` of a page's query string (`?goal=…`), decoded; `None` when absent or blank. */
-  def param(search: String, name: String): Option[String] =
+  def param(search: com.histmersion.web.ActivityView.ParamSearch, name: com.histmersion.web.ActivityView.ParamName): Option[com.histmersion.web.ActivityView.ParamResult] =
     Option(search)
       .getOrElse("")
       .stripPrefix("?")
@@ -74,7 +113,7 @@ object ActivityView:
   private val Months = Vector("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
   /** `12:40` today, `29 Oct` before, in the reader's own time zone. */
-  private def clock(iso: String): String =
+  private def clock(iso: com.histmersion.web.ActivityView.ClockIso): com.histmersion.web.ActivityView.ClockResult =
     val d = new js.Date(iso)
     if d.getTime().isNaN then iso.take(16)
     else
@@ -84,7 +123,7 @@ object ActivityView:
 
   // ── one row ─────────────────────────────────────────────────────────────────────────────────────
 
-  private def goalLink(g: String): HtmlElement =
+  private def goalLink(g: com.histmersion.web.ActivityView.GoalLinkG): HtmlElement =
     RouteLink(Route.Goal(g), cls := "goal-ref", Wording.humanize(g))
 
   /** What an entry touched, as links. */
@@ -216,7 +255,7 @@ object ActivityView:
 
     def tick(): Unit = if !older then first()
 
-  private def list(feed: Feed, empty: String): HtmlElement =
+  private def list(feed: Feed, empty: com.histmersion.web.ActivityView.ListEmpty): HtmlElement =
     div(
       child.maybe <-- feed.failure.signal
         .map(_.map(m => p(cls := "form-error", role := "alert", s"Could not read the activity: $m"))),
@@ -236,7 +275,7 @@ object ActivityView:
     List(onMountCallback(_ => feed.first()), EventStream.periodic(15000).drop(1) --> (_ => feed.tick()))
 
   /** The chips: each a link to its page, the goal kept; the running and the problems counted. */
-  def chips(ui: UiConfig, on: Option[ActivityTab], goal: Option[String], counts: Signal[Activity.Counts]): HtmlElement =
+  def chips(ui: UiConfig, on: Option[ActivityTab], goal: Option[com.histmersion.web.ActivityView.ChipsGoal], counts: Signal[Activity.Counts]): HtmlElement =
     navTag(
       cls := "activity-chips",
       aria.label := "Show",
@@ -262,7 +301,7 @@ object ActivityView:
     )
 
   /** The whole page: the chips, the list, and the detailed lists it sums up. */
-  def pane(ui: UiConfig, tab: ActivityTab, goal: Option[String]): HtmlElement =
+  def pane(ui: UiConfig, tab: ActivityTab, goal: Option[com.histmersion.web.ActivityView.PaneGoal]): HtmlElement =
     val feed = Feed(tab.show.getOrElse(Activity.Show.Everything), goal, Activity.DefaultLimit)
     div(
       cls := "activity-pane",
@@ -293,12 +332,12 @@ object ActivityView:
     )
 
   /** The overview's few latest entries, linking to the whole list. */
-  def short(limit: Int): HtmlElement =
+  def short(limit: com.histmersion.web.ActivityView.ShortLimit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, None, limit)
     div(cls := "activity-short", polled(feed), list(feed, "Nothing has happened yet."))
 
   /** A goal's slice of the list. */
-  def history(goal: String, limit: Int): HtmlElement =
+  def history(goal: com.histmersion.web.ActivityView.HistoryGoal, limit: com.histmersion.web.ActivityView.HistoryLimit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, Some(goal), limit)
     div(cls := "activity-history", polled(feed), list(feed, "Nothing has happened for this goal yet."))
 

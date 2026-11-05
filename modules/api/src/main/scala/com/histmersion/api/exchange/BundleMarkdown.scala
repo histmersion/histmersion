@@ -5,21 +5,42 @@ import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.given
 object BundleMarkdown:
 
-  def instance(i: InstanceInfo): String =
+  type InstanceResult = InstanceResult.T
+  object InstanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhoResult = WhoResult.T
+  object WhoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesResult = BytesResult.T
+  object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesN = BytesN.T
+  object BytesN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestResult = ManifestResult.T
+  object ManifestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyResult = VerifyResult.T
+  object VerifyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportResultResult = ImportResultResult.T
+  object ImportResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemsResult = ProblemsResult.T
+  object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemsTitle = ProblemsTitle.T
+  object ProblemsTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemsPs = ProblemsPs.T
+  object ProblemsPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def instance(i: InstanceInfo): com.histmersion.api.exchange.BundleMarkdown.InstanceResult =
     s"**Instance** ${i.id}" + i.label
       .map(l => s" · $l")
       .getOrElse(" · _(no label — `histmersion bundle instance --label <name>`)_") +
       s"  \n_created ${i.createdAt}_"
 
-  private def who(i: Bundle.Instance): String = i.label.fold(i.id.toString)(l => s"$l (${i.id})")
+  private def who(i: Bundle.Instance): com.histmersion.api.exchange.BundleMarkdown.WhoResult = i.label.fold(i.id.toString)(l => s"$l (${i.id})")
 
-  private def bytes(n: Long): String =
+  private def bytes(n: com.histmersion.api.exchange.BundleMarkdown.BytesN): com.histmersion.api.exchange.BundleMarkdown.BytesResult =
     if n < 1024 then s"$n B"
     else if n < 1024L * 1024 then s"${n / 1024} KB"
     else if n < 1024L * 1024 * 1024 then s"${n / (1024L * 1024)} MB"
     else s"${n / (1024L * 1024 * 1024)} GB"
 
-  def manifest(m: Bundle.Manifest): String =
+  def manifest(m: Bundle.Manifest): com.histmersion.api.exchange.BundleMarkdown.ManifestResult =
     val files = m.files
       .filter(_.lines > 0)
       .map(f => s"| ${f.path.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
@@ -30,12 +51,12 @@ object BundleMarkdown:
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
-  def verify(r: Bundle.VerifyResult): String =
+  def verify(r: Bundle.VerifyResult): com.histmersion.api.exchange.BundleMarkdown.VerifyResult =
     val head = if r.ok then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, "blob")} verified"
     else s"**NOT OK** — ${Plural.count(r.problems.size, "problem")}"
     (head :: r.manifest.map(manifest).toList ++ problems("Problems", r.problems)).mkString("\n\n")
 
-  def importResult(r: Bundle.ImportResult): String =
+  def importResult(r: Bundle.ImportResult): com.histmersion.api.exchange.BundleMarkdown.ImportResultResult =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
       else if r.dryRun then "**Dry run** — nothing was written; this is what an import would do"
@@ -66,5 +87,5 @@ object BundleMarkdown:
       problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts) ++
       problems("Notes", r.notes)).mkString("\n\n")
 
-  private def problems(title: String, ps: List[String]): List[String] =
+  private def problems(title: com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle, ps: List[com.histmersion.api.exchange.BundleMarkdown.ProblemsPs]): List[com.histmersion.api.exchange.BundleMarkdown.ProblemsResult] =
     if ps.isEmpty then Nil else List(s"**$title**\n" + ps.map(p => s"- $p").mkString("\n"))

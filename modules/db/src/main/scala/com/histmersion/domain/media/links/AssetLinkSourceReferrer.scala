@@ -40,7 +40,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
     if links.nonEmpty then sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run()
 
   /** Other figures' links to the source or one of its findings. */
-  private def linksTo(source: SourceKeys)(using DbCon): List[Long] =
+  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.domain.media.links.AssetLinkSourceReferrer.LinksToResult] =
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck
             AND ((target_type = 'source' AND target_id = ANY($keys::text[]))
@@ -48,3 +48,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       .query[Long]
       .run()
       .toList
+
+object AssetLinkSourceReferrer:
+  type LinksToResult = LinksToResult.T
+  object LinksToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

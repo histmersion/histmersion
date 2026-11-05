@@ -18,24 +18,48 @@ import com.histmersion.api.library.{Facet, Label}
   */
 object ChipInput:
 
-  private var seq: Int = 0
+  type Seq = Seq.T
+  object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyValues = ApplyValues.T
+  object ApplyValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintLabelResult = HintLabelResult.T
+  object HintLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintLabelValue = HintLabelValue.T
+  object HintLabelValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private var seq: com.histmersion.web.ChipInput.Seq = 0
 
   case class Config(
       field: Config.Field,
       label: Config.Label,
       placeholder: Config.Placeholder,
       debounceMs: Config.DebounceMs,
-      getSuggestions: String => Future[List[Facet]],
-      onChange: List[String] => Unit,
+      getSuggestions: Config.GetSuggestionsArg1 => Future[List[Facet]],
+      onChange: List[Config.OnChangeArg1] => Unit,
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
-      onPreview: Option[String] => Unit = _ => (),
+      onPreview: Option[Config.OnPreviewArg1] => Unit = _ => (),
       /** How a value reads on its chip and in the suggestions. */
-      display: String => String = Label.display,
+      display: Config.DisplayArg1 => Config.DisplayResult = Label.display,
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
-      mark: String => Option[String] = _ => None
+      mark: Config.MarkArg1 => Option[Config.MarkResult] = _ => None
   )
 
   object Config:
+    type GetSuggestionsArg1 = GetSuggestionsArg1.T
+    object GetSuggestionsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OnChangeArg1 = OnChangeArg1.T
+    object OnChangeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OnPreviewArg1 = OnPreviewArg1.T
+    object OnPreviewArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DisplayArg1 = DisplayArg1.T
+    object DisplayArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DisplayResult = DisplayResult.T
+    object DisplayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkArg1 = MarkArg1.T
+    object MarkArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkResult = MarkResult.T
+    object MarkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Field = Field.T
     object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
@@ -48,7 +72,7 @@ object ChipInput:
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
-  def apply(config: Config, values: StrictSignal[List[String]]): HtmlElement =
+  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.ChipInput.ApplyValues]]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
@@ -243,6 +267,6 @@ object ChipInput:
   /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
     * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.
     */
-  private[web] def hintLabel(value: String): String = Fmt.display(value)
+  private[web] def hintLabel(value: com.histmersion.web.ChipInput.HintLabelValue): com.histmersion.web.ChipInput.HintLabelResult = Fmt.display(value)
 
 end ChipInput

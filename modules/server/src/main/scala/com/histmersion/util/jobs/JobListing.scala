@@ -14,10 +14,10 @@ import com.histmersion.api.Api
   */
 final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
-  def job(id: String): Either[Api.Error, JobInfo] =
+  def job(id: com.histmersion.util.jobs.JobListing.JobId): Either[Api.Error, JobInfo] =
     Transactor(ds).read(JobRepo.get(id)).toRight(Api.Error(s"No job '$id'", Some(Write.CodeNotFound)))
 
-  def jobs(status: Option[String], limit: Option[Int]): List[JobInfo] =
+  def jobs(status: Option[com.histmersion.util.jobs.JobListing.JobsStatus], limit: Option[com.histmersion.util.jobs.JobListing.JobsLimit]): List[JobInfo] =
     val c = cfg()
     Transactor(ds).read(JobRepo.list(status, c.limits.page(limit, c.limits.search))).toList
 
@@ -26,10 +26,10 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
     */
   def page(
       q: JobQuery,
-      limit: Option[Int],
-      before: Option[String],
-      upTo: Option[String],
-      facetMax: Int
+      limit: Option[com.histmersion.util.jobs.JobListing.PageLimit],
+      before: Option[com.histmersion.util.jobs.JobListing.PageBefore],
+      upTo: Option[com.histmersion.util.jobs.JobListing.PageUpTo],
+      facetMax: com.histmersion.util.jobs.JobListing.PageFacetMax
   ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
     val c = cfg()
     Transactor(ds)
@@ -42,7 +42,29 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
       }
 
   /** The newest job of `kind`. */
-  def newest(kind: String): Option[JobInfo] =
+  def newest(kind: com.histmersion.util.jobs.JobListing.NewestKind): Option[JobInfo] =
     Transactor(ds).read(JobRepo.page(JobQuery(kinds = List(kind)), 1, None, None)).toOption.flatMap(_._1.headOption)
 
-  private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)
+  private def clean(cursor: Option[com.histmersion.util.jobs.JobListing.CleanCursor]): Option[com.histmersion.util.jobs.JobListing.CleanResult] = cursor.map(_.trim).filter(_.nonEmpty)
+
+object JobListing:
+  type JobId = JobId.T
+  object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsStatus = JobsStatus.T
+  object JobsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobsLimit = JobsLimit.T
+  object JobsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageLimit = PageLimit.T
+  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageBefore = PageBefore.T
+  object PageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageUpTo = PageUpTo.T
+  object PageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageFacetMax = PageFacetMax.T
+  object PageFacetMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewestKind = NewestKind.T
+  object NewestKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CleanResult = CleanResult.T
+  object CleanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CleanCursor = CleanCursor.T
+  object CleanCursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

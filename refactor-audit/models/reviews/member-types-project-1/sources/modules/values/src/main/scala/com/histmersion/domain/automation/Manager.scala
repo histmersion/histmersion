@@ -1,0 +1,33 @@
+package com.histmersion.domain.automation
+
+object Manager:
+
+  /** What a manager drives: `review` (library-wide: articles until their review converges), `enrich` (library-wide:
+    * sources until enriched), `seed` (one research area: new articles proposed, approved and compiled), `watch` (one
+    * research area: an acquisition sweep and a currency check on its cron).
+    */
+  enum Kind(val wire: String):
+    case Review extends Kind("review")
+    case Seed extends Kind("seed")
+    case Watch extends Kind("watch")
+    case Enrich extends Kind("enrich")
+
+  object Kind:
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Manager.Kind.ParseS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
+    * cancelled its in-flight runs and items.
+    */
+  enum State(val wire: String):
+    case Active extends State("active")
+    case Paused extends State("paused")
+    case Stopped extends State("stopped")
+
+  object State:
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Manager.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)

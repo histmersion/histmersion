@@ -11,6 +11,29 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 object ConfigReload:
 
+  type RestartOnlyPart1 = RestartOnlyPart1.T
+  object RestartOnlyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartOnlyPart2 = RestartOnlyPart2.T
+  object RestartOnlyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartOnlyResult = RestartOnlyResult.T
+  object RestartOnlyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartOnlyKey = RestartOnlyKey.T
+  object RestartOnlyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeavesResultPart1 = LeavesResultPart1.T
+  object LeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeavesResultPart2 = LeavesResultPart2.T
+  object LeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangedResult = ChangedResult.T
+  object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart1 = SplitResultPart1.T
+  object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart2 = SplitResultPart2.T
+  object SplitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitChanged = SplitChanged.T
+  object SplitChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EffectiveChanged = EffectiveChanged.T
+  object EffectiveChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Root = "histmersion"
 
   /** The settings of a merged tree — the `histmersion { … }` block alone (a merged tree also holds the environment's
@@ -22,7 +45,7 @@ object ConfigReload:
   /** The settings a running server cannot change in place, and why. The running value is kept until a restart (see
     * [[effective]]), and the reload report lists them.
     */
-  val RestartOnly: List[(String, String)] = List(
+  val RestartOnly: List[(com.histmersion.config.ConfigReload.RestartOnlyPart1, com.histmersion.config.ConfigReload.RestartOnlyPart2)] = List(
     "histmersion.server.host" -> "the listener is bound once",
     "histmersion.server.port" -> "the listener is bound once",
     "histmersion.server.request-timeout-seconds" -> "the listener's request timeout is set when it is bound",
@@ -34,20 +57,20 @@ object ConfigReload:
     "histmersion.converter.parallelism" -> "the size of the OCR worker pool, started once"
   )
 
-  def restartOnly(key: String): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
+  def restartOnly(key: com.histmersion.config.ConfigReload.RestartOnlyKey): com.histmersion.config.ConfigReload.RestartOnlyResult = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
 
   /** Every leaf setting (a value or a list; `null` leaves none) with its value rendered. */
-  def leaves(c: org.ekrich.config.Config): Map[String, String] =
+  def leaves(c: org.ekrich.config.Config): Map[com.histmersion.config.ConfigReload.LeavesResultPart1, com.histmersion.config.ConfigReload.LeavesResultPart2] =
     c.entrySet.asScala.iterator.map(e => e.getKey -> e.getValue.render(ConfigRenderOptions.concise)).toMap
 
   /** The settings that differ — set in one and not the other, or set to another value — sorted. */
-  def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[String] =
+  def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[com.histmersion.config.ConfigReload.ChangedResult] =
     val a = leaves(settings(before))
     val b = leaves(settings(after))
     (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sorted
 
   /** `changed`, split into what a running server applies and what waits for a restart. */
-  def split(changed: List[String]): (List[String], List[String]) = changed.partition(k => !restartOnly(k))
+  def split(changed: List[com.histmersion.config.ConfigReload.SplitChanged]): (List[com.histmersion.config.ConfigReload.SplitResultPart1], List[com.histmersion.config.ConfigReload.SplitResultPart2]) = changed.partition(k => !restartOnly(k))
 
   /** The settings the server switches to: `next`, with every restart-only setting that changed put back to its
     * `running` value — so the config the server reports is the one it runs.
@@ -55,7 +78,7 @@ object ConfigReload:
   def effective(
       running: org.ekrich.config.Config,
       next: org.ekrich.config.Config,
-      changed: List[String]
+      changed: List[com.histmersion.config.ConfigReload.EffectiveChanged]
   ): org.ekrich.config.Config =
     changed.filter(restartOnly).foldLeft(settings(next)) { (c, k) =>
       if running.hasPath(k) then c.withValue(k, running.getValue(k)) else c.withoutPath(k)

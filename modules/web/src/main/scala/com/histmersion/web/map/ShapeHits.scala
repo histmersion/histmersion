@@ -11,7 +11,14 @@ object ShapeHits:
   /** Is (`lat`, `lon`) inside the polygon or multipolygon `g` (even–odd over every ring: holes are outside)? Points and
     * lines contain nothing. Pure.
     */
-  def contains(g: js.Dynamic, lat: Double, lon: Double): Boolean =
+  type ContainsResult = ContainsResult.T
+  object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsLat = ContainsLat.T
+  object ContainsLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsLon = ContainsLon.T
+  object ContainsLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def contains(g: js.Dynamic, lat: com.histmersion.web.map.ShapeHits.ContainsLat, lon: com.histmersion.web.map.ShapeHits.ContainsLon): com.histmersion.web.map.ShapeHits.ContainsResult =
     if js.isUndefined(g) || g == null then false
     else
       def ring(r: js.Array[js.Array[Double]]): Boolean =

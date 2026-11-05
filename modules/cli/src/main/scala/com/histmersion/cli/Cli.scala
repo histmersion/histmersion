@@ -30,6 +30,23 @@ import com.histmersion.util.console.Console
   */
 object Cli:
 
+  type HostSeedForce = HostSeedForce.T
+  object HostSeedForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexLoopAfter = ReindexLoopAfter.T
+  object ReindexLoopAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexLoopSources = ReindexLoopSources.T
+  object ReindexLoopSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexLoopChunks = ReindexLoopChunks.T
+  object ReindexLoopChunks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfirmResult = ConfirmResult.T
+  object ConfirmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfirmQuestion = ConfirmQuestion.T
+  object ConfirmQuestion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandResultPart1 = CommandResultPart1.T
+  object CommandResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandResultPart2 = CommandResultPart2.T
+  object CommandResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def out(using console: Console): Console.Output = console.out
   def err(using console: Console): Console.Output = console.err
 
@@ -113,7 +130,7 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
-  private def hostSeed(c: Client, dir: Path, force: Boolean)(using
+  private def hostSeed(c: Client, dir: Path, force: com.histmersion.cli.Cli.HostSeedForce)(using
       console: Console
   ): Either[com.histmersion.cli.Cli.Error, Unit] =
     val layout = ArticleCli.WikiLayout.of(dir)
@@ -395,9 +412,9 @@ object Cli:
   @annotation.tailrec
   private def reindexLoop(
       c: Client,
-      after: Option[String],
-      sources: Int,
-      chunks: Int
+      after: Option[com.histmersion.cli.Cli.ReindexLoopAfter],
+      sources: com.histmersion.cli.Cli.ReindexLoopSources,
+      chunks: com.histmersion.cli.Cli.ReindexLoopChunks
   )(using console: Console): Either[com.histmersion.cli.Cli.Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
@@ -563,7 +580,7 @@ object Cli:
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted `histmersion restore` can
     * never destroy a database by accident; use `--yes` for that.
     */
-  private[cli] def confirm(question: String)(using console: Console): Boolean =
+  private[cli] def confirm(question: com.histmersion.cli.Cli.ConfirmQuestion)(using console: Console): com.histmersion.cli.Cli.ConfirmResult =
     Cli.err.print(s"$question [y/N] ")
     Cli.err.flush()
     Option(console.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
@@ -633,7 +650,7 @@ object Cli:
 
   private[cli] def command(using
       console: Console
-  ): Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
+  ): Command[(Option[com.histmersion.cli.Cli.CommandResultPart1], Option[com.histmersion.cli.Cli.CommandResultPart2], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,

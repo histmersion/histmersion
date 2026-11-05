@@ -7,6 +7,11 @@ import com.histmersion.web.ui.CssClass
   */
 object FadingLayer:
 
+  type PlanBefore = PlanBefore.T
+  object PlanBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanAfter = PlanAfter.T
+  object PlanAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Plan(entering: Set[Plan.Entering], staying: Set[Plan.Staying], exiting: Set[Plan.Exiting])
 
   object Plan:
@@ -18,7 +23,7 @@ object FadingLayer:
     object Exiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: what enters, stays and leaves going from `before` to `after`. */
-  private[web] def plan(before: Set[String], after: Set[String]): Plan =
+  private[web] def plan(before: Set[com.histmersion.web.FadingLayer.PlanBefore], after: Set[com.histmersion.web.FadingLayer.PlanAfter]): Plan =
     Plan(entering = after -- before, staying = after & before, exiting = before -- after)
 
   val fadeIn: CssClass = CssClass("hd-fade-in")

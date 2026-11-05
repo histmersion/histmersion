@@ -35,17 +35,54 @@ import javax.sql.DataSource
   */
 object BundleImporter:
 
+  type RunResultPart1 = RunResultPart1.T
+  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunBundleSha256 = RunBundleSha256.T
+  object RunBundleSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailedProblems = FailedProblems.T
+  object FailedProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamedResult = NamedResult.T
+  object NamedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportInBundleSha = ImportInBundleSha.T
+  object ImportInBundleSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeededBlobsResultPart1 = NeededBlobsResultPart1.T
+  object NeededBlobsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeededBlobsWritesResult = NeededBlobsWritesResult.T
+  object NeededBlobsWritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobsResult = BlobsResult.T
+  object BlobsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobsNeededPart1 = BlobsNeededPart1.T
+  object BlobsNeededPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart1 = ApplyResultPart1.T
+  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyBundleSha256 = ApplyBundleSha256.T
+  object ApplyBundleSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPlanHash = ApplyPlanHash.T
+  object ApplyPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyBackupResultPart1 = ApplyBackupResultPart1.T
+  object ApplyBackupResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyBackupResultPart2 = ApplyBackupResultPart2.T
+  object ApplyBackupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInBundleSha = ApplyInBundleSha.T
+  object ApplyInBundleSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInPlanHash = ApplyInPlanHash.T
+  object ApplyInPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInBackupResultPart1 = ApplyInBackupResultPart1.T
+  object ApplyInBackupResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInBackupResultPart2 = ApplyInBackupResultPart2.T
+  object ApplyInBackupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def run(
       ds: DataSource,
       bundle: ByteSource,
-      bundleSha256: String,
+      bundleSha256: com.histmersion.util.data.exchange.BundleImporter.RunBundleSha256,
       opts: ImportOptions,
       files: ContentStore,
       resolutions: MergeResolutions,
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[String, Bundle.ImportResult] =
+  ): Either[com.histmersion.util.data.exchange.BundleImporter.RunResultPart1, Bundle.ImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -58,11 +95,11 @@ object BundleImporter:
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
-  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[String]): Bundle.ImportResult =
+  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[com.histmersion.util.data.exchange.BundleImporter.FailedProblems]): Bundle.ImportResult =
     Bundle.ImportResult(m.bundleId, m.instance, opts.dryRun, applied = false, Nil, 0, problems, Nil, Nil)
 
   /** The issue as a problem line names it. */
-  private def named(i: MergeIssue): String =
+  private def named(i: MergeIssue): com.histmersion.util.data.exchange.BundleImporter.NamedResult =
     s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}"
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
@@ -83,7 +120,7 @@ object BundleImporter:
     */
   private def importIn(
       bundle: ByteSource,
-      bundleSha: String,
+      bundleSha: com.histmersion.util.data.exchange.BundleImporter.ImportInBundleSha,
       m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
@@ -175,7 +212,7 @@ object BundleImporter:
     MergeRepo.importing(true)
 
   /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
-  private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[String, List[BlobUse]] =
+  private def neededBlobs(es: BundleEntities, writes: UUID => com.histmersion.util.data.exchange.BundleImporter.NeededBlobsWritesResult): Map[com.histmersion.util.data.exchange.BundleImporter.NeededBlobsResultPart1, List[BlobUse]] =
     es.blobRefs.view
       .mapValues(_.filter(u => writes(u.record)))
       .filter(_._2.nonEmpty)
@@ -187,11 +224,11 @@ object BundleImporter:
     */
   private def blobs(
       in: InputStream,
-      needed: Map[String, List[BlobUse]],
+      needed: Map[com.histmersion.util.data.exchange.BundleImporter.BlobsNeededPart1, List[BlobUse]],
       w: BundleImport.Writer,
       files: ContentStore,
       kinds: CarriedKinds
-  ): List[String] =
+  ): List[com.histmersion.util.data.exchange.BundleImporter.BlobsResult] =
     val tar = BundleTar.Reader(in)
     val failures = List.newBuilder[String]
     @annotation.tailrec
@@ -235,17 +272,17 @@ object BundleImporter:
   def apply(
       ds: DataSource,
       bundle: ByteSource,
-      bundleSha256: String,
+      bundleSha256: com.histmersion.util.data.exchange.BundleImporter.ApplyBundleSha256,
       opts: ImportOptions,
       files: ContentStore,
       resolutions: MergeResolutions,
       merge: MergeSettings,
-      planHash: String,
-      backup: () => Either[String, String],
+      planHash: com.histmersion.util.data.exchange.BundleImporter.ApplyPlanHash,
+      backup: () => Either[com.histmersion.util.data.exchange.BundleImporter.ApplyBackupResultPart1, com.histmersion.util.data.exchange.BundleImporter.ApplyBackupResultPart2],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
-  ): Either[String, MergeApplyResult] =
+  ): Either[com.histmersion.util.data.exchange.BundleImporter.ApplyResultPart1, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -276,15 +313,15 @@ object BundleImporter:
 
   private def applyIn(
       bundle: ByteSource,
-      bundleSha: String,
+      bundleSha: com.histmersion.util.data.exchange.BundleImporter.ApplyInBundleSha,
       m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
       files: ContentStore,
       resolutions: MergeResolutions,
       merge: MergeSettings,
-      planHash: String,
-      backup: () => Either[String, String],
+      planHash: com.histmersion.util.data.exchange.BundleImporter.ApplyInPlanHash,
+      backup: () => Either[com.histmersion.util.data.exchange.BundleImporter.ApplyInBackupResultPart1, com.histmersion.util.data.exchange.BundleImporter.ApplyInBackupResultPart2],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps

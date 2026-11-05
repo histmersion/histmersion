@@ -13,21 +13,40 @@ import com.histmersion.plugin.Plugin
 object WorkLookup:
 
   /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
-  val WorkFields: String =
+  type WorkFields = WorkFields.T
+  object WorkFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkUrlResult = WorkUrlResult.T
+  object WorkUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CrossrefUrlResult = CrossrefUrlResult.T
+  object CrossrefUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaResultPart1 = MetaResultPart1.T
+  object MetaResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaJsonArg1 = MetaJsonArg1.T
+  object MetaJsonArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaJsonResultPart1 = MetaJsonResultPart1.T
+  object MetaJsonResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithUnpaywallJsonArg1 = WithUnpaywallJsonArg1.T
+  object WithUnpaywallJsonArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithUnpaywallJsonResultPart1 = WithUnpaywallJsonResultPart1.T
+  object WithUnpaywallJsonResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyArxiv = KeyArxiv.T
+  object KeyArxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val WorkFields: com.histmersion.domain.library.acquisition.WorkLookup.WorkFields =
     "id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
       "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works"
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
-  def workUrl(cfg: UpstreamSettings, doi: String): String =
+  def workUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult =
     s"${cfg.openalex.url}/works/https://doi.org/$doi"
 
   /** Crossref's record of a DOI. */
-  def crossrefUrl(cfg: UpstreamSettings, doi: String): String =
+  def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult =
     Url(cfg.crossref.url, s"/works/$doi", "mailto" -> cfg.mailto)
 
-  def meta(cfg: UpstreamSettings, json: String => Either[String, Json], log: Plugin.Log)(
-      doi: String
-  ): Either[String, WorkRef] =
+  def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonResultPart1, Json], log: Plugin.Log)(
+      doi: com.histmersion.domain.library.Doi
+  ): Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaResultPart1, WorkRef] =
     json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, "mailto" -> cfg.mailto))
       .map(AcquireParse.openalexWork)
       .left
@@ -44,8 +63,8 @@ object WorkLookup:
     */
   private def withUnpaywall(
       cfg: UpstreamSettings,
-      json: String => Either[String, Json],
-      doi: String,
+      json: com.histmersion.domain.library.acquisition.WorkLookup.WithUnpaywallJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.WithUnpaywallJsonResultPart1, Json],
+      doi: com.histmersion.domain.library.Doi,
       w: WorkRef
   ): WorkRef =
     cfg.contact
@@ -56,7 +75,7 @@ object WorkLookup:
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata record says of it.
     * A DOI that is none is not passed on.
     */
-  def key(doi: Option[String], arxiv: Option[String], work: Option[WorkRef]): WorkKey =
+  def key(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.acquisition.WorkLookup.KeyArxiv], work: Option[WorkRef]): WorkKey =
     WorkKey(
       doi = doi.flatMap(d => Doi.option(d.trim)),
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)),

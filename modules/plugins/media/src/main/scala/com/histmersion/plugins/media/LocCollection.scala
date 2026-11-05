@@ -21,12 +21,12 @@ final class LocCollection(conf: CollectionSettings, thumbPx: Int)
   val role = MediaCollection.Map
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear))
 
-  private def explain(e: String): String =
+  private def explain(e: com.histmersion.plugins.media.LocCollection.ExplainE): com.histmersion.plugins.media.LocCollection.ExplainResult =
     if e.contains("HTTP 403") then
       s"$e — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
     else e
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.LocCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.LocCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(LocCollection.results)
@@ -44,20 +44,63 @@ final class LocCollection(conf: CollectionSettings, thumbPx: Int)
 
 object LocCollection:
 
-  def searchUrl(base: String, name: String, limit: Int): String =
+  type ExplainResult = ExplainResult.T
+  object ExplainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExplainE = ExplainE.T
+  object ExplainE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart2Part1 = SearchResultPart2Part1.T
+  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlResult = SearchUrlResult.T
+  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlBase = SearchUrlBase.T
+  object SearchUrlBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlName = SearchUrlName.T
+  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlLimit = SearchUrlLimit.T
+  object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemUrlResult = ItemUrlResult.T
+  object ItemUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemUrlBase = ItemUrlBase.T
+  object ItemUrlBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemUrlId = ItemUrlId.T
+  object ItemUrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemIdResult = ItemIdResult.T
+  object ItemIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemIdUrl = ItemIdUrl.T
+  object ItemIdUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResultsResultPart1 = ResultsResultPart1.T
+  object ResultsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResultsResultPart2 = ResultsResultPart2.T
+  object ResultsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearsOfDate = YearsOfDate.T
+  object YearsOfDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordBase = RecordBase.T
+  object RecordBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordMaxYear = RecordMaxYear.T
+  object RecordMaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordDisplayPx = RecordDisplayPx.T
+  object RecordDisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordThumbPx = RecordThumbPx.T
+  object RecordThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def searchUrl(base: com.histmersion.plugins.media.LocCollection.SearchUrlBase, name: com.histmersion.plugins.media.LocCollection.SearchUrlName, limit: com.histmersion.plugins.media.LocCollection.SearchUrlLimit): com.histmersion.plugins.media.LocCollection.SearchUrlResult =
     s"${base.stripSuffix("/")}/maps/?q=${name.enc}&fo=json&c=${limit.max(1)}&fa=${"partof:geography and map division".enc}"
 
-  def itemUrl(base: String, id: String): String = s"${base.stripSuffix("/")}/item/${id.enc}/?fo=json"
+  def itemUrl(base: com.histmersion.plugins.media.LocCollection.ItemUrlBase, id: com.histmersion.plugins.media.LocCollection.ItemUrlId): com.histmersion.plugins.media.LocCollection.ItemUrlResult = s"${base.stripSuffix("/")}/item/${id.enc}/?fo=json"
 
   private val ItemId = """.*/item/([^/?#]+)/?.*""".r
 
   /** Pure: the item id of a result's `id`/`url` (`http://www.loc.gov/item/2007627513/` → `2007627513`). */
-  def itemId(url: String): Option[String] = url match
+  def itemId(url: com.histmersion.plugins.media.LocCollection.ItemIdUrl): Option[com.histmersion.plugins.media.LocCollection.ItemIdResult] = url match
     case ItemId(id) => Some(id)
     case _          => None
 
   /** Pure: the item ids of a search answer, in its order. */
-  def results(json: Json): Either[String, List[String]] =
+  def results(json: Json): Either[com.histmersion.plugins.media.LocCollection.ResultsResultPart1, List[com.histmersion.plugins.media.LocCollection.ResultsResultPart2]] =
     val c = json.hcursor
     c.downField("results").focus.flatMap(_.asArray) match
       case None     => Left("no results in the answer")
@@ -68,7 +111,7 @@ object LocCollection:
         }.distinct)
 
   /** Pure: the years in a date string (`1890`, `[ca. 1880]`, `1906-1910` → its range). */
-  def yearsOf(date: String): Option[Period] =
+  def yearsOf(date: com.histmersion.plugins.media.LocCollection.YearsOfDate): Option[Period] =
     val ys = """(?<![0-9])([0-9]{4})(?![0-9])""".r.findAllMatchIn(date).map(_.group(1).toLong).toList
     ys.headOption.flatMap(_ => Period.span(ys.min, ys.max))
 
@@ -77,7 +120,7 @@ object LocCollection:
   /** Pure: one item answer. `maxYear` is the public-domain boundary; `displayPx`/`thumbPx` choose among the item's JPEG
     * files (the largest no wider than display, the smallest no narrower than thumb).
     */
-  def record(json: Json, base: String, maxYear: Int, displayPx: Int, thumbPx: Int): Either[String, MediaItem] =
+  def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.histmersion.plugins.media.LocCollection.RecordDisplayPx, thumbPx: com.histmersion.plugins.media.LocCollection.RecordThumbPx): Either[com.histmersion.plugins.media.LocCollection.RecordResultPart1, MediaItem] =
     val item = json.hcursor.downField("item")
     if item.focus.isEmpty then Left("no item in the answer")
     else

@@ -13,7 +13,7 @@ final class OnePasswordVault(
     token: Option[String],
     timeout: FiniteDuration
 )(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
-  def resolve(ref: String): Either[String, String] =
+  def resolve(ref: com.histmersion.plugins.vaults.OnePasswordVault.ResolveRef): Either[com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart1, com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart2] =
     val r = ref.trim
     for
       _ <- Subprocess.plain("the reference", r)
@@ -23,10 +23,24 @@ final class OnePasswordVault(
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(uri))
     yield v
 
-  private def classify(uri: String)(err: String): Option[String] =
+  private def classify(uri: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyUri)(err: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyErr): Option[com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult] =
     if err.contains("not currently signed in") || err.contains("sign in") || err.contains("authorization") ||
       err.contains("session expired") || err.contains("locked")
     then Some(s"$name: not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\"")
     else if err.contains("isn't an item") || err.contains("could not find") || err.contains("not found") then
       Some(s"$name: no item at $uri")
     else None
+
+object OnePasswordVault:
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart2 = ResolveResultPart2.T
+  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveRef = ResolveRef.T
+  object ResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResult = ClassifyResult.T
+  object ClassifyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyUri = ClassifyUri.T
+  object ClassifyUri extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyErr = ClassifyErr.T
+  object ClassifyErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

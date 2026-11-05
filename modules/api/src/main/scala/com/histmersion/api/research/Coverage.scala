@@ -25,10 +25,15 @@ final case class Coverage(
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def capped: Boolean = checked < total
-  def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
+  def capped: com.histmersion.api.research.Coverage.CappedResult = checked < total
+  def unplaced: List[com.histmersion.api.research.Coverage.UnplacedResult] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
 
+
+  type CappedResult = CappedResult.T
+  object CappedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnplacedResult = UnplacedResult.T
+  object UnplacedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type FilterLine = FilterLine.T
   object FilterLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -56,6 +61,21 @@ object Coverage:
 
   final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Reason.Value) derives KindlingsCodecAsObject
   object Reason:
+    type MergeResultPart1 = MergeResultPart1.T
+    object MergeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeResultPart2Part1 = MergeResultPart2Part1.T
+    object MergeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeResultPart2Part2 = MergeResultPart2Part2.T
+    object MergeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeCurrentPart1 = MergeCurrentPart1.T
+    object MergeCurrentPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeCurrentPart2 = MergeCurrentPart2.T
+    object MergeCurrentPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ListMPart1 = ListMPart1.T
+    object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ListMPart2 = ListMPart2.T
+    object ListMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -72,7 +92,7 @@ object Coverage:
 
     val MaxChars = 500
 
-    def merge(current: Map[String, String], stated: List[Reason]): Either[String, Map[String, String]] =
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reason]): Either[com.histmersion.api.research.Coverage.Reason.MergeResultPart1, Map[com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1, com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part2]] =
       stated.foldLeft[Either[String, Map[String, String]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
           val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
@@ -85,7 +105,7 @@ object Coverage:
         }
       }
 
-    def list(m: Map[String, String]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _))
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _))
 
   final case class Source(
       citekey: com.histmersion.api.library.Citekey,

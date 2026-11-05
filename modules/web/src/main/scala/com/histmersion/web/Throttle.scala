@@ -17,9 +17,9 @@ final class Throttle[A](
     later: (Double, () => Unit) => Int = (ms, g) => dom.window.setTimeout(() => g(), ms),
     cancel: Int => Unit = id => dom.window.clearTimeout(id)
 ):
-  private var lastRun: Double = Double.NegativeInfinity
+  private var lastRun: com.histmersion.web.Throttle.LastRun = Double.NegativeInfinity
   private var pending: Option[A] = None
-  private var timer: Int = 0
+  private var timer: com.histmersion.web.Throttle.Timer = 0
 
   def apply(a: A): Unit =
     val t = now()
@@ -35,7 +35,15 @@ final class Throttle[A](
     if pending.isDefined then cancel(timer)
     pending = None
 
-  private def run(a: A, t: Double): Unit =
+  private def run(a: A, t: com.histmersion.web.Throttle.RunT): Unit =
     pending = None
     lastRun = t
     f(a)
+
+object Throttle:
+  type LastRun = LastRun.T
+  object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunT = RunT.T
+  object RunT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

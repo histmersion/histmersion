@@ -11,8 +11,8 @@ import scala.util.Try
 final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
-  val title: String = "Calibre"
-  override val description: String =
+  val title: com.histmersion.plugins.calibre.CalibreCollection.Title = "Calibre"
+  override val description: com.histmersion.plugins.calibre.CalibreCollection.Description =
     s"The Calibre library at ${library.library}: read with calibredb (sqlite3 while the GUI holds it)" +
       (if writeBack then ", written back with calibredb" else ", read-only")
 
@@ -26,19 +26,19 @@ final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shel
 
   override def reach: Either[String, Unit] = CalibreCollection.reach(Path.of(library.library))
 
-  def search(query: CollectionQuery): Either[String, List[CollectionItem]] =
+  def search(query: CollectionQuery): Either[com.histmersion.plugins.calibre.CalibreCollection.SearchResultPart1, List[CollectionItem]] =
     (query.text match
       case Some(text) => calibre.search(text, query.limit.getOrElse(CalibreCollection.SearchLimit))
       case None       => query.limit.fold(calibre.all())(calibre.all(_))
     ).map(_.map(CalibreCollection.item))
 
-  def item(id: CollectionId): Either[String, Option[CollectionItem]] =
+  def item(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.ItemResultPart1, Option[CollectionItem]] =
     id.value.trim.toIntOption.fold(Right(None))(calibre.byId(_).map(_.map(CalibreCollection.item)))
 
   override def admits(item: CollectionItem): Either[String, Unit] =
     Calibre.guard(item.title.getOrElse(""), item.authors).left.map(e => s"Calibre id ${item.id.value} has $e")
 
-  def file(item: CollectionItem, format: Option[String]): Either[String, CollectionFile] =
+  def file(item: CollectionItem, format: Option[com.histmersion.plugins.calibre.CalibreCollection.FileFormat]): Either[com.histmersion.plugins.calibre.CalibreCollection.FileResultPart1, CollectionFile] =
     CalibreCollection
       .book(item)
       .pick(format)
@@ -48,7 +48,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shel
           "KFX/MOBI must be converted in Calibre first"
       )
 
-  def original(item: CollectionItem, file: CollectionFile): Either[String, FetchedFile] =
+  def original(item: CollectionItem, file: CollectionFile): Either[com.histmersion.plugins.calibre.CalibreCollection.OriginalResultPart1, FetchedFile] =
     CalibreCollection
       .read(file.name)
       .map(bytes => FetchedFile("calibre", Some(file.name), bytes, CalibreCollection.extension(file.name)))
@@ -94,7 +94,44 @@ final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shel
 
 object CalibreCollection:
   /** The most books a search answers when the host does not say. */
-  val SearchLimit: Int = 20
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemResultPart1 = ItemResultPart1.T
+  object ItemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileResultPart1 = FileResultPart1.T
+  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileFormat = FileFormat.T
+  object FileFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalResultPart1 = OriginalResultPart1.T
+  object OriginalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumberResultPart1 = NumberResultPart1.T
+  object NumberResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumberResultPart2 = NumberResultPart2.T
+  object NumberResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtensionResult = ExtensionResult.T
+  object ExtensionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtensionName = ExtensionName.T
+  object ExtensionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPath = ReadPath.T
+  object ReadPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagedResultPart1 = StagedResultPart1.T
+  object StagedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagedName = StagedName.T
+  object StagedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagedFResultPart1 = StagedFResultPart1.T
+  object StagedFResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReachResultPart1 = ReachResultPart1.T
+  object ReachResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val SearchLimit: com.histmersion.plugins.calibre.CalibreCollection.SearchLimit = 20
 
   /** A book as a collection item. */
   def item(b: Calibre.Book): CollectionItem =
@@ -160,22 +197,22 @@ object CalibreCollection:
       f.fixable
     )
 
-  def number(id: CollectionId): Either[String, Int] =
+  def number(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1, com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2] =
     id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")
 
-  def extension(name: String): String = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
+  def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
 
-  def read(path: String)(using files: com.histmersion.plugin.LocalFiles): Either[String, Array[Byte]] =
+  def read(path: com.histmersion.plugins.calibre.CalibreCollection.ReadPath)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart1, Array[Byte]] =
     Try(files.read(Path.of(path))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
-  def staged[A](name: String, file: FetchedFile)(f: Path => Either[String, A])(using files: com.histmersion.plugin.LocalFiles): Either[String, A] =
+  def staged[A](name: com.histmersion.plugins.calibre.CalibreCollection.StagedName, file: FetchedFile)(f: Path => Either[com.histmersion.plugins.calibre.CalibreCollection.StagedFResultPart1, A])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.StagedResultPart1, A] =
     files.staged(s"$name.${file.extension}", file.bytes)(f)
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
-  def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[String, Unit] =
+  def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1, Unit] =
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir) && !files.exists(db) then
       Left(
