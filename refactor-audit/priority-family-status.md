@@ -1,5 +1,16 @@
 # Priority-family status
 
+## Domain clock treatment checkpoint
+
+Source/AST review confirms 42 existing production clock occurrences in 38 anchors
+across 15 domain files: 29 wall-clock sites for a bulk rewrite, 11 monotonic timer
+sites requiring a supplied timer design, and two backup-polling deadline reads.
+These are newly adjudicated existing candidates, not new code regressions.
+No fixes, exceptions, independent quality acceptance or detector refinement rounds
+are claimed. All other 87 anchors from the frozen 125-anchor observation remain
+preserved. See capability-treatment/review-2/README.md for evidence and batch
+requirements. Prior review and repair histories remain unchanged.
+
 ## Transaction source acceptance checkpoint
 
 A source-only audit plus parent counterexample found a fourth confirmed transaction
