@@ -1,5 +1,64 @@
 # Priority-family status
 
+## Current measurement: callback, member and method type gaps
+
+type-positions-3 measures all 3167 current main/test source files (113827 source
+declaration positions). Fresh filesystem enumeration matches the frozen manifest;
+all source hashes match the ten-plan chain. There are 28022 explicit primitive
+leaves: 21968 production and 6054 test. These are a new, broader candidate scope,
+not a confirmed-violation denominator or a correction that erases earlier counts.
+No application sources were changed and no repair credit is added.
+
+| Disjoint measurement family | Production leaves | Test leaves |
+| --- | ---: | ---: |
+| Callback arguments/results, including nested types | 908 | 169 |
+| Member values and variables | 934 | 137 |
+| Local values and variables | 113 | 4 |
+| Method parameters, including local methods | 11839 | 4230 |
+| Method results, including local methods | 7340 | 1281 |
+
+The table is a selected breakdown, not the whole 28022-leaf total; constructors,
+lambda parameters, aliases and remaining parameter positions appear in totals.tsv.
+Callback leaves are classified as callbacks rather than also counted under their
+enclosing declaration family. counts.tsv retains module, scope, locality, status
+and classification; positions.tsv and leaves.tsv retain owner, route, AST and
+line-independent identities. Same-name declaration overloads use source-order
+ordinals, so insertion/reordering of overloads requires identity reconciliation.
+
+Three reviewed production occurrences are confirmed and required by configuration:
+FindingGuards.resolves's String callback argument (geocoding query concept),
+GoalFocus.Plan.activeSet's Set[String] element (goal identifier propagation) and
+CompareRuns.seconds's Long result (shared seconds-duration modeling). They remain
+outstanding. The first belongs to callback signature rewriting, the second to
+type propagation/concept consolidation, and the third needs a shared unit and
+timestamp construction decision before rewriting. All other primitive occurrences
+are candidates; no accepted exceptions are inferred. Confirming only these three
+does not classify the others as valid or limit the migration to three findings.
+
+The current pass uses a read-only AST mode in the existing pipeline because fresh
+SemanticDB is unavailable while compilation is intentionally broken. It traverses
+explicit function/context-function, container, tuple, union/infix, by-name and
+repeated types, plus constructor/method/value/alias declarations. Inference and
+unresolved named references remain explicit evidence; aliases, primitive-name
+shadowing, implicit conversions and expression data flow are not resolved.
+Opaque alias bodies and given types are not measured by this mode. Parse failures,
+missing configured positives and source coverage mismatches fail the pass.
+
+The fixture asserts the exact set of ten primitive selectors, including callback
+inputs/results, containers, an alias, a lazy member and method signatures. Named
+lookalikes and an inferred value are not promoted to primitive findings. All three
+corresponding configured positives are present. The fixture passes. The initial
+project run misclassified method parameters as local; type-positions-2 corrects
+locality, and type-positions-3 adds fresh source coverage checks. All observations
+are preserved. The aggregate primitive count remains unchanged across those runs;
+the earlier semantic inventory is untouched. Freeze further detector expansion
+for this pass with these limits; use the rows to select reusable repair families.
+
+The full staged whitespace check flags trailing tabs in generated TSV rows whose
+last AST column is empty for inferred types. These preserve the empty column;
+they are not application edits or missing inference evidence. Source/config/docs
+whitespace checks are run separately. The raw observation tables are retained.
+
 ## Local helper definition conversion applied
 
 definitions-locals-1 converts fifteen primitive leaves in four method-local

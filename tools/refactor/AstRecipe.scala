@@ -11,7 +11,8 @@ object AstRecipe {
     implicit val decoder: ConfDecoder[Edit] = generic.deriveDecoder(Edit()).noTypos
   }
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
-    definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil)
+    definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
+    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -45,7 +46,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     }
     frozen.foreach { case(p,h) => require(hash(read(p)) == h, "Stale source: " + p) }
     val out = Paths.get(policy.report)
-    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty))
+    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes))
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
@@ -86,6 +87,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       require(!Files.exists(Paths.get(p)) && !policy.edits.exists(_.path == p)); s.parse[Source].get; (p,"",s)
     }
     Files.createDirectories(out)
+    if(policy.measureTypes) TypeMeasurement.run(frozen,out,policy.confirmedTypes,policy.expectedTypeSelectors)
     (changed ++ created).foreach { case(p,b,n) =>
       val dest = out.resolve("sources").resolve(p); Files.createDirectories(dest.getParent); Files.writeString(dest,n)
       if(b.nonEmpty) { val old = out.resolve("before").resolve(p); Files.createDirectories(old.getParent); Files.writeString(old,b) }
@@ -102,6 +104,114 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       println(summary)
       if(policy.buffers.nonEmpty) Files.writeString(out.resolve("status.txt"),s"Buffer corrections: ${evidence.count(_(2).startsWith("CORRECTION"))}\n",java.nio.file.StandardOpenOption.APPEND)
     }
+  }
+}
+
+object TypeMeasurement {
+  def run(sources: Map[String,String], out: java.nio.file.Path, confirmed: List[String], expected: List[String]): Unit = {
+    import scala.jdk.CollectionConverters._
+    implicit val dialect: Dialect = dialects.Scala3
+    val primitives = Set("String","Boolean","Byte","Short","Int","Long","Float","Double","Char")
+    val positions = scala.collection.mutable.ListBuffer.empty[List[String]]
+    val leaves = scala.collection.mutable.ListBuffer.empty[List[String]]
+    def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
+    def owner(t: Tree): String = parents(t).reverse.collect {
+      case p: Pkg => p.ref.syntax
+      case c: Defn.Class => c.name.value
+      case c: Defn.Trait => c.name.value
+      case c: Defn.Object => c.name.value
+      case c: Defn.Enum => c.name.value
+      case d: Defn.Def if !(d.name eq t) => d.name.value
+      case d: Decl.Def if !(d.name eq t) => d.name.value
+    }.mkString(".")
+    sources.toList.sortBy(_._1).foreach { case(path,_) =>
+      val source = Files.readString(Paths.get(path))
+      val tree = source.parse[Source].get
+      val scope = if(path.contains("/src/test/")) "test" else "production"
+      val module = path.stripPrefix("modules/").split("/src/").head
+      val serial = scala.collection.mutable.Map.empty[String,Int]
+      def position(n: Name, kind: String, declared: Option[Type]): Unit = {
+        val o = owner(n)
+        val key = o + "." + n.value + ":" + kind
+        val ordinal = serial.getOrElse(key,0); serial(key) = ordinal + 1
+        val id = path + "::" + key + "#" + ordinal
+        val methods = parents(n).collect { case d: Defn.Def => d }
+        val local = kind == "lambda-parameter" || methods.exists(d => !(d.name eq n) &&
+          !(kind == "method-parameter" && methods.headOption.contains(d)))
+        positions += List(id,path,module,scope,if(local) "local" else "member",(n.pos.startLine + 1).toString,kind,o,n.value,declared.fold("<inferred>")(_.syntax),declared.fold("")(_.structure))
+        def emit(route: String,status: String,detail: String,t: Option[Type],callback: Boolean): Unit = {
+          val selector = key + "|" + route
+          leaves += List(id,route,status,detail,t.fold("")(_.structure),if(callback) "callback" else kind,
+            if(status == "primitive" && confirmed.contains(selector)) "confirmed" else if(status == "primitive") "candidate" else "unresolved",selector)
+        }
+        def inspect(t: Type, route: String, callback: Boolean = false): Unit = t match {
+          case Type.Name(n) if primitives(n) => emit(route,"primitive",n,Some(t),callback)
+          case Type.Select(Term.Name("scala"),Type.Name(n)) if primitives(n) => emit(route,"primitive",n,Some(t),callback)
+          case Type.Select(Term.Select(Term.Name("java"),Term.Name("lang")),Type.Name("String")) => emit(route,"primitive","String",Some(t),callback)
+          case a: Type.Apply => a.argClause.values.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/argument[" + i + "]",callback) }
+          case f: Type.Function =>
+            f.paramClause.values.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/function-parameter[" + i + "]",true) }
+            inspect(f.res,route + "/function-result",true)
+          case f: Type.ContextFunction =>
+            f.paramClause.values.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/context-parameter[" + i + "]",true) }
+            inspect(f.res,route + "/context-result",true)
+          case t: Type.Tuple => t.args.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/tuple[" + i + "]",callback) }
+          case t: Type.ByName => inspect(t.tpe,route + "/by-name",callback)
+          case t: Type.Repeated => inspect(t.tpe,route + "/repeated",callback)
+          case t: Type.ApplyInfix => inspect(t.lhs,route + "/left",callback); inspect(t.rhs,route + "/right",callback)
+          case Type.Name(n) if Set("Unit","Nothing","Any","AnyRef","Null")(n) => ()
+          case _ => emit(route,"unresolved",t.syntax,Some(t),callback)
+        }
+        declared match {
+          case Some(t) => inspect(t,"type")
+          case None => emit("type","inferred-unresolved","No current semantic type available",None,false)
+        }
+      }
+      tree.collect {
+        case p: Term.Param =>
+          val context = parents(p)
+          val kind = context.collectFirst {
+            case _: Term.Function => "lambda-parameter"
+            case _: Term.ContextFunction => "lambda-parameter"
+            case _: Ctor.Primary => "constructor-parameter"
+            case _: Defn.Def => "method-parameter"
+            case _: Decl.Def => "method-parameter"
+          }.getOrElse("parameter")
+          position(p.name,kind,p.decltpe)
+        case d: Defn.Def => position(d.name,"method-result",d.decltpe)
+        case d: Decl.Def => position(d.name,"method-result",Some(d.decltpe))
+        case v: Defn.Val => v.pats.flatMap(_.collect { case p: Pat.Var => p.name }).foreach(position(_,"value",v.decltpe))
+        case v: Defn.Var => v.pats.flatMap(_.collect { case p: Pat.Var => p.name }).foreach(position(_,"variable",v.decltpe))
+        case v: Decl.Val => v.pats.flatMap(_.collect { case p: Pat.Var => p.name }).foreach(position(_,"value",Some(v.decltpe)))
+        case v: Decl.Var => v.pats.flatMap(_.collect { case p: Pat.Var => p.name }).foreach(position(_,"variable",Some(v.decltpe)))
+        case t: Defn.Type if !t.mods.exists(_.is[Mod.Opaque]) => position(t.name,"alias",Some(t.body))
+      }
+    }
+    val byId = positions.map(p => p.head -> p).toMap
+    require(byId.size == positions.size,"Duplicate measurement identities")
+    val observed = leaves.filter(_(2) == "primitive").map(_(7)).toSet
+    require(confirmed.forall(observed),"Confirmed measurement selector missing: " + confirmed.filterNot(observed).mkString(", "))
+    if(expected.nonEmpty) require(leaves.filter(_(2) == "primitive").map(_(7)).toList.sorted == expected.sorted,"Exact primitive selector fixture mismatch")
+    def esc(s: String) = s.replace("\\","\\\\").replace("\t","\\t").replace("\r","\\r").replace("\n","\\n")
+    def write(name: String,header: String,rows: List[List[String]]): Unit = Files.write(out.resolve(name),(header :: rows.map(_.map(esc).mkString("\t"))).asJava)
+    write("positions.tsv","id\tpath\tmodule\tscope\tlocality\tline\tkind\towner\tname\tdeclared\tast",positions.toList)
+    write("leaves.tsv","position\troute\tstatus\tdetail\tast\tfamily\tclassification\tselector",leaves.toList)
+    write("sources.tsv","path\tsha256",sources.toList.sorted.map { case(p,h) => List(p,h) })
+    if(sources.keys.forall(_.startsWith("modules/"))) {
+      val stream = Files.walk(Paths.get("modules"))
+      val current = try stream.iterator.asScala.filter(Files.isRegularFile(_)).map(_.toString).filter(p =>
+        p.endsWith(".scala") && (p.contains("/src/main/") || p.contains("/src/test/")) &&
+          !p.contains("/target/") && !p.contains("/.scala-build/")).toSet finally stream.close()
+      write("coverage.tsv","path\tstatus",(current ++ sources.keySet).toList.sorted.map(p => List(p,
+        if(!current(p)) "manifest-only" else if(!sources.contains(p)) "UNMEASURED" else "measured")))
+      require(current == sources.keySet,"Current source coverage differs; see coverage.tsv (no completion claim)")
+    }
+    val groups = leaves.toList.groupBy(l => (byId(l.head)(3),byId(l.head)(2),byId(l.head)(4),l(5),l(2),l(6))).toList.sortBy(_._1)
+    write("counts.tsv","scope\tmodule\tlocality\tfamily\tstatus\tclassification\tpositions\tleaves",groups.map { case((s,m,o,f,t,c),ls) => List(s,m,o,f,t,c,ls.map(_.head).distinct.size.toString,ls.size.toString) })
+    val summary = leaves.toList.groupBy(l => (byId(l.head)(3),byId(l.head)(4),l(5),l(2),l(6))).toList.sortBy(_._1)
+    write("totals.tsv","scope\tlocality\tfamily\tstatus\tclassification\tpositions\tleaves",summary.map { case((s,o,f,t,c),ls) => List(s,o,f,t,c,ls.map(_.head).distinct.size.toString,ls.size.toString) })
+    Files.writeString(out.resolve("measurement.txt"),s"${sources.size} files; ${positions.size} positions; ${leaves.count(_(2) == "primitive")} explicit primitive leaves; ${leaves.count(_(6) == "confirmed")} confirmed occurrences.\nAST-only: inference, aliases, named references and primitive shadowing require semantic review. Candidates are not confirmed violations; no accepted exceptions inferred. IDs omit line numbers; same-name overloads use source-order ordinals. Historical semantic inventory remains unchanged.\n")
+    println(Files.readString(out.resolve("measurement.txt")))
   }
 }
 
