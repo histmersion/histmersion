@@ -8,22 +8,22 @@ import java.nio.file.Path
 object Resolution:
 
   /** Orders two versions as Maven does: negative when the first is older. */
-  type ConflictsPlugin = ConflictsPlugin.T
-  object ConflictsPlugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NeededByResultPart2 = NeededByResultPart2.T
-  object NeededByResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NeededByPerPluginPart1 = NeededByPerPluginPart1.T
-  object NeededByPerPluginPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependenciesNeededPart2 = DependenciesNeededPart2.T
-  object DependenciesNeededPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConflictsPlugin = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val ConflictsPlugin: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type NeededByResultPart2 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val NeededByResultPart2: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type NeededByPerPluginPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val NeededByPerPluginPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type DependenciesNeededPart2 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val DependenciesNeededPart2: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
   type ClasspathFileResult = ClasspathFileResult.T
   object ClasspathFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InputsFileResult = InputsFileResult.T
   object InputsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputsFileFilesPart1 = InputsFileFilesPart1.T
-  object InputsFileFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputsFileFilesPart2 = InputsFileFilesPart2.T
-  object InputsFileFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsFileFilesPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val InputsFileFilesPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type InputsFileFilesPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  val InputsFileFilesPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
   type ReportResult = ReportResult.T
   object ReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -68,27 +68,27 @@ object Resolution:
   ): List[Dependency] =
     joint
       .collect {
-        case (c, Some(file)) if !plugins.contains(c.key) && !server.provides(c.key) =>
+        case (c, Some(file)) if !plugins.contains(c.key) && !(server.provides(c.key)).value =>
           Dependency(c, file, needed.getOrElse(c.key, Nil))
       }
       .sortBy(_.libName)
 
   /** The modules of a plugin's own resolution the server provides (shown, not installed). */
   def provided(resolved: List[ModuleCoordinates], plugins: Set[ModuleKey], server: ServerModules): List[ModuleKey] =
-    resolved.map(_.key).filter(k => !plugins.contains(k) && server.provides(k)).distinct.sortBy(_.toString)
+    resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k)).value).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
-  def classpathFile(deps: List[Dependency]): com.histmersion.pluginresolver.Resolution.ClasspathFileResult = deps.map(_.libName).map(_ + "\n").mkString
+  def classpathFile(deps: List[Dependency]): com.histmersion.pluginresolver.Resolution.ClasspathFileResult = _root_.com.histmersion.pluginresolver.Resolution.ClasspathFileResult(deps.map(_.libName).map((_).value + "\n").mkString)
 
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.
     */
   def inputsFile(files: List[(com.histmersion.pluginresolver.Resolution.InputsFileFilesPart1, com.histmersion.pluginresolver.Resolution.InputsFileFilesPart2)]): com.histmersion.pluginresolver.Resolution.InputsFileResult =
-    files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString
+    _root_.com.histmersion.pluginresolver.Resolution.InputsFileResult(files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString)
 
   /** The lines `plugin add` and the relink show. */
   def report(deps: List[Dependency], provided: List[ModuleKey]): List[com.histmersion.pluginresolver.Resolution.ReportResult] =
-    deps.map(d =>
+    (deps.map(d =>
       s"dependency: ${d.coordinates}" + (if d.neededBy.isEmpty then "" else s" (for ${d.neededBy.mkString(", ")})")
     ) ++
       (if provided.isEmpty then Nil
@@ -96,4 +96,4 @@ object Resolution:
          List(
            s"provided by Histmersion: ${provided.size} module(s) (${provided.take(6).mkString(", ")}" +
              (if provided.size > 6 then ", …)" else ")")
-         ))
+         ))).map(refactorValue3 => _root_.com.histmersion.pluginresolver.Resolution.ReportResult(refactorValue3))

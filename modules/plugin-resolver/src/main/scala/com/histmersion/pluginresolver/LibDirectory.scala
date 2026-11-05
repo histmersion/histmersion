@@ -10,14 +10,14 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  type StoredRepositoriesResultPart1 = StoredRepositoriesResultPart1.T
-  object StoredRepositoriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteInputsPart1 = WriteInputsPart1.T
-  object WriteInputsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteInputsPart2 = WriteInputsPart2.T
-  object WriteInputsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256Result = Sha256Result.T
-  object Sha256Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredRepositoriesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val StoredRepositoriesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type WriteInputsPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val WriteInputsPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type WriteInputsPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  val WriteInputsPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  type Sha256Result = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  val Sha256Result: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
 
   val Classpath = "classpath"
   val Inputs = "inputs"
@@ -28,7 +28,7 @@ object LibDirectory:
     if !Files.isRegularFile(f) then Right(Nil)
     else
       traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => s"$f: '$r': $e")
+        RepositoryUrl.either(r).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"$f: '$r': $e"))
       )
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.
@@ -41,16 +41,16 @@ object LibDirectory:
   ): Unit =
     Files.createDirectories(lib)
     val wanted = deps.map(_.libName).toSet
-    jarsIn(lib).filterNot(p => wanted(p.getFileName.toString)).foreach(Files.delete)
+    jarsIn(lib).filterNot(p => wanted(_root_.com.histmersion.pluginresolver.Dependency.LibNameResult(p.getFileName.toString))).foreach(Files.delete)
     deps.foreach { d =>
-      val target = lib.resolve(d.libName)
+      val target = lib.resolve((d.libName).value)
       if !Files.isRegularFile(target) || sha256(target) != sha256(d.file) then
-        val partial = lib.resolve(d.libName + ".part")
+        val partial = lib.resolve((d.libName).value + ".part")
         Files.copy(d.file, partial, StandardCopyOption.REPLACE_EXISTING)
         Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
     }
-    Files.writeString(lib.resolve(Classpath), Resolution.classpathFile(deps), UTF_8)
-    Files.writeString(lib.resolve(Inputs), Resolution.inputsFile(inputs), UTF_8)
+    Files.writeString(lib.resolve(Classpath), (Resolution.classpathFile(deps)).value, UTF_8)
+    Files.writeString(lib.resolve(Inputs), (Resolution.inputsFile(inputs)).value, UTF_8)
     if repositories.nonEmpty then
       Files.writeString(lib.resolve(Repositories), repositories.map(_.value + "\n").mkString, UTF_8)
 
@@ -66,4 +66,4 @@ object LibDirectory:
       val buf = new Array[Byte](1 << 16)
       Iterator.continually(in.read(buf)).takeWhile(_ >= 0).foreach(n => md.update(buf, 0, n))
     finally in.close()
-    md.digest().map(b => f"$b%02x").mkString
+    _root_.com.histmersion.pluginresolver.LibDirectory.Sha256Result(md.digest().map(b => f"$b%02x").mkString)

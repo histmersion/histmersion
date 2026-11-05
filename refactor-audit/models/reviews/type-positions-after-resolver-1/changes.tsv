@@ -1,0 +1,3 @@
+change	stable-position-and-route
+raw-primitive-eliminated-unverified	modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Model.scala::com.histmersion.pluginresolver.traverse.f:method-parameter#0|type/function-result/argument[0]
+raw-primitive-eliminated-unverified	modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Model.scala::com.histmersion.pluginresolver.traverse:method-result#0|type/argument[0]
