@@ -7,4 +7,7 @@ type HandedFile = java.io.File
 
 object HandedFile:
   /** A handed-in file's bytes. */
+  final case class Snapshot(name: String, size: Long, bytes: ByteSource)
+
+  def snapshot(file: HandedFile): Snapshot = Snapshot(file.getName, file.length(), source(file))
   def source(file: HandedFile): ByteSource = ByteSource.file(file.toPath)

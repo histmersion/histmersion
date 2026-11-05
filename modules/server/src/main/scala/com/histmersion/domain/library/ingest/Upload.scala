@@ -9,7 +9,7 @@ final case class Upload(name: String, size: Long, bytes: ByteSource)
 
 object Upload:
   /** The file the HTTP layer streamed a request body into, where it put it. */
-  def handed(file: HandedFile): Upload = Upload(file.getName, file.length(), HandedFile.source(file))
+  def handed(file: HandedFile.Snapshot): Upload = Upload(file.name, file.size, file.bytes)
 
   /** A stored file. */
   def stored(blob: Blob): Upload = Upload(blob.key.name, blob.size.value, blob.asSource)

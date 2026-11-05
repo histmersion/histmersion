@@ -18,6 +18,7 @@ import com.histmersion.api.library.Source
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.
   */
 class SeedImportSuite extends com.histmersion.db.DbSuite:
+  private given com.histmersion.util.storage.TextFiles = new com.histmersion.util.storage.DiskTextFiles
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

@@ -1,0 +1,4 @@
+PASS
+All preview definitions/callers, including tests, compile together.
+Standalone capability contracts pass for confinement, optional OCR, input failure, metadata capture and repeatable bytes.
+Application unchanged; module-local compilation remains required after application.

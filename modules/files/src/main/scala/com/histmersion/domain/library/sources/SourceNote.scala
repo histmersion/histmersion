@@ -70,14 +70,14 @@ object SourceNote:
     m.put("significance", f.significance.orNull)
     m
 
-  def parseFile(p: Path): Option[Source] = parseFile(p, None)
+  def parseFile(p: Path)(using files: com.histmersion.util.storage.TextFiles): Option[Source] = parseFile(p, None)
 
   /** `confineTo` is `corpus.dir` when it is configured: `md_path` is a path out of a note's frontmatter — content an
     * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
     * host-side workflow where the server legitimately sees the user's own tree.
     */
-  def parseFile(p: Path, confineTo: Option[String]): Option[Source] =
-    val text = Files.readString(p)
+  def parseFile(p: Path, confineTo: Option[String])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
+    val text = files.read(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
     parseNote(text, fallbackCitekey).map(src => src.modify(_.ocrMarkdown).setTo(fullText(p, yamlMap(text), confineTo)))
 
@@ -128,15 +128,15 @@ object SourceNote:
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
-  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[String]): Option[String] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[String])(using files: com.histmersion.util.storage.TextFiles): Option[String] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))
         .flatMap(a => Option(a.getParent))
         .map(_.resolve(rel))
         .filter(SafePath.within(confineTo, _))
-        .filter(Files.exists(_))
-        .map(Files.readString)
+        .filter(files.exists(_))
+        .map(files.read)
         .map(_.filterNot(_.toInt == 0)) // Postgres text rejects NUL bytes (present in some OCR output)
     }
 

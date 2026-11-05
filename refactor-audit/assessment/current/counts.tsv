@@ -202,7 +202,7 @@ capability/environment	server	0
 capability/environment	upstreams	0
 capability/environment	values	0
 capability/environment	web	0
-capability/filesystem	ALL	23
+capability/filesystem	ALL	18
 capability/filesystem	api	0
 capability/filesystem	chimney-iron	0
 capability/filesystem	chimney-iron-tests	0
@@ -211,7 +211,7 @@ capability/filesystem	config	0
 capability/filesystem	console	0
 capability/filesystem	core	0
 capability/filesystem	db	0
-capability/filesystem	files	3
+capability/filesystem	files	0
 capability/filesystem	plugin-api	0
 capability/filesystem	plugin-fixtures/hello	0
 capability/filesystem	plugin-fixtures/hello-ai	0
@@ -227,7 +227,7 @@ capability/filesystem	plugins/events	0
 capability/filesystem	plugins/fetchers	0
 capability/filesystem	plugins/gazetteers	0
 capability/filesystem	plugins/media	0
-capability/filesystem	server	2
+capability/filesystem	server	0
 capability/filesystem	upstreams	0
 capability/filesystem	values	0
 capability/filesystem	web	0

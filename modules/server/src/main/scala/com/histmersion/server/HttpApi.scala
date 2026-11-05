@@ -120,7 +120,7 @@ final class HttpApi(
     Api.agentStateDelete.serverLogic[Identity](key => h.agentState.delete(key)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) =>
-      h.ingest.controllers.ingest(p, com.histmersion.domain.library.ingest.Upload.handed(file))
+      h.ingest.controllers.ingest(p, com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(file)))
     ),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.controllers.reocr(ck, quality)),
     Api.original.serverLogic[Identity](ck =>

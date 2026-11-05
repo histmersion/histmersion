@@ -99,7 +99,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     try
       refused("ingest")(
         h.ingest.controllers
-          .ingest(Ingest.Params("zzlock_src", Some("a.pdf")), com.histmersion.domain.library.ingest.Upload.handed(f))
+          .ingest(Ingest.Params("zzlock_src", Some("a.pdf")), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(f)))
       )
       refused("reocr")(h.ingest.controllers.reocr("zzlock_src", false))
       refused("put_assets")(h.media.assets.putFigures("zzlock_src", List(png)))
