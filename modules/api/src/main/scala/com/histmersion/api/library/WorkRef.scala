@@ -7,23 +7,51 @@ import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class WorkRef(
     doi: Option[com.histmersion.api.library.Doi] = None,
-    openalexId: Option[String] = None,
-    arxivId: Option[String] = None,
+    openalexId: Option[WorkRef.OpenalexId] = None,
+    arxivId: Option[WorkRef.ArxivId] = None,
     title: Option[com.histmersion.api.library.Title] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
     authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     venue: Option[com.histmersion.api.library.Venue] = None,
-    citedByCount: Option[Int] = None,
-    isOa: Boolean = false,
-    oaStatus: Option[String] = None,
-    oaUrl: Option[String] = None,
-    isRetracted: Boolean = false,
-    workType: Option[String] = None,
-    abstractText: Option[String] = None,
-    referencedWorks: List[String] = Nil,
+    citedByCount: Option[WorkRef.CitedByCount] = None,
+    isOa: WorkRef.IsOa = false,
+    oaStatus: Option[WorkRef.OaStatus] = None,
+    oaUrl: Option[WorkRef.OaUrl] = None,
+    isRetracted: WorkRef.IsRetracted = false,
+    workType: Option[WorkRef.WorkType] = None,
+    abstractText: Option[WorkRef.AbstractText] = None,
+    referencedWorks: List[WorkRef.ReferencedWorks] = Nil,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
-    inDb: Boolean = false,
-    oaLocations: List[String] = Nil,
-    oaLicence: Option[String] = None
+    inDb: WorkRef.InDb = false,
+    oaLocations: List[WorkRef.OaLocations] = Nil,
+    oaLicence: Option[WorkRef.OaLicence] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object WorkRef:
+  type OpenalexId = OpenalexId.T
+  object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivId = ArxivId.T
+  object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedByCount = CitedByCount.T
+  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsOa = IsOa.T
+  object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OaStatus = OaStatus.T
+  object OaStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OaUrl = OaUrl.T
+  object OaUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRetracted = IsRetracted.T
+  object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkType = WorkType.T
+  object WorkType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AbstractText = AbstractText.T
+  object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferencedWorks = ReferencedWorks.T
+  object ReferencedWorks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InDb = InDb.T
+  object InDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OaLocations = OaLocations.T
+  object OaLocations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OaLicence = OaLicence.T
+  object OaLicence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

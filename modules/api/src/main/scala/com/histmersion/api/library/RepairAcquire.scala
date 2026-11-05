@@ -8,34 +8,70 @@ import com.histmersion.api.given
 
 object RepairAcquire:
 
-  final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None)
+  final case class RepairRequest(dryRun: RepairRequest.DryRun = false, by: Option[RepairRequest.By] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object RepairRequest:
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type By = By.T
+    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class RepairRow(
-      item: Int,
-      doi: String,
-      goals: List[String] = Nil,
-      watcher: String = "",
-      action: String = "",
-      detail: String = "",
-      backlogItem: Option[Long] = None
+      item: RepairRow.Item,
+      doi: com.histmersion.api.library.Doi,
+      goals: List[RepairRow.Goals] = Nil,
+      watcher: RepairRow.Watcher = "",
+      action: RepairRow.Action = "",
+      detail: RepairRow.Detail = "",
+      backlogItem: Option[RepairRow.BacklogItem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object RepairRow:
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goals = Goals.T
+    object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Watcher = Watcher.T
+    object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BacklogItem = BacklogItem.T
+    object BacklogItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class RepairResult(
-      dryRun: Boolean,
-      moved: Int = 0,
-      removed: Int = 0,
-      kept: Int = 0,
-      untouched: Int = 0,
+      dryRun: RepairResult.DryRun,
+      moved: RepairResult.Moved = 0,
+      removed: RepairResult.Removed = 0,
+      kept: RepairResult.Kept = 0,
+      untouched: RepairResult.Untouched = 0,
       rows: List[RepairRow] = Nil,
-      backlog: Int = 0,
-      backlogDays: Option[Int] = None
+      backlog: RepairResult.Backlog = 0,
+      backlogDays: Option[RepairResult.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object RepairResult:
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Moved = Moved.T
+    object Moved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kept = Kept.T
+    object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Untouched = Untouched.T
+    object Untouched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Backlog = Backlog.T
+    object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BacklogDays = BacklogDays.T
+    object BacklogDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   val Move = "move"

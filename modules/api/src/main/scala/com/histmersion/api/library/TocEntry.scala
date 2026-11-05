@@ -4,11 +4,18 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 object TocEntry:
 
 
   /** A source's table of contents as `get_source` shows it. */
+  type Heading = Heading.T
+  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ord = Ord.T
+  object Ord extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Chars = Chars.T
+  object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def markdown(entries: List[TocEntry]): String =
     if entries.isEmpty then "_(no headings in body)_"
     else

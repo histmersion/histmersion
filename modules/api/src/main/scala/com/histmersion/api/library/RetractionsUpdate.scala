@@ -8,9 +8,19 @@ import com.histmersion.api.given
   * it and `GET` is polled until `running` is false.
   */
 final case class RetractionsUpdate(
-    rows: Int,
-    source: String,
-    running: Boolean = false,
-    error: Option[String] = None
+    rows: RetractionsUpdate.Rows,
+    source: RetractionsUpdate.Source,
+    running: RetractionsUpdate.Running = false,
+    error: Option[RetractionsUpdate.Error] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object RetractionsUpdate:
+  type Rows = Rows.T
+  object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Source = Source.T
+  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Running = Running.T
+  object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

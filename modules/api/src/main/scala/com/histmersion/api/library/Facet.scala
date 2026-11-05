@@ -6,14 +6,23 @@ import com.histmersion.api.given
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 
 final case class Facet(
-    value: String,
-    count: Int,
-    id: Option[String] = None,
-    contested: Boolean = false
+    value: Facet.Value,
+    count: Facet.Count,
+    id: Option[Facet.Id] = None,
+    contested: Facet.Contested = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
 
+
+  type Value = Value.T
+  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Contested = Contested.T
+  object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Field:
     case Tags, Authors, Places, Topics, Status, Provenance

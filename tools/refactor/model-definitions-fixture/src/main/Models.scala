@@ -12,3 +12,8 @@ final case class Token(value: String)
 final case class Collision(kind: String)
 object Collision:
   object Kind
+
+final case class Choice(kind: String)
+object Choice:
+  enum Kind:
+    case One

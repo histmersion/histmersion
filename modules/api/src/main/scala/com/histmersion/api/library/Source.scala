@@ -29,23 +29,46 @@ final case class Source(
     year: Option[com.histmersion.api.catalogue.Year],
     venue: Option[com.histmersion.api.library.Venue],
     status: com.histmersion.api.library.Source.Status,
-    topics: List[String],
-    regions: List[String],
-    tags: List[String],
+    topics: List[Source.Topics],
+    regions: List[Source.Regions],
+    tags: List[Source.Tags],
     period: Option[Period],
-    summary: Option[String],
-    citedByCount: Option[Int],
-    influentialCitations: Option[Int],
-    provenance: Option[String],
-    calibreId: Option[String],
-    ocrMarkdown: Option[String] = None,
+    summary: Option[Source.Summary],
+    citedByCount: Option[Source.CitedByCount],
+    influentialCitations: Option[Source.InfluentialCitations],
+    provenance: Option[Source.Provenance],
+    calibreId: Option[Source.CalibreId],
+    ocrMarkdown: Option[Source.OcrMarkdown] = None,
     findings: List[Finding] = Nil,
     edges: List[Edge] = Nil,
-    notes: Option[String] = None,
-    updatedAt: Option[String] = None
+    notes: Option[Source.Notes] = None,
+    updatedAt: Option[Source.UpdatedAt] = None
 )
 
 object Source:
+
+  type Topics = Topics.T
+  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Regions = Regions.T
+  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedByCount = CitedByCount.T
+  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfluentialCitations = InfluentialCitations.T
+  object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provenance = Provenance.T
+  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreId = CalibreId.T
+  object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OcrMarkdown = OcrMarkdown.T
+  object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Notes = Notes.T
+  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
@@ -64,29 +87,53 @@ object Source:
       def fromWire(s: String): Option[Status] =
         Status.values.find(_.toString.equalsIgnoreCase(s))
 
-  final case class Alias(alias: String, citekey: com.histmersion.api.library.Citekey)
+  final case class Alias(alias: Alias.Value, citekey: com.histmersion.api.library.Citekey)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  object Alias:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Candidate(
-      id: Long,
-      goal: String,
+      id: Candidate.Id,
+      goal: Candidate.Goal,
       doi: com.histmersion.api.library.Doi,
       title: com.histmersion.api.library.Title,
       year: Option[com.histmersion.api.catalogue.Year] = None,
       authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
       venue: Option[com.histmersion.api.library.Venue] = None,
-      abstractText: Option[String] = None,
-      isOa: Boolean = false,
-      arxivId: Option[String] = None,
-      foundBy: List[String] = Nil,
-      state: String = Candidates.State.New.wire,
-      firstSeen: String = "",
-      lastSeen: String = ""
+      abstractText: Option[Candidate.AbstractText] = None,
+      isOa: Candidate.IsOa = false,
+      arxivId: Option[Candidate.ArxivId] = None,
+      foundBy: List[Candidate.FoundBy] = Nil,
+      state: Candidate.State = Candidates.State.New.wire,
+      firstSeen: Candidate.FirstSeen = "",
+      lastSeen: Candidate.LastSeen = ""
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object Candidate:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AbstractText = AbstractText.T
+    object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsOa = IsOa.T
+    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArxivId = ArxivId.T
+    object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FoundBy = FoundBy.T
+    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstSeen = FirstSeen.T
+    object FirstSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastSeen = LastSeen.T
+    object LastSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Delete:
 
@@ -177,30 +224,51 @@ object Source:
       (List(head, "", s"**${d.title}**") ++ blockers ++ counts ++ aliases ++ edgesIn ++ coverage ++ files ++ failed ++
         mentions ++ calibreLines ++ tail).mkString("\n")
 
-  final case class DeleteRequest(apply: Boolean = false) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class DeleteRequest(apply: DeleteRequest.Apply = false) derives KindlingsSchema, com.histmersion.api.json.Schema
   object DeleteRequest:
+
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
 
   final case class Deletion(
-      citekey: String,
-      title: String,
-      applied: Boolean,
+      citekey: com.histmersion.api.library.Citekey,
+      title: Deletion.Title,
+      applied: Deletion.Applied,
       blockers: List[DeleteBlocker] = Nil,
       counts: List[DeleteCount] = Nil,
-      aliases: List[String] = Nil,
+      aliases: List[Deletion.Aliases] = Nil,
       edgesIn: List[Edge] = Nil,
-      coverage: List[String] = Nil,
-      files: List[String] = Nil,
-      filesFailed: List[String] = Nil,
-      mentions: List[Int] = Nil,
-      calibreId: Option[String] = None,
-      logEntry: Option[Int] = None
+      coverage: List[Deletion.Coverage] = Nil,
+      files: List[Deletion.Files] = Nil,
+      filesFailed: List[Deletion.FilesFailed] = Nil,
+      mentions: List[Deletion.Mentions] = Nil,
+      calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None,
+      logEntry: Option[Deletion.LogEntry] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def refused: Boolean = blockers.nonEmpty
     def count(p: DeletePart): Int = counts.find(_.part == p).fold(0)(_.rows)
+
+  object Deletion:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Aliases = Aliases.T
+    object Aliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Coverage = Coverage.T
+    object Coverage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Files = Files.T
+    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilesFailed = FilesFailed.T
+    object FilesFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mentions = Mentions.T
+    object Mentions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LogEntry = LogEntry.T
+    object LogEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Detail(
       citekey: com.histmersion.api.library.Citekey,
@@ -209,31 +277,43 @@ object Source:
       year: Option[com.histmersion.api.catalogue.Year],
       venue: Option[com.histmersion.api.library.Venue],
       status: com.histmersion.api.library.Source.Status,
-      topics: List[String],
-      regions: List[String],
-      tags: List[String],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      summary: Option[String],
+      topics: List[com.histmersion.api.library.Source.Topics],
+      regions: List[com.histmersion.api.library.Source.Regions],
+      tags: List[com.histmersion.api.library.Source.Tags],
+      periodStart: Option[com.histmersion.api.catalogue.Year],
+      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      summary: Option[com.histmersion.api.library.Source.Summary],
       doi: Option[com.histmersion.api.library.Doi],
-      ocrMarkdown: Option[String],
-      notes: Option[String] = None,
-      updatedAt: Option[String] = None,
-      provenance: Option[String] = None,
+      ocrMarkdown: Option[Detail.OcrMarkdown],
+      notes: Option[com.histmersion.api.library.Source.Notes] = None,
+      updatedAt: Option[Detail.UpdatedAt] = None,
+      provenance: Option[com.histmersion.api.library.Source.Provenance] = None,
       uid: Option[java.util.UUID] = None,
       origin: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  object Detail:
+    type OcrMarkdown = OcrMarkdown.T
+    object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Graph(
-      root: String,
-      depth: Int,
+      root: Graph.Root,
+      depth: Graph.Depth,
       nodes: List[GraphNode],
       links: List[GraphLink]
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object Graph:
+    type Root = Root.T
+    object Root extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Kinds:
     val Book = "book"
@@ -287,20 +367,27 @@ object Source:
 
   final case class Match(
       rightUid: UUID,
-      rightCitekey: String,
+      rightCitekey: com.histmersion.api.library.Citekey,
       leftUid: Option[UUID],
-      leftCitekey: Option[String],
+      leftCitekey: Option[com.histmersion.api.library.Citekey],
       method: MatchMethod,
       outcome: MatchOutcome,
-      score: Option[Double] = None,
-      why: List[String] = Nil,
-      issue: Option[String] = None
+      score: Option[Match.Score] = None,
+      why: List[Match.Why] = Nil,
+      issue: Option[Match.Issue] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Match:
 
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
+    type Score = Score.T
+    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Issue = Issue.T
+    object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Matches: com.histmersion.api.exchange.PlanMatchKind[Match] =
       com.histmersion.api.exchange.PlanMatchKind(_.outcome != MatchOutcome.New, line)
 
@@ -312,16 +399,16 @@ object Source:
 
   final case class Patch(
       metadata: Option[MetadataPatch] = None,
-      summary: Option[String] = None,
-      body: Option[String] = None,
-      notes: Option[String] = None,
-      topics: Option[List[String]] = None,
-      regions: Option[List[String]] = None,
+      summary: Option[com.histmersion.api.library.Source.Summary] = None,
+      body: Option[com.histmersion.api.library.Source.OcrMarkdown] = None,
+      notes: Option[com.histmersion.api.library.Source.Notes] = None,
+      topics: Option[List[com.histmersion.api.library.Source.Topics]] = None,
+      regions: Option[List[com.histmersion.api.library.Source.Regions]] = None,
       period: Option[Period.Input] = None,
       tags: Option[ListPatch] = None,
       findings: Option[FindingsPatch] = None,
       edges: Option[EdgesPatch] = None,
-      ifUpdatedAt: Option[String] = None
+      ifUpdatedAt: Option[com.histmersion.api.library.Source.UpdatedAt] = None
   ) derives KindlingsSchema,
         com.histmersion.api.json.Schema
   object Patch:
@@ -335,18 +422,18 @@ object Source:
       year: Option[com.histmersion.api.catalogue.Year] = None,
       venue: Option[com.histmersion.api.library.Venue] = None,
       status: Option[com.histmersion.api.library.Source.Status] = None,
-      topics: List[String] = Nil,
-      regions: List[String] = Nil,
-      tags: List[String] = Nil,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None,
-      summary: Option[String] = None,
-      body: Option[String] = None,
-      notes: Option[String] = None,
-      citedByCount: Option[Int] = None,
-      influentialCitations: Option[Int] = None,
-      provenance: Option[String] = None,
-      calibreId: Option[String] = None,
+      topics: List[com.histmersion.api.library.Source.Topics] = Nil,
+      regions: List[com.histmersion.api.library.Source.Regions] = Nil,
+      tags: List[com.histmersion.api.library.Source.Tags] = Nil,
+      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
+      periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
+      summary: Option[com.histmersion.api.library.Source.Summary] = None,
+      body: Option[com.histmersion.api.library.Source.OcrMarkdown] = None,
+      notes: Option[com.histmersion.api.library.Source.Notes] = None,
+      citedByCount: Option[com.histmersion.api.library.Source.CitedByCount] = None,
+      influentialCitations: Option[com.histmersion.api.library.Source.InfluentialCitations] = None,
+      provenance: Option[com.histmersion.api.library.Source.Provenance] = None,
+      calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None,
       findings: List[Finding.Input] = Nil,
       edges: List[Edge.Input] = Nil
   ) derives KindlingsSchema,
@@ -411,12 +498,12 @@ object Source:
         case a :: _        => surname(a) + " et al."
 
   final case class Renamed(
-      oldCitekey: String,
-      newCitekey: String,
+      oldCitekey: com.histmersion.api.library.Citekey,
+      newCitekey: com.histmersion.api.library.Citekey,
       source: Detail,
       counts: Rename.Counts,
       /** Calibre never stores the citekey, but the host-side originals directory is keyed by it. */
-      calibreId: Option[String] = None
+      calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema

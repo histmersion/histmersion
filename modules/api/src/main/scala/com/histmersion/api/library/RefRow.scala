@@ -10,7 +10,11 @@ final case class RefRow(
     authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     year: Option[com.histmersion.api.catalogue.Year] = None,
     doi: Option[com.histmersion.api.library.Doi] = None,
-    raw: Option[String] = None,
+    raw: Option[RefRow.Raw] = None,
     citekey: Option[com.histmersion.api.library.Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object RefRow:
+  type Raw = Raw.T
+  object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

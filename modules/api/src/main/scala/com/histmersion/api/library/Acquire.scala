@@ -222,7 +222,15 @@ object Acquire:
       (if r.isInfluential then 0 else 1, if strong then 0 else 1, -r.year.getOrElse(0))
     }
 
-  final case class RetractionRow(doi: String, reason: Option[String], date: Option[String], nature: Option[String])
+  final case class RetractionRow(doi: com.histmersion.api.library.Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
+
+  object RetractionRow:
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Date = Date.T
+    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Nature = Nature.T
+    object Nature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The export's `Reason` column is full of quoted commas and embedded newlines, so it needs a real CSV reader.
     * Columns are located by header name because their order has changed between exports, and the last row for a DOI
@@ -255,60 +263,125 @@ object Acquire:
 
   object Checks:
 
-    final case class AcquireCheck(item: Int, checkedAt: String, outcome: String, reason: String, checks: Int = 1)
+    final case class AcquireCheck(item: AcquireCheck.Item, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: AcquireCheck.Reason, checks: AcquireCheck.Checks = 1)
         derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
+    object AcquireCheck:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type CheckedAt = CheckedAt.T
+      object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Checks = Checks.T
+      object Checks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
     final case class RecheckRequest(
-        dryRun: Boolean = false,
-        limit: Option[Int] = None,
-        id: Option[Int] = None,
-        by: Option[String] = None,
-        all: Boolean = false
+        dryRun: RecheckRequest.DryRun = false,
+        limit: Option[RecheckRequest.Limit] = None,
+        id: Option[RecheckRequest.Id] = None,
+        by: Option[RecheckRequest.By] = None,
+        all: RecheckRequest.All = false
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
+
+    object RecheckRequest:
+      type DryRun = DryRun.T
+      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Limit = Limit.T
+      object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type By = By.T
+      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type All = All.T
+      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     final case class RecheckRow(
-        item: Int,
-        doi: Option[String] = None,
-        action: String = "",
-        detail: String = "",
-        citekey: Option[String] = None
+        item: RecheckRow.Item,
+        doi: Option[com.histmersion.api.library.Doi] = None,
+        action: RecheckRow.Action = "",
+        detail: RecheckRow.Detail = "",
+        citekey: Option[com.histmersion.api.library.Citekey] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
+    object RecheckRow:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Action = Action.T
+      object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Detail = Detail.T
+      object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
     final case class RecheckResult(
-        dryRun: Boolean,
-        open: Int = 0,
-        withDoi: Int = 0,
-        due: Int = 0,
-        allowance: Int = 0,
-        closed: Int = 0,
-        fetched: Int = 0,
-        noCopy: Int = 0,
-        failed: Int = 0,
+        dryRun: RecheckResult.DryRun,
+        open: RecheckResult.Open = 0,
+        withDoi: RecheckResult.WithDoi = 0,
+        due: RecheckResult.Due = 0,
+        allowance: RecheckResult.Allowance = 0,
+        closed: RecheckResult.Closed = 0,
+        fetched: RecheckResult.Fetched = 0,
+        noCopy: RecheckResult.NoCopy = 0,
+        failed: RecheckResult.Failed = 0,
         rows: List[RecheckRow] = Nil,
-        note: Option[String] = None,
+        note: Option[RecheckResult.Note] = None,
         job: Option[JobInfo] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
+    object RecheckResult:
+      type DryRun = DryRun.T
+      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Open = Open.T
+      object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type WithDoi = WithDoi.T
+      object WithDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Due = Due.T
+      object Due extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Allowance = Allowance.T
+      object Allowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Closed = Closed.T
+      object Closed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Fetched = Fetched.T
+      object Fetched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type NoCopy = NoCopy.T
+      object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Failed = Failed.T
+      object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
     final case class RecheckJob(
-        all: Boolean,
-        upTo: Int = 0,
-        since: String = "",
-        by: String = "",
-        resumes: Option[String] = None
+        all: RecheckJob.All,
+        upTo: RecheckJob.UpTo = 0,
+        since: RecheckJob.Since = "",
+        by: RecheckJob.By = "",
+        resumes: Option[RecheckJob.Resumes] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
     object RecheckJob:
 
 
       /** A re-check job's plan, in its detail. */
+      type All = All.T
+      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type UpTo = UpTo.T
+      object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Since = Since.T
+      object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type By = By.T
+      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Resumes = Resumes.T
+      object Resumes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[RecheckJob]] =
         com.histmersion.api.jobs.JobDetail.Field("recheck", None)
 
@@ -320,20 +393,46 @@ object Acquire:
           j.resumes.fold("")(id => s" (resuming job $id)")
 
     final case class RecheckStatus(
-        enabled: Boolean,
-        withDoi: Int = 0,
-        due: Int = 0,
-        triedToday: Int = 0,
-        perDay: Int = 0,
-        fetchedToday: Int = 0,
-        closedWeek: Int = 0,
-        fetchedWeek: Int = 0,
-        everyDays: Int = 0,
-        nextPass: Option[String] = None,
-        note: Option[String] = None,
-        job: Option[String] = None
+        enabled: RecheckStatus.Enabled,
+        withDoi: RecheckStatus.WithDoi = 0,
+        due: RecheckStatus.Due = 0,
+        triedToday: RecheckStatus.TriedToday = 0,
+        perDay: RecheckStatus.PerDay = 0,
+        fetchedToday: RecheckStatus.FetchedToday = 0,
+        closedWeek: RecheckStatus.ClosedWeek = 0,
+        fetchedWeek: RecheckStatus.FetchedWeek = 0,
+        everyDays: RecheckStatus.EveryDays = 0,
+        nextPass: Option[RecheckStatus.NextPass] = None,
+        note: Option[RecheckStatus.Note] = None,
+        job: Option[RecheckStatus.Job] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
+
+    object RecheckStatus:
+      type Enabled = Enabled.T
+      object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type WithDoi = WithDoi.T
+      object WithDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Due = Due.T
+      object Due extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type TriedToday = TriedToday.T
+      object TriedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PerDay = PerDay.T
+      object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type FetchedToday = FetchedToday.T
+      object FetchedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type ClosedWeek = ClosedWeek.T
+      object ClosedWeek extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type FetchedWeek = FetchedWeek.T
+      object FetchedWeek extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type EveryDays = EveryDays.T
+      object EveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type NextPass = NextPass.T
+      object NextPass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Job = Job.T
+      object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     val Closed = "closed"

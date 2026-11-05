@@ -2,12 +2,15 @@ package com.histmersion.api.library
 
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
-final case class ExternalId(scheme: LinkScheme, id: String):
+final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   def key: String = s"${scheme.wire}:$id"
 
   def placeId: String = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
 
 object ExternalId:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Prefixed = """^(wd|wikidata|gn|geonames|pl|pleiades|tgn|whg)\s*:\s*(\S+)$""".r
   private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q\d+)/?$""".r
   private val GeonamesUri = """^https?://(?:sws\.|www\.)?geonames\.org/(\d+)(?:/.*)?$""".r

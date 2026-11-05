@@ -8,20 +8,20 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 
 final case class Filter(
-    q: Option[String] = None,
-    tags: List[String] = Nil,
-    authors: List[String] = Nil,
-    places: List[String] = Nil,
-    topics: List[String] = Nil,
-    status: List[String] = Nil,
+    q: Option[Filter.Q] = None,
+    tags: List[Filter.Tags] = Nil,
+    authors: List[Filter.Authors] = Nil,
+    places: List[Filter.Places] = Nil,
+    topics: List[Filter.Topics] = Nil,
+    status: List[Filter.Status] = Nil,
     years: Option[Period] = None,
     period: Option[Period] = None,
     bbox: Option[BBox] = None,
     sort: Sort = Sort.Relevance,
-    limit: Int = 0,
-    offset: Int = 0,
-    title: Option[String] = None,
-    goal: Option[String] = None
+    limit: Filter.Limit = 0,
+    offset: Filter.Offset = 0,
+    title: Option[Filter.Title] = None,
+    goal: Option[Filter.Goal] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
 
@@ -38,6 +38,27 @@ object Filter:
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
+  type Q = Q.T
+  object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Places = Places.T
+  object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Topics = Topics.T
+  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offset = Offset.T
+  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Goal = Goal.T
+  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Earliest: Long = -1000000000L
   val Latest: Long = 1000000000L
 
@@ -109,7 +130,17 @@ object Filter:
   /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
   object Docs:
 
-    final case class Param(rest: String, mcp: String, doc: String, brief: String)
+    final case class Param(rest: Param.Rest, mcp: Param.Mcp, doc: Param.Doc, brief: Param.Brief)
+
+    object Param:
+      type Rest = Rest.T
+      object Rest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Mcp = Mcp.T
+      object Mcp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Doc = Doc.T
+      object Doc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Brief = Brief.T
+      object Brief extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val query = Param(
       "q",
@@ -208,25 +239,25 @@ object Filter:
     * parameters.
     */
   final case class Query(
-      q: Option[String],
-      tag: List[String],
-      author: List[String],
-      place: List[String],
-      topic: List[String],
-      status: List[String],
-      yearFrom: Option[Long],
-      yearTo: Option[Long],
-      from: Option[Long],
-      to: Option[Long],
-      minLon: Option[Double],
-      minLat: Option[Double],
-      maxLon: Option[Double],
-      maxLat: Option[Double],
-      sort: Option[String],
-      limit: Option[Int],
-      offset: Option[Int],
-      title: Option[String] = None,
-      goal: Option[String] = None
+      q: Option[com.histmersion.api.library.Filter.Q],
+      tag: List[com.histmersion.api.library.Filter.Tags],
+      author: List[com.histmersion.api.library.Filter.Authors],
+      place: List[com.histmersion.api.library.Filter.Places],
+      topic: List[com.histmersion.api.library.Filter.Topics],
+      status: List[com.histmersion.api.library.Filter.Status],
+      yearFrom: Option[com.histmersion.api.catalogue.Year],
+      yearTo: Option[com.histmersion.api.catalogue.Year],
+      from: Option[com.histmersion.api.catalogue.Year],
+      to: Option[com.histmersion.api.catalogue.Year],
+      minLon: Option[com.histmersion.api.catalogue.Longitude],
+      minLat: Option[com.histmersion.api.catalogue.Latitude],
+      maxLon: Option[com.histmersion.api.catalogue.Longitude],
+      maxLat: Option[com.histmersion.api.catalogue.Latitude],
+      sort: Option[Query.Sort],
+      limit: Option[com.histmersion.api.library.Filter.Limit],
+      offset: Option[com.histmersion.api.library.Filter.Offset],
+      title: Option[com.histmersion.api.library.Filter.Title] = None,
+      goal: Option[com.histmersion.api.library.Filter.Goal] = None
   ):
     def toFilter: Filter =
       Filter.of(
@@ -252,6 +283,9 @@ object Filter:
       )
 
   object Query:
+    type Sort = Sort.T
+    object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def from(f: Filter): Query =
       def lo(p: Option[Period]) = Filter.lowerGiven(p)
       def hi(p: Option[Period]) = Filter.upperGiven(p)

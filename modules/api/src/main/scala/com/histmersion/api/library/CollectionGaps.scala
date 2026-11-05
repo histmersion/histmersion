@@ -8,9 +8,17 @@ import sttp.tapir.Schema
   * `total` both, and every row.
   */
 final case class CollectionGaps(
-    count: Int,
-    uncounted: Int,
-    total: Int,
+    count: CollectionGaps.Count,
+    uncounted: CollectionGaps.Uncounted,
+    total: CollectionGaps.Total,
     gaps: List[CollectionGapRow]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionGaps:
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Uncounted = Uncounted.T
+  object Uncounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

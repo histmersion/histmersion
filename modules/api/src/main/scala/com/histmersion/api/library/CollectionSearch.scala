@@ -8,6 +8,10 @@ import sttp.tapir.Schema
   */
 final case class CollectionSearch(
     entries: List[CollectionEntry],
-    total: Int
+    total: CollectionSearch.Total
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionSearch:
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

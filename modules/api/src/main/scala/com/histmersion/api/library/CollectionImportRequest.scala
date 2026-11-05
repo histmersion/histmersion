@@ -9,11 +9,23 @@ import sttp.tapir.Schema
   * item `acquireItem` when the conversion succeeds.
   */
 final case class CollectionImportRequest(
-    id: String,
-    citekey: Option[String] = None,
-    format: Option[String] = None,
-    convert: Boolean = true,
-    cover: Boolean = true,
-    acquireItem: Option[Int] = None
+    id: CollectionImportRequest.Id,
+    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    format: Option[CollectionImportRequest.Format] = None,
+    convert: CollectionImportRequest.Convert = true,
+    cover: CollectionImportRequest.Cover = true,
+    acquireItem: Option[CollectionImportRequest.AcquireItem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CollectionImportRequest:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Format = Format.T
+  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Convert = Convert.T
+  object Convert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cover = Cover.T
+  object Cover extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireItem = AcquireItem.T
+  object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,11 +9,16 @@ import com.histmersion.api.catalogue.{EventEdge, EventParticipant}
 import com.histmersion.api.research.Article
 import io.circe.{Decoder, Encoder}
 
-final case class DeleteBlocker(kind: DeleteBlocker.Kind, id: String, title: Option[String] = None)
+final case class DeleteBlocker(kind: DeleteBlocker.Kind, id: DeleteBlocker.Id, title: Option[DeleteBlocker.Title] = None)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object DeleteBlocker:
 
+
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Kind(val wire: String, val label: String):
     case Article extends Kind("article", "cited by article")

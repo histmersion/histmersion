@@ -1,0 +1,24 @@
+package com.histmersion.api.library
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.Schema
+import com.histmersion.api.given
+
+final case class Assessment(
+    target: String,
+    doi: Option[String],
+    citekey: Option[String],
+    year: Option[Int],
+    citedByCount: Option[Int],
+    influentialCitations: Option[Int],
+    isRetracted: Boolean,
+    retractionWatch: List[RetractionNotice],
+    crossrefUpdates: List[UpdateNotice],
+    flagged: Boolean,
+    verdict: String,
+    recommendation: String,
+    applied: Option[String] = None,
+    checkedAt: Option[String] = None,
+    kept: Option[com.histmersion.api.library.Source.Status] = None
+) derives KindlingsCodecAsObject,
+      KindlingsSchema, com.histmersion.api.json.Schema
