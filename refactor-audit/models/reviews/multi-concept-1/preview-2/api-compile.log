@@ -1,0 +1,339 @@
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/catalogue/Lpf.scala:310:48 [0m[0m
+[31m310 |[0m    fields += [32m"@id"[0m -> [33mJson[0m.fromString(in.place.id)
+[31m[31m    |[0m                                       ^^^^^^^^^^^[0m
+[31m    |[0m      Found:    (in.place.id : com.histmersion.api.catalogue.Place.Id)
+[31m    |[0m      Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/catalogue/Place.scala:244:27 [0m[0m
+[31m244 |[0m      [33mval[0m [36mid[0m = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(label))
+[31m[31m    |[0m                         ^^^^^^[0m
+[31m    |[0mvalue trim is not a member of com.histmersion.api.catalogue.Place.Id, but could be made available as an extension method.
+[31m    |[0m
+[31m    |[0mThe following import might make progress towards fixing the problem:
+[31m    |[0m
+[31m    |[0m  import io.github.iltotore.iron.autoRefine
+[31m    |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/catalogue/Place.scala:244:40 [0m[0m
+[31m244 |[0m      [33mval[0m [36mid[0m = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(label))
+[31m[31m    |[0m                                        ^[0m
+[31m    |[0mFound:    (_$10 : Nothing)
+[31m    |[0mRequired: ?{ nonEmpty: ? }
+[31m    |[0mNote that implicit conversions were not tried because the result of an implicit conversion
+[31m    |[0mmust be more specific than ?{ nonEmpty: Boolean }
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/jobs/JobKinds.scala:28:22 [0m[0m
+[31m28 |[0m    job.citekey.orElse(job.detail.flatMap([36md[0m => entries.iterator.flatMap(_.subject(d)).nextOption()))
+[31m[31m   |[0m    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0m    Found:    Option[com.histmersion.api.library.Citekey | String]
+[31m   |[0m    Required: Option[String]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Acquire.scala:102:35 [0m[0m
+[31m102 |[0m      [33mval[0m [36mtitle[0m = work.title.map(_.trim).filter(_.nonEmpty).getOrElse(doi)
+[31m[31m    |[0m                                 ^^^^^^[0m
+[31m    |[0mvalue trim is not a member of com.histmersion.api.library.Title, but could be made available as an extension method.
+[31m    |[0m
+[31m    |[0mThe following import might make progress towards fixing the problem:
+[31m    |[0m
+[31m    |[0m  import io.github.iltotore.iron.autoRefine
+[31m    |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Acquire.scala:102:50 [0m[0m
+[31m102 |[0m      [33mval[0m [36mtitle[0m = work.title.map(_.trim).filter(_.nonEmpty).getOrElse(doi)
+[31m[31m    |[0m                                                ^^^^^^^^^^[0m
+[31m    |[0mvalue nonEmpty is not a member of Any, but could be made available as an extension method.
+[31m    |[0m
+[31m    |[0mThe following import might make progress towards fixing the problem:
+[31m    |[0m
+[31m    |[0m  import io.github.iltotore.iron.autoRefine
+[31m    |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:28:24 [0m[0m
+[31m28 |[0m          w.citekey.map(esc).getOrElse([32m"—"[0m),
+[31m[31m   |[0m                        ^^^[0m
+[31m   |[0m                 Found:    String => String
+[31m   |[0m                 Required: com.histmersion.api.library.Citekey => String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:29:31 [0m[0m
+[31m29 |[0m          esc(w.title.getOrElse([32m"(untitled)"[0m)),
+[31m[31m   |[0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0m              Found:    com.histmersion.api.library.Title | String
+[31m   |[0m              Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:30:16 [0m[0m
+[31m30 |[0m          num(w.year),
+[31m[31m   |[0m              ^^^^^^[0m
+[31m   |[0m         Found:    (w.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:33:20 [0m[0m
+[31m33 |[0m          doiLink(w.doi),
+[31m[31m   |[0m                  ^^^^^[0m
+[31m   |[0m             Found:    (w.doi : Option[com.histmersion.api.library.Doi])
+[31m   |[0m             Required: Option[String]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:47:15 [0m[0m
+[31m47 |[0m    ).filter(_.nonEmpty).mkString([32m" · "[0m)
+[31m[31m   |[0m             ^^^^^^^^^^[0m
+[31m   |[0mvalue nonEmpty is not a member of String | com.histmersion.api.library.Venue, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mThe following import might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:58:29 [0m[0m
+[31m58 |[0m      [32ms"**DOI:** [0m${doiLink(w.doi)}[32m  "[0m,
+[31m[31m   |[0m                           ^^^^^[0m
+[31m   |[0m             Found:    (w.doi : Option[com.histmersion.api.library.Doi])
+[31m   |[0m             Required: Option[String]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:83:45 [0m[0m
+[31m83 |[0m          esc(x.title.orElse(x.raw).getOrElse([32m"(unstructured)"[0m)).take([32m90[0m),
+[31m[31m   |[0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0m              Found:    com.histmersion.api.library.Title | String
+[31m   |[0m              Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:84:16 [0m[0m
+[31m84 |[0m          num(x.year),
+[31m[31m   |[0m              ^^^^^^[0m
+[31m   |[0m         Found:    (x.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala:85:20 [0m[0m
+[31m85 |[0m          doiLink(x.doi),
+[31m[31m   |[0m                  ^^^^^[0m
+[31m   |[0m             Found:    (x.doi : Option[com.histmersion.api.library.Doi])
+[31m   |[0m             Required: Option[String]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/IngestMarkdown.scala:19:44 [0m[0m
+[31m19 |[0m      j.sha256.map([36ms[0m => [32ms"- **sha256:** [0m${s.take([32m12[0m)}[32m…"[0m),
+[31m[31m   |[0m                                          ^^^^^^[0m
+[31m   |[0mvalue take is not a member of com.histmersion.api.Sha256, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mThe following import might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SearchMarkdown.scala:20:31 [0m[0m
+[31m20 |[0m        [33mval[0m [36mmeta[0m = [33mList[0m(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString([32m" · "[0m)
+[31m[31m   |[0m                             ^^^^^^[0m
+[31m   |[0m         Found:    (h.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SearchMarkdown.scala:34:31 [0m[0m
+[31m34 |[0m        [33mval[0m [36mmeta[0m = [33mList[0m(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString([32m" · "[0m)
+[31m[31m   |[0m                             ^^^^^^[0m
+[31m   |[0m         Found:    (h.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SearchMarkdown.scala:61:31 [0m[0m
+[31m61 |[0m        [33mval[0m [36mmeta[0m = [33mList[0m(year(h.year), h.status.wire, per).filter(_.nonEmpty).mkString([32m" · "[0m)
+[31m[31m   |[0m                             ^^^^^^[0m
+[31m   |[0m         Found:    (h.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:392:39 [0m[0m
+[31m392 |[0m    [33mdef[0m [36midLabel[0m: [32mString[0m = doi.getOrElse(citekey)
+[31m[31m    |[0m                          ^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m    |[0mFound:    com.histmersion.api.library.Doi | com.histmersion.api.library.Citekey
+[31m    |[0mRequired: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:395:34 [0m[0m
+[31m395 |[0m      [33mval[0m [36mauth[0m = [33mRef[0m.shortAuthors(authors)
+[31m[31m    |[0m                                  ^^^^^^^[0m
+[31m    |[0mFound:    (Ref.this.authors : List[com.histmersion.api.library.AuthorName])
+[31m    |[0mRequired: List[String]
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:467:29 [0m[0m
+[31m467 |[0m        doi = (blankToNone(p.doi)).map(com.histmersion.api.library.[33mDoi[0m.apply),
+[31m[31m    |[0m                           ^^^^^[0m
+[31m    |[0m           Found:    (p.doi : Option[com.histmersion.api.library.Doi])
+[31m    |[0m           Required: Option[String]
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:469:31 [0m[0m
+[31m469 |[0m        venue = (blankToNone(p.venue)).map(com.histmersion.api.library.[33mVenue[0m.apply),
+[31m[31m    |[0m                             ^^^^^^^[0m
+[31m    |[0m       Found:    (p.venue : Option[com.histmersion.api.library.Venue])
+[31m    |[0m       Required: Option[String]
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:506:33 [0m[0m
+[31m506 |[0m          applyFindings(existing.citekey, existing.findings, fp)
+[31m[31m    |[0m                        ^^^^^^^^^^^^^^^^[0m
+[31m    |[0m    Found:    (existing.citekey : com.histmersion.api.library.Citekey)
+[31m    |[0m    Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:511:30 [0m[0m
+[31m511 |[0m          applyEdges(existing.citekey, existing.edges, _)
+[31m[31m    |[0m                     ^^^^^^^^^^^^^^^^[0m
+[31m    |[0m    Found:    (existing.citekey : com.histmersion.api.library.Citekey)
+[31m    |[0m    Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E134] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SourcesMarkdown.scala:28:49 [0m[0m
+[31m28 |[0m    [33mval[0m [36mauthorLinks[0m = [33mif[0m s.authors.nonEmpty [33mthen[0m chipLinks(s.authors, [32m"author"[0m) [33melse[0m [32m""[0m
+[31m[31m   |[0m                                                 ^^^^^^^^^[0m
+[31m   |[0mNone of the overloaded alternatives of [33mmethod[0m [32mchipLinks[0m in [33mobject[0m [32mMarkdown[0m with types
+[31m   |[0m (values: List[String], hashKey: String): String
+[31m   |[0m (values: String, hashKey: String): String
+[31m   |[0mmatch arguments ((s.authors : List[com.histmersion.api.library.AuthorName]), ([32m"author"[0m : String))
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SourcesMarkdown.scala:29:40 [0m[0m
+[31m29 |[0m    [33mval[0m [36mmeta[0m = [33mList[0m(authorLinks, year(s.year), s.venue.getOrElse([32m""[0m), s.status.wire).filter(_.nonEmpty).mkString([32m" · "[0m)
+[31m[31m   |[0m                                      ^^^^^^[0m
+[31m   |[0m         Found:    (s.year : Option[com.histmersion.api.catalogue.Year])
+[31m   |[0m         Required: Option[Int]
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/library/SourcesMarkdown.scala:64:65 [0m[0m
+[31m64 |[0m          .map(t => [32ms"\n\n---\n\n[0m${[33mAssetLinks[0m.normalizeBody(t, s.title)}[32m"[0m)
+[31m[31m   |[0m                                                               ^^^^^^^[0m
+[31m   |[0m                 Found:    (s.title : com.histmersion.api.library.Title)
+[31m   |[0m                 Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:40:57 [0m[0m
+[31m40 |[0m    entries.filter(_.within.isEmpty).flatMap(_.bytes).sum
+[31m[31m   |[0m                                                         ^[0m
+[31m   |[0mNo given instance of type Numeric[B] was found for parameter num of [33mmethod[0m [32msum[0m in [33mtrait[0m [32mIterableOnceOps[0m
+[31m   |[0m
+[31m   |[0mwhere:    B is a type variable with constraint >: com.histmersion.api.ByteCount.T
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:44:85 [0m[0m
+[31m44 |[0m      .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.exists(_ > [32m0[0m))
+[31m[31m   |[0m                                                                                   ^^^[0m
+[31m   |[0mvalue > is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Ordered.orderingToOrdered
+[31m   |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m   |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m   |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:19 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                   ^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0mvalue unary_- is not a member of com.histmersion.api.ByteCount | Long, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:42 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                                          ^[0m
+[31m   |[0mAmbiguous given instances: both [33mobject[0m [32mShort[0m in [33mobject[0m [32mOrdering[0m and [33mobject[0m [32mChar[0m in [33mobject[0m [32mOrdering[0m match type Ordering[B] of parameter ord of [33mmethod[0m [32msortBy[0m in [33mtrait[0m [32mSeqOps[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:48:38 [0m[0m
+[31m48 |[0m    report.volumes.filter(_.freeBytes < report.lowFreeBytes).sortBy(_.freeBytes).map { [36mv[0m =>
+[31m[31m   |[0m                          ^^^^^^^^^^^^^[0m
+[31m   |[0mvalue < is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Ordered.orderingToOrdered
+[31m   |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m   |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m   |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:48:80 [0m[0m
+[31m48 |[0m    report.volumes.filter(_.freeBytes < report.lowFreeBytes).sortBy(_.freeBytes).map { [36mv[0m =>
+[31m[31m   |[0m                                                                                ^[0m
+[31m   |[0mNo given instance of type Ordering[com.histmersion.api.ByteCount.T] was found for parameter ord of [33mmethod[0m [32msortBy[0m in [33mtrait[0m [32mSeqOps[0m.
+[31m   |[0mI found:
+[31m   |[0m
+[31m   |[0m    scala.math.Ordering.comparatorToOrdering[[32mcom.histmersion.api.ByteCount.T[0m](
+[31m   |[0m      /* missing */summon[java.util.Comparator[com.histmersion.api.ByteCount.T]])
+[31m   |[0m
+[31m   |[0mBut no implicit values were found that match type java.util.Comparator[com.histmersion.api.ByteCount.T].
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsKernelOrderingForOrder
+[31m   |[0m  import cats.instances.all.catsKernelOrderingForOrder
+[31m   |[0m  import cats.kernel.Order.catsKernelOrderingForOrder
+[31m   |[0m  import scala.math.Ordering.comparatorToOrdering
+[31m   |[0m  import scala.math.Ordering.ordered
+[31m   |[0m  import cats.instances.order.catsKernelOrderingForOrder
+[31m   |[0m  import cats.kernel.instances.order.catsKernelOrderingForOrder
+[31m   |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:73:97 [0m[0m
+[31m73 |[0m    [33mval[0m [36mfiles[0m = e.files.filter(_ => e.bytes.isDefined && e.path.isDefined).map([36mn[0m => [33mPlural[0m.count(n, [32m"file"[0m)).toList
+[31m[31m   |[0m                                                                                                 ^[0m
+[31m   |[0m       Found:    (n : com.histmersion.api.maintenance.Storage.FileCount)
+[31m   |[0m       Required: Long
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:103:66 [0m[0m
+[31m103 |[0m      [33mcase[0m [33mSome[0m(b) [33mif[0m e.partial => [32ms"at least [0m${[33mBackup[0m.humanBytes(b)}[32m"[0m
+[31m[31m    |[0m                                                                  ^[0m
+[31m    |[0m                       Found:    (b : com.histmersion.api.ByteCount.T)
+[31m    |[0m                       Required: Long
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:104:53 [0m[0m
+[31m104 |[0m      [33mcase[0m [33mSome[0m(b)              => [33mBackup[0m.humanBytes(b)
+[31m[31m    |[0m                                                     ^[0m
+[31m    |[0m                       Found:    (b : com.histmersion.api.ByteCount.T)
+[31m    |[0m                       Required: Long
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/StorageMarkdown.scala:11:71 [0m[0m
+[31m11 |[0m      [33mval[0m [36mwhen[0m = (r.ageSeconds.map([36ms[0m => [32ms"measured [0m${[33mAboutMarkdown[0m.age(s)}[32m ago"[0m) ++
+[31m[31m   |[0m                                                                       ^[0m
+[31m   |[0mFound:    (s : com.histmersion.api.maintenance.Storage.Report.AgeSeconds)
+[31m   |[0mRequired: Long
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/StorageMarkdown.scala:18:55 [0m[0m
+[31m18 |[0m        [32ms"- free space: [0m${v.id}[32m: [0m${[33mBackup[0m.humanBytes(v.freeBytes)}[32m free of [0m${[33mBackup[0m.humanBytes(v.totalBytes)}[32m"[0m +
+[31m[31m   |[0m                                                     ^^^^^^^^^^^[0m
+[31m   |[0m                 Found:    (v.freeBytes : com.histmersion.api.ByteCount)
+[31m   |[0m                 Required: Long
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/maintenance/StorageMarkdown.scala:18:97 [0m[0m
+[31m18 |[0m        [32ms"- free space: [0m${v.id}[32m: [0m${[33mBackup[0m.humanBytes(v.freeBytes)}[32m free of [0m${[33mBackup[0m.humanBytes(v.totalBytes)}[32m"[0m +
+[31m[31m   |[0m                                                                                               ^^^^^^^^^^^^[0m
+[31m   |[0m                Found:    (v.totalBytes : com.histmersion.api.ByteCount)
+[31m   |[0m                Required: Long
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/research/ArticleMarkdown.scala:113:45 [0m[0m
+[31m113 |[0m          .map(v => [33mif[0m truncate [33mthen[0m stripMd(v).take([32m200[0m) [33melse[0m v)
+[31m[31m    |[0m                                             ^[0m
+[31m    |[0m                     Found:    (v : com.histmersion.api.library.Title)
+[31m    |[0m                     Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-2/modules/api/src/main/scala/com/histmersion/api/research/ArticleMarkdown.scala:115:45 [0m[0m
+[31m115 |[0m        [33mval[0m [36mauth[0m = [33mSource[0m.[33mRef[0m.shortAuthors(s.authors)
+[31m[31m    |[0m                                           ^^^^^^^^^[0m
+[31m    |[0m  Found:    (s.authors : List[com.histmersion.api.library.AuthorName])
+[31m    |[0m  Required: List[String]
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+42 errors found
+Compilation failed

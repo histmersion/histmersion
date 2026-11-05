@@ -2,6 +2,26 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Preview follow-up: the existing configurable Preview/PreviewCompile tools generated
+the entire 79-field cohort together, retaining all confirmed identities. Preview-1
+stopped on synthetic Scala 3 package ownership while locating existing Latitude;
+the lookup now resolves the source package and declaration name. Preview-2 generated
+twelve definitions and reused five, then failed the 487-source API overlay compile
+with 42 diagnostics. Preview-3 adds configured container rendering boundaries and
+fails with 24 diagnostics. Original source hashes are unchanged in both runs.
+No source repair or detector-refinement credit is assigned.
+
+Real boundary evidence includes AcquireMarkdown's optional titles/years/DOIs,
+ArticleMarkdown's optional title and author list, Source.Ref's mixed DOI/citekey
+display label, Markdown.year/chipLinks and JSON serialization. The shared fixture
+was extended with new samples, leaving previous expected transformations intact;
+rewrite-boundaries.txt records exact output, compile, runtime and rejection checks.
+This is rule development evidence, not an independent detector-quality holdout.
+The unmatched AssetLinks key in preview-3 used the wrong package (library; source
+imports media). Preserve that observation and correct the next configuration.
+Remaining errors include semantic helper propagation, normalization and quantity
+arithmetic; they must not be resolved by permitting global implicit unwrapping.
+
 Follow-up implementation evidence: the shared ModelTypeRewrite extension passed
 the seven-concept String/Int/Long/Double, scalar/Option/List Iron fixture and the
 unchanged legacy Int fixture. Wrong base and constructor order fail without source

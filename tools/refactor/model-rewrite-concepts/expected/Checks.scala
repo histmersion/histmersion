@@ -22,3 +22,7 @@ import scala.compiletime.testing.typeChecks
   assert(Calls.defaults.doi.isEmpty && Calls.defaults.authors.isEmpty)
   assert(Calls.defaults.bytes.value == 0L)
   assert(Calls.unrelated == Unrelated("raw", 3L))
+  assert(Rendering.render(r) == "a|bd" && Rendering.evaluations == 1)
+  assert(Rendering.render(Calls.defaults) == "missing")
+  assert(Rendering.normalized(r).contains("d"))
+  assert(Rendering.forwarded(r) == r)
