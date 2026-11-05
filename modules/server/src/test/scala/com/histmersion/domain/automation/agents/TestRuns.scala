@@ -109,10 +109,11 @@ object TestRuns:
   /** The library's routing of a source's proposals, as the composition builds it for engine `a`. */
   def proposals(
       a: com.histmersion.domain.automation.agents.AgentsControllers,
-      h: com.histmersion.server.ServerWiring
+      h: com.histmersion.server.ServerWiring,
+      ds: DataSource
   ): SourceProposals =
     SourceProposals(
-      a.approvals,
+      SourceApprovalService(Transactor(ds), a.approvalStore, a.clock),
       a.config,
       ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status),
       p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)

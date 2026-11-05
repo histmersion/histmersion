@@ -1,5 +1,30 @@
 # Priority-family status
 
+## Approval ownership repair completed
+
+The 14-file Scalafix ownership batch and separate one-file codec prerequisite are
+applied. Full production/test compilation and 38 unchanged test identities pass.
+All 54 confirmed production relationships in the source-proposal coupling are
+verified removed; every other production relationship is retained. These are
+relationships within one design problem, not 54 independent operations. Original
+codec failures, rejected gate runs and immutable baselines remain preserved.
+
+The integrated assessment passes across 3,140 source/test files. Ten new test
+relationships are individually adjudicated non-violations through a hashed additive
+event; identity regression checks still reject substitution and reappearance.
+Isolation now retains 170 production candidates, 21 accepted production exceptions,
+138 test candidates and 61 test non-violations. Unclassified directions remain
+unresolved. See `approval-isolation/README.md` for repair and verification evidence.
+
+Capability measurement remains 147 occurrences in 125 anchors, with no new/reopened
+identities or multiplicity changes. Transaction ownership retains three verified
+repairs and two unresolved SQL expressions. Primitive modeling now records 30,437
+production member primitive leaves and 46,873 unresolved leaves across all scopes;
+these are not confirmed violations. Purpose/owner/equivalence decisions for modeling
+remain next. Independent detector quality and the project-wide 90% automation target
+remain unestablished. Copy automation stays paused. No detector refinement round was
+consumed. The checkpoints below retain historical states.
+
 ## Approval extraction development checkpoint
 
 The source-proposal ownership repair now has a generated four-file definition/storage

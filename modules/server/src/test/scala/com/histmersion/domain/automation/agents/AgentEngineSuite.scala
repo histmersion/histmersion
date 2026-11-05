@@ -468,12 +468,12 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val p =
       AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(Source.Status.Contested), evidence = "e")
-    val first = TestRuns.proposals(a, h).propose(None, p)
+    val first = TestRuns.proposals(a, h, ds).propose(None, p)
     val id = first match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
     // the same proposal while it is open is not doubled
-    assert(TestRuns.proposals(a, h).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
+    assert(TestRuns.proposals(a, h, ds).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
     val decided = a.decide(id, "approve", DecisionRequest(Some("checked the rebuttal"))).toOption.get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
@@ -482,7 +482,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
     val p2 = p.modify(_.status).setTo(Some(Source.Status.Debunked))
-    val id2 = TestRuns.proposals(a, h).propose(None, p2) match
+    val id2 = TestRuns.proposals(a, h, ds).propose(None, p2) match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
     assertEquals(a.decide(id2, "reject", DecisionRequest()).map(_.state), Right("rejected"))
@@ -506,7 +506,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val auto = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(AgentApprovalsConfig("auto", "manual", "manual")))
     val (a, h) = handlers(c, auto); seed(h)
     val o = TestRuns
-      .proposals(a, h)
+      .proposals(a, h, ds)
       .propose(
         None,
         AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(Source.Status.Debunked), evidence = "e")

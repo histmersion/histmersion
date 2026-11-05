@@ -1,9 +1,9 @@
 status=VIOLATIONS
 best-effort=false
 unresolved-reference-names=2
-expected-files=2368
+expected-files=2370
 missing-files=0
-files=2368
+files=2370
 violations=147
 indirect-repository-findings=0
 coverage=direct resolved references plus repository calls through known source method bodies; dynamic dispatch, callbacks, external helper bodies and inferred-type escapes remain unmeasured

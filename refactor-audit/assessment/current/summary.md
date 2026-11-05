@@ -1,6 +1,6 @@
 # Project-wide rule measurements
 
-28 source modules; 3138 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
+28 source modules; 3140 source/test files. Source and policy fingerprints remained stable. Baseline comparable: false.
 
 Counts are matches within each rule's stated scope, not proof of all 43 architectural goals. Relationship counts and rewrite-plan nodes must not be added to diagnostic counts. CLI-only rows outside cli are not applicable. Zero is never a claim that an unimplemented goal is covered.
 

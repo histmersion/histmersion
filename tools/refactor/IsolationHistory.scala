@@ -4,7 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters._
 
 object IsolationHistory {
-  case class Policy(mode: String = "check", ledger: String = "refactor-audit/isolation-history")
+  case class Policy(mode: String = "check", ledger: String = "refactor-audit/isolation-history", reviewedAdditions: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -68,7 +68,20 @@ class IsolationHistory(val policy: IsolationHistory.Policy) extends SyntacticRul
       write(baseline,table); write(ledger.resolve("contract.txt"),contract)
     }
     require(lines(ledger.resolve("contract.txt")) == contract, "Policy changed: explicit correction required")
-    val before = rows(baseline).map(_.head).toSet
+    val original = rows(baseline).map(_.head).toSet
+    val adopted = policy.reviewedAdditions.flatMap { event =>
+      val path = Paths.get(event)
+      val recorded = lines(path.resolve("event.txt"))
+      require(recorded.contains("baseline-sha256=" + hash(Files.readString(baseline))),"Adoption baseline changed")
+      require(recorded.contains("contract-sha256=" + hash(Files.readString(ledger.resolve("contract.txt")))),"Adoption detector contract changed")
+      require(recorded.contains("decisions-sha256=" + hash(Files.readString(path.resolve("decisions.tsv")))),"Adoption decisions changed")
+      val decisions = rows(path.resolve("decisions.tsv"))
+      require(decisions.forall(r => r.size == 5 && r(1).contains("/src/test/") && r(3) == "non-violation" && r(4).trim.nonEmpty),"Unsupported adoption classification/scope")
+      require(decisions.forall(r => hash(Files.readString(Paths.get(r(1)))) == r(2)),"Review source changed; explicit re-review required")
+      decisions.map(_.head)
+    }
+    require(adopted.distinct.size == adopted.size && (adopted.toSet intersect original).isEmpty,"Repeated/replaced baseline identity")
+    val before = original ++ adopted
     val now = grouped.keys.map(_.id).toSet
     val history = ledger.resolve("observations")
     val prior = if(Files.exists(history)) {
@@ -90,6 +103,7 @@ class IsolationHistory(val policy: IsolationHistory.Policy) extends SyntacticRul
       "production-candidates=" + grouped.keys.count(_.scope == "production"), "test-candidates=" + grouped.keys.count(_.scope == "test"),
       "ambiguous-owner-relationships=" + grouped.keys.count(_.confidence != "symbol-relationship"),
       "unclassified-direction-evidence=" + raw.count(_(10) == "unclassified-direction"),
+      "reviewed-additional-test-nonviolations=" + adopted.size,
       "new=" + added.size, "reopened=" + reopened.size,
       "No confirmed violations or verified repairs inferred. Repeated uses share a relationship; occurrence multiplicity is not a gate.",
       "Missing/local owners remain ambiguous. Build dependencies and permitted crossings are separate evidence, outside this identity gate.")

@@ -5,7 +5,7 @@ local-position	cli	1132	1171
 local-position	config	165	176
 local-position	console	2	2
 local-position	core	1599	1771
-local-position	db	1291	1434
+local-position	db	1292	1435
 local-position	files	178	193
 local-position	plugin-api	13	17
 local-position	plugin-fixtures/hello-ai	4	4
@@ -50,7 +50,7 @@ non-public-member-review	cli	265	269
 non-public-member-review	config	91	95
 non-public-member-review	console	5	5
 non-public-member-review	core	249	279
-non-public-member-review	db	1087	1198
+non-public-member-review	db	1096	1207
 non-public-member-review	files	72	75
 non-public-member-review	plugin-api	2	2
 non-public-member-review	plugin-host	77	84
@@ -63,7 +63,7 @@ non-public-member-review	plugins/events	9	10
 non-public-member-review	plugins/fetchers	12	14
 non-public-member-review	plugins/gazetteers	17	18
 non-public-member-review	plugins/media	34	37
-non-public-member-review	server	2335	2578
+non-public-member-review	server	2334	2577
 non-public-member-review	upstreams	77	81
 non-public-member-review	values	6	6
 non-public-member-review	web	994	1105
@@ -97,7 +97,7 @@ public-method-review	cli	467	496
 public-method-review	config	151	165
 public-method-review	console	1	1
 public-method-review	core	1163	1293
-public-method-review	db	770	852
+public-method-review	db	762	844
 public-method-review	files	168	180
 public-method-review	plugin-api	101	110
 public-method-review	plugin-fixtures/hello	6	6
@@ -175,7 +175,7 @@ trait-contract	plugin-host	14	15
 trait-contract	plugins/ai-http	1	1
 trait-contract	plugins/calibre	4	5
 trait-contract	plugins/gazetteers	6	7
-trait-contract	server	1223	1374
+trait-contract	server	1224	1375
 trait-contract	values	2	2
 trait-contract	web	84	91
 type-definition	api	1	2

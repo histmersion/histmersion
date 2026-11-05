@@ -70,6 +70,7 @@ object EngineStoreSuite:
         val autopilot = AutopilotRowService.InMemory(state, clock)
         val goals = GoalService.InMemory(state, clock, targets)
         val approvals = ApprovalService.InMemory(state, jobs, clock)
+        val sourceApprovals = com.histmersion.domain.library.workflows.SourceApprovalService.InMemory(state, approvals, clock)
         val runs = jobs
         val agentRuns = RunService.InMemory(state, jobs, clock)
         val managers = ManagerService.InMemory(state, jobs, clock)
@@ -98,6 +99,7 @@ object EngineStoreSuite:
           val autopilot = AutopilotRowService(db)
           val goals = GoalService(db)
           val approvals = ApprovalService(db, Clock.systemUTC())
+          val sourceApprovals = com.histmersion.domain.library.workflows.SourceApprovalService(db, approvals, Clock.systemUTC())
           val runs = JobRuns(db)
           val agentRuns = RunService(db)
           val managers = ManagerService(db)

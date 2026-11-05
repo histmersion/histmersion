@@ -1,0 +1,3 @@
+PASS: actual CLI accepted exact reviewed additions and rejected source drift, changed classification, wrong baseline and reappearance.
+Evidence: target/approval-adoption-verification/2026-11-05T01-29-53.633660Z
+Original ledger and application files unchanged by verification.

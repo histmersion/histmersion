@@ -1,15 +1,15 @@
 check	status	count
-behavioral-parity	unproven; contract-suite-evidence-required	57
+behavioral-parity	unproven; contract-suite-evidence-required	58
 companion-Implementation	candidate-gap; confirm-service-role	8
 companion-Implementation	required-shape-missing	1
-companion-Implementation	structural-evidence-present	48
+companion-Implementation	structural-evidence-present	49
 companion-InMemory	candidate-gap; confirm-service-role	15
 companion-InMemory	required-shape-missing	1
-companion-InMemory	structural-evidence-present	41
-other-implementations	inventory	57
+companion-InMemory	structural-evidence-present	42
+other-implementations	inventory	58
 private-Implementation	candidate-gap; confirm-service-role	8
 private-Implementation	required-shape-missing	1
-private-Implementation	structural-evidence-present	48
+private-Implementation	structural-evidence-present	49
 service-trait	candidate-gap; confirm-service-role	8
 service-trait	required-shape-missing	1
-service-trait	structural-evidence-present	48
+service-trait	structural-evidence-present	49

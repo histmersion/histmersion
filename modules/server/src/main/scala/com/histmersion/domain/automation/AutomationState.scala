@@ -32,6 +32,19 @@ final case class AutomationState(
 )
 
 object AutomationState:
+  import hearth.kindlings.optics.syntax.*
+
+  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: Long => ApprovalRecord): Option[Long] =
+    var made: Option[Long] = None
+    val _ = state.updateAndGet { s =>
+      if s.approvals.exists(conflicts) then { made = None; s }
+      else
+        val id = s.lastApprovalId + 1
+        made = Some(id)
+        s.modify(_.approvals).using(_ :+ make(id)).modify(_.lastApprovalId).setTo(id)
+    }
+    made
+
   val empty: AutomationState =
     AutomationState(
       None,

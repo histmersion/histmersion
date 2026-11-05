@@ -1,0 +1,9 @@
+class	test	status	message
+com.histmersion.domain.automation.agents.ApprovalServiceDbSuite	a run's step approval opens once; its approvals oldest first; a cancelled run's open step ones rejected	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceDbSuite	a source's open proposal is not doubled; once decided, it may be proposed again; ever proposed is known	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceDbSuite	pages newest first, with cursors; filters by kind, text (the run's goal and manager too), goal; facets	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceDbSuite	what the autopilot approved since a moment, and who decided each	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceInMemorySuite	a run's step approval opens once; its approvals oldest first; a cancelled run's open step ones rejected	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceInMemorySuite	a source's open proposal is not doubled; once decided, it may be proposed again; ever proposed is known	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceInMemorySuite	pages newest first, with cursors; filters by kind, text (the run's goal and manager too), goal; facets	passed	
+com.histmersion.domain.automation.agents.ApprovalServiceInMemorySuite	what the autopilot approved since a moment, and who decided each	passed	
