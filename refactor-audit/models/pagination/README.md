@@ -92,3 +92,43 @@ as calls. Enclosing operations can include unrelated arguments. Exact argument
 mapping, compiler synthetics and implicit conversions remain required before claiming
 complete rewrite coverage. Next is a compiled fixture covering these shapes and a
 guarded multi-module preview; do not expand general primitive discovery first.
+
+## Reusable rewrite development
+
+`tools/refactor/ModelTypeRewrite.scala` introduces a configurable semantic rewrite
+for reviewed direct Int fields and explicit method results. Configuration identifies
+record symbols, the complete constructor parameter order, selected fields and their
+replacement types, and selected result symbols. It changes type tokens and numeric
+defaults, wraps raw arguments at positional/named constructor and generated copy
+calls, and preserves forwarding of already-migrated fields. A look-alike text offset
+on another record is unchanged. It checks constructor parameter order before patching.
+
+The fixture separates opaque definitions into their own source file so that the
+consumer compilation proves actual type separation. Baseline, expected and generated
+sources are compiled independently; generated sources must match expected output
+exactly. A wrong-order config must fail with the intended message and leave input
+unchanged. Runtime checks cover retained values and compile-time rejection checks
+cover Int/RowCount misuse as Offset. `rewrite-fixture.txt` records the completed run.
+
+The first run failed compiling the config decoder; the second failed locating the
+fixture SemanticDB because the source root was wrong. Both were corrected in tooling.
+Before claiming success, fixture opacity was strengthened by separating definitions;
+the expected constructor behavior was not weakened. Later runs added the constructor
+order rejection and behavior checks. `rewrite-runs` preserves the run inputs/outputs
+and logs, including failures; development fixture additions are not independent
+detector samples.
+
+Run v5 incorrectly compiled the post-migration typed assertions against the primitive
+baseline and failed on Int versus opaque-type equality. Run v6 stages those unchanged
+postconditions after rewriting; the original Models/Types baseline still compiles
+first. No comparison assertion was weakened or removed. These postconditions verify
+the target representation, not a claim of identical baseline test signatures.
+
+This rule is not production-ready: Option leaves, arithmetic, arbitrary method
+parameters, inferred return types, pre-existing typed arguments not named in the
+configuration, multiple parameter clauses and transitive propagation remain outside
+its tested support. An unsupported declaration type fails instead of silently
+rewriting it. Do not run it directly on application sources; the next step is extending
+these fixtures for optional offsets and generating a guarded preview of the reviewed
+record family. Production/test module compilation and remeasurement are still required.
+The overall automation target and independent detector-quality requirement remain open.
