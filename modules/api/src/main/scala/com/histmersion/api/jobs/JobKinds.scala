@@ -25,4 +25,4 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
 
   /** What a job is about: its source, else what its detail says. */
   def subject(job: JobInfo): Option[String] =
-    job.citekey.orElse(job.detail.flatMap(d => entries.iterator.flatMap(_.subject(d)).nextOption()))
+    job.citekey.map(_.value.toString).orElse(job.detail.flatMap(d => entries.iterator.flatMap(_.subject(d)).nextOption()))

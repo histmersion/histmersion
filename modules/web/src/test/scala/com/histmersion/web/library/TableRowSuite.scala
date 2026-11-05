@@ -9,16 +9,16 @@ class TableRowSuite extends munit.FunSuite:
   private def hit(authors: List[String]) =
     Hit(
       SearchHit(
-        "cline2014_year",
-        "1177 B.C.",
-        Some(2014),
+        com.histmersion.api.library.Citekey("cline2014_year"),
+        com.histmersion.api.library.Title("1177 B.C."),
+        (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
         Source.Status.Current,
         Nil,
         List("levant"),
         Some(-1250),
         Some(-1100),
         None,
-        authors = authors
+        authors = (authors).map(com.histmersion.api.library.AuthorName.apply)
       ),
       Nil,
       Nil

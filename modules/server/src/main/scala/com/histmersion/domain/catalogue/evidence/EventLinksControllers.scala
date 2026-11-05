@@ -162,8 +162,8 @@ final class EventLinksControllers(
                             eid,
                             links.candidates(eid).filter(_.status == Event.LinkStatus.Proposed) :+
                               EventLinkCandidate(
-                                eid,
-                                ck,
+                                com.histmersion.api.catalogue.Event.Id(eid),
+                                com.histmersion.api.library.Citekey(ck),
                                 0,
                                 Event.LinkStatus.Proposed,
                                 None,

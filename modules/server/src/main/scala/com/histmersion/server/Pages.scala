@@ -122,7 +122,7 @@ object Pages:
       case FullText.Missing => """<hr><p class="muted">No full text is stored for this source.</p>"""
       // normalised here as well as at import: the corpus was seeded before the figure-link rewrite
       case FullText.Shown(text) =>
-        s"""<hr><div class="reading src-body">${html(AssetLinks.normalizeBody(text, r.title))}</div>"""
+        s"""<hr><div class="reading src-body">${html(AssetLinks.normalizeBody(text, r.title.value))}</div>"""
     s"""<h1>${esc(r.title)}</h1>""" +
       s"""<p class="src-byline">$byline</p>""" +
       s"""<p class="src-ident"><span class="lbl">$ident</span> ${identifier(r)}</p>""" +

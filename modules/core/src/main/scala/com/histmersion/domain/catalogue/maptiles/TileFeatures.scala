@@ -50,7 +50,7 @@ object TileFeatures:
     TilePoint(
       c.x,
       c.y,
-      text(P.Key, c.key) ++ text(P.Id, e.id) ++ text(P.Label, e.label) ++ text(P.Kind, e.kind) ++
+      text(P.Key, c.key) ++ text(P.Id, e.id.value) ++ text(P.Label, e.label) ++ text(P.Kind, e.kind) ++
         text(P.Scale, e.scale) ++ text(P.Historicity, e.historicity) ++ whole(P.NotBefore, e.timeSpan.notBefore) ++
         whole(P.BeginBy, e.timeSpan.beginBy) ++ whole(P.EndFrom, e.timeSpan.endFrom) ++ whole(
           P.NotAfter,

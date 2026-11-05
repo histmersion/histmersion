@@ -18,16 +18,16 @@ final private[events] case class EventGeoRow(
   def toGeo: EventGeo =
     val e = row.toSummary
     EventGeo(
-      e.id,
+      com.histmersion.api.catalogue.Event.Id(e.id),
       e.label,
       e.kind,
       e.scale,
       e.historicity,
       e.timeSpan,
-      lat,
-      lon,
+      com.histmersion.api.catalogue.Latitude(lat),
+      com.histmersion.api.catalogue.Longitude(lon),
       anchor,
-      e.placeId,
+      (e.placeId).map(com.histmersion.api.catalogue.Place.Id.apply),
       placeLabel,
       e.parentId,
       None,

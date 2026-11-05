@@ -92,8 +92,8 @@ object Preview:
   def card(s: com.histmersion.api.library.Source.Detail): Card =
     val ref = com.histmersion.api.library.Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
     Card(
-      title = s.title,
-      byline = List(s.authors.mkString(", "), s.year.fold("")(_.toString), s.venue.getOrElse(""))
+      title = s.title.value,
+      byline = List(s.authors.map(_.value).mkString(", "), s.year.map(_.value.toInt).fold("")(_.toString), s.venue.map(_.value).getOrElse(""))
         .filter(_.trim.nonEmpty)
         .mkString(" · "),
       identifier = ref.idLabel,
@@ -168,7 +168,7 @@ object Preview:
       byline = (List(Label.display(p.kind).capitalize, p.when) ++ contested)
         .filter(_.nonEmpty)
         .mkString(" · "),
-      identifier = p.id,
+      identifier = p.id.value,
       status = None,
       chips = Nil,
       where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
@@ -262,8 +262,8 @@ object Preview:
         "Possibly discussed in",
         d.candidates.map(c =>
           Item(
-            c.title.getOrElse(c.citekey) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
-            citekey = Some(c.citekey)
+            c.title.getOrElse(c.citekey.value.toString) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
+            citekey = Some(c.citekey.value.toString)
           )
         ),
         note = Some("unconfirmed — proposed from findings near it and passages naming it"),

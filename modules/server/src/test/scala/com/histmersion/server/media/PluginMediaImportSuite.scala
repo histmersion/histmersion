@@ -138,7 +138,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              PlaceId,
+              com.histmersion.api.catalogue.Place.Id(PlaceId),
               "Zqplenae",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[142.0,-43]}""")

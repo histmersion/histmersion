@@ -13,4 +13,4 @@ final private[places] case class PlaceTypeRow(
     citekey: Option[String]
 ) derives DbCodec:
   def toDto: Place.Type =
-    Place.Type(placeId, typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)
+    Place.Type(com.histmersion.api.catalogue.Place.Id(placeId), typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)

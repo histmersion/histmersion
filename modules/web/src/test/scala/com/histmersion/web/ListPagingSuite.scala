@@ -11,7 +11,7 @@ import com.histmersion.api.library.Ingest
   */
 class ListPagingSuite extends munit.FunSuite:
 
-  private def job(id: String, state: JobState = JobState.Done) = JobInfo(id, Ingest.KindIngest, state.wire)
+  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), state.wire)
   private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
 
   test("the heading: every row shown, or the latest N of the total, with the filter's word"):

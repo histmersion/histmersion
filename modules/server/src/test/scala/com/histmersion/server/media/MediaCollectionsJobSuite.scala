@@ -129,15 +129,15 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place("zqmc_site", "Zqmcenae", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), "Zqmcenae", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
             List(Place.Name("Zqmcenae"), Place.Name("Zqmcenai"))
           ),
           Place.Input(
-            Place("zqmc_thebai_a", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
             List(Place.Name("Zqmc Thebai"))
           ),
           Place.Input(
-            Place("zqmc_thebai_b", "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
             List(Place.Name("Zqmc Thebai"))
           )
         )

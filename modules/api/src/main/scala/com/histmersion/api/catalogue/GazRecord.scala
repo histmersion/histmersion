@@ -6,7 +6,7 @@ import com.histmersion.api.given
 final case class GazRecord(
     ref: String,
     own: Option[ExternalId],
-    placeId: String,
+    placeId: com.histmersion.api.catalogue.Place.Id,
     label: String,
     kind: String,
     geometry: Option[GazGeometry],

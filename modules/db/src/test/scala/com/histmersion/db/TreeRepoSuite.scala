@@ -48,17 +48,17 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   // gazetteer) materialises. Keep new fixture geometry away from real places.
   private val batch = List(
     Place.Input(
-      Place("zzt_world", "Zzt World", com.histmersion.domain.catalogue.Place.Kind.Region),
+      Place(com.histmersion.api.catalogue.Place.Id("zzt_world"), "Zzt World", com.histmersion.domain.catalogue.Place.Kind.Region),
       List(Place.Name("Zzt World"))
     ),
     Place.Input(
-      Place("zzt_land", "Zzt Land", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(170, -50, 179, -40))),
+      Place(com.histmersion.api.catalogue.Place.Id("zzt_land"), "Zzt Land", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(170, -50, 179, -40))),
       List(Place.Name("Zzt Land")),
       List(Place.Relation("zzt_land", "zzt_world"))
     ),
     Place.Input(
       Place(
-        "zzt_north",
+        com.histmersion.api.catalogue.Place.Id("zzt_north"),
         "Zzt North",
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(box(171, -48, 175, -44)),
@@ -70,7 +70,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     ),
     Place.Input(
       Place(
-        "zzt_south",
+        com.histmersion.api.catalogue.Place.Id("zzt_south"),
         "Zzt South",
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(box(174, -47, 178, -44)),
@@ -85,11 +85,11 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   private val Tag = "zzt-tree-fixture"
 
   private val src = Source(
-    citekey = "zzt_src",
-    title = "Tree fixture",
-    authors = List("T"),
+    citekey = com.histmersion.api.library.Citekey("zzt_src"),
+    title = com.histmersion.api.library.Title("Tree fixture"),
+    authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2021),
+    year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -105,7 +105,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // in the OVERLAP of the two polities (and in the region containing both)
       Finding(
         "zzt_src#0",
-        "zzt_src",
+        com.histmersion.api.library.Citekey("zzt_src"),
         "Frontier hoard",
         Some("Frontier"),
         Some(GeoPoint(174.5, -45.0)),
@@ -117,7 +117,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // in the northern polity only
       Finding(
         "zzt_src#1",
-        "zzt_src",
+        com.histmersion.api.library.Citekey("zzt_src"),
         "Capital archive",
         Some("Capital"),
         Some(GeoPoint(172.0, -45.0)),
@@ -129,7 +129,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // nowhere: mid-Atlantic, no place covers it
       Finding(
         "zzt_src#2",
-        "zzt_src",
+        com.histmersion.api.library.Citekey("zzt_src"),
         "Atlantic core",
         None,
         Some(GeoPoint(-30.0, 45.0)),

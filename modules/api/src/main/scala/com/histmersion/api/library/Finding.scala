@@ -11,7 +11,7 @@ import sttp.tapir.Schema
 
 final case class Finding(
     id: String,
-    citekey: String,
+    citekey: com.histmersion.api.library.Citekey,
     claim: String,
     region: Option[String],
     geo: Option[GeoPoint],

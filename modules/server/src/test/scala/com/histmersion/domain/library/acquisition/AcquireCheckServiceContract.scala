@@ -15,11 +15,11 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
 
   private def source(ck: String, doi: Option[String], body: Option[String]) =
     Source(
-      ck,
-      ck,
-      Nil,
-      doi,
-      Some(2000),
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(ck),
+      (Nil).map(com.histmersion.api.library.AuthorName.apply),
+      (doi).map(com.histmersion.api.library.Doi.apply),
+      (Some(2000)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       com.histmersion.api.library.Source.Status.Current,
       Nil,

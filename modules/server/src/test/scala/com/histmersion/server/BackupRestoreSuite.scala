@@ -136,9 +136,9 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   private def fixture(ck: String, title: String) =
     com.histmersion.api.library.Source.Put(
-      title = title,
-      authors = List("Tester"),
-      year = Some(2026),
+      title = com.histmersion.api.library.Title(title),
+      authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
+      year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
       status = Some(Source.Status.Current),
       topics = List("backup"),
       regions = List("Anatolia"),

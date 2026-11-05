@@ -55,66 +55,66 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val Peir = "pleiades_999100009"
 
   protected val places = List(
-    Place(City, "Zzrc City", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0, -50.0)),
+    Place(com.histmersion.api.catalogue.Place.Id(City), "Zzrc City", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0, -50.0)),
     Place(
-      Regio1,
+      com.histmersion.api.catalogue.Place.Id(Regio1),
       "Zzrc Regio I (Porta Capena)",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(140.02, -50.01),
       properties = types("region")
     ),
     Place(
-      Regio2,
+      com.histmersion.api.catalogue.Place.Id(Regio2),
       "Zzrc Regio II (Caelimontium)",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(140.03, -49.99),
       properties = types("region")
     ),
     Place(
-      Aiantis,
+      com.histmersion.api.catalogue.Place.Id(Aiantis),
       "Zzrc Aiantis",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(140.2, -50.0),
       properties = types("people")
     ),
-    Place(Athens, "Zzrc Athens", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.21, -50.02)),
+    Place(com.histmersion.api.catalogue.Place.Id(Athens), "Zzrc Athens", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.21, -50.02)),
     Place(
-      Thess,
+      com.histmersion.api.catalogue.Place.Id(Thess),
       "Zzrc Thessalia",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(142.5, -47.5),
       properties = types("province")
     ),
     Place(
-      Achaia,
+      com.histmersion.api.catalogue.Place.Id(Achaia),
       "Zzrc Achaia",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(141.25, -47.75),
       properties = types("region")
     ),
     Place(
-      Grid,
+      com.histmersion.api.catalogue.Place.Id(Grid),
       "Zzrc Gridsite",
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(143.5, -46.5),
       properties = types("settlement")
     ),
     Place(
-      Dup,
+      com.histmersion.api.catalogue.Place.Id(Dup),
       "Withdrawn (duplicate): Zzrc Creta et Cyrene",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(144.0, -45.0),
       properties = types("province")
     ),
     Place(
-      Into,
+      com.histmersion.api.catalogue.Place.Id(Into),
       "Zzrc Creta et Cyrene (Roman province)",
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(144.3, -45.2),
       properties = types("province-2")
     ),
     Place(
-      Peir,
+      com.histmersion.api.catalogue.Place.Id(Peir),
       "Zzrc Peiraieus",
       com.histmersion.domain.catalogue.Place.Kind.Region,
       pt(140.25, -50.05),
@@ -123,7 +123,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   )
 
   protected def f(n: Int, region: Option[String], at: Option[GeoPoint]) =
-    Finding(s"zzrc_src#$n", "zzrc_src", s"claim $n", region, at, None, None, Nil, None)
+    Finding(s"zzrc_src#$n", com.histmersion.api.library.Citekey("zzrc_src"), s"claim $n", region, at, None, None, Nil, None)
 
   protected val findings = List(
     f(0, Some("Zzrc City"), Some(GeoPoint(140.0, -50.0))),
@@ -140,11 +140,11 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = "zzrc_src",
-        title = "Region cleanup fixture",
-        authors = List("T"),
+        citekey = com.histmersion.api.library.Citekey("zzrc_src"),
+        title = com.histmersion.api.library.Title("Region cleanup fixture"),
+        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2026),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,

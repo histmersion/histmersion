@@ -119,10 +119,10 @@ final class CandidateSearch(
               Source.Candidate(
                 0,
                 g.slug,
-                k,
-                w.title.getOrElse(k),
+                com.histmersion.api.library.Doi(k),
+                com.histmersion.api.library.Title(w.title.getOrElse(k)),
                 w.year,
-                w.authors.take(8),
+                (w.authors.take(8)).map(com.histmersion.api.library.AuthorName.apply),
                 w.venue,
                 w.abstractText.map(_.take(2000)),
                 w.isOa,

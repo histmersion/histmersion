@@ -48,9 +48,9 @@ class RenameCmdSuite extends munit.FunSuite:
       val out = RenameCmd.pruneRenamed(
         dir,
         List(
-          Source.Alias("old2020_a", "new1999_a"),
-          Source.Alias("gone2020_c", "new1999_c"), // no file: nothing to report
-          Source.Alias("../keep2020_b", "x2020_y")
+          Source.Alias("old2020_a", com.histmersion.api.library.Citekey("new1999_a")),
+          Source.Alias("gone2020_c", com.histmersion.api.library.Citekey("new1999_c")), // no file: nothing to report
+          Source.Alias("../keep2020_b", com.histmersion.api.library.Citekey("x2020_y"))
         )
       ) // not a citekey: never a path outside `dir`
       assertEquals(out, List(Right("old2020_a → new1999_a")))

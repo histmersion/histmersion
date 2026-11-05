@@ -55,13 +55,13 @@ object JobRecords:
     def create(kind: String, citekey: Option[String], sha256: Option[String], acquireItem: Option[Int]): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
-        UUID.randomUUID().toString,
-        kind,
+        com.histmersion.api.jobs.JobInfo.Id(UUID.randomUUID().toString),
+        com.histmersion.api.jobs.JobInfo.Kind(kind),
         JobState.Queued.wire,
-        citekey,
+        (citekey).map(com.histmersion.api.library.Citekey.apply),
         None,
         None,
-        sha256,
+        (sha256).map(com.histmersion.api.Sha256.apply),
         now,
         now,
         acquireItem

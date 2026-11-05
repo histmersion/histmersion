@@ -64,7 +64,7 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: a place card shows kind, validity in BCE/CE, the parents and the counts") {
     def summary(id: String, label: String, kind: String, ps: Option[Long] = None, pe: Option[Long] = None) =
-      Place.Summary(id, label, kind, ps, pe, None, "")
+      Place.Summary(com.histmersion.api.catalogue.Place.Id(id), label, kind, ps, pe, None, "")
     val d = PlaceDetail(
       place = summary("hatti", "Hittite Empire", "polity", Some(-1650), Some(-1180)),
       geometry = None,

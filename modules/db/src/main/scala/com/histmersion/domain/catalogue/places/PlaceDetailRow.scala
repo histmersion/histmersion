@@ -26,7 +26,7 @@ final private[places] case class PlaceDetailRow(
 ) derives DbCodec:
   def toSummary: com.histmersion.api.catalogue.Place.Summary =
     com.histmersion.api.catalogue.Place.Summary(
-      id,
+      com.histmersion.api.catalogue.Place.Id(id),
       label,
       kind,
       periodStart,

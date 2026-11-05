@@ -16,11 +16,11 @@ import com.histmersion.api.library.Finding
 class MarkdownSuite extends munit.FunSuite:
 
   private val detail = com.histmersion.api.library.Source.Detail(
-    citekey = "cline2014_collapse",
-    title = "1177 BC",
-    authors = List("Eric H. Cline"),
-    year = Some(2014),
-    venue = Some("PUP"),
+    citekey = com.histmersion.api.library.Citekey("cline2014_collapse"),
+    title = com.histmersion.api.library.Title("1177 BC"),
+    authors = (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
+    year = (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+    venue = (Some("PUP")).map(com.histmersion.api.library.Venue.apply),
     status = Source.Status.Current,
     topics = List("collapse"),
     regions = List("Levant"),
@@ -28,7 +28,7 @@ class MarkdownSuite extends munit.FunSuite:
     periodStart = Some(-1300),
     periodEnd = Some(-1100),
     summary = Some("Systems collapse."),
-    doi = Some("10.1/x"),
+    doi = (Some("10.1/x")).map(com.histmersion.api.library.Doi.apply),
     ocrMarkdown = Some("BODY TEXT")
   )
 
@@ -71,9 +71,9 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
     val hit = SearchHit(
-      "k1_a",
-      "T",
-      Some(2020),
+      com.histmersion.api.library.Citekey("k1_a"),
+      com.histmersion.api.library.Title("T"),
+      (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
       Source.Status.Current,
       Nil,
       Nil,
@@ -104,7 +104,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) includes paging footer when total > hits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(com.histmersion.api.library.Citekey(s"k$i"), com.histmersion.api.library.Title(s"T$i"), (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(50), hits))
@@ -113,7 +113,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults: the footer follows the page's own offset — every page, not just the first (#1798)"):
     val hits = (1 to 3).map { i =>
-      Hit(SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None), Nil, Nil)
+      Hit(SearchHit(com.histmersion.api.library.Citekey(s"k$i"), com.histmersion.api.library.Title(s"T$i"), (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), Source.Status.Current, Nil, Nil, None, None, None), Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult.of(50, hits, 20))
     assert(md.startsWith("### 3 of 50 source(s)"), md)
@@ -123,7 +123,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), Source.Status.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(com.histmersion.api.library.Citekey(s"k$i"), com.histmersion.api.library.Title(s"T$i"), (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), Source.Status.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(3), hits))
@@ -155,10 +155,10 @@ class MarkdownSuite extends munit.FunSuite:
 class MarkdownHopsSuite extends munit.FunSuite:
 
   private val src = com.histmersion.api.library.Source.Detail(
-    citekey = "x2020_y",
-    title = "T",
-    authors = List("A"),
-    year = Some(2020),
+    citekey = com.histmersion.api.library.Citekey("x2020_y"),
+    title = com.histmersion.api.library.Title("T"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = Source.Status.Current,
     topics = List("steppe", "migration"),

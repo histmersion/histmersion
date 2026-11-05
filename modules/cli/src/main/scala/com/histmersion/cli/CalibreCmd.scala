@@ -187,7 +187,7 @@ object CalibreCmd:
                 s"queued job ${a.jobId} for ${a.citekey}" +
                   item.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
               )
-              if noWait || json then Right(()) else IngestCmd.pollJob(c, a.jobId, 0)
+              if noWait || json then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.jobs.JobInfo.Id(a.jobId), 0)
             }
     }
 
@@ -301,11 +301,11 @@ object CalibreCmd:
             Source.Patch(
               metadata = Some(
                 MetadataPatch(
-                  title = Some(b.title),
-                  authors = Some(b.authors),
-                  year = b.year,
-                  venue = b.publisher,
-                  doi = b.doi,
+                  title = (Some(b.title)).map(com.histmersion.api.library.Title.apply),
+                  authors = (Some(b.authors)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
+                  year = (b.year).map(com.histmersion.api.catalogue.Year.apply),
+                  venue = (b.publisher).map(com.histmersion.api.library.Venue.apply),
+                  doi = (b.doi).map(com.histmersion.api.library.Doi.apply),
                   calibreId = Some(b.id.toString)
                 )
               ),
@@ -317,11 +317,11 @@ object CalibreCmd:
         c.putSource(
           ck,
           Source.Put(
-            title = b.title,
-            authors = b.authors,
-            doi = b.doi,
-            year = b.year,
-            venue = b.publisher,
+            title = com.histmersion.api.library.Title(b.title),
+            authors = (b.authors).map(com.histmersion.api.library.AuthorName.apply),
+            doi = (b.doi).map(com.histmersion.api.library.Doi.apply),
+            year = (b.year).map(com.histmersion.api.catalogue.Year.apply),
+            venue = (b.publisher).map(com.histmersion.api.library.Venue.apply),
             status = Some(com.histmersion.api.library.Source.Status.Unassessed),
             tags = b.tags,
             summary = summary,

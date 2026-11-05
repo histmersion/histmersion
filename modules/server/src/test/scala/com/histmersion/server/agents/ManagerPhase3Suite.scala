@@ -95,7 +95,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, Query)).isRight)
 
   private def work(doi: String, title: String, oa: Boolean) =
-    WorkRef(doi = Some(doi), title = Some(title), year = Some(2023), authors = List("Zz"), isOa = oa)
+    WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
   private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, Ingest.Report] =
@@ -103,7 +103,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     else
       val ck = "zzagent" + doi.replaceAll("[^a-z0-9]", "")
       assert(
-        h.library.sources.put(ck, Source.Put(title = s"Ingested $doi", year = Some(2023), doi = Some(doi))).isRight
+        h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $doi"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply))).isRight
       )
       Right(
         Ingest.Report(
@@ -368,8 +368,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** The (paused) enrich manager with two source items. */
   private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
-    assert(h.library.sources.put(CkA, Source.Put(title = "Hint A", year = Some(2020))).isRight)
-    assert(h.library.sources.put(CkB, Source.Put(title = "Hint B", year = Some(2021))).isRight)
+    assert(h.library.sources.put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
+    assert(h.library.sources.put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
       a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity)

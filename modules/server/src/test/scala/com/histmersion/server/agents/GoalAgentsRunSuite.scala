@@ -152,8 +152,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         .put(
           Ck,
           com.histmersion.api.library.Source.Put(
-            title = "Bronze Age tin",
-            year = Some(2019),
+            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List("zzagent_tin"),
             status = Some(Source.Status.Current),
             summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
@@ -169,8 +169,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         .put(
           Ck2,
           com.histmersion.api.library.Source.Put(
-            title = "Tin isotopes",
-            year = Some(2024),
+            title = com.histmersion.api.library.Title("Tin isotopes"),
+            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List("zzagent_tin"),
             body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
           )
@@ -222,17 +222,17 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   private def stubPlan(up: StubUpstream): Unit =
     up.metas = Map(
       "10.5555/zzagent.in" -> WorkRef(
-        doi = Some("10.5555/zzagent.in"),
-        title = Some("Bronze Age tin"),
-        year = Some(2019),
-        citekey = Some(Ck),
+        doi = (Some("10.5555/zzagent.in")).map(com.histmersion.api.library.Doi.apply),
+        title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply),
+        year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
+        citekey = (Some(Ck)).map(com.histmersion.api.library.Citekey.apply),
         inDb = true
       ),
       "10.5555/zzagent.out" -> WorkRef(
-        doi = Some("10.5555/zzagent.out"),
-        title = Some("Zzagent tin isotopes"),
-        year = Some(2023),
-        authors = List("Berger", "Lockhoff")
+        doi = (Some("10.5555/zzagent.out")).map(com.histmersion.api.library.Doi.apply),
+        title = (Some("Zzagent tin isotopes")).map(com.histmersion.api.library.Title.apply),
+        year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (List("Berger", "Lockhoff")).map(com.histmersion.api.library.AuthorName.apply)
       )
     )
 

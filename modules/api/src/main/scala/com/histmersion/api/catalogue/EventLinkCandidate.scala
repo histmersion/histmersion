@@ -3,10 +3,11 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class EventLinkCandidate(
-    eventId: String,
-    citekey: String,
+    eventId: com.histmersion.api.catalogue.Event.Id,
+    citekey: com.histmersion.api.library.Citekey,
     score: Double,
     status: String = EventLinkCandidate.Status.Proposed,
     title: Option[String] = None,

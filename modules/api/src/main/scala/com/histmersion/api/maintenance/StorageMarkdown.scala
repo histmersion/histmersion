@@ -8,15 +8,15 @@ object StorageMarkdown:
   def render(r: Storage.Report): List[String] =
     if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
     else
-      val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
-        r.tookMillis.map(ms => s"took $ms ms") ++ Option.when(r.measuring)("measuring…")).mkString(", ")
-      val head = s"## Storage" + (if r.entries.nonEmpty then s" — ${Backup.humanBytes(Storage.total(r.entries))} in all"
+      val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
+        r.tookMillis.map(_.value.toLong).map(ms => s"took $ms ms") ++ Option.when(r.measuring)("measuring…")).mkString(", ")
+      val head = s"## Storage" + (if r.entries.nonEmpty then s" — ${Backup.humanBytes(Storage.total(r.entries).value.toLong)} in all"
                                   else "") +
         (if when.nonEmpty then s" ($when)" else "")
       val entries = Storage.shown(r.entries).map((e, depth) => entry(r, e, depth))
       val vols = r.volumes.map(v =>
-        s"- free space: ${v.id}: ${Backup.humanBytes(v.freeBytes)} free of ${Backup.humanBytes(v.totalBytes)}" +
-          (if v.freeBytes < r.lowFreeBytes then " — LOW" else "")
+        s"- free space: ${v.id}: ${Backup.humanBytes(v.freeBytes.value.toLong)} free of ${Backup.humanBytes(v.totalBytes.value.toLong)}" +
+          (if v.freeBytes.value.toLong < r.lowFreeBytes.value.toLong then " — LOW" else "")
       )
       val hints = r.hints.map(h => s"- $h")
       val problems = r.problems.map(p => s"- problem: $p")

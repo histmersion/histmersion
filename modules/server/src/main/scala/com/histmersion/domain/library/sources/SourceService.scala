@@ -213,7 +213,7 @@ object SourceService:
     def current(id: String): Option[String] = currentIn(state.get, id)
     def aliasOf(citekey: String): Option[String] = state.get.aliases.get(citekey)
     def aliasesOf(citekey: String): Set[String] = state.get.aliases.collect { case (a, ck) if ck == citekey => a }.toSet
-    def aliases: List[Source.Alias] = state.get.aliases.toList.sortBy(_._1).map(Source.Alias(_, _))
+    def aliases: List[Source.Alias] = state.get.aliases.toList.sortBy(_._1).map(Source.Alias(_, com.histmersion.api.library.Citekey(_)))
     def citekeys: List[String] = state.get.sources.keys.toList.sorted
     def updatedAtMillis: Map[String, Long] = state.get.sources.view.mapValues(_.updatedAt.toEpochMilli).toMap
     def calibreId(citekey: String): Option[String] = state.get.sources.get(citekey).flatMap(_.source.calibreId)
@@ -279,7 +279,7 @@ object SourceService:
       citekeys.distinct.sorted.flatMap(ck =>
         st.sources
           .get(ck)
-          .map(x => Source.Ref(ck, x.source.doi, x.source.authors, x.source.year, x.source.title, x.source.status))
+          .map(x => Source.Ref(com.histmersion.api.library.Citekey(ck), x.source.doi, x.source.authors, x.source.year, x.source.title, x.source.status))
       )
 
     /** The precedence of the database's resolution: the citekey itself, an old citekey, a short form. */

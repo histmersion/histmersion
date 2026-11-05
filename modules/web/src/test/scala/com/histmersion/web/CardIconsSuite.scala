@@ -27,11 +27,11 @@ class CardIconsSuite extends munit.FunSuite:
       tags: List[String] = Nil
   ) =
     com.histmersion.api.library.Source.Detail(
-      "zz2020",
-      "Zz",
-      Nil,
-      Some(2020),
-      venue,
+      com.histmersion.api.library.Citekey("zz2020"),
+      com.histmersion.api.library.Title("Zz"),
+      (Nil).map(com.histmersion.api.library.AuthorName.apply),
+      (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+      (venue).map(com.histmersion.api.library.Venue.apply),
       Source.Status.Current,
       Nil,
       Nil,
@@ -39,7 +39,7 @@ class CardIconsSuite extends munit.FunSuite:
       None,
       None,
       None,
-      doi,
+      (doi).map(com.histmersion.api.library.Doi.apply),
       None,
       provenance = provenance
     )
@@ -122,7 +122,7 @@ class CardIconsSuite extends munit.FunSuite:
       Some("book")
     )
     val fort = PlaceDetail(
-      com.histmersion.api.catalogue.Place.Summary("zz_f", "Zz fort", Place.Kind.Site, None, None, None, "Zz fort"),
+      com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("zz_f"), "Zz fort", Place.Kind.Site, None, None, None, "Zz fort"),
       None,
       Nil,
       Nil,

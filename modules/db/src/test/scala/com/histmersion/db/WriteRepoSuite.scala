@@ -31,12 +31,12 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   private val ck = "zz_write_source"
 
   private def seedSource(citekey: String = ck) = Source(
-    citekey = citekey,
-    title = "Writes",
-    authors = List("A", "B"),
-    doi = Some("10.0/x"),
-    year = Some(2020),
-    venue = Some("Nature"),
+    citekey = com.histmersion.api.library.Citekey(citekey),
+    title = com.histmersion.api.library.Title("Writes"),
+    authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
+    doi = (Some("10.0/x")).map(com.histmersion.api.library.Doi.apply),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Current,
     topics = List("t"),
     regions = List("Anatolia"),
@@ -51,7 +51,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         s"$citekey#0",
-        citekey,
+        com.histmersion.api.library.Citekey(citekey),
         "claim one",
         Some("Anatolia"),
         Some(GeoPoint(32.0, 39.0)),
@@ -61,7 +61,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(citekey, "zz_other", "references")),
+    edges = List(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey("zz_other"), "references")),
     notes = Some("# article\n\nagent-written prose")
   )
 
@@ -93,7 +93,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(s.tags, List("adna", "yamnaya"))
     assertEquals(s.findings.map(_.id), List(s"$ck#0"))
     assertEquals(s.findings.head.geo, Some(GeoPoint(32.0, 39.0)))
-    assertEquals(s.edges, List(Edge(ck, "zz_other", "references")))
+    assertEquals(s.edges, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("zz_other"), "references")))
     assertEquals(s.period, Some(Period(-2000, -1500)))
     assert(s.updatedAt.isDefined)
 

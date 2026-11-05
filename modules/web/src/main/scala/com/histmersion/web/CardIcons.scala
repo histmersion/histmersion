@@ -46,7 +46,7 @@ object CardIcons:
 
   /** Pure: what a source is, from its record ([[SourceKinds.of]]). */
   def kindOf(s: Source.Detail, hasCover: Boolean = false): String =
-    Source.Kinds.of(s.doi, s.venue, s.provenance, s.tags, s.topics, hasCover)
+    Source.Kinds.of(s.doi.map(_.value), s.venue.map(_.value), s.provenance, s.tags, s.topics, hasCover)
 
   def source(s: Source.Detail, hasCover: Boolean = false): String = sourceKind(kindOf(s, hasCover))
 

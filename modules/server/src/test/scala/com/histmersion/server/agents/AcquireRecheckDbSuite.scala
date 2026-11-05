@@ -133,12 +133,12 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h, up) = setup()
     assert(
       h.library.sources
-        .put("zzrecheck_full", Source.Put(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+        .put("zzrecheck_full", Source.Put(title = com.histmersion.api.library.Title("Full"), doi = (Some(doi("full"))).map(com.histmersion.api.library.Doi.apply), body = Some("The text.")))
         .isRight
     )
     assert(
       h.library.sources
-        .put("zzrecheck_meta", Source.Put(title = "Meta", doi = Some(doi("meta")), notes = Some("Compiled.")))
+        .put("zzrecheck_meta", Source.Put(title = com.histmersion.api.library.Title("Meta"), doi = (Some(doi("meta"))).map(com.histmersion.api.library.Doi.apply), notes = Some("Compiled.")))
         .isRight
     )
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
@@ -272,11 +272,11 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Right(Nil)
     def meta(d: String) = Right(
       WorkRef(
-        doi = Some(d),
-        title = Some(s"Work $d"),
-        year = Some(2020),
-        authors = List("Zz Zzrecheck"),
-        citekey = Some("zzrecheck2020_" + d.replaceAll("[^a-z0-9]", "").takeRight(6))
+        doi = (Some(d)).map(com.histmersion.api.library.Doi.apply),
+        title = (Some(s"Work $d")).map(com.histmersion.api.library.Title.apply),
+        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (List("Zz Zzrecheck")).map(com.histmersion.api.library.AuthorName.apply),
+        citekey = (Some("zzrecheck2020_" + d.replaceAll("[^a-z0-9]", "").takeRight(6))).map(com.histmersion.api.library.Citekey.apply)
       )
     )
     def references(d: String) = Right(("crossref", Nil))
@@ -328,7 +328,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     a.attach(AgentUpstream.of(acq))
     assert(
       h.library.sources
-        .put("zzrecheck_kept", Source.Put(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled.")))
+        .put("zzrecheck_kept", Source.Put(title = com.histmersion.api.library.Title("Kept"), doi = (Some(doi("oa"))).map(com.histmersion.api.library.Doi.apply), notes = Some("Compiled.")))
         .isRight
     )
     val oa = item(h, "oa"); val closed = item(h, "closed")
@@ -409,7 +409,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(asked(up), Nil)
     assert(
       h.library.sources
-        .put("zzrecheck_full", Source.Put(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+        .put("zzrecheck_full", Source.Put(title = com.histmersion.api.library.Title("Full"), doi = (Some(doi("full"))).map(com.histmersion.api.library.Doi.apply), body = Some("The text.")))
         .isRight
     )
     val full = item(h, "full")

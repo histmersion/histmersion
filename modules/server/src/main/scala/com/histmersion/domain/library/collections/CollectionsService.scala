@@ -260,11 +260,11 @@ object CollectionsService:
               Source.Patch(
                 metadata = Some(
                   MetadataPatch(
-                    title = item.title.orElse(Some("")),
-                    authors = Some(item.authors),
-                    year = item.year.map(_.value),
-                    venue = item.publisher,
-                    doi = doi,
+                    title = (item.title.orElse(Some(""))).map(com.histmersion.api.library.Title.apply),
+                    authors = (Some(item.authors)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
+                    year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
+                    venue = (item.publisher).map(com.histmersion.api.library.Venue.apply),
+                    doi = (doi).map(com.histmersion.api.library.Doi.apply),
                     calibreId = Some(item.id.value)
                   )
                 ),
@@ -276,11 +276,11 @@ object CollectionsService:
           library.create(
             ck,
             Source.Put(
-              title = item.title.getOrElse(""),
-              authors = item.authors,
-              doi = doi,
-              year = item.year.map(_.value),
-              venue = item.publisher,
+              title = com.histmersion.api.library.Title(item.title.getOrElse("")),
+              authors = (item.authors).map(com.histmersion.api.library.AuthorName.apply),
+              doi = (doi).map(com.histmersion.api.library.Doi.apply),
+              year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
+              venue = (item.publisher).map(com.histmersion.api.library.Venue.apply),
               status = Some(
                 com.histmersion.domain.library.Source.Status.Unassessed
                   .transformInto[com.histmersion.api.library.Source.Status]

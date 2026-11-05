@@ -200,12 +200,12 @@ private[sources] object SourceRepo:
                      SELECT src, dst, kind FROM unresolved_edges WHERE src = $citekey
                      ORDER BY kind, dst""".query[EdgeRow].run()
       Source(
-        citekey = r.citekey,
-        title = r.title,
-        authors = r.authors,
-        doi = r.doi,
-        year = r.year,
-        venue = r.venue,
+        citekey = com.histmersion.api.library.Citekey(r.citekey),
+        title = com.histmersion.api.library.Title(r.title),
+        authors = (r.authors).map(com.histmersion.api.library.AuthorName.apply),
+        doi = (r.doi).map(com.histmersion.api.library.Doi.apply),
+        year = (r.year).map(com.histmersion.api.catalogue.Year.apply),
+        venue = (r.venue).map(com.histmersion.api.library.Venue.apply),
         status = r.status.transformInto[com.histmersion.api.library.Source.Status],
         topics = r.topics,
         regions = r.regions,
@@ -225,7 +225,7 @@ private[sources] object SourceRepo:
             case _                  => None
           Finding(
             f.id,
-            r.citekey,
+            com.histmersion.api.library.Citekey(r.citekey),
             f.claim,
             f.regionName,
             geo,
@@ -238,7 +238,7 @@ private[sources] object SourceRepo:
             f.significance
           )
         },
-        edges = es.toList.map(e => Edge(e.src, e.dst, e.kind)),
+        edges = es.toList.map(e => Edge(com.histmersion.api.library.Citekey(e.src), com.histmersion.api.library.Citekey(e.dst), e.kind)),
         notes = r.notes,
         updatedAt = Some(r.updatedAt)
       )
@@ -362,7 +362,7 @@ private[sources] object SourceRepo:
         .query[(String, String)]
         .run()
         .toList
-        .map(Source.Alias(_, _))
+        .map(Source.Alias(_, com.histmersion.api.library.Citekey(_)))
     )
 
   /** Rename a source's citekey, in the caller's transaction — all of it happens or none of it does.

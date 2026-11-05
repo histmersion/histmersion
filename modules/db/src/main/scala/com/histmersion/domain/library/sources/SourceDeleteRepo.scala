@@ -73,7 +73,7 @@ private[sources] object SourceDeleteRepo:
           .query[(String, String, String)]
           .run()
           .toList
-          .map((s, d, k) => Edge(s, d, k))
+          .map((s, d, k) => Edge(com.histmersion.api.library.Citekey(s), com.histmersion.api.library.Citekey(d), k))
         val report = referrers.report(DeleteReport(counts = counts(ck, aliases.size, edgesIn.size)), keysOf(ck, keys))
         val d = Source.Deletion(
           citekey = ck,

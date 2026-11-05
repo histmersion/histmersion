@@ -249,9 +249,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .put(
           Ck,
           Source.Put(
-            title = "Bronze Age tin",
-            authors = List("Ann Tinley"),
-            year = Some(2019),
+            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            authors = (List("Ann Tinley")).map(com.histmersion.api.library.AuthorName.apply),
+            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
             body = Some(
               "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
             )
@@ -264,8 +264,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .put(
           Ck2,
           Source.Put(
-            title = "Tin isotopes",
-            year = Some(2024),
+            title = com.histmersion.api.library.Title("Tin isotopes"),
+            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
             body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
           )
         )
@@ -1499,8 +1499,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .put(
           Ck3,
           Source.Put(
-            title = "Tin routes",
-            year = Some(2021),
+            title = com.histmersion.api.library.Title("Tin routes"),
+            year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply),
             body = Some("The tin went overland before it reached the coast.")
           )
         )

@@ -13,10 +13,10 @@ object IngestMarkdown:
   def job(j: JobInfo): String =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
-      j.citekey.map(c => s"- **citekey:** $c"),
+      j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
       j.progress.filter(_.nonEmpty).map(p => s"- **progress:** $p"),
       j.error.filter(_.nonEmpty).map(e => s"- **error:** $e"),
-      j.sha256.map(s => s"- **sha256:** ${s.take(12)}…"),
+      j.sha256.map(_.value).map(s => s"- **sha256:** ${s.take(12)}…"),
       j.acquireItem.map(i =>
         s"- **acquisition item:** $i" + (j.state match
           case JobState.Done   => ""

@@ -104,7 +104,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def seed(h: ServerWiring): Unit =
     assert(
-      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+      h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(Body))).isRight
     )
 
   /** Spend `tokens` on `model`, finished `minutesAgo`, as a recorded LLM attempt of a run of its own. */

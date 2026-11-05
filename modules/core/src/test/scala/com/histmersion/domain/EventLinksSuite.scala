@@ -124,7 +124,7 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(ArticleEventLead.markdown(Nil), "")
 
   test("markdown of links and leads says unconfirmed and lists the commands"):
-    val l = EventLinkList("e", "E", List(EventLinkCandidate("e", "a2020", 1.1, reasons = List("names it 1 time"))))
+    val l = EventLinkList("e", "E", List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.library.Citekey("a2020"), 1.1, reasons = List("names it 1 time"))))
     assert(EventLinksMarkdown.list(l).contains("unconfirmed"))
     val md = EventLeads.markdown(
       EventLead.List(

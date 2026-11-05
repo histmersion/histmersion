@@ -22,7 +22,7 @@ class PlaceRecordSuite extends munit.FunSuite:
     assertEquals(Place.Register("P9999", "x").name, "P9999")
 
   test("the place's Markdown lists its record; none when it holds nothing"):
-    val p = Place.Summary("wikidata_q1", "Larissa Castle", "site", None, None, None, "", false)
+    val p = Place.Summary(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), "Larissa Castle", "site", None, None, None, "", false)
     val rec = Place.Record(
       Some("wikidata-p580"),
       List("Byzantine"),

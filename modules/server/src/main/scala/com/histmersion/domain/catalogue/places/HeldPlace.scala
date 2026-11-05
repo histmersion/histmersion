@@ -31,7 +31,7 @@ final case class HeldPlace(
 
   def summary: Place.Summary =
     Place.Summary(
-      id,
+      com.histmersion.api.catalogue.Place.Id(id),
       place.label,
       place.kind,
       place.period.map(_.start),

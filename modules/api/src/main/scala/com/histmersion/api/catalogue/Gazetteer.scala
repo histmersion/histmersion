@@ -202,7 +202,7 @@ object Gazetteer:
         GazRecord(
           ref = own.map(_.key).getOrElse(ref),
           own = own,
-          placeId = placeIdFor(own, ref, dataset),
+          placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
           label = label,
           kind = in.place.kind,
           geometry = in.place.geometry.map(GazGeometry.GeoJson(_)),
@@ -277,7 +277,7 @@ object Gazetteer:
           GazRecord(
             ref = own.map(_.key).getOrElse(ref),
             own = own,
-            placeId = placeIdFor(own, ref, dataset),
+            placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
             label = title,
             kind = kind,
             geometry = point.orElse(get("geowkt").map(GazGeometry.Wkt(_))),

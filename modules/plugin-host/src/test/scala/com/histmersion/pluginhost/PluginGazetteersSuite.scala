@@ -31,7 +31,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
       Right(
         Place.Input(
           Place(
-            "zz_slice_-1650_-1401",
+            com.histmersion.api.catalogue.Place.Id("zz_slice_-1650_-1401"),
             " Hittite Empire ",
             "polity",
             Some("""{"type":"Point","coordinates":[33.0,40.0]}"""),

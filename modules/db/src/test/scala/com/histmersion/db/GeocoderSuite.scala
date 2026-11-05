@@ -209,7 +209,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   // ── the repair ───────────────────────────────────────────────────────────────────────────────
 
   private def finding(n: Int, region: String, lon: Double, lat: Double, claim: String, period: Option[Period] = None) =
-    Finding(s"$Ck#$n", Ck, claim, Some(region), Some(GeoPoint(lon, lat)), period, None, Nil, Some(Confidence.High))
+    Finding(s"$Ck#$n", com.histmersion.api.library.Citekey(Ck), claim, Some(region), Some(GeoPoint(lon, lat)), period, None, Nil, Some(Confidence.High))
 
   private def point(id: String): (Double, Double, Option[String]) = connect(ds):
     sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = $id"
@@ -220,11 +220,11 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   test("finding-geocode: only old-geocoder points move; hand-placed ones and the unchanged never do"):
     val siteLabel = "[Zzhulwan]/Zzchala/Zzalbania"
     val src = Source(
-      citekey = Ck,
-      title = "Fixture",
-      authors = List("A"),
+      citekey = com.histmersion.api.library.Citekey(Ck),
+      title = com.histmersion.api.library.Title("Fixture"),
+      authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
-      year = Some(2025),
+      year = (Some(2025)).map(com.histmersion.api.catalogue.Year.apply),
       venue = None,
       status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,

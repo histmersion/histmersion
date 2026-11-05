@@ -35,11 +35,11 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
   stest("a verdict is recorded with its stamp, and a later one replaces it") { s =>
     val _ = s.sources.put(
       com.histmersion.api.library.Source(
-        "zqa_one",
-        "One",
-        Nil,
+        com.histmersion.api.library.Citekey("zqa_one"),
+        com.histmersion.api.library.Title("One"),
+        (Nil).map(com.histmersion.api.library.AuthorName.apply),
         None,
-        Some(2000),
+        (Some(2000)).map(com.histmersion.api.catalogue.Year.apply),
         None,
         com.histmersion.api.library.Source.Status.Current,
         Nil,

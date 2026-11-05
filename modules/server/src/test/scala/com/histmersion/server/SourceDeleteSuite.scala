@@ -72,11 +72,11 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     ): Either[String, ConvertedDoc] = Left("not used")
 
   private def source(ck: String, edges: List[Edge] = Nil, findings: Int = 0, calibre: Option[String] = None) = Source(
-    citekey = ck,
-    title = s"Title $ck",
-    authors = List("A"),
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2020),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -92,7 +92,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     findings = (0 until findings).toList.map(i =>
       Finding(
         s"$ck#$i",
-        ck,
+        com.histmersion.api.library.Citekey(ck),
         s"claim $i",
         Some("Anatolia"),
         Some(GeoPoint(32.0, 39.0)),
@@ -135,12 +135,12 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         Old,
         findings = 2,
         calibre = Some("1693"),
-        edges = List(Edge(Old, Other, "challenges"), Edge(Old, "zzdelmissing2001_x", "references"))
+        edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), "challenges"), Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey("zzdelmissing2001_x"), "references"))
       )
     )
     put(source(Other, edges = Nil))
     SourceFixtures.rename(ds, Old, Del).fold(e => fail(e.message), _ => ())
-    put(source(Other, edges = List(Edge(Other, Del, "references"))))
+    put(source(Other, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), "references"))))
     connect(ds):
       sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Del".update.run()
       sql"INSERT INTO places (id, label, kind) VALUES ($Place, 'Zz place', 'site')".update.run()
@@ -220,7 +220,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     )
     assert(d.count(Chunks) > 0 && d.count(FindingPlaces) >= 1)
     assertEquals(d.aliases, List(Old))
-    assertEquals(d.edgesIn, List(Edge(Other, Del, "references")))
+    assertEquals(d.edgesIn, List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), "references")))
     assertEquals(d.coverage, List(Slug))
     assertEquals(d.calibreId, Some("1693"))
     assertEquals(d.mentions.size, 1)

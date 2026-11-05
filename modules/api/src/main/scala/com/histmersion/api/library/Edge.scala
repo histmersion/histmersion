@@ -7,7 +7,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-final case class Edge(src: String, dst: String, kind: String)
+final case class Edge(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, kind: String)
 
 object Edge:
 

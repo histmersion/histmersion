@@ -48,7 +48,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   private val places = List(
     Place.Input(
       Place(
-        "zzi_land",
+        com.histmersion.api.catalogue.Place.Id("zzi_land"),
         "Zzia Land",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(box(-130, -40, -120, -30))
@@ -57,7 +57,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     ),
     Place.Input(
       Place(
-        "zzi_realm",
+        com.histmersion.api.catalogue.Place.Id("zzi_realm"),
         "Zzia Realm",
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(box(-129, -39, -125, -35)),
@@ -68,7 +68,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     ),
     Place.Input(
       Place(
-        "zzi_town",
+        com.histmersion.api.catalogue.Place.Id("zzi_town"),
         "Zzia Town",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
@@ -78,7 +78,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     ),
     Place.Input(
       Place(
-        "zzi_east",
+        com.histmersion.api.catalogue.Place.Id("zzi_east"),
         "Zzia East",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(box(-122, -40, -120, -38))
@@ -87,18 +87,18 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     ),
     // contains the query but does not START with it, and is only findable by a period-scoped name
     Place.Input(
-      Place("zzi_hidden", "Hidden Place", com.histmersion.domain.catalogue.Place.Kind.Site),
+      Place(com.histmersion.api.catalogue.Place.Id("zzi_hidden"), "Hidden Place", com.histmersion.domain.catalogue.Place.Kind.Site),
       List(Place.Name("Hidden Place"), Place.Name("Zzia Hidden", "xx", Some(Period(-1500, -1200))))
     ),
     Place.Input(
-      Place("zzi_inner", "The Zzia", com.histmersion.domain.catalogue.Place.Kind.Site),
+      Place(com.histmersion.api.catalogue.Place.Id("zzi_inner"), "The Zzia", com.histmersion.domain.catalogue.Place.Kind.Site),
       List(Place.Name("The Zzia"))
     ),
-    Place.Input(Place("zzi_exact", "Zzia", com.histmersion.domain.catalogue.Place.Kind.Site), List(Place.Name("Zzia"))),
+    Place.Input(Place(com.histmersion.api.catalogue.Place.Id("zzi_exact"), "Zzia", com.histmersion.domain.catalogue.Place.Kind.Site), List(Place.Name("Zzia"))),
     // a present-day GeoNames/Wikidata place (made one in beforeAll): never in a search before modern-from
     Place.Input(
       Place(
-        "zzi_wd_now",
+        com.histmersion.api.catalogue.Place.Id("zzi_wd_now"),
         "Zzia Wikitown",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[-127.0,-36.0]}""")
@@ -109,11 +109,11 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def source(ck: String, tags: List[String], fs: List[(String, Option[GeoPoint], Option[String], Period)]) =
     Source(
-      citekey = ck,
-      title = s"Zzi source $ck",
-      authors = List("Zzi"),
+      citekey = com.histmersion.api.library.Citekey(ck),
+      title = com.histmersion.api.library.Title(s"Zzi source $ck"),
+      authors = (List("Zzi")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
-      year = Some(2011),
+      year = (Some(2011)).map(com.histmersion.api.catalogue.Year.apply),
       venue = None,
       status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,
@@ -126,7 +126,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       provenance = None,
       calibreId = None,
       findings = fs.zipWithIndex.map { case ((claim, at, region, p), i) =>
-        Finding(s"$ck#$i", ck, claim, region, at, Some(p), None, Nil, Some(Confidence.High))
+        Finding(s"$ck#$i", com.histmersion.api.library.Citekey(ck), claim, region, at, Some(p), None, Nil, Some(Confidence.High))
       }
     )
 
@@ -467,7 +467,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       List(
         Place.Input(
           Place(
-            "zzi_pol_ohm",
+            com.histmersion.api.catalogue.Place.Id("zzi_pol_ohm"),
             "Zzi Kingdom",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some(box(-140, -40, -135, -35)),
@@ -477,7 +477,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_pol_cl",
+            com.histmersion.api.catalogue.Place.Id("zzi_pol_cl"),
             "Zzi Kingdom",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some(box(-139.5, -39.5, -135, -35)),
@@ -487,7 +487,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_imp_hit",
+            com.histmersion.api.catalogue.Place.Id("zzi_imp_hit"),
             "Zzi Imported Hit",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
@@ -496,7 +496,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_imp_miss",
+            com.histmersion.api.catalogue.Place.Id("zzi_imp_miss"),
             "Zzi Imported Miss",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-139.0,-36.0]}""")
@@ -507,7 +507,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         // finding dated then, a physical feature at any time, a present-day place from modern-from
         Place.Input(
           Place(
-            "zzi_und_site",
+            com.histmersion.api.catalogue.Place.Id("zzi_und_site"),
             "Zzi Undated Site",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-121.0,-39.0]}""")
@@ -516,7 +516,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_feat",
+            com.histmersion.api.catalogue.Place.Id("zzi_feat"),
             "Zzi Feature",
             com.histmersion.domain.catalogue.Place.Kind.Feature,
             Some("""{"type":"Point","coordinates":[-122.0,-39.0]}""")
@@ -525,7 +525,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_mod",
+            com.histmersion.api.catalogue.Place.Id("zzi_mod"),
             "Zzi Modern Town",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-123.0,-39.0]}"""),
@@ -537,7 +537,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         // finding dated then), a dated one (drawn as usual), and an undated people (drawn by its findings)
         Place.Input(
           Place(
-            "zzi_und_pol",
+            com.histmersion.api.catalogue.Place.Id("zzi_und_pol"),
             "Zzi Undated Province",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some("""{"type":"Point","coordinates":[-124.0,-39.0]}""")
@@ -546,7 +546,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_dat_pol",
+            com.histmersion.api.catalogue.Place.Id("zzi_dat_pol"),
             "Zzi Dated Province",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some("""{"type":"Point","coordinates":[-125.0,-39.0]}"""),
@@ -556,7 +556,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         Place.Input(
           Place(
-            "zzi_people",
+            com.histmersion.api.catalogue.Place.Id("zzi_people"),
             "Zzi Tribe",
             com.histmersion.domain.catalogue.Place.Kind.People,
             Some("""{"type":"Point","coordinates":[-126.0,-39.0]}""")

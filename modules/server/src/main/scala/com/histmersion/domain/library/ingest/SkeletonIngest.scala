@@ -40,13 +40,13 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
   private def create(citekey: String, meta: IngestMeta): Either[String, Unit] =
     com.histmersion.api.library.Source.Write
       .applyPut(
-        citekey,
+        com.histmersion.api.library.Citekey(citekey),
         com.histmersion.api.library.Source.Put(
-          title = meta.title,
-          authors = meta.authors,
-          doi = meta.doi,
-          year = meta.year,
-          venue = meta.venue,
+          title = com.histmersion.api.library.Title(meta.title),
+          authors = (meta.authors).map(com.histmersion.api.library.AuthorName.apply),
+          doi = (meta.doi).map(com.histmersion.api.library.Doi.apply),
+          year = (meta.year).map(com.histmersion.api.catalogue.Year.apply),
+          venue = (meta.venue).map(com.histmersion.api.library.Venue.apply),
           status = Some(Source.Status.Unassessed),
           summary = meta.summary,
           citedByCount = meta.citedByCount,
@@ -65,11 +65,11 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         com.histmersion.api.library.Source.Patch(
           metadata = Some(
             MetadataPatch(
-              title = Some(meta.title).filter(_.nonEmpty),
-              authors = Option(meta.authors).filter(_.nonEmpty),
-              year = meta.year,
-              venue = meta.venue,
-              doi = meta.doi
+              title = (Some(meta.title).filter(_.nonEmpty)).map(com.histmersion.api.library.Title.apply),
+              authors = (Option(meta.authors).filter(_.nonEmpty)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
+              year = (meta.year).map(com.histmersion.api.catalogue.Year.apply),
+              venue = (meta.venue).map(com.histmersion.api.library.Venue.apply),
+              doi = (meta.doi).map(com.histmersion.api.library.Doi.apply)
             )
           ),
           summary = meta.summary

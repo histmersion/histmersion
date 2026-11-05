@@ -109,7 +109,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def seed(h: ServerWiring): Unit =
     assert(
-      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+      h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(Body))).isRight
     )
 
   private val now = () => System.currentTimeMillis()

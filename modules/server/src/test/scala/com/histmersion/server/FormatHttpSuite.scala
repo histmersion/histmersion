@@ -196,7 +196,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         List(
           Place.Input(
             Place(
-              "zz_fmt_place_a",
+              com.histmersion.api.catalogue.Place.Id("zz_fmt_place_a"),
               "Fmt A",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.0,39.0]}""")
@@ -205,7 +205,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
           ),
           Place.Input(
             Place(
-              "zz_fmt_place_other",
+              com.histmersion.api.catalogue.Place.Id("zz_fmt_place_other"),
               "Fmt Other",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[31.0,39.0]}""")

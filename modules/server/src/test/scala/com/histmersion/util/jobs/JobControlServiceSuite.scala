@@ -20,7 +20,7 @@ import com.histmersion.api.Api
 class JobControlServiceSuite extends com.histmersion.db.DbSuite:
 
   private def job(id: String, kind: JobInfo.Kind, status: String) =
-    JobInfo(id, kind.value, status, None, progress = Some("2/6"))
+    JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(kind.value), status, None, progress = Some("2/6"))
 
   test("in memory: a pause is asked of a running job, which stops at its next part and resumes later"):
     val stops = JobStops()

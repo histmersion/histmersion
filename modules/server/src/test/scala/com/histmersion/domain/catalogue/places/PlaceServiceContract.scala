@@ -17,7 +17,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
   private def point(x: Double, y: Double): Option[String] = Some(s"""{"type":"Point","coordinates":[$x,$y]}""")
 
   private def place(id: String, label: String, kind: String, geometry: Option[String], period: Option[Period] = None) =
-    Place(id, label, kind, geometry, period, Some("zz test"))
+    Place(com.histmersion.api.catalogue.Place.Id(id), label, kind, geometry, period, Some("zz test"))
 
   /** A region, a region inside it, two sites in that, one named twice; a site whose parent is nowhere. */
   private val batch = List(

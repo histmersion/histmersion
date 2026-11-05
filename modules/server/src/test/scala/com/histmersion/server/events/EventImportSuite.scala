@@ -148,11 +148,11 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
   test("links: a source naming the event is proposed; confirmed from its passage; one without a passage refused"):
     val chunk = AppConfig.load().limits.chunkChars
     def src(ck: String, body: String, lon: Double) = Source(
-      ck,
-      s"Zqei $ck",
-      List("A"),
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(s"Zqei $ck"),
+      (List("A")).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      Some(2020),
+      (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       com.histmersion.api.library.Source.Status.Current,
       Nil,
@@ -166,7 +166,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       None,
       ocrMarkdown = Some(body),
       findings = List(
-        Finding(s"$ck#0", ck, "a claim", None, Some(GeoPoint(lon, 47.53)), Some(Period(-55, -50)), None, Nil, None)
+        Finding(s"$ck#0", com.histmersion.api.library.Citekey(ck), "a claim", None, Some(GeoPoint(lon, 47.53)), Some(Period(-55, -50)), None, Nil, None)
       )
     )
     SourceFixtures.upsert(
@@ -205,11 +205,11 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        "zqei_sites2020",
-        "Zqei sites",
-        List("A"),
+        com.histmersion.api.library.Citekey("zqei_sites2020"),
+        com.histmersion.api.library.Title("Zqei sites"),
+        (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         None,
-        Some(2020),
+        (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         None,
         com.histmersion.api.library.Source.Status.Current,
         Nil,

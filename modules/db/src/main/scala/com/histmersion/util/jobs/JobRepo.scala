@@ -30,13 +30,13 @@ object JobRepo:
   /** A stored detail this build cannot read (written by a newer one) is left out, not fatal. */
   private def toInfo(r: JobRow): JobInfo =
     JobInfo(
-      r.id,
-      r.kind,
+      com.histmersion.api.jobs.JobInfo.Id(r.id),
+      com.histmersion.api.jobs.JobInfo.Kind(r.kind),
       r.status,
-      r.citekey,
+      (r.citekey).map(com.histmersion.api.library.Citekey.apply),
       r.progress,
       r.error,
-      r.sha256,
+      (r.sha256).map(com.histmersion.api.Sha256.apply),
       r.createdAt,
       r.updatedAt,
       r.acquireItem,
@@ -60,7 +60,7 @@ object JobRepo:
     sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
           VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb)""".update.run()
     get(id).getOrElse(
-      JobInfo(id, kind, JobState.Queued.wire, citekey, None, None, sha256, acquireItem = acquireItem, detail = detail)
+      JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(kind), JobState.Queued.wire, (citekey).map(com.histmersion.api.library.Citekey.apply), None, None, (sha256).map(com.histmersion.api.Sha256.apply), acquireItem = acquireItem, detail = detail)
     )
 
   /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */

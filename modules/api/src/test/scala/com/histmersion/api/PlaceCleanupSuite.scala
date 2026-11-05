@@ -39,7 +39,7 @@ class PlaceCleanupSuite extends munit.FunSuite:
   test("a place's Markdown: the shape and, for a grid-square point, the location"):
     val pt = Some("""{"type":"Point","coordinates":[22.5,37.5]}""")
     def detail(kind: String, precision: Place.Precision) = PlaceDetail(
-      com.histmersion.api.catalogue.Place.Summary("pleiades_1001895", "Thessalia", kind, None, None, None, ""),
+      com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("pleiades_1001895"), "Thessalia", kind, None, None, None, ""),
       pt,
       Nil,
       Nil,

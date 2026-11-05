@@ -12,7 +12,7 @@ class StorageSuite extends munit.FunSuite:
   private val vol = "/Volumes/Data (/dev/disk3s5)"
 
   private def e(key: String, path: Option[String], bytes: Long, shrink: Option[String] = None) =
-    Storage.Entry(key, key, "caches", path, Some(bytes), Some(1L), volume = Some(vol), shrink = shrink)
+    Storage.Entry(key, key, "caches", path, (Some(bytes)).map(com.histmersion.api.ByteCount.apply), (Some(1L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply), volume = Some(vol), shrink = shrink)
 
   test("paths nest by containment — the innermost parent, either separator, not a mere prefix"):
     assert(Storage.under("/d/pg", "/d"))
@@ -25,7 +25,7 @@ class StorageSuite extends munit.FunSuite:
         e("kit", Some("/h/kit"), 2),
         e("deep", Some("/h/kit/lib"), 1),
         e("logs", Some("/d/logs"), 3),
-        Storage.Entry("database", "db", "database", None, Some(5L), within = Some("cluster"))
+        Storage.Entry("database", "db", "database", None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some("cluster"))
       )
     )
     assertEquals(
@@ -52,7 +52,7 @@ class StorageSuite extends munit.FunSuite:
   test("shown: children follow their parent, missing locations are left out"):
     val es = Storage.nest(
       List(
-        Storage.Entry("database", "db", "database", None, Some(5L), within = Some("cluster")),
+        Storage.Entry("database", "db", "database", None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some("cluster")),
         e("cluster", Some("/d/pg"), 6),
         e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[_root_.scala.Long])),
         e("logs", Some("/d/logs"), 1)
@@ -71,7 +71,7 @@ class StorageSuite extends munit.FunSuite:
           e("logs", Some("/d/logs"), GB / 2, Storage.Advice.shrink("logs", 5))
         )
       ),
-      volumes = List(Storage.Volume(vol, 500 * GB, 4 * GB), Storage.Volume("/other", 100 * GB, 50 * GB))
+      volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(4 * GB)), Storage.Volume("/other", com.histmersion.api.ByteCount(100 * GB), com.histmersion.api.ByteCount(50 * GB)))
     )
     val hints = Storage.hints(r)
     assertEquals(hints.size, 1, hints)
@@ -105,13 +105,13 @@ class StorageSuite extends munit.FunSuite:
   test("the CLI's own locations join the report; one the server reports already is not listed twice"):
     val server = Storage.Report(
       entries = List(e("install", Some("/h"), 10 * GB)),
-      volumes = List(Storage.Volume(vol, 500 * GB, 400 * GB))
+      volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(400 * GB)))
     )
     val local = List(e("install", Some("/h"), 10 * GB), e("calibre-originals", Some("/o"), 2 * GB))
     val merged = Storage.addLocal(
       server,
       local,
-      List(Storage.Volume(vol, 500 * GB, 400 * GB), Storage.Volume("/usb", 10 * GB, 1 * GB))
+      List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(400 * GB)), Storage.Volume("/usb", com.histmersion.api.ByteCount(10 * GB), com.histmersion.api.ByteCount(1 * GB)))
     )
     assertEquals(merged.entries.map(x => x.key -> x.host), List("install" -> "server", "calibre-originals" -> "cli"))
     assertEquals(merged.volumes.map(_.id), List(vol, "/usb"))
@@ -119,8 +119,8 @@ class StorageSuite extends munit.FunSuite:
 
   private val report = Storage.Report(
     measuredAt = Some("2026-10-19T10:00:00Z"),
-    tookMillis = Some(420),
-    ageSeconds = Some(12),
+    tookMillis = (Some(420)).map(com.histmersion.api.maintenance.Storage.Report.DurationMillis.apply),
+    ageSeconds = (Some(12)).map(com.histmersion.api.maintenance.Storage.Report.AgeSeconds.apply),
     entries = Storage.nest(
       List(
         Storage.Entry(
@@ -128,7 +128,7 @@ class StorageSuite extends munit.FunSuite:
           "database (Postgres)",
           "database",
           None,
-          Some(9 * GB),
+          (Some(9 * GB)).map(com.histmersion.api.ByteCount.apply),
           within = Some("database-cluster"),
           detail = Some("histmersion")
         ),
@@ -137,8 +137,8 @@ class StorageSuite extends munit.FunSuite:
           "database files (bundled Postgres)",
           "database",
           Some("/d/pg"),
-          Some(10 * GB),
-          Some(3000L),
+          (Some(10 * GB)).map(com.histmersion.api.ByteCount.apply),
+          (Some(3000L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol)
         ),
         Storage.Entry(
@@ -146,8 +146,8 @@ class StorageSuite extends munit.FunSuite:
           "backups",
           "backups",
           Some("/d/backups"),
-          Some(28 * GB),
-          Some(5L),
+          (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
+          (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol),
           shrink = Storage.Advice.shrink("backups", 5)
         ),
@@ -157,8 +157,8 @@ class StorageSuite extends munit.FunSuite:
           "terrain base map (cache)",
           "caches",
           Some("/c/basemap"),
-          Some(600_000_000L),
-          Some(3L),
+          (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
+          (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           partial = true,
           detail = Some("vector 410.0 MB · terrain 190.0 MB"),
           volume = Some(vol)
@@ -166,7 +166,7 @@ class StorageSuite extends munit.FunSuite:
       )
     ),
     tables = List(TableSize("sources", 5 * GB), TableSize("assets", 2 * GB)),
-    volumes = List(Storage.Volume(vol, 994 * GB, 120 * GB)),
+    volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(120 * GB))),
     backups = Some(BackupsUsage(5, 28 * GB, Some("histmersion-20261019T212919Z.dump"), 5))
   )
 
@@ -195,7 +195,7 @@ class StorageSuite extends munit.FunSuite:
     assert(!md.contains("toolchain"), md)
     assert(md.contains(s"- free space: $vol: 120.0 GB free of 994.0 GB"), md)
     assert(!md.contains("LOW") && !md.contains("Low disk space"), md)
-    val low = Storage.withHints(report.modify(_.volumes).setTo(List(Storage.Volume(vol, 994 * GB, 5 * GB))))
+    val low = Storage.withHints(report.modify(_.volumes).setTo(List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(5 * GB)))))
     val lmd = StorageMarkdown.render(low).mkString("\n")
     assert(lmd.contains("5.0 GB free of 994.0 GB — LOW"), lmd)
     assert(lmd.contains("- Low disk space on"), lmd)

@@ -179,7 +179,7 @@ object AssetService:
       ofSource(citekey)
         .sortBy(_.name)
         .toList
-        .map(a => AssetInfo(a.name, a.mime, a.bytes.length, a.sha256, a.width, a.height))
+        .map(a => AssetInfo(a.name, a.mime, a.bytes.length, com.histmersion.api.Sha256(a.sha256), a.width, a.height))
 
     def figure(citekey: String, name: String): Option[(String, Array[Byte])] =
       named(citekey, name).map(a => (a.mime, a.bytes))

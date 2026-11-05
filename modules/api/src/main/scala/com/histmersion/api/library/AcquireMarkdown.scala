@@ -25,12 +25,12 @@ object AcquireMarkdown:
           if w.isOa then Some(w.oaStatus.getOrElse("oa")) else None
         ).flatten.mkString(", ")
         List(
-          w.citekey.map(esc).getOrElse("—"),
-          esc(w.title.getOrElse("(untitled)")),
-          num(w.year),
-          esc(w.authors.take(2).mkString(", ") + (if w.authors.size > 2 then " et al." else "")),
+          w.citekey.map(_.value.toString).map(esc).getOrElse("—"),
+          esc(w.title.map(_.value).getOrElse("(untitled)")),
+          num(w.year.map(_.value.toInt)),
+          esc(w.authors.map(_.value).take(2).mkString(", ") + (if w.authors.map(_.value).size > 2 then " et al." else "")),
           num(w.citedByCount),
-          doiLink(w.doi),
+          doiLink(w.doi.map(_.value)),
           if flag.isEmpty then "—" else flag
         )
       }
@@ -40,9 +40,9 @@ object AcquireMarkdown:
 
   def work(w: WorkRef): String =
     val meta = List(
-      w.authors.mkString(", "),
-      w.year.map(_.toString).getOrElse(""),
-      w.venue.getOrElse(""),
+      w.authors.map(_.value).mkString(", "),
+      w.year.map(_.value.toInt).map(_.toString).getOrElse(""),
+      w.venue.map(_.value).getOrElse(""),
       w.workType.getOrElse("")
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
@@ -51,16 +51,16 @@ object AcquireMarkdown:
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
-      s"# ${w.title.getOrElse("(untitled)")}",
+      s"# ${w.title.map(_.value).getOrElse("(untitled)")}",
       "",
       s"_${meta}_",
       "",
-      s"**DOI:** ${doiLink(w.doi)}  ",
-      s"**Citekey (proposed):** `${w.citekey.getOrElse("—")}`  ",
+      s"**DOI:** ${doiLink(w.doi.map(_.value))}  ",
+      s"**Citekey (proposed):** `${w.citekey.map(_.value.toString).getOrElse("—")}`  ",
       s"**Cited by:** ${num(w.citedByCount)}  ",
       s"**Access:** $oa" + w.oaUrl.map(u => s" — $u").getOrElse(""),
       if w.isRetracted then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
-      if w.inDb then s"\n_Already in the corpus as `${w.citekey.getOrElse("?")}`._" else "",
+      if w.inDb then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
       w.abstractText.map(a => s"\n## Abstract\n\n$a").getOrElse("")
     )
     lines.filter(_.nonEmpty).mkString("\n")
@@ -80,10 +80,10 @@ object AcquireMarkdown:
     else
       val rows = r.references.map { x =>
         List(
-          esc(x.title.orElse(x.raw).getOrElse("(unstructured)")).take(90),
-          num(x.year),
-          doiLink(x.doi),
-          x.citekey.map(k => s"`$k`").getOrElse("—")
+          esc(x.title.map(_.value).orElse(x.raw).getOrElse("(unstructured)")).take(90),
+          num(x.year.map(_.value.toInt)),
+          doiLink(x.doi.map(_.value)),
+          x.citekey.map(_.value.toString).map(k => s"`$k`").getOrElse("—")
         )
       }
       s"### ${r.count} reference(s) of ${esc(r.target)} · backend ${r.backend}\n\n" +

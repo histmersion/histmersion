@@ -16,8 +16,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import io.circe.Json
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 final case class Place(
-    id: String,
+    id: com.histmersion.api.catalogue.Place.Id,
     label: String,
     kind: String,
     geometry: Option[String] = None,
@@ -116,7 +117,7 @@ object Place:
       lon: Double,
       lat: Double,
       source: String,
-      id: Option[String] = None,
+      id: Option[com.histmersion.api.catalogue.Place.Id] = None,
       names: List[String] = Nil,
       lang: Option[String] = None,
       periodStart: Option[Long] = None,
@@ -240,7 +241,7 @@ object Place:
     def toInput(in: Add): Either[Api.Error, Input] =
       val label = in.label.trim.replaceAll("\\s+", " ")
       val kind = in.kind.trim.toLowerCase(java.util.Locale.ROOT)
-      val id = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(label))
+      val id = in.id.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(label))
       for
         _ <- Either.cond(label.nonEmpty, (), invalid("the label is empty"))
         _ <- Either.cond(
@@ -285,7 +286,7 @@ object Place:
         val names = (Name(label) :: extra.map(Name(_, l))).distinctBy(n => (n.name.toLowerCase, n.lang))
         Input(
           Place(
-            id,
+            com.histmersion.api.catalogue.Place.Id(id),
             label,
             kind,
             Some(point),
@@ -333,7 +334,7 @@ object Place:
   /** Follows the Pleiades Place/Location split: one place, many dated footprints. */
   final case class Footprint(
       id: Int,
-      placeId: String,
+      placeId: com.histmersion.api.catalogue.Place.Id,
       role: String = "extent",
       period: Option[Period] = None,
       certainty: Option[String] = None,
@@ -374,7 +375,7 @@ object Place:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def toSummary: Summary =
-      Summary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
+      Summary(com.histmersion.api.catalogue.Place.Id(id), label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 
 
   final case class ImportResult(
@@ -389,7 +390,7 @@ object Place:
 
   final case class Input(place: Place, names: List[Name] = Nil, relations: List[Relation] = Nil)
 
-  final case class Link(placeId: String, scheme: String, externalId: String, relation: String = "close_match")
+  final case class Link(placeId: com.histmersion.api.catalogue.Place.Id, scheme: String, externalId: String, relation: String = "close_match")
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
@@ -694,7 +695,7 @@ object Place:
     val PeopleNote: String = "a people or tribe — placed at a representative point, not an area"
 
   final case class Summary(
-      id: String,
+      id: com.histmersion.api.catalogue.Place.Id,
       label: String,
       kind: String,
       periodStart: Option[Long],
@@ -748,7 +749,7 @@ object Place:
     val FindingsNote: String = "dated by its findings — the place has no date of its own"
 
   final case class TreeRow(
-      id: String,
+      id: com.histmersion.api.catalogue.Place.Id,
       label: String,
       kind: String,
       depth: Int,
@@ -759,9 +760,13 @@ object Place:
 
 
   final case class Type(
-      placeId: String,
+      placeId: com.histmersion.api.catalogue.Place.Id,
       typeLabel: String,
       period: Option[Period] = None,
       citekey: Option[String] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  type Id = Id.T
+  object Id extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.constraint.any.Pure]
+

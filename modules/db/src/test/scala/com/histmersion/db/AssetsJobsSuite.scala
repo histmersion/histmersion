@@ -37,9 +37,9 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
   private def png(colour: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', colour)
 
   private def source(body: Option[String] = None) = Source(
-    citekey = ck,
-    title = "Assets",
-    authors = Nil,
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title("Assets"),
+    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,

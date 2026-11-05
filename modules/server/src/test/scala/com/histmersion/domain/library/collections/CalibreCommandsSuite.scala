@@ -37,11 +37,11 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
 
   private def source(ck: String, title: String, authors: List[String], year: Option[Int]) =
     Source(
-      ck,
-      title,
-      authors,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      (authors).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      year,
+      (year).map(com.histmersion.api.catalogue.Year.apply),
       None,
       com.histmersion.api.library.Source.Status.Current,
       Nil,

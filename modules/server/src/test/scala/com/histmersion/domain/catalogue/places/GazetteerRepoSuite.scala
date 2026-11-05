@@ -77,7 +77,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     GazRecord(
       own.key,
       Some(own),
-      own.placeId,
+      com.histmersion.api.catalogue.Place.Id(own.placeId),
       label,
       kind,
       pt(30.0, 40.0),
@@ -116,7 +116,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       List(
         Place.Input(
           Place(
-            Seed,
+            com.histmersion.api.catalogue.Place.Id(Seed),
             "Zzgazhattusa",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),
@@ -296,7 +296,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val undated = GazRecord(
       "lpf:zzgaz:a",
       None,
-      "zzgaz_a_farm",
+      com.histmersion.api.catalogue.Place.Id("zzgaz_a_farm"),
       "Zzgaz farm",
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(44.0, 39.0),
@@ -309,7 +309,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val dated = GazRecord(
       "lpf:zzgaz:b",
       None,
-      "zzgaz_b_village",
+      com.histmersion.api.catalogue.Place.Id("zzgaz_b_village"),
       "Zzgaz village",
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(45.0, 39.5),
@@ -467,11 +467,11 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       SourceFixtures.upsert(
         ds,
         Source(
-          citekey = "zzgaz_src",
-          title = "Gazetteer fixture",
-          authors = List("T"),
+          citekey = com.histmersion.api.library.Citekey("zzgaz_src"),
+          title = com.histmersion.api.library.Title("Gazetteer fixture"),
+          authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
           doi = None,
-          year = Some(2026),
+          year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           venue = None,
           status = com.histmersion.api.library.Source.Status.Current,
           topics = Nil,

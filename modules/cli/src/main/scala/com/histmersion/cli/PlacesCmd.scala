@@ -228,7 +228,7 @@ object PlacesCmd:
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
   private def started(c: Client, id: String, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
-    if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
+    if noWait then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.jobs.JobInfo.Id(id), 0)
 
   private def buildHierarchy (using console: Console) = Opts.subcommand(
     "build-hierarchy",
@@ -362,7 +362,7 @@ object PlacesCmd:
       Opts.option[Long]("to", "Signed year the place ends (BCE negative)").orNone
     )
       .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
-        c.addPlace(com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source, id, names, lang, from, to))
+        c.addPlace(com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source, (id).map(com.histmersion.api.catalogue.Place.Id.apply), names, lang, from, to))
           .map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
       }
   }

@@ -97,9 +97,9 @@ object Acquire:
 
   def browserDownloadText(work: WorkRef, doi: String, citekey: String, refusals: List[String] = Nil): Option[String] =
     Option.when(work.isOa) {
-      val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"$a et al." else a)
-      val head = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")
-      val title = work.title.map(_.trim).filter(_.nonEmpty).getOrElse(doi)
+      val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
+      val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
+      val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(doi)
       val oa = work.oaStatus.map(_.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
       val at = work.oaUrl
         .map(_.trim)

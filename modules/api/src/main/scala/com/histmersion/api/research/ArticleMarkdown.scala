@@ -109,11 +109,11 @@ object ArticleMarkdown:
     if rows.isEmpty then ""
     else
       val items = rows.map { s =>
-        val t = s.title
+        val t = s.title.map(_.value)
           .map(v => if truncate then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
-        val auth = Source.Ref.shortAuthors(s.authors)
-        val yr = s.year.map(_.toString).getOrElse("")
+        val auth = Source.Ref.shortAuthors(s.authors.map(_.value))
+        val yr = s.year.map(_.value.toInt).map(_.toString).getOrElse("")
         val byline = List(auth, yr).filter(_.nonEmpty).mkString(" ")
         val tail = List(byline, s"_${t}_", s.status.map(st => s"**${st.wire}**").getOrElse(""))
           .filter(_.nonEmpty)

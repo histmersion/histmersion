@@ -32,11 +32,11 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = ck,
-        title = "Vocab",
-        authors = Nil,
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title("Vocab"),
+        authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2020),
+        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
@@ -50,9 +50,9 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         calibreId = None,
         ocrMarkdown = None,
         findings = List(
-          Finding(s"$ck#0", ck, "stated low", None, None, None, None, Nil, Some(Confidence.Low)),
-          Finding(s"$ck#1", ck, "garbled", None, None, None, None, Nil, Some(Confidence.Medium)),
-          Finding(s"$ck#2", ck, "not stated", None, None, None, None, Nil, None)
+          Finding(s"$ck#0", com.histmersion.api.library.Citekey(ck), "stated low", None, None, None, None, Nil, Some(Confidence.Low)),
+          Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), "garbled", None, None, None, None, Nil, Some(Confidence.Medium)),
+          Finding(s"$ck#2", com.histmersion.api.library.Citekey(ck), "not stated", None, None, None, None, Nil, None)
         )
       ),
       cfg.limits.chunkChars,

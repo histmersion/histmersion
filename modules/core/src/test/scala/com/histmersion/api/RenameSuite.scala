@@ -75,10 +75,10 @@ class RenameSuite extends munit.FunSuite:
 
   test("the rename report names the alias, the counts, and what Calibre and the mirror need"):
     val src = com.histmersion.api.library.Source.Detail(
-      "page1959_history",
-      "History",
-      List("Page"),
-      Some(1959),
+      com.histmersion.api.library.Citekey("page1959_history"),
+      com.histmersion.api.library.Title("History"),
+      (List("Page")).map(com.histmersion.api.library.AuthorName.apply),
+      (Some(1959)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       Source.Status.Foundational,
       Nil,

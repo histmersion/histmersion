@@ -70,7 +70,7 @@ class SourceDeleteSuite extends munit.FunSuite:
     assert(gone.contains("entry 1693 no longer exists in the library") && !gone.contains("NOT touched"), gone)
 
   test("the wire shape round-trips, enums as their wire names"):
-    val d = done.modify(_.blockers).setTo(blocked).modify(_.edgesIn).setTo(List(Edge("cline2014_1177", Ck, "challenges")))
+    val d = done.modify(_.blockers).setTo(blocked).modify(_.edgesIn).setTo(List(Edge(com.histmersion.api.library.Citekey("cline2014_1177"), com.histmersion.api.library.Citekey(Ck), "challenges")))
     val json = d.asJson.noSpaces
     assert(json.contains("\"part\":\"edges-in\"") && json.contains("\"kind\":\"article\""), json)
     assertEquals(decode[Source.Deletion](json), Right(d))

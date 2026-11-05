@@ -50,10 +50,10 @@ class RegistriesOracleSuite extends munit.FunSuite:
     val lines = com.histmersion.api.RegisteredJobKinds.all.kinds.flatMap { k =>
       val head = s"${k.value}\t${Wording.jobKindOf(k.value)}\tstoppable=${JobActions.Stoppable.contains(k.value)}"
       val subjects = details.map { (name, d) =>
-        val j = JobInfo(id = "j", kind = k.value, status = "done", detail = Some(d))
+        val j = JobInfo(id = com.histmersion.api.jobs.JobInfo.Id("j"), kind = com.histmersion.api.jobs.JobInfo.Kind(k.value), status = "done", detail = Some(d))
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"
       }
-      val withCitekey = JobInfo(id = "j", kind = k.value, status = "done", citekey = Some("hattusa_1990"))
+      val withCitekey = JobInfo(id = com.histmersion.api.jobs.JobInfo.Id("j"), kind = com.histmersion.api.jobs.JobInfo.Kind(k.value), status = "done", citekey = (Some("hattusa_1990")).map(com.histmersion.api.library.Citekey.apply))
       head :: subjects ::: List(s"  citekey\t${JobDetail.subject(withCitekey).getOrElse("-")}")
     }
     val unknown = s"unknown\t${Wording.jobKindOf("some-new-kind")}\tstoppable=${JobActions.Stoppable

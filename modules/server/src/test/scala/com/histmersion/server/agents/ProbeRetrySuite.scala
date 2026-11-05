@@ -62,7 +62,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: ScriptedClient): AgentsControllers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
@@ -110,7 +110,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")

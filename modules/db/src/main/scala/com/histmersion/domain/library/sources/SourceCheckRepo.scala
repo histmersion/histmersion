@@ -154,7 +154,7 @@ private[sources] object SourceCheckRepo:
       .frag
       .query[(String, String, String)]
       .run()
-      .map((src, dst, kind) => Edge(src, dst, kind))
+      .map((src, dst, kind) => Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), kind))
       .toList
   )
   private val TagRows = CheckInput(arrays(tagsSql))
@@ -169,9 +169,9 @@ private[sources] object SourceCheckRepo:
   /** One rule's report, on the run's connection. */
   def report(r: Rule, c: Context, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name match
-      case DanglingEdges           => CitationLint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+      case DanglingEdges           => CitationLint.danglingEdges(run(EdgeRows), (run(StoredCitekeys)).map(com.histmersion.api.library.Citekey.apply), c.suggestions)
       case UnresolvedShortCitekeys =>
-        CitationLint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+        CitationLint.unresolvedShortCitekeys(run(EdgeRows), (run(StoredCitekeys)).map(com.histmersion.api.library.Citekey.apply), c.suggestions)
       case DuplicateDoi        => Lint.duplicates(pairs(doiSql), "doi")
       case DuplicateSha256     => Lint.duplicates(pairs(sha256Sql), "sha256")
       case NonCanonicalTag     => Lint.nonCanonicalTags(run(TagRows))

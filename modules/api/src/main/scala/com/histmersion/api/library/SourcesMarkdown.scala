@@ -25,14 +25,14 @@ object SourcesMarkdown:
       s"## Findings (${findings.size})\n${items.mkString("\n")}"
 
   def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
-    val authorLinks = if s.authors.nonEmpty then chipLinks(s.authors, "author") else ""
-    val meta = List(authorLinks, year(s.year), s.venue.getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
+    val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
+    val meta = List(authorLinks, year(s.year.map(_.value.toInt)), s.venue.map(_.value).getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
     val header = s"# ${s.title}\n\n_$meta${if per.nonEmpty then s" · $per" else ""}_"
     val topics = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics, "topic")}" else ""
     val regions = if s.regions.nonEmpty then s"  \n**Regions:** ${chipLinks(s.regions, "place")}" else ""
     val tags = if s.tags.nonEmpty then s"  \n**Tags:** ${chipLinks(s.tags, "tag")}" else ""
-    val doi = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
+    val doi = s.doi.map(_.value).map(d => s"  \n**DOI:** $d").getOrElse("")
     val prov = s.provenance.filter(_.nonEmpty).map(p => s"  \n**Provenance:** $p").getOrElse("")
     val uid = s.uid.map(u => s"  \n**Uid:** $u").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
@@ -61,7 +61,7 @@ object SourcesMarkdown:
       if !fullText then ""
       else
         s.ocrMarkdown
-          .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title)}")
+          .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title.value)}")
           .getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body
 

@@ -68,7 +68,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(parse("sometimes"), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = com.histmersion.api.catalogue.Place.Summary("x", "Anatolia", Place.Kind.Region, None, None, None, "")
+    val p = com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("x"), "Anatolia", Place.Kind.Region, None, None, None, "")
     val d = PlaceDetail(p, None, Nil, Nil, 0, Some(-2500L), timeBasis = Findings)
     assert(d.datedByFindings)
     assert(!d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long])).datedByFindings)

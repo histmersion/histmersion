@@ -118,7 +118,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     List("zzfocus_s1", "zzfocus_s2").foreach { c =>
       assert(
         h.library.sources
-          .put(c, Source.Put(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
+          .put(c, Source.Put(title = com.histmersion.api.library.Title(s"Zz $c"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), topics = List("zzfocus_t"), body = Some("Tin.")))
           .isRight
       )
       assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
@@ -138,7 +138,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
     up.onIngest = d =>
-      assert(h.library.sources.put(ck(d), Source.Put(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck(d), Source.Put(title = com.histmersion.api.library.Title(s"Ingested $d"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(d)).map(com.histmersion.api.library.Doi.apply))).isRight)
       Right(
         Ingest.Report(
           ck(d),
@@ -480,7 +480,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
     def cand(id: Long, goal: String, oa: Boolean) =
-      Source.Candidate(id, goal, s"10.5555/zzseed.$id", s"Zz seed $id", isOa = oa)
+      Source.Candidate(id, goal, com.histmersion.api.library.Doi(s"10.5555/zzseed.$id"), com.histmersion.api.library.Title(s"Zz seed $id"), isOa = oa)
     up.sweepFinds = Map(
       g(1) -> List(cand(1, g(1), oa = true), cand(2, g(1), oa = false)),
       g(2) -> List(cand(3, g(2), oa = true)),

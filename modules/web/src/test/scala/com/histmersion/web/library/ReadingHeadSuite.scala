@@ -12,11 +12,11 @@ import com.histmersion.api.library.Finding
 class ReadingHeadSuite extends munit.FunSuite:
 
   private val detail = com.histmersion.api.library.Source.Detail(
-    "cline2014_year",
-    "1177 B.C.",
-    List("Eric H. Cline"),
-    Some(2014),
-    Some("Princeton University Press"),
+    com.histmersion.api.library.Citekey("cline2014_year"),
+    com.histmersion.api.library.Title("1177 B.C."),
+    (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
+    (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+    (Some("Princeton University Press")).map(com.histmersion.api.library.Venue.apply),
     Source.Status.Current,
     Nil,
     List("levant", "anatolia"),
@@ -32,16 +32,16 @@ class ReadingHeadSuite extends munit.FunSuite:
   test("from the table's row at once: year, title, authors, status, period, regions, summary"):
     val h = ReadingHead.of(
       SearchHit(
-        "cline2014_year",
-        "1177 B.C.",
-        Some(2014),
+        com.histmersion.api.library.Citekey("cline2014_year"),
+        com.histmersion.api.library.Title("1177 B.C."),
+        (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
         Source.Status.Current,
         Nil,
         List("levant"),
         Some(-1250),
         Some(-1100),
         Some("Sum."),
-        authors = List("Eric H. Cline")
+        authors = (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply)
       )
     )
     assertEquals(

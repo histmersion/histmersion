@@ -110,10 +110,10 @@ object AboutView:
   private[web] def storage(r: Storage.Report): List[Section] =
     if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
     else
-      val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
+      val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
         Option.when(r.measuring)("measuring…")).mkString(" · ")
       val total = Option.when(r.entries.nonEmpty)(
-        Row("in all", Backup.humanBytes(Storage.total(r.entries)), detail = Option.when(when.nonEmpty)(when))
+        Row("in all", Backup.humanBytes(Storage.total(r.entries).value.toLong), detail = Option.when(when.nonEmpty)(when))
       )
       val rows = Storage.shown(r.entries).map { (e, depth) =>
         Row(
@@ -126,12 +126,12 @@ object AboutView:
       }
       val waiting = Option.when(r.entries.isEmpty && r.measuring)(Row("", "measuring…"))
       val disks = r.volumes.map { v =>
-        val low = v.freeBytes < r.lowFreeBytes
+        val low = v.freeBytes.value.toLong < r.lowFreeBytes.value.toLong
         Row(
           v.id,
-          s"${Backup.humanBytes(v.freeBytes)} free",
+          s"${Backup.humanBytes(v.freeBytes.value.toLong)} free",
           state = Some(if low then ServiceState.Down else ServiceState.Ok),
-          detail = Some(s"of ${Backup.humanBytes(v.totalBytes)}")
+          detail = Some(s"of ${Backup.humanBytes(v.totalBytes.value.toLong)}")
         )
       }
       val notes = r.hints.map(h => Row("", h)) ++ r.problems.map(p => Row("", p))

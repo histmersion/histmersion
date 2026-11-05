@@ -515,9 +515,9 @@ object FilterSql:
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
       SearchHit(
-        citekey,
-        title,
-        year,
+        com.histmersion.api.library.Citekey(citekey),
+        com.histmersion.api.library.Title(title),
+        (year).map(com.histmersion.api.catalogue.Year.apply),
         status,
         topics,
         regions,
@@ -526,8 +526,8 @@ object FilterSql:
         summary,
         snippet,
         matchedHeading,
-        doi,
-        authors
+        (doi).map(com.histmersion.api.library.Doi.apply),
+        (authors).map(com.histmersion.api.library.AuthorName.apply)
       )
 
   private def ci(a: String, b: String) = a.equalsIgnoreCase(b)

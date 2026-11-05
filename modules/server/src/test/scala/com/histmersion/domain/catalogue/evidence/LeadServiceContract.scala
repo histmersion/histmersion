@@ -42,7 +42,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       CatalogRecord("gvp", "8", "u", "Zz small", "eruption", span(-1400, -1400), Some(1.0), Some(1.0), vei = Some(3))
     val _ =
       s.eventImports.save(List(big, small).map(r => r -> CatalogMerge.Placement.New(CatalogRecord.eventId(r), "new")))
-    s.eventLinks.saveCandidates("gvp_8", List(EventLinkCandidate("gvp_8", "zzld2020_own", 0.5)))
+    s.eventLinks.saveCandidates("gvp_8", List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("gvp_8"), com.histmersion.api.library.Citekey("zzld2020_own"), 0.5)))
     assertEquals(
       s.leads.attestingSources("zz_attested").map(r => (r.citekey, r.via, r.title)),
       List(("zzld2020_own", "citekey", Some("zzld2020_own")), ("zzld2021_att", "attestation", Some("zzld2021_att")))

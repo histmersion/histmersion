@@ -20,7 +20,7 @@ class LintSuite extends munit.FunSuite:
     "knapp2016_seapeoples"
   )
 
-  private def edge(src: String, dst: String, kind: String = "references") = Edge(src, dst, kind)
+  private def edge(src: String, dst: String, kind: String = "references") = Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), kind)
 
   // ── rule selection ───────────────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ class LintSuite extends munit.FunSuite:
       edge("anthony2015_ringe", "heggarty2023"), // short form
       edge("kassian2025_critique", "gone2001_missing")
     ) // truly dead
-    val items = CitationLint.danglingEdges(edges, corpus, 3)
+    val items = CitationLint.danglingEdges(edges, (corpus).map(com.histmersion.api.library.Citekey.apply), 3)
     assertEquals(items.size, 2)
     assert(
       items.exists(i => i.citekey == "anthony2015_ringe" && i.detail.contains("heggarty2023_language")),
@@ -86,14 +86,14 @@ class LintSuite extends munit.FunSuite:
     // the seeded corpus has 1 050 article links and exactly ONE dead source reference; the report
     // must not bury it.
     val edges = (1 to 5).toList.map(i => edge("s", s"concept_$i")) :+ edge("s", "gray_atkinson_2003")
-    val items = CitationLint.danglingEdges(edges, corpus, 3)
+    val items = CitationLint.danglingEdges(edges, (corpus).map(com.histmersion.api.library.Citekey.apply), 3)
     assert(items.head.detail.contains("gray_atkinson_2003"), items.head.detail)
     assert(items.head.detail.endsWith("(no such source)"), items.head.detail)
     assert(items(1).detail.contains("looks like a concept/article link"), items(1).detail)
 
   test("dangling-edges deduplicates and orders by (src, kind, dst)"):
     val e = edge("b_src", "gone", "cites")
-    val items = CitationLint.danglingEdges(List(e, e, edge("a_src", "gone", "cites")), corpus, 1)
+    val items = CitationLint.danglingEdges(List(e, e, edge("a_src", "gone", "cites")), (corpus).map(com.histmersion.api.library.Citekey.apply), 1)
     assertEquals(items.map(_.citekey), List("a_src", "b_src"))
 
   test("unresolved-short-citekeys covers only prefixes of real citekeys, and flags the fixable ones"):
@@ -102,7 +102,7 @@ class LintSuite extends munit.FunSuite:
       edge("b", "knapp2016"), // two expansions → needs a human
       edge("c", "gone2001_missing")
     ) // not a short form at all
-    val items = CitationLint.unresolvedShortCitekeys(edges, corpus, 3)
+    val items = CitationLint.unresolvedShortCitekeys(edges, (corpus).map(com.histmersion.api.library.Citekey.apply), 3)
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.contains("resolves to heggarty2023_language"), items.head.detail)
     assert(items.head.detail.contains("lint --fix"))

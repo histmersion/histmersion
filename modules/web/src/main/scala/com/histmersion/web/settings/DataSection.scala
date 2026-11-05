@@ -261,8 +261,8 @@ object DataSection:
     )
 
   private def disk(r: Storage.Report): HtmlElement =
-    val used = Storage.total(r.entries)
-    val free = r.volumes.map(_.freeBytes).minOption.getOrElse(0L)
+    val used = Storage.total(r.entries).value.toLong
+    val free = r.volumes.map(_.freeBytes.value.toLong).minOption.getOrElse(0L)
     val pct = share(used, free)
     div(
       cls := "data-disk",

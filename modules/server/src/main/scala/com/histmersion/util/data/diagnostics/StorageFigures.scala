@@ -108,8 +108,8 @@ final class StorageFigures(registry: DataContributions):
         label = spot.label,
         group = spot.group,
         path = spot.path,
-        bytes = Option.when(exists)(results.map(_.bytes.value).sum),
-        files = Option.when(exists)(results.map(_.files).sum),
+        bytes = (Option.when(exists)(results.map(_.bytes.value).sum)).map(com.histmersion.api.ByteCount.apply),
+        files = (Option.when(exists)(results.map(_.files).sum)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
         exists = exists,
         partial = results.exists(_.partial),
         detail = (spot.detail.toList ++ extra.toList).reduceOption(_ + " · " + _),
@@ -125,7 +125,7 @@ final class StorageFigures(registry: DataContributions):
       .map(_.head)
       .toList
       .sortBy(_.id)
-      .map(v => com.histmersion.api.maintenance.Storage.Volume(v.id, v.total.value, v.usable.value))
+      .map(v => com.histmersion.api.maintenance.Storage.Volume(v.id, com.histmersion.api.ByteCount(v.total.value), com.histmersion.api.ByteCount(v.usable.value)))
     val (dbEntry, tables) =
       database.fold((Option.empty[com.histmersion.api.maintenance.Storage.Entry], List.empty[TableSize])) { d =>
         val size = scala.util.Try(d.databaseSize).toEither.left.map(e => s"database size: ${e.getMessage}")
@@ -142,7 +142,7 @@ final class StorageFigures(registry: DataContributions):
               "database",
               "database (Postgres)",
               "database",
-              bytes = size.toOption.map(_._2.value),
+              bytes = (size.toOption.map(_._2.value)).map(com.histmersion.api.ByteCount.apply),
               exists = size.isRight,
               within = Option.when(measured.exists(e => e.key == ShownStore.DatabaseCluster.key && e.exists))(
                 ShownStore.DatabaseCluster.key
@@ -162,12 +162,12 @@ final class StorageFigures(registry: DataContributions):
       )
     val report = com.histmersion.api.maintenance.Storage.Report(
       measuredAt = Some(now().toString),
-      tookMillis = Some((System.nanoTime() - started) / 1_000_000L),
+      tookMillis = (Some((System.nanoTime() - started) / 1_000_000L)).map(com.histmersion.api.maintenance.Storage.Report.DurationMillis.apply),
       entries = StorageReports.nest(dbEntry.toList ++ measured),
       tables = tables,
       volumes = volumes,
       backups = usage,
-      lowFreeBytes = settings.storage.lowFreeBytes,
+      lowFreeBytes = com.histmersion.api.ByteCount(settings.storage.lowFreeBytes),
       problems = problems.result() ++
         Option
           .when(budget.exhausted)(

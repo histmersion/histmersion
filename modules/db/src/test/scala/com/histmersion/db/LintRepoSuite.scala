@@ -54,11 +54,11 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       findings: List[Finding] = Nil,
       edges: List[Edge] = Nil
   ) = Source(
-    citekey = citekey,
-    title = s"Fixture $citekey",
-    authors = List("A"),
-    doi = doi,
-    year = Some(2020),
+    citekey = com.histmersion.api.library.Citekey(citekey),
+    title = com.histmersion.api.library.Title(s"Fixture $citekey"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    doi = (doi).map(com.histmersion.api.library.Doi.apply),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = status,
     topics = List("t"),
@@ -76,7 +76,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def finding(id: String, ck: String, period: Option[Period], region: Option[String], geo: Option[GeoPoint]) =
-    Finding(id, ck, "a claim", region, geo, period, None, Nil, Some(Confidence.High))
+    Finding(id, com.histmersion.api.library.Citekey(ck), "a claim", region, geo, period, None, Nil, Some(Confidence.High))
 
   /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from a previous failure
     * must not leak into the next assertion.
@@ -168,9 +168,9 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       source(
         Prefix + "src",
         edges = List(
-          Edge(Prefix + "src", Prefix + "target_full", "references"), // resolves
-          Edge(Prefix + "src", Prefix + "target", "cites"), // short form
-          Edge(Prefix + "src", Prefix + "vanished", "refutes")
+          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target_full"), "references"), // resolves
+          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target"), "cites"), // short form
+          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "vanished"), "refutes")
         )
       )
     ) // dead
@@ -182,7 +182,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     assert(items.exists(_.detail.contains("refutes → " + Prefix + "vanished")), items.toString)
 
   test("unresolved-short-citekeys is the fixable subset, and `lint --fix` really fixes it"):
-    put(source(Prefix + "src", edges = List(Edge(Prefix + "src", Prefix + "target", "cites"))))
+    put(source(Prefix + "src", edges = List(Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target"), "cites"))))
     put(source(Prefix + "target_full"))
     assertEquals(run(UnresolvedShortCitekeys).size, 1)
     assert(run(UnresolvedShortCitekeys).head.detail.contains("resolves to"))
@@ -192,7 +192,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   test("orphan-sources: no edges in, no edges out"):
     put(source(Prefix + "lonely"))
-    put(source(Prefix + "linked", edges = List(Edge(Prefix + "linked", Prefix + "lonely", "cites"))))
+    put(source(Prefix + "linked", edges = List(Edge(com.histmersion.api.library.Citekey(Prefix + "linked"), com.histmersion.api.library.Citekey(Prefix + "lonely"), "cites"))))
     val ks = keys(OrphanSources)
     assert(!ks.contains(Prefix + "lonely"), "an incoming edge is enough")
     assert(!ks.contains(Prefix + "linked"), "an outgoing edge is enough")

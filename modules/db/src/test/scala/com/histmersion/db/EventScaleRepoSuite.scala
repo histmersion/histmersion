@@ -46,15 +46,15 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private val places = List(
     Place.Input(
-      Place("zqes_site", "Zqes site", com.histmersion.domain.catalogue.Place.Kind.Site, pt(124.0)),
+      Place(com.histmersion.api.catalogue.Place.Id("zqes_site"), "Zqes site", com.histmersion.domain.catalogue.Place.Kind.Site, pt(124.0)),
       List(Place.Name("Zqes site"))
     ),
     Place.Input(
-      Place("zqes_area", "Zqes area", com.histmersion.domain.catalogue.Place.Kind.Region, Square),
+      Place(com.histmersion.api.catalogue.Place.Id("zqes_area"), "Zqes area", com.histmersion.domain.catalogue.Place.Kind.Region, Square),
       List(Place.Name("Zqes area"))
     ),
     Place.Input(
-      Place("zqes_ptregion", "Zqes point region", com.histmersion.domain.catalogue.Place.Kind.Region, pt(125.0)),
+      Place(com.histmersion.api.catalogue.Place.Id("zqes_ptregion"), "Zqes point region", com.histmersion.domain.catalogue.Place.Kind.Region, pt(125.0)),
       List(Place.Name("Zqes point region"))
     )
   )

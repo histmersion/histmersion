@@ -229,7 +229,7 @@ final class AcquisitionControllers(
                 case None      => 0
                 case Some(src) =>
                   sources.addEdges(
-                    resolved.flatMap(_.citekey).distinct.filter(_ != src).map(Edge(src, _, "references")),
+                    resolved.flatMap(_.citekey).distinct.filter(_ != src).map(Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(_), "references")),
                     Caller.Local
                   )
           RefsResult(req.id, Some(doi), backend, resolved.size, resolved.count(_.citekey.isDefined), added, resolved)
@@ -384,7 +384,7 @@ final class AcquisitionControllers(
       t.doi
         .toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
         .flatMap { doi =>
-          val work = discovery.meta(doi).getOrElse(WorkRef(doi = Some(doi)))
+          val work = discovery.meta(doi).getOrElse(WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply)))
           val cap = cfg().limits.page(req.limit, acq.defaults.followupsLimit.value)
           citations.citing(work, req.since, cap).left.map(err).map { (backend, rows) =>
             val index = sources.doiIndex
@@ -399,7 +399,7 @@ final class AcquisitionControllers(
             val added = (req.apply, t.citekey) match
               case (true, Some(dst)) =>
                 sources.addEdges(
-                  enriched.flatMap(r => r.citekey.filter(_ != dst).map(src => Edge(src, dst, r.proposedKind))),
+                  enriched.flatMap(r => r.citekey.filter(_ != dst).map(src => Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), r.proposedKind))),
                   Caller.Local
                 )
               case _ => 0
@@ -560,7 +560,7 @@ final class AcquisitionControllers(
         .flatMap(_.citekey)
         .distinct
         .filter(_ != citekey)
-        .map(Edge(citekey, _, "references"))
+        .map(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(_), "references"))
       steps += Ingest.Step(
         "references",
         refRows.nonEmpty,

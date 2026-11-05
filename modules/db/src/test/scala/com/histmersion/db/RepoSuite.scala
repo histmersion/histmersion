@@ -26,11 +26,11 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     Migrate.run(d); d
 
   private val src = Source(
-    citekey = "zz_test_source",
-    title = "Test",
-    authors = List("A", "B"),
+    citekey = com.histmersion.api.library.Citekey("zz_test_source"),
+    title = com.histmersion.api.library.Title("Test"),
+    authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2020),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = List("t"),
@@ -45,7 +45,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         "zz_test_source#0",
-        "zz_test_source",
+        com.histmersion.api.library.Citekey("zz_test_source"),
         "claim",
         Some("Anatolia"),
         Some(GeoPoint(32.0, 39.0)),
@@ -55,7 +55,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge("zz_test_source", "zz_other", "references"))
+    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), "references"))
   )
 
   test("upsert → get round-trip, int8range bounds inclusive"):

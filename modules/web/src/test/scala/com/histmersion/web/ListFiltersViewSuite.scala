@@ -149,7 +149,7 @@ class ListFiltersViewSuite extends munit.FunSuite:
       JobsView.filterOf(Some(JobState.Failed), List("ingest"), None, Some("2026-10-01"), None),
       ListFilters.JobFilter(List("failed"), List("ingest"), None, Some("2026-10-01"), None)
     )
-    val rows = List(JobInfo("1", "ingest", "done"), JobInfo("2", "reocr", "failed"), JobInfo("3", "ingest", "failed"))
+    val rows = List(JobInfo(com.histmersion.api.jobs.JobInfo.Id("1"), com.histmersion.api.jobs.JobInfo.Kind("ingest"), "done"), JobInfo(com.histmersion.api.jobs.JobInfo.Id("2"), com.histmersion.api.jobs.JobInfo.Kind("reocr"), "failed"), JobInfo(com.histmersion.api.jobs.JobInfo.Id("3"), com.histmersion.api.jobs.JobInfo.Kind("ingest"), "failed"))
     assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List("ingest"))).map(_.id), List("1", "3"))
     assertEquals(
       JobsView.visible(rows, ListFilters.JobFilter(status = List("failed"), kind = List("ingest"))).map(_.id),

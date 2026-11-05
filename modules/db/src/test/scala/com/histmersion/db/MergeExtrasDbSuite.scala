@@ -152,7 +152,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private def site(id: String, label: String, lon: Double, lat: Double): Place.Input =
     Place.Input(
       Place(
-        id,
+        com.histmersion.api.catalogue.Place.Id(id),
         label,
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
@@ -231,11 +231,11 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     SourceFixtures.upsert(
       work,
       Source(
-        "zzgoal2020_src",
-        "Linked",
-        List("A"),
+        com.histmersion.api.library.Citekey("zzgoal2020_src"),
+        com.histmersion.api.library.Title("Linked"),
+        (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         None,
-        Some(2020),
+        (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         None,
         com.histmersion.api.library.Source.Status.Current,
         Nil,

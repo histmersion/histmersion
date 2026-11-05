@@ -167,7 +167,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   private def polity(id: String, label: String, g: String, from: Long, to: Long, method: Option[String]) =
     Place.Input(
       Place(
-        id,
+        com.histmersion.api.catalogue.Place.Id(id),
         label,
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(g),
@@ -325,7 +325,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     import com.augustnagro.magnum.*
     val round = Place.Input(
       Place(
-        "zzs_round",
+        com.histmersion.api.catalogue.Place.Id("zzs_round"),
         "The Kingdom of Zzs-Round (East)",
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(circle(157.5, -38.5, 1.5, 720)),
@@ -337,7 +337,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     val tiny = polity("zzs_tiny", "Zzs City", box(158.9, -38.05, 158.95, -38.0), 3000, 3100, None)
     val dot = Place.Input(
       Place(
-        "zzs_dot",
+        com.histmersion.api.catalogue.Place.Id("zzs_dot"),
         "Zzs Dot",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[156.2,-38.2]}"""),
@@ -424,7 +424,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     def site(id: String, label: String) =
       Place.Input(
         Place(
-          id,
+          com.histmersion.api.catalogue.Place.Id(id),
           label,
           com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[165.5,-38.5]}"""),
@@ -457,7 +457,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     def site(id: String, props: Option[String]) =
       Place.Input(
         Place(
-          id,
+          com.histmersion.api.catalogue.Place.Id(id),
           "Zzqmodern",
           com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[166.5,-38.5]}"""),

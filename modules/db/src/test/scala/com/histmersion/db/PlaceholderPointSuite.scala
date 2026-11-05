@@ -72,11 +72,11 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(Hellas, "Zzph Hellas", com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
-        in(Place(Balkans, "Zzph Balkans", com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), "Zzph Hellas", com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), "Zzph Balkans", com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
         in(
           Place(
-            Pelop,
+            com.histmersion.api.catalogue.Place.Id(Pelop),
             "Zzph Peloponnesos",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             box(151.0, -43.5, 152.8, -42.2)
@@ -84,15 +84,15 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         in(
           Place(
-            Mykenai,
+            com.histmersion.api.catalogue.Place.Id(Mykenai),
             "Zzph Mykenai Realm",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             box(150, -44, 152, -41),
             Some(Period(-1600, -1100))
           )
         ),
-        in(Place(Tegea, "Zzph Tegea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
-        in(Place(Mantinea, "Zzph Mantinea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
+        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), "Zzph Tegea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), "Zzph Mantinea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
       )
     )
     val r = rep
@@ -101,7 +101,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       List(
         in(
           Place(
-            NearRep,
+            com.histmersion.api.catalogue.Place.Id(NearRep),
             "Zzph Nearrep",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             pt(r.lon + 0.02, r.lat + 0.01)
@@ -110,15 +110,15 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     def f(n: Int, region: Option[String], at: Option[GeoPoint], period: Option[Period] = None) =
-      Finding(s"zzph_src#$n", "zzph_src", s"claim $n", region, at, period, None, Nil, None)
+      Finding(s"zzph_src#$n", com.histmersion.api.library.Citekey("zzph_src"), s"claim $n", region, at, period, None, Nil, None)
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = "zzph_src",
-        title = "Placeholder fixture",
-        authors = List("T"),
+        citekey = com.histmersion.api.library.Citekey("zzph_src"),
+        title = com.histmersion.api.library.Title("Placeholder fixture"),
+        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2026),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
@@ -196,7 +196,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place("zzph_tribe", "Zzph Tribe", com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
+          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), "Zzph Tribe", com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
           List(Place.Name("Zzph Tribe"))
         )
       )

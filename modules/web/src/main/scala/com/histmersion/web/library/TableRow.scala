@@ -31,14 +31,14 @@ object TableRow:
   def of(h: Hit): TableRow =
     val s = h.source
     TableRow(
-      s.citekey,
-      s.title,
-      authors(s.authors),
-      s.year,
+      s.citekey.value.toString,
+      s.title.value,
+      authors(s.authors.map(_.value)),
+      s.year.map(_.value.toInt),
       Some(s.status),
       "",
       YearFmt.period(s.periodStart, s.periodEnd),
-      SourceLink.href(s.citekey)
+      SourceLink.href(s.citekey.value.toString)
     )
 
   def of(a: Article.Summary): TableRow =

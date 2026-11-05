@@ -54,11 +54,11 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   private val Lat = -40.0
 
   private val src = Source(
-    citekey = "zqec_src2020",
-    title = "Zqec volcanology",
-    authors = List("A"),
+    citekey = com.histmersion.api.library.Citekey("zqec_src2020"),
+    title = com.histmersion.api.library.Title("Zqec volcanology"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2020),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -73,7 +73,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         "zqec_src2020#0",
-        "zqec_src2020",
+        com.histmersion.api.library.Citekey("zqec_src2020"),
         "ash layer",
         None,
         Some(GeoPoint(150.2, Lat)),
@@ -84,7 +84,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       ),
       Finding(
         "zqec_src2020#1",
-        "zqec_src2020",
+        com.histmersion.api.library.Citekey("zqec_src2020"),
         "far away",
         None,
         Some(GeoPoint(170.0, Lat)),
@@ -224,8 +224,8 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   test("the full-text index finds the sources naming an event; candidates keep their status"):
     assertEquals(SourceFixtures.naming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
     val c = EventLinkCandidate(
-      "zztest_b",
-      "zqec_src2020",
+      com.histmersion.api.catalogue.Event.Id("zztest_b"),
+      com.histmersion.api.library.Citekey("zqec_src2020"),
       1.1,
       findings = Nil,
       passages = List(EventPassage(10, 26, "Zqecian eruption", "Zqecian eruption")),
@@ -287,7 +287,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       ds,
       List(
         Place.Input(
-          Place("zqec_site", "Zqec site", com.histmersion.domain.catalogue.Place.Kind.Site, pt),
+          Place(com.histmersion.api.catalogue.Place.Id("zqec_site"), "Zqec site", com.histmersion.domain.catalogue.Place.Kind.Site, pt),
           List(Place.Name("Zqec site"))
         )
       )

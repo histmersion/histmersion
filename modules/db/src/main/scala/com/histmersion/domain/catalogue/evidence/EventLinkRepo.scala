@@ -22,7 +22,7 @@ private[evidence] object EventLinkRepo:
       .toList
       .map { r =>
         val ps = Jsonb.read[List[EventPassage]](r.passages).getOrElse(Nil)
-        EventLinkCandidate(r.eventId, r.citekey, r.score, r.status, r.title, r.findings, ps, r.reasons)
+        EventLinkCandidate(com.histmersion.api.catalogue.Event.Id(r.eventId), com.histmersion.api.library.Citekey(r.citekey), r.score, r.status, r.title, r.findings, ps, r.reasons)
       }
 
   /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
