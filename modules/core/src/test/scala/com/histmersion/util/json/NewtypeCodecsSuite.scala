@@ -11,7 +11,7 @@ import java.util.UUID
 import com.histmersion.{Latitude, Longitude, Offset, PageSize, UserId, Year}
 import com.histmersion.domain.library.ArchiveId
 import com.histmersion.domain.library.ArxivId
-import com.histmersion.domain.library.AuthorName
+import com.histmersion.domain.AuthorName
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Isbn
 import com.histmersion.domain.library.Pmcid

@@ -1,5 +1,32 @@
 # Priority-family status
 
+## Unread projection and shared AuthorName verified
+
+Personal now uses the shared kernel AuthorName and its own typed display Status.
+Library interprets its status enum in SourceReadable and converts to the receiver's
+projection. The first duplicate-author-type design was rejected despite passing
+mechanical checks; its evidence is preserved as superseded. The final semantic
+relocation reuses the existing String/Pure type and updates its codec-test caller.
+
+Full production/test compilation passes on 3,158 sources in 28 modules. Twenty
+projection/controller/type tests pass before and after with unchanged bodies; five
+codec tests also pass after relocation, all without skips. Fresh scans and patch-chain
+reconciliation verify seven original production relationships repaired. Two identity
+replacements and two test caller relocations receive no repair credit. Three exact
+contributor identities and 25 test non-violations have explicit review records;
+the original baseline and failed unreviewed observations remain. No unreviewed new
+or reopened finding remains.
+
+The reviewed isolation set now has zero confirmed outstanding production findings,
+111 accepted contributions and four unresolved registry relationships. Tests retain
+82 adjudicated non-violations and 131 candidates. Seventy-seven relationships have
+ambiguous owners and 182,326 direction rows remain unclassified. Primitive candidates
+are 30,393 production member leaves, 62,229 all-scope leaves and 46,915 unresolved
+leaves; extraction exposes seven storage parameters as member signatures, with no
+denominator suppression. Other families retain their prior measurement checkpoints.
+This remains manual/design treatment, without bulk-automation credit or independent
+detector-quality acceptance. See `unread-projection/README.md` and `reconciliation-2`.
+
 ## Media source boundary verified
 
 The library adapter now owns source validation and lookup. Media receives a typed

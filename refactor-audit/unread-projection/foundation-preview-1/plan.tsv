@@ -1,0 +1,3 @@
+path	before-sha256	after-sha256
+modules/server/src/main/scala/com/histmersion/domain/library/sources/SourceReadable.scala	8149d64087ee70e6f0ec9e341799d9e970dd65c8f7009cabc560d7bedca194a5	3a463c81bb7213bcd364e7b7a01b863ffa0851933d2168b538abe45da53969a4
+modules/server/src/test/scala/com/histmersion/domain/library/sources/UnreadProjectionSuite.scala	new	c2570d533bf3ea1873696c25fd23f81a304fb0bf955a3ae453cec5f5f53e44a2

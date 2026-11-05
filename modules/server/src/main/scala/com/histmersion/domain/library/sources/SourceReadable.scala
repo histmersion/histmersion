@@ -5,7 +5,6 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem, UnreadItems}
 import com.histmersion.util.database.Transactor
-import com.histmersion.domain.library.AuthorName
 import com.histmersion.domain.Title
 import com.histmersion.{Offset, PageSize, WireEnumValues, Year}
 
@@ -35,15 +34,28 @@ final class SourceReadable(db: Transactor) extends Readable:
       val total = (Sql.raw("SELECT count(*)") ++ notRead(read)).frag.query[Long].run().head.toInt
       UnreadItems(
         rows.map((ck, title, authors, year, status, start, end) =>
-          UnreadItem(
-            ItemKey(ck),
-            Title(title),
-            authors.map(AuthorName(_)),
-            year.map(Year(_)),
-            status.flatMap(summon[WireEnumValues[Source.Status]].fromWire),
-            start.map(y => Year(y.toInt)),
-            end.map(y => Year(y.toInt))
-          )
+          SourceReadable.row(ck, title, authors, year, status, start, end)
         ),
         total
       )
+
+
+object SourceReadable:
+  private[sources] def row(
+      ck: String,
+      title: String,
+      authors: List[String],
+      year: Option[Int],
+      status: Option[String],
+      start: Option[Long],
+      end: Option[Long]
+  ): UnreadItem =
+    UnreadItem(
+      ItemKey(ck),
+      Title(title),
+      authors.map(com.histmersion.domain.AuthorName(_)),
+      year.map(Year(_)),
+      status.flatMap(summon[WireEnumValues[Source.Status]].fromWire).map(s => UnreadItem.Status(s.wire)),
+      start.map(y => Year(y.toInt)),
+      end.map(y => Year(y.toInt))
+    )
