@@ -101,7 +101,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val r = Gazetteer.fromFeature(f, "anatolia", 0).fold(e => fail(e), identity)
     assertEquals(r.own, Some(ExternalId(LinkScheme.Whg, "99")))
     assertEquals(r.ref, "whg:99")
-    assertEquals(r.placeId, "whg_99")
+    assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("whg_99"))
     assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(-1650), Some(-1180)))
     assertEquals(
@@ -124,7 +124,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "nagar",
       0
     )
-    assertEquals(r.map(_.placeId), Right("lpf_nagar_tell_brak"))
+    assertEquals(r.map(_.placeId), Right(com.histmersion.api.catalogue.Place.Id("lpf_nagar_tell_brak")))
     assertEquals(r.map(_.ref), Right("https://example.org/gaz/place/Tell-Brak"))
     assert(Gazetteer.fromFeature(json("""{"properties":{"title":"x"}}"""), "d", 3).isLeft)
 
@@ -134,7 +134,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "p1\tKaneš\tKt archive\tTR\twd:Q1192387; tgn:7016542\tKanesh@en; Neša@hit; Kültepe\tsettlement\t35.635\t38.850\t-2000\t-1700"
     )
     val r = Gazetteer.fromTsvRow(header, row, "kultepe", 2).fold(e => fail(e), identity)
-    assertEquals(r.placeId, "lpf_kultepe_p1")
+    assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("lpf_kultepe_p1"))
     assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(-2000), Some(-1700)))
     assertEquals(r.links.map(_.id.key), List("wikidata:Q1192387", "tgn:7016542"))
@@ -212,7 +212,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "",
       1
     )
-    assertEquals(r.map(x => (x.ref, x.placeId)), Right(("tgn:7001393", "tgn_7001393")))
+    assertEquals(r.map(x => (x.ref, x.placeId)), Right(("tgn:7001393", com.histmersion.api.catalogue.Place.Id("tgn_7001393"))))
 
   test("canonical: the record's own id decides before its links; a native id before a copied one"):
     // GeoNames 3188382 (Varaždin) names wd:Q5420; Wikidata Q5420 names gn:3188382 (native on its place);

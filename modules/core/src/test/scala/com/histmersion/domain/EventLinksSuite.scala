@@ -65,7 +65,7 @@ class EventLinksSuite extends munit.FunSuite:
     val named =
       Map("named2020" -> List(EventPassage(120, 125, "Thera", "Thera"), EventPassage(900, 905, "Thera", "Thera")))
     val cs = EventMatcher.candidates("thera", near, named, w)
-    assertEquals(cs.map(_.citekey), List("named2020", "near2020"))
+    assertEquals(cs.map(_.citekey), List("named2020", "near2020").map(com.histmersion.api.library.Citekey.apply))
     assertEquals(cs.head.status, Event.LinkStatus.Proposed)
     assert(cs.head.reasons.exists(_.contains("names it 2 times")), cs.head.reasons.toString)
     assert(cs(1).score <= w.finding, "findings alone never pass a name")

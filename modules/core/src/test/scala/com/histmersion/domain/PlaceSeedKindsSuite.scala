@@ -35,7 +35,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
   test("every Pleiades place's kind is the one the place-kind rule gives it"):
     val proposals = pleiades.filter(_.place.geometry.exists(_.contains("\"Point\""))).flatMap { in =>
       val e = PlaceReview.Evidence(
-        in.place.id,
+        in.place.id.value,
         in.place.label,
         in.place.kind,
         prop(in, "feature_types"),
@@ -49,9 +49,9 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
 
   test("the seed carries the reclassified kinds and none of Pleiades' withdrawn duplicates"):
     val byId = pleiades.map(in => in.place.id -> in.place).toMap
-    assertEquals(byId.get("pleiades_330976685").map(_.kind), Some(Place.Kind.People), "Aiantis")
-    assertEquals(byId.get("pleiades_992074").map(_.kind), Some(Place.Kind.Polity), "Viennensis (diocese)")
-    assertEquals(byId.get("pleiades_580062").map(_.kind), Some(Place.Kind.Site), "Peiraieus")
-    assertEquals(byId.get("pleiades_307963010").map(_.kind), Some(Place.Kind.Region), "Regio I (Porta Capena)")
-    assert(!byId.contains("pleiades_981515"), "Withdrawn (duplicate): Creta et Cyrene")
+    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_330976685")).map(_.kind), Some(Place.Kind.People), "Aiantis")
+    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_992074")).map(_.kind), Some(Place.Kind.Polity), "Viennensis (diocese)")
+    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_580062")).map(_.kind), Some(Place.Kind.Site), "Peiraieus")
+    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_307963010")).map(_.kind), Some(Place.Kind.Region), "Regio I (Porta Capena)")
+    assert(!byId.contains(com.histmersion.api.catalogue.Place.Id("pleiades_981515")), "Withdrawn (duplicate): Creta et Cyrene")
     assert(pleiades.forall(in => PlaceReview.duplicateOf(in.place.label).isEmpty))

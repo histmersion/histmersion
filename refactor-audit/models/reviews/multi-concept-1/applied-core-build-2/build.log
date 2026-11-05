@@ -1,0 +1,51 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[success] elapsed time: 2 s, cache 100%, 67 disk cache hits
+[info] compiling 28 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-core/test-classes ...
+[info] done compiling
+[success] elapsed time: 10 s, cache 98%, 134 disk cache hits, 2 onsite tasks
+Test run com.histmersion.domain.library.workflows.AcquisitionSweepRulesSuite started
+com.histmersion.domain.library.workflows.AcquisitionSweepRulesSuite: finished 0.036s
+Test run com.histmersion.domain.BrowserDownloadSuite started
+com.histmersion.domain.BrowserDownloadSuite: finished 0.037s
+Test run com.histmersion.domain.library.workflows.AcquisitionSweepRulesSuite finished: 0 failed, 0 ignored, 4 total 0.044s
+Test run com.histmersion.domain.BrowserDownloadSuite finished: 0 failed, 0 ignored, 4 total 0.044s
+Test run com.histmersion.api.AcquireSuite started
+com.histmersion.api.AcquireSuite: finished 0.055s
+Test run com.histmersion.api.AcquireSuite finished: 0 failed, 0 ignored, 23 total 0.059s
+Test run com.histmersion.domain.EventLinksSuite started
+com.histmersion.domain.EventLinksSuite: finished 0.089s
+Test run com.histmersion.domain.EventLinksSuite finished: 0 failed, 0 ignored, 14 total 0.093s
+Test run com.histmersion.api.CandidatesSuite started
+com.histmersion.api.CandidatesSuite: finished 0.1s
+Test run com.histmersion.api.CandidatesSuite finished: 0 failed, 0 ignored, 8 total 0.104s
+Test run com.histmersion.domain.EnrichSourceSuite started
+com.histmersion.domain.EnrichSourceSuite: finished 0.103s
+Test run com.histmersion.domain.EnrichSourceSuite finished: 0 failed, 0 ignored, 14 total 0.107s
+Test run com.histmersion.util.jobs.JobControlRulesSuite started
+com.histmersion.util.jobs.JobControlRulesSuite: finished 0.105s
+Test run com.histmersion.util.jobs.JobControlRulesSuite finished: 0 failed, 0 ignored, 6 total 0.109s
+Test run com.histmersion.api.EmptyAnswerFieldsSuite started
+com.histmersion.api.EmptyAnswerFieldsSuite: finished 0.154s
+Test run com.histmersion.api.EmptyAnswerFieldsSuite finished: 0 failed, 0 ignored, 15 total 0.154s
+Test run com.histmersion.api.GazetteerSourcesSuite started
+com.histmersion.api.GazetteerSourcesSuite: finished 0.426s
+Test run com.histmersion.api.GazetteerSourcesSuite finished: 0 failed, 0 ignored, 25 total 0.43s
+Test run com.histmersion.domain.PlaceSeedKindsSuite started
+com.histmersion.domain.PlaceSeedKindsSuite: finished 0.902s
+Test run com.histmersion.domain.PlaceSeedKindsSuite finished: 0 failed, 0 ignored, 2 total 0.906s
+[info] Passed: Total 115, Failed 0, Errors 0, Passed 115
+[success] elapsed time: 2 s, cache 90%, 141 disk cache hits, 15 onsite tasks
