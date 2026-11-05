@@ -32,7 +32,7 @@ final class BasemapService(
     jobs: BasemapJobs,
     http: () => RangeHttp,
     freeSpace: Store => Long = _.usableSpace.value
-):
+)(using clock: java.time.Clock):
 
   private def cfg = config()
 
@@ -723,7 +723,7 @@ final class BasemapService(
         plan,
         rules.filter(_.whole).map(_.layer).toSet,
         attribution(l),
-        Instant.now().toString,
+        Instant.now(clock).toString,
         l,
         Option.when(l == Basemap.Layer.Vector)((keepAll, cfg.vector.drop))
       )
@@ -825,7 +825,7 @@ final class BasemapService(
               "bbox" -> io.circe.Json
                 .fromString(s"${a.bbox.minLon},${a.bbox.minLat},${a.bbox.maxLon},${a.bbox.maxLat}"),
               "maxZoom" -> io.circe.Json.fromInt(bc.maxZoom),
-              "fetchedAt" -> io.circe.Json.fromString(Instant.now().toString)
+              "fetchedAt" -> io.circe.Json.fromString(Instant.now(clock).toString)
             )
           )
           val bytes = w.finish(header, meta)
@@ -897,7 +897,7 @@ final class BasemapService(
                 "bbox" -> io.circe.Json
                   .fromString(s"${a.bbox.minLon},${a.bbox.minLat},${a.bbox.maxLon},${a.bbox.maxLat}"),
                 "maxZoom" -> io.circe.Json.fromInt(bc.gebco.maxZoom),
-                "fetchedAt" -> io.circe.Json.fromString(Instant.now().toString)
+                "fetchedAt" -> io.circe.Json.fromString(Instant.now(clock).toString)
               )
             )
             val bytes = w.finish(header, meta)
@@ -949,7 +949,7 @@ final class BasemapService(
             kept,
             a.bbox,
             lc.maxZoom,
-            BasemapService.labelsMetadata(lc, a.bbox, kept.size, Instant.now().toString)
+            BasemapService.labelsMetadata(lc, a.bbox, kept.size, Instant.now(clock).toString)
           )
           val _ = reader(Basemap.Layer.Labels)
           s"labels (Natural Earth): ${kept.size} names in $tiles tiles, ${Backup.humanBytes(bytes)} at ${store.where(key(Basemap.Layer.Labels))}"

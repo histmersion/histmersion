@@ -38,7 +38,7 @@ final class MaintenanceControllers(
     * finished backup, or `running` when it outlasts the request.
     */
   def backup(): Either[Api.Error, Backup.Status] =
-    maintenance.guard("backup")(backupJobs.start(Instant.now()))
+    maintenance.guard("backup")(backupJobs.start(Instant.now(deps.clock)))
 
   /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]).

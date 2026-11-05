@@ -132,7 +132,7 @@ production	plugins/gazetteers			unclassified-direction	148
 production	plugins/gazetteers			unresolved-reference	1
 production	plugins/media			unclassified-direction	876
 production	plugins/media			unresolved-reference	22
-production	server			unclassified-direction	6252
+production	server			unclassified-direction	6254
 production	server			unresolved-reference	218
 production	server		com.histmersion.domain.automation	unclassified-direction	791
 production	server		com.histmersion.domain.catalogue	unclassified-direction	321
@@ -371,7 +371,7 @@ test	server	com.histmersion.domain.research	com.histmersion.domain.library	allow
 test	server	com.histmersion.domain.research	com.histmersion.domain.media	allowed-direction; contract-review	30
 test	server	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	158
 test	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	18
-test	server	com.histmersion.util		unclassified-direction	1905
+test	server	com.histmersion.util		unclassified-direction	1911
 test	server	com.histmersion.util		unresolved-reference	85
 test	server	com.histmersion.util	com.histmersion.domain.library	forbidden-direction	10
 test	server	com.histmersion.util	com.histmersion.domain.research	forbidden-direction	12

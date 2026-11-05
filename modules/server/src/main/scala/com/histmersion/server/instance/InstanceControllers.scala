@@ -88,7 +88,7 @@ final class InstanceControllers(
     * part that cannot be read becomes a `problems` line, never a failed request: this is the page someone opens BECAUSE
     * something looks wrong.
     */
-  def about(now: Instant = Instant.now()): About =
+  def about(now: Instant = Instant.now(deps.clock)): About =
     def attempt[A](what: String)(a: => A): Either[String, A] =
       Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
     val jobs = attempt("job counts")(

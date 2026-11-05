@@ -1,5 +1,46 @@
 # Priority-family status
 
+## Current execution gate: acceptance before further repairs
+
+The active server-clock batch is closed. Existing verification confirms eight
+original finding IDs / nine production occurrences repaired by one configured
+semantic rewrite across five production files, including the changed constructor's
+caller. Full compilation covers 3,159 source/test files; 38 selected test identities
+pass with no skips. The generated fixed-clock metadata probe fails before the
+production rewrite and passes after it. See `server-clock/verification-1/status.txt`.
+
+Fresh capability measurement is 79 anchors / 96 occurrences, with no new/reopened
+IDs or multiplicity changes. Review-3's remaining confirmed set is 17 anchors /
+18 occurrences; 48 candidate anchors / 64 occurrences, 13 unresolved adapter
+operations and one pure separator non-violation remain. Earlier verified repairs
+and their original IDs remain in their existing histories. No blanket exception
+was introduced. Primitive counts remain 30,393 production member leaves, 62,229
+all-scope leaves and 46,914 unresolved leaves.
+
+**Inventory acceptance completed:** no. The readiness register still marks 42 of
+43 goals as partial/unmeasured. Full source traversal is not accepted semantic
+coverage or independent precision/recall evidence.
+
+**Confirmed violations repaired:** this batch's eight anchors / nine occurrences
+are verified. Historical family repair counts remain separately recorded in
+`migration-rounds.tsv` and linked original-ID evidence; incompatible units are not
+summed.
+
+**Remaining confirmed violations:** the capability subset above remains outstanding;
+the migration-wide deduplicated confirmed inventory is not yet consolidated.
+
+**Automation coverage:** no overall percentage is established. Tooling, artifacts
+and repeated scans do not count as repairs. The 90% automatic-repair target remains.
+
+No further repairs start before a bounded acceptance pass for all fourteen families
+in migration-rounds.tsv, spanning the original 43 goals and twelve historical slices.
+Consolidate into that existing ledger and this report, retaining original identities
+and append-only evidence. Freeze insufficient detectors with explicit limits within
+the existing two-round budget. Consolidate existing tools into one configurable
+pipeline; additional batch-specific runners/verifiers/report frameworks require
+explicit user approval. Current batch tools below predate this execution correction
+and are not a template for continuing the proliferation.
+
 ## Whole-project refresh and capability treatment
 
 The integrated assessment passes on 3,159 source/test files in 28 modules.

@@ -120,7 +120,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           MergeRuleSet(Deps.data.mergeRules),
           com.histmersion.domain.automation.worklists.WorkListMergeFollowUps,
           applyJobs,
-          () => backups.create(Instant.now()).map(_.file)
+          () => backups.create(Instant.now(deps.clock)).map(_.file)
         )
       ),
       deps.maintenance
@@ -140,7 +140,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
   val activity: com.histmersion.domain.activity.ActivityControllers =
     com.histmersion.domain.activity
-      .ActivityControllers(com.histmersion.domain.activity.ActivityService(ds), () => Instant.now())
+      .ActivityControllers(com.histmersion.domain.activity.ActivityService(ds), () => Instant.now(deps.clock))
 
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
@@ -472,7 +472,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none
     * before CORE was first asked, and none when the database cannot be read (`about` says that elsewhere).
     */
-  def upstreamQuotas(now: Instant = Instant.now()): List[UpstreamQuota] =
+  def upstreamQuotas(now: Instant = Instant.now(deps.clock)): List[UpstreamQuota] =
     scala.util
       .Try(
         com.histmersion.domain.library.acquisition

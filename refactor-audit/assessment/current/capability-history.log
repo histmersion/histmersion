@@ -3,11 +3,11 @@ WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scalafix.internal
 WARNING: Please consider reporting this to the maintainers of class scalafix.internal.reflect.ClasspathOps$
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
 PASS
-occurrences=105
-anchors=87
-ambiguous-occurrences=31
+occurrences=96
+anchors=79
+ambiguous-occurrences=29
 new=0
-absent-not-verified-fixed=103
+absent-not-verified-fixed=111
 reopened=0
 multiplicity-changes=0
 Tests, permission occurrences, dynamic dispatch and callback effects are not covered by this gate.

@@ -4,7 +4,7 @@ unresolved-reference-names=2
 expected-files=2381
 missing-files=0
 files=2381
-violations=105
+violations=96
 indirect-repository-findings=0
 coverage=direct resolved references plus repository calls through known source method bodies; dynamic dispatch, callbacks, external helper bodies and inferred-type escapes remain unmeasured
 unresolved-reference-names includes unsupported transaction SQL expressions; missing-symbol names are collected only in best-effort mode
@@ -17,7 +17,7 @@ domain-console=0
 environment=8
 properties=11
 console=0
-clock=57
+clock=48
 lifecycle=10
 filesystem=18
 http=1

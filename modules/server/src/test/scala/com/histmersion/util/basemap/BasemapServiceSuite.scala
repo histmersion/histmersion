@@ -71,7 +71,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
           case Sea(z, x, y) =>
             BasemapServiceSuite.seaGets.incrementAndGet(); Right(Option.when(x != "0")(s"PNG$z/$x/$y".getBytes))
           case _ => Left(s"$url: unexpected")
-    (BasemapWiring.service(Deps(cfg, ds), () => router, _ => free), v, t)
+    (BasemapWiring.service(Deps(cfg, ds, ds, clock = java.time.Clock.fixed(java.time.Instant.parse("2000-01-02T03:04:05Z"), java.time.ZoneOffset.UTC)), () => router, _ => free), v, t)
 
   test("a dry run reads directories only and reports the sizes; nothing is written"):
     val dir = Files.createTempDirectory("basemap")
@@ -93,7 +93,10 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val j = await(svc.fetch(Basemap.FetchQuery()).fold(e => fail(e.message), _.id))
     assert(j.succeeded, j.toString)
     val st = svc.status
-    assert(st.available, st.toString)
+    locally {
+      assert(st.available, st.toString)
+      assertEquals(st.layers.map(l => l.layer -> l.fetchedAt), List("vector", "terrain", "labels", "bathymetry").map(_ -> Some("2000-01-02T03:04:05Z")))
+    }
     assertEquals(
       st.layers.map(l => (l.layer, l.maxZoom)),
       List(("vector", Some(4)), ("terrain", Some(3)), ("labels", Some(6)), ("bathymetry", Some(3)))
@@ -318,7 +321,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         )
       )
     )
-    val svc = BasemapWiring.service(Deps(cfg, ds), () => router)
+    val svc = BasemapWiring.service(Deps(cfg, ds, ds, clock = java.time.Clock.fixed(java.time.Instant.parse("2000-01-02T03:04:05Z"), java.time.ZoneOffset.UTC)), () => router)
     val dry = await(svc.fetch(Basemap.FetchQuery(layer = "bathymetry", dryRun = true)).fold(e => fail(e.message), _.id))
     assert(dry.succeeded, dry.toString)
     // rows 196–219 (latitudes 41–35) of 720 bytes, in requests of at most 1 MB: one
