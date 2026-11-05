@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Pom.scala	eab6c54a22ca488cad009aacaf0ad0064fb01a717ad15122d24d8ef7a09649c2	9d93f9931dd8d9b20e026d393e1b767d829ef30c7723bb12cf4e08efb4fdc297

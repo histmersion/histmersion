@@ -8,12 +8,12 @@ import io.github.iltotore.iron.constraint.all.*
   */
 final case class Conflict(plugin: Conflict.Plugin, key: ModuleKey, wanted: ModuleVersion, shipped: ModuleVersion):
   def message: com.histmersion.pluginresolver.Conflict.MessageResult =
-    s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
-      s"build the plugin against ${shipped.value} (the histmersion-plugin-platform POM), or install a Histmersion that ships ${wanted.value}"
+    _root_.com.histmersion.pluginresolver.Resolver.Error(s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
+      s"build the plugin against ${shipped.value} (the histmersion-plugin-platform POM), or install a Histmersion that ships ${wanted.value}")
 
 object Conflict:
-  type MessageResult = MessageResult.T
-  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MessageResult = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val MessageResult: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
 
-  type Plugin = Plugin.T
-  object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Plugin = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val Plugin: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName

@@ -9,12 +9,12 @@ import java.nio.file.Path
 type RepositoryUrl = RepositoryUrl.T
 object RepositoryUrl extends RefinedType[String, Match["(https?|file):.+"]]:
   /** A URL as given, or a local directory as its `file:` URL. */
-  type FromArgumentResultPart1 = FromArgumentResultPart1.T
-  object FromArgumentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromArgumentResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val FromArgumentResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
   type FromArgumentRaw = FromArgumentRaw.T
   object FromArgumentRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def fromArgument(raw: com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw): Either[com.histmersion.pluginresolver.RepositoryUrl.FromArgumentResultPart1, RepositoryUrl] =
-    val trimmed = raw.trim
-    if trimmed.matches("(https?|file):.+") then either(trimmed)
-    else either(Path.of(trimmed).toAbsolutePath.normalize.toUri.toString)
+    val trimmed = (raw).value.trim
+    if trimmed.matches("(https?|file):.+") then (either(trimmed)).left.map(refactorError2 => _root_.com.histmersion.pluginresolver.Resolver.Error(refactorError2))
+    else (either(Path.of(trimmed).toAbsolutePath.normalize.toUri.toString)).left.map(refactorError3 => _root_.com.histmersion.pluginresolver.Resolver.Error(refactorError3))

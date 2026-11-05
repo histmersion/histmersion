@@ -1,5 +1,78 @@
 # Priority-family status
 
+## Verified locally: resolver vocabulary and compiler repair
+
+The resolver production module and all three resolver test sources now compile.
+PomSuite (5 tests) and ResolutionSuite (10 tests) pass against the actual production
+sources. PluginResolverSuite has not run: its generated Maven fixture needs
+plugin-api, which still fails compilation with 143 errors. The isolated pure-test
+invocation disables that resource generator only for its session and selects the
+two suites that do not use it. It does not replace the failed full-suite observation.
+
+All application and application-test edits were applied through the existing
+AstRecipe/ApplyFrozenPreview pipeline. CompileBatch remains the single build/test
+runner. Configuration chooses reviewed vocabulary roles, source roots, raw parser
+input targets and the common error type; there are no caller-expression recipes.
+
+The applied vocabulary cohort replaces 45 duplicate opaque definitions in 13
+existing production files with transparent type aliases and singleton constructor
+forwards. Six canonical types are introduced in Resolver: Argument, Error, ExitCode,
+FileName, Sha256 and ManifestLine. POM inputs reuse PluginArtifact.Pom, and XML tag
+parameters reuse Pom.ChildName. Constrained Maven identifiers, output contents,
+XML text and raw parsing inputs retain their distinct meanings. The initial error
+role expectation omitted ServerModules.ParseResultPart1; the count assertion failed,
+source review established the thirteenth error alias, and the corrected expectation
+was recorded before application. No assertion was weakened to exclude that source.
+
+Compiler repairs cover all supported reported findings in the selected production
+scope, then all three test suites together. The reusable conversions include
+List/Option/Either, tuples, callbacks captured once before adaptation, primitive
+operations and JDK overloads, multiline declared results, failure payloads, optional
+flatten results and literal-pattern guards. Test comparison repair projects confirmed
+Pure results to their primitive representation, including nested collections and
+tuples; expected values and failure conditions remain intact. It is opt-in for test
+scope and requires the compiler's munit.Compare diagnostic and compatible shapes.
+It never adds Compare[Any, Any], casts, or equality between different nominal types.
+
+Production observations resolver-build-1 through -6 retain the sequence
+90 → 48 → 19 → 2 → 2 → 0 errors. Later errors were exposed as earlier type errors
+cleared. Test observations resolver-test-build-1 through -4 retain 50 → 26 → 1 → 0
+resolver test-source errors; the last observation then fails in plugin-api during
+fixture generation. resolver-pure-tests-1 passes all 15 selected behavioral tests:
+POM identity/parent fallback, malformed/hostile XML, beside/embedded/ambiguous POMs,
+version ordering/conflicts, dependency selection/names, manifests and report output.
+Every build observation checks all 3168 Scala source hashes plus build.sbt with
+formatting disabled. Frozen previews and the complete applied-plan chain verify.
+
+The compiler fixture matches exact expected output and compiles/runs with
+Scala 3.10, -source:future and fatal E165. It checks nullable values, container and
+tuple conversion, callback evaluation timing, overload callbacks, literal guards,
+error-message fallback and positive/negative test comparisons. Four negative
+diagnostics remain unresolved: constrained construction, different nominal meanings,
+wrong primitive base and comparison of unrelated newtypes. The initial extractor
+pattern fixture missed the project flags; actual compilation caught E165. Guards
+replace those extractors, and the stricter fixture now passes without flag changes.
+The canonical-type fixture also matches expected output and compiles/runs under
+those flags, proving constructor forwards, type identity and typed error callbacks.
+
+type-positions-after-resolver-3 measures all 3168 main/test Scala files. The added
+file is the canonical resolver vocabulary, not a reduced source denominator.
+Stable-ID changes remove two raw production declaration leaves and introduce none:
+production594/test6051, total6645. The third raw Either.Left rewrite is a body type
+argument outside this declaration census; it is not counted as another removed leaf.
+Newtype identity history records 45 removed opaque shapes and six introductions:
+production27701/test15, with 3018 overlap candidate groups and 16058 unresolved
+candidate references. Alias names persist. These are local consolidation and
+compilation facts, not verified semantic classification of every remaining type.
+
+Inventory acceptance remains partial and all other policy-family histories and
+denominators are preserved. Inference, imported/external symbols, shadowing beyond
+the supported checks and unsupported diagnostic shapes remain explicit limits.
+The next repair scope is plugin-api, the concrete dependency blocking resolver
+integration behavior. Whole-project compilation/tests, native images and fresh
+cross-policy regression checks remain outstanding; no overall repair percentage,
+inventory completion, baseline replacement or new exception is claimed.
+
 ## Verified locally: console and fixture-library compilation repair
 
 The existing AstRecipe/ApplyFrozenPreview/CompileBatch pipeline now supports

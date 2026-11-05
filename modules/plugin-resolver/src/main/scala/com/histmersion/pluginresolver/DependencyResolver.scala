@@ -21,39 +21,39 @@ import com.histmersion.util.console.Console
   * each, and of everything it depends on, is on the class path already. What remains goes into `lib/`. Exit codes: 0
   * done, 1 usage, 2 refused, 3 failed (a repository, a download, a file).
   */
-@main def pluginResolver(args: String*): Unit = sys.exit(DependencyResolver.exitCode(args.toList)(using Console.system))
+@main def pluginResolver(args: String*): Unit = sys.exit((DependencyResolver.exitCode((args.toList).map(refactorValue3 => _root_.com.histmersion.pluginresolver.Resolver.Argument(refactorValue3)))(using Console.system)).value)
 
 object DependencyResolver:
 
-  type ParseLoopResultPart1 = ParseLoopResultPart1.T
-  object ParseLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseLoopRest = ParseLoopRest.T
-  object ParseLoopRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLoopResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val ParseLoopResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ParseLoopRest = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  val ParseLoopRest: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
 
-  type ExitCodeResult = ExitCodeResult.T
-  object ExitCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExitCodeArgs = ExitCodeArgs.T
-  object ExitCodeArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResult = RunResult.T
-  object RunResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunArgs = RunArgs.T
-  object RunArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseArgs = ParseArgs.T
-  object ParseArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveResult = ResolveResult.T
-  object ResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveRootsResultPart1 = ResolveRootsResultPart1.T
-  object ResolveRootsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSomeResultPart1 = ResolveSomeResultPart1.T
-  object ResolveSomeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerModulesResultPart1 = ServerModulesResultPart1.T
-  object ServerModulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputsResultPart1 = InputsResultPart1.T
-  object InputsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputsResultPart2 = InputsResultPart2.T
-  object InputsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExitCodeResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  val ExitCodeResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  type ExitCodeArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  val ExitCodeArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  type RunResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  val RunResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  type RunArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  val RunArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ParseArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  val ParseArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
+  type ResolveResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  val ResolveResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  type ResolveRootsResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  val ResolveRootsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  type ResolveSomeResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  val ResolveSomeResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
+  type ServerModulesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val ServerModulesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type InputsResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val InputsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type InputsResultPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  val InputsResultPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
 
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
@@ -62,42 +62,42 @@ object DependencyResolver:
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        3
+        _root_.com.histmersion.pluginresolver.DependencyResolver.ExitCodeResult(3)
 
   def run(args: List[com.histmersion.pluginresolver.DependencyResolver.RunArgs])(using console: Console): com.histmersion.pluginresolver.DependencyResolver.RunResult = args match
-    case "resolve" :: rest =>
+    case refactorPattern :: rest if (refactorPattern.value == "resolve") =>
       parse(rest) match
-        case Left(e)  => console.errorLine(s"$e\n$Usage"); 1
+        case Left(e)  => console.errorLine(s"$e\n$Usage"); _root_.com.histmersion.pluginresolver.DependencyResolver.RunResult(1)
         case Right(r) => resolve(r)(using console)
-    case _ => console.errorLine(Usage); 1
+    case _ => console.errorLine(Usage); _root_.com.histmersion.pluginresolver.DependencyResolver.RunResult(1)
 
   /** Pure: the request the arguments make. */
   def parse(args: List[com.histmersion.pluginresolver.DependencyResolver.ParseArgs]): Either[com.histmersion.pluginresolver.DependencyResolver.ParseResultPart1, ResolveRequest] =
     @annotation.tailrec
     def loop(rest: List[com.histmersion.pluginresolver.DependencyResolver.ParseLoopRest], acc: ResolveRequest): Either[com.histmersion.pluginresolver.DependencyResolver.ParseLoopResultPart1, ResolveRequest] = rest match
-      case "--kit" :: d :: t              => loop(t, acc.copy(kit = Path.of(d)))
-      case "--lib" :: d :: t              => loop(t, acc.copy(lib = Path.of(d)))
-      case "--histmersion-repo" :: d :: t => loop(t, acc.copy(histmersionRepo = Some(Path.of(d))))
-      case "--repo" :: r :: t             =>
-        RepositoryUrl.fromArgument(r) match
+      case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit")              => loop(t, acc.copy(kit = Path.of((d).value)))
+      case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib")              => loop(t, acc.copy(lib = Path.of((d).value)))
+      case refactorPattern4 :: d :: t if (refactorPattern4.value == "--histmersion-repo") => loop(t, acc.copy(histmersionRepo = Some(Path.of((d).value))))
+      case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo")             =>
+        RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw((r).value)) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
-          case Left(e)    => Left(s"--repo '$r': $e")
-      case "--check" :: t                     => loop(t, acc.copy(check = true))
-      case flag :: _ if flag.startsWith("--") => Left(s"unknown option $flag")
-      case jars                               => Right(acc.copy(jars = jars.map(Path.of(_))))
+          case Left(e)    => Left(_root_.com.histmersion.pluginresolver.Resolver.Error(s"--repo '$r': $e"))
+      case refactorPattern6 :: t if (refactorPattern6.value == "--check")                     => loop(t, acc.copy(check = _root_.com.histmersion.pluginresolver.ResolveRequest.Check(true)))
+      case flag :: _ if (flag).value.startsWith("--") => Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ParseLoopResultPart1(s"unknown option $flag"))
+      case jars                               => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
-    loop(args, ResolveRequest(empty, empty, None, Nil, false, Nil))
-      .filterOrElse(r => r.kit != empty && r.lib != empty, "--kit and --lib are required")
+    loop(args, ResolveRequest(empty, empty, None, Nil, _root_.com.histmersion.pluginresolver.ResolveRequest.Check(false), Nil))
+      .filterOrElse(r => r.kit != empty && r.lib != empty, _root_.com.histmersion.pluginresolver.Resolver.Error("--kit and --lib are required"))
 
   def resolve(r: ResolveRequest)(using console: Console): com.histmersion.pluginresolver.DependencyResolver.ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
       missing = r.jars.filterNot(Files.isRegularFile(_))
-      _ <- Either.cond(missing.isEmpty, (), s"no such plugin jar: ${missing.mkString(", ")}")
+      _ <- Either.cond(missing.isEmpty, (), _root_.com.histmersion.pluginresolver.Resolver.Error(s"no such plugin jar: ${missing.mkString(", ")}"))
     yield (server, stored)
     outcome match
-      case Left(e)                 => console.errorLine(e); 3
+      case Left(e)                 => console.errorLine((e).value); _root_.com.histmersion.pluginresolver.DependencyResolver.ResolveResult(3)
       case Right((server, stored)) =>
         val named = (r.repositories ++ stored).distinct
         val remote = if named.nonEmpty then named else List(Coursier.central)
@@ -105,7 +105,7 @@ object DependencyResolver:
         val scratch = Files.createTempDirectory("histmersion-plugin-resolve")
         try
           Coursier.pluginRepository(scratch, plugins) match
-            case Left(e)      => console.errorLine(s"refused: $e"); 2
+            case Left(e)      => console.errorLine(s"refused: $e"); _root_.com.histmersion.pluginresolver.DependencyResolver.ResolveResult(2)
             case Right(roots) =>
               val local =
                 (Some(scratch) ++ r.histmersionRepo).map(d => RepositoryUrl.applyUnsafe(d.toUri.toString)).toList
@@ -113,8 +113,8 @@ object DependencyResolver:
               resolveRoots(roots, server, coursier)(using console) match
                 case Left(rc)    => rc
                 case Right(deps) =>
-                  if !r.check then LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
-                  0
+                  if !(r.check).value then LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
+                  _root_.com.histmersion.pluginresolver.DependencyResolver.ResolveResult(0)
         finally deleteTree(scratch)
 
   private def resolveRoots(
@@ -134,19 +134,19 @@ object DependencyResolver:
       coursier
         .resolve(List(c), server.excluded)
         .left
-        .map(e => s"${plugin.fileName}: $e")
+        .map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"${plugin.fileName}: $e"))
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
-      case Left(e)          => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(3)
+      case Left(e)          => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ResolveSomeResultPart1(3))
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
             conflicts.foreach(c => console.errorLine(s"refused: ${c.message}"))
-            Left(2)
+            Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ResolveSomeResultPart1(2))
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match
-              case Left(e)      => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(3)
+              case Left(e)      => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ResolveSomeResultPart1(3))
               case Right(joint) =>
                 val deps = Resolution.dependencies(joint, pluginKeys, server, Resolution.neededBy(perPlugin))
                 val provided = Resolution.provided(perPlugin.flatMap(_._2), pluginKeys, server)
@@ -157,16 +157,16 @@ object DependencyResolver:
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
     if !Files.isRegularFile(modules) then
-      Left(s"no module list in the kit ($modules): this kit predates plugin dependencies")
+      Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ServerModulesResultPart1(s"no module list in the kit ($modules): this kit predates plugin dependencies"))
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
-      ServerModules.parse(lines(modules), lines(excludes)).left.map(e => s"$modules: $e")
+      ServerModules.parse((lines(modules)).map(refactorValue => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue)), (lines(excludes)).map(refactorValue2 => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue2))).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"$modules: $e"))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
   private def inputs(jars: List[Path]): List[(com.histmersion.pluginresolver.DependencyResolver.InputsResultPart1, com.histmersion.pluginresolver.DependencyResolver.InputsResultPart2)] =
     jars
       .flatMap(j => j :: List(Pom.besideJar(j)).filter(Files.isRegularFile(_)))
-      .map(p => p.getFileName.toString -> LibDirectory.sha256(p))
+      .map(p => { val refactorTuple = p.getFileName.toString -> LibDirectory.sha256(p); (_root_.com.histmersion.pluginresolver.Resolver.FileName(refactorTuple._1), refactorTuple._2) })
 
   private def deleteTree(dir: Path): Unit =
     Try {

@@ -1,0 +1,4 @@
+PASS
+exit=0
+source-files=3169
+All source hashes stable during compilation. Later commands may not execute after the first failed command.

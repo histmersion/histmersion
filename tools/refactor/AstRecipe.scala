@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object AstRecipe {
-  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1)
+  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false)
   object Consolidation {
     implicit val surface: generic.Surface[Consolidation] = generic.deriveSurface[Consolidation]
     implicit val decoder: ConfDecoder[Consolidation] = generic.deriveDecoder(Consolidation()).noTypos
@@ -22,7 +22,7 @@ object AstRecipe {
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
     ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
-    compilerObservation: String = "", boundaryRoots: List[String] = Nil)
+    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -44,7 +44,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val initial = policy.appliedPlans.foldLeft((rows(policy.manifest) ++ supplemental).map(r => r(0) -> r(1)).toMap) { (before, plan) =>
       val changes = rows(plan)
       require(changes.forall(_.length == 3) && changes.map(_(0)).distinct.size == changes.size)
-      changes.foreach(r => require(before.get(r(0)).contains(r(1)), "Patch chain does not match manifest: " + r(0)))
+      changes.foreach(r => require(if(r(1) == "new") !before.contains(r(0)) else before.get(r(0)).contains(r(1)), "Patch chain does not match manifest: " + r(0)))
       before ++ changes.map(r => r(0) -> r(2))
     }
     val frozen = if(policy.relocatedPreview.isEmpty) initial else {
@@ -60,9 +60,9 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty || policy.ironProjects.nonEmpty || policy.interfaceContracts.nonEmpty || policy.compilerObservation.nonEmpty))
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
-    val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence)
+    val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence)
-    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence)
+    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
@@ -190,7 +190,8 @@ class RepairTypes(frozen: Map[String,String], index: String) {
     val prefixMatches = indexed.filter(d => name.startsWith(d(5).stripSuffix("." + d(6)) + "."))
     val longest = prefixMatches.map(d => d(5).stripSuffix("." + d(6)).length).foldLeft(0)(math.max)
     val paths = (if(direct.nonEmpty) direct else prefixMatches.filter(d => d(5).stripSuffix("." + d(6)).length == longest)).map(_(1)).distinct
-    paths.foreach(tree)
+    val suffixes = name.split('.').toList.inits.filter(_.nonEmpty).map(_.mkString("/" ) + ".scala").toList
+    (paths ++ frozen.keys.filter(p => suffixes.exists(s => p.endsWith("/" + s)))).distinct.foreach(tree)
     val aliases = loaded.values.toList.flatMap(_.collect {
       case d: Defn.Type if owner(d) + "." + d.name.value == name && !d.body.syntax.endsWith(".T") => d.body.syntax.stripPrefix("_root_.")
     }).distinct
@@ -268,8 +269,9 @@ object InterfaceSignatures {
 }
 
 object CompilerRepairs {
-  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]]): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false): Map[String,List[(Int,Int,String)]] = {
     if(observation.isEmpty) return Map.empty
+    implicit val dialect: Dialect = dialects.Scala3
     require(roots.nonEmpty,"Compiler repairs need explicit boundary roots")
     val snapshot = Files.readAllLines(Paths.get(observation,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1)).toMap
     require(snapshot == frozen,"Compiler diagnostics do not describe the current frozen snapshot")
@@ -280,6 +282,20 @@ object CompilerRepairs {
     val types = new RepairTypes(frozen,index)
     val root = Paths.get("").toAbsolutePath.normalize
     val proposed = scala.collection.mutable.ListBuffer.empty[(String,Tree,String,String)]
+    val patternGuards = scala.collection.mutable.LinkedHashMap.empty[(String,Case),List[String]]
+    val freshNames = scala.collection.mutable.Map.empty[Tree,Set[String]]
+    def fresh(prefix: String, tree: Tree): String = {
+      val names = tree.collect { case n: Term.Name => n.value }.toSet ++ freshNames.getOrElse(tree,Set.empty)
+      val n = Iterator.from(1).map(i => prefix + (if(i == 1) "" else i.toString)).find(n => !names(n)).get
+      freshNames(tree) = freshNames.getOrElse(tree,Set.empty) + n; n
+    }
+    def guardLiteral(path: String, node: Tree, literal: Lit.String, tree: Tree, reason: String): Unit = {
+      val c = types.parents(node).collectFirst { case c: Case if c.pat.pos.start <= node.pos.start && c.pat.pos.end >= node.pos.end => c }.get
+      val name = fresh("refactorPattern",tree)
+      proposed += ((path,node,name,reason))
+      val key = path -> c
+      patternGuards(key) = patternGuards.getOrElse(key,Nil) :+ (name + ".value == " + literal.syntax)
+    }
     diagnostics.zipWithIndex.foreach { case(d,i) =>
       val abs = Paths.get(d.group(2)).toAbsolutePath.normalize
       require(abs.startsWith(root),"Diagnostic outside worktree")
@@ -296,7 +312,7 @@ object CompilerRepairs {
         val displays = "(?m)^.*?\\b([0-9]+)\\s*\\|(.*)$".r.findAllMatchIn(block).toList
         val sourceDisplayMatches = displays.size == 1 && displays.head.group(1).toInt == line + 1 &&
           displays.head.group(2).trim == source.linesIterator.drop(line).next().trim
-        val terms = tree.collect { case t: Term if t.pos.start <= offset && offset < t.pos.end => t }.sortBy(t => t.pos.end - t.pos.start)
+        val terms = tree.collect { case t: Term if t.pos.start <= offset && (offset < t.pos.end || (d.group(1) == "E172" && offset == t.pos.end)) => t }.sortBy(t => t.pos.end - t.pos.start)
         val highlights = block.linesIterator.flatMap { s =>
           val bar = s.indexOf('|')
           val tail = if(bar < 0) "" else s.substring(bar + 1)
@@ -311,30 +327,206 @@ object CompilerRepairs {
           val at = s.indexOf(marker)
           if(at < 0) None else Some(s.substring(at + marker.length).trim)
         }.toList match { case List(value) => Some(value); case _ => None }
+        def fullDetail(label: String): Option[String] = {
+          val messages = block.linesIterator.filter(_.contains('|')).map(s => s.substring(s.indexOf('|') + 1).trim).toList
+          val locations = messages.indices.filter(i => messages(i).startsWith(label + ":")).toList
+          locations match {
+            case List(at) => Some((messages(at).stripPrefix(label + ":").trim :: messages.drop(at + 1).takeWhile(s => s.nonEmpty && !s.startsWith("Found:") && !s.startsWith("Required:") && !s.startsWith("where:") && !s.startsWith("longer "))).mkString(" "))
+            case _ => None
+          }
+        }
+        def diagnosticType(s: String, nullable: Boolean = false): Option[Type] = {
+          val input = s.replace(" : => "," : ")
+          val parsed = input.parse[Term].toOption.collect { case Term.Ascribe(_,t) => t }.orElse(input.parse[Type].toOption)
+          parsed.map { case a: Type.ApplyInfix if nullable && a.op.value == "|" && a.rhs.syntax == "Null" => a.lhs; case t => t }
+        }
+        def normalize(t: Type): String = types.pure(t.syntax,tree).map(_.name).getOrElse(types.clean(t.syntax).stripSuffix(".T"))
+        def contextual(t: Type): String = t match {
+          case a: Type.Apply => types.clean(a.tpe.syntax) + a.argClause.values.map(contextual).mkString("[",",","]")
+          case a: Type.Tuple => a.args.map(contextual).mkString("(",",",")")
+          case _ =>
+            val normalized = normalize(t)
+            if(normalized.contains(".")) normalized else {
+              val imports = tree.collect { case i: Import => i.importers.flatMap(x => x.importees.collect { case Importee.Name(n) if n.value == normalized => x.ref.syntax + "." + n.value }) }.flatten.distinct
+              val pkg = tree.collect { case p: Pkg => p.ref.syntax }.headOption.getOrElse("")
+              if(imports.size == 1) imports.head else if(frozen.keys.exists(_.endsWith("/" + (pkg + "." + normalized).replace('.','/') + ".scala"))) pkg + "." + normalized else normalized
+            }
+        }
+        def convert(from: Type, to: Type, value: String): Option[String] = {
+          if(normalize(from) == normalize(to) || to.syntax == "Any") Some(value) else {
+            val a = types.pure(from.syntax,tree); val b = types.pure(to.syntax,tree)
+            if(a.isEmpty && b.exists(_.base == types.clean(from.syntax))) b.map(n => "_root_." + n.name + "(" + value + ")")
+            else if(b.isEmpty && a.exists(n => n.base == types.clean(to.syntax) || (n.base == "String" && Set("CharSequence","java.lang.CharSequence")(to.syntax)))) Some("(" + value + ").value")
+            else if(a.nonEmpty && b.exists(n => n.base == a.get.base && rawInputs.contains(n.name))) b.map(n => "_root_." + n.name + "((" + value + ").value)")
+            else (from,to) match {
+              case (f: Type.Apply,t: Type.Apply) if types.clean(f.tpe.syntax) == types.clean(t.tpe.syntax) && f.argClause.values.size == t.argClause.values.size =>
+                val fa = f.argClause.values; val ta = t.argClause.values
+                if(Set("List","Option")(types.clean(f.tpe.syntax)) && fa.size == 1) {
+                  val name = fresh("refactorValue",tree)
+                  convert(fa.head,ta.head,name).map(body => "(" + value + ").map(" + name + " => " + body + ")")
+                } else if(types.clean(f.tpe.syntax) == "Either" && fa.size == 2) {
+                  val left = fresh("refactorError",tree); val right = fresh("refactorValue",tree)
+                  for(l <- convert(fa.head,ta.head,left); r <- convert(fa(1),ta(1),right)) yield {
+                    val first = if(l == left) value else "(" + value + ").left.map(" + left + " => " + l + ")"
+                    if(r == right) first else "(" + first + ").map(" + right + " => " + r + ")"
+                  }
+                } else if(types.clean(f.tpe.syntax) == "Map" && fa.size == 2) {
+                  val key = fresh("refactorKey",tree); val item = fresh("refactorItem",tree)
+                  for(k <- convert(fa.head,ta.head,key); v <- convert(fa(1),ta(1),item)) yield
+                    "(" + value + ").iterator.map { case (" + key + ", " + item + ") => (" + k + ", " + v + ") }.toMap"
+                } else None
+              case (f: Type.Tuple,t: Type.Tuple) if f.args.size == t.args.size =>
+                val name = fresh("refactorTuple",tree)
+                val parts = f.args.zip(t.args).zipWithIndex.map { case((a,b),i) => convert(a,b,name + "._" + (i + 1)) }
+                if(parts.forall(_.nonEmpty)) Some("{ val " + name + " = " + value + "; " + parts.flatten.mkString("(",", ",")") + " }") else None
+              case (f: Type.Function,t: Type.Function) if f.paramClause.values.size == t.paramClause.values.size =>
+                val fn = fresh("refactorFunction",tree)
+                val parameters = t.paramClause.values.map(_ => fresh("refactorValue",tree))
+                val args = t.paramClause.values.zip(f.paramClause.values).zip(parameters).map { case((a,b),n) => convert(a,b,n) }
+                if(args.forall(_.nonEmpty)) convert(f.res,t.res,fn + args.flatten.mkString("(",", ",")")).map(body =>
+                  "{ val " + fn + " = " + value + "; " + parameters.mkString("(",", ",")") + " => " + body + " }") else None
+              case _ => None
+            }
+          }
+        }
         def simple(s: String, nullable: Boolean = false): Option[String] = {
           val raw = if(s.startsWith("(") && s.contains(" : ")) s.substring(s.indexOf(" : ") + 3).stripSuffix(")") else s
           val value = if(nullable) raw.stripSuffix(" | Null") else raw
           if(value.matches("[_A-Za-z][_A-Za-z0-9.]*")) Some(value) else None
         }
         var supported = false
-        if(sourceDisplayMatches && d.group(1) == "E007") {
-          for(t <- mismatch; found <- detail("Found").flatMap(s => simple(s)); required <- detail("Required").flatMap(s => simple(s,nullable = true))) {
-            val from = types.pure(found,t)
-            val to = types.pure(required,t)
+        if(testComparisons && d.group(1) == "E172" && block.contains("munit.Compare") && block.contains("Can't compare these two types:")) {
+          def comparisonType(label: String): Option[Type] = {
+            val messages = block.linesIterator.filter(_.contains('|')).map(s => s.substring(s.indexOf('|') + 1).trim).toList
+            val at = messages.indexWhere(_.startsWith(label + " type:"))
+            if(at < 0) None else diagnosticType((messages(at).stripPrefix(label + " type:").trim :: messages.drop(at + 1).takeWhile(s =>
+              s.nonEmpty && !s.startsWith("Second type:") && !s.startsWith("Possible "))).mkString(" "))
+          }
+          def projection(t: Type): Type = types.pure(t.syntax,tree) match {
+            case Some(n) => n.base.parse[Type].get
+            case None => t match {
+              case a: Type.Apply if Set("List","Option","Some","Map","Either")(types.clean(a.tpe.syntax)) =>
+                val container = if(types.clean(a.tpe.syntax) == "Some") "Option" else types.clean(a.tpe.syntax)
+                (container + a.argClause.values.map(projection).map(_.syntax).mkString("[",", ", "]")).parse[Type].get
+              case a: Type.Tuple => a.args.map(projection).map(_.syntax).mkString("(",", ", ")").parse[Type].get
+              case _ => t
+            }
+          }
+          val comparison = tree.collect { case a: Term.Apply if a.fun.syntax == "assertEquals" && a.argClause.values.size >= 2 &&
+            a.pos.start <= offset && offset <= a.pos.end => a }.sortBy(a => a.pos.end - a.pos.start).headOption
+          for(a <- comparison; first <- comparisonType("First"); second <- comparisonType("Second") if
+            normalize(projection(first)) == normalize(projection(second)) && second.collect { case t: Type if types.pure(t.syntax,tree).nonEmpty => true }.isEmpty &&
+            displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
+            val obtained = a.argClause.values.head
+            val original = source.substring(obtained.pos.start,obtained.pos.end)
+            convert(first,projection(first),original).filter(_ != original).foreach { next =>
+              proposed += ((path,obtained,"(" + next + ": " + projection(first).syntax + ")","E172 test comparison Pure projection")); supported = true
+            }
+          }
+        }
+        if(d.group(1) == "E007") {
+          for(found <- fullDetail("Found").flatMap(s => diagnosticType(s)); required <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))) {
+            val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
+            val target = if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) body else None
+            target.foreach { t =>
             val original = source.substring(t.pos.start,t.pos.end)
-            val next = if(from.isEmpty && to.exists(_.base == types.clean(found))) to.map(n => "_root_." + n.name + "(" + original + ")")
-              else if(to.isEmpty && from.exists(_.base == types.clean(required))) Some("(" + original + ").value") else None
-            next.foreach { n => proposed += ((path,t,n,"E007 " + found + " -> " + required)); supported = true }
+            convert(found,required,original).filter(_ != original).foreach { n => proposed += ((path,t,n,"E007 " + found.syntax + " -> " + required.syntax)); supported = true }
+            }
           }
         }
         if(sourceDisplayMatches && d.group(1) == "E008") {
-          terms.collectFirst { case s: Term.Select => s }.foreach { selection =>
-            val receiverType = selection.qual match {
-              case n: Term.Name => parameterType(n,selection)
-              case _ => None
+          val member = "value ([^ ]+) is not a member of ([_A-Za-z][_A-Za-z0-9.]*)".r.findFirstMatchIn(block)
+          member.foreach { m => types.pure(m.group(2).stripSuffix("."),tree).foreach { n =>
+            val method = m.group(1)
+            val encoded = scala.reflect.NameTransformer.encode(method)
+            val stringMember = n.base == "String" && (method == "+" || (classOf[String].getMethods ++ classOf[scala.collection.StringOps].getMethods).exists(_.getName == encoded))
+            val receiver = if(stringMember) terms.collectFirst {
+              case s: Term.Select if s.name.value == method => s.qual
+              case a: Term.ApplyInfix if a.op.value == method => a.lhs
+            } else if(n.base == "Boolean" && method == "unary_!") terms.collectFirst { case a: Term.ApplyUnary if a.op.value == "!" => a.arg } else None
+            receiver.foreach { r => proposed += ((path,r,"(" + source.substring(r.pos.start,r.pos.end) + ").value","E008 primitive member " + method)); supported = true }
+          }}
+        }
+        if(sourceDisplayMatches && d.group(1) == "E134") {
+          terms.collectFirst { case a: Term.Apply => a }.foreach { app =>
+            app.argClause.values match {
+              case List(f: Term.AnonymousFunction) if f.body.structure == Term.Select(Term.Placeholder(),Term.Name("value")).structure =>
+                val name = fresh("refactorValue",tree)
+                val call = source.substring(app.pos.start,app.pos.end).patch(f.pos.start - app.pos.start,name + ".value",f.pos.end - f.pos.start)
+                proposed += ((path,app,"(" + name + " => " + call + ")","E134 lift placeholder boundary callback")); supported = true
+              case _ => ()
             }
-            receiverType.flatMap(types.pure(_,selection)).filter(n => n.base == "String" && block.contains(n.name) && classOf[String].getMethods.exists(_.getName == selection.name.value)).foreach { _ =>
-              proposed += ((path,selection.qual,"(" + selection.qual.syntax + ").value","E008 primitive String member " + selection.name.value)); supported = true
+            val at = block.indexOf("match arguments")
+            val description = if(at < 0) "" else block.substring(at + "match arguments".length).linesIterator.map(s => if(s.contains('|')) s.substring(s.indexOf('|') + 1).trim else s.trim).mkString(" ").trim
+            def parts(s: String): List[String] = {
+              var depth = 0; var start = 0; val out = scala.collection.mutable.ListBuffer.empty[String]
+              s.indices.foreach { i => s.charAt(i) match {
+                case '(' | '[' => depth += 1
+                case ')' | ']' => depth -= 1
+                case ',' if depth == 0 => out += s.substring(start,i).trim; start = i + 1
+                case _ => ()
+              }}
+              out += s.substring(start).trim; out.toList
+            }
+            var end = -1; var depth = 0
+            if(description.startsWith("(")) description.indices.iterator.takeWhile(_ => end < 0).foreach { i =>
+              if(description.charAt(i) == '(') depth += 1
+              if(description.charAt(i) == ')') { depth -= 1; if(depth == 0) end = i }
+            }
+            val actuals = if(end < 0) Nil else parts(description.substring(1,end))
+            if(!supported && actuals.size == app.argClause.values.size) actuals.zip(app.argClause.values).foreach { case(actual,arg) =>
+              diagnosticType(actual).flatMap(t => types.pure(t.syntax,tree)).foreach { n =>
+                val signatures = if(at < 0) "" else block.take(at)
+                val base = if(n.base == "String") "(?:String|java.lang.String|CharSequence|java.lang.CharSequence)" else java.util.regex.Pattern.quote(n.base)
+                val parameter = ("\\([^\\n)]*:\\s*" + base + "(?:[,* )]).*").r
+                if(signatures.linesIterator.exists(s => parameter.findFirstIn(s).nonEmpty)) {
+                  if(arg.is[Term.Placeholder]) types.parents(app).collectFirst { case f: Term.AnonymousFunction if f.body.collect { case _: Term.Placeholder => true }.size == 1 => f }.foreach { f =>
+                    val name = fresh("refactorValue",tree)
+                    val body = source.substring(f.body.pos.start,f.body.pos.end).patch(arg.pos.start - f.body.pos.start,name + ".value",arg.pos.end - arg.pos.start)
+                    proposed += ((path,f,"(" + name + " => " + body + ")","E134 primitive callback argument")); supported = true
+                  }
+                  else { proposed += ((path,arg,"(" + source.substring(arg.pos.start,arg.pos.end) + ").value","E134 primitive overload argument")); supported = true }
+                }
+              }
+            }
+          }
+        }
+        if(sourceDisplayMatches && d.group(1) == "E172") {
+          val comparison = "Values of types String and ([_A-Za-z][_A-Za-z0-9.]*) cannot be compared".r.findFirstMatchIn(block)
+          for {
+            name <- comparison.map(_.group(1))
+            literal <- terms.collectFirst { case s: Lit.String if types.parents(s).exists { case c: Case => c.pat.pos.start <= s.pos.start && c.pat.pos.end >= s.pos.end; case _ => false } => s }
+            nominal <- types.pure(name,literal).filter(_.base == "String")
+          } {
+            guardLiteral(path,literal,literal,tree,"E172 typed literal guard")
+            supported = true
+          }
+          if(!supported) for {
+            name <- comparison.map(_.group(1))
+            nominal <- types.pure(name,tree).filter(_.base == "String")
+            equality <- terms.collectFirst { case a: Term.ApplyInfix if Set("==","!=")(a.op.value) => a }
+            operand <- (equality.lhs :: equality.argClause.values).collectFirst {
+              case n: Term.Name if parameterType(n,equality).flatMap(types.pure(_,equality)).exists(_.name == nominal.name) => n
+            }
+          } { proposed += ((path,operand,"(" + operand.syntax + ").value","E172 primitive boundary equality")); supported = true }
+          if(!supported) terms.collectFirst { case s: Term.Select if s.name.value == "flatten" => s }.foreach { flatten =>
+            val expected = types.parents(flatten).collectFirst { case m: Defn.Def if m.body eq flatten => m.decltpe }.flatten
+            expected.collect { case a: Type.Apply if a.tpe.syntax == "Option" && a.argClause.values.size == 1 => a.argClause.values.head }.flatMap(t => types.pure(t.syntax,t)).foreach { n =>
+              if(Set("Option","Some").exists(container => block.contains("Cannot prove that " + container + "[" + n.base + "] <:< Option["))) {
+                val name = fresh("refactorValue",tree)
+                val base = if(n.base == "String") "_root_.java.lang.String" else "_root_.scala." + n.base
+                proposed += ((path,flatten,"(" + source.substring(flatten.pos.start,flatten.pos.end) + "[" + base + "]).map(" + name + " => _root_." + n.name + "(" + name + "))","E172 optional Pure result")); supported = true
+              }
+            }
+          }
+        }
+        if(sourceDisplayMatches && d.group(1) == "E165") {
+          val reported = "unmatchable type ([_A-Za-z][_A-Za-z0-9.]*)".r.findFirstMatchIn(block).map(_.group(1))
+          tree.collect { case p: Pat.Extract if p.pos.start <= offset && offset < p.pos.end => p }.sortBy(p => p.pos.end - p.pos.start).headOption.foreach { p =>
+            p.argClause.values match {
+              case List(literal: Lit.String) if reported.flatMap(types.pure(_,p)).exists(n => n.base == "String" && types.pure(p.fun.syntax,p).exists(_.name == n.name)) =>
+                guardLiteral(path,p,literal,tree,"E165 typed literal guard"); supported = true
+              case _ => ()
             }
           }
         }
@@ -354,6 +546,35 @@ object CompilerRepairs {
     val primitiveClasses = Map("String" -> classOf[String],"Int" -> java.lang.Integer.TYPE,"Long" -> java.lang.Long.TYPE,
       "Double" -> java.lang.Double.TYPE,"Float" -> java.lang.Float.TYPE,"Boolean" -> java.lang.Boolean.TYPE,"Char" -> java.lang.Character.TYPE,
       "Byte" -> java.lang.Byte.TYPE,"Short" -> java.lang.Short.TYPE)
+    def rawString(t: Term): Boolean = t match {
+      case _: Lit.String => true
+      case i: Term.Interpolate => Set("s","f","raw")(i.prefix.value)
+      case _ => false
+    }
+    if(errorType.nonEmpty) frozen.keys.filter(p => p.endsWith(".scala") && roots.exists(p.startsWith)).foreach { path =>
+      val tree = types.tree(path)
+      val error = types.pure(errorType,tree).filter(_.base == "String").getOrElse(throw new IllegalArgumentException("Expected Pure String error type"))
+      tree.collect { case a: Term.Apply =>
+        val payload = if(Set("Either.cond","scala.Either.cond")(a.fun.syntax) && a.argClause.values.size == 3) a.argClause.values.lift(2)
+          else if(a.fun.syntax == "Left" && a.argClause.values.size == 1) a.argClause.values.headOption
+          else a.fun match {
+            case s: Term.Select if s.name.value == "toRight" && a.argClause.values.size == 1 => a.argClause.values.headOption
+            case s: Term.Select if s.name.value == "filterOrElse" && a.argClause.values.size == 2 => a.argClause.values.lift(1)
+            case Term.Select(Term.Select(q,Term.Name("left")),Term.Name("map")) if a.argClause.values.size == 1 => a.argClause.values.head match {
+              case f: Term.Function if rawString(f.body) => Some(f.body)
+              case f: Term.Function if f.paramClause.values.size == 1 && q.is[Term.Select] && q.asInstanceOf[Term.Select].name.value == "toEither" &&
+                q.asInstanceOf[Term.Select].qual.is[Term.Apply] && Set("Try","scala.util.Try")(q.asInstanceOf[Term.Select].qual.asInstanceOf[Term.Apply].fun.syntax) &&
+                f.body.structure == ("Option(" + f.paramClause.values.head.name.syntax + ".getMessage).getOrElse(" + f.paramClause.values.head.name.syntax + ".getClass.getSimpleName)").parse[Term].get.structure =>
+                  val value = f.body
+                  proposed += ((path,value,"_root_." + error.name + "(" + Files.readString(Paths.get(path)).substring(value.pos.start,value.pos.end) + ")","ERROR_ROLE Throwable message"))
+                  None
+              case _ => None
+            }
+            case _ => None
+          }
+        payload.filter(rawString).foreach { value => proposed += ((path,value,"_root_." + error.name + "(" + Files.readString(Paths.get(path)).substring(value.pos.start,value.pos.end) + ")","ERROR_ROLE primitive failure payload")) }
+      }
+    }
     frozen.keys.filter(p => p.endsWith(".scala") && roots.exists(p.startsWith)).foreach { path => types.tree(path).collect {
       case app: Term.Apply if app.argClause.values.size == 1 => app.fun match {
         case Term.Select(receiver: Term.Name,method) => app.argClause.values.head match {
@@ -369,26 +590,44 @@ object CompilerRepairs {
         case _ => ()
       }
     }}
+    val guardPatches = patternGuards.toList.map { case((path,c),guards) =>
+      val source = Files.readString(Paths.get(path))
+      val condition = guards.map(s => "(" + s + ")").mkString(" && ")
+      val patch = c.cond match {
+        case Some(old) => (old.pos.start,old.pos.end,condition + " && (" + source.substring(old.pos.start,old.pos.end) + ")")
+        case None => (c.pat.pos.end,c.pat.pos.end," if " + condition)
+      }
+      evidence += List(path,(c.pos.startLine + 1).toString,"PATTERN_GUARD " + c.pat.structure,patch._3)
+      path -> patch
+    }
     val accepted = scala.collection.mutable.ListBuffer.empty[(String,Tree,String,String)]
     proposed.toList.groupBy(p => (p._1,p._2.pos.start,p._2.pos.end,p._3)).values.map(_.head).toList.sortBy(p => (p._2.pos.end - p._2.pos.start,p._1,p._2.pos.start)).foreach { p =>
       if(!accepted.exists(q => p._1 == q._1 && p._2.pos.start < q._2.pos.end && q._2.pos.start < p._2.pos.end)) accepted += p
       else evidence += List(p._1,(p._2.pos.startLine + 1).toString,"UNRESOLVED compiler overlapping expression","innermost repair first; recompile before retry")
     }
-    accepted.toList.map { case(path,t,next,reason) =>
+    (accepted.toList.map { case(path,t,next,reason) =>
       evidence += List(path,(t.pos.startLine + 1).toString,"COMPILER " + reason + " " + t.structure,next)
       path -> ((t.pos.start,t.pos.end,next))
-    }.groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
+    } ++ guardPatches).groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
   }
 }
 
 object TypeConsolidation {
-  def patches(frozen: Map[String,String], index: String, roles: List[AstRecipe.Consolidation], evidence: scala.collection.mutable.ListBuffer[List[String]]): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, roles: List[AstRecipe.Consolidation], evidence: scala.collection.mutable.ListBuffer[List[String]], creates: Map[String,String] = Map.empty): Map[String,List[(Int,Int,String)]] = {
     if(roles.isEmpty) return Map.empty
     implicit val dialect: Dialect = dialects.Scala3
     def rows(file: String) = Files.readAllLines(Paths.get(file)).asScala.drop(1).map(_.split("\t",-1).toList).toList
     val snapshot = rows(index + "/sources.tsv").map(r => r.head -> r(1)).toMap
     require(snapshot.forall { case(p,h) => frozen.get(p).contains(h) } && (frozen.keySet -- snapshot.keySet).subsetOf(Set("build.sbt")),"Consolidation index is not the current frozen snapshot")
-    val definitions = rows(index + "/newtypes.tsv")
+    val additions = new NewtypeIndex(Nil, "")
+    val newTrees = creates.map { case(p,s) =>
+      require(!Files.exists(Paths.get(p)),"Canonical source already exists: " + p)
+      val tree = s.parse[Source].get
+      additions.inspect(tree,p,p.stripPrefix("modules/").split("/src/").head,if(p.contains("/src/test/")) "test" else "production")
+      p -> tree
+    }
+    val definitions = rows(index + "/newtypes.tsv") ++ additions.entries
+    require(additions.entries.map(_(5)).distinct.size == additions.entries.size && !rows(index + "/newtypes.tsv").exists(r => additions.entries.exists(_(5) == r(5))),"Created canonical definition already exists or is ambiguous")
     val selected = roles.flatMap { role =>
       require(role.within.nonEmpty && (role.target.nonEmpty != role.targetOwner.nonEmpty),"Choose one canonical type or projection owner")
       require(role.target.isEmpty || (role.names.nonEmpty && role.target.contains(".")),"Canonical role needs names and a qualified type")
@@ -402,7 +641,7 @@ object TypeConsolidation {
         if(role.target.nonEmpty) require(targets.nonEmpty,"Canonical definition missing: " + name)
         targets.map(target => (d,target))
       }
-      require(role.expected < 0 || candidates.size == role.expected,"Consolidation candidate count differs: " + role.within)
+      require(role.expected < 0 || candidates.size == role.expected,"Consolidation candidate count differs: " + role.target + " expected=" + role.expected + " actual=" + candidates.size)
       candidates.map { case(d,target) =>
         require(d(2) == target(2) && d(3) == target(3),"Consolidation cannot cross module or source-set boundaries")
         require(d(12) == "member" && target(12) == "member","Local consolidation requires semantic evidence")
@@ -421,13 +660,13 @@ object TypeConsolidation {
       case e: Defn.Enum => e.name.value
     }.mkString(".")
     def ancestors(t: Tree): List[Tree] = t :: t.parent.toList.flatMap(ancestors)
-    val trees = paths.map(p => p -> Files.readString(Paths.get(p)).parse[Source].get).toMap
-    def definition(d: List[String]): (Defn.Object,Defn.Type,Type.Apply) = {
+    val trees = paths.map(p => p -> newTrees.getOrElse(p,Files.readString(Paths.get(p)).parse[Source].get)).toMap
+    def definition(d: List[String], canonical: Boolean = false): (Defn.Object,Defn.Type,Type.Apply) = {
       val matches = trees(d(1)).collect { case o: Defn.Object if owner(o) + "." + o.name.value == d(5) => o }
       require(matches.size == 1,"Definition does not resolve uniquely in AST: " + d.head)
       val obj = matches.head
       require(!ancestors(obj).tail.exists(t => t.is[Defn.Class] || t.is[Defn.Trait] || t.is[Defn.Def]),"Consolidation owner is not a stable object path: " + d.head)
-      require(obj.mods.isEmpty && obj.templ.stats.isEmpty && obj.templ.inits.size == 1,"Companion has behavior or unsupported modifiers: " + d.head)
+      require(obj.mods.isEmpty && (obj.templ.stats.isEmpty || (canonical && obj.templ.stats.forall(_.is[Defn.GivenAlias]))) && obj.templ.inits.size == 1,"Companion has behavior or unsupported modifiers: " + d.head)
       val init = obj.templ.inits.head
       require(init.argClauses.isEmpty,"Newtype parent constructor has arguments: " + d.head)
       val parent = init.tpe match {
@@ -447,7 +686,7 @@ object TypeConsolidation {
     }
     val patches = selected.flatMap { case(d,target) =>
       val (obj,alias,parent) = definition(d)
-      val (_,_,canonical) = definition(target)
+      val (_,_,canonical) = definition(target,canonical = true)
       require(base(parent.argClause.values.head) == base(canonical.argClause.values.head),"Consolidation base mismatch: " + d.head)
       val constraint = parent.argClause.values(1).syntax.stripPrefix("_root_.")
       require(constraint == "io.github.iltotore.iron.constraint.any.Pure" && constraint == canonical.argClause.values(1).syntax.stripPrefix("_root_."),"Consolidation constraint needs separate construction review: " + d.head)
@@ -459,7 +698,24 @@ object TypeConsolidation {
         d(1) -> (tree.pos.start,tree.pos.end,next)
       }
     }
-    patches.groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
+    val primitives = roles.filter(_.primitiveEitherLeft).flatMap { role =>
+      val target = definitions.find(_(5) == role.target).get
+      val (_,_,parent) = definition(target,canonical = true)
+      require(base(parent.argClause.values.head) == "String" && parent.argClause.values(1).syntax.stripPrefix("_root_.") == "io.github.iltotore.iron.constraint.any.Pure","Expected Pure error-message type")
+      val sourceRoot = target(1).split("/src/").head + "/src/main/"
+      frozen.keys.toList.sorted.filter(p => p.startsWith(sourceRoot) && p.endsWith(".scala")).flatMap { path =>
+        val tree = Files.readString(Paths.get(path)).parse[Source].get
+        val shadowed = tree.collect { case t: Defn.Type if t.name.value == "String" => true; case t: Type.Param if t.name.value == "String" => true }.nonEmpty
+        tree.collect {
+          case a: Type.Apply if Set("Either","scala.Either","scala.util.Either")(a.tpe.syntax) && a.argClause.values.size == 2 && a.argClause.values.head.syntax == "String" &&
+            (owner(a) == role.within || owner(a).startsWith(role.within + ".")) && !shadowed =>
+            val t = a.argClause.values.head
+            evidence += List(path,(t.pos.startLine + 1).toString,"PRIMITIVE_ROLE Either.Left " + t.structure,role.target)
+            path -> ((t.pos.start,t.pos.end,"_root_." + role.target))
+        }
+      }
+    }
+    (patches ++ primitives).groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
   }
 }
 
@@ -467,6 +723,7 @@ class NewtypeIndex(histories: List[String], previous: String) {
   private val definitions = scala.collection.mutable.ListBuffer.empty[List[String]]
   private val references = scala.collection.mutable.ListBuffer.empty[List[String]]
   private val definitionOrdinals = scala.collection.mutable.Map.empty[String,Int]
+  def entries: List[List[String]] = definitions.toList
   private def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
   private def owner(t: Tree): String = parents(t).reverse.collect {
     case p: Pkg => p.ref.syntax

@@ -9,11 +9,11 @@ import java.nio.file.Path
   * one. Without a POM it has no dependencies of its own.
   */
 final case class PluginArtifact(jar: Path, pom: Option[PluginArtifact.Pom]):
-  def fileName: com.histmersion.pluginresolver.PluginArtifact.FileNameResult = jar.getFileName.toString
+  def fileName: com.histmersion.pluginresolver.PluginArtifact.FileNameResult = _root_.com.histmersion.pluginresolver.PluginArtifact.FileNameResult(jar.getFileName.toString)
 
 object PluginArtifact:
-  type FileNameResult = FileNameResult.T
-  object FileNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileNameResult = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  val FileNameResult: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
 
   type Pom = Pom.T
   object Pom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

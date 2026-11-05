@@ -18,33 +18,33 @@ import scala.util.Try
 object Pom:
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  type CoordinatesResultPart1 = CoordinatesResultPart1.T
-  object CoordinatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoordinatesXml = CoordinatesXml.T
-  object CoordinatesXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfResult = OfResult.T
-  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EmbeddedResult = EmbeddedResult.T
-  object EmbeddedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseXml = ParseXml.T
-  object ParseXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoordinatesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val CoordinatesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type CoordinatesXml = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  val CoordinatesXml: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  type OfResult = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  val OfResult: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  type EmbeddedResult = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  val EmbeddedResult: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
+  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ParseXml = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  val ParseXml: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
   type ChildName = ChildName.T
   object ChildName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextName = TextName.T
-  object TextName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextName = _root_.com.histmersion.pluginresolver.Pom.ChildName
+  val TextName: _root_.com.histmersion.pluginresolver.Pom.ChildName.type = _root_.com.histmersion.pluginresolver.Pom.ChildName
 
   def coordinates(xml: com.histmersion.pluginresolver.Pom.CoordinatesXml): Either[com.histmersion.pluginresolver.Pom.CoordinatesResultPart1, ModuleCoordinates] =
     for
       project <- parse(xml)
-      parent = child(project, "parent")
-      group <- text(project, "groupId").orElse(parent.flatMap(text(_, "groupId"))).toRight("the POM names no groupId")
-      artifact <- text(project, "artifactId").toRight("the POM names no artifactId")
-      version <- text(project, "version").orElse(parent.flatMap(text(_, "version"))).toRight("the POM names no version")
-      coords <- ModuleCoordinates.parse(s"$group:$artifact:$version")
+      parent = child(project, _root_.com.histmersion.pluginresolver.Pom.ChildName("parent"))
+      group <- text(project, _root_.com.histmersion.pluginresolver.Pom.ChildName("groupId")).orElse(parent.flatMap(text(_, _root_.com.histmersion.pluginresolver.Pom.ChildName("groupId")))).toRight(_root_.com.histmersion.pluginresolver.Resolver.Error("the POM names no groupId"))
+      artifact <- text(project, _root_.com.histmersion.pluginresolver.Pom.ChildName("artifactId")).toRight(_root_.com.histmersion.pluginresolver.Resolver.Error("the POM names no artifactId"))
+      version <- text(project, _root_.com.histmersion.pluginresolver.Pom.ChildName("version")).orElse(parent.flatMap(text(_, _root_.com.histmersion.pluginresolver.Pom.ChildName("version")))).toRight(_root_.com.histmersion.pluginresolver.Resolver.Error("the POM names no version"))
+      coords <- ModuleCoordinates.parse(_root_.com.histmersion.pluginresolver.ModuleCoordinates.ParseRaw(s"$group:$artifact:$version"))
     yield coords
 
   /** The POM published beside a jar (`x-1.0.jar` → `x-1.0.pom`), else the one Maven's jar plugin puts in the jar when
@@ -53,12 +53,12 @@ object Pom:
     */
   def of(jar: Path): Option[com.histmersion.pluginresolver.Pom.OfResult] =
     val beside = besideJar(jar)
-    if Files.isRegularFile(beside) then Some(Files.readString(beside, UTF_8)) else embedded(jar)
+    if Files.isRegularFile(beside) then Some(_root_.com.histmersion.pluginresolver.Pom.OfResult(Files.readString(beside, UTF_8))) else embedded(jar)
 
   def besideJar(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
 
   private def embedded(jar: Path): Option[com.histmersion.pluginresolver.Pom.EmbeddedResult] =
-    Try {
+    (Try {
       val zip = ZipFile(jar.toFile)
       try
         zip
@@ -69,7 +69,7 @@ object Pom:
           case List(only) => Some(String(zip.getInputStream(only).readAllBytes(), UTF_8))
           case _          => None
       finally zip.close()
-    }.toOption.flatten
+    }.toOption.flatten[_root_.java.lang.String]).map(refactorValue => _root_.com.histmersion.pluginresolver.PluginArtifact.Pom(refactorValue))
 
   private def parse(xml: com.histmersion.pluginresolver.Pom.ParseXml): Either[com.histmersion.pluginresolver.Pom.ParseResultPart1, Element] =
     Try {
@@ -81,16 +81,16 @@ object Pom:
       val builder = factory.newDocumentBuilder()
       // the parse error is the Left below; the parser's own printing to stderr is not wanted
       builder.setErrorHandler(new DefaultHandler)
-      builder.parse(ByteArrayInputStream(xml.getBytes(UTF_8))).getDocumentElement
+      builder.parse(ByteArrayInputStream((xml).value.getBytes(UTF_8))).getDocumentElement
     }.toEither.left
-      .map(e => s"not a POM: ${e.getMessage}")
-      .filterOrElse(_.getLocalName == "project", "not a POM: no <project>")
+      .map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"not a POM: ${e.getMessage}"))
+      .filterOrElse(_.getLocalName == "project", _root_.com.histmersion.pluginresolver.Resolver.Error("not a POM: no <project>"))
 
   private def child(e: Element, name: com.histmersion.pluginresolver.Pom.ChildName): Option[Element] =
     val nodes = e.getChildNodes
     (0 until nodes.getLength).map(nodes.item).collectFirst {
-      case c: Element if c.getNodeType == Node.ELEMENT_NODE && c.getLocalName == name => c
+      case c: Element if c.getNodeType == Node.ELEMENT_NODE && c.getLocalName == (name).value => c
     }
 
   private def text(e: Element, name: com.histmersion.pluginresolver.Pom.TextName): Option[com.histmersion.pluginresolver.Pom.TextResult] =
-    child(e, name).map(_.getTextContent.trim).filter(_.nonEmpty)
+    (child(e, name).map(_.getTextContent.trim).filter(_.nonEmpty)).map(refactorValue5 => _root_.com.histmersion.pluginresolver.Pom.TextResult(refactorValue5))

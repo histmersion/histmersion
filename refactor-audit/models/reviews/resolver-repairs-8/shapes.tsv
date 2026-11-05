@@ -1,0 +1,3 @@
+path	line	before-ast	after-ast
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Pom.scala	46	COMPILER E007 String -> com.histmersion.pluginresolver.Pom.TextName Lit.String("version")	_root_.com.histmersion.pluginresolver.Pom.ChildName("version")
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Pom.scala	47	COMPILER E007 String -> com.histmersion.pluginresolver.ModuleCoordinates.ParseRaw Term.Interpolate(\n  Term.Name("s"),\n  List(Lit.String(""), Lit.String(":"), Lit.String(":"), Lit.String("")),\n  List(Term.Name("group"), Term.Name("artifact"), Term.Name("version"))\n)	_root_.com.histmersion.pluginresolver.ModuleCoordinates.ParseRaw(s"$group:$artifact:$version")
