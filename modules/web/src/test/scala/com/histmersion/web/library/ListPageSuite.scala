@@ -11,17 +11,17 @@ class ListPageSuite extends munit.FunSuite:
   test("the range line: loading, nothing, or which rows of how many"):
     assertEquals(ListPage.rangeLine(ListPage[Int](), "sources"), "Loading…")
     assertEquals(ListPage.rangeLine(ListPage[Int](loaded = true), "sources"), "No sources")
-    assertEquals(ListPage.rangeLine(ListPage(List.fill(50)(0), 0, 1026, loaded = true), "sources"), "1–50 of 1,026")
+    assertEquals(ListPage.rangeLine(ListPage(List.fill(50)(0), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(1026), loaded = true), "sources"), "1–50 of 1,026")
     assertEquals(
-      ListPage.rangeLine(ListPage(List.fill(26)(0), 1000, 1026, loaded = true), "sources"),
+      ListPage.rangeLine(ListPage(List.fill(26)(0), com.histmersion.api.Offset(1000), com.histmersion.api.RowCount(1026), loaded = true), "sources"),
       "1,001–1,026 of 1,026"
     )
 
   test("pages: previous and next exist only where there are rows, and turn by a page"):
-    val first = ListPage(List.fill(50)(0), 0, 120, loaded = true)
+    val first = ListPage(List.fill(50)(0), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(120), loaded = true)
     assert(!first.hasPrevious && first.hasNext)
     assertEquals(first.nextOffset(50), 50)
-    val last = ListPage(List.fill(20)(0), 100, 120, loaded = true)
+    val last = ListPage(List.fill(20)(0), com.histmersion.api.Offset(100), com.histmersion.api.RowCount(120), loaded = true)
     assert(last.hasPrevious && !last.hasNext)
     assertEquals(last.previousOffset(50), 50)
-    assertEquals(ListPage(List(1), 10, 11).previousOffset(50), 0)
+    assertEquals(ListPage(List(1), com.histmersion.api.Offset(10), com.histmersion.api.RowCount(11)).previousOffset(50), 0)

@@ -5,19 +5,19 @@ package com.histmersion.web.library
   */
 final case class ListPage[Row](
     rows: List[Row] = Nil,
-    offset: Int = 0,
-    total: Int = 0,
+    offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
+    total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
     loaded: Boolean = false,
     loading: Boolean = false,
     error: Option[String] = None
 ):
 
-  def hasPrevious: Boolean = offset > 0
-  def hasNext: Boolean = offset + rows.size < total
+  def hasPrevious: Boolean = offset.value > 0
+  def hasNext: Boolean = offset.value + rows.size < total.value
 
   /** Where the page before and after this one start, for pages of `size` rows. */
-  def previousOffset(size: Int): Int = math.max(0, offset - size)
-  def nextOffset(size: Int): Int = offset + size
+  def previousOffset(size: Int): Int = math.max(0, offset.value - size)
+  def nextOffset(size: Int): Int = offset.value + size
 
 object ListPage:
 
@@ -31,5 +31,5 @@ object ListPage:
   /** Pure: the line over the table — `1–50 of 1,026`; `No sources` for an empty answer, `Loading…` before the first. */
   def rangeLine(p: ListPage[?], noun: String): String =
     if !p.loaded then "Loading…"
-    else if p.total == 0 || p.rows.isEmpty then s"No $noun"
-    else s"${grouped(p.offset + 1)}–${grouped(p.offset + p.rows.size)} of ${grouped(p.total)}"
+    else if p.total.value == 0 || p.rows.isEmpty then s"No $noun"
+    else s"${grouped(p.offset.value + 1)}–${grouped(p.offset.value + p.rows.size)} of ${grouped(p.total.value)}"

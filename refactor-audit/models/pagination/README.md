@@ -191,3 +191,26 @@ Actual build-v1 finished with fourteen dependent production errors: eleven web a
 three server. API JVM/JS compiled; Test/compile did not run after production failed.
 `residual-compilation.md` records the required propagation scope. This is an applied,
 in-progress migration checkpoint, not a passing build or verified repair count.
+
+## Web record propagation
+
+The next six-file batch migrates TabPage.total, TabState.total/shown and
+ListPage.offset/total, plus their constructors/defaults and FilterTab's collection
+size access. Known already-typed API fields are configured separately from primitive
+declaration targets. The rule resolves explicit generic type applications before
+matching calls. A two-stage fixture first migrates a wire record, then its generic
+consumer against unchanged consumer SemanticDB, and compiles/runs the complete result.
+No stale-source bypass is used.
+
+Web preview v1 exposed overlapping boundary/wrapper patches on a forwarded count.
+It was rejected before application and remains preserved. Direct forwarding to a
+typed constructor/copy argument now takes precedence over boundary unwrapping.
+The fixture's copied method was placed under a boundary policy while keeping its
+expected output unchanged; it passed. Corrected web preview v2 is applied and all
+six files match its frozen hashes.
+
+Build-v2 reports seven web and three server errors; Test/compile has not executed.
+Signal/private-variable state and combined counts still need propagation, along with
+the server contract work. Newly exposed errors may appear in later incremental
+compiler phases. This applied checkpoint remains incomplete, with no verified-fix
+count and no fresh all-module inventory claim.

@@ -1,5 +1,12 @@
 # Applied pagination batch: remaining compilation work
 
+Latest checkpoint: build-v2, after the six-file web record batch, reports seven web
+errors and the same three server errors. Test/compile is still pending. TabPage,
+TabState and ListPage fields have propagated; their broader signal/state consumers
+remain required work. The earlier build-v1 checklist below is retained as history,
+not a claim that those record declarations remain primitive. Compiler error counts
+can change as later incremental phases become reachable.
+
 Build-v1 compiled API JVM and Scala.js, then failed in web/server. It did not reach
 Test/compile. Fourteen errors are compiler observations, not fourteen new violations.
 All nineteen applied sources match preview-v3. No production fix is credited yet.
