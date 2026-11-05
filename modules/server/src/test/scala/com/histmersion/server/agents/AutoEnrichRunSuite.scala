@@ -166,8 +166,8 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           .put(
             Ck,
             Source.Put(
-              title = "Bronze Age tin",
-              year = Some(2020),
+              title = com.histmersion.api.library.Title("Bronze Age tin"),
+              year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
               findings = List(Finding.Input("The Uluburun ship carried copper."))
             )
           )

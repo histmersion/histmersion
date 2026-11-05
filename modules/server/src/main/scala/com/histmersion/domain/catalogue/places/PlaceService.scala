@@ -280,7 +280,7 @@ object PlaceService:
             InMemory.RootKinds(p.place.kind) && !places.exists(_.id == p.id && p.parents.nonEmpty) &&
               places.exists(_.parents.exists(_.parentId == p.id))
           )
-      def row(p: HeldPlace, d: Int) = Place.TreeRow(p.id, p.place.label, p.place.kind, d, 0, p.contested)
+      def row(p: HeldPlace, d: Int) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.place.label, p.place.kind, d, 0, p.contested)
       def walk(p: HeldPlace, d: Int, seen: Set[String]): List[Place.TreeRow] =
         row(p, d) :: (if d >= depth then Nil
                       else

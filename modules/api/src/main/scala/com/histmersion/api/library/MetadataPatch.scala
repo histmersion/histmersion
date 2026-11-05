@@ -8,13 +8,14 @@ import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class MetadataPatch(
-    title: Option[String] = None,
-    authors: Option[List[String]] = None,
-    year: Option[Int] = None,
-    venue: Option[String] = None,
-    doi: Option[String] = None,
+    title: Option[com.histmersion.api.library.Title] = None,
+    authors: Option[List[com.histmersion.api.library.AuthorName]] = None,
+    year: Option[com.histmersion.api.catalogue.Year] = None,
+    venue: Option[com.histmersion.api.library.Venue] = None,
+    doi: Option[com.histmersion.api.library.Doi] = None,
     status: Option[com.histmersion.api.library.Source.Status] = None,
     provenance: Option[String] = None,
     calibreId: Option[String] = None,

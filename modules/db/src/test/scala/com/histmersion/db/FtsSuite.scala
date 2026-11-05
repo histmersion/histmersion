@@ -31,11 +31,11 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
   private def source(ck: String, title: String, summary: String, body: String) =
     Source(
-      citekey = ck,
-      title = title,
-      authors = List("Tester"),
+      citekey = com.histmersion.api.library.Citekey(ck),
+      title = com.histmersion.api.library.Title(title),
+      authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
-      year = Some(1999),
+      year = (Some(1999)).map(com.histmersion.api.catalogue.Year.apply),
       venue = None,
       status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,

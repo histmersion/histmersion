@@ -87,7 +87,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              "zqmh_mycenae",
+              com.histmersion.api.catalogue.Place.Id("zqmh_mycenae"),
               "Zqmh Mycenae",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
@@ -97,7 +97,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
           ),
           Place.Input(
             Place(
-              "zqmh_nolink",
+              com.histmersion.api.catalogue.Place.Id("zqmh_nolink"),
               "Zqmh no link",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.0,37.0]}""")

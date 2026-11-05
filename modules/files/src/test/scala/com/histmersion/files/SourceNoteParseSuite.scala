@@ -57,9 +57,9 @@ class SourceNoteParseSuite extends munit.FunSuite:
     assertEquals(
       es,
       Set(
-        Edge("heggarty2023_language", "anthony2007", "refutes"),
-        Edge("heggarty2023_language", "anthony2007_horse", "references"),
-        Edge("heggarty2023_language", "bouckaert2012_mapping", "references")
+        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("anthony2007"), "refutes"),
+        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("anthony2007_horse"), "references"),
+        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("bouckaert2012_mapping"), "references")
       )
     )
 

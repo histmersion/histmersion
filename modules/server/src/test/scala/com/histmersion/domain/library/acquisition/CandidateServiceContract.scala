@@ -10,7 +10,7 @@ import com.histmersion.api.library.Source
 abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
   private def candidate(goal: String, doi: String, by: String) =
-    Source.Candidate(0, goal, doi, s"Work $doi", Some(2025), List("Zq Author"), None, None, false, None, List(by))
+    Source.Candidate(0, goal, com.histmersion.api.library.Doi(doi), com.histmersion.api.library.Title(s"Work $doi"), (Some(2025)).map(com.histmersion.api.catalogue.Year.apply), (List("Zq Author")).map(com.histmersion.api.library.AuthorName.apply), None, None, false, None, List(by))
 
   stest("a watch keeps its watermark when a read fails, and is listed by kind, subject and index") { s =>
     s.goal("zq-goal")

@@ -45,7 +45,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   ) =
     Finding(
       s"$ck#$n",
-      ck,
+      com.histmersion.api.library.Citekey(ck),
       claim,
       Some(region),
       Some(GeoPoint(lon, lat)),
@@ -69,11 +69,11 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
       findings: List[Finding]
   ) =
     Source(
-      ck,
-      title,
-      authors,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      (authors).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      Some(year),
+      (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       status,
       topics,

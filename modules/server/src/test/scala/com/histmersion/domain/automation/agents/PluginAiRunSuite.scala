@@ -141,7 +141,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def startAndRun(a: AgentsControllers, h: ServerWiring): RunInfo =
     assert(
-      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+      h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(Body))).isRight
     )
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)

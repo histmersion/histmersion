@@ -512,8 +512,8 @@ object ReviewArticle:
     cited
       .map { c =>
         val status = c.status.fold("not in the corpus")(_.wire)
-        val title = c.title.map(t => if t.length > 120 then t.take(119).trim + "…" else t)
-        (s"- [[${c.citekey}]]" :: List(c.year.map(_.toString), Some(status), title).flatten).mkString(" · ")
+        val title = c.title.map(_.value).map(t => if t.length > 120 then t.take(119).trim + "…" else t)
+        (s"- [[${c.citekey}]]" :: List(c.year.map(_.value.toInt).map(_.toString), Some(status), title).flatten).mkString(" · ")
       }
       .mkString("\n")
 

@@ -56,14 +56,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   private val TestPrefix = "zzacq"
 
   private val target = WorkRef(
-    doi = Some("10.1038/zztest001"),
+    doi = (Some("10.1038/zztest001")).map(com.histmersion.api.library.Doi.apply),
     openalexId = Some("W1"),
-    title = Some("Massive migration test"),
-    year = Some(2015),
-    authors = List("Wolfgang Haak"),
-    venue = Some("Nature"),
+    title = (Some("Massive migration test")).map(com.histmersion.api.library.Title.apply),
+    year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
+    authors = (List("Wolfgang Haak")).map(com.histmersion.api.library.AuthorName.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
     citedByCount = Some(900),
-    citekey = Some("zzacq_ingested")
+    citekey = (Some("zzacq_ingested")).map(com.histmersion.api.library.Citekey.apply)
   )
 
   private class FakeDiscovery(
@@ -174,11 +174,11 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       year: Option[Int] = Some(2000)
   ) =
     Source(
-      ck,
-      title,
-      authors,
-      doi,
-      year,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      (authors).map(com.histmersion.api.library.AuthorName.apply),
+      (doi).map(com.histmersion.api.library.Doi.apply),
+      (year).map(com.histmersion.api.catalogue.Year.apply),
       None,
       com.histmersion.api.library.Source.Status.Current,
       Nil,
@@ -219,9 +219,9 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
 
     val rows = List(
-      RefRow(title = Some("Something"), doi = Some("10.1038/zzref001")),
-      RefRow(title = Some("Who We Are and How We Got Here"), authors = List("Someone Zzacqreich"), year = Some(2018)),
-      RefRow(title = Some("Unknown work"), authors = List("Nobody Here"), year = Some(1904))
+      RefRow(title = (Some("Something")).map(com.histmersion.api.library.Title.apply), doi = (Some("10.1038/zzref001")).map(com.histmersion.api.library.Doi.apply)),
+      RefRow(title = (Some("Who We Are and How We Got Here")).map(com.histmersion.api.library.Title.apply), authors = (List("Someone Zzacqreich")).map(com.histmersion.api.library.AuthorName.apply), year = (Some(2018)).map(com.histmersion.api.catalogue.Year.apply)),
+      RefRow(title = (Some("Unknown work")).map(com.histmersion.api.library.Title.apply), authors = (List("Nobody Here")).map(com.histmersion.api.library.AuthorName.apply), year = (Some(1904)).map(com.histmersion.api.catalogue.Year.apply))
     )
 
     val h = handlers(FakeDiscovery(refs = rows))
@@ -238,7 +238,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_target", "zzacq_bydoi")
     SourceFixtures.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
     SourceFixtures.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
-    val h = handlers(FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))))
+    val h = handlers(FakeDiscovery(refs = List(RefRow(doi = (Some("10.1038/zzref001")).map(com.histmersion.api.library.Doi.apply)))))
     val r = h.refs(RefsRequest("zzacq_target")).fold(e => fail(e.message), identity)
     assertEquals(r.resolved, 1)
     assertEquals(r.edgesAdded, 0)
@@ -376,8 +376,8 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_known")
     SourceFixtures.upsert(ds, source("zzacq_known", Some("10.1038/zzknown")), cfg.limits.chunkChars)
     val hits = List(
-      WorkRef(doi = Some("10.1038/zzknown"), title = Some("Known"), citekey = Some("x2000_known")),
-      WorkRef(doi = Some("10.1038/zzbrandnew"), title = Some("New"), citekey = Some("y2001_new"))
+      WorkRef(doi = (Some("10.1038/zzknown")).map(com.histmersion.api.library.Doi.apply), title = (Some("Known")).map(com.histmersion.api.library.Title.apply), citekey = (Some("x2000_known")).map(com.histmersion.api.library.Citekey.apply)),
+      WorkRef(doi = (Some("10.1038/zzbrandnew")).map(com.histmersion.api.library.Doi.apply), title = (Some("New")).map(com.histmersion.api.library.Title.apply), citekey = (Some("y2001_new")).map(com.histmersion.api.library.Citekey.apply))
     )
     val h = handlers(FakeDiscovery(hits = hits))
     val all = h.discover("q", None, None, None, notInDb = false).fold(e => fail(e.message), identity)
@@ -394,7 +394,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // Postgres returns first, which made this test fail about half the time. Wipe it too.
     wipe("zzacq_ingested", "zzacq_ref", "zzacq_bydoi")
     SourceFixtures.upsert(ds, source("zzacq_ref", Some("10.1038/zzref001")), cfg.limits.chunkChars)
-    val h = handlers(FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))), oa = SomePdf())
+    val h = handlers(FakeDiscovery(refs = List(RefRow(doi = (Some("10.1038/zzref001")).map(com.histmersion.api.library.Doi.apply)))), oa = SomePdf())
     val r = h.ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
 
     assertEquals(r.citekey, "zzacq_ingested")

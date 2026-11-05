@@ -86,11 +86,11 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = "zzrc_src2",
-        title = "Region cleanup fixture 2",
-        authors = List("T"),
+        citekey = com.histmersion.api.library.Citekey("zzrc_src2"),
+        title = com.histmersion.api.library.Title("Region cleanup fixture 2"),
+        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2026),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
@@ -105,7 +105,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
         findings = List(
           Finding(
             "zzrc_src2#0",
-            "zzrc_src2",
+            com.histmersion.api.library.Citekey("zzrc_src2"),
             "on the real point",
             None,
             Some(GeoPoint(141.71, -47.62)),

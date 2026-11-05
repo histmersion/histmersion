@@ -12,7 +12,7 @@ class JobFollowSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   private def job(status: String, error: Option[String] = None) =
-    JobInfo(id = "j1", kind = "ingest", status = status, error = error)
+    JobInfo(id = com.histmersion.api.jobs.JobInfo.Id("j1"), kind = com.histmersion.api.jobs.JobInfo.Kind("ingest"), status = status, error = error)
 
   /** A fake server answering `answers` in order (the last one repeats). */
   private def server[A](answers: A*): () => A =
@@ -26,14 +26,14 @@ class JobFollowSuite extends munit.FunSuite:
   test("a job followed to done is Right; queued and running are polled through"):
     val next = server(job("queued"), job("running"), job("done"))
     var slept = 0 // `var`: how often the fake clock was asked to wait
-    val r = JobFollow.job(_ => Right(next()), "j1", sleep = _ => slept += 1, progress = quiet, clear = () => ())
+    val r = JobFollow.job(_ => Right(next()), com.histmersion.api.jobs.JobInfo.Id("j1"), sleep = _ => slept += 1, progress = quiet, clear = () => ())
     assertEquals(r.map(_.status), Right("done"))
     assertEquals(slept, 2)
 
   test("a job that fails exits 2 with its error"):
     val r = JobFollow.job(
       _ => Right(job("failed", Some("pdf is encrypted"))),
-      "j1",
+      com.histmersion.api.jobs.JobInfo.Id("j1"),
       sleep = _ => (),
       progress = quiet,
       clear = () => ()
@@ -42,12 +42,12 @@ class JobFollowSuite extends munit.FunSuite:
     assert(r.left.exists(_.message.contains("pdf is encrypted")))
 
   test("an unreadable job state counts as failed, not as success"):
-    val r = JobFollow.job(_ => Right(job("interrupted")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
+    val r = JobFollow.job(_ => Right(job("interrupted")), com.histmersion.api.jobs.JobInfo.Id("j1"), sleep = _ => (), progress = quiet, clear = () => ())
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
 
   test("an unreachable server keeps its own exit code"):
     val r =
-      JobFollow.job(_ => Left(Cli.Error("cannot reach")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
+      JobFollow.job(_ => Left(Cli.Error("cannot reach")), com.histmersion.api.jobs.JobInfo.Id("j1"), sleep = _ => (), progress = quiet, clear = () => ())
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Unreachable))
 
   private def backup(state: String, error: Option[String] = None, sha: Option[String] = None) =

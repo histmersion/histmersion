@@ -144,11 +144,11 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       status: com.histmersion.api.library.Source.Status = com.histmersion.api.library.Source.Status.Current
   ): Source =
     Source(
-      ck,
-      title,
-      List("Doe, Jane"),
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      (List("Doe, Jane")).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      Some(year),
+      (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       status,
       List("bronze age"),
@@ -164,7 +164,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       findings = findings.zipWithIndex.map { (claim, i) =>
         Finding(
           s"$ck#${i + 1}",
-          ck,
+          com.histmersion.api.library.Citekey(ck),
           claim,
           Some("Anatolia"),
           Some(GeoPoint(34.6 + i, 40.0)),
@@ -174,13 +174,13 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
           Some(Confidence.High)
         )
       },
-      edges = edges.map((dst, kind) => Edge(ck, dst, kind))
+      edges = edges.map((dst, kind) => Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(dst), kind))
     )
 
   private def site(id: String, label: String, lon: Double, lat: Double): Place.Input =
     Place.Input(
       Place(
-        id,
+        com.histmersion.api.catalogue.Place.Id(id),
         label,
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),

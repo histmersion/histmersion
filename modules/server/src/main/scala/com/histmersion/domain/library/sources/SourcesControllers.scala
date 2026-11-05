@@ -77,7 +77,7 @@ final class SourcesControllers(
     maintenance.guard("put_source"):
       Citekey.parse(citekey).left.map(Write.invalid).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
         Source.Write
-          .applyPut(ck, in, sources.aliasesOf(ck))
+          .applyPut(com.histmersion.api.library.Citekey(ck), in, (sources.aliasesOf(ck)).map(com.histmersion.api.library.Citekey.apply))
           .left
           .map(m => Api.Error(m, Some(Write.CodeInvalid)))
           .flatMap(s => strictGate(strict, formatting.issues(s.summary, s.notes)).map(_ => s))
@@ -155,7 +155,7 @@ final class SourcesControllers(
           // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
           // away, and any base64 payloads that travelled with the note stored
           val normalised =
-            withBody.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, withBody.title)))
+            withBody.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, withBody.title.value)))
           val _ = sources.put(normalised, Caller.Local)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else figures.putFigures(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
@@ -244,7 +244,7 @@ final class SourcesControllers(
 
           case Some(Source.Section.Summary) =>
             val s = sw.source
-            val authStr = Markdown.chipLinks(s.authors, "author")
+            val authStr = Markdown.chipLinks(s.authors.map(_.value), "author")
             val meta = List(authStr, Markdown.periodLabel(s.periodStart, s.periodEnd))
               .filter(_.nonEmpty)
               .mkString(" · ")

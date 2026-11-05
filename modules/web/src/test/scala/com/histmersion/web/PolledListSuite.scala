@@ -17,7 +17,7 @@ class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
-  private def job(id: String, state: JobState = JobState.Done) = JobInfo(id, Ingest.KindIngest, state.wire)
+  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), state.wire)
   private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */

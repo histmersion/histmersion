@@ -28,7 +28,7 @@ final class SeedImport(sources: SourceService, addFigures: (String, List[NewFigu
             Right(Some(n.source.citekey))
           case Some(n) =>
             val found = folder.figures(name, n.source.citekey, assetBytes)
-            val s = n.source.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, n.source.title)))
+            val s = n.source.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, n.source.title.value)))
             val _ = sources.put(s, Caller.Local)
             if found.nonEmpty then
               val _ = addFigures(s.citekey, found)

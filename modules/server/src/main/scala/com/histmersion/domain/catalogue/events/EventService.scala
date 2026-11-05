@@ -154,16 +154,16 @@ object EventService:
         val vei = s.catalogueRecords.filter(_._1 == e.id).flatMap(_._2.vei).maxOption
         val magnitude = s.catalogueRecords.filter(_._1 == e.id).flatMap(_._2.magnitude).maxOption
         EventGeo(
-          sum.id,
+          com.histmersion.api.catalogue.Event.Id(sum.id),
           sum.label,
           sum.kind,
           sum.scale,
           sum.historicity,
           sum.timeSpan,
-          lat,
-          lon,
+          com.histmersion.api.catalogue.Latitude(lat),
+          com.histmersion.api.catalogue.Longitude(lon),
           "event",
-          sum.placeId,
+          (sum.placeId).map(com.histmersion.api.catalogue.Place.Id.apply),
           None,
           sum.parentId,
           None,

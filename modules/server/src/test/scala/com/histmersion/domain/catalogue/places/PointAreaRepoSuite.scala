@@ -62,7 +62,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       List(
         Place.Input(
           Place(
-            Site,
+            com.histmersion.api.catalogue.Place.Id(Site),
             "Zzpa Site",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[150.0,-60.0]}""")
@@ -71,7 +71,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         ),
         Place.Input(
           Place(
-            Thracia,
+            com.histmersion.api.catalogue.Place.Id(Thracia),
             "Zzpa Thracia",
             com.histmersion.domain.catalogue.Place.Kind.Region,
             Some("""{"type":"Point","coordinates":[150.8,-60.2]}""")
@@ -145,15 +145,15 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       val _ =
         sql"""INSERT INTO place_relations (child_id, parent_id, kind) VALUES ($Site, $GnArea, 'part_of')""".update.run()
     def f(n: Int, at: GeoPoint, name: String = "somewhere") =
-      Finding(s"zzpa_src#$n", "zzpa_src", s"claim $n", Some(name), Some(at), None, None, Nil, None)
+      Finding(s"zzpa_src#$n", com.histmersion.api.library.Citekey("zzpa_src"), s"claim $n", Some(name), Some(at), None, None, Nil, None)
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = "zzpa_src",
-        title = "Point area fixture",
-        authors = List("T"),
+        citekey = com.histmersion.api.library.Citekey("zzpa_src"),
+        title = com.histmersion.api.library.Title("Point area fixture"),
+        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2026),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,

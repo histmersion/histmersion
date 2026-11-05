@@ -60,7 +60,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     seed()
     val precise =
       Place(
-        "pleiades_999100010",
+        com.histmersion.api.catalogue.Place.Id("pleiades_999100010"),
         "Zzrc Thessalia",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         pt(141.9, -47.1),

@@ -44,14 +44,14 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def place(id: String, kind: String, i: Int, period: Option[Period], props: Option[String] = None) =
     Place.Input(
-      Place(id, s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some("fixture"), props),
+      Place(com.histmersion.api.catalogue.Place.Id(id), s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some("fixture"), props),
       List(Place.Name(s"Zqtv ${id.stripPrefix("zqtv_")}")),
       List(Place.Relation(id, "zqtv_root"))
     )
 
   private val fixtures = List(
     Place.Input(
-      Place("zqtv_root", "Zqtv root", com.histmersion.domain.catalogue.Place.Kind.Region),
+      Place(com.histmersion.api.catalogue.Place.Id("zqtv_root"), "Zqtv root", com.histmersion.domain.catalogue.Place.Kind.Region),
       List(Place.Name("Zqtv root"))
     ),
     place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(-2600, -2400))),
@@ -77,15 +77,15 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
       // an unknown start (V074): the stored period is the window the time filters use
       connect(ds)(sql"UPDATE places SET start_unknown = true WHERE id = 'zqtv_su'".update.run())
       def f(i: Int, at: Int, p: Option[Period]) =
-        Finding(s"zqtv_src#$i", "zqtv_src", s"claim $i", None, Some(GeoPoint(100.0 + at, Lat)), p, None, Nil, None)
+        Finding(s"zqtv_src#$i", com.histmersion.api.library.Citekey("zqtv_src"), s"claim $i", None, Some(GeoPoint(100.0 + at, Lat)), p, None, Nil, None)
       SourceFixtures.upsert(
         ds,
         Source(
-          citekey = "zqtv_src",
-          title = "Time rule fixture",
-          authors = List("T"),
+          citekey = com.histmersion.api.library.Citekey("zqtv_src"),
+          title = com.histmersion.api.library.Title("Time rule fixture"),
+          authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
           doi = None,
-          year = Some(2026),
+          year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           venue = None,
           status = com.histmersion.api.library.Source.Status.Current,
           topics = Nil,

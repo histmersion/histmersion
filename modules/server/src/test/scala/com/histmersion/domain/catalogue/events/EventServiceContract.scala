@@ -43,9 +43,9 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         None,
         Some("a long siege"),
         Some("zzev2020_src"),
-        List(EventDating("ignored", "zzev2020_src", span(-1251, -1239), Some("c14"), Some("n"))),
+        List(EventDating(com.histmersion.api.catalogue.Event.Id("ignored"), com.histmersion.api.library.Citekey("zzev2020_src"), span(-1251, -1239), Some("c14"), Some("n"))),
         List(EventEdge("zz_a", "zz_b", "before", "zzev2020_src", None)),
-        List(EventParticipant("ignored", "Achaeans", "attacker", None)),
+        List(EventParticipant(com.histmersion.api.catalogue.Event.Id("ignored"), "Achaeans", "attacker", None)),
         Some("regional")
       )
     )

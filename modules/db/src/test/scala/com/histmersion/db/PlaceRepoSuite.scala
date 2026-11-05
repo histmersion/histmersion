@@ -38,11 +38,11 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
     s"""{"type":"Polygon","coordinates":[[[$minLon,$minLat],[$maxLon,$minLat],[$maxLon,$maxLat],[$minLon,$maxLat],[$minLon,$minLat]]]}"""
 
-  private val asia = Place("zzp_asia", "Asia", com.histmersion.domain.catalogue.Place.Kind.Region)
+  private val asia = Place(com.histmersion.api.catalogue.Place.Id("zzp_asia"), "Asia", com.histmersion.domain.catalogue.Place.Kind.Region)
   private val turkey =
-    Place("zzp_turkey", "Turkey", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(26, 36, 45, 42)))
+    Place(com.histmersion.api.catalogue.Place.Id("zzp_turkey"), "Turkey", com.histmersion.domain.catalogue.Place.Kind.Region, Some(box(26, 36, 45, 42)))
   private val hatti = Place(
-    "zzp_hatti",
+    com.histmersion.api.catalogue.Place.Id("zzp_hatti"),
     "Hittite Empire",
     com.histmersion.domain.catalogue.Place.Kind.Polity,
     Some(box(30, 38, 36, 41)),
@@ -51,7 +51,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   )
   private val hattusa =
     Place(
-      "zzp_hattusa",
+      com.histmersion.api.catalogue.Place.Id("zzp_hattusa"),
       "Hattusa",
       com.histmersion.domain.catalogue.Place.Kind.Site,
       Some("""{"type":"Point","coordinates":[34.615,40.019]}""")
@@ -76,18 +76,18 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     ),
     // a relation to a place nobody declared → reported, not fatal
     Place.Input(
-      Place("zzp_orphan", "Orphan", com.histmersion.domain.catalogue.Place.Kind.Site),
+      Place(com.histmersion.api.catalogue.Place.Id("zzp_orphan"), "Orphan", com.histmersion.domain.catalogue.Place.Kind.Site),
       Nil,
       List(Place.Relation("zzp_orphan", "zzp_nowhere"))
     )
   )
 
   private val src = Source(
-    citekey = "zzp_src",
-    title = "Gazetteer fixture",
-    authors = List("T"),
+    citekey = com.histmersion.api.library.Citekey("zzp_src"),
+    title = com.histmersion.api.library.Title("Gazetteer fixture"),
+    authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2020),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -103,7 +103,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       // inside Hattusa/Hatti/Turkey, LBA
       Finding(
         "zzp_src#0",
-        "zzp_src",
+        com.histmersion.api.library.Citekey("zzp_src"),
         "Destruction layer",
         Some("Hattusa"),
         Some(GeoPoint(34.615, 40.019)),
@@ -115,7 +115,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       // inside Turkey but NOT inside Hatti's polygon, and after Hatti's period anyway
       Finding(
         "zzp_src#1",
-        "zzp_src",
+        com.histmersion.api.library.Citekey("zzp_src"),
         "Iron Age pottery",
         Some("Gordion"),
         Some(GeoPoint(31.99, 39.65)),
@@ -127,7 +127,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       // no geometry: only the region_name fallback can place it
       Finding(
         "zzp_src#2",
-        "zzp_src",
+        com.histmersion.api.library.Citekey("zzp_src"),
         "Textual reference",
         Some("Zzpland"),
         None,
@@ -139,7 +139,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       // nowhere near any place
       Finding(
         "zzp_src#3",
-        "zzp_src",
+        com.histmersion.api.library.Citekey("zzp_src"),
         "Atlantic sediment",
         None,
         Some(GeoPoint(-30.0, 45.0)),
@@ -188,8 +188,8 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   test("a finding on a border counts in EVERY containing place (counts are non-additive)"):
     seed()
     // the shared edge of two adjoining boxes: a point ON it is within both
-    val west = Place("zzp_west", "West", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(0, 0, 10, 10)))
-    val east = Place("zzp_east", "East", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(10, 0, 20, 10)))
+    val west = Place(com.histmersion.api.catalogue.Place.Id("zzp_west"), "West", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(0, 0, 10, 10)))
+    val east = Place(com.histmersion.api.catalogue.Place.Id("zzp_east"), "East", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(10, 0, 20, 10)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(Place.Input(west, List(Place.Name("West"))), Place.Input(east, List(Place.Name("East"))))
@@ -198,7 +198,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       _.citekey).setTo("zzp_border").modify(_.findings).setTo(List(
         Finding(
           "zzp_border#0",
-          "zzp_border",
+          com.histmersion.api.library.Citekey("zzp_border"),
           "On the frontier",
           None,
           Some(GeoPoint(10.0, 5.0)),
@@ -231,7 +231,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       ds,
       List(
         Place.Input(
-          Place("zzp_under", "Zzp_Under 50%", com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place(com.histmersion.api.catalogue.Place.Id("zzp_under"), "Zzp_Under 50%", com.histmersion.domain.catalogue.Place.Kind.Site),
           List(Place.Name("Zzp_Under 50%"))
         )
       )

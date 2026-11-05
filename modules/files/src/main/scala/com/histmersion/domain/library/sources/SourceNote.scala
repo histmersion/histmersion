@@ -33,17 +33,17 @@ object SourceNote:
   private def frontmatterOf(s: Source): Frontmatter =
     Frontmatter(
       List(
-        "citekey" -> s.citekey,
-        "doi" -> s.doi.orNull,
-        "title" -> s.title,
-        "authors" -> s.authors.asJava,
-        "year" -> s.year.map(Int.box).orNull,
-        "venue" -> s.venue.orNull,
+        "citekey" -> s.citekey.value.toString,
+        "doi" -> s.doi.map(_.value).orNull,
+        "title" -> s.title.value,
+        "authors" -> s.authors.map(_.value).asJava,
+        "year" -> s.year.map(_.value.toInt).map(Int.box).orNull,
+        "venue" -> s.venue.map(_.value).orNull,
         "source" -> s.provenance.orNull,
         "calibre_id" -> s.calibreId.orNull,
         "status" -> s.status.toString.toLowerCase,
         // `superseded_by` is stored as an edge; Frontmatter turns this key back into that edge.
-        "superseded_by" -> s.edges.find(_.kind == "superseded_by").map(_.dst).orNull,
+        "superseded_by" -> s.edges.find(_.kind == "superseded_by").map(_.dst.value.toString).orNull,
         "topics" -> s.topics.asJava,
         "regions" -> s.regions.asJava,
         "tags" -> s.tags.asJava,
@@ -90,7 +90,7 @@ object SourceNote:
       val m = parse(y)
       val src = toSource(m, fallbackCitekey)
       src.modify(
-        _.edges).setTo(edgesOf(src.citekey, m, text)).modify(_.notes).setTo(bodyOf(text)).modify(_.topics).setTo(withLinkedTopics(src.topics, src.citekey, text)
+        _.edges).setTo(edgesOf(src.citekey.value.toString, m, text)).modify(_.notes).setTo(bodyOf(text)).modify(_.topics).setTo(withLinkedTopics(src.topics, src.citekey.value.toString, text)
       )
     }
 
@@ -115,9 +115,9 @@ object SourceNote:
 
   /** Typed, directed reference edges out of this note. */
   private def edgesOf(citekey: String, m: Map[String, Any], noteText: String): List[Edge] =
-    val superseded = str(m, "superseded_by").map(d => Edge(citekey, d, "superseded_by")).toList
-    val rel = list(m, "topics").collect { case RelTag(kind, dst) => Edge(citekey, dst, kind) }
-    val links = linkTargets(citekey, noteText)._1.map(dst => Edge(citekey, dst, "references"))
+    val superseded = str(m, "superseded_by").map(d => Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(d), "superseded_by")).toList
+    val rel = list(m, "topics").collect { case RelTag(kind, dst) => Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(dst), kind) }
+    val links = linkTargets(citekey, noteText)._1.map(dst => Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(dst), "references"))
     (superseded ++ rel ++ links).distinct
 
   /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
@@ -202,12 +202,12 @@ object SourceNote:
   private def toSource(m: Map[String, Any], fallbackCitekey: String): Source =
     val citekey = str(m, "citekey").getOrElse(fallbackCitekey)
     Source(
-      citekey = citekey,
-      title = str(m, "title").getOrElse(fallbackCitekey),
-      authors = list(m, "authors"),
-      doi = str(m, "doi"),
-      year = int(m, "year"),
-      venue = str(m, "venue"),
+      citekey = com.histmersion.api.library.Citekey(citekey),
+      title = com.histmersion.api.library.Title(str(m, "title").getOrElse(fallbackCitekey)),
+      authors = (list(m, "authors")).map(com.histmersion.api.library.AuthorName.apply),
+      doi = (str(m, "doi")).map(com.histmersion.api.library.Doi.apply),
+      year = (int(m, "year")).map(com.histmersion.api.catalogue.Year.apply),
+      venue = (str(m, "venue")).map(com.histmersion.api.library.Venue.apply),
       status = com.histmersion.api.library.Source.Status.fromString(str(m, "status").getOrElse("unassessed")),
       topics = list(m, "topics"),
       regions = list(m, "regions"),
@@ -231,7 +231,7 @@ object SourceNote:
             case _                  => None
           Finding(
             id = s"$citekey#$i",
-            citekey = citekey,
+            citekey = com.histmersion.api.library.Citekey(citekey),
             claim = str(f, "claim").getOrElse(""),
             region = str(f, "region"),
             geo = geo,

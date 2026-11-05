@@ -79,7 +79,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     GazRecord(
       own.key,
       Some(own),
-      own.placeId,
+      com.histmersion.api.catalogue.Place.Id(own.placeId),
       label,
       kind,
       pt(dx),
@@ -112,11 +112,11 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = ck,
-        title = "Imported place fixture",
-        authors = List("T"),
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title("Imported place fixture"),
+        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2026),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
@@ -129,7 +129,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
         provenance = None,
         calibreId = None,
         findings = periods.toList.zipWithIndex.map((p, i) =>
-          Finding(s"$ck#$i", ck, s"claim $i", Some("Zzpt"), Some(GeoPoint(Lon, Lat)), Some(p), None, Nil, None)
+          Finding(s"$ck#$i", com.histmersion.api.library.Citekey(ck), s"claim $i", Some("Zzpt"), Some(GeoPoint(Lon, Lat)), Some(p), None, Nil, None)
         )
       ),
       cfg.limits.chunkChars,
@@ -227,7 +227,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   test("the seed's and an LPF dataset's open ranges are untouched"):
     val seedRegion = Place.Input(
       Place(
-        "zzpt_region",
+        com.histmersion.api.catalogue.Place.Id("zzpt_region"),
         "Zzpt Region",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(
@@ -243,7 +243,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     val lpf = GazRecord(
       "lpf:zzpt:1",
       None,
-      "lpf_zzpt_1",
+      com.histmersion.api.catalogue.Place.Id("lpf_zzpt_1"),
       "Zzpt Lpf State",
       com.histmersion.domain.catalogue.Place.Kind.Polity,
       pt(),
@@ -311,7 +311,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
   test("a filter's scope, a place's children and the tree leave GeoNames/Wikidata places out"):
     val region = Place.Input(
       Place(
-        "zzpt_land",
+        com.histmersion.api.catalogue.Place.Id("zzpt_land"),
         "Zzpt Land",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(
@@ -325,7 +325,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     )
     val town = Place.Input(
       Place(
-        "zzpt_town",
+        com.histmersion.api.catalogue.Place.Id("zzpt_town"),
         "Zzpt Town",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[${Lon + 1},$Lat]}"""),
@@ -384,7 +384,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     )
     val seedPt = Place.Input(
       Place(
-        "zzpt_seed_site",
+        com.histmersion.api.catalogue.Place.Id("zzpt_seed_site"),
         "Zzpt Seed Site",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some(s"""{"type":"Point","coordinates":[${Lon + 0.02},$Lat]}"""),

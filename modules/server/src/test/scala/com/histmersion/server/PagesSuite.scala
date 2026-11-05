@@ -16,19 +16,19 @@ import com.histmersion.api.research.Article
 class PagesSuite extends munit.FunSuite:
 
   private val cline = com.histmersion.api.library.Source.Ref(
-    "cline2014_year",
-    Some("10.1515/9781400849987"),
-    List("Eric H. Cline"),
-    Some(2014),
-    "1177 BC: The Year Civilization Collapsed",
+    com.histmersion.api.library.Citekey("cline2014_year"),
+    (Some("10.1515/9781400849987")).map(com.histmersion.api.library.Doi.apply),
+    (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
+    (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+    com.histmersion.api.library.Title("1177 BC: The Year Civilization Collapsed"),
     Source.Status.Current
   )
   private val drews = com.histmersion.api.library.Source.Ref(
-    "drews1993_end",
+    com.histmersion.api.library.Citekey("drews1993_end"),
     None,
-    List("Robert Drews"),
-    Some(1993),
-    "The End of the Bronze Age",
+    (List("Robert Drews")).map(com.histmersion.api.library.AuthorName.apply),
+    (Some(1993)).map(com.histmersion.api.catalogue.Year.apply),
+    com.histmersion.api.library.Title("The End of the Bronze Age"),
     Source.Status.Contested
   )
   private val topic = Article.Ref("bronze_age_collapse", "The Bronze Age Collapse", Some("Around 1200 BCE."))
@@ -152,14 +152,14 @@ class PagesSuite extends munit.FunSuite:
         body,
         List(
           CitedSource(
-            "cline2014_year",
-            Some(cline.title),
-            Some(2014),
+            com.histmersion.api.library.Citekey("cline2014_year"),
+            (Some(cline.title)).map(com.histmersion.api.library.Title.apply),
+            (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
             Some(Source.Status.Current),
             cline.authors,
             cline.doi
           ),
-          CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(Source.Status.Contested), drews.authors)
+          CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), (Some(drews.title)).map(com.histmersion.api.library.Title.apply), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors)
         )
       ),
       links
@@ -201,7 +201,7 @@ class PagesSuite extends munit.FunSuite:
     val html = Pages.article(
       articlePage(
         "# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n",
-        List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(Source.Status.Contested), drews.authors))
+        List(CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), (Some(drews.title)).map(com.histmersion.api.library.Title.apply), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors))
       ),
       links
     )

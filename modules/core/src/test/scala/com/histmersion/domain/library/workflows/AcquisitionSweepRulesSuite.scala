@@ -13,15 +13,15 @@ import com.histmersion.api.library.WorkRef
 class AcquisitionSweepRulesSuite extends munit.FunSuite:
 
   test("a sweep never offers what the corpus or the queue has; each work once; capped"):
-    val w = (doi: String, inDb: Boolean) => WorkRef(doi = Some(doi), title = Some(doi), inDb = inDb)
+    val w = (doi: String, inDb: Boolean) => WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(doi)).map(com.histmersion.api.library.Title.apply), inDb = inDb)
     val found = List(
       "q1" -> w("10.1000/a", false),
       "q1" -> w("10.1000/b", true),
       "q2" -> w("10.1000/a", false),
       "q2" -> w("10.1000/c", false),
-      "q2" -> WorkRef(title = Some("no doi")),
+      "q2" -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
       "q2" -> w("10.1000/d", false),
-      "q2" -> WorkRef(doi = Some("10.1000/e"), isRetracted = true)
+      "q2" -> WorkRef(doi = (Some("10.1000/e")).map(com.histmersion.api.library.Doi.apply), isRetracted = true)
     )
     val (cs, skipped) = candidates(found, queued = Set("10.1000/c"), max = 1)
     assertEquals(cs.map(c => (c.doi, c.query)), List(("10.1000/a", "q1")))

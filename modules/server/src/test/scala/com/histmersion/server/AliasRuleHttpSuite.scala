@@ -177,7 +177,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
         List(
           Place.Input(
             Place(
-              "zz_alias_p1",
+              com.histmersion.api.catalogue.Place.Id("zz_alias_p1"),
               "Zzalias Hill",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.5,39.5]}""")

@@ -215,7 +215,7 @@ final class IngestQueue(
             .map(_.message)
         else
           com.histmersion.api.library.Source.Write
-            .applyPut(citekey, skeleton(job.params, body))
+            .applyPut(com.histmersion.api.library.Citekey(citekey), skeleton(job.params, body))
             .map(s =>
               val _ = sources.put(s, Caller.Local)
             )
@@ -281,10 +281,10 @@ final class IngestQueue(
     */
   private def skeleton(p: Ingest.Params, body: String): com.histmersion.api.library.Source.Put =
     com.histmersion.api.library.Source.Put(
-      title = p.title.map(_.trim).filter(_.nonEmpty).getOrElse(p.citekey),
-      authors = p.authors.map(_.trim).filter(_.nonEmpty),
-      doi = p.doi.map(_.trim).filter(_.nonEmpty),
-      year = p.year,
+      title = com.histmersion.api.library.Title(p.title.map(_.trim).filter(_.nonEmpty).getOrElse(p.citekey)),
+      authors = (p.authors.map(_.trim).filter(_.nonEmpty)).map(com.histmersion.api.library.AuthorName.apply),
+      doi = (p.doi.map(_.trim).filter(_.nonEmpty)).map(com.histmersion.api.library.Doi.apply),
+      year = (p.year).map(com.histmersion.api.catalogue.Year.apply),
       status = Some(Source.Status.Unassessed),
       body = Some(body),
       provenance = Some("ocr")

@@ -858,9 +858,9 @@ class ReviewArticleSuite extends munit.FunSuite:
     val long = "A " * 80
     val lines = ReviewArticle.citedLines(
       List(
-        CitedSource("watkins1995_dragon", Some("How to Kill a Dragon"), Some(1995), Some(Source.Status.Foundational)),
-        CitedSource("x2020_y", Some(long), None, Some(Source.Status.Contested)),
-        CitedSource("ghost2001_z", None, None, None)
+        CitedSource(com.histmersion.api.library.Citekey("watkins1995_dragon"), (Some("How to Kill a Dragon")).map(com.histmersion.api.library.Title.apply), (Some(1995)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Foundational)),
+        CitedSource(com.histmersion.api.library.Citekey("x2020_y"), (Some(long)).map(com.histmersion.api.library.Title.apply), None, Some(Source.Status.Contested)),
+        CitedSource(com.histmersion.api.library.Citekey("ghost2001_z"), None, None, None)
       )
     )
     val ls = lines.split("\n").toList

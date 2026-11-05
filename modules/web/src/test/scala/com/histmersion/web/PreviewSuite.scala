@@ -9,11 +9,11 @@ import com.histmersion.api.library.Source
 class PreviewSuite extends munit.FunSuite:
 
   private val detail = com.histmersion.api.library.Source.Detail(
-    "cline2014_year",
-    "1177 BC",
-    List("Eric H. Cline"),
-    Some(2014),
-    Some("Princeton UP"),
+    com.histmersion.api.library.Citekey("cline2014_year"),
+    com.histmersion.api.library.Title("1177 BC"),
+    (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
+    (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+    (Some("Princeton UP")).map(com.histmersion.api.library.Venue.apply),
     Source.Status.Current,
     List("bronze_age_collapse"),
     List("Eastern_Mediterranean"),
@@ -21,7 +21,7 @@ class PreviewSuite extends munit.FunSuite:
     Some(-1250),
     Some(-1100),
     Some("x" * 400),
-    Some("10.1515/9781400849987"),
+    (Some("10.1515/9781400849987")).map(com.histmersion.api.library.Doi.apply),
     None,
     None,
     None,
@@ -55,7 +55,7 @@ class PreviewSuite extends munit.FunSuite:
 
   private val patones = PlaceDetail(
     com.histmersion.api.catalogue.Place.Summary(
-      "wikidata_q131839713",
+      com.histmersion.api.catalogue.Place.Id("wikidata_q131839713"),
       "Kingdom of Patones",
       Place.Kind.Polity,
       None,
@@ -71,7 +71,7 @@ class PreviewSuite extends munit.FunSuite:
     findings = 0,
     asOf = Some(-3900L),
     links =
-      List(com.histmersion.api.catalogue.Place.Link("wikidata_q131839713", "wikidata", "Q131839713", "exact_match")),
+      List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("wikidata_q131839713"), "wikidata", "Q131839713", "exact_match")),
     hasBoundary = false,
     descriptions = List(
       com.histmersion.api.catalogue.Place.Description("former country in Modern Day Spain", "en", "wikidata"),
@@ -93,7 +93,7 @@ class PreviewSuite extends munit.FunSuite:
       place = patones.place.modify(
         _.id).setTo("geonames_1").modify(_.label).setTo("Boğazkale").modify(_.kind).setTo(Place.Kind.Site).modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Unknown).modify(_.importSource).setTo(Some("geonames")
       ),
-      links = List(com.histmersion.api.catalogue.Place.Link("geonames_1", "geonames", "1", "exact_match")),
+      links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("geonames_1"), "geonames", "1", "exact_match")),
       descriptions = Nil
     )
     val c = Preview.card(gn)
@@ -116,7 +116,7 @@ class PreviewSuite extends munit.FunSuite:
   test("a place card at a time says when an undated place is there only by its findings"):
     val anatolia = patones.copy(
       place =
-        com.histmersion.api.catalogue.Place.Summary("anatolia", "Anatolia", Place.Kind.Region, None, None, None, ""),
+        com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("anatolia"), "Anatolia", Place.Kind.Region, None, None, None, ""),
       links = Nil,
       descriptions = Nil,
       timeBasis = com.histmersion.api.catalogue.Place.TimeBasis.Findings

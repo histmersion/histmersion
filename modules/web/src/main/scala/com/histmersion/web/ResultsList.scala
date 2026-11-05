@@ -241,7 +241,7 @@ object ResultsList:
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
-      src.year.map(_.toString),
+      src.year.map(_.value.toInt).map(_.toString),
       Some(src.status.wire),
       Some(period).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
@@ -254,12 +254,12 @@ object ResultsList:
       cls := "hit hit-source",
       role := "button",
       tabIndex := 0,
-      div(cls := "ck", SourceLink(src.citekey, src.doi)),
+      div(cls := "ck", SourceLink(src.citekey.value.toString, src.doi.map(_.value))),
       a(
         cls := "title row-link",
-        href := SourceLink.href(src.citekey),
-        src.title,
-        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }
+        href := SourceLink.href(src.citekey.value.toString),
+        src.title.value,
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey.value.toString, inPanel) } }
       ),
       div(cls := "meta", meta),
       src.snippet
@@ -290,18 +290,18 @@ object ResultsList:
         )
       else emptyNode,
       marks.RowActions(
-        marks.ItemRef.source(src.citekey, src.title),
-        SourceLink.href(src.citekey),
-        List(src.authors.take(3).mkString(", "), src.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+        marks.ItemRef.source(src.citekey.value.toString, src.title.value),
+        SourceLink.href(src.citekey.value.toString),
+        List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
       ),
       onClick --> { ev =>
         val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined
-        if !inLink then openSource(src.citekey, inPanel)
+        if !inLink then openSource(src.citekey.value.toString, inPanel)
       },
       onKeyDown --> { ev =>
         if (ev.key == "Enter" || ev.key == " ") && ev.target == ev.currentTarget then
           ev.preventDefault()
-          openSource(src.citekey, inPanel)
+          openSource(src.citekey.value.toString, inPanel)
       }
     )
 

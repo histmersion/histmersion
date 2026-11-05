@@ -46,14 +46,14 @@ class PointKindsSuite extends munit.FunSuite:
     Some((-1400.0, -1300.0))
   )
   private val event = EventGeo(
-    "zz_b",
+    com.histmersion.api.catalogue.Event.Id("zz_b"),
     "Zz battle",
     "battle",
     "local",
     "attested",
     TimeSpan(Some(-1274), None, None, Some(-1274)),
-    37.5,
-    32,
+    com.histmersion.api.catalogue.Latitude(37.5),
+    com.histmersion.api.catalogue.Longitude(32),
     "event"
   )
   private val picture = MediaGeoHit(None, "zz.jpg", Some("photo"), 37.0, 22.0, Some(-1500L), Some(-1400L), None, "u1")

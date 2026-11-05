@@ -33,9 +33,9 @@ object ReadingHead:
   /** From a row of the table: no type or venue yet. */
   def of(h: SearchHit): ReadingHead =
     ReadingHead(
-      line(h.year.map(_.toString)),
-      h.title,
-      h.authors.mkString(", "),
+      line(h.year.map(_.value.toInt).map(_.toString)),
+      h.title.value,
+      h.authors.map(_.value).mkString(", "),
       Some(h.status),
       YearFmt.period(h.periodStart, h.periodEnd),
       regions(h.regions),
@@ -45,17 +45,17 @@ object ReadingHead:
   def of(sw: com.histmersion.api.library.Source.WithFindings): ReadingHead =
     val s = sw.source
     val kind = com.histmersion.api.library.Source.Kinds.of(
-      s.doi,
-      s.venue,
+      s.doi.map(_.value),
+      s.venue.map(_.value),
       s.provenance,
       s.tags,
       s.topics,
       hasCover = sw.illustration.exists(_.role == MediaRole.Cover)
     )
     ReadingHead(
-      line(kindWord(kind), s.venue, s.year.map(_.toString)),
-      s.title,
-      s.authors.mkString(", "),
+      line(kindWord(kind), s.venue.map(_.value), s.year.map(_.value.toInt).map(_.toString)),
+      s.title.value,
+      s.authors.map(_.value).mkString(", "),
       Some(s.status),
       YearFmt.period(s.periodStart, s.periodEnd),
       regions(s.regions),

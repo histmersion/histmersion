@@ -257,7 +257,7 @@ object Lpf:
         Right(
           Place.Input(
             Place(
-              id = id,
+              id = com.histmersion.api.catalogue.Place.Id(id),
               label = if label.nonEmpty then label else id,
               kind = kind,
               geometry = f("geometry").filterNot(_.isNull).map(_.noSpaces),
@@ -307,7 +307,7 @@ object Lpf:
         leftover.toList
     )
     val fields = List.newBuilder[(String, Json)]
-    fields += "@id" -> Json.fromString(in.place.id)
+    fields += "@id" -> Json.fromString(in.place.id.value)
     fields += "type" -> Json.fromString("Feature")
     fields += "properties" -> Json.fromJsonObject(props)
     fields += "types" -> Json.arr(Json.obj("label" -> Json.fromString(in.place.kind)))

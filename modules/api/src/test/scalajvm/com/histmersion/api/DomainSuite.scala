@@ -94,17 +94,17 @@ class DomainSuite extends munit.FunSuite:
   // ── SourceRef ──────────────────────────────────────────────────────────────────────────────────
   test("SourceRef.idLabel prefers DOI"):
     val r = com.histmersion.api.library.Source.Ref(
-      "haak2015",
-      Some("10.1038/nature14317"),
-      Nil,
-      Some(2015),
-      "Title",
+      com.histmersion.api.library.Citekey("haak2015"),
+      (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
+      (Nil).map(com.histmersion.api.library.AuthorName.apply),
+      (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
+      com.histmersion.api.library.Title("Title"),
       Source.Status.Current
     )
     assertEquals(r.idLabel, "10.1038/nature14317")
 
   test("SourceRef.idLabel falls back to citekey"):
-    val r = com.histmersion.api.library.Source.Ref("haak2015", None, Nil, Some(2015), "Title", Source.Status.Current)
+    val r = com.histmersion.api.library.Source.Ref(com.histmersion.api.library.Citekey("haak2015"), None, (Nil).map(com.histmersion.api.library.AuthorName.apply), (Some(2015)).map(com.histmersion.api.catalogue.Year.apply), com.histmersion.api.library.Title("Title"), Source.Status.Current)
     assertEquals(r.idLabel, "haak2015")
 
   test("SourceRef.surname handles Firstname Lastname"):
@@ -135,11 +135,11 @@ class DomainSuite extends munit.FunSuite:
   test("SourceRef.shortCite combines authors and year"):
     val r =
       com.histmersion.api.library.Source.Ref(
-        "haak2015",
+        com.histmersion.api.library.Citekey("haak2015"),
         None,
-        List("Haak, Wolfgang", "Lazaridis, Iosif"),
-        Some(2015),
-        "Title",
+        (List("Haak, Wolfgang", "Lazaridis, Iosif")).map(com.histmersion.api.library.AuthorName.apply),
+        (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
+        com.histmersion.api.library.Title("Title"),
         Source.Status.Current
       )
     assertEquals(r.shortCite, "Haak & Lazaridis 2015")

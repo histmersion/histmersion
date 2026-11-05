@@ -116,8 +116,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .put(
           Ck,
           com.histmersion.api.library.Source.Put(
-            title = "Bronze Age tin",
-            year = Some(2019),
+            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List("zzagent_tin"),
             status = Some(Source.Status.Current),
             summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
@@ -133,8 +133,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .put(
           Ck2,
           com.histmersion.api.library.Source.Put(
-            title = "Tin isotopes",
-            year = Some(2024),
+            title = com.histmersion.api.library.Title("Tin isotopes"),
+            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List("zzagent_tin"),
             body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
           )

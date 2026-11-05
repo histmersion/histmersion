@@ -38,11 +38,11 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = ck,
-        title = s"Title of $ck",
-        authors = List("A"),
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title(s"Title of $ck"),
+        authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2014),
+        year = (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Foundational,
         topics = Nil,

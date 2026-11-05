@@ -52,7 +52,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
 
   private def seed(): Unit =
     List(Frazer -> 1922, Smith -> 1987, Brown -> 1999, Lone -> 2005).foreach { (ck, y) =>
-      assert(h.library.sources.put(ck, Source.Put(title = s"Title of $ck", year = Some(y))).isRight)
+      assert(h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Title of $ck"), year = (Some(y)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     }
     assert(
       h.library.sources

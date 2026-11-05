@@ -85,7 +85,7 @@ object EventMatcher:
               }
               .toList
         Option.when(score >= w.minScore)(
-          EventLinkCandidate(eventId, ck, score, Event.LinkStatus.Proposed, titles.get(ck), fs.map(_.id), ps, reasons)
+          EventLinkCandidate(com.histmersion.api.catalogue.Event.Id(eventId), com.histmersion.api.library.Citekey(ck), score, Event.LinkStatus.Proposed, titles.get(ck), fs.map(_.id), ps, reasons)
         )
       }
       .sortBy(c => (-c.score, c.citekey))

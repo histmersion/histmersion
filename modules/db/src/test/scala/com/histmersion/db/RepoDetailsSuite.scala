@@ -38,11 +38,11 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = ck,
-        title = "Details",
-        authors = Nil,
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title("Details"),
+        authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2020),
+        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,
@@ -58,7 +58,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
         findings = List(
           Finding(
             s"$ck#0",
-            ck,
+            com.histmersion.api.library.Citekey(ck),
             "A claim",
             Some("Nile"),
             Some(GeoPoint(31.0, 30.0)),

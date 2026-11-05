@@ -12,16 +12,16 @@ import com.histmersion.api.catalogue.{EventGeo, EventScale}
 class EventPlaybackSuite extends munit.FunSuite:
 
   private val kadesh = EventGeo(
-    "kadesh",
+    com.histmersion.api.catalogue.Event.Id("kadesh"),
     "Battle <of> Kadesh",
     "battle",
     EventScale.Local,
     "attested",
     TimeSpan(Some(-1274), None, None, Some(-1274)),
-    34.55,
-    36.5,
+    com.histmersion.api.catalogue.Latitude(34.55),
+    com.histmersion.api.catalogue.Longitude(36.5),
     "place",
-    Some("p"),
+    (Some("p")).map(com.histmersion.api.catalogue.Place.Id.apply),
     Some("Kadesh")
   )
   private val migration = kadesh.modify(

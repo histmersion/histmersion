@@ -59,11 +59,11 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = ck,
-        title = "Probe",
-        authors = List("A"),
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title("Probe"),
+        authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2020),
+        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = com.histmersion.api.library.Source.Status.Current,
         topics = Nil,

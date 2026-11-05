@@ -217,7 +217,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(prop2, Some("current: cited"))
 
   test("metadata: the record against the upstream one — title, year, first author, the citekey's year"):
-    val w = WorkRef(title = Some("Bronze Age Tin: a Review"), year = Some(2017), authors = List("A. Bernard Knapp"))
+    val w = WorkRef(title = (Some("Bronze Age Tin: a Review")).map(com.histmersion.api.library.Title.apply), year = (Some(2017)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("A. Bernard Knapp")).map(com.histmersion.api.library.AuthorName.apply))
     val diffs = compareMetadata("knapp2016_tin", "Bronze age tin — a review", List("Knapp, A. Bernard"), Some(2016), w)
     assertEquals(diffs.size, 2, diffs)
     assert(diffs.exists(_.contains("year 2016 differs from the upstream record's 2017")), diffs)
@@ -237,7 +237,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     assert(other.exists(_.startsWith("title differs")), other)
     assert(other.exists(_.contains("A. Bernard Knapp is not among")), other)
     assert(
-      compareMetadata("x2016_y", "T", Nil, None, WorkRef(year = Some(2016))).exists(_.contains("no year recorded"))
+      compareMetadata("x2016_y", "T", Nil, None, WorkRef(year = (Some(2016)).map(com.histmersion.api.catalogue.Year.apply))).exists(_.contains("no year recorded"))
     )
 
   test("close lint: no findings, no period, still unassessed"):

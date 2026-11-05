@@ -57,12 +57,12 @@ class InteractiveLatencySuite extends munit.FunSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place("zzl_world", "Zzl World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzl_world"), "Zzl World", com.histmersion.domain.catalogue.Place.Kind.Region),
         List(Place.Name("Zzl World"))
       ),
       Place.Input(
         Place(
-          "zzl_land",
+          com.histmersion.api.catalogue.Place.Id("zzl_land"),
           "Zzl Land",
           com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(

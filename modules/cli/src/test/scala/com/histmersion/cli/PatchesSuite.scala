@@ -67,7 +67,7 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--status and --title fold into one metadata part"):
     val p = build(status = Some(Source.Status.Superseded), title = Some("New")).toOption.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("New"), status = Some(Source.Status.Superseded))))
+    assertEquals(p.metadata, Some(MetadataPatch(title = (Some("New")).map(com.histmersion.api.library.Title.apply), status = Some(Source.Status.Superseded))))
 
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(

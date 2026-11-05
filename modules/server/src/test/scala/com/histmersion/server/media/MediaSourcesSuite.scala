@@ -137,7 +137,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              "zqms_site",
+              com.histmersion.api.catalogue.Place.Id("zqms_site"),
               "Zqms Mykenai",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60,-50]}""")
@@ -146,7 +146,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
           ),
           Place.Input(
             Place(
-              "zqms_dup",
+              com.histmersion.api.catalogue.Place.Id("zqms_dup"),
               "Zqms Mykenai",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60.005,-50]}""")

@@ -191,7 +191,7 @@ class PlacesSuite extends munit.FunSuite:
   // ── rendering ───────────────────────────────────────────────────────────────────────────────
   private val turkey =
     com.histmersion.api.catalogue.Place.Summary(
-      "ne_country_tur",
+      com.histmersion.api.catalogue.Place.Id("ne_country_tur"),
       "Turkey",
       Place.Kind.Region,
       None,
@@ -200,7 +200,7 @@ class PlacesSuite extends munit.FunSuite:
       "Turkey, Türkiye"
     )
   private val disputed = com.histmersion.api.catalogue.Place.Summary(
-    "israel_united_monarchy_ia1",
+    com.histmersion.api.catalogue.Place.Id("israel_united_monarchy_ia1"),
     "Israel (united monarchy, as narrated) (contested)",
     Place.Kind.Polity,
     Some(-1030),
@@ -211,7 +211,7 @@ class PlacesSuite extends munit.FunSuite:
   )
   private val hatti =
     com.histmersion.api.catalogue.Place.Summary(
-      "hatti_lba",
+      com.histmersion.api.catalogue.Place.Id("hatti_lba"),
       "Hatti",
       Place.Kind.Polity,
       Some(-1400),
@@ -259,9 +259,9 @@ class PlacesSuite extends munit.FunSuite:
   test("the hierarchy renders as an indented list, one level of indent per depth"):
     val md = PlacesMarkdown.placeTree(
       Vector(
-        com.histmersion.api.catalogue.Place.TreeRow("continent_asia", "Asia", Place.Kind.Region, 0, 400),
-        com.histmersion.api.catalogue.Place.TreeRow("ne_country_tur", "Turkey", Place.Kind.Region, 1, 122),
-        com.histmersion.api.catalogue.Place.TreeRow("hatti_lba", "Hatti", Place.Kind.Polity, 2, 44, contested = true)
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("continent_asia"), "Asia", Place.Kind.Region, 0, 400),
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("ne_country_tur"), "Turkey", Place.Kind.Region, 1, 122),
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "Hatti", Place.Kind.Polity, 2, 44, contested = true)
       )
     )
     assertEquals(md.linesIterator.map(_.takeWhile(_ == ' ').length).toList, List(0, 2, 4))
@@ -274,7 +274,7 @@ class PlacesSuite extends munit.FunSuite:
         disputed,
         Some("""{"type":"Polygon","coordinates":[]}"""),
         List(
-          com.histmersion.api.catalogue.Place.Summary("levant", "Levant", Place.Kind.Region, None, None, None, "Levant")
+          com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("levant"), "Levant", Place.Kind.Region, None, None, None, "Levant")
         ),
         List(turkey),
         5,
@@ -283,7 +283,7 @@ class PlacesSuite extends munit.FunSuite:
       ),
       Vector(
         com.histmersion.api.catalogue.Place
-          .TreeRow("israel_united_monarchy_ia1", disputed.label, Place.Kind.Polity, 0, 5, true)
+          .TreeRow(com.histmersion.api.catalogue.Place.Id("israel_united_monarchy_ia1"), disputed.label, Place.Kind.Polity, 0, 5, true)
       )
     )
     assert(md.startsWith("# Israel (united monarchy, as narrated) (contested)\n"), md.take(80))
@@ -306,7 +306,7 @@ class PlacesSuite extends munit.FunSuite:
         footprints = List(
           com.histmersion.api.catalogue.Place.Footprint(
             1,
-            "hatti_lba",
+            com.histmersion.api.catalogue.Place.Id("hatti_lba"),
             "extent",
             Some(Period(-1400, -1180)),
             Some("uncertain"),
@@ -314,10 +314,10 @@ class PlacesSuite extends munit.FunSuite:
             Some("bryce2005_kingdom")
           ),
           com.histmersion.api.catalogue.Place
-            .Footprint(2, "hatti_lba", "core", Some(Period(-1400, -1200)), Some("approximate"))
+            .Footprint(2, com.histmersion.api.catalogue.Place.Id("hatti_lba"), "core", Some(Period(-1400, -1200)), Some("approximate"))
         ),
-        links = List(com.histmersion.api.catalogue.Place.Link("hatti_lba", "pleiades", "550595", "close_match")),
-        types = List(com.histmersion.api.catalogue.Place.Type("hatti_lba", "polity", Some(Period(-1400, -1180)))),
+        links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "pleiades", "550595", "close_match")),
+        types = List(com.histmersion.api.catalogue.Place.Type(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "polity", Some(Period(-1400, -1180)))),
         hasBoundary = true
       )
     )

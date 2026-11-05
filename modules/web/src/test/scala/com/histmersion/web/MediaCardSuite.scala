@@ -29,13 +29,13 @@ class MediaCardSuite extends munit.FunSuite:
 
   private val mycenae = PlaceDetail(
     com.histmersion.api.catalogue.Place
-      .Summary("pleiades_570491", "Mycenae", Place.Kind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
+      .Summary(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), "Mycenae", Place.Kind.Site, Some(-1600L), Some(-1100L), None, "Mycenae"),
     geometry = Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
     parents = Nil,
     children = Nil,
     findings = 3,
     asOf = None,
-    links = List(com.histmersion.api.catalogue.Place.Link("pleiades_570491", "commons", "Mycenae", "see_also")),
+    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), "commons", "Mycenae", "see_also")),
     media = List(thumb, thumb.modify(_.uid).setTo("x").modify(_.role).setTo(MediaRole.LocatorMap))
   )
 
@@ -50,10 +50,10 @@ class MediaCardSuite extends munit.FunSuite:
 
   test("a source card shows its cover, else its illustration; none when it has neither (#1446)"):
     val src = com.histmersion.api.library.Source.Detail(
-      "anthony2007",
-      "The Horse, the Wheel, and Language",
-      List("Anthony, David W."),
-      Some(2007),
+      com.histmersion.api.library.Citekey("anthony2007"),
+      com.histmersion.api.library.Title("The Horse, the Wheel, and Language"),
+      (List("Anthony, David W.")).map(com.histmersion.api.library.AuthorName.apply),
+      (Some(2007)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       Source.Status.Current,
       Nil,

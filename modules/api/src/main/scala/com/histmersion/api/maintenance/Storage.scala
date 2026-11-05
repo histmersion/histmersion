@@ -10,6 +10,7 @@ import com.histmersion.api.backup.BackupsUsage
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 object Storage:
 
   val DefaultLowFreeBytes: Long = 10L * 1000 * 1000 * 1000
@@ -35,23 +36,23 @@ object Storage:
         }
     }
 
-  def total(entries: List[Storage.Entry]): Long =
-    entries.filter(_.within.isEmpty).flatMap(_.bytes).sum
+  def total(entries: List[Storage.Entry]): com.histmersion.api.ByteCount =
+    com.histmersion.api.ByteCount(entries.filter(_.within.isEmpty).flatMap(_.bytes.map(_.value.toLong)).sum)
 
   def onVolume(entries: List[Storage.Entry], volume: String): List[Storage.Entry] =
     entries
-      .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.exists(_ > 0))
-      .sortBy(e => -e.bytes.getOrElse(0L))
+      .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.map(_.value.toLong).exists(_ > 0))
+      .sortBy(e => -e.bytes.map(_.value.toLong).getOrElse(0L))
 
   def hints(report: Storage.Report): List[String] =
-    report.volumes.filter(_.freeBytes < report.lowFreeBytes).sortBy(_.freeBytes).map { v =>
+    report.volumes.filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong).sortBy(_.freeBytes.value.toLong).map { v =>
       val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
       val head =
-        s"Low disk space on ${v.id}: ${Backup.humanBytes(v.freeBytes)} free of ${Backup.humanBytes(v.totalBytes)}"
+        s"Low disk space on ${v.id}: ${Backup.humanBytes(v.freeBytes.value.toLong)} free of ${Backup.humanBytes(v.totalBytes.value.toLong)}"
       if big.isEmpty then s"$head."
       else
         s"$head. Biggest here: " + big
-          .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.getOrElse(0L))} (${e.shrink.getOrElse("")})")
+          .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.map(_.value.toLong).getOrElse(0L))} (${e.shrink.getOrElse("")})")
           .mkString("; ") + "."
     }
 
@@ -69,7 +70,7 @@ object Storage:
   def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Storage.Report, e: Storage.Entry): List[String] =
-    val files = e.files.filter(_ => e.bytes.isDefined && e.path.isDefined).map(n => Plural.count(n, "file")).toList
+    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Plural.count(n, "file")).toList
     val extra = e.key match
       case "backups" =>
         r.backups
@@ -97,7 +98,7 @@ object Storage:
     present.filter(e => e.within.forall(w => !keys.contains(w))).flatMap(walk(_, 0, Set.empty))
 
   def size(e: Storage.Entry): String =
-    e.bytes match
+    e.bytes.map(_.value.toLong) match
       case None                 => if e.exists then "—" else "not there"
       case Some(b) if e.partial => s"at least ${Backup.humanBytes(b)}"
       case Some(b)              => Backup.humanBytes(b)
@@ -129,8 +130,8 @@ object Storage:
       label: String,
       group: String,
       path: Option[String] = None,
-      bytes: Option[Long] = None,
-      files: Option[Long] = None,
+      bytes: Option[com.histmersion.api.ByteCount] = None,
+      files: Option[com.histmersion.api.maintenance.Storage.FileCount] = None,
       exists: Boolean = true,
       partial: Boolean = false,
       within: Option[String] = None,
@@ -145,20 +146,31 @@ object Storage:
   final case class Report(
       measuring: Boolean = false,
       measuredAt: Option[String] = None,
-      tookMillis: Option[Long] = None,
-      ageSeconds: Option[Long] = None,
+      tookMillis: Option[com.histmersion.api.maintenance.Storage.Report.DurationMillis] = None,
+      ageSeconds: Option[com.histmersion.api.maintenance.Storage.Report.AgeSeconds] = None,
       entries: List[Entry] = Nil,
       tables: List[TableSize] = Nil,
       volumes: List[Volume] = Nil,
       backups: Option[BackupsUsage] = None,
-      lowFreeBytes: Long = Storage.DefaultLowFreeBytes,
+      lowFreeBytes: com.histmersion.api.ByteCount = com.histmersion.api.ByteCount(Storage.DefaultLowFreeBytes),
       hints: List[String] = Nil,
       problems: List[String] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  final case class Volume(id: String, totalBytes: Long, freeBytes: Long)
+  final case class Volume(id: String, totalBytes: com.histmersion.api.ByteCount, freeBytes: com.histmersion.api.ByteCount)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  type FileCount = FileCount.T
+  object FileCount extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+
+  object Report:
+    type AgeSeconds = AgeSeconds.T
+    object AgeSeconds extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+
+    type DurationMillis = DurationMillis.T
+    object DurationMillis extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+

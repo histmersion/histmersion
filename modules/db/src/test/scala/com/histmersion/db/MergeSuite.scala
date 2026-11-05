@@ -151,12 +151,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       edges: List[(String, String)] = Nil
   ): Source =
     Source(
-      ck,
-      title,
-      authors,
-      doi,
-      Some(year),
-      venue,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      (authors).map(com.histmersion.api.library.AuthorName.apply),
+      (doi).map(com.histmersion.api.library.Doi.apply),
+      (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
+      (venue).map(com.histmersion.api.library.Venue.apply),
       status,
       Nil,
       Nil,
@@ -172,7 +172,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       findings = findings.zipWithIndex.map { case ((claim, tags), i) =>
         Finding(
           s"$ck#${i + 1}",
-          ck,
+          com.histmersion.api.library.Citekey(ck),
           claim,
           Some("Anatolia"),
           Some(GeoPoint(34.6, 40.0)),
@@ -182,7 +182,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
           Some(Confidence.High)
         )
       },
-      edges = edges.map((dst, kind) => Edge(ck, dst, kind))
+      edges = edges.map((dst, kind) => Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(dst), kind))
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)

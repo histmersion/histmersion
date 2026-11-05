@@ -58,16 +58,16 @@ object TileDecode:
     val p = f.props
     for id <- str(p, P.Id)
     yield EventGeo(
-      id,
+      com.histmersion.api.catalogue.Event.Id(id),
       str(p, P.Label).getOrElse(id),
       str(p, P.Kind).getOrElse(""),
       str(p, P.Scale).getOrElse(EventScale.Local),
       str(p, P.Historicity).getOrElse(""),
       TimeSpan(long(p, P.NotBefore), long(p, P.BeginBy), long(p, P.EndFrom), long(p, P.NotAfter)),
-      f.at.lat,
-      f.at.lon,
+      com.histmersion.api.catalogue.Latitude(f.at.lat),
+      com.histmersion.api.catalogue.Longitude(f.at.lon),
       str(p, P.Anchor).getOrElse("event"),
-      str(p, P.PlaceId),
+      (str(p, P.PlaceId)).map(com.histmersion.api.catalogue.Place.Id.apply),
       str(p, P.PlaceLabel),
       str(p, P.ParentId),
       None,

@@ -70,7 +70,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
         List(
           Place.Input(
             Place(
-              "zqmd_site",
+              com.histmersion.api.catalogue.Place.Id("zqmd_site"),
               "Zqmd site",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               pt(130.0),
@@ -79,11 +79,11 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
             List(Place.Name("Zqmd site"))
           ),
           Place.Input(
-            Place("zqmd_busy", "Zqmd busy", com.histmersion.domain.catalogue.Place.Kind.Site, pt(131.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmd_busy"), "Zqmd busy", com.histmersion.domain.catalogue.Place.Kind.Site, pt(131.0)),
             List(Place.Name("Zqmd busy"))
           ),
           Place.Input(
-            Place("zqmd_nolink", "Zqmd no link", com.histmersion.domain.catalogue.Place.Kind.Site, pt(132.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmd_nolink"), "Zqmd no link", com.histmersion.domain.catalogue.Place.Kind.Site, pt(132.0)),
             List(Place.Name("Zqmd no link"))
           )
         )
@@ -436,22 +436,22 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place("zqmd_eq_a", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_a"), "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.0)),
           List(Place.Name("Zqmd Gobekli Tepe"))
         ),
         // another gazetteer's point of the same site: the same name (the key folds ö and case), 850 m away
         Place.Input(
-          Place("zqmd_eq_b", "Zqmd Göbekli tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.01)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_b"), "Zqmd Göbekli tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.01)),
           List(Place.Name("Zqmd Göbekli tepe"))
         ),
         // the same name 700 km away is another place
         Place.Input(
-          Place("zqmd_eq_far", "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_far"), "Zqmd Gobekli Tepe", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
           List(Place.Name("Zqmd Gobekli Tepe"))
         ),
         // another name, the same Wikidata item (a polity's other time slice, a Wikidata import)
         Place.Input(
-          Place("zqmd_eq_wd", "Zqmd Other", com.histmersion.domain.catalogue.Place.Kind.Site, pt(135.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_wd"), "Zqmd Other", com.histmersion.domain.catalogue.Place.Kind.Site, pt(135.0)),
           List(Place.Name("Zqmd Other"))
         )
       )

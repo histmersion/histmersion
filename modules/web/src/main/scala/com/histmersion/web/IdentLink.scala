@@ -38,7 +38,7 @@ object IdentLink:
     span(
       cls := "ident",
       child <-- Signal.fromFuture(resolve(id)).map {
-        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(r.shortCite))
+        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey.value.toString, r.doi.map(_.value), Some(r.shortCite))
         case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit)
         case _                                     => span(Label.display(id))
       }

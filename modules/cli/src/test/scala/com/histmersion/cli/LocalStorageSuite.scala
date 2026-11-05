@@ -21,7 +21,7 @@ class LocalStorageSuite extends munit.FunSuite:
     None,
     None,
     storage =
-      Storage.Report(entries = List(Storage.Entry("backups", "backups", "backups", Some("/srv/backups"), Some(10L))))
+      Storage.Report(entries = List(Storage.Entry("backups", "backups", "backups", Some("/srv/backups"), (Some(10L)).map(com.histmersion.api.ByteCount.apply))))
   )
 
   private def config(originals: Path, install: Path): AppConfig =
@@ -64,7 +64,7 @@ class LocalStorageSuite extends munit.FunSuite:
             "install",
             "install",
             Some(d.resolve("install").toAbsolutePath.normalize.toString),
-            Some(100L)
+            (Some(100L)).map(com.histmersion.api.ByteCount.apply)
           )
       )
     )

@@ -5,15 +5,16 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class JobInfo(
-    id: String,
-    kind: String,
+    id: com.histmersion.api.jobs.JobInfo.Id,
+    kind: com.histmersion.api.jobs.JobInfo.Kind,
     status: String,
-    citekey: Option[String] = None,
+    citekey: Option[com.histmersion.api.library.Citekey] = None,
     progress: Option[String] = None,
     error: Option[String] = None,
-    sha256: Option[String] = None,
+    sha256: Option[com.histmersion.api.Sha256] = None,
     createdAt: String = "",
     updatedAt: String = "",
     acquireItem: Option[Int] = None,

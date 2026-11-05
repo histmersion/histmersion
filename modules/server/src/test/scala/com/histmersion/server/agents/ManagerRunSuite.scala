@@ -113,8 +113,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = "Bronze Age tin",
-            year = Some(2019),
+            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
             body = Some(
               "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
             )
@@ -233,7 +233,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         h.library.sources
           .put(
             ck,
-            Source.Put(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))
+            Source.Put(title = com.histmersion.api.library.Title(s"Against $ck"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), body = Some("The tin was not from Anatolia."))
           )
           .isRight
       )
@@ -390,7 +390,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     assertEquals(List("zzagent_h1", "zzagent_h2").map(item(_).status), List("held", "held"))
-    assert(h.library.sources.put("zzagent2030_new", Source.Put(title = "New", year = Some(2030))).isRight)
+    assert(h.library.sources.put("zzagent2030_new", Source.Put(title = com.histmersion.api.library.Title("New"), year = (Some(2030)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     a.managers.tick(t0)
     assertEquals(item("zzagent_h2").status, "active")
     a.managers.tick(Instant.parse("2026-10-16T00:00:01Z"))

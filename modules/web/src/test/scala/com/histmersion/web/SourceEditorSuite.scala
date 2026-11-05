@@ -14,11 +14,11 @@ import com.histmersion.api.catalogue.Period
 class SourceEditorSuite extends munit.FunSuite:
 
   private val orig = com.histmersion.api.library.Source.Detail(
-    citekey = "anthony2007_horse",
-    title = "The Horse, the Wheel, and Language",
-    authors = List("David W. Anthony"),
-    year = Some(2007),
-    venue = Some("Princeton UP"),
+    citekey = com.histmersion.api.library.Citekey("anthony2007_horse"),
+    title = com.histmersion.api.library.Title("The Horse, the Wheel, and Language"),
+    authors = (List("David W. Anthony")).map(com.histmersion.api.library.AuthorName.apply),
+    year = (Some(2007)).map(com.histmersion.api.catalogue.Year.apply),
+    venue = (Some("Princeton UP")).map(com.histmersion.api.library.Venue.apply),
     status = Source.Status.Current,
     topics = List("pie_origins"),
     regions = List("pontic_caspian_steppe"),
@@ -51,7 +51,7 @@ class SourceEditorSuite extends munit.FunSuite:
       _.title).setTo("The Horse").modify(_.status).setTo(Source.Status.Contested).modify(_.tags).setTo(List("horses", "wheel")).modify(_.periodStart).setTo("4200 BCE").modify(_.periodEnd).setTo("3000 BC"
     )
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some(Source.Status.Contested))))
+    assertEquals(p.metadata, Some(MetadataPatch(title = (Some("The Horse")).map(com.histmersion.api.library.Title.apply), status = Some(Source.Status.Contested))))
     assertEquals(p.tags, Some(ListPatch(add = List("wheel"), remove = List("steppe"))))
     assertEquals(p.period, Some(Period.Input(-4200, -3000)))
     assertEquals(p.topics, None)

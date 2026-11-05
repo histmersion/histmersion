@@ -4,18 +4,19 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class EventGeo(
-    id: String,
+    id: com.histmersion.api.catalogue.Event.Id,
     label: String,
     kind: String,
     scale: String,
     historicity: String,
     timeSpan: TimeSpan,
-    lat: Double,
-    lon: Double,
+    lat: com.histmersion.api.catalogue.Latitude,
+    lon: com.histmersion.api.catalogue.Longitude,
     anchor: String,
-    placeId: Option[String] = None,
+    placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
     placeLabel: Option[String] = None,
     parentId: Option[String] = None,
     outline: Option[String] = None,

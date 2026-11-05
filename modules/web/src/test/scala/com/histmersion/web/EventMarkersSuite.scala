@@ -47,26 +47,26 @@ class EventMarkersSuite extends munit.FunSuite:
     )
 
   private val battle = EventGeo(
-    "zz_b",
+    com.histmersion.api.catalogue.Event.Id("zz_b"),
     "Zz <battle>",
     "battle",
     "local",
     "attested",
     TimeSpan(Some(-1274), None, None, Some(-1274)),
-    37.5,
-    32,
+    com.histmersion.api.catalogue.Latitude(37.5),
+    com.histmersion.api.catalogue.Longitude(32),
     "event",
     tier = EventTier.Attested
   )
   private val eruption = EventGeo(
-    "zz_e",
+    com.histmersion.api.catalogue.Event.Id("zz_e"),
     "Eruption of Zz",
     "eruption",
     "local",
     "attested",
     TimeSpan(Some(-1630), None, None, Some(-1600)),
-    37,
-    33,
+    com.histmersion.api.catalogue.Latitude(37),
+    com.histmersion.api.catalogue.Longitude(33),
     "event",
     tier = EventTier.Catalogue,
     size = Some("VEI 6")
@@ -186,7 +186,7 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(
       EventPlayback
         .playable(
-          List(EventGeo("e", "E", "war", "regional", "attested", TimeSpan(notBefore = Some(-1200)), 0, 0, "event"))
+          List(EventGeo(com.histmersion.api.catalogue.Event.Id("e"), "E", "war", "regional", "attested", TimeSpan(notBefore = Some(-1200)), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0), "event"))
         )
         .map(_._2),
       Vector((-1200L, -1200L)),
@@ -209,7 +209,7 @@ class EventMarkersSuite extends munit.FunSuite:
           vei = Some(6)
         )
       ),
-      candidates = List(EventLinkCandidate("e", "x2020", 0.9, title = Some("X"), reasons = List("names it 1 time"))),
+      candidates = List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.library.Citekey("x2020"), 0.9, title = Some("X"), reasons = List("names it 1 time"))),
       leads = List(
         EventLead(
           "e",

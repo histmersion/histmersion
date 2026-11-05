@@ -22,14 +22,14 @@ import com.histmersion.api.library.Source
 class CandidatesSuite extends munit.FunSuite:
 
   private def w(doi: String, title: String = "T", by: List[String] = Nil) =
-    WorkRef(doi = Some(doi), title = Some(title), authors = by)
+    WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), authors = (by).map(com.histmersion.api.library.AuthorName.apply))
 
   test(
     "a work's key is its DOI, lower case without a resolver; an arXiv preprint without one gets arXiv's DataCite DOI"
   ):
     assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(w("https://doi.org/10.1234/ABC")), Some("10.1234/abc"))
     assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(arxivId = Some("2401.01234v3"))), Some("10.48550/arxiv.2401.01234"))
-    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(title = Some("no id"))), None)
+    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(title = (Some("no id")).map(com.histmersion.api.library.Title.apply))), None)
 
   test("a watch reads from its watermark, or (never read) the look-back before today"):
     val today = LocalDate.of(2026, 10, 24)
@@ -42,10 +42,10 @@ class CandidatesSuite extends munit.FunSuite:
       "openalex query \"x\"" -> w("10.1234/a", by = List("Ann")),
       "crossref query \"x\"" -> w("10.1234/A", title = "Other title"),
       "openalex citing 10.9999/z" -> w("10.1234/a"),
-      "openalex query \"x\"" -> WorkRef(title = Some("no doi")),
+      "openalex query \"x\"" -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
       "openalex query \"x\"" -> w("10.1234/r").modify(_.isRetracted).setTo(true),
       "europepmc query \"x\"" -> w("10.1234/known"),
-      "arxiv query \"x\"" -> WorkRef(arxivId = Some("2401.00001"), title = Some("P"))
+      "arxiv query \"x\"" -> WorkRef(arxivId = Some("2401.00001"), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
     )
     val (kept, skipped) = com.histmersion.domain.library.acquisition.CandidateDedupe.dedupe(found, Set("10.1234/known"))
     assertEquals(
@@ -67,11 +67,11 @@ class CandidatesSuite extends munit.FunSuite:
     assertEquals(
       ws.head,
       WorkRef(
-        doi = Some("10.1234/e"),
-        title = Some("Bronze"),
-        year = Some(2026),
-        authors = List("Doe J", "Roe K"),
-        venue = Some("J Arch"),
+        doi = (Some("10.1234/e")).map(com.histmersion.api.library.Doi.apply),
+        title = (Some("Bronze")).map(com.histmersion.api.library.Title.apply),
+        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (List("Doe J", "Roe K")).map(com.histmersion.api.library.AuthorName.apply),
+        venue = (Some("J Arch")).map(com.histmersion.api.library.Venue.apply),
         isOa = true,
         abstractText = Some("Text")
       )
@@ -85,11 +85,11 @@ class CandidatesSuite extends munit.FunSuite:
       Candidates.coreWorks(j),
       List(
         WorkRef(
-          doi = Some("10.1234/c"),
-          title = Some("T"),
-          year = Some(2026),
-          authors = List("A B"),
-          venue = Some("P"),
+          doi = (Some("10.1234/c")).map(com.histmersion.api.library.Doi.apply),
+          title = (Some("T")).map(com.histmersion.api.library.Title.apply),
+          year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+          authors = (List("A B")).map(com.histmersion.api.library.AuthorName.apply),
+          venue = (Some("P")).map(com.histmersion.api.library.Venue.apply),
           isOa = true
         )
       )
@@ -106,12 +106,12 @@ class CandidatesSuite extends munit.FunSuite:
       Candidates.arxivWorks(atom),
       List(
         WorkRef(
-          doi = Some("10.1234/ax"),
+          doi = (Some("10.1234/ax")).map(com.histmersion.api.library.Doi.apply),
           arxivId = Some("2410.01234"),
-          title = Some("Late Bronze Age & climate"),
-          year = Some(2026),
-          authors = List("Ann Lee", "Bo Ng"),
-          venue = Some("arXiv"),
+          title = (Some("Late Bronze Age & climate")).map(com.histmersion.api.library.Title.apply),
+          year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+          authors = (List("Ann Lee", "Bo Ng")).map(com.histmersion.api.library.AuthorName.apply),
+          venue = (Some("arXiv")).map(com.histmersion.api.library.Venue.apply),
           isOa = true,
           abstractText = Some("About it.")
         )
@@ -128,11 +128,11 @@ class CandidatesSuite extends munit.FunSuite:
     val c = Source.Candidate(
       7,
       "g",
-      "10.1234/a",
-      "A title",
-      Some(2026),
-      List("Ann", "Bo"),
-      Some("J"),
+      com.histmersion.api.library.Doi("10.1234/a"),
+      com.histmersion.api.library.Title("A title"),
+      (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+      (List("Ann", "Bo")).map(com.histmersion.api.library.AuthorName.apply),
+      (Some("J")).map(com.histmersion.api.library.Venue.apply),
       Some("abs"),
       isOa = true,
       foundBy = List("openalex query \"x\""),

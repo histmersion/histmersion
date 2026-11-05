@@ -17,7 +17,7 @@ object SearchMarkdown:
     else
       val body = hits.map { h =>
         val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
@@ -31,7 +31,7 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
@@ -58,7 +58,7 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val per = period(h.periodStart, h.periodEnd)
-        val meta = List(year(h.year), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }

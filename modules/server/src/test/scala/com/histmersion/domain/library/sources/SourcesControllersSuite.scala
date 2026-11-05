@@ -69,7 +69,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     )(using new com.histmersion.util.time.SystemTimer)
 
   private val put =
-    Source.Put(title = "Walls", body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))
+    Source.Put(title = com.histmersion.api.library.Title("Walls"), body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
@@ -93,7 +93,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(c.markdown("zqa1990_walls", false, Some("nonsense")).left.exists(_.message.startsWith("unknown section")))
     assertEquals(c.passages(Api.PassagesQuery("zqa1990_walls", "gate")).map(_.matches), Right(1))
     assertEquals(c.passages(Api.PassagesQuery("zqnone2000_x", "gate")).left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.aliases, List(Source.Alias("zqa1990_walls", "zqa1991_walls")))
+    assertEquals(c.aliases, List(Source.Alias("zqa1990_walls", com.histmersion.api.library.Citekey("zqa1991_walls"))))
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):
     val c = controllers()

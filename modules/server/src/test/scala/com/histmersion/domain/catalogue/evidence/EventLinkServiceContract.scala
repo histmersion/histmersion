@@ -12,8 +12,8 @@ import com.histmersion.domain.catalogue.Event
 abstract class EventLinkServiceContract extends CatalogueStoreSuite:
   private def cand(ck: String, score: Double) =
     EventLinkCandidate(
-      "zz_ev",
-      ck,
+      com.histmersion.api.catalogue.Event.Id("zz_ev"),
+      com.histmersion.api.library.Citekey(ck),
       score,
       findings = List("f1"),
       passages = List(EventPassage(1, 5, "Zzev", "Zzev", "a Zzev b")),

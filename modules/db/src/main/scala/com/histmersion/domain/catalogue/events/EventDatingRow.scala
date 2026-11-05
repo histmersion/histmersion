@@ -16,4 +16,4 @@ final private[events] case class EventDatingRow(
     note: Option[String]
 ) derives DbCodec:
   def toDto: EventDating =
-    EventDating(eventId, citekey, TimeSpan(notBefore, beginBy, endFrom, notAfter), method, note)
+    EventDating(com.histmersion.api.catalogue.Event.Id(eventId), com.histmersion.api.library.Citekey(citekey), TimeSpan(notBefore, beginBy, endFrom, notAfter), method, note)

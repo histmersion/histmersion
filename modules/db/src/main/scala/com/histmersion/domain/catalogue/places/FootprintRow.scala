@@ -18,7 +18,7 @@ final private[places] case class FootprintRow(
   def toDto: Place.Footprint =
     Place.Footprint(
       id,
-      placeId,
+      com.histmersion.api.catalogue.Place.Id(placeId),
       role,
       for s <- periodStart; e <- periodEnd yield Period(s, e),
       certainty,

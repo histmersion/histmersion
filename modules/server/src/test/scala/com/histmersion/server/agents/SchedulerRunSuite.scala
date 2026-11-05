@@ -79,12 +79,12 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .put(Ck, Source.Put(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old")))
+        .put(Ck, Source.Put(title = com.histmersion.api.library.Title("Old tin"), year = (Some(2000)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some("10.5555/zzagent.old")).map(com.histmersion.api.library.Doi.apply)))
         .isRight
     )
     assert(
       h.library.sources
-        .put(Ck2, Source.Put(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new")))
+        .put(Ck2, Source.Put(title = com.histmersion.api.library.Title("New tin"), year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some("10.5555/zzagent.new")).map(com.histmersion.api.library.Doi.apply)))
         .isRight
     )
     assert(h.goals.put(Goal, com.histmersion.api.automation.Goal.Put("Zz scheduled tin")).isRight)
@@ -151,7 +151,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assertEquals(a.approvalsList(Some("all"), None).toOption.get.count(_.citekey == Ck2), 1)
 
   private def work(doi: String, title: String, inDb: Boolean = false) =
-    WorkRef(doi = Some(doi), title = Some(title), year = Some(2023), authors = List("Zz"), inDb = inDb)
+    WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), inDb = inDb)
 
   test(
     "acquisition-sweep: the goal's queries searched, corpus and queue left out, the ranking model's picks queued once"
@@ -240,19 +240,19 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       Source.Candidate(
         1,
         Goal,
-        "10.5555/zzagent.a",
-        "A",
-        Some(2026),
-        List("Zz"),
+        com.histmersion.api.library.Doi("10.5555/zzagent.a"),
+        com.histmersion.api.library.Title("A"),
+        (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
         foundBy = List("openalex query \"zzagent tin trade\"")
       ),
       Source.Candidate(
         2,
         Goal,
-        "10.5555/zzagent.b",
-        "B",
-        Some(2026),
-        List("Zz"),
+        com.histmersion.api.library.Doi("10.5555/zzagent.b"),
+        com.histmersion.api.library.Title("B"),
+        (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
         foundBy = List("crossref query \"zzagent tin trade\"")
       )
     )

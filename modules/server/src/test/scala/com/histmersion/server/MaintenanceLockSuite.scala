@@ -62,7 +62,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     AssetInput("f.png", "image/png", java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
 
   test("every source write is refused while a restore holds the lock"):
-    refused("put_source")(h.library.sources.put("zzlock_src", Source.Put(title = "T")))
+    refused("put_source")(h.library.sources.put("zzlock_src", Source.Put(title = com.histmersion.api.library.Title("T"))))
     refused("patch_source")(h.library.sources.patch("zzlock_src", Source.Patch(summary = Some("x"))))
     refused("import")(h.library.sources.importNote(NoteImport(text = "---\ncitekey: zzlock_src\n---\n")))
     refused("seed")(h.seeding.seed(SeedRequest(dir = "/tmp")))
@@ -128,5 +128,5 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     assert(!h.ingest.queue.paused, "…and it must come back, whatever the restore did")
 
   test("once the lock is released, the same writes go through"):
-    assert(h.library.sources.put("zzlock_src", Source.Put(title = "T")).isRight)
+    assert(h.library.sources.put("zzlock_src", Source.Put(title = com.histmersion.api.library.Title("T"))).isRight)
     assert(h.places.rebuild(Caller.Local).isRight)

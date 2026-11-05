@@ -224,7 +224,7 @@ private[sources] object SourceBundleRepo:
   def unresolvedEdgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
-      val _ = SourceRepo.insertEdges(List(Edge(w.citekeyOf(e.srcUid), e.dst, e.kind)))
+      val _ = SourceRepo.insertEdges(List(Edge(com.histmersion.api.library.Citekey(w.citekeyOf(e.srcUid)), com.histmersion.api.library.Citekey(e.dst), e.kind)))
     }
 
   def aliasesIn(w: BundleImport.Writer): Unit =

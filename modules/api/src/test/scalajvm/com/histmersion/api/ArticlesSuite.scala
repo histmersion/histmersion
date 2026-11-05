@@ -147,8 +147,8 @@ class ArticlesSuite extends munit.FunSuite:
         "# T\n\nprose",
         backs = List(Backlink("article", "bronze_age_collapse", Some("LBA Collapse"))),
         cited = List(
-          CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some(Source.Status.Foundational)),
-          CitedSource("zz_ghost", None, None, None)
+          CitedSource(com.histmersion.api.library.Citekey("cline2014_year"), (Some("1177 B.C.")).map(com.histmersion.api.library.Title.apply), (Some(2014)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Foundational)),
+          CitedSource(com.histmersion.api.library.Citekey("zz_ghost"), None, None, None)
         )
       )
     )

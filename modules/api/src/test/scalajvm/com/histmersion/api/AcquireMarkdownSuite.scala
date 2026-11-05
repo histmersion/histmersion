@@ -27,15 +27,15 @@ import com.histmersion.api.library.Ingest
 class AcquireMarkdownSuite extends munit.FunSuite:
 
   private val work = WorkRef(
-    doi = Some("10.1038/nature14317"),
-    title = Some("Massive migration from the steppe"),
-    year = Some(2015),
-    authors = List("Wolfgang Haak", "Iosif Lazaridis", "Nick Patterson"),
-    venue = Some("Nature"),
+    doi = (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
+    title = (Some("Massive migration from the steppe")).map(com.histmersion.api.library.Title.apply),
+    year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
+    authors = (List("Wolfgang Haak", "Iosif Lazaridis", "Nick Patterson")).map(com.histmersion.api.library.AuthorName.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
     citedByCount = Some(2065),
     isOa = true,
     oaStatus = Some("green"),
-    citekey = Some("haak2015_massive")
+    citekey = (Some("haak2015_massive")).map(com.histmersion.api.library.Citekey.apply)
   )
 
   test("discover renders a table and flags what is already stored"):
@@ -83,7 +83,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       2,
       1,
       0,
-      List(RefRow(title = Some("A"), citekey = Some("drews1993_bronze")), RefRow(title = Some("B")))
+      List(RefRow(title = (Some("A")).map(com.histmersion.api.library.Title.apply), citekey = (Some("drews1993_bronze")).map(com.histmersion.api.library.Citekey.apply)), RefRow(title = (Some("B")).map(com.histmersion.api.library.Title.apply)))
     )
     val md = AcquireMarkdown.refs(r)
     assert(md.contains("1 of 2 resolve to stored sources; re-run with `--apply`"), md)

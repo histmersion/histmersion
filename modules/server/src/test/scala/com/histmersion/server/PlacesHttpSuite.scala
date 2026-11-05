@@ -45,12 +45,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place("zzh_world", "Zzh World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzh_world"), "Zzh World", com.histmersion.domain.catalogue.Place.Kind.Region),
         List(Place.Name("Zzh World"))
       ),
       Place.Input(
         Place(
-          "zzh_land",
+          com.histmersion.api.catalogue.Place.Id("zzh_land"),
           "Zzh Land",
           com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(
@@ -63,7 +63,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       ),
       Place.Input(
         Place(
-          "zzh_polity",
+          com.histmersion.api.catalogue.Place.Id("zzh_polity"),
           "Zzh Polity",
           com.histmersion.domain.catalogue.Place.Kind.Polity,
           Some("""{"type":"Point","coordinates":[105.0,15.0]}"""),
@@ -150,12 +150,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val countsDoc = Lpf.render(
     List(
       Place.Input(
-        Place("zzc_world", "Zzc World", com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzc_world"), "Zzc World", com.histmersion.domain.catalogue.Place.Kind.Region),
         List(Place.Name("Zzc World"))
       ),
       Place.Input(
         Place(
-          "zzc_land",
+          com.histmersion.api.catalogue.Place.Id("zzc_land"),
           "Zzc Land",
           com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(
@@ -265,7 +265,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              "zzn_lake",
+              com.histmersion.api.catalogue.Place.Id("zzn_lake"),
               "Zzn Sea",
               com.histmersion.domain.catalogue.Place.Kind.Feature,
               Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")
@@ -357,7 +357,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              "zzo_regio",
+              com.histmersion.api.catalogue.Place.Id("zzo_regio"),
               "Zzo Regio XII",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
@@ -425,7 +425,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              "zzo_dup",
+              com.histmersion.api.catalogue.Place.Id("zzo_dup"),
               "Withdrawn: Zzo Regio XII",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
@@ -434,7 +434,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
           ),
           Place.Input(
             Place(
-              "zzo_road",
+              com.histmersion.api.catalogue.Place.Id("zzo_road"),
               "Withdrawn: Untitled",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")

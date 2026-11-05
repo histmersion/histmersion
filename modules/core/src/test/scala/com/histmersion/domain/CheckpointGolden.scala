@@ -50,11 +50,11 @@ object CheckpointGolden:
 
   private val metadataPatches = List(
     MetadataPatch(
-      Some("A title"),
-      Some(List("Smith, J.", "Doe, A.")),
-      Some(1987),
-      Some("Antiquity"),
-      Some("10.1/x"),
+      (Some("A title")).map(com.histmersion.api.library.Title.apply),
+      (Some(List("Smith, J.", "Doe, A."))).map(_.map(com.histmersion.api.library.AuthorName.apply)),
+      (Some(1987)).map(com.histmersion.api.catalogue.Year.apply),
+      (Some("Antiquity")).map(com.histmersion.api.library.Venue.apply),
+      (Some("10.1/x")).map(com.histmersion.api.library.Doi.apply),
       Some(Source.Status.Contested),
       Some("oa"),
       Some("42"),
@@ -259,13 +259,13 @@ object CheckpointGolden:
     "work-ref.ndjson",
     List(
       WorkRef(
-        Some("10.1/x"),
+        (Some("10.1/x")).map(com.histmersion.api.library.Doi.apply),
         Some("W123"),
         Some("2101.00001"),
-        Some("Tin and trade"),
-        Some(1987),
-        List("J. Smith"),
-        Some("Antiquity"),
+        (Some("Tin and trade")).map(com.histmersion.api.library.Title.apply),
+        (Some(1987)).map(com.histmersion.api.catalogue.Year.apply),
+        (List("J. Smith")).map(com.histmersion.api.library.AuthorName.apply),
+        (Some("Antiquity")).map(com.histmersion.api.library.Venue.apply),
         Some(12),
         isOa = true,
         Some("gold"),
@@ -274,7 +274,7 @@ object CheckpointGolden:
         Some("article"),
         Some("An abstract."),
         List("W1", "W2"),
-        Some("smith1987_tin"),
+        (Some("smith1987_tin")).map(com.histmersion.api.library.Citekey.apply),
         inDb = true,
         List("https://example.org/x.pdf"),
         Some("cc-by")

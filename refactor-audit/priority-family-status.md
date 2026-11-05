@@ -2,6 +2,31 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+The 87-field / seventeen-concept batch is now APPLIED to this worktree as an
+incomplete migration. ApplyFrozenPreview applied preview-13's frozen plan;
+applied-verification.txt confirms all 233 files exactly match its hashes.
+This includes production definitions/callers and test construction changes, not
+233 confirmed defects. Twelve newtype definitions are generated and five existing
+types reused. The 87 reviewed production finding IDs are preserved; no test
+violation denominator or additional repair credit is inferred from changed files.
+
+Compilation is a completion gate, not an application gate for this isolated
+worktree. applied-build-1 records compilation against the actual applied sources.
+It confirms API JVM, API JS and files compile; CLI reports one diagnostic, core
+22 and web 51. Test/compile did not run after the failed compile. All 3,167 source
+hashes stayed stable during compilation (eight newly created source files).
+Two generated files retain an extra blank line at EOF (Place.scala and
+Storage.scala); the whitespace check reports these, and frozen content is preserved.
+The batch stays applied while reusable rewrites address remaining failures;
+there will be no restoration of pre-migration sources or compiler products.
+The broader inventory is not being expanded as a prerequisite. Existing histories
+and denominators remain intact. The 87 findings are applied-but-unverified and
+still outstanding until relevant tests and stable-ID remeasurement pass as well.
+The uncommitted type-site extension to ModelTypeRewrite is unfinished tooling and
+was not used to produce this applied checkpoint.
+
+The following preview checkpoints are historical evidence.
+
 Latest checkpoint: preview-13 retains 87 reviewed fields / seventeen concepts in
 233 overlay files. build-preview-5 passes API JVM, API JS and files compilation;
 CLI reports one diagnostic (Calibre JSON's raw citekey), core 22 and web 51.

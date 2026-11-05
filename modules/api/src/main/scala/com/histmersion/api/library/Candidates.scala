@@ -41,12 +41,12 @@ object Candidates:
     json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
       val c = r.hcursor
       WorkRef(
-        doi = str(c, "doi"),
-        title = str(c, "title").map(_.stripSuffix(".")),
-        year = str(c, "pubYear").flatMap(_.toIntOption),
-        authors = str(c, "authorString").toList.flatMap(_.stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty)),
+        doi = (str(c, "doi")).map(com.histmersion.api.library.Doi.apply),
+        title = (str(c, "title").map(_.stripSuffix("."))).map(com.histmersion.api.library.Title.apply),
+        year = (str(c, "pubYear").flatMap(_.toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (str(c, "authorString").toList.flatMap(_.stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty))).map(com.histmersion.api.library.AuthorName.apply),
         venue =
-          str(c, "journalTitle").orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption),
+          (str(c, "journalTitle").orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption)).map(com.histmersion.api.library.Venue.apply),
         isOa = str(c, "isOpenAccess").contains("Y"),
         abstractText = str(c, "abstractText").map(_.replaceAll("<[^>]+>", ""))
       )
@@ -57,11 +57,11 @@ object Candidates:
     json.hcursor.downField("results").values.toList.flatten.map { r =>
       val c = r.hcursor
       WorkRef(
-        doi = str(c, "doi"),
-        title = str(c, "title"),
-        year = c.get[Int]("yearPublished").toOption,
-        authors = c.downField("authors").values.toList.flatten.flatMap(a => str(a.hcursor, "name")),
-        venue = str(c, "publisher"),
+        doi = (str(c, "doi")).map(com.histmersion.api.library.Doi.apply),
+        title = (str(c, "title")).map(com.histmersion.api.library.Title.apply),
+        year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (c.downField("authors").values.toList.flatten.flatMap(a => str(a.hcursor, "name"))).map(com.histmersion.api.library.AuthorName.apply),
+        venue = (str(c, "publisher")).map(com.histmersion.api.library.Venue.apply),
         isOa = str(c, "downloadUrl").isDefined,
         abstractText = str(c, "abstract"),
         arxivId = str(c, "arxivId")
@@ -77,11 +77,11 @@ object Candidates:
       val id = tag(e, "id").map(_.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
         arxivId = id,
-        title = tag(e, "title").map(unescape),
-        year = tag(e, "published").flatMap(_.take(4).toIntOption),
-        authors = "(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape(m.group(1).trim)).toList,
-        doi = tag(e, "arxiv:doi"),
-        venue = Some("arXiv"),
+        title = (tag(e, "title").map(unescape)).map(com.histmersion.api.library.Title.apply),
+        year = (tag(e, "published").flatMap(_.take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape(m.group(1).trim)).toList).map(com.histmersion.api.library.AuthorName.apply),
+        doi = (tag(e, "arxiv:doi")).map(com.histmersion.api.library.Doi.apply),
+        venue = (Some("arXiv")).map(com.histmersion.api.library.Venue.apply),
         isOa = true,
         abstractText = tag(e, "summary").map(unescape)
       )

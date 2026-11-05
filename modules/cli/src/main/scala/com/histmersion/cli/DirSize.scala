@@ -87,7 +87,7 @@ object DirSize:
     existing(p).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        Storage.Volume(s.toString, s.getTotalSpace, s.getUsableSpace)
+        Storage.Volume(s.toString, com.histmersion.api.ByteCount(s.getTotalSpace), com.histmersion.api.ByteCount(s.getUsableSpace))
       }.toOption
     }
 

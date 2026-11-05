@@ -141,7 +141,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def seed(h: ServerWiring, body: String = Body): Unit =
     val r = h.library.sources
-      .put(Ck, com.histmersion.api.library.Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(body)))
+      .put(Ck, com.histmersion.api.library.Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(body)))
     assert(r.isRight, r)
 
   private def startAndRun(a: AgentsControllers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
@@ -410,11 +410,11 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     assert(
       h.library.sources
-        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz")))))
+        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply)))))
         .isRight
     )
     val up =
-      FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2020)), retracted = false)
+      FakeUpstream(WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply), title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply)), retracted = false)
     a.attach(up)
     val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
     val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id)))
@@ -439,10 +439,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     assert(
       h.library.sources
-        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz")))))
+        .patch(Ck, com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply)))))
         .isRight
     )
-    a.attach(FakeUpstream(WorkRef(doi = Some("10.1/zz")), retracted = true))
+    a.attach(FakeUpstream(WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply)), retracted = true))
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assert(run.warnings.exists(_.contains("RETRACTED")), run.warnings)
@@ -622,12 +622,12 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .patch(
           Ck,
           com.histmersion.api.library.Source
-            .Patch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(Source.Status.Current))))
+            .Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply), status = Some(Source.Status.Current))))
         )
         .isRight
     )
     val up =
-      FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2019)), retracted = false)
+      FakeUpstream(WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply), title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply)), retracted = false)
     a.attach(up)
     val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
     val before = CorpusSnapshot.of(ds)

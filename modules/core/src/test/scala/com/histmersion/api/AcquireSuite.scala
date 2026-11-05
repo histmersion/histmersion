@@ -224,9 +224,9 @@ class AcquireSuite extends munit.FunSuite:
 
   test("browserDownloadText: an open-access work no script may fetch, as a download in the browser (#1581)"):
     val w = WorkRef(
-      title = Some("Archaeology and Religion in Late Bronze Age Canaan"),
-      year = Some(2019),
-      authors = List("Aaron Greener"),
+      title = (Some("Archaeology and Religion in Late Bronze Age Canaan")).map(com.histmersion.api.library.Title.apply),
+      year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
+      authors = (List("Aaron Greener")).map(com.histmersion.api.library.AuthorName.apply),
       isOa = true,
       oaStatus = Some("gold"),
       oaUrl = Some("https://www.mdpi.com/2077-1444/10/4/258/pdf")
@@ -252,9 +252,9 @@ class AcquireSuite extends munit.FunSuite:
 
   test("browserDownloadText: a fetcher's refusal says where to download it and under which licence"):
     val w = WorkRef(
-      title = Some("Gods of the Bronze Age"),
-      year = Some(2020),
-      authors = List("A"),
+      title = (Some("Gods of the Bronze Age")).map(com.histmersion.api.library.Title.apply),
+      year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+      authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
       isOa = true,
       oaStatus = Some("gold")
     )

@@ -169,15 +169,15 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place("zqmp_site", "Zqmpetra", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), "Zqmpetra", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
             List(Place.Name("Zqmpetra"))
           ),
           Place.Input(
-            Place("zqmp_region", "Zqmpjordan", com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), "Zqmpjordan", com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
             List(Place.Name("Zqmpjordan"))
           ),
           Place.Input(
-            Place("pleiades_99900002", "Zqmp Zygouries", com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), "Zqmp Zygouries", com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
             List(Place.Name("Zqmp Zygouries"))
           )
         )

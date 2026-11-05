@@ -85,7 +85,7 @@ private[assets] object AssetRepo:
           FROM assets WHERE citekey = $citekey ORDER BY name"""
       .query[AssetInfoRow]
       .run()
-      .map(r => AssetInfo(r.name, r.mime, r.bytes, r.sha256, r.width, r.height))
+      .map(r => AssetInfo(r.name, r.mime, r.bytes, com.histmersion.api.Sha256(r.sha256), r.width, r.height))
 
   /** The bytes to stream, with the mime type to serve them as. */
   def read(citekey: String, name: String)(using DbCon): Option[(String, Array[Byte])] =

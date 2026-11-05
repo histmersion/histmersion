@@ -26,11 +26,11 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
 
   /** A source dated −1300…−1200 with one Anatolian finding at −1250 (the §1.7 acceptance shape). */
   private val dated = Source(
-    citekey = "zz_agg_dated",
-    title = "Dated",
-    authors = List("A"),
+    citekey = com.histmersion.api.library.Citekey("zz_agg_dated"),
+    title = com.histmersion.api.library.Title("Dated"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2020),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -45,7 +45,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         "zz_agg_dated#0",
-        "zz_agg_dated",
+        com.histmersion.api.library.Citekey("zz_agg_dated"),
         "c",
         Some("Anatolia"),
         Some(GeoPoint(32.0, 39.0)),
@@ -59,9 +59,9 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
 
   /** No source-level period, but a dated finding → the finding envelope stands in for it. */
   private val undatedSourceDatedFinding = Source(
-    citekey = "zz_agg_findingonly",
-    title = "Finding only",
-    authors = Nil,
+    citekey = com.histmersion.api.library.Citekey("zz_agg_findingonly"),
+    title = com.histmersion.api.library.Title("Finding only"),
+    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -78,7 +78,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         "zz_agg_findingonly#0",
-        "zz_agg_findingonly",
+        com.histmersion.api.library.Citekey("zz_agg_findingonly"),
         "c",
         Some("Aegean"),
         Some(GeoPoint(23.0, 38.0)),
@@ -92,9 +92,9 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
 
   /** Nothing dated at all → must never appear in the histogram (plan §1.7). */
   private val undated = Source(
-    citekey = "zz_agg_undated",
-    title = "Undated",
-    authors = Nil,
+    citekey = com.histmersion.api.library.Citekey("zz_agg_undated"),
+    title = com.histmersion.api.library.Title("Undated"),
+    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -113,9 +113,9 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
 
   /** Tagged, in its own century, so a `tag=` filter can be shown to narrow the histogram. */
   private val tagged = Source(
-    citekey = "zz_agg_tagged",
-    title = "Tagged",
-    authors = Nil,
+    citekey = com.histmersion.api.library.Citekey("zz_agg_tagged"),
+    title = com.histmersion.api.library.Title("Tagged"),
+    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -132,7 +132,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
     findings = List(
       Finding(
         "zz_agg_tagged#0",
-        "zz_agg_tagged",
+        com.histmersion.api.library.Citekey("zz_agg_tagged"),
         "c",
         Some("Aegean"),
         Some(GeoPoint(23.0, 38.0)),

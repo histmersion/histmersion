@@ -133,7 +133,7 @@ object ReadingPane:
   // ── a source ────────────────────────────────────────────────────────────────────────────────────
 
   private def sourcePane(ck: String): HtmlElement =
-    val row = LibraryLists.sources.now().rows.find(_.source.citekey == ck).map(_.source)
+    val row = LibraryLists.sources.now().rows.find(_.source.citekey.value.toString == ck).map(_.source)
     val reading = Var(Option.empty[Either[String, SourceReading]])
     val page = SourceLink.href(ck)
     def showOnMap(): Unit =
@@ -144,13 +144,13 @@ object ReadingPane:
         .flatMap(_.toOption)
         .flatMap(r => bounds(r.source.findings))
         .foreach(b => TheMap.surface.fitBounds(b, 40, Layout.fitMaxZoom))
-    val ref0 = marks.ItemRef.source(ck, row.map(_.title).getOrElse(ck))
+    val ref0 = marks.ItemRef.source(ck, row.map(_.title.value).getOrElse(ck))
     // the item's own title once its record is read (the row is not on the page when the address chose it)
     val ref = reading.signal
-      .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title)))
+      .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title.value)))
       .distinct
     val byline = row.fold("")(h =>
-      List(TableRow.authors(h.authors), h.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+      List(TableRow.authors(h.authors.map(_.value)), h.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
     )
     div(
       cls := "reading-item",
@@ -296,6 +296,6 @@ object ReadingPane:
     reading
       .now()
       .flatMap(_.toOption)
-      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.getOrElse(""), r.source.source.title))
+      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.getOrElse(""), r.source.source.title.value))
 
   private def message(e: Throwable): String = Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)

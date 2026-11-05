@@ -47,11 +47,11 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
       summary: Option[String] = None,
       findings: Int = 0
   ) = Source(
-    citekey = ck,
-    title = s"Title $ck",
-    authors = List("A"),
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = Some(2011),
+    year = (Some(2011)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
@@ -67,7 +67,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     findings = (0 until findings).toList.map(i =>
       Finding(
         s"$ck#$i",
-        ck,
+        com.histmersion.api.library.Citekey(ck),
         s"claim $i",
         Some("Anatolia"),
         Some(GeoPoint(32.0, 39.0)),
@@ -129,16 +129,16 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a rename moves every table, finding id, link and parked edge, and leaves an alias"):
     // ── fixtures: the renamed source, a source citing it, one waiting for the NEW name ──
-    put(source(Old, findings = 2, edges = List(Edge(Old, Other, "challenges")), notes = Some(s"Self link [[$Old]].")))
+    put(source(Old, findings = 2, edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), "challenges")), notes = Some(s"Self link [[$Old]].")))
     put(
       source(
         Other,
-        edges = List(Edge(Other, Old, "references")),
+        edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), "references")),
         notes = Some(s"See [[$Old|Beckman]] and the short form [[zzrn2025]], not [[${Old}x]]."),
         summary = Some(s"Cites [[$Old#ch-2]].")
       )
     )
-    put(source(Waiter, edges = List(Edge(Waiter, New, "references"), Edge(Waiter, "zzrn2011", "updates"))))
+    put(source(Waiter, edges = List(Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey(New), "references"), Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey("zzrn2011"), "updates"))))
     assertEquals(count(sql"SELECT count(*)::int FROM unresolved_edges WHERE src = $Waiter"), 2)
     val body =
       s"""# Article
@@ -283,7 +283,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(counts.links, 10)
 
     // the alias
-    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)), List(Source.Alias(Old, New)))
+    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)), List(Source.Alias(Old, com.histmersion.api.library.Citekey(New))))
     assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
     assertEquals(SourceFixtures.canonical(ds, New), Some(New))
     assertEquals(SourceFixtures.canonical(ds, "zzrn_nothing"), None)
@@ -296,7 +296,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleFixtures.put(ds, Article(Slug, "Zz", "concept", s"Late [[$Old]].", None, Nil, Nil, None))
     assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
     // an edge written later to the old key is a real edge to the new one, not a parked one
-    put(source(Other, edges = List(Edge(Other, Old, "challenges"))))
+    put(source(Other, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), "challenges"))))
     assertEquals(
       CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.citekey, n.target)),
       Vector(("in", Other, NeighborTarget.Source))
@@ -315,7 +315,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(SourceFixtures.canonical(ds, Old), Some(Old))
     assertEquals(
       SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)).toSet,
-      Set(Source.Alias(New, Old), Source.Alias(third, Old))
+      Set(Source.Alias(New, com.histmersion.api.library.Citekey(Old)), Source.Alias(third, com.histmersion.api.library.Citekey(Old)))
     )
 
   test("renaming back leaves a tombstone for the dropped alias; renaming away again clears it (#827)"):

@@ -30,8 +30,8 @@ object JobFollow:
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
   def job(using console: Console)(
-      fetch: String => Either[Cli.Error, JobInfo],
-      id: String,
+      fetch: com.histmersion.api.jobs.JobInfo.Id => Either[Cli.Error, JobInfo],
+      id: com.histmersion.api.jobs.JobInfo.Id,
       waited: Long = 0,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = Progress.line,

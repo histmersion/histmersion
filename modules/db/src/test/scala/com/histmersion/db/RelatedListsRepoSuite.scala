@@ -46,11 +46,11 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = ck,
-        title = s"Source title $ck",
-        authors = List(author),
+        citekey = com.histmersion.api.library.Citekey(ck),
+        title = com.histmersion.api.library.Title(s"Source title $ck"),
+        authors = (List(author)).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = Some(2010),
+        year = (Some(2010)).map(com.histmersion.api.catalogue.Year.apply),
         venue = None,
         status = status,
         topics = Nil,

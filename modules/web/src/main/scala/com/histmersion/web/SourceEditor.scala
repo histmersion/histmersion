@@ -36,11 +36,11 @@ object SourceEditor:
 
   object Draft:
     def of(s: com.histmersion.api.library.Source.Detail): Draft = Draft(
-      title = s.title,
-      authors = s.authors,
-      year = s.year.fold("")(_.toString),
-      venue = s.venue.getOrElse(""),
-      doi = s.doi.getOrElse(""),
+      title = s.title.value,
+      authors = s.authors.map(_.value),
+      year = s.year.map(_.value.toInt).fold("")(_.toString),
+      venue = s.venue.map(_.value).getOrElse(""),
+      doi = s.doi.map(_.value).getOrElse(""),
       status = s.status,
       topics = s.topics,
       regions = s.regions,
@@ -81,18 +81,18 @@ object SourceEditor:
 
     val title =
       if d.title.trim.isEmpty then { errs += Field.Title -> "a source needs a title"; None }
-      else Option.when(d.title.trim != orig.title)(d.title.trim)
-    val authors = Option.when(d.authors != orig.authors)(d.authors)
+      else Option.when(d.title.trim != orig.title.value)(d.title.trim)
+    val authors = Option.when(d.authors != orig.authors.map(_.value))(d.authors)
     val yr = d.year.trim match
       case "" =>
-        if orig.year.isDefined then errs += Field.Year -> cannotClear("the year")
+        if orig.year.map(_.value.toInt).isDefined then errs += Field.Year -> cannotClear("the year")
         None
       case y =>
         y.toIntOption.filter(v => v > 0 && v < 3000) match
-          case Some(v) => Option.when(!orig.year.contains(v))(v)
+          case Some(v) => Option.when(!orig.year.map(_.value.toInt).contains(v))(v)
           case None    => errs += Field.Year -> s"'$y' is not a publication year (e.g. 2007)"; None
-    val venue = text(d.venue, orig.venue, Field.Venue, "the venue")
-    val doi = text(d.doi, orig.doi, Field.Doi, "the DOI")
+    val venue = text(d.venue, orig.venue.map(_.value), Field.Venue, "the venue")
+    val doi = text(d.doi, orig.doi.map(_.value), Field.Doi, "the DOI")
     doi.foreach(v => if !v.matches("^10\\.\\S+/\\S+$") then errs += Field.Doi -> s"'$v' is not a DOI (10.…/…)")
     val status = Option.when(d.status != orig.status)(d.status)
     val summary = text(d.summary, orig.summary, Field.Summary, "the summary")
@@ -116,7 +116,7 @@ object SourceEditor:
     val problems = errs.result()
     if problems.nonEmpty then Left(problems)
     else
-      val meta = MetadataPatch(title = title, authors = authors, year = yr, venue = venue, doi = doi, status = status)
+      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(com.histmersion.api.library.AuthorName.apply)), year = (yr).map(com.histmersion.api.catalogue.Year.apply), venue = (venue).map(com.histmersion.api.library.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
       val patch = com.histmersion.api.library.Source.Patch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary,

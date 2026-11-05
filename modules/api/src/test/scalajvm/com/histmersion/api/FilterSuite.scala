@@ -115,9 +115,9 @@ class FilterSuite extends munit.FunSuite:
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(
     SearchHit(
-      "cline2014_collapse",
-      "1177 BC",
-      Some(2014),
+      com.histmersion.api.library.Citekey("cline2014_collapse"),
+      com.histmersion.api.library.Title("1177 BC"),
+      (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
       Source.Status.Current,
       List("collapse"),
       List("Levant"),

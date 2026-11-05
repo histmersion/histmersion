@@ -105,7 +105,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
 
   private def doi(n: String) = s"10.5555/zzagent.$n"
   private def work(n: String, oa: Boolean = true) =
-    WorkRef(doi = Some(doi(n)), title = Some(s"Work $n"), year = Some(2023), authors = List("Zz"), isOa = oa)
+    WorkRef(doi = (Some(doi(n))).map(com.histmersion.api.library.Doi.apply), title = (Some(s"Work $n")).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
   private def picks(ns: Seq[String]) =
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
 
@@ -114,7 +114,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     if noCopy.contains(d) then Left(s"${IngestBacklog.NoLegalCopy} $d: no fetcher had it")
     else
       val ck = ck0(d)
-      assert(h.library.sources.put(ck, Source.Put(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $d"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(d)).map(com.histmersion.api.library.Doi.apply))).isRight)
       Right(
         Ingest.Report(
           ck,
@@ -356,7 +356,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(acquire(h).size, 4)
     // c reached the corpus meanwhile; the watcher now auto-ingests
     assert(
-      h.library.sources.put("zzagent2023_c", Source.Put(title = "C", year = Some(2023), doi = Some(doi("c")))).isRight
+      h.library.sources.put("zzagent2023_c", Source.Put(title = com.histmersion.api.library.Title("C"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(doi("c"))).map(com.histmersion.api.library.Doi.apply))).isRight
     )
     a.managing
       .update(m.id, ManagerUpdate(Some(m.config.copy(autoIngest = Some(true)))))

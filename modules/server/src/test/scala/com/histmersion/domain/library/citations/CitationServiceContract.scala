@@ -16,11 +16,11 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       edges: List[Edge] = Nil
   ): Source =
     Source(
-      ck,
-      s"Title of $ck",
-      Nil,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(s"Title of $ck"),
+      (Nil).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      Some(year),
+      (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
       None,
       status,
       Nil,
@@ -47,18 +47,18 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     List(
       source(E, 1950, com.histmersion.api.library.Source.Status.Contested),
       source(D, 2010, com.histmersion.api.library.Source.Status.Current),
-      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(C, A, "superseded_by"))),
+      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), "superseded_by"))),
       source(
         B,
         2001,
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(B, A, "refutes"), Edge(B, D, "references"))
+        List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), "refutes"), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(D), "references"))
       ),
       source(
         A,
         1990,
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(A, B, "references"), Edge(A, "zq_topic", "references"))
+        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_topic"), "references"))
       )
     ).foreach(x => s.sources.put(x, Caller.Local): Unit)
 

@@ -18,7 +18,7 @@ class AboutStorageSuite extends munit.FunSuite:
     About("histmersion", BuildStamp("1.2.3"), Health("ok", "ok", Some("97"), Some("ok")), JobCounts(), None, None, None)
 
   private val report = Storage.Report(
-    ageSeconds = Some(30),
+    ageSeconds = (Some(30)).map(com.histmersion.api.maintenance.Storage.Report.AgeSeconds.apply),
     entries = Storage.nest(
       List(
         Storage.Entry(
@@ -26,7 +26,7 @@ class AboutStorageSuite extends munit.FunSuite:
           "database (Postgres)",
           "database",
           None,
-          Some(9 * GB),
+          (Some(9 * GB)).map(com.histmersion.api.ByteCount.apply),
           within = Some("database-cluster"),
           detail = Some("histmersion")
         ),
@@ -35,8 +35,8 @@ class AboutStorageSuite extends munit.FunSuite:
           "database files (bundled Postgres)",
           "database",
           Some("/d/pg"),
-          Some(10 * GB),
-          Some(3000L),
+          (Some(10 * GB)).map(com.histmersion.api.ByteCount.apply),
+          (Some(3000L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol)
         ),
         Storage.Entry(
@@ -44,8 +44,8 @@ class AboutStorageSuite extends munit.FunSuite:
           "backups",
           "backups",
           Some("/d/backups"),
-          Some(28 * GB),
-          Some(5L),
+          (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
+          (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol),
           shrink = Storage.Advice.shrink("backups", 5)
         ),
@@ -55,8 +55,8 @@ class AboutStorageSuite extends munit.FunSuite:
           "terrain base map (cache)",
           "caches",
           Some("/c/basemap"),
-          Some(600_000_000L),
-          Some(3L),
+          (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
+          (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           partial = true,
           volume = Some(vol)
         ),
@@ -65,14 +65,14 @@ class AboutStorageSuite extends munit.FunSuite:
           "originals folder (cli.calibre.originals-dir)",
           "corpus",
           Some("/o"),
-          Some(GB),
-          Some(10L),
+          (Some(GB)).map(com.histmersion.api.ByteCount.apply),
+          (Some(10L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           host = "cli"
         )
       )
     ),
     tables = List(TableSize("sources", 5 * GB)),
-    volumes = List(Storage.Volume(vol, 994 * GB, 5 * GB)),
+    volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(5 * GB))),
     backups = Some(BackupsUsage(5, 28 * GB, Some("histmersion-1.dump"), 5))
   )
 
@@ -106,7 +106,7 @@ class AboutStorageSuite extends munit.FunSuite:
     assertEquals((rows.head.label, rows.head.value, rows.head.state), (vol, "5.0 GB free", Some(ServiceState.Down)))
     assert(rows(1).value.startsWith(s"Low disk space on $vol"), rows)
     assert(rows(1).value.contains("backups 28.0 GB (lower backups.keep (now 5)"), rows)
-    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(vol, 994 * GB, 500 * GB))))
+    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(500 * GB)))))
     assertEquals(roomy.last.rows.map(_.state), List(Some(ServiceState.Ok)))
 
   test("measuring: the window says so; an older server's About has no Storage section"):

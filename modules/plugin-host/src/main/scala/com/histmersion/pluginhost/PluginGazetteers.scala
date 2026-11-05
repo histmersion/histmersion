@@ -64,7 +64,7 @@ object PluginGazetteers:
             relations <- all(Option(p.relations).getOrElse(Nil))(relation).left.map(named)
           yield
             val source = Option(p.source).flatten.orElse(Option(credit).map(_.trim).filter(_.nonEmpty))
-            Place.Input(Place(id, label, p.kind, geometry, period._1, source, properties, period._2), names, relations)
+            Place.Input(Place(com.histmersion.api.catalogue.Place.Id(id), label, p.kind, geometry, period._1, source, properties, period._2), names, relations)
     catch
       case NonFatal(e) =>
         Left(

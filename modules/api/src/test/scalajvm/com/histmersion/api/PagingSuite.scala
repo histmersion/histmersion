@@ -59,7 +59,7 @@ class PagingSuite extends munit.FunSuite:
 
   test("the jobs, runs and approvals listings head a partial page and say how to go on"):
     val page = Paging.Page(250, Some("j2"), List("done" -> 240, "failed" -> 10))
-    val js = Vector(JobInfo("j1", Ingest.KindIngest, "done"), JobInfo("j2", Ingest.KindIngest, "done"))
+    val js = Vector(JobInfo(com.histmersion.api.jobs.JobInfo.Id("j1"), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), "done"), JobInfo(com.histmersion.api.jobs.JobInfo.Id("j2"), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), "done"))
     val md = IngestMarkdown.jobs(js, page, Some("done"), Some("Older: `histmersion jobs --before j2`"))
     assert(md.startsWith("### Latest 2 of 250 done jobs\n"), md)
     assert(md.endsWith("\n\nOlder: `histmersion jobs --before j2`"), md)

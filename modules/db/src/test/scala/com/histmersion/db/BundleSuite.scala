@@ -80,7 +80,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // the reference data both sides share (an event points into it)
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(Place("zzb_place", "Hattusa", "site", Some("""{"type":"Point","coordinates":[34.61,40.02]}"""))))
+      List(Place.Input(Place(com.histmersion.api.catalogue.Place.Id("zzb_place"), "Hattusa", "site", Some("""{"type":"Point","coordinates":[34.61,40.02]}"""))))
     )
     ds
 
@@ -142,12 +142,12 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       edges: List[Edge] = Nil,
       calibre: Option[String] = None
   ) = Source(
-    citekey = ck,
-    title = s"Title of $ck — Ünïcödé",
-    authors = List("Güterbock, Hans G.", "Jane Harrison"),
-    doi = Some(s"10.1234/$ck"),
-    year = Some(2001),
-    venue = Some("JNES"),
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title(s"Title of $ck — Ünïcödé"),
+    authors = (List("Güterbock, Hans G.", "Jane Harrison")).map(com.histmersion.api.library.AuthorName.apply),
+    doi = (Some(s"10.1234/$ck")).map(com.histmersion.api.library.Doi.apply),
+    year = (Some(2001)).map(com.histmersion.api.catalogue.Year.apply),
+    venue = (Some("JNES")).map(com.histmersion.api.library.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Current,
     topics = List("hittites"),
     regions = List("Anatolia"),
@@ -162,7 +162,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     findings = (0 until findings).toList.map(i =>
       Finding(
         s"$ck#$i",
-        ck,
+        com.histmersion.api.library.Citekey(ck),
         s"claim $i of $ck",
         Some("Anatolia"),
         Option.when(i % 2 == 0)(GeoPoint(34.615 + i * 0.000000000000123, 40.019)),
@@ -192,11 +192,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         A1,
         Some("# Alpha\n\nThe body of alpha, with Ünïcödé and a NUL-free tail.\n\n" + ("x" * 9000)),
         4,
-        List(Edge(A1, B0, "references"), Edge(A1, "zzbmissing2020_x", "challenges")),
+        List(Edge(com.histmersion.api.library.Citekey(A1), com.histmersion.api.library.Citekey(B0), "references"), Edge(com.histmersion.api.library.Citekey(A1), com.histmersion.api.library.Citekey("zzbmissing2020_x"), "challenges")),
         Some(Calibre)
       )
     )
-    put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(G1, A1, "superseded_by"))))
+    put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(com.histmersion.api.library.Citekey(G1), com.histmersion.api.library.Citekey(A1), "superseded_by"))))
     val _ = SourceFixtures.rename(ds, B0, B1)
     // a finding dropped by a later write leaves a tombstone
     SourceFixtures.load(ds, A1).foreach(s => put(ds, s.modify(_.findings).setTo(s.findings.filterNot(_.id == s"$A1#3"))))
@@ -277,8 +277,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         citekey = Some(A1),
         description = Some("d"),
         scale = Some("regional"),
-        datings = List(EventDating("zzb_e1", A1, TimeSpan(Some(-1210), None, None, Some(-1180)), Some("textual"))),
-        participants = List(EventParticipant("zzb_e1", "Hattusili", "ruler", Some(A1)))
+        datings = List(EventDating(com.histmersion.api.catalogue.Event.Id("zzb_e1"), com.histmersion.api.library.Citekey(A1), TimeSpan(Some(-1210), None, None, Some(-1180)), Some("textual"))),
+        participants = List(EventParticipant(com.histmersion.api.catalogue.Event.Id("zzb_e1"), "Hattusili", "ruler", (Some(A1)).map(com.histmersion.api.library.Citekey.apply)))
       )
     )
     EventFixtures.put(
@@ -448,7 +448,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(kinds.get("queue-item"), Some(1))
     // V030: a change to an owned set moves its owner
     val t0 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
-    val _ = SourceFixtures.addEdges(ds, List(Edge(G1, B1, "challenges")))
+    val _ = SourceFixtures.addEdges(ds, List(Edge(com.histmersion.api.library.Citekey(G1), com.histmersion.api.library.Citekey(B1), "challenges")))
     val t1 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
     assertNotEquals(t1, t0)
 
@@ -855,7 +855,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       val n = 2 + rnd.nextInt(6)
       val cks = (0 until n).map(k => f"zzp${1900 + rnd.nextInt(120)}%d_s$k%d").toList
       cks.foreach { ck =>
-        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(Edge(ck, _, "references"))
+        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(_), "references"))
         put(
           a,
           source(

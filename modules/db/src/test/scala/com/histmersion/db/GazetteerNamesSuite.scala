@@ -252,7 +252,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
   // ── the fill ───────────────────────────────────────────────────────────────────────────────
 
   private def finding(n: Int, region: String, at: Option[GeoPoint], period: Option[Period] = None) =
-    Finding(s"$Ck#$n", Ck, s"claim $n about $region", Some(region), at, period, None, Nil, Some(Confidence.High))
+    Finding(s"$Ck#$n", com.histmersion.api.library.Citekey(Ck), s"claim $n about $region", Some(region), at, period, None, Nil, Some(Confidence.High))
 
   private def pointOf(n: Int): Option[(Double, Double)] = connect(ds):
     sql"SELECT ST_X(geom), ST_Y(geom) FROM findings WHERE id = ${s"$Ck#$n"} AND geom IS NOT NULL"
@@ -262,11 +262,11 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("finding-unplaced: a finding with a name and no point gets the geocoder's point; a placed one never moves"):
     val src = Source(
-      citekey = Ck,
-      title = "Fixture",
-      authors = List("A"),
+      citekey = com.histmersion.api.library.Citekey(Ck),
+      title = com.histmersion.api.library.Title("Fixture"),
+      authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
-      year = Some(2025),
+      year = (Some(2025)).map(com.histmersion.api.catalogue.Year.apply),
       venue = None,
       status = com.histmersion.api.library.Source.Status.Current,
       topics = Nil,

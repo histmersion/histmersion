@@ -17,12 +17,12 @@ class SourceNoteSuite extends munit.FunSuite:
   private val ck = "haak2015_massive"
 
   private val source = Source(
-    citekey = ck,
-    title = "Massive migration from the steppe",
-    authors = List("Wolfgang Haak", "David Reich"),
-    doi = Some("10.1038/nature14317"),
-    year = Some(2015),
-    venue = Some("Nature"),
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title("Massive migration from the steppe"),
+    authors = (List("Wolfgang Haak", "David Reich")).map(com.histmersion.api.library.AuthorName.apply),
+    doi = (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
+    year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Foundational,
     topics = List("ancient_dna", "yamnaya_culture"),
     regions = List("Eurasian Steppe", "Central Europe"),
@@ -37,7 +37,7 @@ class SourceNoteSuite extends munit.FunSuite:
     findings = List(
       Finding(
         s"$ck#0",
-        ck,
+        com.histmersion.api.library.Citekey(ck),
         "Corded Ware derived ~75% of ancestry from Yamnaya.",
         Some("Central Europe (Germany)"),
         Some(GeoPoint(10.4, 51.2)),
@@ -46,9 +46,9 @@ class SourceNoteSuite extends munit.FunSuite:
         List("corded_ware", "yamnaya_culture"),
         Some(Confidence.High)
       ),
-      Finding(s"$ck#1", ck, "An undated, unplaced claim.", None, None, None, None, Nil, None)
+      Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), "An undated, unplaced claim.", None, None, None, None, Nil, None)
     ),
-    edges = List(Edge(ck, "anthony2007_horse", "references")),
+    edges = List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), "references")),
     notes = Some("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one"),
     updatedAt = Some("2026-08-25T10:00:00.000000Z")
   )
@@ -92,9 +92,9 @@ class SourceNoteSuite extends munit.FunSuite:
 
   test("a source with no findings, notes or optional metadata still round-trips"):
     val bare = Source(
-      citekey = "bare_one",
-      title = "T",
-      authors = Nil,
+      citekey = com.histmersion.api.library.Citekey("bare_one"),
+      title = com.histmersion.api.library.Title("T"),
+      authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
       year = None,
       venue = None,
@@ -116,10 +116,10 @@ class SourceNoteSuite extends munit.FunSuite:
     assertEquals(back.period, None)
 
   test("superseded_by is exported from the edge and parsed back into it"):
-    val s = source.modify(_.edges).setTo(List(Edge(ck, "reich2018_who", "superseded_by")))
+    val s = source.modify(_.edges).setTo(List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("reich2018_who"), "superseded_by")))
     val back = SourceNote.parseNote(SourceNote.note(s), ck).get
-    assert(back.edges.contains(Edge(ck, "reich2018_who", "superseded_by")), back.edges.toString)
+    assert(back.edges.contains(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("reich2018_who"), "superseded_by")), back.edges.toString)
 
   test("wikilinks in the notes body are re-derived as reference edges"):
     val back = SourceNote.parseNote(SourceNote.note(source), ck).get
-    assert(back.edges.contains(Edge(ck, "anthony2007_horse", "references")), back.edges.toString)
+    assert(back.edges.contains(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), "references")), back.edges.toString)

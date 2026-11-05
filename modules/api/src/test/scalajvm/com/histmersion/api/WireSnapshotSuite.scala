@@ -63,9 +63,9 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 
   private val hit = SearchHit(
-    "zq_alpha_2001",
-    "Zq Alpha",
-    Some(2001),
+    com.histmersion.api.library.Citekey("zq_alpha_2001"),
+    com.histmersion.api.library.Title("Zq Alpha"),
+    (Some(2001)).map(com.histmersion.api.catalogue.Year.apply),
     Source.Status.Contested,
     List("zq-topic"),
     List("zq-region"),
@@ -153,7 +153,7 @@ class WireSnapshotSuite extends munit.FunSuite:
   )
   private val summary =
     com.histmersion.api.catalogue.Place.Summary(
-      "zq_tell",
+      com.histmersion.api.catalogue.Place.Id("zq_tell"),
       "Zq Tell",
       "settlement",
       Some(-2000),
@@ -206,7 +206,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     geometry = Some("POINT(30.5 40.25)"),
     children = List(EventSummary("zq-child", "Zq ash fall", "ashfall", TimeSpan(notBefore = Some(-1610)), "inferred")),
     datings =
-      List(EventDating("zq-event", "zq_alpha_2001", TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
+      List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
     wikidata = Some("Q1"),
     media = List(thumb),
     names = List("Zq eruption", "Zq event")
@@ -214,11 +214,11 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val place = PlaceDetail(
     summary,
     Some("POINT(30.5 40.25)"),
-    List(com.histmersion.api.catalogue.Place.Summary("zq_land", "Zqland", "region", None, None, None, "Zqland")),
+    List(com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("zq_land"), "Zqland", "region", None, None, None, "Zqland")),
     Nil,
     findings = 3,
     asOf = Some(-1500),
-    links = List(com.histmersion.api.catalogue.Place.Link("zq_tell", "wikidata", "Q2")),
+    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("zq_tell"), "wikidata", "Q2")),
     locationPrecision = Place.Precision.Stated,
     media = List(thumb),
     siteType = Some("tell")

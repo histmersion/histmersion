@@ -275,7 +275,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(AppConfig.load().places.sources.openStartWindowYears, Gazetteer.DefaultOpenStartWindowYears)
 
   test("inDataset: an LPF feature with no `when` takes its dataset's; a dated one keeps its own"):
-    val r = GazRecord("x", None, "lpf_d_x", "X", Place.Kind.Site, None, Span.always, Nil, Nil, None, None)
+    val r = GazRecord("x", None, com.histmersion.api.catalogue.Place.Id("lpf_d_x"), "X", Place.Kind.Site, None, Span.always, Nil, Nil, None, None)
     val ds = LpfDataset(None, None, None, Span(Some(-800L), Some(-300L)))
     assertEquals(Gazetteer.inDataset(r, ds).span, Span(Some(-800L), Some(-300L)))
     assertEquals(Gazetteer.inDataset(r.modify(_.span).setTo(Span(Some(-500L), None)), ds).span, Span(Some(-500L), None))
@@ -402,7 +402,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       GazRecord(
         "wikidata:Q1",
         Some(ExternalId(LinkScheme.Wikidata, "Q1")),
-        "wikidata_q1",
+        com.histmersion.api.catalogue.Place.Id("wikidata_q1"),
         "X",
         kind,
         g,

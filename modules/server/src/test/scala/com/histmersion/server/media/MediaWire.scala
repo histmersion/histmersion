@@ -150,7 +150,7 @@ object MediaWire:
 
   private def place(id: String, label: String, kind: String, lon: Double, lat: Double, period: Option[(Long, Long)]) =
     Place.Input(
-      Place(id, label, kind, Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""), period.map(Period(_, _))),
+      Place(com.histmersion.api.catalogue.Place.Id(id), label, kind, Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""), period.map(Period(_, _))),
       List(Place.Name(label))
     )
 

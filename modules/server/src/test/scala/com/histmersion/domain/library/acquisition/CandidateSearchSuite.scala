@@ -47,7 +47,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     def byAuthor(authorId: String, since: LocalDate, limit: Int) = { asked.add(s"author $authorId"); Right(Nil) }
 
   private def work(doi: String, title: String = "A work") =
-    WorkRef(doi = Some(doi), title = Some(title), year = Some(2026))
+    WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply))
 
   private def fresh(): Unit =
     import com.augustnagro.magnum.*
@@ -86,11 +86,11 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        "zzcand_have",
-        "Have",
-        Nil,
-        Some("10.5555/zzcand.have"),
-        Some(2020),
+        com.histmersion.api.library.Citekey("zzcand_have"),
+        com.histmersion.api.library.Title("Have"),
+        (Nil).map(com.histmersion.api.library.AuthorName.apply),
+        (Some("10.5555/zzcand.have")).map(com.histmersion.api.library.Doi.apply),
+        (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
         None,
         com.histmersion.api.library.Source.Status.Current,
         Nil,
@@ -180,11 +180,11 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        "zzcand_src",
-        "Source",
-        Nil,
-        Some("10.5555/zzcand.src"),
-        Some(2010),
+        com.histmersion.api.library.Citekey("zzcand_src"),
+        com.histmersion.api.library.Title("Source"),
+        (Nil).map(com.histmersion.api.library.AuthorName.apply),
+        (Some("10.5555/zzcand.src")).map(com.histmersion.api.library.Doi.apply),
+        (Some(2010)).map(com.histmersion.api.catalogue.Year.apply),
         None,
         com.histmersion.api.library.Source.Status.Current,
         Nil,

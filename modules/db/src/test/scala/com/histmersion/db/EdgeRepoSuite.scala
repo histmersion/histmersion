@@ -31,11 +31,11 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   private val Prefix = "zzedge"
 
   private def source(ck: String, edges: List[Edge] = Nil, topics: List[String] = Nil) = Source(
-    citekey = ck,
-    title = s"Title $ck",
-    authors = List("A"),
-    doi = Some(s"10.1/$ck"),
-    year = Some(2020),
+    citekey = com.histmersion.api.library.Citekey(ck),
+    title = com.histmersion.api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    doi = (Some(s"10.1/$ck")).map(com.histmersion.api.library.Doi.apply),
+    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
     topics = topics,
@@ -59,9 +59,9 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("an edge to a source not stored yet is parked, listed as unresolved, and promoted when it arrives"):
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
-    put(source(a, edges = List(Edge(a, b, "challenges"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "challenges"))))
     // the domain read still carries it — a patch or an export must not lose it
-    assertEquals(SourceFixtures.load(ds, a).get.edges, List(Edge(a, b, "challenges")))
+    assertEquals(SourceFixtures.load(ds, a).get.edges, List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "challenges")))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
@@ -79,7 +79,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val a = s"${Prefix}a2020_x"
     val slug = s"${Prefix}_topic"
     val _ = ArticleFixtures.put(ds, Article(slug, "A topic", "concept", "# A topic", None, Nil, Nil, None))
-    put(source(a, edges = List(Edge(a, slug, "updates"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(slug), "updates"))))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
@@ -91,7 +91,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val a = s"${Prefix}a2020_x"
     put(source(s"${Prefix}c2019_full"))
     put(source(s"${Prefix}d2018_one")); put(source(s"${Prefix}d2018_two"))
-    put(source(a, edges = List(Edge(a, s"${Prefix}c2019", "references"), Edge(a, s"${Prefix}d2018", "references"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}c2019"), "references"), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}d2018"), "references"))))
     assert(SourceFixtures.resolveEdges(ds) >= 1)
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
@@ -101,8 +101,8 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("graph: every link joins two nodes of the result, whatever the depth cut-off"):
     val (a, b, c, d) = (s"${Prefix}a2020_x", s"${Prefix}b2021_y", s"${Prefix}c2019_z", s"${Prefix}d2018_w")
     List(b, c, d).foreach(k => put(source(k)))
-    put(source(a, edges = List(Edge(a, b, "references"), Edge(a, "not_a_source_topic", "references"))))
-    put(source(c, edges = List(Edge(c, a, "challenges"), Edge(c, d, "references"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "references"), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey("not_a_source_topic"), "references"))))
+    put(source(c, edges = List(Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(a), "challenges"), Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(d), "references"))))
     val g1 = CitationFixtures.graph(ds, a, 1)
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
