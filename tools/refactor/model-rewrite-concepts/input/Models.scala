@@ -19,3 +19,14 @@ object Calls:
   def echo(label: String): String = label
   def echoed: String = echo("echo")
   def unrelated: Unrelated = Unrelated("raw", 3L)
+
+object Rendering:
+  var evaluations = 0
+  def observed(r: Report): Report =
+    evaluations += 1
+    r
+  def strings(xs: List[String]): String = xs.mkString("|")
+  def optional(s: Option[String]): String = s.getOrElse("missing")
+  def render(r: Report): String = strings(observed(r).authors) + optional(r.doi)
+  def normalized(r: Report): Option[String] = r.doi.map(_.trim).filter(_.nonEmpty)
+  def forwarded(r: Report): Report = Report(r.label, r.title, r.bytes, r.lat, r.doi, r.authors, r.year)

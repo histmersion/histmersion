@@ -12,7 +12,8 @@ object ModelTypeRewrite {
     scalarBoundaryOwners: List[String] = Nil, scalarBoundaryCalls: Map[String,List[Int]] = Map.empty, codecImport: Option[String] = None,
     knownValues: Map[String,String] = Map.empty, optionalKnownValues: List[String] = Nil,
     methods: List[Record] = Nil, primitiveTypes: Map[String,String] = Map.empty,
-    listResults: List[String] = Nil, listKnownValues: List[String] = Nil)
+    listResults: List[String] = Nil, listKnownValues: List[String] = Nil,
+    containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -38,6 +39,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     require(p.listKnownValues.toSet.subsetOf(p.knownValues.keySet) && p.listKnownValues.toSet.intersect(p.optionalKnownValues.toSet).isEmpty)
     require(p.primitiveTypes.values.forall(Set("scala/Int#", "scala/Long#", "scala/Double#", "java/lang/String#")), "Unsupported reviewed primitive base")
     require(p.scalarBoundaryCalls.values.forall(_.forall(_ >= 0)))
+    require(p.containerBoundaryCalls.values.forall(_.forall(_ >= 0)))
     Configured.ok(new ModelTypeRewrite(p))
   }
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -69,6 +71,8 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
     def scalarBoundary(t: Term): Boolean = {
       val parents = ancestors(t)
+      val owners = if(container(t.symbol.value).isEmpty) policy.scalarBoundaryOwners else policy.containerBoundaryOwners
+      val calls = if(container(t.symbol.value).isEmpty) policy.scalarBoundaryCalls else policy.containerBoundaryCalls
       val forwarded = parents.exists {
         case a: Term.Apply =>
           val target = resultSymbol(a.fun)
@@ -83,9 +87,9 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
           }
         case _ => false
       }
-      !forwarded && (parents.collectFirst { case d: Defn.Def => d.name.symbol.value }.exists(policy.scalarBoundaryOwners.contains) ||
+      !forwarded && (parents.collectFirst { case d: Defn.Def => d.name.symbol.value }.exists(owners.contains) ||
         parents.exists {
-          case a: Term.Apply => policy.scalarBoundaryCalls.get(a.fun.symbol.value).exists(indices =>
+          case a: Term.Apply => calls.get(a.fun.symbol.value).exists(indices =>
             indices.exists(i => a.argClause.values.lift(i).exists(arg => arg.pos.start <= t.pos.start && arg.pos.end >= t.pos.end)))
           case _ => false
         })
@@ -145,6 +149,12 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       }.getOrElse(Patch.empty)
     }
     val boundaries = doc.tree.collect {
+      case t: Term.Select if fields.contains(t.symbol.value) && container(t.symbol.value).nonEmpty && scalarBoundary(t) => Patch.addRight(t,".map(_.value)")
+      case n: Term.Name if fields.contains(n.symbol.value) && container(n.symbol.value).nonEmpty && scalarBoundary(n) && !n.parent.exists {
+        case s: Term.Select => s.name eq n
+        case p: Term.Param => p.name eq n
+        case _ => false
+      } => Patch.addRight(n,".map(_.value)")
       case t: Term.Select if fields.contains(t.symbol.value) && container(t.symbol.value).isEmpty && scalarBoundary(t) && !wrappedScalars((t.pos.start,t.pos.end)) => Patch.addRight(t,".value")
       case n: Term.Name if fields.contains(n.symbol.value) && container(n.symbol.value).isEmpty && scalarBoundary(n) && !wrappedScalars((n.pos.start,n.pos.end)) && !n.parent.exists {
         case s: Term.Select => s.name eq n

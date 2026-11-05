@@ -30,12 +30,29 @@ violations or a proven transitive dataflow closure. The first impact observation
 retained; impact-2 deterministically selects the most specific nested owner instead
 of an arbitrary parent prefix, without changing the source/reference denominator.
 
-Next: generate the twelve missing type definitions with Scalafix and produce one
-isolated production preview, then resolve its definition/caller closure and use the
-existing pipeline. Arithmetic, formatted output, codecs, inferred result propagation
-and parse boundaries still require production validation; nested containers are not
-supported by this extension. See models/reviews/multi-concept-1/{rewrite-guards.txt,
-legacy-fixture.txt,impact-2/status.txt} and the versioned fixture/configuration.
+The configured Preview rule now generates all twelve missing Pure definitions,
+including companion-owned types, and rewrites all seventeen concepts together.
+Preview-2 changed 196 overlay files; compiling all 487 API production sources
+reported 42 errors. Preview-3 changes 201 overlay files and reports 24 errors after
+adding configured Option/List rendering boundaries to the shared rewrite. All
+3,159 original source hashes remained unchanged. These compiler diagnostic counts
+are not violation counts or verified repairs; subsequent errors can emerge after
+earlier failures are resolved. Both failed compile observations are retained.
+
+The extended fixture passes exact output, compilation and behavior, including
+container order, absent values, one evaluation of the receiver and typed forwarding
+inside a configured boundary. Scalar and container boundary permissions are
+separate. No blanket implicit primitive conversion was introduced.
+
+Next: resolve the remaining normalization, typed helper propagation, storage
+arithmetic and rendering shapes for the whole cohort, then verify dependent
+modules and tests through the existing pipeline. The preview-3 AssetLinks boundary
+key incorrectly names library instead of media; it matched nothing and remains
+uncorrected in that frozen observation. API overlay compilation does not verify
+Scala.js or dependent modules. PreviewCompile records compiler failure but its
+current wrapper exits zero; it is diagnostic evidence, not a pipeline success gate.
+Nested containers remain unsupported. See models/reviews/multi-concept-1/
+{rewrite-boundaries.txt,preview-2,preview-3} and the versioned configurations.
 Application fixes in this purpose-review step: zero. Detector refinement rounds
 consumed: zero. Uncertain concepts and all other policy families remain tracked.
 
