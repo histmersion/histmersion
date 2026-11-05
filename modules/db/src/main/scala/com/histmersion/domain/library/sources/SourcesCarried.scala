@@ -50,7 +50,7 @@ object SourcesCarried:
 
   /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes.
     */
-  val sources: CarriedKind = new CarriedKind:
+  def sources(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
     val entry: BundleEntry = BundleEntry(Bundle.Kind.Source.file)
     override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Source)
@@ -92,7 +92,7 @@ object SourcesCarried:
     ): Option[BlobSink] = SourceBundleRepo.blobIn(use, sha256, writer, files)
 
     override val rowsIn: List[RowsIn] = List(
-      rows(10)(SourceBundleRepo.sourcesIn),
+      rows(10)(w => SourceBundleRepo.sourcesIn(w, referrers)),
       RowsIn(ImportStage.AfterBlobs, ImportRank(100), SourceBundleRepo.bodyRenamesIn),
       RowsIn(ImportStage.Derived, ImportRank(200), SourceBundleRepo.derivedIn)
     )
@@ -142,4 +142,4 @@ object SourcesCarried:
     )
 
   /** Every kind of the library, in the order the registry has always listed them. */
-  val all: List[CarriedKind] = List(sources, findings, edges, unresolvedEdges, assessments, aliases)
+  def all(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): List[CarriedKind] = List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)

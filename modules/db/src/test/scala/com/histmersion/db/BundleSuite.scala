@@ -369,7 +369,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         com.histmersion.util.storage.ByteSource.file(f),
         BundleFormat.sha256Hex(bundle),
-        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
+        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         resolutions,
         merge,

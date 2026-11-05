@@ -1,0 +1,8 @@
+class	test	status	message
+com.histmersion.util.data.DataContributionsSuite	an owner registered twice and a table claimed twice are refused, each named	passed	
+com.histmersion.util.data.DataContributionsSuite	every table of the migrated schema has exactly one owner	passed	
+com.histmersion.util.data.DataContributionsSuite	today's registry carries every entry of the bundle format once, and a merge rule for every kind of record	passed	
+com.histmersion.util.data.DataContributionsSuite	today's registry: the owners in their order, every table once	passed	
+com.histmersion.util.data.mirror.MirrorSuite	a kind nobody registered is refused	passed	
+com.histmersion.util.data.mirror.MirrorSuite	a note from the registered member of its kind	passed	
+com.histmersion.util.data.mirror.MirrorSuite	today's registration	passed	

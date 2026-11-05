@@ -16,8 +16,8 @@ import com.histmersion.util.data.mirror.Mirror
   * files in, the sources a restore must not drop unasked, what a bundle carries of it and how a merge treats it, the
   * sources' notes in the mirror, the rebuild of their chunks, its counts and its checks.
   */
-object LibraryData extends DataContribution:
-  val owner: DataOwner = DataOwner("library")
+final class LibraryData(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers) extends DataContribution:
+  val owner: DataOwner = LibraryData.owner
 
   val tables: List[OwnedTable] = OwnedTable.all(
     "sources",
@@ -43,13 +43,13 @@ object LibraryData extends DataContribution:
   override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), "source")))
 
   /** The sources and what they own. */
-  override val carried: List[CarriedKind] = LibraryExchange.carried
+  override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)
 
   /** How a merge treats sources and findings. */
   override val mergeRules: List[MergeRules] = LibraryExchange.mergeRules
 
   /** The sources' records in the mirror. */
-  val SourceNotes: Mirror.Records = Mirror.Records("sources")
+  val SourceNotes: Mirror.Records = LibraryData.SourceNotes
 
   /** The sources' notes (each its frontmatter and its notes, `SourceNotes`), in `sources/`. */
   override val mirror: List[Mirror.Export] = List(new Mirror.Export:
@@ -62,3 +62,8 @@ object LibraryData extends DataContribution:
   override val checks: List[CheckRule] = SourcesData.checks(owner)
 
   def figures(using DbCon): DataFigures = DataFigures(SourcesData.figures)
+
+
+object LibraryData:
+  val owner: DataOwner = DataOwner("library")
+  val SourceNotes: Mirror.Records = Mirror.Records("sources")

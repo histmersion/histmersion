@@ -143,14 +143,14 @@ private[sources] object SourceBundleRepo:
   private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] =
     w.once(changedBodies)
 
-  def sourcesIn(w: BundleImport.Writer): Unit =
+  def sourcesIn(w: BundleImport.Writer, referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): Unit =
     given DbCon = w.transaction
     // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
     // old citekey does not stay an alias (it is the other work's now)
     w.merged.renames.foreach { (_, from, to) =>
       w.asLocal {
         SourceRepo
-          .renameIn(from, to, w.opts.sourceReferrers)
+          .renameIn(from, to, referrers)
           .left
           .foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
@@ -163,7 +163,7 @@ private[sources] object SourceBundleRepo:
       localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
         w.asLocal {
           SourceRepo
-            .renameIn(old, s.citekey, w.opts.sourceReferrers)
+            .renameIn(old, s.citekey, referrers)
             .left
             .foreach(e => throw ImportAbort(List(s"source $old → ${s.citekey}: ${e.message}")))
         }

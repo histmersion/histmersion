@@ -120,8 +120,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           MergeRuleSet(Deps.data.mergeRules),
           com.histmersion.domain.automation.worklists.WorkListMergeFollowUps,
           applyJobs,
-          () => backups.create(Instant.now()).map(_.file),
-          Deps.sourceReferrers
+          () => backups.create(Instant.now()).map(_.file)
         )
       ),
       deps.maintenance

@@ -67,12 +67,12 @@ production	core	unresolved-call-metadata	unresolved	8179
 production	db	callable-value-or-companion	unresolved	90
 production	db	companion-apply-candidates	no-project-class-resolved	5
 production	db	companion-apply-candidates	project-model-result-candidate	16
-production	db	method-call	no-project-class-resolved	717
+production	db	method-call	no-project-class-resolved	718
 production	db	method-call	project-model-result-candidate	291
 production	db	new	no-project-class-resolved	1
 production	db	new	project-model-result-candidate	2
 production	db	parent-initializer	no-project-class-resolved	54
-production	db	project-signature-call-candidate	no-project-class-resolved	600
+production	db	project-signature-call-candidate	no-project-class-resolved	602
 production	db	project-signature-call-candidate	project-model-result-candidate	1431
 production	db	unresolved-call	unresolved	74
 production	db	unresolved-call-metadata	unresolved	4981
@@ -236,10 +236,10 @@ production	server	new	project-model-result-candidate	25
 production	server	parent-initializer	no-project-class-resolved	447
 production	server	parent-initializer	project-model-result-candidate	5
 production	server	parent-initializer	unresolved	11
-production	server	project-signature-call-candidate	no-project-class-resolved	4172
+production	server	project-signature-call-candidate	no-project-class-resolved	4173
 production	server	project-signature-call-candidate	project-model-result-candidate	3972
 production	server	unresolved-call	unresolved	780
-production	server	unresolved-call-metadata	unresolved	23306
+production	server	unresolved-call-metadata	unresolved	23307
 production	upstreams	callable-value-or-companion	unresolved	14
 production	upstreams	companion-apply-candidates	project-model-result-candidate	16
 production	upstreams	method-call	no-project-class-resolved	406
@@ -333,7 +333,7 @@ test	db	new	no-project-class-resolved	2
 test	db	parent-initializer	no-project-class-resolved	44
 test	db	parent-initializer	project-model-result-candidate	49
 test	db	parent-initializer	unresolved	2
-test	db	project-signature-call-candidate	no-project-class-resolved	1015
+test	db	project-signature-call-candidate	no-project-class-resolved	1016
 test	db	project-signature-call-candidate	project-model-result-candidate	2204
 test	db	unresolved-call	unresolved	139
 test	db	unresolved-call-metadata	unresolved	9721

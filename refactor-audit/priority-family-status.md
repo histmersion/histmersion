@@ -1,5 +1,29 @@
 # Priority-family status
 
+## Import registry ownership repaired
+
+The library contribution now captures SourceReferrers and supplies it to its own
+importer. Generic ImportOptions and BundleService.Wiring no longer transport a
+library type. One frozen 12-file AST/token batch updated definitions, composition
+and all callers. Both rename paths, their writer transaction and referrer order are
+structurally unchanged. All 39 database tests pass before/after, seven supplementary
+server registry/mirror tests pass, none skip, and all 3,159 sources compile.
+
+Original-ID reconciliation verifies four production relationships fixed after an
+explicit unresolved-to-confirmed adjudication. A test value-to-method identity
+replacement has no repair credit; three new test-composition relationships have
+exact reviews. The final gate has zero new/reopened findings, with its earlier
+unreviewed failure preserved. Current reviewed production: 111 accepted contributions,
+zero outstanding confirmed/unresolved. Tests: 85 non-violations, 130 candidates.
+Seventy-five relationships have ambiguous owners and 182,318 direction rows remain
+unclassified. Primitive counts are unchanged: 30,393 production member leaves,
+62,229 all-scope leaves, 46,914 unresolved. Other families retain older checkpoints.
+
+This is manual/design treatment, without bulk-automation credit or independent
+detector-quality acceptance. See `import-registry/OWNERSHIP.md` and
+`import-registry/ownership-verification/current-treatment.tsv`. Broader module
+isolation and the overall 90% target remain unproven; copy automation stays paused.
+
 ## Import-registry baseline repaired before ownership changes
 
 Real PostgreSQL import/merge/rename tests exposed ten failures in 39 tests before
