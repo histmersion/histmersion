@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+final case class CritiqueRef(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   def wire: String = s"$src>$dst"
 
   def same(o: CritiqueRef): Boolean = (src == o.src && dst == o.dst) || (src == o.dst && dst == o.src)

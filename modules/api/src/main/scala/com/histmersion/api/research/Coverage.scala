@@ -8,14 +8,14 @@ import com.histmersion.api.given
 import com.histmersion.api.library.Source
 
 final case class Coverage(
-    slug: String,
+    slug: com.histmersion.api.research.Article.Slug,
     filter: Article.Filter,
-    filterLine: String,
-    total: Int,
-    checked: Int,
+    filterLine: Coverage.FilterLine,
+    total: Coverage.Total,
+    checked: Coverage.Checked,
     cited: List[Coverage.Source],
     notUsed: List[Coverage.Entry],
-    citedOutside: List[String],
+    citedOutside: List[com.histmersion.api.library.Citekey],
     statuses: List[StatusCount],
     edges: List[Coverage.Edge],
     searches: List[CoverageSearch],
@@ -30,17 +30,35 @@ final case class Coverage(
 object Coverage:
 
 
-  final case class Drift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  type FilterLine = FilterLine.T
+  object FilterLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Checked = Checked.T
+  object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Drift(kind: DriftKind, citekeys: List[com.histmersion.api.library.Citekey]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class Edge(from: String, kind: String, to: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Edge(from: com.histmersion.api.library.Citekey, kind: Edge.Kind, to: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Edge:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class Entry(source: Source, reason: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Entry(source: Source, reason: Option[Entry.Reason]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Entry:
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class Reason(citekey: String, reason: String) derives KindlingsCodecAsObject
+  final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Reason.Value) derives KindlingsCodecAsObject
   object Reason:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
       .schema
@@ -70,10 +88,10 @@ object Coverage:
     def list(m: Map[String, String]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _))
 
   final case class Source(
-      citekey: String,
-      title: String,
-      year: Option[Int],
+      citekey: com.histmersion.api.library.Citekey,
+      title: com.histmersion.api.library.Title,
+      year: Option[com.histmersion.api.catalogue.Year],
       status: com.histmersion.api.library.Source.Status,
-      authors: List[String] = Nil
+      authors: List[com.histmersion.api.library.AuthorName] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

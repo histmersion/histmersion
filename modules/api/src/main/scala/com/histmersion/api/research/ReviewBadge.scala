@@ -6,12 +6,28 @@ import com.histmersion.api.given
 
 final case class ReviewBadge(
     state: ReviewState,
-    label: String,
-    detail: String,
-    openMajors: Int = 0,
-    openMinors: Int = 0,
-    findings: Int = 0,
-    runs: Int = 0,
-    round: Option[Int] = None
+    label: ReviewBadge.Label,
+    detail: ReviewBadge.Detail,
+    openMajors: ReviewBadge.OpenMajors = 0,
+    openMinors: ReviewBadge.OpenMinors = 0,
+    findings: ReviewBadge.Findings = 0,
+    runs: ReviewBadge.Runs = 0,
+    round: Option[ReviewBadge.Round] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object ReviewBadge:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Detail = Detail.T
+  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenMajors = OpenMajors.T
+  object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenMinors = OpenMinors.T
+  object OpenMinors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Findings = Findings.T
+  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Runs = Runs.T
+  object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Round = Round.T
+  object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

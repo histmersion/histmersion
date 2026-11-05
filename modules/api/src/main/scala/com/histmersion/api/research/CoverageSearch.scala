@@ -4,6 +4,12 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class CoverageSearch(query: String, total: Int, cited: List[String])
+final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSearch.Total, cited: List[com.histmersion.api.library.Citekey])
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CoverageSearch:
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

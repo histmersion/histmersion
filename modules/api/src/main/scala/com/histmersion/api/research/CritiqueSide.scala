@@ -5,10 +5,16 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class CritiqueSide(
-    citekey: String,
-    title: Option[String] = None,
-    year: Option[Int] = None,
-    cited: Boolean = false,
-    mentions: Int = 0
+    citekey: com.histmersion.api.library.Citekey,
+    title: Option[com.histmersion.api.library.Title] = None,
+    year: Option[com.histmersion.api.catalogue.Year] = None,
+    cited: CritiqueSide.Cited = false,
+    mentions: CritiqueSide.Mentions = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object CritiqueSide:
+  type Cited = Cited.T
+  object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mentions = Mentions.T
+  object Mentions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -6,11 +6,11 @@ import com.histmersion.api.given
 
 final case class CritiquePair(
     src: CritiqueSide,
-    kinds: List[String],
+    kinds: List[CritiquePair.Kinds],
     dst: CritiqueSide,
     state: CritiqueState,
-    reason: Option[String] = None,
-    reasonBy: Option[String] = None
+    reason: Option[CritiquePair.Reason] = None,
+    reasonBy: Option[CritiquePair.ReasonBy] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def ref: CritiqueRef = CritiqueRef(src.citekey, dst.citekey)
@@ -23,3 +23,11 @@ final case class CritiquePair(
   def bearing: Boolean = open && criticised.cited
 
   def line: String = s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]"
+
+object CritiquePair:
+  type Kinds = Kinds.T
+  object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonBy = ReasonBy.T
+  object ReasonBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

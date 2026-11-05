@@ -12,7 +12,15 @@ object Critiques:
 
   def paragraphs(body: String): List[String] = units(body).map(_.text)
 
-  final case class Block(from: Int, to: Int, text: String)
+  final case class Block(from: Block.From, to: Block.To, text: Block.Text)
+
+  object Block:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def units(body: String): List[Block] =
     val lines = body.replace("\r\n", "\n").split("\n", -1).toVector

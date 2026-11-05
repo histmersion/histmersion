@@ -1,0 +1,29 @@
+package fixture
+
+final case class Entry(label: Token, size: Option[Entry.Size], existing: Token)
+object Entry:
+  type Size = Size.T
+  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val sentinel = 1
+
+object Group:
+  final case class Row(keys: Map[Row.KeysKey, Row.KeysValue], active: Row.Active)
+
+  object Row:
+    type KeysKey = KeysKey.T
+    object KeysKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KeysValue = KeysValue.T
+    object KeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Active = Active.T
+    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+final case class Token(value: Token.Value)
+
+object Token:
+  type Value = Value.T
+  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+final case class Collision(kind: String)
+object Collision:
+  object Kind
