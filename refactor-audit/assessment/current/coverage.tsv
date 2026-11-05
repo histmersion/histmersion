@@ -5,7 +5,7 @@ chimney-iron-tests	0	8
 cli	74	33
 config	152	11
 console	1	0
-core	126	92
+core	128	93
 db	256	90
 files	15	10
 plugin-api	65	8
@@ -23,7 +23,7 @@ plugins/events	19	2
 plugins/fetchers	22	2
 plugins/gazetteers	9	4
 plugins/media	38	5
-server	624	313
+server	626	314
 upstreams	32	7
 values	56	6
 web	276	87

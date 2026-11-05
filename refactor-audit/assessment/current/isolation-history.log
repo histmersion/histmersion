@@ -3,14 +3,14 @@ WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scalafix.internal
 WARNING: Please consider reporting this to the maintainers of class scalafix.internal.reflect.ClasspathOps$
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
 PASS
-source-files=3143
+source-files=3149
 raw-forbidden-evidence=689
 package-qualifier-evidence=130
 candidate-relationships=390
 production-candidates=191
 test-candidates=199
 ambiguous-owner-relationships=106
-unclassified-direction-evidence=181915
+unclassified-direction-evidence=182152
 reviewed-additional-test-nonviolations=10
 new=0
 reopened=0

@@ -10,6 +10,7 @@ coverage=direct resolved references plus repository calls through known source m
 unresolved-reference-names includes unsupported transaction SQL expressions; missing-symbol names are collected only in best-effort mode
 SQL controls: configured JDBC method symbols with a direct string literal and a recognized leading command; dynamic, comment-prefixed and compound SQL require review
 completion=check Scalafix exit status for missing/stale SemanticDB and parse failures; this file alone is not a pass
+timer-factory=0
 console-input=0
 console-factory=0
 domain-console=0
@@ -24,6 +25,10 @@ config-load=0
 process=0
 repo-factory=0
 repo-transaction=6
+permission:monotonic-adapter:uses=0
+permission:deps-timing-composition:uses=0
+permission:deps-timing-factory:uses=0
+permission:system-timing-composition:uses=0
 permission:plugin-process-monotonic-wait:uses=0
 permission:plugin-generator-exit:uses=0
 permission:console-adapter:uses=0

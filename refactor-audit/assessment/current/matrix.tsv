@@ -1,13 +1,13 @@
 rule	module	scope	current	baseline	delta
-capability/clock	ALL	production; configured symbol/owner policy	99	unknown	incomparable
+capability/clock	ALL	production; configured symbol/owner policy	57	unknown	incomparable
 capability/clock	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	cli	production; configured symbol/owner policy	3	unknown	incomparable
 capability/clock	config	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	console	production; configured symbol/owner policy	0	unknown	incomparable
-capability/clock	core	production; configured symbol/owner policy	3	unknown	incomparable
-capability/clock	db	production; configured symbol/owner policy	2	unknown	incomparable
+capability/clock	core	production; configured symbol/owner policy	0	unknown	incomparable
+capability/clock	db	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	files	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugin-api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugin-fixtures/hello	production; configured symbol/owner policy	0	unknown	incomparable
@@ -24,7 +24,7 @@ capability/clock	plugins/events	production; configured symbol/owner policy	0	unk
 capability/clock	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/media	production; configured symbol/owner policy	0	unknown	incomparable
-capability/clock	server	production; configured symbol/owner policy	89	unknown	incomparable
+capability/clock	server	production; configured symbol/owner policy	52	unknown	incomparable
 capability/clock	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	web	production; configured symbol/owner policy	0	unknown	incomparable
@@ -405,6 +405,35 @@ capability/repo-transaction	server	production; configured symbol/owner policy	0	
 capability/repo-transaction	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/repo-transaction	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/repo-transaction	web	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	ALL	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	api	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	cli	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	config	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	console	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	core	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	db	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	files	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-api	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-fixtures/hello	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-fixtures/hello-ai	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-fixtures/hello-deps	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-fixtures/hello-lib	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-host	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-resolver	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-testkit	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugin-vaults	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/ai-http	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/calibre	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/events	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	plugins/media	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	server	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	values	production; configured symbol/owner policy	0	unknown	incomparable
+capability/timer-factory	web	production; configured symbol/owner policy	0	unknown	incomparable
 derivation/schema-bridge	ALL	production+tests; semantic plain KindlingsSchema bridges, including deferred shapes	0	unknown	incomparable
 derivation/schema-bridge	api	production+tests; semantic plain KindlingsSchema bridges, including deferred shapes	0	unknown	incomparable
 derivation/schema-bridge	chimney-iron	production+tests; semantic plain KindlingsSchema bridges, including deferred shapes	0	unknown	incomparable

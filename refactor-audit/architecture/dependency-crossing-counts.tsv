@@ -1,6 +1,6 @@
 scope	module	from-region	to-region	status	count
 production	api			unclassified-direction	8052
-production	api			unresolved-reference	2229
+production	api			unresolved-reference	2234
 production	chimney-iron			unresolved-reference	8
 production	cli			unclassified-direction	4862
 production	cli			unresolved-reference	111
@@ -14,12 +14,12 @@ production	config			unclassified-direction	214
 production	config			unresolved-reference	151
 production	console	com.histmersion.util		unclassified-direction	1
 production	console	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1
-production	core			unclassified-direction	3199
+production	core			unclassified-direction	3202
 production	core			unresolved-reference	303
 production	core		com.histmersion.domain.automation	unclassified-direction	239
 production	core		com.histmersion.domain.library	unclassified-direction	34
 production	core		com.histmersion.domain.research	unclassified-direction	13
-production	core		com.histmersion.util	unclassified-direction	605
+production	core		com.histmersion.util	unclassified-direction	624
 production	core	com.histmersion.domain.automation		unclassified-direction	22
 production	core	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	2
 production	core	com.histmersion.domain.catalogue		unclassified-direction	1444
@@ -41,9 +41,9 @@ production	core	com.histmersion.domain.research		unresolved-reference	8
 production	core	com.histmersion.domain.research	com.histmersion.domain.automation	allowed-direction; contract-review	17
 production	core	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	2
 production	core	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	16
-production	core	com.histmersion.util		unclassified-direction	489
+production	core	com.histmersion.util		unclassified-direction	491
 production	core	com.histmersion.util		unresolved-reference	11
-production	core	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	64
+production	core	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	66
 production	db	com.histmersion.domain.automation		unclassified-direction	1156
 production	db	com.histmersion.domain.automation		unresolved-reference	27
 production	db	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	76
@@ -54,11 +54,11 @@ production	db	com.histmersion.domain.catalogue		unresolved-reference	68
 production	db	com.histmersion.domain.catalogue	com.histmersion.domain.catalogue	same-region; feature-contract-review	226
 production	db	com.histmersion.domain.catalogue	com.histmersion.domain.library	forbidden-direction	77
 production	db	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	1605
-production	db	com.histmersion.domain.library		unclassified-direction	1619
+production	db	com.histmersion.domain.library		unclassified-direction	1621
 production	db	com.histmersion.domain.library		unresolved-reference	41
 production	db	com.histmersion.domain.library	com.histmersion.domain.catalogue	allowed-direction; contract-review	174
 production	db	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	187
-production	db	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	1046
+production	db	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	1057
 production	db	com.histmersion.domain.media		unclassified-direction	454
 production	db	com.histmersion.domain.media		unresolved-reference	14
 production	db	com.histmersion.domain.media	com.histmersion.domain.catalogue	allowed-direction; contract-review	19
@@ -131,54 +131,54 @@ production	plugins/gazetteers			unclassified-direction	148
 production	plugins/gazetteers			unresolved-reference	1
 production	plugins/media			unclassified-direction	876
 production	plugins/media			unresolved-reference	22
-production	server			unclassified-direction	6245
-production	server			unresolved-reference	223
-production	server		com.histmersion.domain.automation	unclassified-direction	792
+production	server			unclassified-direction	6250
+production	server			unresolved-reference	218
+production	server		com.histmersion.domain.automation	unclassified-direction	791
 production	server		com.histmersion.domain.catalogue	unclassified-direction	321
-production	server		com.histmersion.domain.library	unclassified-direction	600
-production	server		com.histmersion.domain.media	unclassified-direction	110
+production	server		com.histmersion.domain.library	unclassified-direction	598
+production	server		com.histmersion.domain.media	unclassified-direction	111
 production	server		com.histmersion.domain.personal	unclassified-direction	46
 production	server		com.histmersion.domain.research	unclassified-direction	144
-production	server		com.histmersion.util	unclassified-direction	1360
-production	server	com.histmersion.domain.automation		unclassified-direction	9327
+production	server		com.histmersion.util	unclassified-direction	1396
+production	server	com.histmersion.domain.automation		unclassified-direction	9332
 production	server	com.histmersion.domain.automation		unresolved-reference	160
-production	server	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	1977
-production	server	com.histmersion.domain.automation	com.histmersion.util	allowed-direction; contract-review	874
-production	server	com.histmersion.domain.catalogue		unclassified-direction	4745
-production	server	com.histmersion.domain.catalogue		unresolved-reference	90
+production	server	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	1980
+production	server	com.histmersion.domain.automation	com.histmersion.util	allowed-direction; contract-review	904
+production	server	com.histmersion.domain.catalogue		unclassified-direction	4747
+production	server	com.histmersion.domain.catalogue		unresolved-reference	88
 production	server	com.histmersion.domain.catalogue	com.histmersion.domain.catalogue	same-region; feature-contract-review	598
-production	server	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	826
-production	server	com.histmersion.domain.library		unclassified-direction	8709
-production	server	com.histmersion.domain.library		unresolved-reference	156
-production	server	com.histmersion.domain.library	com.histmersion.domain.automation	allowed-direction; contract-review	976
-production	server	com.histmersion.domain.library	com.histmersion.domain.catalogue	allowed-direction; contract-review	82
-production	server	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	967
+production	server	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	840
+production	server	com.histmersion.domain.library		unclassified-direction	8714
+production	server	com.histmersion.domain.library		unresolved-reference	153
+production	server	com.histmersion.domain.library	com.histmersion.domain.automation	allowed-direction; contract-review	982
+production	server	com.histmersion.domain.library	com.histmersion.domain.catalogue	allowed-direction; contract-review	83
+production	server	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	968
 production	server	com.histmersion.domain.library	com.histmersion.domain.media	allowed-direction; contract-review	46
 production	server	com.histmersion.domain.library	com.histmersion.domain.personal	forbidden-direction	11
-production	server	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	863
+production	server	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	884
 production	server	com.histmersion.domain.media		unclassified-direction	1986
-production	server	com.histmersion.domain.media		unresolved-reference	45
+production	server	com.histmersion.domain.media		unresolved-reference	44
 production	server	com.histmersion.domain.media	com.histmersion.domain.catalogue	allowed-direction; contract-review	34
 production	server	com.histmersion.domain.media	com.histmersion.domain.library	forbidden-direction	4
 production	server	com.histmersion.domain.media	com.histmersion.domain.media	same-region; feature-contract-review	353
-production	server	com.histmersion.domain.media	com.histmersion.util	allowed-direction; contract-review	284
+production	server	com.histmersion.domain.media	com.histmersion.util	allowed-direction; contract-review	285
 production	server	com.histmersion.domain.personal		unclassified-direction	2459
 production	server	com.histmersion.domain.personal		unresolved-reference	34
 production	server	com.histmersion.domain.personal	com.histmersion.domain.library	forbidden-direction	48
 production	server	com.histmersion.domain.personal	com.histmersion.domain.personal	same-region; feature-contract-review	928
 production	server	com.histmersion.domain.personal	com.histmersion.util	allowed-direction; contract-review	215
 production	server	com.histmersion.domain.research		unclassified-direction	4175
-production	server	com.histmersion.domain.research		unresolved-reference	91
+production	server	com.histmersion.domain.research		unresolved-reference	90
 production	server	com.histmersion.domain.research	com.histmersion.domain.automation	allowed-direction; contract-review	827
 production	server	com.histmersion.domain.research	com.histmersion.domain.catalogue	allowed-direction; contract-review	29
 production	server	com.histmersion.domain.research	com.histmersion.domain.library	allowed-direction; contract-review	118
 production	server	com.histmersion.domain.research	com.histmersion.domain.personal	forbidden-direction	13
 production	server	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	295
-production	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	289
-production	server	com.histmersion.util		unclassified-direction	3940
+production	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	290
+production	server	com.histmersion.util		unclassified-direction	3944
 production	server	com.histmersion.util		unresolved-reference	228
 production	server	com.histmersion.util	com.histmersion.domain.library	forbidden-direction	48
-production	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1980
+production	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1990
 production	upstreams			unclassified-direction	273
 production	upstreams			unresolved-reference	31
 production	upstreams		com.histmersion.domain.library	unclassified-direction	168
@@ -203,7 +203,7 @@ production	values	com.histmersion.util		unresolved-reference	4
 production	values	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	8
 production	web			unclassified-direction	14326
 production	web			unresolved-reference	850
-test	api			unclassified-direction	9330
+test	api			unclassified-direction	9342
 test	api			unresolved-reference	131
 test	api	com.histmersion.util		unclassified-direction	133
 test	api	com.histmersion.util		unresolved-reference	4
@@ -218,14 +218,14 @@ test	config			unclassified-direction	53
 test	config			unresolved-reference	14
 test	config		com.histmersion.domain.research	unclassified-direction	7
 test	config		com.histmersion.util	unclassified-direction	8
-test	core			unclassified-direction	8393
+test	core			unclassified-direction	8397
 test	core			unresolved-reference	221
 test	core		com.histmersion.domain.automation	unclassified-direction	280
 test	core		com.histmersion.domain.catalogue	unclassified-direction	415
 test	core		com.histmersion.domain.library	unclassified-direction	139
 test	core		com.histmersion.domain.media	unclassified-direction	216
 test	core		com.histmersion.domain.research	unclassified-direction	32
-test	core		com.histmersion.util	unclassified-direction	485
+test	core		com.histmersion.util	unclassified-direction	501
 test	core	com.histmersion.domain.catalogue		unclassified-direction	74
 test	core	com.histmersion.domain.catalogue		unresolved-reference	20
 test	core	com.histmersion.domain.catalogue	com.histmersion.domain.catalogue	same-region; feature-contract-review	56
@@ -241,14 +241,14 @@ test	core	com.histmersion.domain.research		unclassified-direction	203
 test	core	com.histmersion.domain.research		unresolved-reference	7
 test	core	com.histmersion.domain.research	com.histmersion.domain.automation	allowed-direction; contract-review	16
 test	core	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	2
-test	core	com.histmersion.util		unclassified-direction	352
-test	core	com.histmersion.util		unresolved-reference	6
+test	core	com.histmersion.util		unclassified-direction	353
+test	core	com.histmersion.util		unresolved-reference	10
 test	core	com.histmersion.util	com.histmersion.domain.automation	forbidden-direction	16
 test	core	com.histmersion.util	com.histmersion.domain.catalogue	forbidden-direction	21
 test	core	com.histmersion.util	com.histmersion.domain.library	forbidden-direction	33
 test	core	com.histmersion.util	com.histmersion.domain.media	forbidden-direction	4
 test	core	com.histmersion.util	com.histmersion.domain.research	forbidden-direction	11
-test	core	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	34
+test	core	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	35
 test	db			unclassified-direction	7902
 test	db			unresolved-reference	118
 test	db		com.histmersion.domain.automation	unclassified-direction	220
@@ -266,14 +266,14 @@ test	db	com.histmersion.domain.catalogue	com.histmersion.domain.catalogue	same-r
 test	db	com.histmersion.domain.catalogue	com.histmersion.domain.library	forbidden-direction	11
 test	db	com.histmersion.domain.catalogue	com.histmersion.domain.media	forbidden-direction	7
 test	db	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	46
-test	db	com.histmersion.domain.library		unclassified-direction	272
+test	db	com.histmersion.domain.library		unclassified-direction	274
 test	db	com.histmersion.domain.library		unresolved-reference	7
 test	db	com.histmersion.domain.library	com.histmersion.domain.automation	allowed-direction; contract-review	6
 test	db	com.histmersion.domain.library	com.histmersion.domain.catalogue	allowed-direction; contract-review	81
 test	db	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	16
 test	db	com.histmersion.domain.library	com.histmersion.domain.media	allowed-direction; contract-review	3
 test	db	com.histmersion.domain.library	com.histmersion.domain.research	forbidden-direction	10
-test	db	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	49
+test	db	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	57
 test	db	com.histmersion.domain.media		unclassified-direction	102
 test	db	com.histmersion.domain.media		unresolved-reference	1
 test	db	com.histmersion.domain.media	com.histmersion.domain.media	same-region; feature-contract-review	5
@@ -329,31 +329,31 @@ test	plugins/gazetteers			unresolved-reference	2
 test	plugins/media			unclassified-direction	445
 test	plugins/media			unresolved-reference	10
 test	plugins/media		com.histmersion.domain.media	unclassified-direction	26
-test	server			unclassified-direction	20606
+test	server			unclassified-direction	20646
 test	server			unresolved-reference	573
 test	server		com.histmersion.domain.automation	unclassified-direction	3295
 test	server		com.histmersion.domain.catalogue	unclassified-direction	443
-test	server		com.histmersion.domain.library	unclassified-direction	876
+test	server		com.histmersion.domain.library	unclassified-direction	942
 test	server		com.histmersion.domain.media	unclassified-direction	685
 test	server		com.histmersion.domain.research	unclassified-direction	266
 test	server		com.histmersion.util	unclassified-direction	1673
-test	server	com.histmersion.domain.automation		unclassified-direction	3640
-test	server	com.histmersion.domain.automation		unresolved-reference	126
-test	server	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	583
+test	server	com.histmersion.domain.automation		unclassified-direction	3648
+test	server	com.histmersion.domain.automation		unresolved-reference	128
+test	server	com.histmersion.domain.automation	com.histmersion.domain.automation	same-region; feature-contract-review	584
 test	server	com.histmersion.domain.automation	com.histmersion.domain.library	forbidden-direction	84
 test	server	com.histmersion.domain.automation	com.histmersion.util	allowed-direction; contract-review	170
-test	server	com.histmersion.domain.catalogue		unclassified-direction	2518
+test	server	com.histmersion.domain.catalogue		unclassified-direction	2519
 test	server	com.histmersion.domain.catalogue		unresolved-reference	51
 test	server	com.histmersion.domain.catalogue	com.histmersion.domain.catalogue	same-region; feature-contract-review	627
 test	server	com.histmersion.domain.catalogue	com.histmersion.domain.library	forbidden-direction	20
-test	server	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	139
-test	server	com.histmersion.domain.library		unclassified-direction	2224
+test	server	com.histmersion.domain.catalogue	com.histmersion.util	allowed-direction; contract-review	144
+test	server	com.histmersion.domain.library		unclassified-direction	2228
 test	server	com.histmersion.domain.library		unresolved-reference	60
 test	server	com.histmersion.domain.library	com.histmersion.domain.automation	allowed-direction; contract-review	52
-test	server	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	342
+test	server	com.histmersion.domain.library	com.histmersion.domain.library	same-region; feature-contract-review	345
 test	server	com.histmersion.domain.library	com.histmersion.domain.media	allowed-direction; contract-review	19
 test	server	com.histmersion.domain.library	com.histmersion.domain.research	forbidden-direction	6
-test	server	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	58
+test	server	com.histmersion.domain.library	com.histmersion.util	allowed-direction; contract-review	61
 test	server	com.histmersion.domain.media		unclassified-direction	379
 test	server	com.histmersion.domain.media		unresolved-reference	12
 test	server	com.histmersion.domain.media	com.histmersion.domain.catalogue	allowed-direction; contract-review	17
@@ -365,18 +365,18 @@ test	server	com.histmersion.domain.personal	com.histmersion.domain.automation	fo
 test	server	com.histmersion.domain.personal	com.histmersion.domain.library	forbidden-direction	24
 test	server	com.histmersion.domain.personal	com.histmersion.domain.personal	same-region; feature-contract-review	205
 test	server	com.histmersion.domain.personal	com.histmersion.util	allowed-direction; contract-review	16
-test	server	com.histmersion.domain.research		unclassified-direction	403
+test	server	com.histmersion.domain.research		unclassified-direction	404
 test	server	com.histmersion.domain.research		unresolved-reference	10
 test	server	com.histmersion.domain.research	com.histmersion.domain.catalogue	allowed-direction; contract-review	17
 test	server	com.histmersion.domain.research	com.histmersion.domain.library	allowed-direction; contract-review	42
 test	server	com.histmersion.domain.research	com.histmersion.domain.media	allowed-direction; contract-review	18
 test	server	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	158
-test	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	15
-test	server	com.histmersion.util		unclassified-direction	1904
+test	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	18
+test	server	com.histmersion.util		unclassified-direction	1905
 test	server	com.histmersion.util		unresolved-reference	85
 test	server	com.histmersion.util	com.histmersion.domain.library	forbidden-direction	10
 test	server	com.histmersion.util	com.histmersion.domain.research	forbidden-direction	12
-test	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	418
+test	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	421
 test	upstreams			unclassified-direction	371
 test	upstreams			unresolved-reference	19
 test	upstreams		com.histmersion.domain.library	unclassified-direction	70

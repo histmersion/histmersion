@@ -1,3 +1,4 @@
+timer-factory
 console-input
 console-factory
 domain-console
