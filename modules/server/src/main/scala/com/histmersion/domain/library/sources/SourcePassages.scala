@@ -23,7 +23,7 @@ object SourcePassages:
   type NamingLimit = NamingLimit.T
   object NamingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final private class Text(db: Transactor, citekey: String)(using timer: com.histmersion.util.time.Timer) extends PassageReader:
+  final private class Text(db: Transactor, citekey: com.histmersion.domain.library.Citekey)(using timer: com.histmersion.util.time.Timer) extends PassageReader:
     private lazy val chunks = db.read(SourceRepo.bodyChunks(citekey))
     def find(
         query: com.histmersion.domain.library.sources.SourcePassages.Text.FindQuery,

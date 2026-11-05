@@ -1,6 +1,6 @@
 package com.histmersion.web.ui
 
-enum SidebarTab(val key: String, val label: String):
+enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
   case Sources extends SidebarTab("sources", "Sources")
   case Articles extends SidebarTab("articles", "Articles")
   case Events extends SidebarTab("events", "Events")
@@ -9,6 +9,11 @@ enum SidebarTab(val key: String, val label: String):
 
 object SidebarTab:
   /** The tab a kept key names; an old link's `bytime`/`byregion` (tabs no longer shown) is the sources'. */
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfKey = OfKey.T
   object OfKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -222,7 +222,7 @@ object Hot:
           Handle[A](name)
       }
 
-    final private class Handle[A](val name: String) extends Hot[A]:
+    final private class Handle[A](val name: Handle.Name) extends Hot[A]:
       def use[B](f: A => B): B =
         val s = pinnedTL.get()
         if s != null && s.nodes.contains(name) then f(s.nodes(name).value.asInstanceOf[A])
@@ -235,6 +235,10 @@ object Hot:
         (if s != null && s.nodes.contains(name) then s else current.get()).nodes(name).value.asInstanceOf[A]
       def latest: A = current.get().nodes(name).value.asInstanceOf[A]
       override def toString = s"Hot($name)"
+
+    object Handle:
+      type Name = Name.T
+      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     // ── reload ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -479,10 +483,10 @@ object Hot:
 
     /** One built value, the users pinning it and the scope holding it open. */
     final private[hot] class Instance(
-        val name: String,
-        val generation: Long,
+        val name: Instance.Name,
+        val generation: Instance.Generation,
         val value: Any,
-        idle: () => Boolean,
+        idle: () => Instance.IdleResult,
         release: CountDownLatch,
         ended: CountDownLatch
     ):
@@ -504,6 +508,13 @@ object Hot:
             log.warn(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s")
 
     object Instance:
+      type Name = Name.T
+      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Generation = Generation.T
+      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type IdleResult = IdleResult.T
+      object IdleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       type IsClosedResult = IsClosedResult.T
       object IsClosedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type IdleNowResult = IdleNowResult.T

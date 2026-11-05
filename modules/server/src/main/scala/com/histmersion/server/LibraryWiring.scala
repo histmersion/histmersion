@@ -30,7 +30,7 @@ final class LibraryWiring(
     figures: AssetsControllers,
     places: PlaceService,
     formatting: SourceFormatting,
-    mentions: String => String,
+    mentions: LibraryWiring.MentionsArg1 => LibraryWiring.MentionsResult,
     originals: SourceOriginals
 ):
   private val cfg: () => AppConfig = () => deps.cfg
@@ -70,4 +70,9 @@ final class LibraryWiring(
 object LibraryWiring:
 
   /** What a source's write follows, read from the settings at each write (a reload changes them). */
+  type MentionsArg1 = MentionsArg1.T
+  object MentionsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionsResult = MentionsResult.T
+  object MentionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def settings(cfg: AppConfig): SourceSettings = SourceSettings(cfg.limits.chunkChars, cfg.places.pointToleranceKm)

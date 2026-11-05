@@ -42,13 +42,16 @@ object RestartService:
     object RestartResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Counts the restarts asked for instead of ending anything. */
-  final class InMemory(val available: Boolean) extends RestartService:
+  final class InMemory(val available: InMemory.Available) extends RestartService:
     private val asked = AtomicInteger(0)
     def restarts: com.histmersion.util.settings.RestartService.InMemory.RestartsResult = asked.get
     def restart(): Either[com.histmersion.util.settings.RestartService.InMemory.RestartResultPart1, com.histmersion.util.settings.RestartService.InMemory.RestartResultPart2] =
       if !available then Left(NotHere) else { asked.incrementAndGet(); Right(Started) }
 
   object InMemory:
+    type Available = Available.T
+    object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RestartsResult = RestartsResult.T
     object RestartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RestartResultPart1 = RestartResultPart1.T

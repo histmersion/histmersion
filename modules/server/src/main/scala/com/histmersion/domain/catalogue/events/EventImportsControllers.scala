@@ -24,7 +24,7 @@ final class EventImportsControllers(
     corrections: CorrectionService,
     events: EventService,
     jobs: CatalogueJobs,
-    page: (Option[Int], Int) => Int
+    page: (Option[EventImportsControllers.PageArg1], EventImportsControllers.PageArg2) => EventImportsControllers.PageResult
 ):
   private def invalid(m: com.histmersion.domain.catalogue.events.EventImportsControllers.InvalidM) = Api.Error(m, Some(Write.CodeInvalid))
 
@@ -87,6 +87,13 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
+  type PageArg1 = PageArg1.T
+  object PageArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageArg2 = PageArg2.T
+  object PageArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageResult = PageResult.T
+  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InvalidM = InvalidM.T
   object InvalidM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CorrectionsStatus = CorrectionsStatus.T

@@ -35,8 +35,8 @@ final class SourcesControllers(
     figures: AssetsControllers,
     formatting: SourceFormatting,
     originals: SourceOriginals,
-    mentions: String => String,
-    current: (AliasKind, String) => String,
+    mentions: SourcesControllers.MentionsArg1 => SourcesControllers.MentionsResult,
+    current: (AliasKind, SourcesControllers.CurrentArg2) => SourcesControllers.CurrentResult,
     cfg: () => AppConfig,
     maintenance: WriteGate,
     clock: Clock
@@ -319,6 +319,15 @@ final class SourcesControllers(
     Markdown.bodySlice(slice, off, total)
 
 object SourcesControllers:
+  type MentionsArg1 = MentionsArg1.T
+  object MentionsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionsResult = MentionsResult.T
+  object MentionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type CanonicalResult = CanonicalResult.T
   object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CanonicalId = CanonicalId.T

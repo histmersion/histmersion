@@ -1,5 +1,5 @@
 package com.histmersion.api.automation
-enum ProviderKind(val wire: String):
+enum ProviderKind(val wire: ProviderKind.Wire):
   case Anthropic extends ProviderKind("anthropic")
   case OpenAI extends ProviderKind("openai")
   case Local extends ProviderKind("local")
@@ -21,6 +21,9 @@ enum ProviderKind(val wire: String):
 
 object ProviderKind:
   /** The host's own providers, in their order. */
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsCliResult = IsCliResult.T
   object IsCliResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T

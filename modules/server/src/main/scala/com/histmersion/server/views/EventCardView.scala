@@ -15,7 +15,7 @@ import com.histmersion.api.Api
   * sources that attest it), and its pictures. What `GET`, `PUT` and `PATCH /api/events/{id}` and the `events` and
   * `patch_event` tools answer.
   */
-final class EventCardView(events: EventsControllers, pictures: String => List[MediaThumb]):
+final class EventCardView(events: EventsControllers, pictures: EventCardView.PicturesArg1 => List[MediaThumb]):
 
   /** The catalogue's event with its pictures. */
   def page(e: EventEntry): EventDetail =
@@ -32,6 +32,9 @@ final class EventCardView(events: EventsControllers, pictures: String => List[Me
 object EventCardView:
 
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
+  type PicturesArg1 = PicturesArg1.T
+  object PicturesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetId = GetId.T
   object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PutId = PutId.T

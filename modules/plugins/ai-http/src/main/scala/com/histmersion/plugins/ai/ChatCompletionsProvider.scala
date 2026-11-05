@@ -13,10 +13,10 @@ import com.histmersion.plugin.*
   *   placeholder `none`
   */
 final class ChatCompletionsProvider(
-    name: String,
-    val title: String,
+    name: ChatCompletionsProvider.Name,
+    val title: ChatCompletionsProvider.Title,
     settings: ProviderSettings,
-    keyed: Option[(String, String)]
+    keyed: Option[(ChatCompletionsProvider.KeyedPart1, ChatCompletionsProvider.KeyedPart2)]
 ) extends AiProvider:
 
   override def capabilities: AiCapabilities =
@@ -47,6 +47,15 @@ final class ChatCompletionsProvider(
     sent.left.map(AiFailure.Error(_))
 
 object ChatCompletionsProvider:
+
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyedPart1 = KeyedPart1.T
+  object KeyedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyedPart2 = KeyedPart2.T
+  object KeyedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type BaseResultPart1 = BaseResultPart1.T
   object BaseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

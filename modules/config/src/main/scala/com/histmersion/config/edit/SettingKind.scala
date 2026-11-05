@@ -3,7 +3,7 @@ package com.histmersion.config.edit
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
-enum SettingKind(val wire: String, val describe: String):
+enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe):
   case Text extends SettingKind("text", "text")
   case Number extends SettingKind("number", "a number")
   case Flag extends SettingKind("flag", "true or false")
@@ -16,6 +16,11 @@ enum SettingKind(val wire: String, val describe: String):
   case Any extends SettingKind("any", "a value")
 
 object SettingKind:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Describe = Describe.T
+  object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

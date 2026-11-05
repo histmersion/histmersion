@@ -11,7 +11,11 @@ import scala.jdk.CollectionConverters.*
   * parts of the writing guide (its phases, its self-check) that a reviewer or a fixer does not act on. Every turn of a
   * step re-sends its prompt, so what a role does not act on is left out of it (docs/research-agent-runtimes.md §4).
   */
-enum Audience(val wire: String):
+enum Audience(val wire: Audience.Wire):
   case Interactive extends Audience("interactive")
   case Headless extends Audience("headless")
   case Writer extends Audience("writer")
+
+object Audience:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

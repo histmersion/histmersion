@@ -9,7 +9,7 @@ import com.histmersion.api.library.Candidates
 /** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved `api-key`, else
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.
   */
-final class CoreIndex(api: CoreApi, key: Option[String], budget: CoreBudget, limits: CoreQuota.Limits)
+final class CoreIndex(api: CoreApi, key: Option[CoreIndex.Key], budget: CoreBudget, limits: CoreQuota.Limits)
     extends ScholarlyIndex:
   val name = "core"
   override def unavailable: Option[String] = budget.unavailable(limits, CoreQuota.Purpose.Search).map(_.describe)
@@ -29,6 +29,9 @@ final class CoreIndex(api: CoreApi, key: Option[String], budget: CoreBudget, lim
           .map(Candidates.coreWorks)
 
 object CoreIndex:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchQuery = SearchQuery.T
   object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T

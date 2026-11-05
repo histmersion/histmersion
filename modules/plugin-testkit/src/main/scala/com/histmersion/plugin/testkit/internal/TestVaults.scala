@@ -4,7 +4,7 @@ import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The stand-in vaults of a test's `secrets`: `vault → (ref → value)`. */
-final private[testkit] class TestVaults(id: String, values: Map[String, Map[String, String]]) extends Plugin:
+final private[testkit] class TestVaults(id: TestVaults.Id, values: Map[TestVaults.ValuesKey, Map[TestVaults.ValuesValueKey, TestVaults.ValuesValueValue]]) extends Plugin:
   type Config = Unit
   val info = Plugin.Info(id, "0", Spi.Version)
   override given configReader: ConfigReader[Unit] = new ConfigReader[Unit]:
@@ -22,5 +22,14 @@ final private[testkit] class TestVaults(id: String, values: Map[String, Map[Stri
     }
 
 object TestVaults:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuesKey = ValuesKey.T
+  object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuesValueKey = ValuesValueKey.T
+  object ValuesValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValuesValueValue = ValuesValueValue.T
+  object ValuesValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RegisterResultPart1 = RegisterResultPart1.T
   object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

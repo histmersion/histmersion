@@ -12,7 +12,7 @@ import com.histmersion.plugin.Plugin
   * memo by the index steps and the landing step of every open-access index plugin.
   */
 final class OaRecords(
-    val doi: String,
+    val doi: OaRecords.Doi,
     cfg: UpstreamSettings,
     http: Plugin.Http,
     openalexClient: OpenAlexCrossref,
@@ -29,6 +29,9 @@ final class OaRecords(
   lazy val handle: Option[com.histmersion.plugins.fetchers.OaRecords.Handle] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
+  type Doi = Doi.T
+  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Datacite = Datacite.T
   object Datacite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Handle = Handle.T

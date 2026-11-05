@@ -32,7 +32,7 @@ object UndatedSites:
   def apply(db: Transactor, keptZoom: () => com.histmersion.domain.catalogue.maptiles.UndatedSites.ApplyKeptZoomResult, background: (() => Unit) => Unit): UndatedSites =
     Implementation(db, keptZoom, background)
 
-  final private class Implementation(db: Transactor, keptZoom: () => Int, background: (() => Unit) => Unit)
+  final private class Implementation(db: Transactor, keptZoom: () => Implementation.KeptZoomResult, background: (() => Unit) => Unit)
       extends UndatedSites:
     private val rebuilding = AtomicBoolean(false)
 
@@ -64,6 +64,9 @@ object UndatedSites:
         }
 
   object Implementation:
+    type KeptZoomResult = KeptZoomResult.T
+    object KeptZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type CountedSiteType = CountedSiteType.T
     object CountedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ItemsSiteType = ItemsSiteType.T

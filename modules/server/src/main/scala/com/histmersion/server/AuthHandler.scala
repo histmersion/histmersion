@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
   * shared.
   */
 final class AuthHandler(
-    apiKey: () => String,
+    apiKey: () => AuthHandler.ApiKeyResult,
     tokens: com.histmersion.domain.automation.agents.RunTokens
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
@@ -62,6 +62,9 @@ final class AuthHandler(
     (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
 object AuthHandler:
+  type ApiKeyResult = ApiKeyResult.T
+  object ApiKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ExpectedResult = ExpectedResult.T
   object ExpectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ByRunTokenResult = ByRunTokenResult.T

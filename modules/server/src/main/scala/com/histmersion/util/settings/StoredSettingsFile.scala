@@ -13,7 +13,7 @@ import scala.util.Using
   * read its settings from. Its text and its includes are read as a load reads them, which needs the file on disk; a
   * store in memory has none to give, and every read and change of it is refused.
   */
-final class StoredSettingsFile(store: Store, key: Store.Key, val shown: String) extends SettingsFile:
+final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSettingsFile.Shown) extends SettingsFile:
 
   def read(): Either[SettingError, ConfigFileState] =
     if !store.exists(key) then
@@ -73,6 +73,9 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: String) 
   private def io(e: Store.Error): SettingError = SettingError.Io(e.message)
 
 object StoredSettingsFile:
+  type Shown = Shown.T
+  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ReplaceResultPart2 = ReplaceResultPart2.T
   object ReplaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplaceText = ReplaceText.T

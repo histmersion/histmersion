@@ -7,7 +7,7 @@ import com.histmersion.plugin.*
   * (the natural-history departments' specimens) are left out of the search and refused if one still answers; an object
   * made after `max-year` is refused.
   */
-final class SmithsonianCollection(conf: CollectionSettings, key: Option[String])
+final class SmithsonianCollection(conf: CollectionSettings, key: Option[SmithsonianCollection.Key])
     extends KeyedCollection(conf, "media-smithsonian", key, "an api.data.gov key", "media.smithsonian"):
   val title = "Smithsonian Open Access objects"
   override val description = described(
@@ -29,6 +29,9 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[String])
       .map(explain)
 
 object SmithsonianCollection:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchResultPart1 = SearchResultPart1.T
   object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchResultPart2Part1 = SearchResultPart2Part1.T

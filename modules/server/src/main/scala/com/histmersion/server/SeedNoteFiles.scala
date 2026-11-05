@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 /** The notes of a folder the person names for a seed, read where they are: the frontmatter of each `*.md` (its
   * converted body from `md_path`, confined to `corpus.dir` when that is set) and the figures beside it.
   */
-final class SeedNoteFiles(dir: Path, confineTo: Option[String])(using com.histmersion.util.storage.TextFiles) extends SeedFolder:
+final class SeedNoteFiles(dir: Path, confineTo: Option[SeedNoteFiles.ConfineTo])(using com.histmersion.util.storage.TextFiles) extends SeedFolder:
 
   // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
   // eventually exhausts the process's file descriptors.
@@ -38,6 +38,9 @@ object SeedNoteFiles:
   /** Every image in a figures directory. Silently empty when the directory is absent — most notes have no figures, and
     * that is not an import failure.
     */
+  type ConfineTo = ConfineTo.T
+  object ConfineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NotesResult = NotesResult.T
   object NotesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadName = ReadName.T

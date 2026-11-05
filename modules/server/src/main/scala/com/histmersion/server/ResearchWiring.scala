@@ -18,8 +18,8 @@ import com.histmersion.api.Api
 final class ResearchWiring(
     deps: Deps,
     library: LibraryWiring,
-    articleLeads: (String, List[String], Option[Period]) => List[ArticleEventLead],
-    note: String => Either[Api.Error, String]
+    articleLeads: (ResearchWiring.ArticleLeadsArg1, List[ResearchWiring.ArticleLeadsArg2], Option[Period]) => List[ArticleEventLead],
+    note: ResearchWiring.NoteArg1 => Either[Api.Error, ResearchWiring.NoteResultPart2]
 ):
 
   /** The articles as research stores them. */
@@ -46,3 +46,13 @@ final class ResearchWiring(
 
   /** The `/source/{citekey}` and `/article/{slug}` pages. */
   val pages: PageBuilder = PageBuilder(library.sources, library.sourceStore, library.citations, articles)
+
+object ResearchWiring:
+  type ArticleLeadsArg1 = ArticleLeadsArg1.T
+  object ArticleLeadsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleLeadsArg2 = ArticleLeadsArg2.T
+  object ArticleLeadsArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteArg1 = NoteArg1.T
+  object NoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteResultPart2 = NoteResultPart2.T
+  object NoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

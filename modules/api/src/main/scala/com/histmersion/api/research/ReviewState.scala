@@ -5,7 +5,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
-enum ReviewState(val wire: String, val meaning: String):
+enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
   case Unreviewed extends ReviewState("unreviewed", "no review of this article is recorded and none is queued")
   case Queued extends ReviewState("queued", "waiting for the review panel to take it up")
   case InReview extends ReviewState("in-review", "the review panel is working on it now")
@@ -14,6 +14,11 @@ enum ReviewState(val wire: String, val meaning: String):
   case Stopped extends ReviewState("stopped", "the review manager gave up on it; a person decides what happens next")
 
 object ReviewState:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Meaning = Meaning.T
+  object Meaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WireResult = WireResult.T

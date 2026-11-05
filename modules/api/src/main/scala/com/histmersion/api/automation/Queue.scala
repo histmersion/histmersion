@@ -192,12 +192,19 @@ object Queue:
     object Replaced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  enum Kind(val label: String, val file: String, val checkboxes: Boolean):
+  enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes):
     case Acquire extends Kind("acquire", "ACQUIRE.md", true)
     case Tasks extends Kind("tasks", "TASKS.md", true)
     case Log extends Kind("log", "LOG.md", false)
 
   object Kind:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Checkboxes = Checkboxes.T
+    object Checkboxes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type All = All.T
     object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T

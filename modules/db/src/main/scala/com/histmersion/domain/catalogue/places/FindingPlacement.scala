@@ -84,9 +84,12 @@ object FindingPlacement:
   /** The points given (compare-and-set), the touched sources' findings placed again; the findings placed. */
   def place(ps: List[Geocode.Placement], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.PlaceToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.FindingPlacement.PlaceResult = Geocoder.place(ps, toleranceKm)
 
-  final private class Implementation(val toleranceKm: Double) extends FindingPlacement:
+  final private class Implementation(val toleranceKm: Implementation.ToleranceKm) extends FindingPlacement:
     def placeSource(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.PlaceSourceResult = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
 
   object Implementation:
+    type ToleranceKm = ToleranceKm.T
+    object ToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type PlaceSourceResult = PlaceSourceResult.T
     object PlaceSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

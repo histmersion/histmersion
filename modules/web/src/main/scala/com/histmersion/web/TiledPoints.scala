@@ -11,6 +11,9 @@ object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
     * before that the read no longer has (the map let their tile go) and that `keep` (near the view).
     */
+  type MaxZoomResult = MaxZoomResult.T
+  object MaxZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MergeKeyResult = MergeKeyResult.T
   object MergeKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeKeepResult = MergeKeepResult.T
@@ -62,7 +65,7 @@ final class TiledPoints[A](
     val items: PointLayer[A],
     dot: DotKind,
     decode: TilePointFeature => Option[A],
-    maxZoom: () => Int
+    maxZoom: () => TiledPoints.MaxZoomResult
 ):
   val cells: PointLayer[TileCellPoint] = PointLayer(CellKind(dot), () => MapView.dots, () => MapView.spanMid())
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the

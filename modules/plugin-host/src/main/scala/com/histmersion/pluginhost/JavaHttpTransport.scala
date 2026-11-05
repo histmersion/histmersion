@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
   * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the
   * connection.
   */
-final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[Int] = None)
+final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None)
     extends HttpTransport: // by name: read per request
   private val client = HttpClient
     .newBuilder()
@@ -38,6 +38,9 @@ final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[Int
       .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
 object JavaHttpTransport:
+  type ConnectSeconds = ConnectSeconds.T
+  object ConnectSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetResultPart1 = GetResultPart1.T
   object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetUrl = GetUrl.T

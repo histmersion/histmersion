@@ -14,10 +14,10 @@ import scala.scalajs.js
   * contacted) — offered only when `ui.base-map-source` is online.
   */
 enum BaseMap(
-    val wire: String,
-    val label: String,
+    val wire: BaseMap.Wire,
+    val label: BaseMap.Label,
     val vector: Option[com.histmersion.web.map.VectorStyle],
-    val url: Option[String]
+    val url: Option[BaseMap.Url]
 ):
   case Readable extends BaseMap("readable", "Readable", Some(com.histmersion.web.map.VectorStyle.Readable), None)
   case Physical extends BaseMap("physical", "Physical", Some(com.histmersion.web.map.VectorStyle.Physical), None)
@@ -30,6 +30,13 @@ enum BaseMap(
 
 object BaseMap:
   /** A kept choice; `terrain` is what a browser kept for the local map before the two styles: Readable. */
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OnlineResult = OnlineResult.T
   object OnlineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromWireS = FromWireS.T

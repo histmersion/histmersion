@@ -5,12 +5,15 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
-enum CritiqueState(val wire: String):
+enum CritiqueState(val wire: CritiqueState.Wire):
   case Addressed extends CritiqueState("addressed")
   case Reasoned extends CritiqueState("reasoned")
   case Open extends CritiqueState("open")
 
 object CritiqueState:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WireResult = WireResult.T

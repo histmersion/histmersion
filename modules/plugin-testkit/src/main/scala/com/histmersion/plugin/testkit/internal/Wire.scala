@@ -141,7 +141,7 @@ private[testkit] object RecordedExchange:
 /** Replaces the value of every secret the harness knows with `{secret}`. Values shorter than four characters are left
   * alone: they would match inside ordinary words.
   */
-final private[testkit] class Scrubber(secrets: Set[String]):
+final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
   private val values = secrets.filter(_.length >= 4).toList.sortBy(-_.length)
   def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.ApplyText): com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult = values.foldLeft(text)((t, v) => t.replace(v, Scrubber.Placeholder))
   def bytes(body: Array[Byte]): Array[Byte] =
@@ -152,6 +152,9 @@ final private[testkit] class Scrubber(secrets: Set[String]):
       if clean == text then body else clean.getBytes(UTF_8)
 
 private[testkit] object Scrubber:
+  type Secrets = Secrets.T
+  object Secrets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApplyResult = ApplyResult.T
   object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyText = ApplyText.T

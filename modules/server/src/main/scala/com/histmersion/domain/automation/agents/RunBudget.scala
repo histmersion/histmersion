@@ -24,11 +24,11 @@ import scala.jdk.CollectionConverters.*
   */
 final private[automation] class RunBudget(
     spentUsd: BigDecimal,
-    spentTokens: Long,
+    spentTokens: RunBudget.SpentTokens,
     capUsd: BigDecimal,
-    capTokens: Long,
+    capTokens: RunBudget.CapTokens,
     billing: Billing,
-    cacheReadWeight: Double = 1.0
+    cacheReadWeight: RunBudget.CacheReadWeight = 1.0
 ) extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use = LlmClient.usage(state.usage)
@@ -39,3 +39,11 @@ final private[automation] class RunBudget(
         sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction
       )
     else LoopDecision.Continue
+
+object RunBudget:
+  type SpentTokens = SpentTokens.T
+  object SpentTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTokens = CapTokens.T
+  object CapTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CacheReadWeight = CacheReadWeight.T
+  object CacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

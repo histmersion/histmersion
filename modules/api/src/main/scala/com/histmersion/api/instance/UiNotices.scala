@@ -33,7 +33,7 @@ object UiNotices:
   type BadgeCount = BadgeCount.T
   object BadgeCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Board(val wire: String, val counted: Boolean):
+  enum Board(val wire: Board.Wire, val counted: Board.Counted):
     case Goals extends Board("goals", counted = false)
     case Tasks extends Board("tasks", counted = true)
     case Approvals extends Board("approvals", counted = true)
@@ -41,6 +41,11 @@ object UiNotices:
     case Log extends Board("log", counted = false)
 
   object Board:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Counted = Counted.T
+    object Counted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WiresResult = WiresResult.T

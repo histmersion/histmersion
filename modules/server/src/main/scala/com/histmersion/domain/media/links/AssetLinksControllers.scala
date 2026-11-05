@@ -15,7 +15,7 @@ import com.histmersion.api.Api
   */
 final class AssetLinksControllers(
     links: AssetLinkService,
-    current: (AliasKind, String) => String,
+    current: (AliasKind, AssetLinksControllers.CurrentArg2) => AssetLinksControllers.CurrentResult,
     maintenance: WriteGate
 ):
 
@@ -48,6 +48,11 @@ final class AssetLinksControllers(
       else Left(Api.Error(s"No asset link #$id", Some(Write.CodeNotFound)))
 
 object AssetLinksControllers:
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RefIdResult = RefIdResult.T
   object RefIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefIdTargetType = RefIdTargetType.T

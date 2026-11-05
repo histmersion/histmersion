@@ -7,10 +7,10 @@ import com.histmersion.plugin.Plugin.Config.given
 import scala.concurrent.duration.*
 
 final class BitwardenVault(
-    val name: String,
-    exe: String,
-    session: Option[String],
-    field: String,
+    val name: BitwardenVault.Name,
+    exe: BitwardenVault.Exe,
+    session: Option[BitwardenVault.Session],
+    field: BitwardenVault.Field,
     timeout: FiniteDuration
 )(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
   def resolve(ref: com.histmersion.plugins.vaults.BitwardenVault.ResolveRef): Either[com.histmersion.plugins.vaults.BitwardenVault.ResolveResultPart1, com.histmersion.plugins.vaults.BitwardenVault.ResolveResultPart2] =
@@ -31,6 +31,15 @@ final class BitwardenVault(
     else None
 
 object BitwardenVault:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Exe = Exe.T
+  object Exe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Session = Session.T
+  object Session extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Field = Field.T
+  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T

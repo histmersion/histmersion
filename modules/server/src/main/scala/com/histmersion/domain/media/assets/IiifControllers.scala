@@ -16,7 +16,7 @@ import com.histmersion.api.Api
   *
   * `baseUrl` is this server's public URL, read at each request.
   */
-final class IiifControllers(assets: AssetService, baseUrl: () => String):
+final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrlResult):
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
   def info(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.IiifControllers.InfoName): Either[Api.Error, io.circe.Json] =
@@ -173,6 +173,9 @@ final class IiifControllers(assets: AssetService, baseUrl: () => String):
     java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
 object IiifControllers:
+  type BaseUrlResult = BaseUrlResult.T
+  object BaseUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type InfoName = InfoName.T
   object InfoName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImageResultPart2Part1 = ImageResultPart2Part1.T

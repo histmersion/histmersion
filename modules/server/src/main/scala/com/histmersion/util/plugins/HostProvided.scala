@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * command-line AI runtimes, which read the host's own settings at each use. Its defaults resource
   * (`META-INF/histmersion/plugins/<id>.conf`, in the server) names every key and sets `enabled`.
   */
-final class HostProvided[C](id: String, contribute: (C, Plugin.Context) => Either[String, Unit])(using ConfigReader[C])
+final class HostProvided[C](id: HostProvided.Id, contribute: (C, Plugin.Context) => Either[HostProvided.ContributeResultPart1, Unit])(using ConfigReader[C])
     extends Plugin:
   type Config = C
   val info: Plugin.Info = Plugin.Info(id, HostProvided.Release, PluginHost.SpiGeneration)
@@ -18,6 +18,11 @@ object HostProvided:
   /** The ids of the plugins the host supplies itself: the command-line AI runtimes. The relink tool keeps them from a
     * user's plugin without loading the runtimes.
     */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContributeResultPart1 = ContributeResultPart1.T
+  object ContributeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RegisterResultPart1 = RegisterResultPart1.T
   object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ids = Ids.T

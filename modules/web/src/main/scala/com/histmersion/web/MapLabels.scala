@@ -149,12 +149,16 @@ object MapLabels:
     */
   final private class Entry(
       val latlng: LatLon,
-      val rank: Double,
+      val rank: Entry.Rank,
       val shape: Option[LabelPlacement.Shape],
       val el: () => Option[dom.HTMLElement],
       val anchorEl: Option[() => Option[dom.HTMLElement]] = None,
       val marker: Option[DomMarker] = None
   )
+
+  object Entry:
+    type Rank = Rank.T
+    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 

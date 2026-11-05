@@ -16,7 +16,7 @@ import hearth.kindlings.optics.syntax.*
   */
 final class MemoryStore private (
     val location: Location,
-    name: String,
+    name: MemoryStore.Name,
     state: AtomicReference[MemoryStore.Files],
     base: Store.Key
 ) extends Store:
@@ -145,6 +145,9 @@ final class MemoryStore private (
 
 object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhereResult = WhereResult.T
   object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExistsResult = ExistsResult.T
@@ -177,7 +180,7 @@ object MemoryStore:
 
   final case class Files(files: Map[Store.Key, Entry], directories: Set[Store.Key])
 
-  final class MemoryBlob(val key: Store.Key, val where: String, entry: Entry) extends Blob:
+  final class MemoryBlob(val key: Store.Key, val where: MemoryBlob.Where, entry: Entry) extends Blob:
     def size: ByteCount = entry.size
     def modified: Instant = entry.modified
     def open(): InputStream = ByteArrayInputStream(entry.bytes)
@@ -200,12 +203,15 @@ object MemoryStore:
       def close(): Unit = ()
 
   object MemoryBlob:
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type TextResult = TextResult.T
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadAtLength = ReadAtLength.T
     object ReadAtLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final class MemoryReservation(val key: Store.Key, val where: String, commitTo: (Store.Key, Array[Byte]) => Stored)
+  final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, Array[Byte]) => Stored)
       extends Reservation:
     private val written = AtomicReference(Array.emptyByteArray)
     @volatile private var done = false
@@ -233,5 +239,8 @@ object MemoryStore:
     private[util] def onDisk: Either[Store.Error, java.nio.file.Path] = Left(Store.Error.NotOnDisk(where))
 
   object MemoryReservation:
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type CommitKeepPermissions = CommitKeepPermissions.T
     object CommitKeepPermissions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

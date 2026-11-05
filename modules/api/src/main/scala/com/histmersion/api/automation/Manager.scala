@@ -6,13 +6,16 @@ object Manager:
     * sources until enriched), `seed` (one research area: new articles proposed, approved and compiled), `watch` (one
     * research area: an acquisition sweep and a currency check on its cron).
     */
-  enum Kind(val wire: String):
+  enum Kind(val wire: Kind.Wire):
     case Review extends Kind("review")
     case Seed extends Kind("seed")
     case Watch extends Kind("watch")
     case Enrich extends Kind("enrich")
 
   object Kind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -21,12 +24,15 @@ object Manager:
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
     * cancelled its in-flight runs and items.
     */
-  enum State(val wire: String):
+  enum State(val wire: State.Wire):
     case Active extends State("active")
     case Paused extends State("paused")
     case Stopped extends State("stopped")
 
   object State:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

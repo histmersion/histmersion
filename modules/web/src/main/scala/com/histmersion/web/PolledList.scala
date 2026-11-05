@@ -23,12 +23,12 @@ import scala.util.{Failure, Success, Try}
   *   `setTimeout`, injectable for a test; `cancel` its `clearTimeout`
   */
 final class PolledList[A](
-    fetch: (Option[String], Option[String]) => Future[(List[A], Paging.Page)],
-    id: A => String,
-    live: (List[A], Paging.Page) => Boolean,
+    fetch: (Option[PolledList.FetchArg1], Option[PolledList.FetchArg2]) => Future[(List[A], Paging.Page)],
+    id: A => PolledList.IdResult,
+    live: (List[A], Paging.Page) => PolledList.LiveResult,
     after: (ListPaging.Listing[A], List[A]) => Unit = (_: ListPaging.Listing[A], _: List[A]) => (),
-    later: (Int, () => Unit) => Int = (ms, f) => dom.window.setTimeout(() => f(), ms),
-    cancel: Int => Unit = id => dom.window.clearTimeout(id)
+    later: (PolledList.LaterArg1, () => Unit) => PolledList.LaterResult = (ms, f) => dom.window.setTimeout(() => f(), ms),
+    cancel: PolledList.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 )(using ExecutionContext):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
@@ -135,6 +135,21 @@ object PolledList:
     * `mounted` guard, the stale-answer guard and the error line with the list windows; it has no pages, so it never
     * shows older rows. `after` gets the item before and after each poll (not the first load).
     */
+  type FetchArg1 = FetchArg1.T
+  object FetchArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchArg2 = FetchArg2.T
+  object FetchArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdResult = IdResult.T
+  object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiveResult = LiveResult.T
+  object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterArg1 = LaterArg1.T
+  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterResult = LaterResult.T
+  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CancelArg1 = CancelArg1.T
+  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Loaded = Loaded.T
   object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Older = Older.T

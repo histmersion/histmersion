@@ -437,10 +437,14 @@ object LabelPlacement:
   // ── how big, and whether at all ──────────────────────────────────────────────────────────────────
 
   /** A name's size class (`.hd-map-label--s/m/l`): small shapes get small names. */
-  enum Tier(val css: String):
+  enum Tier(val css: Tier.Css):
     case S extends Tier("hd-map-label--s")
     case M extends Tier("hd-map-label--m")
     case L extends Tier("hd-map-label--l")
+
+  object Tier:
+    type Css = Css.T
+    object Css extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A shape whose larger side is under this many screen pixels is not named at that zoom: a name on a dot names
     * nothing anyone can see. Everything larger is named unless it collides.

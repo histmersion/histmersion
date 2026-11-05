@@ -6,7 +6,7 @@ import sttp.tapir.Schema
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
   * the plan's Markdown lists, and how a line of it reads.
   */
-final class PlanMatchKind[A](listed: A => Boolean, line: A => String)(using
+final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A => PlanMatchKind.LineResult)(using
     encoder: Encoder[A],
     decoder: Decoder[A],
     schemaOf: Schema[List[A]]
@@ -24,6 +24,11 @@ final class PlanMatchKind[A](listed: A => Boolean, line: A => String)(using
     m.rows.flatMap(decoder.decodeJson(_).toOption).filter(listed).take(limit).map(line)
 
 object PlanMatchKind:
+  type ListedResult = ListedResult.T
+  object ListedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LinesResult = LinesResult.T
   object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinesLimit = LinesLimit.T

@@ -23,9 +23,9 @@ import com.histmersion.plugin.Plugin
   */
 final class FetchChain(
     steps: List[FetchChain.Step],
-    allowUnauthorised: Boolean,
+    allowUnauthorised: FetchChain.AllowUnauthorised,
     log: HostLog = HostLog.scribe,
-    registered: String => Boolean = _ => false
+    registered: FetchChain.RegisteredArg1 => FetchChain.RegisteredResult = _ => false
 ) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
@@ -92,6 +92,13 @@ final class FetchChain(
 object FetchChain:
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
+  type AllowUnauthorised = AllowUnauthorised.T
+  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisteredArg1 = RegisteredArg1.T
+  object RegisteredArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisteredResult = RegisteredResult.T
+  object RegisteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PlanResultPart1 = PlanResultPart1.T
   object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchResultPart1 = FetchResultPart1.T
@@ -159,9 +166,13 @@ object FetchChain:
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    enum Kind(val label: String):
+    enum Kind(val label: Kind.Label):
       case Miss extends Kind("no copy")
       case Refused extends Kind("refused")
+
+    object Kind:
+      type Label = Label.T
+      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.

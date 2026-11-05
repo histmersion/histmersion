@@ -8,10 +8,10 @@ import org.scalajs.dom
   * injectable so the timing is a unit test, like [[Throttle]].
   */
 final class HoverIntent[K](
-    delayMs: Int,
+    delayMs: HoverIntent.DelayMs,
     fire: K => Unit,
-    later: (Double, () => Unit) => Int = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Int => Unit = id => dom.window.clearTimeout(id)
+    later: (HoverIntent.LaterArg1, () => Unit) => HoverIntent.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
+    cancel: HoverIntent.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 ):
   // `var`: the one pending hover and its timer
   private var pending: Option[(K, com.histmersion.web.HoverIntent.PendingPart2)] = None
@@ -32,6 +32,15 @@ final class HoverIntent[K](
     pending = None
 
 object HoverIntent:
+  type DelayMs = DelayMs.T
+  object DelayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterArg1 = LaterArg1.T
+  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterResult = LaterResult.T
+  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CancelArg1 = CancelArg1.T
+  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PendingPart2 = PendingPart2.T
   object PendingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsPendingResult = IsPendingResult.T

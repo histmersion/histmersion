@@ -36,7 +36,7 @@ import com.histmersion.api.catalogue.Period
   */
 final class Bootstrap(
     deps: Deps,
-    download: String => Either[String, String] = HttpDownload().text,
+    download: Bootstrap.DownloadArg1 => Either[Bootstrap.DownloadResultPart1, Bootstrap.DownloadResultPart2] = HttpDownload().text,
     gazetteerDownload: GazetteerLoad.Download = HttpDownload().file
 ):
 
@@ -214,6 +214,13 @@ final class Bootstrap(
 
 object Bootstrap:
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
+  type DownloadArg1 = DownloadArg1.T
+  object DownloadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart1 = DownloadResultPart1.T
+  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart2 = DownloadResultPart2.T
+  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BundledSeedResultPart1 = BundledSeedResultPart1.T
   object BundledSeedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BundledSeedResultPart2 = BundledSeedResultPart2.T

@@ -225,7 +225,7 @@ object ActivityView:
   /** A list of one query, its first page loaded on mount and every 15 s while shown (unless older pages were asked
     * for); "Show older" appends the next page.
     */
-  final private class Feed(show: Activity.Show, goal: Option[String], limit: Int):
+  final private class Feed(show: Activity.Show, goal: Option[Feed.Goal], limit: Feed.Limit):
     val entries = Var(List.empty[Entry])
     val next = Var(Option.empty[String])
     val counts = Var(Activity.Counts())
@@ -254,6 +254,12 @@ object ActivityView:
     }
 
     def tick(): Unit = if !older then first()
+
+  object Feed:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def list(feed: Feed, empty: com.histmersion.web.ActivityView.ListEmpty): HtmlElement =
     div(

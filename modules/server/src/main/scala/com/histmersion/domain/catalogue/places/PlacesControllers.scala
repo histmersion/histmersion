@@ -25,9 +25,9 @@ final class PlacesControllers(
     shapes: PlaceMap,
     geometry: PlaceGeometry,
     geocoder: Geocoding,
-    current: (AliasKind, String) => String,
+    current: (AliasKind, PlacesControllers.CurrentArg2) => PlacesControllers.CurrentResult,
     cfg: () => AppConfig,
-    limit: (Option[Int], Int) => Int,
+    limit: (Option[PlacesControllers.LimitArg1], PlacesControllers.LimitArg2) => PlacesControllers.LimitResult,
     maintenance: WriteGate
 ):
   private def modernFrom: com.histmersion.domain.catalogue.places.PlacesControllers.ModernFromResult = cfg().places.modernFrom
@@ -215,6 +215,17 @@ final class PlacesControllers(
       Right(geometry.rebuildFindingPlaces(tolKm))
 
 object PlacesControllers:
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitArg1 = LimitArg1.T
+  object LimitArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitArg2 = LimitArg2.T
+  object LimitArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitResult = LimitResult.T
+  object LimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ModernFromResult = ModernFromResult.T
   object ModernFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TolKmResult = TolKmResult.T

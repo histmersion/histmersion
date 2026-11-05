@@ -196,7 +196,7 @@ object PassageFinder:
   /** `source` folded, with the index of the source character every folded character came from (`back(folded.length) ==
     * source.length`), so a match maps back to the original offsets.
     */
-  final private[domain] class Folded(val text: String, back: Array[Int]):
+  final private[domain] class Folded(val text: Folded.Text, back: Array[Int]):
     def start(i: com.histmersion.domain.PassageFinder.Folded.StartI): com.histmersion.domain.PassageFinder.Folded.StartResult = back(i)
 
     /** The original end of a match ending (exclusive) at folded index `i`. */
@@ -209,6 +209,9 @@ object PassageFinder:
           case k  => k
 
   private[domain] object Folded:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type StartResult = StartResult.T
     object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type StartI = StartI.T
@@ -354,7 +357,7 @@ object PassageFinder:
   /** The heading a body offset sits under: its chunk's breadcrumb, or — for a body stored without chunks, whose heading
     * lines are still in the text — the nearest Markdown heading above it.
     */
-  final private class Headings(segments: Seq[Chunk], text: String):
+  final private class Headings(segments: Seq[Chunk], text: Headings.Text):
     private val starts: Array[com.histmersion.domain.PassageFinder.Headings.Starts] =
       segments.iterator.scanLeft(0)((at, c) => at + c.body.length + Separator.length).take(segments.size).toArray
 
@@ -370,6 +373,9 @@ object PassageFinder:
       own.orElse(inline.takeWhile(_._1 <= offset).lastOption.map(_._2))
 
   object Headings:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Starts = Starts.T
     object Starts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type InlinePart1 = InlinePart1.T

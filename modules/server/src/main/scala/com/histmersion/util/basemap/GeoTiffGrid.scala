@@ -132,7 +132,7 @@ object GeoTiffGrid:
   private def le(b: Array[Byte]) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
 
   /** One image file directory: its entries, and their values read from the file as asked. */
-  final private class Directory(entries: Map[Int, Entry], bytesAt: (Long, Int) => Either[String, Array[Byte]]):
+  final private class Directory(entries: Map[Directory.EntriesKey, Entry], bytesAt: (Directory.BytesAtArg1, Directory.BytesAtArg2) => Either[Directory.BytesAtResultPart1, Array[Byte]]):
     def has(tag: com.histmersion.util.basemap.GeoTiffGrid.Directory.HasTag): com.histmersion.util.basemap.GeoTiffGrid.Directory.HasResult = entries.contains(tag)
     private def raw(tag: com.histmersion.util.basemap.GeoTiffGrid.Directory.RawTag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.RawResultPart1, Option[(Entry, Array[Byte])]] = entries.get(tag) match
       case None    => Right(None)
@@ -153,6 +153,15 @@ object GeoTiffGrid:
       ints(tag).flatMap(_.flatMap(_.headOption).orElse(default).toRight(s"no tag $tag"))
 
   object Directory:
+    type EntriesKey = EntriesKey.T
+    object EntriesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BytesAtArg1 = BytesAtArg1.T
+    object BytesAtArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BytesAtArg2 = BytesAtArg2.T
+    object BytesAtArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BytesAtResultPart1 = BytesAtResultPart1.T
+    object BytesAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type HasResult = HasResult.T
     object HasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HasTag = HasTag.T

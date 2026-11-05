@@ -351,9 +351,9 @@ object BackupService:
     */
   final class InMemory(
       store: Store,
-      keep: Int,
+      keep: InMemory.Keep,
       registry: DataContributions,
-      rows: AtomicReference[Int] = AtomicReference(0),
+      rows: AtomicReference[InMemory.Rows] = AtomicReference(0),
       dumped: Array[Byte] = "PGDMP".getBytes("UTF-8")
   ) extends BackupService:
     def prepare(now: Instant): Either[Api.Error, PreparedBackup] =
@@ -382,6 +382,11 @@ object BackupService:
     def refusal(n: com.histmersion.util.data.backup.BackupService.InMemory.RefusalN): Api.Error = refusalOver(registry, n)
 
   object InMemory:
+    type Keep = Keep.T
+    object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rows = Rows.T
+    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ResolveFile = ResolveFile.T
     object ResolveFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ArchiveFile = ArchiveFile.T

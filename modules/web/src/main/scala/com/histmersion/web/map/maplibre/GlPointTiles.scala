@@ -13,7 +13,7 @@ import scala.scalajs.js.JSConverters.*
   * the tiles of the view's zoom (`api.TileProps.Zoom`, which every feature carries — MapLibre keeps a coarser tile
   * drawn while the finer ones come in), once each.
   */
-final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String, maxZoom: Int) extends PointTiles:
+final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
   // `var`s: the template asked for, and the listeners
   private var template: Option[com.histmersion.web.map.maplibre.GlPointTiles.Template] = None
   private val listeners = mutable.ListBuffer.empty[() => Unit]
@@ -99,6 +99,13 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String,
         }
 
 object GlPointTiles:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Layer = Layer.T
+  object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Template = Template.T
   object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetTilesT = SetTilesT.T

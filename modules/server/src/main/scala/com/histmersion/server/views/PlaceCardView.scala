@@ -12,10 +12,10 @@ import com.histmersion.api.catalogue.Place
   * selects in each list (`counts` of the place's id now) and the place's pictures.
   */
 final class PlaceCardView(
-    place: (String, Option[Long]) => Either[Api.Error, Place.Entry],
-    now: String => String,
-    counts: String => Place.Counts,
-    pictures: String => List[MediaThumb]
+    place: (PlaceCardView.PlaceArg1, Option[PlaceCardView.PlaceArg2]) => Either[Api.Error, Place.Entry],
+    now: PlaceCardView.NowArg1 => PlaceCardView.NowResult,
+    counts: PlaceCardView.CountsArg1 => Place.Counts,
+    pictures: PlaceCardView.PicturesArg1 => List[MediaThumb]
 ):
   def apply(id: com.histmersion.server.views.PlaceCardView.ApplyId, asOf: Option[com.histmersion.server.views.PlaceCardView.ApplyAsOf], withCounts: com.histmersion.server.views.PlaceCardView.ApplyWithCounts): Either[Api.Error, PlaceDetail] =
     place(id, asOf).map(d =>
@@ -29,6 +29,19 @@ final class PlaceCardView(
     )
 
 object PlaceCardView:
+  type PlaceArg1 = PlaceArg1.T
+  object PlaceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceArg2 = PlaceArg2.T
+  object PlaceArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowArg1 = NowArg1.T
+  object NowArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowResult = NowResult.T
+  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsArg1 = CountsArg1.T
+  object CountsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PicturesArg1 = PicturesArg1.T
+  object PicturesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApplyId = ApplyId.T
   object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyAsOf = ApplyAsOf.T

@@ -1,7 +1,7 @@
 package com.histmersion.config
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
-enum SeaFloorSource(val wire: String):
+enum SeaFloorSource(val wire: SeaFloorSource.Wire):
   /** NOAA's ETOPO1 (1 arc-minute, ~1.8 km) through Mapzen's terrain tiles: one GET a tile. */
   case Etopo1 extends SeaFloorSource("etopo1")
 
@@ -9,6 +9,9 @@ enum SeaFloorSource(val wire: String):
   case Gebco extends SeaFloorSource("gebco")
 
 object SeaFloorSource:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T

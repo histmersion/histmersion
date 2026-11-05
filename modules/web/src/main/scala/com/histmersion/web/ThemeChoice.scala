@@ -8,13 +8,18 @@ import scala.scalajs.js
 /** The colour theme a reader picked: follow the system's setting (the default), always light, or always dark. One
   * button cycles them in that order, as the documentation site's does.
   */
-enum ThemeChoice(val wire: String, val label: String, val icon: Icon):
+enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val icon: Icon):
   case System extends ThemeChoice("system", "Theme: follows the system", Icon.ThemeSystem)
   case Light extends ThemeChoice("light", "Theme: light", Icon.ThemeLight)
   case Dark extends ThemeChoice("dark", "Theme: dark", Icon.ThemeDark)
 
 object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TooltipResult = TooltipResult.T

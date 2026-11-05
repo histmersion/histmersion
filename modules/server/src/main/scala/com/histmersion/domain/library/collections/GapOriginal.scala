@@ -4,7 +4,7 @@ import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionGapRow
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
-enum GapOriginal(val label: String):
+enum GapOriginal(val label: GapOriginal.Label):
   /** A host-side copy (`cli.calibre.originals-dir`): the CLI's own classification, never the server's. */
   case Local extends GapOriginal("local")
 
@@ -21,6 +21,9 @@ object GapOriginal:
   /** A gap counts when there is an original to push and the source is not already in Calibre (provenance `calibre`, or
     * a Calibre id). A record with no original anywhere is listed, never counted.
     */
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match
       case Some(true)  => Stored

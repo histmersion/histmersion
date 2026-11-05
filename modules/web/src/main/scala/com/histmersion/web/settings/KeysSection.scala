@@ -31,7 +31,7 @@ object KeysSection:
   type StateResult = StateResult.T
   object StateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Form(val scheme: String, val label: String, val hint: String):
+  enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint):
     case Env extends Form("env", "Environment variable", "its name, e.g. HISTMERSION_CORE_KEY")
     case Keepassxc extends Form("keepassxc", "KeePassXC entry", "Group/Entry#attribute")
     case OnePass extends Form("1password", "1Password item", "op://Vault/Item/field")
@@ -39,6 +39,13 @@ object KeysSection:
     case Value extends Form("value", "The value itself, in the settings file", "the key or password")
 
   object Form:
+    type Scheme = Scheme.T
+    object Scheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OfScheme = OfScheme.T
     object OfScheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

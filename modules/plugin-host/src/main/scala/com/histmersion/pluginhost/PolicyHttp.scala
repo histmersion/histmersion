@@ -17,11 +17,11 @@ import com.histmersion.plugin.Plugin
   * request; `sleep` and `clock` are parameters so a test does not wait.
   */
 final class PolicyHttp(
-    userAgent: String,
+    userAgent: PolicyHttp.UserAgent,
     transport: HttpTransport,
-    tries: Int = 4,
-    maxRetryAfterSeconds: Int = 60,
-    sleep: Long => Unit = ms => Thread.sleep(ms),
+    tries: PolicyHttp.Tries = 4,
+    maxRetryAfterSeconds: PolicyHttp.MaxRetryAfterSeconds = 60,
+    sleep: PolicyHttp.SleepArg1 => Unit = ms => Thread.sleep(ms),
     clock: () => java.time.Instant = () => java.time.Instant.now(),
     log: HostLog = HostLog.scribe
 ):
@@ -76,6 +76,15 @@ final class PolicyHttp(
       once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
+  type UserAgent = UserAgent.T
+  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tries = Tries.T
+  object Tries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
+  object MaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepArg1 = SleepArg1.T
+  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BytesResultPart1 = BytesResultPart1.T
   object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesUrl = BytesUrl.T

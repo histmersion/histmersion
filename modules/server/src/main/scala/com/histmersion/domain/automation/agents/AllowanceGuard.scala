@@ -23,7 +23,7 @@ import scala.jdk.CollectionConverters.*
   * to the chain's next model. At most one call overshoots.
   */
 final private[automation] class AllowanceGuard(
-    headroomTokens: Option[Long],
+    headroomTokens: Option[AllowanceGuard.HeadroomTokens],
     headroomUsd: Option[BigDecimal],
     billing: Billing
 ) extends AgentInterceptor[Identity]:
@@ -39,4 +39,7 @@ final private[automation] class AllowanceGuard(
     else LoopDecision.Continue
 
 private[automation] object AllowanceGuard:
+  type HeadroomTokens = HeadroomTokens.T
+  object HeadroomTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Reason = "allowance"

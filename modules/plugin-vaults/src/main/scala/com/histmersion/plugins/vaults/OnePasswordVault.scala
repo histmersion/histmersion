@@ -7,10 +7,10 @@ import com.histmersion.plugin.Plugin.Config.given
 import scala.concurrent.duration.*
 
 final class OnePasswordVault(
-    val name: String,
-    exe: String,
-    account: Option[String],
-    token: Option[String],
+    val name: OnePasswordVault.Name,
+    exe: OnePasswordVault.Exe,
+    account: Option[OnePasswordVault.Account],
+    token: Option[OnePasswordVault.Token],
     timeout: FiniteDuration
 )(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
   def resolve(ref: com.histmersion.plugins.vaults.OnePasswordVault.ResolveRef): Either[com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart1, com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart2] =
@@ -32,6 +32,15 @@ final class OnePasswordVault(
     else None
 
 object OnePasswordVault:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Exe = Exe.T
+  object Exe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Account = Account.T
+  object Account extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Token = Token.T
+  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T

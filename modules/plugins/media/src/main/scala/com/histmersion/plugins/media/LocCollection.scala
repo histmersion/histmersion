@@ -11,7 +11,7 @@ import java.util.Locale
   * restrictions" and its date is no later than `max-year` (1928: US works published before 1929). Its `location` list
   * is where it is of. A 403 is loc.gov's bot challenge to automated clients — reported as such, never worked around.
   */
-final class LocCollection(conf: CollectionSettings, thumbPx: Int)
+final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
     extends MuseumCollection(conf, "Library of Congress", "media.loc"):
   val title = "Library of Congress maps"
   override val description =
@@ -43,6 +43,9 @@ final class LocCollection(conf: CollectionSettings, thumbPx: Int)
       )
 
 object LocCollection:
+
+  type ThumbPx = ThumbPx.T
+  object ThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ExplainResult = ExplainResult.T
   object ExplainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

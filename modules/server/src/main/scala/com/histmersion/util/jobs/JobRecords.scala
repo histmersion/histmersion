@@ -94,7 +94,7 @@ object JobRecords:
     object ProgressText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
-  final class InMemory(state: AtomicReference[Map[String, JobInfo]], clock: Clock) extends JobRecords:
+  final class InMemory(state: AtomicReference[Map[InMemory.StateKey, JobInfo]], clock: Clock) extends JobRecords:
     def create(kind: com.histmersion.util.jobs.JobRecords.InMemory.CreateKind, citekey: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateCitekey], sha256: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateSha256], acquireItem: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateAcquireItem]): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
@@ -148,6 +148,9 @@ object JobRecords:
       )
 
   object InMemory:
+    type StateKey = StateKey.T
+    object StateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type CreateKind = CreateKind.T
     object CreateKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreateCitekey = CreateCitekey.T

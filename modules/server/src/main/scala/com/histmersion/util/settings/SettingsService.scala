@@ -124,7 +124,7 @@ object SettingsService:
     * names in an include is not read.
     */
   final class InMemory(
-      text: AtomicReference[Option[String]],
+      text: AtomicReference[Option[InMemory.Text]],
       env: Config = ConfigFactory.empty,
       val schema: ConfigSchema = ConfigSchema.reference
   ) extends SettingsService:
@@ -196,6 +196,9 @@ object SettingsService:
 
   object InMemory:
     /** The name the file held in memory goes by. */
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Path = Path.T
     object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CurrentResult = CurrentResult.T

@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-enum AgentMode(val wire: String):
+enum AgentMode(val wire: AgentMode.Wire):
   case Working extends AgentMode("working")
   case Finishing extends AgentMode("finish")
   case Paused extends AgentMode("pause")
@@ -22,6 +22,9 @@ enum AgentMode(val wire: String):
     case Paused    => "Research agents are paused"
 
 object AgentMode:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WordingResult = WordingResult.T
   object WordingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadingResult = HeadingResult.T

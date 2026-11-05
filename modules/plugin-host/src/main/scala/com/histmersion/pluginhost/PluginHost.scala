@@ -506,7 +506,7 @@ object PluginHost:
     * answer, value or error, is kept for this generation only (a reload resolves again; nothing outlives the build's
     * registrations).
     */
-  final private class GenerationSecrets(env: Config, wanted: Map[String, List[String]]):
+  final private class GenerationSecrets(env: Config, wanted: Map[GenerationSecrets.WantedKey, List[GenerationSecrets.WantedValue]]):
     private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[String, String]]
     def apply(ref: Secret.Ref, vaults: Map[com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyVaultsPart1, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart1, com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart2] =
       known.getOrElse(
@@ -522,6 +522,11 @@ object PluginHost:
       )
 
   object GenerationSecrets:
+    type WantedKey = WantedKey.T
+    object WantedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WantedValue = WantedValue.T
+    object WantedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ApplyResultPart1 = ApplyResultPart1.T
     object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApplyResultPart2 = ApplyResultPart2.T
@@ -549,7 +554,7 @@ object PluginHost:
   /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but owned by ONE
     * register call: `close` ends it, after which any add (a plugin that kept the context) is refused.
     */
-  final private class Staged[A](kind: String, committed: Map[String, A], valid: (String, A) => Option[String])
+  final private class Staged[A](kind: Staged.Kind, committed: Map[Staged.CommittedKey, A], valid: (Staged.ValidArg1, A) => Option[Staged.ValidResult])
       extends Registry[A]:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[com.histmersion.pluginhost.PluginHost.Staged.AddedPart1, A] = ListMap.empty
@@ -566,6 +571,15 @@ object PluginHost:
       added
 
   object Staged:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CommittedKey = CommittedKey.T
+    object CommittedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ValidArg1 = ValidArg1.T
+    object ValidArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ValidResult = ValidResult.T
+    object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AddedPart1 = AddedPart1.T
     object AddedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AddResultPart1 = AddResultPart1.T
@@ -579,9 +593,9 @@ object PluginHost:
     * The HTTP client is built on the first request.
     */
   final private class RegistrationContext(
-      id: String,
+      id: RegistrationContext.Id,
       services: HostServices,
-      resolved: Secret => Either[String, String],
+      resolved: Secret => Either[RegistrationContext.ResolvedResultPart1, RegistrationContext.ResolvedResultPart2],
       vaults: Staged[Secret.Vault],
       fetchers: Staged[SourceFetcher],
       media: Staged[MediaCollection],
@@ -609,6 +623,13 @@ object PluginHost:
     override def sourceCollections = collections
 
   object RegistrationContext:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolvedResultPart1 = ResolvedResultPart1.T
+    object ResolvedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolvedResultPart2 = ResolvedResultPart2.T
+    object ResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type InfoMessage = InfoMessage.T
     object InfoMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WarnMessage = WarnMessage.T

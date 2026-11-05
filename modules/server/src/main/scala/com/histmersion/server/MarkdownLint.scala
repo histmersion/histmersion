@@ -357,7 +357,7 @@ object MarkdownLint:
   private val LocalPath = """^(?:file:|/(?:Users|home|tmp|var|private|Volumes|mnt)/|[A-Za-z]:\\|\.\.?/|figures/)""".r
 
   /** One pass over one text. Mutable on purpose: a builder of findings, local to one `check`. */
-  final private class Scan(text: String, field: FormatField, ctx: Context):
+  final private class Scan(text: Scan.Text, field: FormatField, ctx: Context):
     val findings = mutable.ListBuffer.empty[Finding]
 
     // offsets → (line, column), both 1-based
@@ -1402,6 +1402,9 @@ object MarkdownLint:
         }
 
   object Scan:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type LineOfResult = LineOfResult.T
     object LineOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LineOfOff = LineOfOff.T

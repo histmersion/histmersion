@@ -60,11 +60,16 @@ object PlanQuota:
 
   import Agents.{ModelRef, ProviderKind}
 
-  enum PoolId(val wire: String, val title: String):
+  enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title):
     case ClaudePlan extends PoolId("claude-plan", "Claude plan")
     case ChatgptPlan extends PoolId("chatgpt-plan", "ChatGPT plan")
 
   object PoolId:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -94,7 +99,7 @@ object PlanQuota:
   def paid(m: ModelRef, logins: Logins): com.histmersion.api.automation.PlanQuota.PaidResult =
     m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty
 
-  enum Source(val wire: String):
+  enum Source(val wire: Source.Wire):
     case Run extends Source("run")
 
     case Mod extends Source("mod")
@@ -108,6 +113,9 @@ object PlanQuota:
     case Probe extends Source("probe")
 
   object Source:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -274,12 +282,15 @@ object PlanQuota:
           case None                           => Verdict.Usable(None)
     (v, states)
 
-  enum RefreshMode(val wire: String):
+  enum RefreshMode(val wire: RefreshMode.Wire):
     case Auto extends RefreshMode("auto")
     case Probe extends RefreshMode("probe")
     case Off extends RefreshMode("off")
 
   object RefreshMode:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -290,12 +301,16 @@ object PlanQuota:
     case Missing(why: String)
     case Unknown(why: String)
 
-  enum RefreshNeed(val text: String):
+  enum RefreshNeed(val text: RefreshNeed.Text):
     case StaleOnly extends RefreshNeed("the reading is stale")
 
     case NoReading extends RefreshNeed("no reading yet")
 
-  enum RefreshTrigger(val wire: String):
+  object RefreshNeed:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  enum RefreshTrigger(val wire: RefreshTrigger.Wire):
     case Pick extends RefreshTrigger("pick")
 
     case Paused extends RefreshTrigger("paused-run")
@@ -303,6 +318,10 @@ object PlanQuota:
     case Command extends RefreshTrigger("command")
 
     case Schedule extends RefreshTrigger("schedule")
+
+  object RefreshTrigger:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def refreshNeed(
       readings: List[Reading],

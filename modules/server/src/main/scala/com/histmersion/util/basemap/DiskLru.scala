@@ -12,7 +12,7 @@ import java.time.Instant
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
   */
-final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp")(using clock: java.time.Clock):
+final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: DiskLru.Ext = "webp")(using clock: java.time.Clock):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -82,6 +82,11 @@ final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp")(us
   }
 
 object DiskLru:
+  type MaxBytesResult = MaxBytesResult.T
+  object MaxBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ext = Ext.T
+  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FileKey = FileKey.T
   object FileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileAbsent = FileAbsent.T

@@ -9,10 +9,10 @@ import scala.scalajs.js
   * `later`/`cancel` are injectable for a test.
   */
 final class Debounce[A](
-    quietMs: Int,
+    quietMs: Debounce.QuietMs,
     f: A => Unit,
-    later: (Double, () => Unit) => Int = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Int => Unit = id => dom.window.clearTimeout(id)
+    later: (Debounce.LaterArg1, () => Unit) => Debounce.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
+    cancel: Debounce.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 ):
   // `var`s: the one pending run and its timer
   private var pending: Option[A] = None
@@ -29,5 +29,14 @@ final class Debounce[A](
     pending = None
 
 object Debounce:
+  type QuietMs = QuietMs.T
+  object QuietMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterArg1 = LaterArg1.T
+  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaterResult = LaterResult.T
+  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CancelArg1 = CancelArg1.T
+  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Timer = Timer.T
   object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

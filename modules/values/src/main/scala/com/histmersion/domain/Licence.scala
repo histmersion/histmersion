@@ -120,7 +120,7 @@ object Licence:
   /** What a licence allows, as an allowlist names it (`cc-by-sa`): a new version of an allowed licence needs no config
     * change. Two families are never stored, whatever a config says: an unreadable licence and all rights reserved.
     */
-  enum Family(val wire: String):
+  enum Family(val wire: Family.Wire):
     case Cc0 extends Family("cc0")
     case PublicDomain extends Family("public-domain")
     case CcBy extends Family("cc-by")
@@ -145,6 +145,9 @@ object Licence:
   object Family:
 
     /** Every family an allowlist may name, in the order the settings document them. */
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type NeedsAttributionResult = NeedsAttributionResult.T
     object NeedsAttributionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsPublicDomainResult = IsPublicDomainResult.T

@@ -1,5 +1,5 @@
 package com.histmersion.domain.automation
-enum ItemStatus(val wire: String):
+enum ItemStatus(val wire: ItemStatus.Wire):
   case Pending extends ItemStatus("pending")
   case Held extends ItemStatus("held")
   case Active extends ItemStatus("active")
@@ -12,6 +12,9 @@ enum ItemStatus(val wire: String):
   def isFinal: com.histmersion.domain.automation.ItemStatus.IsFinalResult = this == Done || this == Stopped || this == Failed || this == Cancelled
 
 object ItemStatus:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsFinalResult = IsFinalResult.T
   object IsFinalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T

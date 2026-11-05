@@ -20,7 +20,7 @@ object DeleteBlocker:
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Kind(val wire: String, val label: String):
+  enum Kind(val wire: Kind.Wire, val label: Kind.Label):
     case Article extends Kind("article", "cited by article")
     case Event extends Kind("event", "primary source of event")
     case EventEdge extends Kind("event-edge", "source of event relation")
@@ -28,6 +28,11 @@ object DeleteBlocker:
     case Job extends Kind("job", "still being written by job")
 
   object Kind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type WireResult = WireResult.T
     object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FromWireS = FromWireS.T

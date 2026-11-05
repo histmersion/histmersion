@@ -89,7 +89,7 @@ import com.histmersion.api.research.Article
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
   * `Authorization: Bearer <key>` value for authenticated servers; `None` = local.
   */
-final class Client(val serverUrl: String, token: Option[String] = None):
+final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] = None):
   private val base = Uri.unsafeParse(serverUrl)
 
   // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a
@@ -406,6 +406,11 @@ final class Client(val serverUrl: String, token: Option[String] = None):
 
 object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
+  type ServerUrl = ServerUrl.T
+  object ServerUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Token = Token.T
+  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchQ = SearchQ.T
   object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T

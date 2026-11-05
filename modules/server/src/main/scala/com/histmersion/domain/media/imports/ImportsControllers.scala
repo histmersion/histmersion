@@ -27,7 +27,7 @@ final class ImportsControllers(
     imports: ImportService,
     store: MediaStore,
     jobs: MediaJobs,
-    collections: () => (ListMap[String, MediaCollection], Map[String, String]),
+    collections: () => (ListMap[ImportsControllers.CollectionsResultPart1Key, MediaCollection], Map[ImportsControllers.CollectionsResultPart2Key, ImportsControllers.CollectionsResultPart2Value]),
     cfg: () => MediaConfig,
     http: HttpTransport,
     converter: ConverterClient,
@@ -171,6 +171,13 @@ final class ImportsControllers(
     out.modify(_.pending).setTo(imp.pending(since))
 
 object ImportsControllers:
+  type CollectionsResultPart1Key = CollectionsResultPart1Key.T
+  object CollectionsResultPart1Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsResultPart2Key = CollectionsResultPart2Key.T
+  object CollectionsResultPart2Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsResultPart2Value = CollectionsResultPart2Value.T
+  object CollectionsResultPart2Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProviderOfP = ProviderOfP.T
   object ProviderOfP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunImportSingle = RunImportSingle.T

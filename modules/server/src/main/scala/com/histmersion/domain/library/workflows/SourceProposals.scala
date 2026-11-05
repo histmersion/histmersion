@@ -21,8 +21,8 @@ import com.histmersion.api.library.Source
 final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
-    status: String => Option[Source.Status],
-    apply: Proposal => Either[String, String]
+    status: SourceProposals.StatusArg1 => Option[Source.Status],
+    apply: Proposal => Either[SourceProposals.ApplyResultPart1, SourceProposals.ApplyResultPart2]
 ):
   def proposedBefore(p: Proposal): com.histmersion.domain.library.workflows.SourceProposals.ProposedBeforeResult = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
 
@@ -75,6 +75,13 @@ final class SourceProposals(
 
 object SourceProposals:
   /** What became of one proposal, for the run's log and warnings. */
+  type StatusArg1 = StatusArg1.T
+  object StatusArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart1 = ApplyResultPart1.T
+  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart2 = ApplyResultPart2.T
+  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ProposedBeforeResult = ProposedBeforeResult.T
   object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResult = RecordResult.T

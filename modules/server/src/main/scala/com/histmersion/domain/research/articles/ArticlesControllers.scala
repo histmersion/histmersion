@@ -55,10 +55,10 @@ final class ArticlesControllers(
     sources: SourcesControllers,
     sourceStore: SourceService,
     filters: SearchFilters,
-    ledgers: String => Either[String, Option[ReviewLedger.Ledger]],
-    articleLeads: (String, List[String], Option[Period]) => List[ArticleEventLead],
-    note: String => Either[Api.Error, String],
-    current: (AliasKind, String) => String,
+    ledgers: ArticlesControllers.LedgersArg1 => Either[ArticlesControllers.LedgersResultPart1, Option[ReviewLedger.Ledger]],
+    articleLeads: (ArticlesControllers.ArticleLeadsArg1, List[ArticlesControllers.ArticleLeadsArg2], Option[Period]) => List[ArticleEventLead],
+    note: ArticlesControllers.NoteArg1 => Either[Api.Error, ArticlesControllers.NoteResultPart2],
+    current: (AliasKind, ArticlesControllers.CurrentArg2) => ArticlesControllers.CurrentResult,
     cfg: () => AppConfig,
     maintenance: WriteGate
 ):
@@ -551,6 +551,23 @@ final class ArticlesControllers(
           }
 
 object ArticlesControllers:
+  type LedgersArg1 = LedgersArg1.T
+  object LedgersArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgersResultPart1 = LedgersResultPart1.T
+  object LedgersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleLeadsArg1 = ArticleLeadsArg1.T
+  object ArticleLeadsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleLeadsArg2 = ArticleLeadsArg2.T
+  object ArticleLeadsArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteArg1 = NoteArg1.T
+  object NoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteResultPart2 = NoteResultPart2.T
+  object NoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentArg2 = CurrentArg2.T
+  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NormResult = NormResult.T
   object NormResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormSlug = NormSlug.T

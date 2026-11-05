@@ -11,7 +11,7 @@ import scala.scalajs.js
   * a click or Enter activates it; switched off, it keeps the last content and shows it again when switched on. The same
   * code for every kind.
   */
-final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[Long]):
+final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[PointLayer.AsOfResult]):
   // `var`s: what was shown last (shown again when the layer is switched back on), whether it is on, and
   // its points in the cluster layer, by key
   private var last: Option[(Iterable[A], (com.histmersion.web.PointLayer.LastPart2Part1, com.histmersion.web.PointLayer.LastPart2Part2))] = None
@@ -101,6 +101,9 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
 
 object PointLayer:
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
+  type AsOfResult = AsOfResult.T
+  object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LastPart2Part1 = LastPart2Part1.T
   object LastPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastPart2Part2 = LastPart2Part2.T

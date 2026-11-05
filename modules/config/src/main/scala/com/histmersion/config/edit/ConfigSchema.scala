@@ -10,7 +10,7 @@ import scala.util.Try
   * whether it waits for a restart and whether it is a credential — what Settings' "Advanced" form is generated from and
   * what a write is checked against. Pure: built from reference.conf's text.
   */
-final class ConfigSchema private (val fields: List[SettingField], blocks: Map[SettingKey, String]):
+final class ConfigSchema private (val fields: List[SettingField], blocks: Map[SettingKey, ConfigSchema.BlocksValue]):
 
   private val byKey: Map[SettingKey, SettingField] = fields.map(f => f.key -> f).toMap
 
@@ -49,6 +49,9 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
 object ConfigSchema:
 
   /** The schema of the reference.conf on the class path. */
+  type BlocksValue = BlocksValue.T
+  object BlocksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type BlockDocResult = BlockDocResult.T
   object BlockDocResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsBlockResult = IsBlockResult.T

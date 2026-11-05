@@ -312,7 +312,7 @@ object JobRuns:
   /** The same rows in memory, stamped by `now` (the database's `now()`), each with the order it was made and last
     * changed in; behaves as the database does.
     */
-  final class InMemory(state: AtomicReference[Map[String, JobRunState]], now: () => Instant) extends JobRuns:
+  final class InMemory(state: AtomicReference[Map[InMemory.StateKey, JobRunState]], now: () => Instant) extends JobRuns:
     private val stamp = java.util.concurrent.atomic.AtomicLong(0L)
     private def touched(r: JobRunState): JobRunState =
       r.modify(_.updated).setTo(stamp.incrementAndGet()).modify(_.updatedAt).setTo(now())
@@ -418,6 +418,9 @@ object JobRuns:
       get(id).exists(_.row.status == paused) && change(kind, id)(r => touched(r.modify(_.resumeAt).setTo(Some(at))))
 
   object InMemory:
+    type StateKey = StateKey.T
+    object StateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ChangeResult = ChangeResult.T
     object ChangeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ChangeKind = ChangeKind.T

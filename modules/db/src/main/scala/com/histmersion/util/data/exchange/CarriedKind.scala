@@ -79,8 +79,8 @@ object CarriedKind:
       override val table: Option[TableName],
       override val rowsIn: List[RowsIn],
       lines: BundleScope => DbCon ?=> List[A],
-      line: A => String,
-      clock: A => Option[String],
+      line: A => Lines.LineResult,
+      clock: A => Option[Lines.ClockResult],
       set: (BundleEntities, List[A]) => BundleEntities
   ) extends CarriedKind:
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
@@ -89,3 +89,9 @@ object CarriedKind:
     def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
       val as = lines(scope)
       es => set(es, as)
+
+  object Lines:
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClockResult = ClockResult.T
+    object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

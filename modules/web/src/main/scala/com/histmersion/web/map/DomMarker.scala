@@ -10,10 +10,10 @@ import scala.scalajs.js
   * [[MapEvent.overMarker]]); the element answers the pointer and the keyboard itself (its kind binds them).
   */
 final class DomMarker(
-    private var latV: Double,
-    private var lonV: Double,
+    private var latV: DomMarker.LatV,
+    private var lonV: DomMarker.LonV,
     val el: dom.HTMLElement,
-    box: Option[(Int, Int)] = None
+    box: Option[(DomMarker.BoxPart1, DomMarker.BoxPart2)] = None
 ):
   // `var`s: the last position written, whether it is hidden off screen, and the handlers of being shown
   private var lastX = Double.NaN
@@ -78,6 +78,15 @@ final class DomMarker(
 
 object DomMarker:
   /** A marker element of class `cls` holding `html`. */
+  type LatV = LatV.T
+  object LatV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LonV = LonV.T
+  object LonV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxPart1 = BoxPart1.T
+  object BoxPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxPart2 = BoxPart2.T
+  object BoxPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LatResult = LatResult.T
   object LatResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LonResult = LonResult.T

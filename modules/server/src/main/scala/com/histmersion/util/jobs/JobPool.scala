@@ -23,8 +23,8 @@ import java.util.concurrent.LinkedBlockingQueue
   */
 final class JobPool(
     ds: DataSource,
-    parallelism: Int,
-    run: String => Unit,
+    parallelism: JobPool.Parallelism,
+    run: JobPool.RunArg1 => Unit,
     pins: com.histmersion.util.jobs.Pinning = com.histmersion.util.jobs.Pinning.none
 ):
 
@@ -140,6 +140,11 @@ final class JobPool(
       catch case _: InterruptedException => running = false
 
 object JobPool:
+  type Parallelism = Parallelism.T
+  object Parallelism extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunArg1 = RunArg1.T
+  object RunArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsPausedResult = IsPausedResult.T
   object IsPausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartResult = StartResult.T

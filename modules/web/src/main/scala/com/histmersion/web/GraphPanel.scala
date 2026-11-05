@@ -187,7 +187,7 @@ object GraphPanel:
   final private class Simulation(
       g: com.histmersion.api.library.Source.Graph,
       canvas: dom.html.Canvas,
-      size: () => (Double, Double),
+      size: () => (Simulation.SizeResultPart1, Simulation.SizeResultPart2),
       hovered: Var[Option[GraphNode]]
   ):
     private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
@@ -409,6 +409,11 @@ object GraphPanel:
       if i == rootIdx then GL.rootRadius else if nodes(i).depth <= 1 then GL.depth1Radius else GL.leafRadius
 
   object Simulation:
+    type SizeResultPart1 = SizeResultPart1.T
+    object SizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SizeResultPart2 = SizeResultPart2.T
+    object SizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ToWorldResultPart1 = ToWorldResultPart1.T
     object ToWorldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ToWorldResultPart2 = ToWorldResultPart2.T

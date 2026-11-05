@@ -28,15 +28,15 @@ import com.histmersion.api.automation.Agents
 final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
-    resolve: ModelRef => Either[String, (LlmClient, Billing)],
-    listModels: (String, List[(String, String)], Int) => Either[String, List[String]] = AgentDoctor.listModels,
-    runCommand: (List[String], Map[String, Option[String]], Int) => Either[String, (Int, String)] =
+    resolve: ModelRef => Either[AgentDoctor.ResolveResultPart1, (LlmClient, Billing)],
+    listModels: (AgentDoctor.ListModelsArg1, List[(AgentDoctor.ListModelsArg2Part1, AgentDoctor.ListModelsArg2Part2)], AgentDoctor.ListModelsArg3) => Either[String, List[String]] = AgentDoctor.listModels,
+    runCommand: (List[AgentDoctor.RunCommandArg1], Map[AgentDoctor.RunCommandArg2Key, Option[AgentDoctor.RunCommandArg2Value]], AgentDoctor.RunCommandArg3) => Either[String, (Int, String)] =
       AgentDoctor.runCommand,
     /** The AI-provider registry of the pinned plugin generation (docs/research-plugins.md §22): a host provider whose
       * plugin is off says so, and each plugin provider gets its own section. None: every host provider is taken as on,
       * and there is no plugin provider (a test's doctor).
       */
-    registry: Option[scala.collection.immutable.ListMap[String, com.histmersion.plugin.AiProvider]] = None,
+    registry: Option[scala.collection.immutable.ListMap[AgentDoctor.RegistryKey, com.histmersion.plugin.AiProvider]] = None,
     aiHttp: com.histmersion.plugin.AiHttp = com.histmersion.plugin.AiHttp.Offline,
     /** The process environment the entry point read (none: a test's doctor). */
     paths: com.histmersion.config.UserPaths = com.histmersion.domain.automation.agents.AgentTrees.NoEnvironment
@@ -345,6 +345,27 @@ object AgentDoctor:
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.
     */
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsArg1 = ListModelsArg1.T
+  object ListModelsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsArg2Part1 = ListModelsArg2Part1.T
+  object ListModelsArg2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsArg2Part2 = ListModelsArg2Part2.T
+  object ListModelsArg2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsArg3 = ListModelsArg3.T
+  object ListModelsArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandArg1 = RunCommandArg1.T
+  object RunCommandArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandArg2Key = RunCommandArg2Key.T
+  object RunCommandArg2Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandArg2Value = RunCommandArg2Value.T
+  object RunCommandArg2Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandArg3 = RunCommandArg3.T
+  object RunCommandArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegistryKey = RegistryKey.T
+  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OkN = OkN.T
   object OkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OkD = OkD.T

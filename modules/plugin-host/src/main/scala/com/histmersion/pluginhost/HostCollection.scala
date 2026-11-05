@@ -8,7 +8,7 @@ import scala.util.control.NonFatal
   * the operation's `Left`, naming the collection), and every write refused unless the collection declares the
   * capability it needs — whatever the plugin's own member would do.
   */
-final class HostCollection(val name: String, collection: SourceCollection):
+final class HostCollection(val name: HostCollection.Name, collection: SourceCollection):
   def title: com.histmersion.pluginhost.HostCollection.TitleResult = guardedValue(collection.title, name)
   def description: com.histmersion.pluginhost.HostCollection.DescriptionResult = guardedValue(collection.description, "")
   def capabilities: Set[CollectionCapability] = guardedValue(collection.capabilities, Set(CollectionCapability.Read))
@@ -62,6 +62,9 @@ final class HostCollection(val name: String, collection: SourceCollection):
       case NonFatal(_)     => otherwise
 
 object HostCollection:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TitleResult = TitleResult.T
   object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescriptionResult = DescriptionResult.T

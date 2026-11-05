@@ -8,7 +8,7 @@ import scala.util.Try
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
-final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
+final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: com.histmersion.plugins.calibre.CalibreCollection.Title = "Calibre"
@@ -94,6 +94,9 @@ final class CalibreCollection(library: Calibre.Library, writeBack: Boolean, shel
 
 object CalibreCollection:
   /** The most books a search answers when the host does not say. */
+  type WriteBack = WriteBack.T
+  object WriteBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T

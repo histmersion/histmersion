@@ -10,7 +10,7 @@ object Approval:
     * the decision (`waiting_approval`) and applies it itself when it resumes; the other kinds are applied by the
     * decision and the run never waits.
     */
-  enum Kind(val wire: String, val blocking: Boolean):
+  enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
     case StatusChange extends Kind("status-change", false)
     case Edge extends Kind("edge", false)
     case GoalPlan extends Kind("goal-plan", true)
@@ -38,6 +38,11 @@ object Approval:
     def proposesArticles: com.histmersion.api.automation.Approval.Kind.ProposesArticlesResult = this == ArticlePlan
 
   object Kind:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Blocking = Blocking.T
+    object Blocking extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AboutSubjectResult = AboutSubjectResult.T
     object AboutSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ProposesFilterResult = ProposesFilterResult.T
@@ -61,11 +66,14 @@ object Approval:
   /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and still recorded,
     * already approved).
     */
-  enum Mode(val wire: String):
+  enum Mode(val wire: Mode.Wire):
     case Manual extends Mode("manual")
     case Auto extends Mode("auto")
 
   object Mode:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -74,13 +82,16 @@ object Approval:
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
     * `result`.
     */
-  enum State(val wire: String):
+  enum State(val wire: State.Wire):
     case Open extends State("open")
     case Approved extends State("approved")
     case Rejected extends State("rejected")
     case Failed extends State("failed")
 
   object State:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -90,13 +101,18 @@ object Approval:
     * applied the moment it was proposed, by an `agents.approvals.*` mode of `auto` (its result starts [[AutoResult]]);
     * `Person` = everything else that is decided.
     */
-  enum DecidedBy(val wire: String, val describe: String):
+  enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
     case Person extends DecidedBy("person", "decided by a person")
     case Autopilot extends DecidedBy("autopilot", "decided by the autopilot's checks")
     case Auto extends DecidedBy("auto", "applied when proposed (an auto approval mode)")
 
   object DecidedBy:
     /** The note every autopilot decision starts with (`AutopilotPolicy.note`). */
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Describe = Describe.T
+    object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfState = OfState.T

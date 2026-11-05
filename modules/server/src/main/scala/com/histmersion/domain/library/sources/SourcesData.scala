@@ -39,7 +39,7 @@ object SourcesData:
         site.settings.limits.reindexChars
       )
 
-  final private class Check(val owner: DataOwner, name: String, override val fix: Option[SafeFix]) extends CheckRule:
+  final private class Check(val owner: DataOwner, name: Check.Name, override val fix: Option[SafeFix]) extends CheckRule:
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, name))
 
     def report(context: CheckContext, maxItems: com.histmersion.domain.library.sources.SourcesData.Check.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
@@ -50,6 +50,9 @@ object SourcesData:
       )
 
   object Check:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ReportMaxItems = ReportMaxItems.T
     object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -6,7 +6,7 @@ import scala.annotation.tailrec
   * the end of its line and of its environment line (`key = ${?VAR}` right under it), and the comment lines under those
   * that continue them (indented to the comments' column), and the variable it names. Pure.
   */
-final class ReferenceDocs(lines: IndexedSeq[String]):
+final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Lines]):
   import ReferenceDocs.*
 
   /** The documentation of the key `leaf` defined at line `line` (1-based). */
@@ -50,6 +50,9 @@ final class ReferenceDocs(lines: IndexedSeq[String]):
     loop(i + 1, Nil)
 
 object ReferenceDocs:
+  type Lines = Lines.T
+  object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DocResult = DocResult.T
   object DocResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DocLine = DocLine.T

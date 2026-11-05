@@ -81,7 +81,7 @@ object MergeApplyRuns:
     object OutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The rows in memory, keyed by id; ids are numbered in start order. */
-  final class InMemory(state: AtomicReference[Map[String, Run]] = AtomicReference(Map.empty[String, Run]))
+  final class InMemory(state: AtomicReference[Map[InMemory.StateKey, Run]] = AtomicReference(Map.empty[String, Run]))
       extends MergeApplyRuns:
     def running: com.histmersion.util.jobs.MergeApplyRuns.InMemory.RunningResult = state.get().values.exists(_.outcome.isEmpty)
 
@@ -104,6 +104,9 @@ object MergeApplyRuns:
       }
 
   object InMemory:
+    type StateKey = StateKey.T
+    object StateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RunningResult = RunningResult.T
     object RunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type StartResult = StartResult.T

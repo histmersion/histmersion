@@ -152,11 +152,17 @@ object CollectionsService:
   final class InMemory(
       linked: AtomicReference[List[LinkedSource]],
       library: CollectionLibrary,
-      registry: () => ListMap[String, SourceCollection],
-      archiveRows: Int
+      registry: () => ListMap[InMemory.RegistryResultKey, SourceCollection],
+      archiveRows: InMemory.ArchiveRows
   ) extends CollectionsService:
     private val run = Implementation(() => linked.get.sortBy(_.citekey), library, registry, archiveRows)
     export run.*
+
+  object InMemory:
+    type RegistryResultKey = RegistryResultKey.T
+    object RegistryResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveRows = ArchiveRows.T
+    object ArchiveRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val StoredOriginalHint =
     " — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
@@ -164,8 +170,8 @@ object CollectionsService:
   final private class Implementation(
       linked: () => List[LinkedSource],
       library: CollectionLibrary,
-      registry: () => ListMap[String, SourceCollection],
-      archiveRows: Int
+      registry: () => ListMap[Implementation.RegistryResultKey, SourceCollection],
+      archiveRows: Implementation.ArchiveRows
   ) extends CollectionsService:
 
     private def fail(message: com.histmersion.domain.library.collections.CollectionsService.Implementation.FailMessage): Api.Error = Api.Error(message)
@@ -585,6 +591,11 @@ object CollectionsService:
       yield report
 
   object Implementation:
+    type RegistryResultKey = RegistryResultKey.T
+    object RegistryResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveRows = ArchiveRows.T
+    object ArchiveRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type FailMessage = FailMessage.T
     object FailMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UsageMessage = UsageMessage.T

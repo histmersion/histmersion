@@ -22,7 +22,7 @@ import com.histmersion.api.library.{
 }
 
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
-final class CollectionsClient(c: Client, name: String):
+final class CollectionsClient(c: Client, name: CollectionsClient.Name):
   def info: Either[Cli.Error, CollectionInfo] = c.call(CollectionsApi.collection)(name)
   def search(q: Option[com.histmersion.cli.CollectionsClient.SearchQ], limit: Option[com.histmersion.cli.CollectionsClient.SearchLimit], unlinked: com.histmersion.cli.CollectionsClient.SearchUnlinked): Either[Cli.Error, CollectionSearch] =
     c.call(CollectionsApi.search)((name, q, limit, unlinked))
@@ -46,6 +46,9 @@ final class CollectionsClient(c: Client, name: String):
   def onServer: com.histmersion.cli.CollectionsClient.OnServerResult = info.exists(_.reachable)
 
 object CollectionsClient:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SearchQ = SearchQ.T
   object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T

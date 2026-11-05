@@ -25,8 +25,8 @@ final class GazetteerImports(
     stores: () => GazetteerLoad.Stores,
     cfg: () => AppConfig,
     download: GazetteerLoad.Download,
-    text: String => Either[String, String],
-    registered: () => ListMap[String, GazetteerSource],
+    text: GazetteerImports.TextArg1 => Either[GazetteerImports.TextResultPart1, GazetteerImports.TextResultPart2],
+    registered: () => ListMap[GazetteerImports.RegisteredResultKey, GazetteerSource],
     http: () => Plugin.Http
 ):
   private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
@@ -108,6 +108,15 @@ final class GazetteerImports(
     ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, cfg().places.pointToleranceKm)
 
 object GazetteerImports:
+  type TextArg1 = TextArg1.T
+  object TextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResultPart1 = TextResultPart1.T
+  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResultPart2 = TextResultPart2.T
+  object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisteredResultKey = RegisteredResultKey.T
+  object RegisteredResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadApply = LoadApply.T

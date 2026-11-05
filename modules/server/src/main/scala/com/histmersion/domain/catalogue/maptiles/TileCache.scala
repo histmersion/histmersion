@@ -4,7 +4,7 @@ package com.histmersion.domain.catalogue.maptiles
   * tile's key carries the versions of what it was cut from, so a write makes the tiles it touched unreachable at once;
   * they age out. Thread-safe.
   */
-final class TileCache(maxBytes: () => Long):
+final class TileCache(maxBytes: () => TileCache.MaxBytesResult):
   private val tiles = new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true)
   // `var`: the bytes held
   private var held = 0L
@@ -27,6 +27,9 @@ final class TileCache(maxBytes: () => Long):
   def stats: (com.histmersion.domain.catalogue.maptiles.TileCache.StatsResultPart1, com.histmersion.domain.catalogue.maptiles.TileCache.StatsResultPart2) = synchronized((tiles.size, held))
 
 object TileCache:
+  type MaxBytesResult = MaxBytesResult.T
+  object MaxBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GetResult = GetResult.T
   object GetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetKey = GetKey.T

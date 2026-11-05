@@ -60,7 +60,7 @@ final class IngestQueue(
     clock: Clock,
     ds: () => DataSource,
     pins: Pinning,
-    afterStore: String => Option[String]
+    afterStore: IngestQueue.AfterStoreArg1 => Option[IngestQueue.AfterStoreResult]
 ):
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes it and a worker
@@ -291,6 +291,11 @@ final class IngestQueue(
     )
 
 object IngestQueue:
+  type AfterStoreArg1 = AfterStoreArg1.T
+  object AfterStoreArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterStoreResult = AfterStoreResult.T
+  object AfterStoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StartResult = StartResult.T
   object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PausedResult = PausedResult.T

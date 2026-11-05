@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
   * reload does not reset it, and a restart reads it back from the store it was given ([[persistTo]]). `clock` and
   * `sleep` are parameters so a test does not wait.
   */
-final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.sleep(ms)):
+final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit = ms => Thread.sleep(ms)):
 
   private val lock = Object()
   private val current = AtomicReference(CoreQuota.State.fresh(CoreQuota.day(clock())))
@@ -89,6 +89,9 @@ final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.
 
 object CoreBudget:
   /** Its row in `upstream_quota`, and the upstream's name plugins ask the host's quota by. */
+  type SleepArg1 = SleepArg1.T
+  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ObserveCode = ObserveCode.T
   object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ObserveHeadersPart1 = ObserveHeadersPart1.T

@@ -27,11 +27,11 @@ import com.histmersion.api.catalogue.Correction
   */
 final class EventImports(
     store: EventImportService,
-    registered: () => ListMap[String, EventCatalogue],
+    registered: () => ListMap[EventImports.RegisteredResultKey, EventCatalogue],
     cfg: () => AppConfig,
     http: HttpTransport,
-    presentYear: () => Long,
-    held: () => Boolean
+    presentYear: () => EventImports.PresentYearResult,
+    held: () => EventImports.HeldResult
 ):
   private def ec = cfg().events
 
@@ -333,6 +333,13 @@ final class EventImports(
       )
 
 object EventImports:
+  type RegisteredResultKey = RegisteredResultKey.T
+  object RegisteredResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PresentYearResult = PresentYearResult.T
+  object PresentYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeldResult = HeldResult.T
+  object HeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ClassOrderResult = ClassOrderResult.T
   object ClassOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PoliteIntervalMs = PoliteIntervalMs.T

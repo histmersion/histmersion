@@ -17,7 +17,7 @@ final class CheckControllers(
     checks: CheckRunner,
     config: () => AppConfig,
     ds: DataSource,
-    format: (String => Boolean) => FormatChecker,
+    format: (CheckControllers.FormatArg1Arg1 => CheckControllers.FormatArg1Result) => FormatChecker,
     write: GuardedWrite,
     maintenance: WriteGate
 )(using timer: com.histmersion.util.time.Timer):
@@ -50,6 +50,11 @@ final class CheckControllers(
     else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied)))
 
 object CheckControllers:
+  type FormatArg1Arg1 = FormatArg1Arg1.T
+  object FormatArg1Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FormatArg1Result = FormatArg1Result.T
+  object FormatArg1Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LintRulesResult = LintRulesResult.T
   object LintRulesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LintRules = LintRules.T

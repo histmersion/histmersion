@@ -7,9 +7,9 @@ import scala.scalajs.js
   * agent run with its costs, every background job, the worklog by day).
   */
 enum ActivityTab(
-    val slug: String,
-    val label: String,
-    val agents: Boolean,
+    val slug: ActivityTab.Slug,
+    val label: ActivityTab.Label,
+    val agents: ActivityTab.Agents,
     val show: Option[com.histmersion.api.automation.Activity.Show]
 ):
   case Everything
@@ -62,5 +62,12 @@ enum ActivityTab(
   def isChip: com.histmersion.web.ActivityTab.IsChipResult = show.isDefined
 
 object ActivityTab:
+  type Slug = Slug.T
+  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Agents = Agents.T
+  object Agents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsChipResult = IsChipResult.T
   object IsChipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

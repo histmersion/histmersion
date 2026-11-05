@@ -60,7 +60,7 @@ import scala.jdk.CollectionConverters.*
   * }}}
   */
 final class PluginHarness private (
-    val id: String,
+    val id: PluginHarness.Id,
     /** The plugin as loaded. */
     val plugin: Plugin,
     registries: Registries,
@@ -71,7 +71,7 @@ final class PluginHarness private (
     lines: Lines,
     acquisition: PolicyHttp,
     /** What the server would have warned about while loading the plugin (a secret written into the config). */
-    val warnings: List[String]
+    val warnings: List[PluginHarness.Warnings]
 ):
 
   private val hostLog: HostLog = lines.host
@@ -331,6 +331,11 @@ final class PluginHarness private (
 object PluginHarness:
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warnings = Warnings.T
+  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SleepResultArg1 = SleepResultArg1.T
   object SleepResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GazetteerSourcesResult = GazetteerSourcesResult.T

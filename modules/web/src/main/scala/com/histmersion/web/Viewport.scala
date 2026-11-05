@@ -44,10 +44,14 @@ object Viewport:
   type TabletNowResult = TabletNowResult.T
   object TabletNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Mode(val wire: String):
+  enum Mode(val wire: Mode.Wire):
     case Narrow extends Mode("narrow")
     case Tablet extends Mode("narrow")
     case Wide extends Mode("wide")
+
+  object Mode:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the mode a viewport of `width` × `height` (CSS px) is in. Narrow when it is thin, or when it is short and
     * driven by touch — a phone held sideways, which is wide but has no room; else a tablet up to `tabletMaxWidth`.

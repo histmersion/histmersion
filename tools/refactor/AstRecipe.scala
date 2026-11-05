@@ -12,7 +12,7 @@ object AstRecipe {
   }
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
-    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "")
+    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -56,7 +56,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       val source = read(path)
       val tree = source.parse[Source].get
       val definitionPatches = if(definitionPaths(path)) {
-        val records = ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, evidence)
+        val records = ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, policy.otherConstructors, evidence)
         val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,evidence) else Nil
         (records ++ members).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
           if(a == b) {
@@ -335,13 +335,13 @@ object MemberDefinitions {
 }
 
 object ModelDefinitions {
-  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], defer: Map[String,String], buffers: Map[String,String], localModels: List[String],
+  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], defer: Map[String,String], buffers: Map[String,String], localModels: List[String], otherConstructors: Boolean,
       evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
     val primitive = Set("String", "Boolean", "Byte", "Short", "Int", "Long", "Float", "Double", "Char")
     val result = scala.collection.mutable.ListBuffer.empty[(Int,Int,String)]
     def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
     def indent(t: Tree): String = source.substring(source.lastIndexOf('\n',t.pos.start - 1) + 1,t.pos.start).takeWhile(_ == ' ')
-    def upper(s: String): String = s.head.toUpper + s.tail
+    def upper(s: String): String = if(s.isEmpty) "Anonymous" else s.head.toUpper + s.tail
     def qualified(b: String): String = if(b == "String") "_root_.java.lang.String" else "_root_.scala." + b
     def base(t: Type): Option[String] = t match {
       case Type.Name(n) if primitive(n) => Some(n)
@@ -358,14 +358,19 @@ object ModelDefinitions {
       case f: Type.ContextFunction => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "ContextArg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
       case _ => Nil
     })
-    tree.collect { case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) => c }.foreach { c =>
+    tree.collect {
+      case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) || otherConstructors => (c: Tree,c.name,c.ctor)
+      case e: Defn.Enum if otherConstructors => (e: Tree,e.name,e.ctor)
+    }.foreach { case(c,className,ctor) =>
       val ancestry = parents(c)
       val owner = (ancestry.reverse.collect {
         case p: Pkg => p.ref.syntax
         case o: Defn.Object => o.name.value
         case d: Defn.Class => d.name.value
-      } :+ c.name.value).mkString(".")
-      val companion = c.parent.toList.flatMap(_.children).collectFirst { case o: Defn.Object if o.name.value == c.name.value => o }
+        case d: Defn.Trait => d.name.value
+        case d: Defn.Enum => d.name.value
+      } :+ className.value).mkString(".")
+      val companion = c.parent.toList.flatMap(_.children).collectFirst { case o: Defn.Object if o.name.value == className.value => o }
       val declarations = scala.collection.mutable.LinkedHashMap.empty[String,String]
       val occupied = companion.toList.flatMap(_.templ.stats).flatMap {
         case d: Defn.Type => List(d.name.value)
@@ -375,7 +380,7 @@ object ModelDefinitions {
         case d: Defn.Enum => List(d.name.value)
         case _ => Nil
       }.toSet
-      c.ctor.paramClauses.filter(_.mod.isEmpty).flatMap(_.values).foreach { p =>
+      ctor.paramClauses.filter(_.mod.isEmpty).flatMap(_.values).foreach { p =>
         val fieldKey = owner + "." + p.name.value
         val handled = scala.collection.mutable.Set.empty[Int]
         buffers.get(fieldKey).foreach { element =>
@@ -387,7 +392,7 @@ object ModelDefinitions {
             val correction = base(leaf).isEmpty
             val baseType = "_root_.scala.Array[" + qualified(element) + "]"
             if(correction) {
-              require(leaf.syntax == c.name.value + "." + name,"Unexpected prior buffer element: " + fieldKey)
+              require(leaf.syntax == className.value + "." + name,"Unexpected prior buffer element: " + fieldKey)
               val obj = companion.toList.flatMap(_.templ.stats).collectFirst { case o: Defn.Object if o.name.value == name => o }.getOrElse(sys.error("Missing prior buffer type"))
               require(obj.templ.inits.size == 1 && obj.templ.stats.isEmpty)
               val parent = obj.templ.inits.head.tpe.asInstanceOf[Type.Apply]
@@ -399,15 +404,14 @@ object ModelDefinitions {
               declarations(name) = baseType
             }
             handled += a.pos.start
-            result += ((a.pos.start,a.pos.end,c.name.value + "." + name))
-            evidence += List(path,(a.pos.startLine + 1).toString,(if(correction) "CORRECTION " else "") + owner + "#" + p.name.value + "/buffer " + a.structure,c.name.value + "." + name)
+            result += ((a.pos.start,a.pos.end,className.value + "." + name))
+            evidence += List(path,(a.pos.startLine + 1).toString,(if(correction) "CORRECTION " else "") + owner + "#" + p.name.value + "/buffer " + a.structure,className.value + "." + name)
           }
         }
         p.decltpe.toList.flatMap(leaves(_)).filterNot { case(t,_,_) => parents(t).exists(x => handled(x.pos.start)) }.foreach { case(t,b,suffix) =>
           val key = owner + "." + p.name.value + (if(suffix.isEmpty) "" else "." + suffix)
           val defaultName = upper(p.name.value) + suffix
-          val name = names.getOrElse(key,if(defaultName == c.name.value) "Value" else defaultName)
-          require(name.matches("[A-Z][A-Za-z0-9_]*"),"Invalid newtype name: " + key)
+          val name = names.getOrElse(key,if(defaultName == className.value) "Value" else defaultName)
           val mappings = reuse.toList.collect { case(pattern,value) if
             key.matches(pattern.split("\\*",-1).map(java.util.regex.Pattern.quote).mkString(".*")) => value }.distinct
           require(mappings.size <= 1,"Conflicting concept mappings: " + key)
@@ -419,11 +423,15 @@ object ModelDefinitions {
               case _ => false
             } => n }.nonEmpty
           val reason = defer.get(owner + "." + p.name.value)
-          val blocked = reason.nonEmpty || (ancestry.exists(_.is[Defn.Def]) && !localModels.contains(owner)) || shadowed ||
+          val packed = parents(t).takeWhile(x => x.pos.start >= p.pos.start && x.pos.end <= p.pos.end).exists {
+            case a: Type.Apply => Set("Array","scala.Array","_root_.scala.Array","js.Array")(a.tpe.syntax)
+            case _ => false
+          }
+          val blocked = reason.nonEmpty || packed || !name.matches("[A-Z][A-Za-z0-9_]*") || (ancestry.exists(_.is[Defn.Def]) && !localModels.contains(owner)) || shadowed ||
             (target.isEmpty && (occupied(name) || companion.exists(_.templ.stats.isEmpty) || declarations.get(name).exists(_ != qualified(b))))
           if(blocked) evidence += List(path,(t.pos.startLine + 1).toString,"UNRESOLVED " + key,t.structure + reason.map(" deferred: " + _).getOrElse(""))
           else {
-            val replacement = target.getOrElse(c.name.value + "." + name)
+            val replacement = target.getOrElse(className.value + "." + name)
             if(target.isEmpty) declarations(name) = qualified(b)
             result += ((t.pos.start,t.pos.end,replacement))
             evidence += List(path,(t.pos.startLine + 1).toString,owner + "#" + p.name.value + "/" + suffix + " " + t.structure,replacement)
@@ -438,7 +446,7 @@ object ModelDefinitions {
             ", _root_.io.github.iltotore.iron.constraint.any.Pure]") }.mkString("\n" + pad)
         companion match {
           case Some(o) => val start = o.templ.stats.head.pos.start; result += ((start,start,definitions + "\n\n" + pad))
-          case None => result += ((c.pos.end,c.pos.end,"\n\n" + indent(c) + "object " + c.name.value + ":\n" + pad + definitions))
+          case None => result += ((c.pos.end,c.pos.end,"\n\n" + indent(c) + "object " + className.value + ":\n" + pad + definitions))
         }
       }
     }

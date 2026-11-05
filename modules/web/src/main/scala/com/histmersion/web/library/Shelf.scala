@@ -3,7 +3,7 @@ package com.histmersion.web.library
 /** A shelf of My library: everything the filters select, the person's bookmarks, their notes, what they have not marked
   * read, and what they opened lately.
   */
-enum Shelf(val wire: String, val label: String):
+enum Shelf(val wire: Shelf.Wire, val label: Shelf.Label):
   case Everything extends Shelf("all", "Everything")
   case Bookmarks extends Shelf("bookmarks", "Bookmarks")
   case Notes extends Shelf("notes", "My notes")
@@ -11,6 +11,11 @@ enum Shelf(val wire: String, val label: String):
   case Recent extends Shelf("recent", "Recently opened")
 
 object Shelf:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

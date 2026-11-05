@@ -12,7 +12,7 @@ final class SettingsControllers(
     settings: SettingsService,
     restarts: RestartService,
     reload: () => ReloadReport,
-    knownKeys: () => List[String] = () => Nil
+    knownKeys: () => List[SettingsControllers.KnownKeysResult] = () => Nil
 ):
 
   def page(prefix: Option[com.histmersion.util.settings.SettingsControllers.PagePrefix]): Either[Api.Error, ConfigEdit.Page] =
@@ -52,6 +52,9 @@ final class SettingsControllers(
   def setupDue: com.histmersion.util.settings.SettingsControllers.SetupDueResult = settings.setupDue
 
 object SettingsControllers:
+  type KnownKeysResult = KnownKeysResult.T
+  object KnownKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PagePrefix = PagePrefix.T
   object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetupDueResult = SetupDueResult.T

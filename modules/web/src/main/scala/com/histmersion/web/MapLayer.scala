@@ -11,7 +11,7 @@ import scala.scalajs.js
   */
 
 /** An overlay the map can show. The wire name is how it is persisted in [[UiState]]. */
-enum MapLayer(val wire: String, val label: String, val icon: Icon):
+enum MapLayer(val wire: MapLayer.Wire, val label: MapLayer.Label, val icon: Icon):
   case Boundaries extends MapLayer("boundaries", "Boundaries", Icon.Region)
   case Sites extends MapLayer("sites", "Sites", Icon.PointSite)
   case Media extends MapLayer("media", "Media", Icon.PointMedia)
@@ -21,6 +21,11 @@ enum MapLayer(val wire: String, val label: String, val icon: Icon):
   case Notes extends MapLayer("notes", "My notes", Icon.Note)
 
 object MapLayer:
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
