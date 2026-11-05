@@ -1,0 +1,4 @@
+source=/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala
+before-sha256=b81e5506ff8fdfc378370032fee6c4ac4e2e8033522c8388be645fffe82cd8c5
+API Source.Status needs the same lowercase/default vocabulary semantics as the existing domain Source.Status codec.
+Original engine baseline: 30 failures before approval ownership application; unassessed not convertible to Status.

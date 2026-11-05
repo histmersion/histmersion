@@ -81,13 +81,7 @@ final class CurrencyCheckPipeline(
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
-            val known = ctx.approvalStore.proposedBefore(
-              p.kind,
-              p.citekey,
-              p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
-              p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]],
-              p.target
-            ) ||
+            val known = approvals.proposedBefore(p) ||
               site.citations
                 .neighbors(p.citekey, p.edgeKind.map(Edge.Kind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))

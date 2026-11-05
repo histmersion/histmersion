@@ -21,8 +21,8 @@ core	production/local	3157	1771	1427
 core	production/member	4209	2756	1777
 core	test/local	2022	727	712
 core	test/member	819	463	247
-db	production/local	2261	1434	1059
-db	production/member	5504	3176	3572
+db	production/local	2262	1435	1059
+db	production/member	5505	3177	3574
 db	test/local	1638	784	560
 db	test/member	1840	1069	589
 files	production/local	319	193	130
@@ -80,9 +80,9 @@ plugins/media	production/member	533	382	220
 plugins/media	test/local	138	57	71
 plugins/media	test/member	38	34	25
 server	production/local	9415	5153	4104
-server	production/member	16220	8949	7638
-server	test/local	10903	5157	2924
-server	test/member	6379	4372	2264
+server	production/member	16237	8949	7642
+server	test/local	10905	5157	2924
+server	test/member	6381	4372	2264
 upstreams	production/local	333	225	192
 upstreams	production/member	493	361	247
 upstreams	test/local	48	14	23

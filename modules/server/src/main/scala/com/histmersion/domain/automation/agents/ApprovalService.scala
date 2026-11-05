@@ -12,37 +12,21 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+
+
 
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
   * the scheduler make of them.
   */
 trait ApprovalService:
-  /** A proposal about a source from its parts and its payload; not doubled while an identical one is open. */
-  def record(
-      jobId: Option[String],
-      kind: ApprovalKind,
-      citekey: String,
-      status: Option[Source.Status],
-      current: Option[Source.Status],
-      edgeKind: Option[Edge.Kind],
-      target: Option[String],
-      payload: String,
-      state: ApprovalState,
-      result: Option[String]
-  ): Option[ApprovalInfo]
+
+  def approvalIn(id: Long)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
+
   def payload(id: Long): Option[String]
 
-  /** Was this change of a source ever proposed (in any state)? */
-  def proposedBefore(
-      kind: ApprovalKind,
-      citekey: String,
-      status: Option[Source.Status],
-      edgeKind: Option[Edge.Kind],
-      target: Option[String]
-  ): Boolean
+
+
   def approval(id: Long): Option[ApprovalInfo]
 
   /** Newest first, of one state or every one. */
@@ -123,30 +107,11 @@ object ApprovalService:
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 
   final private class Implementation(db: Transactor, clock: Clock) extends ApprovalService:
+    def approvalIn(id: Long)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = AgentRepo.approval(id)
     private def now: Instant = Instant.now(clock)
-    def record(
-        jobId: Option[String],
-        kind: ApprovalKind,
-        citekey: String,
-        status: Option[Source.Status],
-        current: Option[Source.Status],
-        edgeKind: Option[Edge.Kind],
-        target: Option[String],
-        payload: String,
-        state: ApprovalState,
-        result: Option[String]
-    ): Option[ApprovalInfo] =
-      db.transact(
-        AgentRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload, state, result, now)
-      )
+
     def payload(id: Long): Option[String] = db.read(AgentRepo.payload(id))
-    def proposedBefore(
-        kind: ApprovalKind,
-        citekey: String,
-        status: Option[Source.Status],
-        edgeKind: Option[Edge.Kind],
-        target: Option[String]
-    ): Boolean = db.read(AgentRepo.proposedBefore(kind, citekey, status, edgeKind, target))
+
     def approval(id: Long): Option[ApprovalInfo] = db.read(AgentRepo.approval(id))
     def approvals(state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =
       db.read(AgentRepo.approvals(state, limit))
@@ -202,6 +167,7 @@ object ApprovalService:
     */
   final class InMemory(state: AtomicReference[AutomationState], runs: JobRuns.InMemory, clock: Clock)
       extends ApprovalService:
+    def approvalIn(id: Long)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = approval(id)
     private def now: Instant = Instant.now(clock)
     private def rows: Vector[ApprovalRecord] = state.get.approvals
     private val Open = ApprovalState.Open.wire
@@ -230,69 +196,12 @@ object ApprovalService:
       rs.sortBy(r => (r.createdAt, r.id)).reverse
 
     /** Insert `make(id)` unless `conflicts` holds of a row there; the new row's id. */
-    private def insert(conflicts: ApprovalRecord => Boolean)(make: Long => ApprovalRecord): Option[Long] =
-      var made: Option[Long] = None
-      val _ = state.updateAndGet { s =>
-        if s.approvals.exists(conflicts) then { made = None; s }
-        else
-          val id = s.lastApprovalId + 1
-          made = Some(id)
-          s.modify(_.approvals).using(_ :+ make(id)).modify(_.lastApprovalId).setTo(id)
-      }
-      made
+
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
 
-    def record(
-        jobId: Option[String],
-        kind: ApprovalKind,
-        citekey: String,
-        status: Option[Source.Status],
-        current: Option[Source.Status],
-        edgeKind: Option[Edge.Kind],
-        target: Option[String],
-        payload: String,
-        state: ApprovalState,
-        result: Option[String]
-    ): Option[ApprovalInfo] =
-      val (st, ek) = (status.map(_.wire), edgeKind.map(Edge.Kind.wireOf))
-      def same(r: ApprovalRecord) =
-        state == ApprovalState.Open && r.state == Open && r.kind == kind.wire && r.citekey.contains(citekey) &&
-          r.status.getOrElse("") == st.getOrElse("") && r.edgeKind.getOrElse("") == ek.getOrElse("") &&
-          r.target.getOrElse("") == target.getOrElse("")
-      val at = now
-      insert(same)(id =>
-        ApprovalRecord(
-          id,
-          jobId,
-          None,
-          kind.wire,
-          Some(citekey),
-          st,
-          current.map(_.wire),
-          ek,
-          target,
-          None,
-          payload,
-          state.wire,
-          None,
-          result,
-          at,
-          decidedAt(state)
-        )
-      ).flatMap(approval)
+
     def payload(id: Long): Option[String] = rows.find(_.id == id).map(_.proposal)
-    def proposedBefore(
-        kind: ApprovalKind,
-        citekey: String,
-        status: Option[Source.Status],
-        edgeKind: Option[Edge.Kind],
-        target: Option[String]
-    ): Boolean =
-      rows.exists(r =>
-        r.kind == kind.wire && r.citekey.contains(citekey) && r.status.getOrElse("") == status.fold("")(_.wire) &&
-          r.edgeKind.getOrElse("") == edgeKind.fold("")(Edge.Kind.wireOf) && r.target.getOrElse("") == target
-            .getOrElse("")
-      )
+
     def approval(id: Long): Option[ApprovalInfo] = rows.find(_.id == id).map(info)
     def approvals(state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =
       newest(rows.filter(r => state.forall(_.wire == r.state))).take(math.max(1, limit)).toList.map(info)
@@ -368,7 +277,7 @@ object ApprovalService:
         result: Option[String]
     ): ApprovalInfo =
       val at = now
-      val _ = insert(r => r.jobId.contains(jobId) && r.seq.contains(seq))(id =>
+      val _ = AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.contains(seq))(id =>
         ApprovalRecord(
           id,
           Some(jobId),
@@ -398,7 +307,7 @@ object ApprovalService:
         result: Option[String]
     ): ApprovalInfo =
       val at = now
-      insert(_ => false)(id =>
+      AutomationState.insertApproval(this.state)(_ => false)(id =>
         ApprovalRecord(
           id,
           jobId,

@@ -9,7 +9,7 @@ import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.AgentProposals.Route
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.domain.automation.approvals.Approvals
+
 import io.circe.syntax.*
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Source
@@ -19,11 +19,13 @@ import com.histmersion.api.library.Source
   * skipped. `status` reads a source's status now; `apply` applies a proposal as a person's patch would.
   */
 final class SourceProposals(
-    approvals: Approvals,
+    approvals: SourceApprovalService,
     cfg: => AgentsConfig,
     status: String => Option[Source.Status],
     apply: Proposal => Either[String, String]
 ):
+  def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
+
   import SourceProposals.Outcome
 
   /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies

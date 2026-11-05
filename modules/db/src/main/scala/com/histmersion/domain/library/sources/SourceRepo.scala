@@ -27,6 +27,9 @@ import com.histmersion.api.Api
   */
 private[sources] object SourceRepo:
 
+  private given DbCodec[Source.Status] =
+    com.histmersion.util.database.Vocab.codec(s => Source.Status.values.find(_.wire.equalsIgnoreCase(s)), _.wire, Source.Status.Unassessed)
+
   private given DbCodec[TocEntry] = DbCodec.derived
   private given DbCodec[Source.Detail] = DbCodec.derived
   private given DbCodec[Finding.Row] = DbCodec.derived

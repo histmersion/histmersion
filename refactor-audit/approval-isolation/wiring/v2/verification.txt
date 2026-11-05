@@ -1,0 +1,2 @@
+PASS: all 14 preview definitions and callers, including tests, compile together.
+The evaluated server classpath is used; actual module compilation and behavior comparison remain required after application.

@@ -11,8 +11,8 @@ import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.util.database.given
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+
+
 import com.histmersion.api.automation.Goal
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
@@ -479,50 +479,15 @@ object AgentRepo:
           base.modify(_.evidence).setTo(p.flatMap(_.evidence).getOrElse("")).modify(_.quote).setTo(p.flatMap(_.quote))
         }
 
-  /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */
-  def record(
-      jobId: Option[String],
-      kind: ApprovalKind,
-      citekey: String,
-      status: Option[Source.Status],
-      current: Option[Source.Status],
-      edgeKind: Option[Edge.Kind],
-      target: Option[String],
-      payload: String,
-      state: ApprovalState,
-      result: Option[String],
-      now: java.time.Instant
-  )(using DbCon): Option[ApprovalInfo] =
-    val decided = Option.when(state != ApprovalState.Open)(now.toString)
-    sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
-                                 result, decided_at)
-          VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
-                  ${edgeKind.map(Edge.Kind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
-                  $decided::timestamptz)
-          ON CONFLICT DO NOTHING RETURNING id"""
-      .query[Long]
-      .run()
-      .headOption
-      .flatMap(approval(_))
+
+
 
   /** The payload an approval was recorded with, as stored. */
   def payload(id: Long)(using DbCon): Option[String] =
     sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption
 
-  /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice about an edge they
-    * already rejected.
-    */
-  def proposedBefore(
-      kind: ApprovalKind,
-      citekey: String,
-      status: Option[Source.Status],
-      edgeKind: Option[Edge.Kind],
-      target: Option[String]
-  )(using DbCon): Boolean =
-    sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
-          AND coalesce(status, '') = ${status.fold("")(_.wire)}
-          AND coalesce(edge_kind, '') = ${edgeKind.fold("")(Edge.Kind.wireOf)}
-          AND coalesce(target, '') = ${target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
+
+
 
   def approval(id: Long)(using DbCon): Option[ApprovalInfo] =
 

@@ -6,7 +6,9 @@ class IsolationHistoryVerification extends SyntacticRule("IsolationHistoryVerifi
   override def afterComplete(): Unit = {
     val root = Paths.get("target/isolation-history-verification",java.time.Instant.now().toString.replace(':','-'))
     val original = Paths.get("refactor-audit/isolation-history")
-    val baseline = Files.readAllLines(original.resolve("baseline.tsv")).asScala.toList
+    val observations = Files.list(original.resolve("observations"))
+    val latest = try observations.iterator.asScala.toList.sortBy(_.toString).last finally observations.close()
+    val baseline = Files.readAllLines(latest.resolve("findings.tsv")).asScala.toList
     val first = baseline(1).split("\t",-1).head
     val scenarios = List("unchanged", "equal-count-substitution", "reopened")
     scenarios.foreach { scenario =>

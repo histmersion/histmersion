@@ -54,3 +54,17 @@ production candidates, 138 test candidates and 51 test non-violations. The origi
 review-1 ledger is unchanged. `ReviewStatus.scala` reconciles both review events with
 current presence and source hashes; stale source evidence or unexplained absence fails.
 It remains a separately invoked review check, not part of ProjectAssessment.
+
+The subsequent approval ownership batch repairs all 54 confirmed production
+relationships. Every other production identity remains present. The integrated
+assessment passes across 3,140 source/test files. Ten added test relationships are
+individually recorded as non-violations in `adoptions/approval-tests`, with source,
+decision, detector-contract and original-baseline hashes. They remain raw findings;
+the additive event does not replace the baseline or exempt tests generally.
+
+Current treatment is zero confirmed outstanding production relationships, 170
+production candidates, 21 accepted production exceptions, 138 test candidates and
+61 test non-violations. This closes the reviewed coupling, not the entire family.
+The original reviews and before-repair treatment snapshot remain retained. Mutation
+verification rejects changed source evidence, changed classifications, wrong baseline,
+equal-count substitution and reappearance, including adopted test identities.

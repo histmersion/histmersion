@@ -12,6 +12,7 @@ import com.augustnagro.magnum.DbCon
   * in a transaction of its own.
   */
 trait EngineStores:
+  def sourceApprovals: com.histmersion.domain.library.workflows.SourceApprovalService
   def autopilot: AutopilotRowService
   def goals: GoalService
   def approvals: ApprovalService

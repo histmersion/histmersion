@@ -11,8 +11,8 @@ import com.histmersion.api.automation.Agents.*
 
 import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsApi, ListFilters, Managers}
-import com.histmersion.domain.library.Edge
-import com.histmersion.domain.library.Source
+
+
 import com.histmersion.api.Api
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
@@ -29,20 +29,8 @@ final class Approvals(
     applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")
 ):
 
-  /** Record a proposal about a source from its parts (open for a person, or already decided with `result`). */
-  def record(
-      runId: Option[String],
-      kind: ApprovalKind,
-      citekey: String,
-      status: Option[Source.Status],
-      current: Option[Source.Status],
-      edgeKind: Option[Edge.Kind],
-      target: Option[String],
-      payload: String,
-      state: ApprovalState = ApprovalState.Open,
-      result: Option[String] = None
-  ): Option[ApprovalInfo] =
-    store.record(runId, kind, citekey, status, current, edgeKind, target, payload, state, result)
+
+
 
   def list(state: Option[String], limit: Option[Int], page: Int): Either[Api.Error, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))

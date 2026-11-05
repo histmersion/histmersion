@@ -30,7 +30,7 @@ final class LibraryWorkflows(
 
   /** How a source's proposed status or edge goes through the approvals (research's review proposes them too). */
   val proposals: SourceProposals = SourceProposals(
-    a.approvals,
+    SourceApprovalService(transactor, a.approvalStore, a.clock),
     cfg().agents,
     ck => site.sources.get(ck, body = false).toOption.map(_.source.status),
     p => site.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
