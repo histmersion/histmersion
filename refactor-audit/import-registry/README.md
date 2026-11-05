@@ -1,9 +1,13 @@
 # Import registry: prerequisites and bounded next batch
 
-The four original `import-referrers` isolation identities remain outstanding. This
-batch does not claim their repair, detector acceptance, or progress toward 90% bulk
+At the prerequisite checkpoint, the four original `import-referrers` isolation
+identities remained outstanding. This prerequisite batch does not claim their repair,
+detector acceptance, or progress toward 90% bulk
 automation. The current treatment checkpoint remains
 `unread-projection/reconciliation-2/current-treatment.tsv` until fresh reconciliation.
+
+The subsequent ownership batch and its final reconciliation are recorded in
+[OWNERSHIP.md](OWNERSHIP.md); the prerequisite observations below remain historical.
 
 ## Database baseline exposed failures
 

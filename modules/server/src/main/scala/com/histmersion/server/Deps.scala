@@ -127,7 +127,7 @@ object Deps:
           com.histmersion.domain.automation.AutomationData,
           com.histmersion.domain.catalogue.CatalogueData,
           com.histmersion.domain.media.MediaData,
-          com.histmersion.domain.library.LibraryData,
+          com.histmersion.domain.library.LibraryData(sourceReferrers),
           com.histmersion.domain.research.ResearchData,
           com.histmersion.domain.personal.PersonalData,
           com.histmersion.util.data.DataManagementData,

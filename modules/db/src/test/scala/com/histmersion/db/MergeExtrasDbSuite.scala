@@ -111,7 +111,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
+        BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         MergeResolutions(),
         merge,
@@ -133,7 +133,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
-          .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
+          .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,

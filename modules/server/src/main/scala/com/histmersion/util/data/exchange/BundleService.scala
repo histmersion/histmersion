@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.domain.library.sources.referrers.SourceReferrers
+
 
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
@@ -54,10 +54,7 @@ trait BundleService:
 
 object BundleService:
 
-  /** What the service runs over: the database, the settings of the moment, the stores, the clock, the registry's
-    * carried kinds and merge rules, the apply's jobs and the backup an apply takes first; `sourceReferrers` keep what
-    * every domain stores of a source right when an import renames one.
-    */
+
   final case class Wiring(
       ds: DataSource,
       config: () => AppConfig,
@@ -67,8 +64,7 @@ object BundleService:
       rules: MergeRuleSet,
       followUps: MergeFollowUps,
       applyJobs: MergeApplyJobs,
-      backup: () => Either[Api.Error, String],
-      sourceReferrers: SourceReferrers
+      backup: () => Either[Api.Error, String]
   )
 
   def apply(wiring: Wiring): BundleService = Implementation(wiring)
@@ -81,7 +77,7 @@ object BundleService:
     private def originals: Store.Contents = Store.Contents(w.storage.store(Location.IngestOriginals))
 
     private def options(dryRun: Boolean): ImportOptions =
-      ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, w.sourceReferrers)
+      ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
 
     def instance: InstanceInfo = Transactor(w.ds).read(BundleRepo.instance)
 

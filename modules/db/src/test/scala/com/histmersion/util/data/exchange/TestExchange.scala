@@ -13,7 +13,7 @@ import com.histmersion.util.identity.TombstonesCarried
   */
 object TestExchange:
   val carried: List[CarriedKind] =
-    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried ++
+    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried(com.histmersion.domain.library.sources.SourceFixtures.referrers) ++
       ResearchExchange.carried :+ TombstonesCarried.tombstones
   val kinds: CarriedKinds = CarriedKinds(carried)
   val rules: MergeRuleSet = MergeRuleSet(
