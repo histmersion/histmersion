@@ -28,7 +28,7 @@ class OaFetchSuite extends munit.FunSuite:
     val cfg = acquire(email)
     val http = RecordingHttp()
     val _ =
-      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http).fetch(Some("10.1038/nature14317"), None)
+      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some("10.1038/nature14317"), None)
     http.urls
 
   test("the repository default has no contact e-mail"):

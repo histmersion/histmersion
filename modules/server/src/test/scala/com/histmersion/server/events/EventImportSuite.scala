@@ -91,7 +91,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
   private lazy val loaded: LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
   private lazy val cfg = loaded.config
-  private lazy val plugins = com.histmersion.server.ServerPlugins.load(loaded)
+  private lazy val plugins = com.histmersion.server.ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)

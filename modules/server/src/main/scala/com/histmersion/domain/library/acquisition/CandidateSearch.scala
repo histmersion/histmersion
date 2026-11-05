@@ -34,7 +34,7 @@ final class CandidateSearch(
     cfg: => CandidatesConfig,
     indexes: => List[ScholarlyIndex],
     alerts: => CitationAlerts,
-    today: () => LocalDate = () => LocalDate.now(ZoneOffset.UTC)
+    today: () => LocalDate
 ):
 
   /** The goal's watches as of now: what is read, from where (the watermark is the stored one). */

@@ -163,7 +163,7 @@ final class AcquireRecheckService(
     * answers at once; any other is started as a job ([[startJob]]), and `all` resumes the `all` job a restart or the
     * drain stopped.
     */
-  def run(in: RecheckRequest, now: Instant = Instant.now()): Either[Api.Error, RecheckResult] =
+  def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock)): Either[Api.Error, RecheckResult] =
     in.id.filter(id =>
       !site.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
     ) match
@@ -296,12 +296,12 @@ final class AcquireRecheckService(
         val fs = facts(None)
         val closed = fs
           .collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }
-          .flatMap((f, ck) => close(f, ck, gen, Instant.now(), Some(jobId)))
+          .flatMap((f, ck) => close(f, ck, gen, Instant.now(agents.clock), Some(jobId)))
         val before = checks.countSince(plan.since)
         def n(o: Outcome) = before.getOrElse(o.wire, 0)
         val triedByJob = n(Outcome.Fetched) + n(Outcome.NoCopy) + n(Outcome.Failed)
         val byId = fs.map(f => f.item.id -> f).toMap
-        val now = Instant.now()
+        val now = Instant.now(agents.clock)
         val picks = AcquireRecheck
           .jobPicks(plan, fetchable(fs).map(candidate), triedByJob, c => isDue(c, gen, now))
           .flatMap(c => byId.get(c.item))
@@ -325,7 +325,7 @@ final class AcquireRecheckService(
               if !site.queues.get(QueueItemId(f.item.id)).exists(_.status == Queue.Open) then
                 loop(rest, t.modify(_.total).using(_ - 1), rows)
               else
-                val tried = attempt(f, gen, Instant.now())
+                val tried = attempt(f, gen, Instant.now(agents.clock))
                 val next = t.add(tried.outcome, tried.detail)
                 progress(AcquireRecheck.progressLine(next))
                 loop(rest, next, tried.row :: rows)
@@ -476,7 +476,7 @@ final class AcquireRecheckService(
   // ── the status ─────────────────────────────────────────────────────────────────────────────────
 
   /** The status line's facts (`agent autopilot status`, `about`); readable with agents off. */
-  def status(now: Instant = Instant.now()): RecheckStatus =
+  def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
     if !s.enabled then RecheckStatus(enabled = false, job = jobLine())
     else

@@ -16,7 +16,7 @@ object Indexes:
       cfg: AcquireConfig,
       http: Http,
       coreKey: Option[String] = None,
-      core: CoreBudget = CoreBudget()
+      core: CoreBudget
   ): (List[ScholarlyIndex], CitationAlerts) =
     val key = coreKey.orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)

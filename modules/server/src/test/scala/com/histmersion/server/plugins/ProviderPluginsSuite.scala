@@ -103,7 +103,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val loaded = com.histmersion.config.AppConfig
       .loadWithUserText(ConfigFactory.empty, "")
       .fold(e => fail(e), identity)
-    val g = ServerPlugins.load(loaded, transport = _ => fail("no HTTP at registration"))
+    val g = ServerPlugins.load(loaded, transport = _ => fail("no HTTP at registration"), core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     assert(g.report.ok, g.report.toString)
     assertEquals(
       g.report.plugins.map(_.id).filterNot(Set("1password", "bitwarden", "keepassxc")).size,

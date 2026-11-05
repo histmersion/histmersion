@@ -10,7 +10,7 @@ import com.histmersion.util.plugins.Plugins
   * runs the chain of its own plugin generation, which may hold more fetchers or fewer.
   */
 object OaFetch:
-  def apply(loaded: LoadedConfig, http: Http, core: CoreBudget = CoreBudget()): FetchChain =
+  def apply(loaded: LoadedConfig, http: Http, core: CoreBudget): FetchChain =
     val g = Plugins.fetchers(
       loaded,
       () => HttpPlugin(http),

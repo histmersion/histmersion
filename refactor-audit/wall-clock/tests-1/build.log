@@ -1,0 +1,116 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-lib/histmersion-plugin-hello-lib_3-0.1.0.pom
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/histmersion-plugin-hello-deps_3-0.1.0.pom
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:14:26 
+[error] 14 |    val tokens = RunTokens()(using Clock.fixed(epoch, ZoneOffset.UTC))
+[error]    |                          ^
+[error]    |No given instance of type java.time.Clock was found for parameter wallClock of constructor RunTokens in class RunTokens
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:17:16 
+[error] 17 |    assertEquals(tokens.check(grant.token), Some(grant))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:18:16 
+[error] 18 |    assertEquals(tokens.bearer(s"Bearer ${grant.token}"), Some(grant))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:19:16 
+[error] 19 |    assertEquals(tokens.check(grant.token, epoch.toEpochMilli + 2000L), None)
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:22:26 
+[error] 22 |    val tokens = RunTokens()(using Clock.fixed(epoch, ZoneOffset.UTC))
+[error]    |                          ^
+[error]    |No given instance of type java.time.Clock was found for parameter wallClock of constructor RunTokens in class RunTokens
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import com.histmersion.server.RefusingDataSource.given_Clock
+[error]    |  import com.histmersion.server.agents.ClaudeStreams.given_Clock
+[error]    |  import com.histmersion.server.agents.Generated.given_Clock
+[error]    |  import com.histmersion.server.agents.PromptBudget.given_Clock
+[error]    |
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:26:16 
+[error] 26 |    assertEquals(tokens.bearer(s"Bearer ${grant.token}", now + 999L), Some(grant))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:27:16 
+[error] 27 |    assertEquals(tokens.bearer(s"Bearer ${grant.token}", now + 1000L), None)
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:28:16 
+[error] 28 |    assertEquals(tokens.check(grant.token, now), None)
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:31:25 
+[error] 31 |    val early = RunTokens()(using Clock.fixed(epoch, ZoneOffset.UTC))
+[error]    |                         ^
+[error]    |No given instance of type java.time.Clock was found for parameter wallClock of constructor RunTokens in class RunTokens
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import com.histmersion.server.RefusingDataSource.given_Clock
+[error]    |  import com.histmersion.server.agents.ClaudeStreams.given_Clock
+[error]    |  import com.histmersion.server.agents.Generated.given_Clock
+[error]    |  import com.histmersion.server.agents.PromptBudget.given_Clock
+[error]    |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:32:24 
+[error] 32 |    val late = RunTokens()(using Clock.fixed(epoch.plusSeconds(60L), ZoneOffset.UTC))
+[error]    |                        ^
+[error]    |No given instance of type java.time.Clock was found for parameter wallClock of constructor RunTokens in class RunTokens
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import com.histmersion.server.RefusingDataSource.given_Clock
+[error]    |  import com.histmersion.server.agents.ClaudeStreams.given_Clock
+[error]    |  import com.histmersion.server.agents.Generated.given_Clock
+[error]    |  import com.histmersion.server.agents.PromptBudget.given_Clock
+[error]    |
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:35:16 
+[error] 35 |    assertEquals(second.expiresAt - first.expiresAt, 60000L)
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:36:16 
+[error] 36 |    assertEquals(early.check(first.token), Some(first))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/RunTokensClockSuite.scala:37:16 
+[error] 37 |    assertEquals(late.check(second.token), Some(second))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]    |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]    |    munit.diff.DiffOptions): Unit
+[error] 13 errors found
+[error] (server / Test / compileIncremental) Compilation failed
+[error] elapsed time: 10 s, cache 99%, 489 disk cache hits, 1 onsite task

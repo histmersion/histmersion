@@ -182,7 +182,7 @@ class AiTrafficSuite extends munit.FunSuite:
   ): String =
     up.script(answers)
     val l = loaded(text)
-    val g = ServerPlugins.load(l)
+    val g = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val f = LlmClient.factory(CliRuntime(l.config, EngineContributions.roster), () => g.registries.aiProviders)
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match

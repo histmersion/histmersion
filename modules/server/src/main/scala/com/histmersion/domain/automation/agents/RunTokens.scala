@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
   * talk its way around. In memory on purpose: a token lives as long as one process, and a restarted server has no
   * running step.
   */
-final class RunTokens:
+final class RunTokens(using wallClock: java.time.Clock):
   private val grants = ConcurrentHashMap[String, RunGrant]()
   private val random = java.security.SecureRandom()
 
@@ -17,7 +17,7 @@ final class RunTokens:
       agent: AgentDef,
       scope: Option[RunScope],
       ttlMillis: Long,
-      now: Long = System.currentTimeMillis()
+      now: Long = wallClock.millis()
   ): RunGrant =
     val bytes = new Array[Byte](32)
     random.nextBytes(bytes)
@@ -31,7 +31,7 @@ final class RunTokens:
   def revoke(token: String): Unit = { val _ = grants.remove(token) }
 
   /** The grant of a live token; an expired one is dropped. */
-  def check(token: String, now: Long = System.currentTimeMillis()): Option[RunGrant] =
+  def check(token: String, now: Long = wallClock.millis()): Option[RunGrant] =
     Option(grants.get(token)).flatMap { g =>
       if g.expiresAt > now then Some(g)
       else
@@ -40,7 +40,7 @@ final class RunTokens:
     }
 
   /** The grant a `Bearer <token>` header carries. */
-  def bearer(header: String, now: Long = System.currentTimeMillis()): Option[RunGrant] =
+  def bearer(header: String, now: Long = wallClock.millis()): Option[RunGrant] =
     Option(header).map(_.trim).filter(_.startsWith("Bearer ")).map(_.stripPrefix("Bearer ").trim).flatMap(check(_, now))
 
   private def prune(now: Long): Unit = grants.values().removeIf(_.expiresAt <= now)

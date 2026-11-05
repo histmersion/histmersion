@@ -56,4 +56,4 @@ object AcquisitionTesting:
       indexes,
       alerts,
       generation
-    )
+    )(using deps.clock)

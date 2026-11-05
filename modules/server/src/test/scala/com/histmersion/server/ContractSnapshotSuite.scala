@@ -113,7 +113,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
     check("toolbox.json", Json.obj("tools" -> tools, "roles" -> roles).spaces2)
 
   test("plugins.json: the plugin report of a stock generation"):
-    val report: PluginsReport = ServerPlugins.load(loaded).report
+    val report: PluginsReport = ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).report
     check("plugins.json", report.asJson.spaces2)
 
   test("settings.json: the settings view of reference.conf"):

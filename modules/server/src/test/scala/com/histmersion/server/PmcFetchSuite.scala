@@ -62,7 +62,7 @@ class PmcFetchSuite extends munit.FunSuite:
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
   private def fetch(c: AcquireConfig, http: Http, doi: String, arxiv: Option[String] = None) =
-    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http).fetch(Some(doi), arxiv)
+    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), arxiv)
 
   private def loaded(text: String): com.histmersion.config.LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)

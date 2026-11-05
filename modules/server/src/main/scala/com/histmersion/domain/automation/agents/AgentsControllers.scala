@@ -245,7 +245,7 @@ final class AgentsControllers(
     * (throttled), the Claude pool from what runs and mods reported.
     */
   def quota: PlanQuota.QuotaInfo =
-    val now = System.currentTimeMillis()
+    val now = clock.millis()
     PlanQuota.QuotaInfo(
       pools.statuses(covers, now),
       picker.allowanceStatuses(now),
@@ -361,7 +361,7 @@ final class AgentsControllers(
   def knownProviders: Set[String] = BuiltinAi.known(site.aiProviders())
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
-  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)
+  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)(using clock)
 
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
@@ -381,7 +381,7 @@ final class AgentsControllers(
   /** `GET /api/agents/models` — each role's chain, the model it would use now, and every allowance's use per window.
     * Sends nothing to a provider: clients are constructed, spends summed.
     */
-  def models: ModelsInfo = models(System.currentTimeMillis())
+  def models: ModelsInfo = models(clock.millis())
 
   def models(now: Long): ModelsInfo =
     val chains = picker.roleChains(now)
@@ -427,7 +427,7 @@ final class AgentsControllers(
     Role.parse(raw).toRight(Api.Error(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
 
   private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
-    picker.roleChains(System.currentTimeMillis()).find(_.role == role.wire).toRight(Api.Error(s"no role ${role.wire}"))
+    picker.roleChains(clock.millis()).find(_.role == role.wire).toRight(Api.Error(s"no role ${role.wire}"))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
@@ -464,7 +464,7 @@ final class AgentsControllers(
       a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(Api.Error(_))
       _ = Transactor(ds).transact(ModelSettingsRepo.setAllowance(t.wire, a.limits.map(_.spec), a.reservePct))
       st <- picker
-        .allowanceStatuses(System.currentTimeMillis())
+        .allowanceStatuses(clock.millis())
         .find(_.target == t.wire)
         .toRight(Api.Error(s"the allowance of ${t.wire} was not recorded"))
     yield st

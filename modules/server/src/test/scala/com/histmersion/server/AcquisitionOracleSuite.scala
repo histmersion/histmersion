@@ -413,8 +413,8 @@ class AcquisitionOracleSuite extends DbSuite:
     val cfg = c.modify(
       _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(c.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
     )
-    val core = com.histmersion.domain.library.acquisition.CoreBudget()
-    val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = 1)
+    val core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+    val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = 1, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
     val plugins = ServerPlugins.fetchers(
       loaded,
       () => com.histmersion.domain.library.acquisition.HttpPlugin(http),
@@ -422,7 +422,7 @@ class AcquisitionOracleSuite extends DbSuite:
       extra = List(ZqShelfPlugin(), ZqUnauthorisedPlugin(), CalibrePlugin())
     )
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, FixtureConverter(), plugins = plugins, core = core).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, FixtureConverter(), plugins = plugins, core = Some(core)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

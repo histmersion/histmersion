@@ -22,7 +22,7 @@ object ServerPlugins:
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
       changed: List[String] = Nil,
-      core: CoreBudget = CoreBudget(),
+      core: CoreBudget,
       transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =
     // ONE acquisition client for every plugin of this generation, built on first use
@@ -33,7 +33,7 @@ object ServerPlugins:
   def fetchers(
       loaded: LoadedConfig,
       http: () => Plugin.Http,
-      core: CoreBudget = CoreBudget(),
+      core: CoreBudget,
       extra: List[Plugin] = Nil
   ): Generation =
     Plugins.fetchers(loaded, http, quotas(loaded, core), extra)

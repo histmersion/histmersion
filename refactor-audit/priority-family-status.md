@@ -1,5 +1,21 @@
 # Priority-family status
 
+## Wall-clock batch verified
+
+Scalafix repaired all 29 reviewed production wall-clock occurrences (28 anchors)
+and propagated their required dependencies through callers. Full production/test
+compilation and 21 focused tests pass, with no test skips. A fresh capability-only
+scan covers 2,373 production files: 147 → 118 occurrences. Identity reconciliation
+finds exactly the reviewed removals, no new identities and no changed residual
+multiplicities. All 31 current source assertions and the unchanged clock fixtures
+pass. The repaired default's assertion correction is documented and chained into
+history; no ban or permission changed.
+
+Thirteen reviewed clock occurrences remain confirmed design work. Other families
+retain preceding measurements; the full multi-family assessment/history gate has
+not been rerun. Independent family acceptance and test capability policy remain
+unestablished. See wall-clock/README.md and wall-clock/reconciliation-1.
+
 ## Domain clock treatment checkpoint
 
 Source/AST review confirms 42 existing production clock occurrences in 38 anchors

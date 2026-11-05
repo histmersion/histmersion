@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
   * reload does not reset it, and a restart reads it back from the store it was given ([[persistTo]]). `clock` and
   * `sleep` are parameters so a test does not wait.
   */
-final class CoreBudget(clock: () => Instant = () => Instant.now(), sleep: Long => Unit = ms => Thread.sleep(ms)):
+final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.sleep(ms)):
 
   private val lock = Object()
   private val current = AtomicReference(CoreQuota.State.fresh(CoreQuota.day(clock())))

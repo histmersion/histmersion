@@ -30,7 +30,7 @@ object SttpHttp:
       tries: Int = 4,
       maxRetryAfterSeconds: Int = 60,
       sleep: Long => Unit = ms => Thread.sleep(ms),
-      clock: () => java.time.Instant = () => java.time.Instant.now(),
+      clock: () => java.time.Instant,
       tls: Option[javax.net.ssl.SSLContext] = None
   ): SttpHttp =
     new SttpHttp(

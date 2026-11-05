@@ -40,4 +40,4 @@ final class AcquisitionWiring(deps: Deps, sources: SourceService, ingest: Ingest
     indexes = clients.peek.indexes,
     alerts = clients.peek.alerts,
     generation = clients.peek.generation
-  )
+  )(using deps.clock)

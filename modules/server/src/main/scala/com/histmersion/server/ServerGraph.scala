@@ -156,8 +156,7 @@ object ServerGraph:
       initial: HotConfig,
       source: Option[ConfigSource],
       plugins: Option[Generation],
-      core: com.histmersion.domain.library.acquisition.CoreBudget =
-        com.histmersion.domain.library.acquisition.CoreBudget()
+      core: com.histmersion.domain.library.acquisition.CoreBudget
   ): Either[String, ServerGraph] =
     val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))

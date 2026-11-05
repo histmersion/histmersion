@@ -30,7 +30,8 @@ import com.histmersion.util.console.Console
   System.setProperty("io.netty.leakDetection.level", "disabled")
   // the ONE CORE budget of this process: every plugin generation's `core` fetcher and the new-source
   // search's `core` index spend from it (kept in the database once it is open)
-  val core = CoreBudget()
+  val startupClock = java.time.Clock.systemUTC()
+  val core = CoreBudget(() => startupClock.instant())
   // eager, on the main thread (native-image StackValue constraint): reference.conf < the user config
   // file < the environment. A broken file stops the start — running on settings the user did not
   // ask for is worse than not running. A reload reads the file again with THIS environment.
@@ -52,7 +53,7 @@ import com.histmersion.util.console.Console
   // the environment the settings were read with, and the paths and the clock: the only reads of them
   val environment = Environment.of(loadedConfig.env)
   val system =
-    SystemContext(java.time.Clock.systemUTC(), environment, UserPaths(environment, System.getProperty("os.name", "")))
+    SystemContext(startupClock, environment, UserPaths(environment, System.getProperty("os.name", "")))
   mode match
     case ServerMode.SelfCheck =>
       val zones = TimeZoneCheck.jdk()
@@ -97,7 +98,7 @@ import com.histmersion.util.console.Console
           None,
           autoInit = cfg.init.auto,
           plugins = generation,
-          core = core,
+          core = Some(core),
           restart = restart,
           system = system
         )

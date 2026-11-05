@@ -110,7 +110,7 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    val plugins = ServerPlugins.load(loaded)
+    val plugins = ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => 2026L)
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)

@@ -36,7 +36,7 @@ class LandingFetchSuite extends munit.FunSuite:
   private def openalexOf(c: AcquireConfig, doi: String) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
   private def fetch(c: AcquireConfig, http: Http, doi: String, settings: String = "") =
-    OaFetch(loaded(settings), http).fetch(Some(doi), None)
+    OaFetch(loaded(settings), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), None)
 
   private def loaded(text: String): com.histmersion.config.LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)

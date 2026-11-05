@@ -262,7 +262,7 @@ class HotReloadSuite extends DbSuite:
   test("a plugin block rebuilds that plugin only; a hot key applies; a restart-only key is reported, not applied"):
     write(DbB)
     val l = loaded
-    val gen = ServerPlugins.load(l)
+    val gen = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     supervised {
       val b =
         Composition
@@ -292,7 +292,7 @@ class HotReloadSuite extends DbSuite:
   test("an AI provider switched off by a reload is out of every chain at once; switched on again, it is back"):
     write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
     val l = loaded
-    val gen = ServerPlugins.load(l)
+    val gen = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     supervised {
       val b =
         Composition

@@ -1,0 +1,48 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-lib/histmersion-plugin-hello-lib_3-0.1.0.pom
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/histmersion-plugin-hello-deps_3-0.1.0.pom
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+Test run com.histmersion.domain.automation.agents.RunTokensClockSuite started
+com.histmersion.domain.automation.agents.RunTokensClockSuite: finished 0.035s
+Test run com.histmersion.domain.automation.agents.RunTokensClockSuite finished: 0 failed, 0 ignored, 4 total 0.043s
+Test run com.histmersion.domain.library.acquisition.CoreQuotaLendSuite started
+com.histmersion.domain.library.acquisition.CoreQuotaLendSuite: finished 0.034s
+Test run com.histmersion.domain.library.acquisition.CoreQuotaLendSuite finished: 0 failed, 0 ignored, 3 total 0.04s
+[36m[1m2026.11.05 04:27:08:453[0m[36m[0m [3mpool-1-thread-1[0m [34mINFO[0m [32mcom.histmersion.pluginhost.HostLog.info:17[0m
+acquire: core: no copy — CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z[0m
+acquire: next: no copy — nothing here either[0m
+Test run com.histmersion.domain.library.acquisition.CoreBudgetSuite started
+com.histmersion.domain.library.acquisition.CoreBudgetSuite: finished 0.853s
+Test run com.histmersion.domain.library.acquisition.CoreBudgetSuite finished: 0 failed, 0 ignored, 7 total 0.853s
+[36m[1m2026.11.05 04:27:08:824[0m[36m[0m [3mpool-1-thread-1[0m [33mWARN[0m [32mcom.histmersion.pluginhost.HostLog.warn:18[0m
+acquire: HTTP 503 — retrying http://127.0.0.1:50589/busy in 1000ms[0m
+Test run com.histmersion.server.HttpChallengeSuite started
+com.histmersion.server.HttpChallengeSuite: finished 1.023s
+Test run com.histmersion.server.HttpChallengeSuite finished: 0 failed, 0 ignored, 7 total 1.024s
+[info] Passed: Total 21, Failed 0, Errors 0, Passed 21
+[success] elapsed time: 18 s, cache 97%, 491 disk cache hits, 11 onsite tasks
