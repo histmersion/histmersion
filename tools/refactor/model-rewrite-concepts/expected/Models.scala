@@ -7,6 +7,18 @@ final case class Quantities(samples: List[conceptfixture.ByteCount], maybe: Opti
 final case class Nested(authors: Option[List[conceptfixture.AuthorName]] = None)
 
 object Calls:
+  def fetchLabel(label: conceptfixture.Label): String = label.value
+  def fetch(using prefix: String)(reader: conceptfixture.Label => String, label: conceptfixture.Label): String = prefix + reader(label)
+  def fetchRaw(using prefix: String)(reader: conceptfixture.Label => String): String = reader(conceptfixture.Label("raw"))
+  def fetched: String = fetch(using "!")(fetchLabel, conceptfixture.Label("fetched"))
+  def fetchedForwarded(r: Report): String = fetch(using "!")(fetchLabel, r.label)
+  def fetchedRaw: String = fetchRaw(using "!")(fetchLabel)
+  def fetchedLambda: String = fetch(using "!")(_ => "constant", conceptfixture.Label("unused"))
+  def leading(using prefix: String)(label: conceptfixture.Label): String = prefix + label.value
+  def leadingImplicit(using prefix: String): String = leading(conceptfixture.Label("implicit"))
+  def leadingExplicit: String = leading(using "!")(conceptfixture.Label("explicit"))
+  def leadingNamed: String = leading(using "?")(label = conceptfixture.Label("named"))
+  def leadingForwarded(r: Report): String = leading(using "!")(r.label)
   def contextual(label: conceptfixture.Label)(using suffix: String): String = label.value + suffix
   def contextImplicit(using suffix: String): String = contextual(conceptfixture.Label("implicit"))
   def contextExplicit: String = contextual(conceptfixture.Label("explicit"))(using "!")

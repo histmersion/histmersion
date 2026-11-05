@@ -7,6 +7,18 @@ final case class Quantities(samples: List[Long], maybe: Option[Long])
 final case class Nested(authors: Option[List[String]] = None)
 
 object Calls:
+  def fetchLabel(label: String): String = label
+  def fetch(using prefix: String)(reader: String => String, label: String): String = prefix + reader(label)
+  def fetchRaw(using prefix: String)(reader: String => String): String = reader("raw")
+  def fetched: String = fetch(using "!")(fetchLabel, "fetched")
+  def fetchedForwarded(r: Report): String = fetch(using "!")(fetchLabel, r.label)
+  def fetchedRaw: String = fetchRaw(using "!")(fetchLabel)
+  def fetchedLambda: String = fetch(using "!")(_ => "constant", "unused")
+  def leading(using prefix: String)(label: String): String = prefix + label
+  def leadingImplicit(using prefix: String): String = leading("implicit")
+  def leadingExplicit: String = leading(using "!")("explicit")
+  def leadingNamed: String = leading(using "?")(label = "named")
+  def leadingForwarded(r: Report): String = leading(using "!")(r.label)
   def contextual(label: String)(using suffix: String): String = label + suffix
   def contextImplicit(using suffix: String): String = contextual("implicit")
   def contextExplicit: String = contextual("explicit")(using "!")

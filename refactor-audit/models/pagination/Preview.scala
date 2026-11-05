@@ -5,7 +5,7 @@ import scala.jdk.CollectionConverters._
 import metaconfig.{ConfDecoder, Configured, generic}
 
 object Preview {
-  case class Method(owner: String = "", parameters: List[String] = Nil, fields: Map[String,String] = Map.empty, setFields: List[String] = Nil)
+  case class Method(owner: String = "", parameters: List[String] = Nil, fields: Map[String,String] = Map.empty, setFields: List[String] = Nil, callbackFields: List[String] = Nil)
   object Method {
     implicit val surface: generic.Surface[Method] = generic.deriveSurface[Method]
     implicit val decoder: ConfDecoder[Method] = generic.deriveDecoder(Method()).noTypos
@@ -79,7 +79,7 @@ class Preview(val policy: Preview.Policy) extends SyntacticRule("Preview") {
       require(m.fields.values.forall(bases.contains),"Method target must belong to reviewed concepts")
       "{owner=" + quote(m.owner) + ",parameters=[" + m.parameters.map(quote).mkString(",") + "],fields={" +
         m.fields.toList.sortBy(_._1).map { case(n,t) => quote(n) + "=" + quote(t) }.mkString(",") +
-        "},setFields=[" + m.setFields.map(quote).mkString(",") + "]}"
+        "},setFields=[" + m.setFields.map(quote).mkString(",") + "],callbackFields=[" + m.callbackFields.map(quote).mkString(",") + "]}"
     }.mkString("methods=[",",","]\n")
     require(policy.results.values.forall(bases.contains),"Result target must belong to reviewed concepts")
     val results = policy.results.toList.sortBy(_._1).map { case(s,t) => quote(s) + "=" + quote(t) }.mkString("results={",",","}\n")
