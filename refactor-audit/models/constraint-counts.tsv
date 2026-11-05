@@ -11,6 +11,6 @@ db	production	pure	4
 plugin-api	production	pure	7
 plugin-resolver	production	non-Pure-constraint	4
 server	production	non-Pure-constraint	5
-server	production	pure	14
+server	production	pure	15
 values	production	non-Pure-constraint	18
 values	production	pure	16

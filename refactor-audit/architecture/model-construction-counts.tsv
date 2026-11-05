@@ -57,7 +57,7 @@ test	plugins/events	public	invariant-obligation-review	2
 test	plugins/fetchers	public	invariant-obligation-review	2
 test	plugins/gazetteers	public	invariant-obligation-review	4
 test	plugins/media	public	invariant-obligation-review	6
-test	server	public	invariant-obligation-review	434
+test	server	public	invariant-obligation-review	435
 test	upstreams	public	invariant-obligation-review	7
 test	values	public	invariant-obligation-review	6
 test	web	public	invariant-obligation-review	100

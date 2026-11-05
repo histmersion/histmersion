@@ -4,7 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters._
 
 object IsolationHistory {
-  case class Policy(mode: String = "check", ledger: String = "refactor-audit/isolation-history", reviewedAdditions: List[String] = Nil)
+  case class Policy(mode: String = "check", ledger: String = "refactor-audit/isolation-history", reviewedAdditions: List[String] = Nil, reviewedContributions: List[String] = Nil, selftestReport: String = "")
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -16,6 +16,12 @@ object IsolationHistory {
     def confidence: String = if(owner.isEmpty) "file-level-owner-unresolved" else if(owner.startsWith("local") || owner.contains("::local")) "unstable-local-owner" else "symbol-relationship"
   }
   def regressions(before: Set[String], now: Set[String], absent: Set[String]): Set[String] = (now -- before) ++ (now intersect absent)
+  def contributionWithinPrior(d: List[String], prior: List[String]): Boolean =
+    d.size == 9 && prior.size == 11 && d(1) == "production" && d(3).contains("/src/main/") &&
+      prior(1) == "production" && prior(2) == "accepted-exception" && prior(3) == "retain-exact-contribution" &&
+      d(7) == prior.head && d(3) == prior(5) && d(8).trim.nonEmpty &&
+      d(5).split('/').dropRight(1).toList == prior(7).split('/').dropRight(1).toList &&
+      d.head == Edge(d(1),d(2),d(3),d(4),d(5)).id
   def verify(): Unit = {
     val a = Edge("production","core","modules/core/src/main/scala/A.scala","p/A#run().","p/B#")
     require(a.id == a.copy().id)
@@ -26,6 +32,14 @@ object IsolationHistory {
     require(a.copy(owner="local12").confidence == "unstable-local-owner")
     require(a.copy(owner="/repo/A.scala::local12").confidence == "unstable-local-owner")
     require(a.copy(owner="").confidence == "file-level-owner-unresolved")
+    val p = List(a.id,"production","accepted-exception","retain-exact-contribution","contribution",a.path,a.owner,a.target,"symbol-relationship","hash","reviewed contribution")
+    val n = a.copy(owner="p/A.project().",target="p/B.Value.")
+    val d = List(n.id,n.scope,n.module,n.path,n.owner,n.target,"hash",a.id,"Reviewed receiver projection")
+    require(contributionWithinPrior(d,p))
+    require(!contributionWithinPrior(d,p.updated(2,"candidate")), "Unreviewed parent cannot authorize a contribution")
+    require(!contributionWithinPrior(d,p.updated(5,"modules/core/src/main/scala/Other.scala")), "Contribution permission is file-scoped")
+    require(!contributionWithinPrior(d,p.updated(7,"other/B#")), "Contribution permission cannot cross receiver packages")
+    require(!contributionWithinPrior(d.updated(1,"test"),p), "Production and test approvals remain separate")
   }
 }
 
@@ -36,7 +50,15 @@ class IsolationHistory(val policy: IsolationHistory.Policy) extends SyntacticRul
   override def afterComplete(): Unit = {
     verify()
     require(Set("capture","check","selftest")(policy.mode))
-    if(policy.mode == "selftest") { println("PASS: isolation identity regression contracts"); return }
+    if(policy.mode == "selftest") {
+      if(policy.selftestReport.nonEmpty) {
+        val out = Paths.get(policy.selftestReport); require(!Files.exists(out))
+        Files.createDirectories(out.getParent)
+        Files.write(out,List("PASS", "identity replacement, reopening, scope, ambiguous owners and contribution-review guard checks",
+          "rule-sha256=" + hash(Files.readString(Paths.get("tools/refactor/IsolationHistory.scala")))).asJava)
+      }
+      println("PASS: isolation identity regression contracts"); return
+    }
     def lines(p: Path) = Files.readAllLines(p).asScala.toList
     def rows(p: Path) = lines(p).drop(1).map(_.split("\t",-1).toList)
     def write(p: Path, data: List[String]): Unit = { Files.createDirectories(p.getParent); Files.write(p,data.asJava) }
@@ -80,8 +102,22 @@ class IsolationHistory(val policy: IsolationHistory.Policy) extends SyntacticRul
       require(decisions.forall(r => hash(Files.readString(Paths.get(r(1)))) == r(2)),"Review source changed; explicit re-review required")
       decisions.map(_.head)
     }
-    require(adopted.distinct.size == adopted.size && (adopted.toSet intersect original).isEmpty,"Repeated/replaced baseline identity")
-    val before = original ++ adopted
+    val contributions = policy.reviewedContributions.flatMap { event =>
+      val path = Paths.get(event)
+      val recorded = lines(path.resolve("event.txt"))
+      require(recorded.contains("baseline-sha256=" + hash(Files.readString(baseline))))
+      require(recorded.contains("contract-sha256=" + hash(Files.readString(ledger.resolve("contract.txt")))))
+      require(recorded.contains("decisions-sha256=" + hash(Files.readString(path.resolve("decisions.tsv")))))
+      require(recorded.contains("prior-treatments-sha256=" + hash(Files.readString(path.resolve("prior-treatments.tsv")))))
+      val parents = rows(path.resolve("prior-treatments.tsv")).map(r => r.head -> r).toMap
+      val decisions = rows(path.resolve("decisions.tsv"))
+      require(decisions.forall(d => d.size == 9 && parents.get(d(7)).exists(p => original(p.head) && contributionWithinPrior(d,p))), "Contribution lacks an accepted original parent in the same file and receiver package")
+      require(decisions.forall(d => hash(Files.readString(Paths.get(d(3)))) == d(6)), "Contribution source changed; explicit re-review required")
+      decisions.map(_.head)
+    }
+    val reviewed = adopted ++ contributions
+    require(reviewed.distinct.size == reviewed.size && (reviewed.toSet intersect original).isEmpty,"Repeated/replaced baseline identity")
+    val before = original ++ reviewed
     val now = grouped.keys.map(_.id).toSet
     val history = ledger.resolve("observations")
     val prior = if(Files.exists(history)) {
@@ -104,6 +140,7 @@ class IsolationHistory(val policy: IsolationHistory.Policy) extends SyntacticRul
       "ambiguous-owner-relationships=" + grouped.keys.count(_.confidence != "symbol-relationship"),
       "unclassified-direction-evidence=" + raw.count(_(10) == "unclassified-direction"),
       "reviewed-additional-test-nonviolations=" + adopted.size,
+      "reviewed-contribution-identities=" + contributions.size,
       "new=" + added.size, "reopened=" + reopened.size,
       "No confirmed violations or verified repairs inferred. Repeated uses share a relationship; occurrence multiplicity is not a gate.",
       "Missing/local owners remain ambiguous. Build dependencies and permitted crossings are separate evidence, outside this identity gate.")

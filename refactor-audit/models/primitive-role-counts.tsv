@@ -63,7 +63,7 @@ non-public-member-review	plugins/events	9	10
 non-public-member-review	plugins/fetchers	12	14
 non-public-member-review	plugins/gazetteers	17	18
 non-public-member-review	plugins/media	34	37
-non-public-member-review	server	2333	2576
+non-public-member-review	server	2340	2583
 non-public-member-review	upstreams	77	81
 non-public-member-review	values	6	6
 non-public-member-review	web	988	1099
@@ -158,7 +158,7 @@ test-position	plugins/events	32	44
 test-position	plugins/fetchers	21	26
 test-position	plugins/gazetteers	62	69
 test-position	plugins/media	73	91
-test-position	server	8501	9526
+test-position	server	8504	9529
 test-position	upstreams	20	20
 test-position	values	7	7
 test-position	web	610	672

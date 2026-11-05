@@ -229,7 +229,7 @@ final class PersonalControllers(
             i.title.value,
             i.authors.map(_.value),
             i.year.map(_.value),
-            i.status.map(_.wire),
+            i.status.map(_.value),
             i.periodStart.map(_.value.toLong),
             i.periodEnd.map(_.value.toLong)
           )

@@ -44,8 +44,8 @@ production	plugins/gazetteers	nested-owner-review	1
 production	plugins/gazetteers	top-level-owner-review	11
 production	plugins/media	nested-owner-review	21
 production	plugins/media	top-level-owner-review	44
-production	server	nested-owner-review	443
-production	server	top-level-owner-review	838
+production	server	nested-owner-review	445
+production	server	top-level-owner-review	840
 production	upstreams	nested-owner-review	10
 production	upstreams	top-level-owner-review	33
 production	values	nested-owner-review	68
@@ -83,7 +83,7 @@ test	plugins/gazetteers	top-level-owner-review	4
 test	plugins/media	nested-owner-review	1
 test	plugins/media	top-level-owner-review	5
 test	server	nested-owner-review	145
-test	server	top-level-owner-review	386
+test	server	top-level-owner-review	387
 test	upstreams	top-level-owner-review	7
 test	values	top-level-owner-review	6
 test	web	nested-owner-review	8
