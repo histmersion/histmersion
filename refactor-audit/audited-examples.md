@@ -2,6 +2,15 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Follow-up implementation evidence: the shared ModelTypeRewrite extension passed
+the seven-concept String/Int/Long/Double, scalar/Option/List Iron fixture and the
+unchanged legacy Int fixture. Wrong base and constructor order fail without source
+changes. The initial generalized verifier summary still named its historical
+Offset/RowCount assertions although it executed the new configured Checks.scala;
+the summary wording was corrected, with no fixture or assertion changes. The
+subsequent guard run generates the corrected summary. These are development tests,
+not independent detector-quality samples or production repairs.
+
 Three requested cheap-model source audits reviewed library/research, catalogue/media
 and automation/jobs/storage concepts concurrently. This was purpose adjudication,
 not a new detector-quality holdout or refinement round. The library audit inspected
@@ -43,7 +52,8 @@ historical bounds, Int-to-Long asset-size widening, pixel-dimension ownership,
 manager/run/item identity equivalence and unrelated count semantics remain
 unresolved or outside this review. They are not compliant or accepted exceptions.
 The 79 bulk-rewrite treatments describe the intended transformation, not current
-rule support: ModelTypeRewrite still lacks general String/Long/Double/List support.
+rule support: at review time ModelTypeRewrite lacked String/Long/Double/List support;
+the subsequent fixture-backed extension is recorded above.
 No newtypes or application fixes are claimed by this review.
 
 ## Bounded acceptance review at a06cb734 (5 November)

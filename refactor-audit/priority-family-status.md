@@ -15,10 +15,27 @@ pagination findings are disjoint and retained: this reviewed model subset now
 contains ninety original findings, eight historically fixed and eighty-two
 outstanding. There is still no migration-wide denominator or percentage.
 
-Next implementation work is shared: extend ModelTypeRewrite's supported primitive
-and collection shapes, generate all required definitions using Scalafix, discover
-all callers of the reviewed declarations, then run one coordinated batch through
-the existing pipeline. General String/Long/Double/List rewrites are not yet ready.
+ModelTypeRewrite now supports configured String/Int/Long/Double bases and scalar,
+Option and List shapes for reviewed fields, parameters and results. One shared
+seven-concept Iron fixture passes exact expected-output comparison, compilation,
+runtime value/evaluation checks and compile-time concept separation. Wrong base
+and constructor order are rejected without source changes; the original Int fixture
+also passes unchanged. This is shared rewrite support, not production repair credit.
+
+The existing Impact rule now reads this review configuration. It verifies all 3,159
+inventory source hashes and finds 27 reviewed records referenced in 493 files across
+nine modules: 9,685 reference rows, including 1,058 reviewed-member references and
+964 one-hop caller candidates. These are overlapping evidence units, not new
+violations or a proven transitive dataflow closure. The first impact observation is
+retained; impact-2 deterministically selects the most specific nested owner instead
+of an arbitrary parent prefix, without changing the source/reference denominator.
+
+Next: generate the twelve missing type definitions with Scalafix and produce one
+isolated production preview, then resolve its definition/caller closure and use the
+existing pipeline. Arithmetic, formatted output, codecs, inferred result propagation
+and parse boundaries still require production validation; nested containers are not
+supported by this extension. See models/reviews/multi-concept-1/{rewrite-guards.txt,
+legacy-fixture.txt,impact-2/status.txt} and the versioned fixture/configuration.
 Application fixes in this purpose-review step: zero. Detector refinement rounds
 consumed: zero. Uncertain concepts and all other policy families remain tracked.
 
@@ -40,9 +57,8 @@ No exception was added, no denominator was reduced, and no detector refinement
 round was consumed. Inventory acceptance and overall automation coverage remain
 unestablished. Copy automation stays paused.
 
-Next: bounded, purpose-based primitive/newtype mappings and a reusable extension
-of ModelTypeRewrite, which currently supports Int/Option[Int], before any String
-rewrite. Candidate totals are not a ready batch or a confirmed denominator.
+The subsequent model cohort and shared rewrite extension are recorded above.
+Candidate totals are not a ready batch or a confirmed denominator.
 
 ## Current bounded acceptance disposition (5 November, a06cb734)
 
