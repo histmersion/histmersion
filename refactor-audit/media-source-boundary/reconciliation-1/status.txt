@@ -1,0 +1,9 @@
+PASS
+verified-production-relationships=3
+remaining-production=120
+remaining-test=191
+new=0
+tests-before-and-after=15
+source-files=3157
+isolation-observation=refactor-audit/isolation-history/observations/2026-11-05T04-55-49.976093Z
+Exact configured AST patch, compilation, unchanged test assertions and original-ID reconciliation establish bounded repair evidence. Not proof of semantic equivalence for arbitrary inputs or independent detector quality.

@@ -2,17 +2,17 @@
 
 Full source and test coverage. Candidate inventories preserve declarations, signatures, constructors, ASTs, references and source hashes. Counts are evidence rows, not confirmed policy violations.
 
-- files: 3156
-- declarations: 56358
-- references: 808095
+- files: 3157
+- declarations: 56370
+- references: 808274
 - unresolved-references: 8939
-- signature-type-references: 163830
-- alias-expanded-references: 6959
+- signature-type-references: 163866
+- alias-expanded-references: 6981
 - visibility-candidates: 489
-- visibility-consumer-relationships: 39656
+- visibility-consumer-relationships: 39665
 - services-repositories-controllers: 237
 - comments: 15962
-- top-level-objects: 1388
+- top-level-objects: 1389
 - object-plan-rows: 645
 
 Service implementations are linked through resolved parent symbols; a class called InMemory elsewhere is not evidence of service parity. Inherited methods, indirect implementations and behavioral parity require further analysis. Unresolved, generated and external references are retained explicitly.

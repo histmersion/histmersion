@@ -87,7 +87,7 @@ other-constructor-review	plugins/events	1	1
 other-constructor-review	plugins/fetchers	5	5
 other-constructor-review	plugins/gazetteers	2	2
 other-constructor-review	plugins/media	13	13
-other-constructor-review	server	221	286
+other-constructor-review	server	222	287
 other-constructor-review	upstreams	2	2
 other-constructor-review	values	22	22
 other-constructor-review	web	173	181
@@ -114,7 +114,7 @@ public-method-review	plugins/events	76	80
 public-method-review	plugins/fetchers	30	31
 public-method-review	plugins/gazetteers	16	17
 public-method-review	plugins/media	198	229
-public-method-review	server	2997	3374
+public-method-review	server	2996	3373
 public-method-review	upstreams	162	171
 public-method-review	values	116	117
 public-method-review	web	1830	1962
@@ -158,7 +158,7 @@ test-position	plugins/events	32	44
 test-position	plugins/fetchers	21	26
 test-position	plugins/gazetteers	62	69
 test-position	plugins/media	73	91
-test-position	server	8502	9527
+test-position	server	8501	9526
 test-position	upstreams	20	20
 test-position	values	7	7
 test-position	web	610	672
@@ -175,7 +175,7 @@ trait-contract	plugin-host	14	15
 trait-contract	plugins/ai-http	1	1
 trait-contract	plugins/calibre	4	5
 trait-contract	plugins/gazetteers	6	7
-trait-contract	server	1223	1374
+trait-contract	server	1222	1373
 trait-contract	values	2	2
 trait-contract	web	84	91
 type-definition	api	1	2

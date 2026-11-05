@@ -1,5 +1,26 @@
 # Priority-family status
 
+## Media source boundary verified
+
+The library adapter now owns source validation and lookup. Media receives a typed
+key or an owned invalid/missing error through MediaSources; its controller no longer
+imports library types. One configured AST batch updated the interface, implementation,
+controller and all three test doubles. This remains a manual/design treatment applied
+mechanically, with no bulk-automation credit.
+
+Full production/test compilation passes. Fifteen tests pass before and after without
+skips and with unchanged assertion bodies. Fresh scans cover 3,157 sources in 28
+modules; original-ID reconciliation verifies three production relationships repaired,
+all other 311 preserved and zero new/reopened IDs.
+
+Production isolation is now seven confirmed (unread projection), 109 accepted exact
+contributions and four unresolved registry cases. Tests retain 59 prior non-violations
+and 132 candidates. Sixty-nine relationships have ambiguous owners; 182,287 direction
+rows remain unclassified. Model candidates are 30,386 production member primitive
+leaves, 62,219 all-scope primitive leaves and 46,908 unresolved leaves; no confirmed
+model-repair inference is made from the count changes. Other families retain earlier
+measurement checkpoints. See `media-source-boundary/README.md` for evidence and limits.
+
 ## Acquisition spool ownership verified
 
 The existing relocation rule moved Spool and five caller files into library acquisition
