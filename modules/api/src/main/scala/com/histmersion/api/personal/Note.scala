@@ -13,16 +13,21 @@ final case class Note(
     id: com.histmersion.api.personal.Note.Id,
     target: Target,
     text: com.histmersion.api.personal.Note.Text,
-    title: String,
-    createdAt: String = "",
-    updatedAt: String = ""
+    title: com.histmersion.api.personal.ReadMark.Title,
+    createdAt: Note.CreatedAt = "",
+    updatedAt: Note.UpdatedAt = ""
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object Note:
 
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  type CreatedAt = CreatedAt.T
+  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Edit(text: Text, ifUpdatedAt: Option[com.histmersion.api.personal.Note.UpdatedAt] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
 
@@ -33,7 +38,7 @@ object Note:
     given Decoder[Id] = Decoder.decodeString.map(Id(_))
     given Schema[Id] = Schema.string[Id]
 
-  final case class New(target: Target, text: Text, title: Option[String] = None)
+  final case class New(target: Target, text: Text, title: Option[com.histmersion.api.personal.ReadMark.Title] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

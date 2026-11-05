@@ -123,36 +123,40 @@ object Managers:
       case ProposeArticles | "propose" | "plan" => Some(Seed)
       case other                                => values.find(_.wire == other)
 
-  final case class ArticleSpec(title: String, kind: String, filter: Article.Filter, why: String = "")
+  final case class ArticleSpec(title: com.histmersion.api.research.Article.Title, kind: com.histmersion.api.research.Article.KindValue, filter: Article.Filter, why: ArticleSpec.Why = "")
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ArticleSpec:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class ManagerConfig(
-      maxRuns: Option[Int] = None,
-      maxOpen: Option[Int] = None,
-      rounds: Option[Int] = None,
-      maxRunsPerArticle: Option[Int] = None,
-      noProgressRuns: Option[Int] = None,
-      reopenLimit: Option[Int] = None,
-      cooldownMinutes: Option[Int] = None,
-      lowWater: Option[Int] = None,
-      refillBatch: Option[Int] = None,
-      maxFailures: Option[Int] = None,
-      budgetUsd: Option[Double] = None,
-      includeTags: Option[List[String]] = None,
-      includeGoal: Option[String] = None,
+      maxRuns: Option[ManagerConfig.MaxRuns] = None,
+      maxOpen: Option[ManagerConfig.MaxOpen] = None,
+      rounds: Option[ManagerConfig.Rounds] = None,
+      maxRunsPerArticle: Option[ManagerConfig.MaxRunsPerArticle] = None,
+      noProgressRuns: Option[ManagerConfig.NoProgressRuns] = None,
+      reopenLimit: Option[ManagerConfig.ReopenLimit] = None,
+      cooldownMinutes: Option[ManagerConfig.CooldownMinutes] = None,
+      lowWater: Option[ManagerConfig.LowWater] = None,
+      refillBatch: Option[ManagerConfig.RefillBatch] = None,
+      maxFailures: Option[ManagerConfig.MaxFailures] = None,
+      budgetUsd: Option[ManagerConfig.BudgetUsd] = None,
+      includeTags: Option[List[ManagerConfig.IncludeTags]] = None,
+      includeGoal: Option[ManagerConfig.IncludeGoal] = None,
       models: Option[List[Agents.ModelOverride]] = None,
-      staleAfterDays: Option[Int] = None,
-      inferFilter: Option[Boolean] = None,
-      minSources: Option[Int] = None,
-      maxArticles: Option[Int] = None,
-      sweeps: Option[List[String]] = None,
-      autoIngest: Option[Boolean] = None,
-      autoIngestPerDay: Option[Int] = None,
-      dailyUsd: Option[Double] = None,
-      autoApprove: Option[Boolean] = None,
-      extendMinNew: Option[Int] = None
+      staleAfterDays: Option[ManagerConfig.StaleAfterDays] = None,
+      inferFilter: Option[ManagerConfig.InferFilter] = None,
+      minSources: Option[ManagerConfig.MinSources] = None,
+      maxArticles: Option[ManagerConfig.MaxArticles] = None,
+      sweeps: Option[List[ManagerConfig.Sweeps]] = None,
+      autoIngest: Option[ManagerConfig.AutoIngest] = None,
+      autoIngestPerDay: Option[ManagerConfig.AutoIngestPerDay] = None,
+      dailyUsd: Option[ManagerConfig.DailyUsd] = None,
+      autoApprove: Option[ManagerConfig.AutoApprove] = None,
+      extendMinNew: Option[ManagerConfig.ExtendMinNew] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -183,6 +187,53 @@ object Managers:
     )
   object ManagerConfig:
 
+
+    type MaxRuns = MaxRuns.T
+    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxOpen = MaxOpen.T
+    object MaxOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxRunsPerArticle = MaxRunsPerArticle.T
+    object MaxRunsPerArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoProgressRuns = NoProgressRuns.T
+    object NoProgressRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReopenLimit = ReopenLimit.T
+    object ReopenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CooldownMinutes = CooldownMinutes.T
+    object CooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LowWater = LowWater.T
+    object LowWater extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefillBatch = RefillBatch.T
+    object RefillBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxFailures = MaxFailures.T
+    object MaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IncludeTags = IncludeTags.T
+    object IncludeTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IncludeGoal = IncludeGoal.T
+    object IncludeGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StaleAfterDays = StaleAfterDays.T
+    object StaleAfterDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InferFilter = InferFilter.T
+    object InferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinSources = MinSources.T
+    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxArticles = MaxArticles.T
+    object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sweeps = Sweeps.T
+    object Sweeps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoIngest = AutoIngest.T
+    object AutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoIngestPerDay = AutoIngestPerDay.T
+    object AutoIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DailyUsd = DailyUsd.T
+    object DailyUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoApprove = AutoApprove.T
+    object AutoApprove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExtendMinNew = ExtendMinNew.T
+    object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(kvs: List[String]): Either[String, ManagerConfig] =
       kvs.foldLeft[Either[String, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
@@ -250,18 +301,33 @@ object Managers:
       case _                      => Left(s"$k: '$v' is not true or false")
 
   final case class ItemCounts(
-      pending: Int = 0,
-      held: Int = 0,
-      active: Int = 0,
-      done: Int = 0,
-      stopped: Int = 0,
-      failed: Int = 0,
-      cancelled: Int = 0
+      pending: ItemCounts.Pending = 0,
+      held: ItemCounts.Held = 0,
+      active: ItemCounts.Active = 0,
+      done: ItemCounts.Done = 0,
+      stopped: ItemCounts.Stopped = 0,
+      failed: ItemCounts.Failed = 0,
+      cancelled: ItemCounts.Cancelled = 0
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def open: Int = pending + held + active
   object ItemCounts:
 
+
+    type Pending = Pending.T
+    object Pending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Held = Held.T
+    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Active = Active.T
+    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Done = Done.T
+    object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Stopped = Stopped.T
+    object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failed = Failed.T
+    object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cancelled = Cancelled.T
+    object Cancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(rows: List[(String, Int)]): ItemCounts =
       @tailrec def loop(
@@ -290,127 +356,258 @@ object Managers:
       loop(rows, 0, 0, 0, 0, 0, 0, 0)
 
   final case class ManagerEvent(
-      id: Long,
-      managerId: String,
-      itemId: Option[Long] = None,
-      runId: Option[String] = None,
-      at: String = "",
-      kind: String = "",
-      text: String = ""
+      id: ManagerEvent.Id,
+      managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
+      itemId: Option[ManagerEvent.ItemId] = None,
+      runId: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
+      at: ManagerEvent.At = "",
+      kind: ManagerEvent.Kind = "",
+      text: ManagerEvent.Text = ""
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ManagerEvent:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemId = ItemId.T
+    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ManagerInfo(
-      id: String,
-      kind: String,
-      goal: Option[String] = None,
-      state: String = State.Active.wire,
-      pauseRuns: Boolean = false,
+      id: ManagerInfo.Id,
+      kind: ManagerInfo.Kind,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      state: ManagerInfo.State = State.Active.wire,
+      pauseRuns: ManagerInfo.PauseRuns = false,
       config: ManagerConfig = ManagerConfig(),
       effective: ManagerConfig = ManagerConfig(),
-      statusNote: Option[String] = None,
-      cron: Option[String] = None,
-      nextTickAt: Option[String] = None,
-      createdAt: String = "",
-      updatedAt: String = "",
+      statusNote: Option[ManagerInfo.StatusNote] = None,
+      cron: Option[ManagerInfo.Cron] = None,
+      nextTickAt: Option[ManagerInfo.NextTickAt] = None,
+      createdAt: ManagerInfo.CreatedAt = "",
+      updatedAt: ManagerInfo.UpdatedAt = "",
       counts: ItemCounts = ItemCounts(),
-      inFlight: Int = 0,
+      inFlight: ManagerInfo.InFlight = 0,
       lastEvent: Option[ManagerEvent] = None,
-      spentTodayUsd: Double = 0,
-      tokensToday: Long = 0,
-      backlog: Int = 0,
-      backlogDays: Option[Int] = None
+      spentTodayUsd: ManagerInfo.SpentTodayUsd = 0,
+      tokensToday: ManagerInfo.TokensToday = 0,
+      backlog: ManagerInfo.Backlog = 0,
+      backlogDays: Option[ManagerInfo.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ManagerInfo:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PauseRuns = PauseRuns.T
+    object PauseRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusNote = StatusNote.T
+    object StatusNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NextTickAt = NextTickAt.T
+    object NextTickAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InFlight = InFlight.T
+    object InFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpentTodayUsd = SpentTodayUsd.T
+    object SpentTodayUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TokensToday = TokensToday.T
+    object TokensToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Backlog = Backlog.T
+    object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BacklogDays = BacklogDays.T
+    object BacklogDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Hold(
-      until: Option[String] = None,
-      untilSource: Option[String] = None,
-      reason: String = "",
-      hint: Option[Long] = None,
-      untilApproval: Option[Long] = None,
-      focus: Option[String] = None
+      until: Option[Hold.Until] = None,
+      untilSource: Option[Hold.UntilSource] = None,
+      reason: Hold.Reason = "",
+      hint: Option[Hold.Hint] = None,
+      untilApproval: Option[Hold.UntilApproval] = None,
+      focus: Option[Hold.Focus] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Hold:
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilSource = UntilSource.T
+    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilApproval = UntilApproval.T
+    object UntilApproval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Focus = Focus.T
+    object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class RunMark(
-      run: String,
-      before: Option[Int] = None,
-      after: Int = 0,
-      maxReopened: Int = 0,
-      escalated: Int = 0,
-      churn: Boolean = false,
-      pairsBefore: Option[Int] = None,
-      pairsAfter: Option[Int] = None
+      run: com.histmersion.api.automation.Agents.RunInfo.Id,
+      before: Option[RunMark.Before] = None,
+      after: RunMark.After = 0,
+      maxReopened: RunMark.MaxReopened = 0,
+      escalated: RunMark.Escalated = 0,
+      churn: RunMark.Churn = false,
+      pairsBefore: Option[RunMark.PairsBefore] = None,
+      pairsAfter: Option[RunMark.PairsAfter] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object RunMark:
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type After = After.T
+    object After extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxReopened = MaxReopened.T
+    object MaxReopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Escalated = Escalated.T
+    object Escalated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Churn = Churn.T
+    object Churn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PairsBefore = PairsBefore.T
+    object PairsBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PairsAfter = PairsAfter.T
+    object PairsAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ItemState(
       history: List[RunMark] = Nil,
-      before: Option[Int] = None,
-      reopened: Int = 0,
-      pairsBefore: Option[Int] = None,
+      before: Option[ItemState.Before] = None,
+      reopened: ItemState.Reopened = 0,
+      pairsBefore: Option[ItemState.PairsBefore] = None,
       spec: Option[ArticleSpec] = None,
-      filterHits: Option[Int] = None,
+      filterHits: Option[ItemState.FilterHits] = None,
       oa: Option[OaWork] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ItemState:
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reopened = Reopened.T
+    object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PairsBefore = PairsBefore.T
+    object PairsBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilterHits = FilterHits.T
+    object FilterHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class OaWork(
-      doi: String,
-      title: String = "",
-      year: Option[Int] = None,
-      authors: List[String] = Nil,
-      venue: Option[String] = None,
-      goals: List[String] = Nil,
-      why: String = "",
-      foundBy: Option[String] = None,
-      acquireText: Option[String] = None
+      doi: com.histmersion.api.library.Doi,
+      title: com.histmersion.api.library.Title = "",
+      year: Option[com.histmersion.api.catalogue.Year] = None,
+      authors: List[com.histmersion.api.library.AuthorName] = Nil,
+      venue: Option[com.histmersion.api.library.Venue] = None,
+      goals: List[com.histmersion.api.automation.Goal.Slug] = Nil,
+      why: OaWork.Why = "",
+      foundBy: Option[OaWork.FoundBy] = None,
+      acquireText: Option[OaWork.AcquireText] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object OaWork:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FoundBy = FoundBy.T
+    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcquireText = AcquireText.T
+    object AcquireText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class ManagerItem(
-      id: Long,
-      managerId: String,
-      kind: String,
-      target: String,
-      status: String,
-      priority: Int = 0,
-      attempts: Int = 0,
-      failures: Int = 0,
-      runId: Option[String] = None,
-      evaluatedRun: Option[String] = None,
-      notBefore: Option[String] = None,
+      id: ManagerItem.Id,
+      managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
+      kind: ManagerItem.Kind,
+      target: ManagerItem.Target,
+      status: ManagerItem.Status,
+      priority: ManagerItem.Priority = 0,
+      attempts: ManagerItem.Attempts = 0,
+      failures: ManagerItem.Failures = 0,
+      runId: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
+      evaluatedRun: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
+      notBefore: Option[ManagerItem.NotBefore] = None,
       hold: Option[Hold] = None,
       state: ItemState = ItemState(),
-      outcome: Option[String] = None,
-      origin: String = ItemOrigin.Selection.wire,
-      createdAt: String = "",
-      updatedAt: String = "",
+      outcome: Option[ManagerItem.Outcome] = None,
+      origin: ManagerItem.Origin = ItemOrigin.Selection.wire,
+      createdAt: ManagerItem.CreatedAt = "",
+      updatedAt: ManagerItem.UpdatedAt = "",
       run: Option[Agents.RunInfo] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ManagerItem:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failures = Failures.T
+    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotBefore = NotBefore.T
+    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Outcome = Outcome.T
+    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class HintEffect(
-      action: String,
-      targets: List[String] = Nil,
-      tag: Option[String] = None,
-      topic: Option[String] = None,
-      goal: Option[String] = None,
-      until: Option[String] = None,
-      untilSource: Option[String] = None,
-      priority: Option[Int] = None,
+      action: HintEffect.Action,
+      targets: List[HintEffect.Targets] = Nil,
+      tag: Option[HintEffect.Tag] = None,
+      topic: Option[HintEffect.Topic] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      until: Option[HintEffect.Until] = None,
+      untilSource: Option[HintEffect.UntilSource] = None,
+      priority: Option[HintEffect.Priority] = None,
       config: Option[ManagerConfig] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object HintEffect:
+
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Targets = Targets.T
+    object Targets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tag = Tag.T
+    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topic = Topic.T
+    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilSource = UntilSource.T
+    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Prioritise = "prioritise"
     val HoldAction = "hold"
@@ -422,31 +619,61 @@ object Managers:
     val Proposable = Actions :+ Config
 
   final case class HintProposal(
-      managerId: String,
-      hint: Long,
-      text: String,
+      managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
+      hint: HintProposal.Hint,
+      text: HintProposal.Text,
       effect: HintEffect,
-      by: String = "",
-      why: String = ""
+      by: HintProposal.By = "",
+      why: HintProposal.Why = ""
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object HintProposal:
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type By = By.T
+    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ManagerHint(
-      id: Long,
-      managerId: String,
-      itemId: Option[Long] = None,
-      text: String = "",
+      id: ManagerHint.Id,
+      managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
+      itemId: Option[ManagerHint.ItemId] = None,
+      text: ManagerHint.Text = "",
       effect: Option[HintEffect] = None,
-      author: String = "",
-      standing: Boolean = true,
-      createdAt: String = "",
-      retiredAt: Option[String] = None,
-      uses: Int = 0,
-      proposal: Option[Long] = None,
+      author: ManagerHint.Author = "",
+      standing: ManagerHint.Standing = true,
+      createdAt: ManagerHint.CreatedAt = "",
+      retiredAt: Option[ManagerHint.RetiredAt] = None,
+      uses: ManagerHint.Uses = 0,
+      proposal: Option[ManagerHint.Proposal] = None,
       proposed: Option[HintEffect] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ManagerHint:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemId = ItemId.T
+    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Author = Author.T
+    object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Standing = Standing.T
+    object Standing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RetiredAt = RetiredAt.T
+    object RetiredAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Uses = Uses.T
+    object Uses extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Proposal = Proposal.T
+    object Proposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ManagerDetail(
@@ -458,63 +685,124 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class ItemPage(items: List[ManagerItem], total: Int, offset: Int, limit: Int)
+  final case class ItemPage(items: List[ManagerItem], total: ItemPage.Total, offset: ItemPage.Offset, limit: ItemPage.Limit)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ItemPage:
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class EventPage(events: List[ManagerEvent], before: Option[Long] = None)
+
+  final case class EventPage(events: List[ManagerEvent], before: Option[EventPage.Before] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object EventPage:
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ManagerCreate(
-      kind: String,
-      goal: Option[String] = None,
+      kind: ManagerCreate.Kind,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
       config: ManagerConfig = ManagerConfig(),
-      paused: Option[Boolean] = None,
-      cron: Option[String] = None
+      paused: Option[ManagerCreate.Paused] = None,
+      cron: Option[ManagerCreate.Cron] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ManagerCreate:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Paused = Paused.T
+    object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[String] = None)
+
+  final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[ManagerUpdate.Cron] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ManagerUpdate:
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class EnqueueRequest(kind: String, target: String, priority: Option[Int] = None)
+
+  final case class EnqueueRequest(kind: EnqueueRequest.Kind, target: EnqueueRequest.Target, priority: Option[EnqueueRequest.Priority] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object EnqueueRequest:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class EnqueueResult(managerId: String, items: List[ManagerItem] = Nil, skipped: List[String] = Nil)
+
+  final case class EnqueueResult(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id, items: List[ManagerItem] = Nil, skipped: List[EnqueueResult.Skipped] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object EnqueueResult:
+    type Skipped = Skipped.T
+    object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ItemPatch(
-      action: String,
-      priority: Option[Int] = None,
-      until: Option[String] = None,
-      untilSource: Option[String] = None,
-      reason: Option[String] = None
+      action: ItemPatch.Action,
+      priority: Option[ItemPatch.Priority] = None,
+      until: Option[ItemPatch.Until] = None,
+      untilSource: Option[ItemPatch.UntilSource] = None,
+      reason: Option[ItemPatch.Reason] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object ItemPatch:
 
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilSource = UntilSource.T
+    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 
   final case class HintAdd(
-      text: String,
-      item: Option[String] = None,
-      once: Option[Boolean] = None,
+      text: HintAdd.Text,
+      item: Option[HintAdd.Item] = None,
+      once: Option[HintAdd.Once] = None,
       effect: Option[HintEffect] = None,
-      author: Option[String] = None,
-      propose: Option[Boolean] = None,
-      suggest: Option[Boolean] = None
+      author: Option[HintAdd.Author] = None,
+      propose: Option[HintAdd.Propose] = None,
+      suggest: Option[HintAdd.Suggest] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object HintAdd:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Once = Once.T
+    object Once extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Author = Author.T
+    object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Propose = Propose.T
+    object Propose extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Suggest = Suggest.T
+    object Suggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   val Actions: List[String] = List("pause", "resume", "stop")

@@ -1,5 +1,33 @@
 # Priority-family status
 
+## Definition sweep applied: automation and personal API
+
+definitions-automation-personal-2 converts 814 explicit primitive leaves across
+153 production models in 24 files. Cumulative definition conversion is 2375
+leaves in 450 models across 204 production files. This is not a percentage of
+the earlier estimated policy findings: the project-wide denominator and overlap
+with historical findings are still unestablished. Verified repair credit is
+unchanged, and compilation/test repair remains deferred.
+
+The unchanged reusable transformation creates companion-owned Pure newtypes by
+default and reuses reviewed source identifiers, bibliographic types, years, run
+and manager identities, queue item IDs and properties, research goal properties,
+agent request/parameter properties and personal display titles. Existing personal
+newtypes are preserved. Goal planning distinguishes goal titles, source titles
+and article titles/identifiers; review corrected these mappings before application.
+Goal.Status remains a constants namespace with a separate StatusValue newtype.
+
+The existing frozen applicator checked and applied all 24 files. The rerun
+definitions-automation-personal-remaining-1 validates all five source-plan links
+and reports zero further supported explicit primitive leaves or blocked matches
+in these scopes. Application whitespace checks pass. The implementation and
+fixtures are unchanged; fixture checks were not repeated. Arbitrary aliases,
+import renames, unsupported type shapes, non-case-class models and named raw
+representations such as BigDecimal remain outside this primitive-name sweep.
+They have not been counted compliant. Validation migration, duplicate concept
+consolidation and behavioral tests remain subsequent phases. Next definition
+scope: the remaining API supporting areas, followed by server/domain models.
+
 ## Definition sweep applied: catalogue API
 
 definitions-catalogue-2 applies the unchanged reusable rule to 572 explicit

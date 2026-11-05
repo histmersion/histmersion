@@ -42,13 +42,16 @@ object ModelChains:
     given io.circe.Decoder[Measure] = WireEnum.decoder
     given Schema[Measure] = WireEnum.schema
 
-  final case class Window(seconds: Long):
+  final case class Window(seconds: Window.Seconds):
     def text: String =
       if seconds % 86400 == 0 then s"${seconds / 86400}d"
       else if seconds % 3600 == 0 then s"${seconds / 3600}h"
       else s"${seconds / 60}m"
 
   object Window:
+    type Seconds = Seconds.T
+    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
 
@@ -144,11 +147,14 @@ object ModelChains:
           .toRight(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
       else ModelRef.parse(t, known).map(Model(_))
 
-  final case class Allowance(target: Target, limits: List[Limit], reservePct: Int):
+  final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
     def text: String =
       (limits.map(_.text) ++ Option.when(reservePct > 0)(s"reserve $reservePct%")).mkString(", ")
 
   object Allowance:
+    type ReservePct = ReservePct.T
+    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(target: Target, limits: List[Limit], reservePct: Int): Either[String, Allowance] =
       if reservePct < 0 || reservePct > 99 then Left(s"a reserve is 0 to 99 %, not $reservePct")
       else
@@ -190,17 +196,29 @@ object ModelChains:
   def parseReserve(s: String): Either[String, Int] =
     s.trim.stripPrefix("=").trim.stripSuffix("%").trim.toIntOption.toRight(s"'${s.trim}' is not a reserve percentage")
 
-  final case class Spend(at: Long, tokens: Long, usd: BigDecimal)
+  final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)
+
+  object Spend:
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tokens = Tokens.T
+    object Tokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class LimitState(
       limit: Limit,
       used: BigDecimal,
       remaining: BigDecimal,
       reserve: BigDecimal,
-      usable: Boolean,
-      freesAt: Option[Long]
+      usable: LimitState.Usable,
+      freesAt: Option[LimitState.FreesAt]
   ):
     def headroom: BigDecimal = (limit.amount - reserve - used).max(0)
+
+  object LimitState:
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
     case Measure.Tokens => BigDecimal(s.tokens)
@@ -236,17 +254,33 @@ object ModelChains:
     val usd = ss.filter(_.limit.measure == Measure.Usd).map(_.headroom).minOption
     (tok, usd)
 
-  final case class LimitSpec(amount: Double, measure: Measure, window: String)
+  final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object LimitSpec:
+    type Amount = Amount.T
+    object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Window = Window.T
+    object Window extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class ChainSet(models: List[ChainSet.Models]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ChainSet:
+    type Models = Models.T
+    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class AllowanceSet(target: String, limits: List[LimitSpec] = Nil, reservePct: Int = 0)
+  final case class AllowanceSet(target: AllowanceSet.Target, limits: List[LimitSpec] = Nil, reservePct: AllowanceSet.ReservePct = 0)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object AllowanceSet:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReservePct = ReservePct.T
+    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum SettingSource(val wire: String):
@@ -254,48 +288,106 @@ object ModelChains:
     case Saved extends SettingSource("saved")
 
   final case class LimitStatus(
-      limit: String,
+      limit: LimitStatus.Limit,
       measure: Measure,
-      window: String,
-      amount: Double,
-      used: Double,
-      remaining: Double,
-      reserve: Double,
-      usable: Boolean,
-      freesAt: Option[String] = None
+      window: LimitStatus.Window,
+      amount: LimitStatus.Amount,
+      used: LimitStatus.Used,
+      remaining: LimitStatus.Remaining,
+      reserve: LimitStatus.Reserve,
+      usable: LimitStatus.Usable,
+      freesAt: Option[LimitStatus.FreesAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object LimitStatus:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Window = Window.T
+    object Window extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Amount = Amount.T
+    object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Used = Used.T
+    object Used extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remaining = Remaining.T
+    object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reserve = Reserve.T
+    object Reserve extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class AllowanceStatus(
-      target: String,
-      source: String,
-      reservePct: Int,
+      target: AllowanceStatus.Target,
+      source: AllowanceStatus.Source,
+      reservePct: AllowanceStatus.ReservePct,
       limits: List[LimitStatus],
-      usable: Boolean,
-      freesAt: Option[String] = None,
-      note: Option[String] = None
+      usable: AllowanceStatus.Usable,
+      freesAt: Option[AllowanceStatus.FreesAt] = None,
+      note: Option[AllowanceStatus.Note] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object AllowanceStatus:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReservePct = ReservePct.T
+    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ChainEntry(
-      model: String,
-      ready: Boolean,
-      usable: Boolean,
-      problem: Option[String] = None,
-      freesAt: Option[String] = None,
-      billing: Option[String] = None,
-      cooling: Boolean = false
+      model: ChainEntry.Model,
+      ready: ChainEntry.Ready,
+      usable: ChainEntry.Usable,
+      problem: Option[ChainEntry.Problem] = None,
+      freesAt: Option[ChainEntry.FreesAt] = None,
+      billing: Option[ChainEntry.Billing] = None,
+      cooling: ChainEntry.Cooling = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ChainEntry:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ready = Ready.T
+    object Ready extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Billing = Billing.T
+    object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cooling = Cooling.T
+    object Cooling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class RoleChain(
-      role: String,
-      source: String,
+      role: RoleChain.Role,
+      source: RoleChain.Source,
       models: List[ChainEntry],
-      active: Option[String] = None,
-      problem: Option[String] = None
+      active: Option[RoleChain.Active] = None,
+      problem: Option[RoleChain.Problem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object RoleChain:
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Active = Active.T
+    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

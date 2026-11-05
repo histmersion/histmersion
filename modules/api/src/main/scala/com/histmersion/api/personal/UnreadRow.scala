@@ -9,11 +9,15 @@ import com.histmersion.api.ItemKind
 final case class UnreadRow(
     kind: ItemKind,
     id: ItemKey,
-    title: String,
-    authors: List[String] = Nil,
-    year: Option[Int] = None,
-    status: Option[String] = None,
-    periodStart: Option[Long] = None,
-    periodEnd: Option[Long] = None
+    title: com.histmersion.api.personal.ReadMark.Title,
+    authors: List[com.histmersion.api.library.AuthorName] = Nil,
+    year: Option[com.histmersion.api.catalogue.Year] = None,
+    status: Option[UnreadRow.Status] = None,
+    periodStart: Option[com.histmersion.api.catalogue.Year] = None,
+    periodEnd: Option[com.histmersion.api.catalogue.Year] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object UnreadRow:
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

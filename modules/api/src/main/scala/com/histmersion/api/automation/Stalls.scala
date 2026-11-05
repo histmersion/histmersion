@@ -8,29 +8,61 @@ import com.histmersion.api.given
 object Stalls:
 
   final case class Stall(
-      slug: String,
-      title: String = "",
-      status: String = "",
-      lastProgress: Option[String] = None,
-      idleDays: Option[Int] = None,
-      code: String = "",
-      why: String = "",
-      action: String = ""
+      slug: Stall.Slug,
+      title: Stall.Title = "",
+      status: Stall.Status = "",
+      lastProgress: Option[Stall.LastProgress] = None,
+      idleDays: Option[Stall.IdleDays] = None,
+      code: Stall.Code = "",
+      why: Stall.Why = "",
+      action: Stall.Action = ""
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Stall:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastProgress = LastProgress.T
+    object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdleDays = IdleDays.T
+    object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ReasonCount(code: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ReasonCount:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class StallReport(
-      days: Int,
-      at: String,
-      goals: Int = 0,
+      days: StallReport.Days,
+      at: StallReport.At,
+      goals: StallReport.Goals = 0,
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object StallReport:
+    type Days = Days.T
+    object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goals = Goals.T
+    object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   object Code:
@@ -47,25 +79,65 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
-  final case class SchedWait(code: String, why: String, position: Int = 0)
+  final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = 0)
+
+  object SchedWait:
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Position = Position.T
+    object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Facts(
-      slug: String,
-      title: String = "",
-      status: String = "",
-      lastProgress: Option[String] = None,
-      idleDays: Option[Int] = None,
-      approvals: List[(Long, String)] = Nil,
-      personHeld: Int = 0,
-      paused: List[String] = Nil,
-      draining: Boolean = false,
+      slug: Facts.Slug,
+      title: Facts.Title = "",
+      status: Facts.Status = "",
+      lastProgress: Option[Facts.LastProgress] = None,
+      idleDays: Option[Facts.IdleDays] = None,
+      approvals: List[(Facts.ApprovalsPart1, Facts.ApprovalsPart2)] = Nil,
+      personHeld: Facts.PersonHeld = 0,
+      paused: List[Facts.Paused] = Nil,
+      draining: Facts.Draining = false,
       waits: List[SchedWait] = Nil,
-      lastStop: Option[String] = None,
-      sources: Int = 0,
-      noCandidates: Boolean = false,
-      open: Int = 0,
-      running: Int = 0
+      lastStop: Option[Facts.LastStop] = None,
+      sources: Facts.Sources = 0,
+      noCandidates: Facts.NoCandidates = false,
+      open: Facts.Open = 0,
+      running: Facts.Running = 0
   )
+
+  object Facts:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastProgress = LastProgress.T
+    object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdleDays = IdleDays.T
+    object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalsPart1 = ApprovalsPart1.T
+    object ApprovalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalsPart2 = ApprovalsPart2.T
+    object ApprovalsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PersonHeld = PersonHeld.T
+    object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Paused = Paused.T
+    object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Draining = Draining.T
+    object Draining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastStop = LastStop.T
+    object LastStop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sources = Sources.T
+    object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoCandidates = NoCandidates.T
+    object NoCandidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Open = Open.T
+    object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Running = Running.T
+    object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def stalled(f: Facts, days: Int): Boolean = f.idleDays.forall(_ >= math.max(0, days))
 
