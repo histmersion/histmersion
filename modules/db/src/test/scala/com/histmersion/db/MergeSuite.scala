@@ -45,7 +45,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
-import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.Attestation
