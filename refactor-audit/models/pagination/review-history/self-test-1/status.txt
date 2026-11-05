@@ -1,0 +1,1 @@
+PASS: unchanged identities accepted; equal aggregate fixed count with one reopened identity rejected. Production sources and original review/baseline were not modified.

@@ -1,6 +1,6 @@
 scope	module	status	count
 production	api	nested-owner-review	619
-production	api	top-level-owner-review	594
+production	api	top-level-owner-review	598
 production	chimney-iron	nested-owner-review	2
 production	chimney-iron	top-level-owner-review	3
 production	cli	nested-owner-review	42
@@ -49,7 +49,7 @@ production	server	top-level-owner-review	835
 production	upstreams	nested-owner-review	10
 production	upstreams	top-level-owner-review	33
 production	values	nested-owner-review	68
-production	values	top-level-owner-review	89
+production	values	top-level-owner-review	91
 production	web	nested-owner-review	107
 production	web	top-level-owner-review	316
 test	api	nested-owner-review	2

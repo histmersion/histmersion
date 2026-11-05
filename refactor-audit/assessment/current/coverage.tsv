@@ -1,5 +1,5 @@
 module	production-files	test-files
-api	477	66
+api	479	66
 chimney-iron	2	0
 chimney-iron-tests	0	8
 cli	74	33
@@ -25,5 +25,5 @@ plugins/gazetteers	9	4
 plugins/media	38	5
 server	624	313
 upstreams	32	7
-values	55	6
+values	56	6
 web	276	87

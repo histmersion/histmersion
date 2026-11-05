@@ -9,7 +9,9 @@ Remaining migration work is independent of compilation: API factory parameter ty
 Filter.limit's default sentinel and Filter.offset; PassageHit's UTF-16 offset;
 AutopilotPolicy.DraftFacts.hits and the wire EventLead.List.total; other primitive
 model candidates and independent detector quality. DB-backed behavior and HTTP tests
-were not executed in this checkpoint. Fresh project-wide measurement is in progress.
+were not executed in this checkpoint. Fresh project-wide measurement is complete:
+eight original reviewed findings have direct newtype evidence, three remain primitive.
+See measurement-1.md; the original review denominator is unchanged.
 
 Historical checkpoints follow.
 

@@ -1,0 +1,16 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scalafix.internal.reflect.ClasspathOps$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/ch/epfl/scala/scalafix-reflect_2.13.18/0.14.9/scalafix-reflect_2.13.18-0.14.9.jar)
+WARNING: Please consider reporting this to the maintainers of class scalafix.internal.reflect.ClasspathOps$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+Exception in thread "main" java.lang.IllegalArgumentException: requirement failed: Previously fixed findings reopened
+	at scala.Predef$.require(Predef.scala:337)
+	at VerifyMeasurement.afterComplete(/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/refactor-audit/models/pagination/VerifyMeasurement.scala:67)
+	at scalafix.internal.v1.MainOps$.$anonfun$run$4(MainOps.scala:438)
+	at scalafix.internal.v1.MainOps$.$anonfun$run$4$adapted(MainOps.scala:438)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at scalafix.internal.v1.MainOps$.run(MainOps.scala:438)
+	at scalafix.internal.v1.MainOps$.run(MainOps.scala:82)
+	at scalafix.v1.Main$.run(Main.scala:34)
+	at scalafix.v1.Main$.main(Main.scala:25)
+	at scalafix.cli.Cli$.main(Cli.scala:9)
+	at scalafix.cli.Cli.main(Cli.scala)

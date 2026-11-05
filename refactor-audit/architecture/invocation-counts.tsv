@@ -9,11 +9,11 @@ production	api	method-call	no-project-class-resolved	1939
 production	api	method-call	project-model-result-candidate	171
 production	api	new	no-project-class-resolved	11
 production	api	new	unresolved	1
-production	api	parent-initializer	no-project-class-resolved	338
+production	api	parent-initializer	no-project-class-resolved	340
 production	api	project-signature-call-candidate	no-project-class-resolved	467
 production	api	project-signature-call-candidate	project-model-result-candidate	266
 production	api	unresolved-call	unresolved	268
-production	api	unresolved-call-metadata	unresolved	11656
+production	api	unresolved-call-metadata	unresolved	11713
 production	chimney-iron	companion-apply-candidates	no-project-class-resolved	2
 production	chimney-iron	companion-apply-candidates	project-model-result-candidate	1
 production	chimney-iron	method-call	no-project-class-resolved	20
@@ -75,7 +75,7 @@ production	db	parent-initializer	no-project-class-resolved	54
 production	db	project-signature-call-candidate	no-project-class-resolved	600
 production	db	project-signature-call-candidate	project-model-result-candidate	1431
 production	db	unresolved-call	unresolved	74
-production	db	unresolved-call-metadata	unresolved	4982
+production	db	unresolved-call-metadata	unresolved	4983
 production	files	apply	unresolved	1
 production	files	callable-value-or-companion	unresolved	34
 production	files	companion-apply-candidates	no-project-class-resolved	12
@@ -239,7 +239,7 @@ production	server	parent-initializer	unresolved	11
 production	server	project-signature-call-candidate	no-project-class-resolved	4163
 production	server	project-signature-call-candidate	project-model-result-candidate	3971
 production	server	unresolved-call	unresolved	780
-production	server	unresolved-call-metadata	unresolved	23302
+production	server	unresolved-call-metadata	unresolved	23304
 production	upstreams	callable-value-or-companion	unresolved	14
 production	upstreams	companion-apply-candidates	project-model-result-candidate	16
 production	upstreams	method-call	no-project-class-resolved	406
@@ -257,7 +257,7 @@ production	values	method-call	no-project-class-resolved	137
 production	values	method-call	project-model-result-candidate	8
 production	values	new	no-project-class-resolved	1
 production	values	new	project-model-result-candidate	2
-production	values	parent-initializer	no-project-class-resolved	135
+production	values	parent-initializer	no-project-class-resolved	136
 production	values	project-signature-call-candidate	no-project-class-resolved	7
 production	values	unresolved-call	unresolved	3
 production	values	unresolved-call-metadata	unresolved	214
@@ -275,7 +275,7 @@ production	web	parent-initializer	no-project-class-resolved	231
 production	web	project-signature-call-candidate	no-project-class-resolved	2161
 production	web	project-signature-call-candidate	project-model-result-candidate	768
 production	web	unresolved-call	unresolved	712
-production	web	unresolved-call-metadata	unresolved	19652
+production	web	unresolved-call-metadata	unresolved	19669
 test	api	callable-value-or-companion	unresolved	75
 test	api	companion-apply-candidates	project-model-result-candidate	1
 test	api	method-call	no-project-class-resolved	862
@@ -285,7 +285,7 @@ test	api	parent-initializer	no-project-class-resolved	71
 test	api	project-signature-call-candidate	no-project-class-resolved	1249
 test	api	project-signature-call-candidate	project-model-result-candidate	1514
 test	api	unresolved-call	unresolved	140
-test	api	unresolved-call-metadata	unresolved	8269
+test	api	unresolved-call-metadata	unresolved	8339
 test	chimney-iron-tests	callable-value-or-companion	unresolved	2
 test	chimney-iron-tests	method-call	no-project-class-resolved	33
 test	chimney-iron-tests	parent-initializer	no-project-class-resolved	20
@@ -323,7 +323,7 @@ test	core	parent-initializer	no-project-class-resolved	97
 test	core	project-signature-call-candidate	no-project-class-resolved	1468
 test	core	project-signature-call-candidate	project-model-result-candidate	2616
 test	core	unresolved-call	unresolved	266
-test	core	unresolved-call-metadata	unresolved	12274
+test	core	unresolved-call-metadata	unresolved	12277
 test	db	apply	unresolved	5
 test	db	callable-value-or-companion	unresolved	108
 test	db	companion-apply-candidates	project-model-result-candidate	3
@@ -459,7 +459,7 @@ test	server	parent-initializer	unresolved	14
 test	server	project-signature-call-candidate	no-project-class-resolved	3638
 test	server	project-signature-call-candidate	project-model-result-candidate	5773
 test	server	unresolved-call	unresolved	929
-test	server	unresolved-call-metadata	unresolved	36646
+test	server	unresolved-call-metadata	unresolved	36652
 test	upstreams	callable-value-or-companion	unresolved	1
 test	upstreams	method-call	no-project-class-resolved	62
 test	upstreams	parent-initializer	no-project-class-resolved	7
@@ -483,4 +483,4 @@ test	web	parent-initializer	unresolved	1
 test	web	project-signature-call-candidate	no-project-class-resolved	1718
 test	web	project-signature-call-candidate	project-model-result-candidate	1197
 test	web	unresolved-call	unresolved	232
-test	web	unresolved-call-metadata	unresolved	7652
+test	web	unresolved-call-metadata	unresolved	7671

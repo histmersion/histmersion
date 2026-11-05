@@ -1,5 +1,5 @@
 module	scope	classification	count
-api	production	pure	16
+api	production	pure	18
 chimney-iron-tests	test	non-Pure-constraint	8
 chimney-iron-tests	test	pure	7
 cli	production	non-Pure-constraint	3
@@ -13,4 +13,4 @@ plugin-resolver	production	non-Pure-constraint	4
 server	production	non-Pure-constraint	5
 server	production	pure	13
 values	production	non-Pure-constraint	18
-values	production	pure	15
+values	production	pure	16
