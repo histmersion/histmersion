@@ -1,0 +1,8 @@
+sbt
+--server
+-batch
+set every scalafmtOnCompile := false
+set ThisBuild / scalacOptions += "-Xsemanticdb"
+db/compile
+db/Test/compile
+db/testOnly *NewtypeColumnsSuite *SourceColumnsSuite *PlaceColumnsSuite

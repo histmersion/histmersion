@@ -17,6 +17,7 @@ import com.histmersion.api.{GeoPoint, Write}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{CalibreGap, Edge, Finding, Rename, Source, TocEntry}
 import com.histmersion.api.Api
@@ -56,7 +57,7 @@ private[sources] object SourceRepo:
   /** [[put]] inside the caller's transaction. */
   def putIn(s: Source, chunkChars: Int, toleranceKm: Double)(using DbCon): String =
     write(s, chunkChars, toleranceKm)
-    token(s.citekey).getOrElse("")
+    token(s.citekey.value).getOrElse("")
 
   /** [[patch]] inside the caller's transaction. */
   def patchIn(requested: String, p: Source.Patch, chunkChars: Int, toleranceKm: Double)(using
@@ -91,7 +92,7 @@ private[sources] object SourceRepo:
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
-    aliasTarget(s.citekey).foreach { now =>
+    aliasTarget(s.citekey.value).foreach { now =>
       throw IllegalStateException(s"'${s.citekey}' was renamed to '$now' — write to '$now' instead")
     }
     val status = s.status.toString.toLowerCase
@@ -142,13 +143,13 @@ private[sources] object SourceRepo:
     }
     // …and re-materialise this citekey's gazetteer assignment in the SAME transaction, so a moved
     // or newly-added finding is located the moment the write commits.
-    val _ = FindingPlacement(toleranceKm).placeSource(s.citekey)
+    val _ = FindingPlacement(toleranceKm).placeSource(s.citekey.value)
 
     sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
     sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
     val _ = insertEdges(s.edges.map(_.modify(_.src).setTo(s.citekey)))
-    promote(s.citekey)
-    val _ = replaceChunks(s.citekey, s.ocrMarkdown, chunkChars) // FTS index follows every body write
+    promote(s.citekey.value)
+    val _ = replaceChunks(s.citekey.value, s.ocrMarkdown, chunkChars) // FTS index follows every body write
 
   /** Store edges, routed by their target (V026): an edge to a stored source goes into `edges`, one to anything else — a
     * work not ingested yet, a short form, a DOI — is parked in `unresolved_edges` until [[promote]] or [[resolveEdges]]
@@ -160,7 +161,7 @@ private[sources] object SourceRepo:
     if es.isEmpty then 0
     else
       // an edge to an OLD citekey (V027) is an edge to the source it was renamed to
-      val known = canonicalAll(es.map(_.dst).distinct)
+      val known = canonicalAll(es.map(_.dst.value).distinct).map((key, value) => com.histmersion.api.library.Citekey(key) -> value)
       es.map { e =>
         if known.contains(e.dst) then
           sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${e.kind})
@@ -362,7 +363,7 @@ private[sources] object SourceRepo:
         .query[(String, String)]
         .run()
         .toList
-        .map(Source.Alias(_, com.histmersion.api.library.Citekey(_)))
+        .map((alias, citekey) => Source.Alias(alias, com.histmersion.api.library.Citekey(citekey)))
     )
 
   /** Rename a source's citekey, in the caller's transaction — all of it happens or none of it does.

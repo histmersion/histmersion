@@ -4,6 +4,7 @@ import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage}
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed

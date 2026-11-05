@@ -19,6 +19,7 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
@@ -93,7 +94,7 @@ private[events] object EventRepo:
           .run()
           .collect { case (id, Some(g)) => id -> g }
           .toMap
-    EventGeo.List(items.map((_, g) => g.modify(_.outline).setTo(outlines.get(g.id))), unplaced, imprecise)
+    EventGeo.List(items.map((_, g) => g.modify(_.outline).setTo(outlines.get(g.id.value))), unplaced, imprecise)
 
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.

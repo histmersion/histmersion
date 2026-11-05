@@ -3,6 +3,7 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.{CandidateCount, CandidateWatch}
 import com.histmersion.api.library.Source
 

@@ -15,6 +15,7 @@ import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.{EventArticleRef, Period}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.SourceColumns.given

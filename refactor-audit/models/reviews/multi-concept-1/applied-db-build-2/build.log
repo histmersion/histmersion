@@ -1,0 +1,1132 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 2 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/classes ...
+[info] done compiling
+[success] elapsed time: 12 s, cache 98%, 111 disk cache hits, 2 onsite tasks
+[info] compiling 94 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/test-classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:105:29 
+[error] 105 |        .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")),
+[error]     |                             ^^^^^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("Stocker, Sharon R." : String)
+[error]     |                    Required: com.histmersion.api.library.AuthorName.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:105:51 
+[error] 105 |        .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")),
+[error]     |                                                   ^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("Davis, Jack L." : String)
+[error]     |                    Required: com.histmersion.api.library.AuthorName.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:112:5 
+[error] 112 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[List[com.histmersion.api.library.AuthorName]]
+[error]     |  Second type: List[List[String]]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[List[com.histmersion.api.library.AuthorName]], List[List[String]]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[List[com.histmersion.api.library.AuthorName]], List[List[String]]](
+[error]     |      /* missing */
+[error]     |        summon[List[List[com.histmersion.api.library.AuthorName]] <:<
+[error]     |          List[List[String]]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[List[com.histmersion.api.library.AuthorName]] <:< List[List[String]].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:116:5 
+[error] 116 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[List[com.histmersion.api.library.AuthorName]]
+[error]     |  Second type: Some[List[String]]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[List[com.histmersion.api.library.AuthorName]], Some[List[String]]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[List[com.histmersion.api.library.AuthorName]], Some[List[String]]](
+[error]     |      /* missing */
+[error]     |        summon[Option[List[com.histmersion.api.library.AuthorName]] <:<
+[error]     |          Some[List[String]]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[List[com.histmersion.api.library.AuthorName]] <:< Some[List[String]].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:125:98 
+[error] 125 |    assertEquals(ArticleFixtures.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
+[error]     |                                                                                                  ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[com.histmersion.api.library.Citekey.T]
+[error]     |  Second type: List[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.library.Citekey.T], List[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[com.histmersion.api.library.Citekey.T], List[String]](
+[error]     |      /* missing */
+[error]     |        summon[List[com.histmersion.api.library.Citekey.T] <:< List[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[com.histmersion.api.library.Citekey.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:130:5 
+[error] 130 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  (Option[com.histmersion.api.library.Title],
+[error]     |  Option[com.histmersion.api.catalogue.Year],
+[error]     |  Option[com.histmersion.api.library.Source.Status])
+[error]     |  Second type: (Some[String], Some[Int], Some[com.histmersion.api.library.Source.Status])
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[(Option[com.histmersion.api.library.Title],
+[error]     |  Option[com.histmersion.api.catalogue.Year],
+[error]     |  Option[com.histmersion.api.library.Source.Status]), (Some[String], Some[Int], Some[com.histmersion.api.library.Source.Status])]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      
+[error]     |        (Option[com.histmersion.api.library.Title],
+[error]     |          Option[com.histmersion.api.catalogue.Year],
+[error]     |          Option[com.histmersion.api.library.Source.Status])
+[error]     |      ,
+[error]     |    (Some[String], Some[Int], Some[com.histmersion.api.library.Source.Status])](
+[error]     |      /* missing */
+[error]     |        summon[(Option[com.histmersion.api.library.Title],
+[error]     |          Option[com.histmersion.api.catalogue.Year],
+[error]     |          Option[com.histmersion.api.library.Source.Status]) <:< (Some[String],
+[error]     |          Some[Int], Some[com.histmersion.api.library.Source.Status])]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type (Option[com.histmersion.api.library.Title],
+[error]     |  Option[com.histmersion.api.catalogue.Year],
+[error]     |  Option[com.histmersion.api.library.Source.Status]) <:< (Some[String],
+[error]     |  Some[Int], Some[com.histmersion.api.library.Source.Status]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ArticleRepoSuite.scala:171:98 
+[error] 171 |    assertEquals(ArticleFixtures.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
+[error]     |                                                                                                  ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[com.histmersion.api.library.Citekey.T]
+[error]     |  Second type: List[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.library.Citekey.T], List[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[com.histmersion.api.library.Citekey.T], List[String]](
+[error]     |      /* missing */
+[error]     |        summon[List[com.histmersion.api.library.Citekey.T] <:< List[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[com.histmersion.api.library.Citekey.T] <:< List[String].
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:170:51 
+[error] 170 |      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running, Some("converting"))),
+[error]     |                                                 ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:173:47 
+[error] 173 |    Transactor(ds).transact(JobRepo.progress(j.id, "storing 3 asset(s)"))
+[error]     |                                             ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:174:51 
+[error] 174 |    assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.progress), Some("storing 3 asset(s)"))
+[error]     |                                                 ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:176:51 
+[error] 176 |      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Done, Some("1 page(s)"))),
+[error]     |                                                 ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:179:49 
+[error] 179 |    val done = Transactor(ds).read(JobRepo.get(j.id)).get
+[error]     |                                               ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:186:51 
+[error] 186 |    assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.acquireItem), Some(4242))
+[error]     |                                                 ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:190:101 
+[error] 190 |        .read(JobRepo.get(Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None)).id))
+[error]     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Found:    (com.histmersion.api.jobs.JobInfo#id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:198:51 
+[error] 198 |      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running)),
+[error]     |                                                 ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:202:62 
+[error] 202 |    assertEquals(Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running)), None)
+[error]     |                                                            ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:204:62 
+[error] 204 |    assertEquals(Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Queued)), None)
+[error]     |                                                            ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:208:49 
+[error] 208 |    Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running))
+[error]     |                                               ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:210:27 
+[error] 210 |      JobRepo.transition(j.id, JobState.Running, JobState.Failed, error = Some("converter unreachable"))
+[error]     |                         ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:212:46 
+[error] 212 |    val f = Transactor(ds).read(JobRepo.get(j.id)).get
+[error]     |                                            ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:219:52 
+[error] 219 |    Transactor(ds).transact(JobRepo.transition(done.id, JobState.Queued, JobState.Running))
+[error]     |                                               ^^^^^^^
+[error]     |             Found:    (done.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:220:52 
+[error] 220 |    Transactor(ds).transact(JobRepo.transition(done.id, JobState.Running, JobState.Done))
+[error]     |                                               ^^^^^^^
+[error]     |             Found:    (done.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:222:55 
+[error] 222 |    Transactor(ds).transact(JobRepo.transition(running.id, JobState.Queued, JobState.Running))
+[error]     |                                               ^^^^^^^^^^
+[error]     |          Found:    (running.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |          Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:226:57 
+[error] 226 |    assertEquals(Transactor(ds).read(JobRepo.get(running.id)).map(_.error), Some(Some(JobState.Interrupted)))
+[error]     |                                                 ^^^^^^^^^^
+[error]     |          Found:    (running.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |          Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:227:56 
+[error] 227 |    assertEquals(Transactor(ds).read(JobRepo.get(queued.id)).map(_.status), Some(JobState.Failed.wire))
+[error]     |                                                 ^^^^^^^^^
+[error]     |           Found:    (queued.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |           Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/AssetsJobsSuite.scala:228:54 
+[error] 228 |    assertEquals(Transactor(ds).read(JobRepo.get(done.id)).map(_.status), Some(JobState.Done.wire))
+[error]     |                                                 ^^^^^^^
+[error]     |             Found:    (done.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/BundleSuite.scala:858:121 
+[error] 858 |        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(_), "references"))
+[error]     |                                                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |             Found:    String => com.histmersion.api.library.Citekey.T
+[error]     |             Required: com.histmersion.api.library.Citekey
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventCatalogRepoSuite.scala:215:33 
+[error] 215 |    assertEquals(geo.events.find(_.id == "zztest_b").map(g => (g.tier, g.size)), Some(("catalogue", Some("VEI 4"))))
+[error]     |                                 ^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.catalogue.Event.Id and String cannot be compared with == or !=
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventCatalogRepoSuite.scala:239:5 
+[error] 239 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[(com.histmersion.api.library.Citekey, String, Int)]
+[error]     |  Second type: List[(String, String, Int)]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[(com.histmersion.api.library.Citekey, String, Int)], List[(String, String, Int)]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[(com.histmersion.api.library.Citekey, String, Int)],
+[error]     |      List[(String, String, Int)]](
+[error]     |      /* missing */
+[error]     |        summon[List[(com.histmersion.api.library.Citekey, String, Int)] <:<
+[error]     |          List[(String, String, Int)]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[(com.histmersion.api.library.Citekey, String, Int)] <:<
+[error]     |  List[(String, String, Int)].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventOuterSpanSuite.scala:86:89 
+[error] 86 |    assertEquals(geoIds(Period(-1205, -1195)), Set("zqos_case_open", "zqos_case_closed"))
+[error]    |                                                                                         ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Set[com.histmersion.api.catalogue.Event.Id.T]
+[error]    |  Second type: Set[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.catalogue.Event.Id.T], Set[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      Set[com.histmersion.api.catalogue.Event.Id.T], Set[String]](
+[error]    |      /* missing */
+[error]    |        summon[Set[com.histmersion.api.catalogue.Event.Id.T] <:< Set[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type Set[com.histmersion.api.catalogue.Event.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventOuterSpanSuite.scala:87:98 
+[error] 87 |    assertEquals(geoIds(Period(-500, -400)), Set.empty[String], "not in a view of a later period")
+[error]    |                                                                                                  ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Set[com.histmersion.api.catalogue.Event.Id.T]
+[error]    |  Second type: Set[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.catalogue.Event.Id.T], Set[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      Set[com.histmersion.api.catalogue.Event.Id.T], Set[String]](
+[error]    |      /* missing */
+[error]    |        summon[Set[com.histmersion.api.catalogue.Event.Id.T] <:< Set[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type Set[com.histmersion.api.catalogue.Event.Id.T] <:< Set[String].
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:109:54 
+[error] 109 |    all.modify(_.events).setTo(all.events.filter(_.id.startsWith("zqes")))
+[error]     |                                                 ^^^^^^^^^^^^^^^
+[error]     |value startsWith is not a member of com.histmersion.api.catalogue.Event.Id, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:174:24 
+[error] 174 |    assert(!by.contains("zqes_unplaced"))
+[error]     |                        ^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_unplaced" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:177:21 
+[error] 177 |    assertEquals((by("zqes_event_site").lon, by("zqes_event_site").lat), (124.0, Lat))
+[error]     |                     ^^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_event_site" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:177:48 
+[error] 177 |    assertEquals((by("zqes_event_site").lon, by("zqes_event_site").lat), (124.0, Lat))
+[error]     |                                                ^^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_event_site" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:178:20 
+[error] 178 |    assertEquals(by("zqes_event_site").anchor, "place")
+[error]     |                    ^^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_event_site" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:179:20 
+[error] 179 |    assertEquals(by("zqes_own_point").anchor, "event")
+[error]     |                    ^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_own_point" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:180:21 
+[error] 180 |    assertEquals((by("zqes_own_point").lon, by("zqes_own_point").lat), (123.5, Lat))
+[error]     |                     ^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_own_point" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:180:47 
+[error] 180 |    assertEquals((by("zqes_own_point").lon, by("zqes_own_point").lat), (123.5, Lat))
+[error]     |                                               ^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_own_point" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:183:17 
+[error] 183 |      val e = by(id)
+[error]     |                 ^^
+[error]     |                 Found:    (id : String)
+[error]     |                 Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:187:14 
+[error] 187 |    assert(by("zqes_migration").outline.exists(_.contains("Polygon")), by("zqes_migration").toString)
+[error]     |              ^^^^^^^^^^^^^^^^
+[error]     |              Found:    ("zqes_migration" : String)
+[error]     |              Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:187:74 
+[error] 187 |    assert(by("zqes_migration").outline.exists(_.contains("Polygon")), by("zqes_migration").toString)
+[error]     |                                                                          ^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_migration" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:188:14 
+[error] 188 |    assert(by("zqes_own_area").outline.isDefined)
+[error]     |              ^^^^^^^^^^^^^^^
+[error]     |              Found:    ("zqes_own_area" : String)
+[error]     |              Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:189:14 
+[error] 189 |    assert(by("zqes_event_area").outline.isDefined)
+[error]     |              ^^^^^^^^^^^^^^^^^
+[error]     |              Found:    ("zqes_event_area" : String)
+[error]     |              Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:190:20 
+[error] 190 |    assertEquals(by("zqes_battle_area").outline, None)
+[error]     |                    ^^^^^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_battle_area" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:191:24 
+[error] 191 |    assert(!by.contains("zqes_sub"), "a sub-event with no place is not on the map")
+[error]     |                        ^^^^^^^^^^
+[error]     |                    Found:    ("zqes_sub" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:192:14 
+[error] 192 |    assert(by("zqes_sub_area").outline.isDefined)
+[error]     |              ^^^^^^^^^^^^^^^
+[error]     |              Found:    ("zqes_sub_area" : String)
+[error]     |              Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:193:20 
+[error] 193 |    assertEquals(by("zqes_drought").outline, None)
+[error]     |                    ^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_drought" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:194:21 
+[error] 194 |    assertEquals((by("zqes_drought").lon, by("zqes_drought").scale), (125.0, "regional"))
+[error]     |                     ^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_drought" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:194:45 
+[error] 194 |    assertEquals((by("zqes_drought").lon, by("zqes_drought").scale), (125.0, "regional"))
+[error]     |                                             ^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_drought" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/EventScaleRepoSuite.scala:195:20 
+[error] 195 |    assertEquals(by("zqes_drought").placeLabel, Some("Zqes point region"))
+[error]     |                    ^^^^^^^^^^^^^^
+[error]     |                    Found:    ("zqes_drought" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Event.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:185:80 
+[error] 185 |  private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))
+[error]     |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |value startsWith is not a member of com.histmersion.api.library.Citekey, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:186:73 
+[error] 186 |  private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey)
+[error]     |                                                                ^^^^^^^^^^^^^^^^
+[error]     |  Found:    (_$4.source.citekey : com.histmersion.api.library.Citekey)
+[error]     |  Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:187:68 
+[error] 187 |  private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
+[error]     |                                                                    ^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:224:111 
+[error] 224 |    assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").source.authors, List("Eric H. Cline"))
+[error]     |                                                                                                               ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[com.histmersion.api.library.AuthorName]
+[error]     |  Second type: List[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.library.AuthorName], List[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[com.histmersion.api.library.AuthorName], List[String]](
+[error]     |      /* missing */
+[error]     |        summon[List[com.histmersion.api.library.AuthorName] <:< List[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[com.histmersion.api.library.AuthorName] <:< List[String].
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:369:42 
+[error] 369 |    r.hits.map(_.source.citekey).filter(_.startsWith("zzc_")).sorted
+[error]     |                                        ^^^^^^^^^^^^
+[error]     |value startsWith is not a member of com.histmersion.api.library.Citekey.T, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:369:68 
+[error] 369 |    r.hits.map(_.source.citekey).filter(_.startsWith("zzc_")).sorted
+[error]     |                                                                    ^
+[error]     |No given instance of type Ordering[B] was found for parameter ord of method sorted in trait StrictOptimizedSeqOps.
+[error]     |I found:
+[error]     |
+[error]     |    scala.math.Ordering.ordered[B](
+[error]     |      /* missing */summon[scala.math.Ordering.AsComparable[B]])
+[error]     |
+[error]     |But no implicit values were found that match type scala.math.Ordering.AsComparable[B]
+[error]     |
+[error]     |where:    B is a type variable with constraint >: com.histmersion.api.library.Citekey.T
+[error]     |.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import scala.math.Ordered.orderingToOrdered
+[error]     |
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:385:16 
+[error] 385 |    assertEquals(casedKeys(run(Filter(tags = List("zzftag")))), all)
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]     |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]     |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:386:16 
+[error] 386 |    assertEquals(casedKeys(run(Filter(tags = List("ZZFTAG")))), all)
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]     |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]     |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FilterRepoSuite.scala:387:16 
+[error] 387 |    assertEquals(casedKeys(run(Filter(places = List("ZZFTOLIA")))), all)
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]     |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]     |    munit.diff.DiffOptions): Unit
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FtsSuite.scala:104:24 
+[error] 104 |    val big = hits.find(_.citekey == "zz_fts_big")
+[error]     |                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FtsSuite.scala:122:61 
+[error] 122 |    val hits = search("sea peoples").map(_.citekey).filter(_.startsWith("zz_fts_"))
+[error]     |                                                           ^^^^^^^^^^^^
+[error]     |value startsWith is not a member of com.histmersion.api.library.Citekey.T, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FtsSuite.scala:123:61 
+[error] 123 |    assertEquals(hits.headOption, Some("zz_fts_title"), hits)
+[error]     |                                                             ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.library.Citekey.T]
+[error]     |  Second type: Some[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.library.Citekey.T], Some[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[com.histmersion.api.library.Citekey.T], Some[String]](
+[error]     |      /* missing */
+[error]     |        summon[Option[com.histmersion.api.library.Citekey.T] <:< Some[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.library.Citekey.T] <:< Some[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FtsSuite.scala:142:45 
+[error] 142 |    assert(!search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
+[error]     |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/FtsSuite.scala:145:44 
+[error] 145 |    assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
+[error]     |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/GazetteerNamesSuite.scala:108:49 
+[error] 108 |          .filter(in => Wanted.contains(in.place.id))
+[error]     |                                        ^^^^^^^^^^^
+[error]     |      Found:    (in.place.id : com.histmersion.api.catalogue.Place.Id)
+[error]     |      Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/GazetteerNamesSuite.scala:119:99 
+[error] 119 |      assertEquals(seed.map(_.place.id).toSet, Wanted, "every wanted place is in the bundled seed")
+[error]     |                                                                                                   ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[B]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[B], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[Set[B], Set[String]](
+[error]     |      /* missing */summon[Set[B] <:< Set[String]])
+[error]     |
+[error]     |But no implicit values were found that match type Set[B] <:< Set[String]
+[error]     |
+[error]     |where:    B is a type variable with constraint >: com.histmersion.api.catalogue.Place.Id.T
+[error]     |.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/GazetteerNamesSuite.scala:197:9 
+[error] 197 |      if in.place.id == Galilee then in.modify(_.names).setTo(in.names.filterNot(_.name == "Sea of Tiberias")) else in
+[error]     |         ^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.catalogue.Place.Id and String cannot be compared with == or !=
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/GazetteerNamesSuite.scala:239:119 
+[error] 239 |    assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", Place.Kind.Site, Some("fixture: a hand-checked map")))
+[error]     |                                                                                                                       ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  (com.histmersion.api.catalogue.Place.Id, String, Option[String])
+[error]     |  Second type: (String, String, Some[String])
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.catalogue.Place.Id, String, Option[String]), (String, String, Some[String])]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      (com.histmersion.api.catalogue.Place.Id, String, Option[String]),
+[error]     |      (String, String, Some[String])](
+[error]     |      /* missing */
+[error]     |        summon[(com.histmersion.api.catalogue.Place.Id, String, Option[String]) <:<
+[error]     |          (String, String, Some[String])]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type (com.histmersion.api.catalogue.Place.Id, String, Option[String]) <:< (String,
+[error]     |  String, Some[String]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:205:48 
+[error] 205 |    assertEquals(ids(mine), Set(i1, i2, m1, r1))
+[error]     |                                                ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:206:98 
+[error] 206 |    assertEquals(ids(mine.modify(_.kinds).setTo(List("ingest", "media-import"))), Set(i1, i2, m1))
+[error]     |                                                                                                  ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:207:75 
+[error] 207 |    assertEquals(ids(mine.modify(_.status).setTo(List("failed"))), Set(i2))
+[error]     |                                                                           ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:208:107 
+[error] 208 |    assertEquals(ids(mine.modify(_.until).setTo(Some(Instant.parse("2026-09-03T00:00:00Z")))), Set(i1, i2))
+[error]     |                                                                                                           ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:210:88 
+[error] 210 |    assertEquals(ids(com.histmersion.util.jobs.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
+[error]     |                                                                                        ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.jobs.JobInfo.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.jobs.JobInfo.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/ListFilterRepoSuite.scala:216:89 
+[error] 216 |    assert(Transactor(ds).read(JobRepo.page(Some("failed"), 500)).toOption.get._1.exists(_.id == i2))
+[error]     |                                                                                         ^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.jobs.JobInfo.Id and String cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/MergeExtrasDbSuite.scala:534:60 
+[error] 534 |    assertEquals(Transactor(ds).read(JobRepo.mergeApply(ocr.id)), None)
+[error]     |                                                        ^^^^^^
+[error]     |              Found:    (ocr.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |              Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/MergeSuite.scala:709:108 
+[error] 709 |    assertEquals(SourceFixtures.load(home, "guterbock1997_hittite").map(_.doi), Some(Some("10.5555/oip26")))
+[error]     |                                                                                                            ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[Option[com.histmersion.api.library.Doi]]
+[error]     |  Second type: Some[Some[String]]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[Option[com.histmersion.api.library.Doi]], Some[Some[String]]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[Option[com.histmersion.api.library.Doi]], Some[Some[String]]](
+[error]     |      /* missing */
+[error]     |        summon[Option[Option[com.histmersion.api.library.Doi]] <:<
+[error]     |          Some[Some[String]]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[Option[com.histmersion.api.library.Doi]] <:< Some[Some[String]].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/MergeSuite.scala:721:91 
+[error] 721 |    assertEquals(SourceFixtures.load(home, "page1959_history").flatMap(_.year), Some(1959))
+[error]     |                                                                                           ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.catalogue.Year.T]
+[error]     |  Second type: Some[Int]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.catalogue.Year.T], Some[Int]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[com.histmersion.api.catalogue.Year.T], Some[Int]](
+[error]     |      /* missing */
+[error]     |        summon[Option[com.histmersion.api.catalogue.Year.T] <:< Some[Int]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.catalogue.Year.T] <:< Some[Int].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/MergeSuite.scala:725:5 
+[error] 725 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.library.Title.T]
+[error]     |  Second type: Some[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.library.Title.T], Some[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[com.histmersion.api.library.Title.T], Some[String]](
+[error]     |      /* missing */
+[error]     |        summon[Option[com.histmersion.api.library.Title.T] <:< Some[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.library.Title.T] <:< Some[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/MergeSuite.scala:726:116 
+[error] 726 |    assertEquals(SourceFixtures.load(home, "smith2019_ritual").map(_.title), Some("Ritual Economies of the Aegean"))
+[error]     |                                                                                                                    ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.library.Title.T]
+[error]     |  Second type: Some[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.library.Title.T], Some[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[com.histmersion.api.library.Title.T], Some[String]](
+[error]     |      /* missing */
+[error]     |        summon[Option[com.histmersion.api.library.Title.T] <:< Some[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.library.Title.T] <:< Some[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:65:50 
+[error] 65 |    assertEquals(p1.map(_.id).toList, all.take(3))
+[error]    |                                                  ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:67:90 
+[error] 67 |    val (p2, more2) = Transactor(ds).read(JobRepo.page(Some(st), 3, before = Some(p1.last.id))).toOption.get
+[error]    |                                                                                  ^^^^^^^^^^
+[error]    |Found:    (com.histmersion.api.jobs.JobInfo#id : com.histmersion.api.jobs.JobInfo.Id)
+[error]    |Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:68:54 
+[error] 68 |    assertEquals(p2.map(_.id).toList, all.slice(3, 6))
+[error]    |                                                      ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:70:90 
+[error] 70 |    val (p3, more3) = Transactor(ds).read(JobRepo.page(Some(st), 3, before = Some(p2.last.id))).toOption.get
+[error]    |                                                                                  ^^^^^^^^^^
+[error]    |Found:    (com.histmersion.api.jobs.JobInfo#id : com.histmersion.api.jobs.JobInfo.Id)
+[error]    |Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:71:50 
+[error] 71 |    assertEquals(p3.map(_.id).toList, all.drop(6))
+[error]    |                                                  ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:77:86 
+[error] 77 |    assertEquals(Transactor(ds).read(JobRepo.list(Some(st), 7)).map(_.id).toList, all)
+[error]    |                                                                                      ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:83:52 
+[error] 83 |    assertEquals(rows.map(_.id).toList, all.take(4))
+[error]    |                                                    ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:89:70 
+[error] 89 |    assertEquals((cut.map(_.id).toList, cutMore), (all.take(2), true))
+[error]    |                                                                      ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (List[com.histmersion.api.jobs.JobInfo.Id.T], Boolean)
+[error]    |  Second type: (List[String], Boolean)
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(List[com.histmersion.api.jobs.JobInfo.Id.T], Boolean), (List[String], Boolean)]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      (List[com.histmersion.api.jobs.JobInfo.Id.T], Boolean),
+[error]    |      (List[String], Boolean)](
+[error]    |      /* missing */
+[error]    |        summon[(List[com.histmersion.api.jobs.JobInfo.Id.T], Boolean) <:< (
+[error]    |          List[String], Boolean)]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (List[com.histmersion.api.jobs.JobInfo.Id.T], Boolean) <:< (List[String],
+[error]    |  Boolean).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PagingRepoSuite.scala:97:5 
+[error] 97 |    )
+[error]    |     ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[com.histmersion.api.jobs.JobInfo.Id.T]
+[error]    |  Second type: List[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[com.histmersion.api.jobs.JobInfo.Id.T], List[String]](
+[error]    |      /* missing */
+[error]    |        summon[List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[com.histmersion.api.jobs.JobInfo.Id.T] <:< List[String].
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceOverrideSuite.scala:134:66 
+[error] 134 |    PlaceFixtures.placesOf(ds, s"zzpo_src#$n").map(_.id).filter(_.startsWith("zzpo")).toSet
+[error]     |                                                                ^^^^^^^^^^^^
+[error]     |value startsWith is not a member of com.histmersion.api.catalogue.Place.Id.T, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:170:37 
+[error] 170 |    assert(ids("zzp_src#0").contains("zzp_turkey"), "inside the polygon")
+[error]     |                                     ^^^^^^^^^^^^
+[error]     |                    Found:    ("zzp_turkey" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Place.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:171:37 
+[error] 171 |    assert(ids("zzp_src#0").contains("zzp_hatti"), "inside the polity, and the periods overlap")
+[error]     |                                     ^^^^^^^^^^^
+[error]     |                    Found:    ("zzp_hatti" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Place.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:172:37 
+[error] 172 |    assert(ids("zzp_src#0").contains("zzp_hattusa"), "within the point tolerance of the site")
+[error]     |                                     ^^^^^^^^^^^^^
+[error]     |                    Found:    ("zzp_hattusa" : String)
+[error]     |                    Required: com.histmersion.api.catalogue.Place.Id.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:177:5 
+[error] 177 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.catalogue.Place.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:178:107 
+[error] 178 |    assertEquals(ids("zzp_src#2"), Set("zzp_turkey"), "no geometry → region_name 'Zzpland' = a place name")
+[error]     |                                                                                                           ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.catalogue.Place.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:179:66 
+[error] 179 |    assertEquals(ids("zzp_src#3"), Set.empty[String], "unlocated")
+[error]     |                                                                  ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[com.histmersion.api.catalogue.Place.Id.T]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Set[com.histmersion.api.catalogue.Place.Id.T], Set[String]](
+[error]     |      /* missing */
+[error]     |        summon[Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Set[com.histmersion.api.catalogue.Place.Id.T] <:< Set[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:214:105 
+[error] 214 |    assertEquals(PlaceFixtures.placesOf(ds, "zzp_border#0").map(_.id).toSet, Set("zzp_west", "zzp_east"))
+[error]     |                                                                                                         ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Set[B]
+[error]     |  Second type: Set[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Set[B], Set[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[Set[B], Set[String]](
+[error]     |      /* missing */summon[Set[B] <:< Set[String]])
+[error]     |
+[error]     |But no implicit values were found that match type Set[B] <:< Set[String]
+[error]     |
+[error]     |where:    B is a type variable with constraint >: com.histmersion.api.catalogue.Place.Id.T
+[error]     |.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:251:55 
+[error] 251 |    assertEquals(t.parents.map(_.id), List("zzp_asia"))
+[error]     |                                                       ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[com.histmersion.api.catalogue.Place.Id.T]
+[error]     |  Second type: List[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.catalogue.Place.Id.T], List[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[com.histmersion.api.catalogue.Place.Id.T], List[String]](
+[error]     |      /* missing */
+[error]     |        summon[List[com.histmersion.api.catalogue.Place.Id.T] <:< List[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[com.histmersion.api.catalogue.Place.Id.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:252:57 
+[error] 252 |    assertEquals(t.children.map(_.id), List("zzp_hatti"))
+[error]     |                                                         ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  List[com.histmersion.api.catalogue.Place.Id.T]
+[error]     |  Second type: List[String]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[List[com.histmersion.api.catalogue.Place.Id.T], List[String]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      List[com.histmersion.api.catalogue.Place.Id.T], List[String]](
+[error]     |      /* missing */
+[error]     |        summon[List[com.histmersion.api.catalogue.Place.Id.T] <:< List[String]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type List[com.histmersion.api.catalogue.Place.Id.T] <:< List[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/db/PlaceRepoSuite.scala:264:109 
+[error] 264 |    assertEquals(lba.map(r => (r.id, r.depth)), Vector(("zzp_asia", 0), ("zzp_turkey", 1), ("zzp_hatti", 2)))
+[error]     |                                                                                                             ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Vector[(com.histmersion.api.catalogue.Place.Id, Int)]
+[error]     |  Second type: Vector[(String, Int)]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Vector[(com.histmersion.api.catalogue.Place.Id, Int)], Vector[(String, Int)]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Vector[(com.histmersion.api.catalogue.Place.Id, Int)], Vector[(String, Int)]](
+[error]     |      /* missing */
+[error]     |        summon[Vector[(com.histmersion.api.catalogue.Place.Id, Int)] <:<
+[error]     |          Vector[(String, Int)]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Vector[(com.histmersion.api.catalogue.Place.Id, Int)] <:< Vector[(String, Int)].
+[error] 135 errors found
+[error] (db / Test / compileIncremental) Compilation failed
+[error] elapsed time: 12 s, cache 97%, 172 disk cache hits, 4 onsite tasks

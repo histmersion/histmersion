@@ -1,0 +1,91 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining db / Test / unmanagedSources, db / Test / unmanagedSources / allOutputFiles and 3 others.
+[info] The new values will be used by db / Test / bspBuildTargetSourcesItem, db / Test / scalafmt and 7 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining db / Test / envVars
+[info] The new value will be used by db / Test / forkOptions, db / Test / run / forkOptions
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[success] elapsed time: 2 s, cache 100%, 113 disk cache hits
+[info] compiling 5 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/test-classes ...
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:6:37 
+[error] 6 |import com.histmersion.util.database.ColumnProbe
+[error]   |                                     ^^^^^^^^^^^
+[error]   |        value ColumnProbe is not a member of com.histmersion.util.database
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:11:17 
+[error] 11 |    assertEquals(ColumnProbe.read[Place.Precision](" GRID-CELL "), Place.Precision.GridCell)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:13:17 
+[error] 13 |    assertEquals(ColumnProbe.read[Place.Precision](null), Place.Precision.Stated)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:14:17 
+[error] 14 |    assertEquals(ColumnProbe.read[Place.Precision]("unknown"), Place.Precision.GridCell)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:16:17 
+[error] 16 |    assertEquals(ColumnProbe.write[Place.Precision](Place.Precision.GridCell), Some("grid-cell"))
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/catalogue/places/PlaceColumnsSuite.scala:17:17 
+[error] 17 |    assertEquals(ColumnProbe.write[Place.Precision](Place.Precision.Stated), None)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/library/sources/SourceColumnsSuite.scala:6:37 
+[error] 6 |import com.histmersion.util.database.ColumnProbe
+[error]   |                                     ^^^^^^^^^^^
+[error]   |        value ColumnProbe is not a member of com.histmersion.util.database
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/library/sources/SourceColumnsSuite.scala:11:17 
+[error] 11 |    assertEquals(ColumnProbe.read[Source.Status](" CURRENT "), Source.Status.Current)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/library/sources/SourceColumnsSuite.scala:13:17 
+[error] 13 |    assertEquals(ColumnProbe.read[Source.Status]("bogus"), Source.Status.Unassessed)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/library/sources/SourceColumnsSuite.scala:14:17 
+[error] 14 |    assertEquals(ColumnProbe.read[Source.Status](null), Source.Status.Unassessed)
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/test/scala/com/histmersion/domain/library/sources/SourceColumnsSuite.scala:16:17 
+[error] 16 |    assertEquals(ColumnProbe.write[Source.Status](Source.Status.Current), Some("current"))
+[error]    |                 ^^^^^^^^^^^
+[error]    |                 Not found: ColumnProbe
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] 11 errors found
+[error] (db / Test / compileIncremental) Compilation failed
+[error] elapsed time: 3 s, cache 99%, 175 disk cache hits, 1 onsite task

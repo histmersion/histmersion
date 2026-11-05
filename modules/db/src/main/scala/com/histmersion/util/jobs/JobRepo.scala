@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
@@ -183,7 +184,7 @@ object JobRepo:
     sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
                           progress = NULL, updated_at = now()
           WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
-            AND kind <> ${Agents.JobKind}
+            AND kind <> ${com.histmersion.api.automation.AgentJobKinds.Agent.kind}
             AND NOT (id = ANY($except::text[]))""".update.run()
 
   // ── runs: jobs that run as checkpointed steps (agent runs) ───────────────────────────────────
@@ -293,7 +294,7 @@ object JobRepo:
     val id = java.util.UUID.randomUUID().toString
     val js = json(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(planHash)))
     sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
-          VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
+          VALUES ($id, ${com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
     id
 
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
@@ -305,7 +306,7 @@ object JobRepo:
       case Left(e)  => (JobState.Failed, Some(e), None)
     val _ =
       sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
-            WHERE id = $id AND kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire}""".update.run()
+            WHERE id = $id AND kind = ${com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update.run()
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The time so far of a
     * running one is measured against the database's clock.
@@ -315,7 +316,7 @@ object JobRepo:
                  (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()
                                           ELSE updated_at END) - created_at) * 1000)::bigint,
                  error, result::text
-          FROM jobs WHERE id = $id AND kind = ${MergeApplyJob.JobKind}"""
+          FROM jobs WHERE id = $id AND kind = ${com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind}"""
       .query[(String, String, String, String, Long, Option[String], Option[String])]
       .run()
       .headOption
@@ -333,7 +334,7 @@ object JobRepo:
 
   /** Is a merge apply running? One at a time. */
   def mergeApplyRunning(using DbCon): Boolean =
-    sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
+    sql"SELECT 1 FROM jobs WHERE kind = ${com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire} LIMIT 1"
       .query[Int]
       .run()
       .nonEmpty

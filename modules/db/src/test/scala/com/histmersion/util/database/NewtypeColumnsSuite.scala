@@ -25,7 +25,28 @@ class NewtypeColumnsSuite extends DbSuite:
     )
     assertEquals(row, Vector((Slug("sea_peoples"), Year(-3300), Source.Uid(uid), None)))
 
+  {
   test("a stored value the constraint refuses fails the read, naming the column and the value"):
     val e = intercept[Exception](connect(ds)(sql"SELECT 'Sea Peoples'::text AS slug".query[Slug].run()))
     val messages = Iterator.iterate[Throwable](e)(_.getCause).takeWhile(_ != null).map(_.getMessage).mkString(" | ")
     assert(messages.contains("column slug: 'Sea Peoples' is not valid"), messages)
+  
+  test("newtype arrays preserve order and duplicates and retain the base null and empty semantics"):
+    import com.histmersion.api.library.AuthorName
+    val authors = List("Ann", "Bob", "Ann").map(AuthorName.apply)
+    val empty = List.empty[AuthorName]
+    val rows = connect(ds)(
+      sql"SELECT $authors::text[], $empty::text[], NULL::text[]"
+        .query[(List[AuthorName], List[AuthorName], List[AuthorName])].run()
+    )
+    assertEquals(rows, Vector((authors, empty, empty)))
+  
+  test("a constrained newtype array rejects an invalid element and names its column"):
+    val valid = List(Slug("sea_peoples"), Slug("bronze_age"))
+    assertEquals(connect(ds)(sql"SELECT $valid::text[]".query[List[Slug]].run()), Vector(valid))
+    val e = intercept[Exception](connect(ds)(
+      sql"SELECT ARRAY['sea_peoples', 'Sea Peoples']::text[] AS slugs".query[List[Slug]].run()
+    ))
+    val messages = Iterator.iterate[Throwable](e)(_.getCause).takeWhile(_ != null).map(_.getMessage).mkString(" | ")
+    assert(messages.contains("column slugs: 'Sea Peoples' is not valid"), messages)
+  }

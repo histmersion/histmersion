@@ -1,0 +1,399 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 26 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/classes ...
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:37:44 
+[error] 37 |  private given DbCodec[EventParticipant] = DbCodec.derived
+[error]    |                                            ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.catalogue.Event.Id.T! Provide one or derive it.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:89:8 
+[info] 89 |        sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(
+[info]    |        ^
+[info]    |Could not find given DbCodec for wanted. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 90 |                       coalesce(e.geom, ep.geom_clipped, ep.geom), $tolerance), 4)
+[info] 91 |              FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:89:8 
+[info] 89 |        sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(
+[info]    |        ^
+[info]    |Could not find given DbCodec for wanted. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 90 |                       coalesce(e.geom, ep.geom_clipped, ep.geom), $tolerance), 4)
+[info] 91 |              FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:252:6 
+[info] 252 |      sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
+[info]     |      ^
+[info]     |Could not find given DbCodec for d.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 253 |                                       method, note)
+[info] 254 |...
+[info] 259 |              method = EXCLUDED.method, note = EXCLUDED.note""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:252:6 
+[info] 252 |      sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
+[info]     |      ^
+[info]     |Could not find given DbCodec for d.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 253 |                                       method, note)
+[info] 254 |...
+[info] 259 |              method = EXCLUDED.method, note = EXCLUDED.note""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:268:6 
+[info] 268 |      sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+[info]     |      ^
+[info]     |Could not find given DbCodec for p.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 269 |            VALUES ($id, ${p.actor}, ${p.role}, ${p.citekey})
+[info] 270 |            ON CONFLICT (event_id, actor, role) DO UPDATE SET citekey = EXCLUDED.citekey""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:268:6 
+[info] 268 |      sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+[info]     |      ^
+[info]     |Could not find given DbCodec for p.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 269 |            VALUES ($id, ${p.actor}, ${p.role}, ${p.citekey})
+[info] 270 |            ON CONFLICT (event_id, actor, role) DO UPDATE SET citekey = EXCLUDED.citekey""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:307:10 
+[info] 307 |          sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
+[info]     |          ^
+[info]     |Could not find given DbCodec for d.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 308 |                                           method, note)
+[info] 309 |                VALUES ($id, ${d.citekey}, ${d.timeSpan.notBefore}, ${d.timeSpan.beginBy},
+[info] 310 |                        ${d.timeSpan.endFrom}, ${d.timeSpan.notAfter}, ${d.method}, ${d.note})""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:307:10 
+[info] 307 |          sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
+[info]     |          ^
+[info]     |Could not find given DbCodec for d.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 308 |                                           method, note)
+[info] 309 |                VALUES ($id, ${d.citekey}, ${d.timeSpan.notBefore}, ${d.timeSpan.beginBy},
+[info] 310 |                        ${d.timeSpan.endFrom}, ${d.timeSpan.notAfter}, ${d.method}, ${d.note})""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:323:10 
+[info] 323 |          sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+[info]     |          ^
+[info]     |Could not find given DbCodec for pp.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 324 |                VALUES ($id, ${pp.actor}, ${pp.role}, ${pp.citekey})""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala:323:10 
+[info] 323 |          sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+[info]     |          ^
+[info]     |Could not find given DbCodec for pp.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 324 |                VALUES ($id, ${pp.actor}, ${pp.role}, ${pp.citekey})""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EventLinkRepo.scala:35:6 
+[info] 35 |      sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)
+[info]    |      ^
+[info]    |Could not find given DbCodec for c.citekey. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 36 |            VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[])
+[info] 37 |            ON CONFLICT (event_id, citekey) DO UPDATE SET score = EXCLUDED.score, findings = EXCLUDED.findings,
+[info] 38 |              passages = EXCLUDED.passages, reasons = EXCLUDED.reasons, computed_at = now()""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EventLinkRepo.scala:35:6 
+[info] 35 |      sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)
+[info]    |      ^
+[info]    |Could not find given DbCodec for c.citekey. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 36 |            VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[])
+[info] 37 |            ON CONFLICT (event_id, citekey) DO UPDATE SET score = EXCLUDED.score, findings = EXCLUDED.findings,
+[info] 38 |              passages = EXCLUDED.passages, reasons = EXCLUDED.reasons, computed_at = now()""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/GazetteerRepo.scala:205:10 
+[info] 205 |          sql"""SELECT id, import_source, import_ref FROM places
+[info]     |          ^
+[info]     |Could not find given DbCodec for placeIds. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 206 |                WHERE id = ANY($placeIds::text[]) OR (import_source = $source AND import_ref = ANY($refs::text[]))"""
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/GazetteerRepo.scala:205:10 
+[info] 205 |          sql"""SELECT id, import_source, import_ref FROM places
+[info]     |          ^
+[info]     |Could not find given DbCodec for placeIds. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 206 |                WHERE id = ANY($placeIds::text[]) OR (import_source = $source AND import_ref = ANY($refs::text[]))"""
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:34:63 
+[error] 34 |  given DbCodec[com.histmersion.api.catalogue.Place.Summary] = DbCodec.derived
+[error]    |                                                               ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.catalogue.Place.Id.T! Provide one or derive it.
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:36:63 
+[error] 36 |  given DbCodec[com.histmersion.api.catalogue.Place.TreeRow] = DbCodec.derived
+[error]    |                                                               ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.catalogue.Place.Id.T! Provide one or derive it.
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:39:60 
+[error] 39 |  given DbCodec[com.histmersion.api.catalogue.Place.Link] = DbCodec.derived
+[error]    |                                                            ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.catalogue.Place.Id.T! Provide one or derive it.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:120:6 
+[info] 120 |      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
+[info]     |      ^
+[info]     |Could not find given DbCodec for in.place.id. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 121 |            VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
+[info] 122 |...
+[info] 128 |              properties = EXCLUDED.properties, dataset = EXCLUDED.dataset""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:120:6 
+[info] 120 |      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
+[info]     |      ^
+[info]     |Could not find given DbCodec for in.place.id. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 121 |            VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
+[info] 122 |...
+[info] 128 |              properties = EXCLUDED.properties, dataset = EXCLUDED.dataset""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:136:6 
+[info] 136 |      sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual AND import_source = ''".update
+[info]     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for idList. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:136:6 
+[info] 136 |      sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual AND import_source = ''".update
+[info]     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for idList. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:138:12 
+[info] 138 |    val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
+[info]     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for idList. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:138:12 
+[info] 138 |    val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
+[info]     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for idList. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:143:6 
+[info] 143 |      sql"""INSERT INTO place_names (place_id, name, lang, period)
+[info]     |      ^
+[info]     |Could not find given DbCodec for pid. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 144 |            VALUES ($pid, ${n.name}, ${n.lang}, $p::int8range)
+[info] 145 |            ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:143:6 
+[info] 143 |      sql"""INSERT INTO place_names (place_id, name, lang, period)
+[info]     |      ^
+[info]     |Could not find given DbCodec for pid. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 144 |            VALUES ($pid, ${n.name}, ${n.lang}, $p::int8range)
+[info] 145 |            ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1044:16 
+[info] 1044 |    val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
+[info]      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1044:16 
+[info] 1044 |    val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
+[info]      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1045:16 
+[info] 1045 |    val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption
+[info]      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1045:16 
+[info] 1045 |    val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption
+[info]      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1046:15 
+[info] 1046 |    val gone = sql"SELECT 1 FROM place_removals WHERE id = $id".query[Int].run().nonEmpty
+[info]      |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1046:15 
+[info] 1046 |    val gone = sql"SELECT 1 FROM place_removals WHERE id = $id".query[Int].run().nonEmpty
+[info]      |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1059:6 
+[info] 1059 |      sql"SELECT ${SqlLiteral(summaryCols)} FROM places p WHERE p.id = $id"
+[info]      |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1059:6 
+[info] 1059 |      sql"SELECT ${SqlLiteral(summaryCols)} FROM places p WHERE p.id = $id"
+[info]      |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]      |Could not find given DbCodec for id. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1086:4 
+[info] 1086 |    sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+[info]      |    ^
+[info]      |Could not find given DbCodec for link.placeId. Using PreparedStatement::setObject instead.
+[info]      |
+[info] 1087 |          VALUES (${link.placeId}, ${link.scheme}, ${link.externalId}, ${link.relation})
+[info] 1088 |          ON CONFLICT (place_id, scheme, external_id) DO UPDATE SET
+[info] 1089 |            relation = EXCLUDED.relation""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1086:4 
+[info] 1086 |    sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+[info]      |    ^
+[info]      |Could not find given DbCodec for link.placeId. Using PreparedStatement::setObject instead.
+[info]      |
+[info] 1087 |          VALUES (${link.placeId}, ${link.scheme}, ${link.externalId}, ${link.relation})
+[info] 1088 |          ON CONFLICT (place_id, scheme, external_id) DO UPDATE SET
+[info] 1089 |            relation = EXCLUDED.relation""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1093:4 
+[info] 1093 |    sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
+[info]      |    ^
+[info]      |Could not find given DbCodec for pt.placeId. Using PreparedStatement::setObject instead.
+[info]      |
+[info] 1094 |          VALUES (${pt.placeId}, ${pt.typeLabel}, $p::int8range, ${pt.citekey})
+[info] 1095 |          ON CONFLICT (place_id, type_label) DO UPDATE SET
+[info] 1096 |            period = EXCLUDED.period, citekey = EXCLUDED.citekey""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala:1093:4 
+[info] 1093 |    sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
+[info]      |    ^
+[info]      |Could not find given DbCodec for pt.placeId. Using PreparedStatement::setObject instead.
+[info]      |
+[info] 1094 |          VALUES (${pt.placeId}, ${pt.typeLabel}, $p::int8range, ${pt.citekey})
+[info] 1095 |          ON CONFLICT (place_id, type_label) DO UPDATE SET
+[info] 1096 |            period = EXCLUDED.period, citekey = EXCLUDED.citekey""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala:57:6 
+[info] 57 |      sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for c.doi. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala:57:6 
+[info] 57 |      sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for c.doi. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala:59:6 
+[info] 59 |      sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by)
+[info]    |      ^
+[info]    |Could not find given DbCodec for c.doi. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 60 |                    VALUES (${c.goal}, ${c.doi}, ${c.title}, ${c.year}, ${c.authors}::text[], ${c.venue}, ${c.abstractText},
+[info] 61 |...
+[info] 65 |                      is_oa = source_candidates.is_oa OR EXCLUDED.is_oa""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala:59:6 
+[info] 59 |      sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by)
+[info]    |      ^
+[info]    |Could not find given DbCodec for c.doi. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 60 |                    VALUES (${c.goal}, ${c.doi}, ${c.title}, ${c.year}, ${c.authors}::text[], ${c.venue}, ${c.abstractText},
+[info] 61 |...
+[info] 65 |                      is_oa = source_candidates.is_oa OR EXCLUDED.is_oa""".update.run()
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:33:41 
+[error] 33 |  private given DbCodec[Source.Detail] = DbCodec.derived
+[error]    |                                         ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.library.Citekey$package.Citekey.T! Provide one or derive it.
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:35:38 
+[error] 35 |  private given DbCodec[Source.Ref] = DbCodec.derived
+[error]    |                                      ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.library.Citekey$package.Citekey.T! Provide one or derive it.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:99:4 
+[info]  99 |    sql"""INSERT INTO sources
+[info]     |    ^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 100 |            (citekey, title, authors, year, venue, status, topics, regions, tags,
+[info] 101 |...
+[info] 116 |            influential_citations=EXCLUDED.influential_citations, updated_at=now()""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:125:4 
+[info] 125 |    sql"""DELETE FROM findings
+[info]     |    ^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 126 |          WHERE citekey = ${s.citekey} AND NOT (id = ANY($keep::text[]))""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:131:6 
+[info] 131 |      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance)
+[info]     |      ^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 132 |            VALUES (${f.id}, ${s.citekey}, ${f.claim}, ${f.region},
+[info] 133 |...
+[info] 141 |              confidence = EXCLUDED.confidence, significance = EXCLUDED.significance""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:147:4 
+[info] 147 |    sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:147:4 
+[info] 147 |    sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:148:4 
+[info] 148 |    sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:148:4 
+[info] 148 |    sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for s.citekey. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:166:10 
+[info] 166 |          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${e.kind})
+[info]     |          ^
+[info]     |Could not find given DbCodec for e.src. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 167 |                ON CONFLICT DO NOTHING""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:166:10 
+[info] 166 |          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${e.kind})
+[info]     |          ^
+[info]     |Could not find given DbCodec for e.src. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 167 |                ON CONFLICT DO NOTHING""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:168:13 
+[info] 168 |        else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+[info]     |             ^
+[info]     |Could not find given DbCodec for e.src. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 169 |                ON CONFLICT DO NOTHING""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:168:13 
+[info] 168 |        else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+[info]     |             ^
+[info]     |Could not find given DbCodec for e.src. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 169 |                ON CONFLICT DO NOTHING""".update.run()
+[error] -- Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleRepo.scala:45:39 
+[error] 45 |  private given DbCodec[CitedSource] = DbCodec.derived
+[error]    |                                       ^^^^^^^^^^^^^^^
+[error]    |Cannot find a DbCodec instance for com.histmersion.api.library.Citekey$package.Citekey.T! Provide one or derive it.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:183:4 
+[info] 183 |    sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
+[info]     |    ^
+[info]     |Could not find given DbCodec for com.histmersion.api.automation.Agents.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 184 |                          progress = NULL, updated_at = now()
+[info] 185 |...
+[info] 187 |            AND NOT (id = ANY($except::text[]))""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:183:4 
+[info] 183 |    sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
+[info]     |    ^
+[info]     |Could not find given DbCodec for com.histmersion.api.automation.Agents.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 184 |                          progress = NULL, updated_at = now()
+[info] 185 |...
+[info] 187 |            AND NOT (id = ANY($except::text[]))""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:295:4 
+[info] 295 |    sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
+[info]     |    ^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 296 |          VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:295:4 
+[info] 295 |    sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
+[info]     |    ^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 296 |          VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:307:6 
+[info] 307 |      sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
+[info]     |      ^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 308 |            WHERE id = $id AND kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire}""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:307:6 
+[info] 307 |      sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
+[info]     |      ^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 308 |            WHERE id = $id AND kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire}""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:314:4 
+[info] 314 |    sql"""SELECT id, status, coalesce(sha256, ''), coalesce(detail->>'planHash', ''),
+[info]     |    ^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info]     |
+[info] 315 |                 (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()
+[info] 316 |...
+[info] 318 |          FROM jobs WHERE id = $id AND kind = ${MergeApplyJob.JobKind}"""
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:336:4 
+[info] 336 |    sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala:336:4 
+[info] 336 |    sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
+[info]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]     |Could not find given DbCodec for com.histmersion.api.exchange.MergeApplyJob.JobKind. Using PreparedStatement::setObject instead.
+[error] 7 errors found
+[error] (db / Compile / compileIncremental) Compilation failed
+[error] elapsed time: 11 s, cache 99%, 212 disk cache hits, 1 onsite task
